@@ -61,13 +61,11 @@
       $${int(link.promote_bid)}
     </div>
     <div class="promotedlink ${link.rowstyle} rounded">
-      <a class="title" href="/promoted/edit_promo/${link._id36}">
-        ${link.title}
+      <a class="title" 
+         href="/promoted/edit_promo/${link._id36}"
+         title="${link.title}">
+        ${link.author.name}
       </a>
-      &#32; 
-      <span class="tagline" style="whitespace: nowrap" >
-        by ${link.author.name}
-      </span>
     </div>
   </div>
 %endfor

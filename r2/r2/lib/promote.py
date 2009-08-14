@@ -118,7 +118,7 @@ def update_promo_data(thing, title, url, commit = True):
             promotion_log(thing, "url updated (was '%s')" %
                           thing.url)
         old_url = thing.url
-        thing.url = old_url
+        thing.url = url
         thing.title = title
         if not c.user_is_sponsor:
             unapproved_promo(thing)
