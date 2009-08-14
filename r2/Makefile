@@ -21,7 +21,7 @@
 ################################################################################
 
 # Jacascript files to be compressified
-js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js ui.core.js ui.datepicker.js
+js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js ui.core.js ui.datepicker.js sponsored.js
 # CSS targets 
 css_targets = reddit.css reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
 

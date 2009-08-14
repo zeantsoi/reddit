@@ -6,8 +6,7 @@ function update_bid(elem) {
     var form = $(elem).parents("form:first");
     var bid = parseFloat(form.find("*[name=bid]").val());
     var ndays = ((Date.parse(form.find("*[name=enddate]").val()) -
-             Date.parse(form.find("*[name=startdate]").val()))
-             / (86400*1000));
+             Date.parse(form.find("*[name=startdate]").val())) / (86400*1000));
     $("#bid-field span.gray").html("($" + (bid/ndays).toFixed(2) +
          " per day)");
     $("#duration span.gray")
