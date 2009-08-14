@@ -71,8 +71,8 @@
     </div>
   </div>
 %endfor
-<div class="clearleft"></div>
-
+</div>
+<div class="clear"></div>
   %if thing.recent:
   <h1>${_('promotions this month')}</h1>
   
@@ -94,7 +94,7 @@
     </tr>
     %for link, uimp, nimp, ucli, ncli in thing.recent:
     <tr>
-      <td>${thing._date.strftime("%Y-%m-$d")}</td>
+      <td>${link._date.strftime("%Y-%m-%d")}</td>
       <td>${uimp}</td>
       <td>${nimp}</td>
       <td>${ucli}</td>

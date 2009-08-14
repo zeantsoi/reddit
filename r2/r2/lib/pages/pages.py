@@ -1753,7 +1753,7 @@ class Promote_Graph(Templated):
             if (link.promoted is not None and
                 (link.promote_status != promote.STATUS.rejected and
                  link.promote_status != promote.STATUS.unpaid)):
-                bid_day = link.promote_bid / (p.end_date - p.start_date).days
+                bid_day = link.promote_bid / max((p.end_date - p.start_date).days, 1)
                 if link.promote_status != promote.STATUS.rejected:
                     for i in xrange(starti, endi):
                         market[i] = market.get(i, 0) + bid_day

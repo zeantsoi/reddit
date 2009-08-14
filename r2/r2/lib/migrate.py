@@ -50,34 +50,39 @@ def convert_promoted():
         promoted = {}
         set_promoted({})
         for l in fetch_things2(q):
-            # move the promotion into the promo subreddit
-            l.sr_id = sr_id
-            # set it to accepted (since some of the update functions
-            # check that it is not already promoted)
-            l.promote_status = STATUS.accepted
-            author = Account._byID(l.author_id)
-            l.promote_trans_id = bidding.auth_transaction(bid, author, -1, l)
-            l.promote_bid = bid
-            l.maximum_clicks = None
-            l.maximum_views = None
-            # set the dates
-            start = getattr(l, "promoted_on", l._date)
-            until = getattr(l, "promote_until", None) or \
-                (l._date + timedelta(1))
-            l.promote_until = None
-            update_promo_dates(l, start, until)
-            # mark it as promoted if it was promoted when we got there
-            if l.promoted and l.promote_until > datetime.now(g.tz):
-                l.promote_status = STATUS.pending
-            else:
-                l.promote_status = STATUS.finished
-
-            if not hasattr(l, "disable_comments"):
-                l.disable_comments = False
-            # add it to the auction list
-            if l.promote_status == STATUS.pending and l._fullname not in promoted:
-                promoted[l._fullname] = auction_weight(l)
-            l._commit()
+            print "updating:", l
+            try:
+                if not l._loaded: l._load()
+                # move the promotion into the promo subreddit
+                l.sr_id = sr_id
+                # set it to accepted (since some of the update functions
+                # check that it is not already promoted)
+                l.promote_status = STATUS.accepted
+                author = Account._byID(l.author_id)
+                l.promote_trans_id = bidding.auth_transaction(bid, author, -1, l)
+                l.promote_bid = bid
+                l.maximum_clicks = None
+                l.maximum_views = None
+                # set the dates
+                start = getattr(l, "promoted_on", l._date)
+                until = getattr(l, "promote_until", None) or \
+                    (l._date + timedelta(1))
+                l.promote_until = None
+                update_promo_dates(l, start, until)
+                # mark it as promoted if it was promoted when we got there
+                if l.promoted and l.promote_until > datetime.now(g.tz):
+                    l.promote_status = STATUS.pending
+                else:
+                    l.promote_status = STATUS.finished
+    
+                if not hasattr(l, "disable_comments"):
+                    l.disable_comments = False
+                # add it to the auction list
+                if l.promote_status == STATUS.pending and l._fullname not in promoted:
+                    promoted[l._fullname] = auction_weight(l)
+                l._commit()
+            except AttributeError:
+                print "BAD THING:", l
         print promoted
         set_promoted(promoted)
     # run what is normally in a cron job to clear out finished promos
