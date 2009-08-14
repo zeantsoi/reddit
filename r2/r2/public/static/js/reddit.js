@@ -298,6 +298,19 @@ function cancelShare(elem) {
     return cancelToggleForm(elem, ".sharelink", ".share-button");
 };
 
+function reject_promo(elem) {
+    $(elem).thing().find(".rejection-form").show().find("textare").focus();
+}
+
+function cancel_reject_promo(elem) {  
+    $(elem).thing().find(".rejection-form").hide();
+}
+
+function complete_reject_promo(elem) {
+    $(elem).thing().removeClass("accepted").addClass("rejected")
+        .find(".reject_promo").remove();
+}
+
 /* Comment generation */
 function helpon(elem) {
     $(elem).parents(".usertext-edit:first").children(".markhelp:first").show();

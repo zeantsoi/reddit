@@ -199,6 +199,17 @@ def strips(text, remove):
     """
     return rstrips(lstrips(text, remove), remove)
 
+class Enum(Storage):
+    def __init__(self, *a):
+        self.name = tuple(a)
+        Storage.__init__(self, ((e, i) for i, e in enumerate(a)))
+    def __contains__(self, item):
+        if isinstance(item, int):
+            return item in self.values()
+        else:
+            return Storage.__contains__(self, item)
+            
+
 class Results():
     def __init__(self, sa_ResultProxy, build_fn, do_batch=False):
         self.rp = sa_ResultProxy

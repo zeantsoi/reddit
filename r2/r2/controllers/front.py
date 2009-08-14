@@ -102,6 +102,45 @@ class FrontController(RedditController):
         """The 'what is my password' page"""
         return BoringPage(_("password"), content=Password()).render()
 
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_verify(self, dest):
+        if c.user.email_verified:
+            content = InfoBar(message = strings.email_verified)
+            if dest:
+                return self.redirect(dest)
+        else:
+            content = PaneStack(
+                [InfoBar(message = strings.verify_email),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+        return BoringPage(_("verify email"), content = content).render()
+
+    @validate(VUser(),
+              cache_evt = VCacheKey('email_verify', ('key', 'name')),
+              key = nop('key'),
+              dest = VDestination(default = "/prefs/update"))
+    def GET_verify_email(self, cache_evt, key, dest):
+        if c.user_is_loggedin and c.user.email_verified:
+            cache_evt.clear()
+            return self.redirect(dest)
+        elif not (cache_evt.user and
+                key == passhash(cache_evt.user.name, cache_evt.user.email)):
+            content = PaneStack(
+                [InfoBar(message = strings.email_verify_failed),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+            return BoringPage(_("verify email"), content = content).render()
+        elif c.user != cache_evt.user:
+            # wrong user.  Log them out and try again. 
+            self.logout()
+            return self.redirect(request.fullpath)
+        else:
+            cache_evt.clear()
+            c.user.email_verified = True
+            c.user._commit()
+            return self.redirect(dest)
+
     @validate(cache_evt = VCacheKey('reset', ('key', 'name')),
               key = nop('key'))
     def GET_resetpassword(self, cache_evt, key):
@@ -130,10 +169,12 @@ class FrontController(RedditController):
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
         return DetailsPage(link = article).render()
-    
+
 
     @validate(article = VLink('article'))
     def GET_shirt(self, article):
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
         if g.spreadshirt_url:
             from r2.lib.spreadshirt import ShirtPage
             return ShirtPage(link = article).render()
@@ -151,8 +192,8 @@ class FrontController(RedditController):
 
         if not c.default_sr and c.site._id != article.sr_id: 
             return self.abort404()
-        
-        if not article.subreddit_slow.can_view(c.user):
+
+        if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
         #check for 304
@@ -188,8 +229,7 @@ class FrontController(RedditController):
             displayPane.append(PermalinkMessage(article.make_permalink_slow()))
 
         # insert reply box only for logged in user
-        if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user)\
-                and not is_api():
+        if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
@@ -200,7 +240,7 @@ class FrontController(RedditController):
         displayPane.append(listing.listing())
 
         loc = None if c.focal_comment or context is not None else 'comments'
-        
+
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane, 
                            subtitle = _("comments"),
@@ -314,6 +354,9 @@ class FrontController(RedditController):
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query."""
+
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
 
         title = c.site.name + ((': ' + article.title) if hasattr(article, 'title') else '')
 

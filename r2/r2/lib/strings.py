@@ -125,6 +125,9 @@ string_dict = dict(
     submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),
     submit_text = _("""You are submitting a text-based post. Speak your mind. A title is required, but expanding further in the text field is not. Beginning your title with "vote up if" is violation of intergalactic law."""),
     iphone_first = _("You should consider using [reddit's free iphone app](http://itunes.com/apps/iredditfree)."),
+    verify_email = _("we're going to need to verify your email address for you to proceed."),
+    email_verified =  _("your email address has been verfied"),
+    email_verify_failed = _("Verification failed.  Please try that again"),
 )
 
 class StringHandler(object):

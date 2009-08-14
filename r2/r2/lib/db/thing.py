@@ -103,7 +103,6 @@ class DataThing(object):
         else:
             old_val = self._t.get(attr, self._defaults.get(attr))
             self._t[attr] = val
-
         if make_dirty and val != old_val:
             self._dirties[attr] = (old_val, val)
 

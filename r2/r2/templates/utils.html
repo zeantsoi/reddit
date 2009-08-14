@@ -244,28 +244,18 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 
-                         onchange = '', 
-                         tabular = False, label = '')">
+                         onchange = '', label = '')">
   <% form_id = "image-upload" %>
   <form id="${form_id}" enctype="multipart/form-data"
-        class="pretty-form image-upload"
+        class="image-upload"
         target="upload-iframe"
         %if onsubmit:
            onsubmit="${onsubmit}"
         %endif
         action="${post_target}" method="post">
-    %if tabular:
-    <table class="preftable">
-     <tr>
-       <th>
-    %endif
       %if label:
          <label for="file">${label}</label>
       %endif
-    %if tabular:
-       </th>
-       <td class="prefright">
-    %endif
           <input type="hidden" name="uh" value="${c.modhash}" />
           %if not c.default_sr:
             <input type="hidden" name="r"  value="${c.site.name}" />
@@ -327,9 +317,6 @@ ${unsafe(txt)}
                  %endif
                  /><br />
           </div>
-      %if tabular:
-       </td>
-      %endif 
      %if caller:
        ${caller.body()}
      %endif

@@ -22,7 +22,7 @@
 from pylons import c, request, g
 from pylons.i18n import _
 from pylons.controllers.util import abort
-from r2.lib import utils, captcha
+from r2.lib import utils, captcha, promote
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
@@ -32,10 +32,27 @@ from r2.lib.jsontemplates import api_type
 from r2.models import *
 
 from r2.controllers.errors import errors, UserRequiredException
+from r2.controllers.errors import VerifiedUserRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
 import re, inspect
+#import pycountry
+
+def visible_promo(article):
+    is_promo = getattr(article, "promoted", None) is not None
+    is_author = (c.user_is_loggedin and
+                 c.user._id == article.author_id)
+    return (is_promo and not article.disable_comments and
+            (is_author or article.promote_status >= promote.STATUS.promoted))
+
+def can_view_link_comments(article):
+    return (article.subreddit_slow.can_view(c.user) or
+            visible_promo(article))
+
+def can_comment_link(article):
+    return (article.subreddit_slow.can_comment(c.user) or
+            visible_promo(article))
 
 class Validator(object):
     default_param = None
@@ -110,6 +127,8 @@ def validate(*simple_vals, **param_vals):
                 return fn(self, *a, **kw)
             except UserRequiredException:
                 return self.intermediate_redirect('/login')
+            except VerifiedUserRequiredException:
+                return self.intermediate_redirect('/verify')
         return newfn
     return val
 
@@ -138,7 +157,10 @@ def api_validate(response_function):
                                              simple_vals, param_vals, *a, **kw)
                 except UserRequiredException:
                     responder.send_failure(errors.USER_REQUIRED)
-                    return self.response_func(responder.make_response())
+                    return self.api_wrapper(responder.make_response())
+                except VerifiedUserRequiredException:
+                    responder.send_failure(errors.VERIFIED_USER_REQUIRED)
+                    return self.api_wrapper(responder.make_response())
             return newfn
         return val
     return _api_validate
@@ -147,12 +169,12 @@ def api_validate(response_function):
 @api_validate
 def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     self_method(self, *a, **kw)
-    return self.response_func({})
+    return self.api_wrapper({})
 
 @api_validate
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     r = self_method(self, *a, **kw)
-    return self.response_func(r)
+    return self.api_wrapper(r)
 
 @api_validate
 def validatedForm(self, self_method, responder, simple_vals, param_vals,
@@ -175,7 +197,7 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
     if val:
         return val
     else:
-        return self.response_func(responder.make_response())
+        return self.api_wrapper(responder.make_response())
 
 
 
@@ -425,10 +447,29 @@ class VAdmin(Validator):
         if not c.user_is_admin:
             abort(404, "page not found")
 
-class VSponsor(Validator):
+class VVerifiedUser(VUser):
     def run(self):
-        if not c.user_is_sponsor:
-            abort(403, 'forbidden')
+        VUser.run(self)
+        if not c.user.email_verified:
+            raise VerifiedUserRequiredException
+        
+class VSponsor(VVerifiedUser):
+    def run(self, link_id = None):
+        VVerifiedUser.run(self)
+        if c.user_is_sponsor:
+            return
+        elif link_id:
+            try:
+                if '_' in link_id:
+                    t = Link._by_fullname(link_id, True)
+                else:
+                    aid = int(link_id, 36)
+                    t = Link._byID(aid, True)
+                if t.author_id == c.user._id:
+                    return
+            except (NotFound, ValueError):
+                pass
+        abort(403, 'forbidden')
 
 class VSrModerator(Validator):
     def run(self):
@@ -496,8 +537,10 @@ class VSubmitParent(VByName):
             if isinstance(parent, Message):
                 return parent
             else:
-                sr = parent.subreddit_slow
-                if c.user_is_loggedin and sr.can_comment(c.user):
+                link = parent
+                if isinstance(parent, Comment):
+                    link = Link._byID(parent.link_id)
+                if c.user_is_loggedin and can_comment_link(link):
                     return parent
         #else
         abort(403, "forbidden")
@@ -630,31 +673,53 @@ class VUserWithEmail(VExistingUname):
         if not user or not hasattr(user, 'email') or not user.email:
             return self.error(errors.NO_EMAIL_FOR_USER)
         return user
-            
+
 
 class VBoolean(Validator):
     def run(self, val):
         return val != "off" and bool(val)
 
-class VInt(Validator):
-    def __init__(self, param, min=None, max=None, *a, **kw):
-        self.min = min
-        self.max = max
+class VNumber(Validator):
+    def __init__(self, param, min=None, max=None, coerce = True, *a, **kw):
+        self.min = self.cast(min) if min is not None else None
+        self.max = self.cast(max) if max is not None else None
+        self.coerce = coerce
         Validator.__init__(self, param, *a, **kw)
+
+    def cast(self, val):
+        raise NotImplementedError
 
     def run(self, val):
         if not val:
             return
-
         try:
-            val = int(val)
+            val = self.cast(val)
             if self.min is not None and val < self.min:
-                val = self.min
+                if self.coerce:
+                    val = self.min
+                else:
+                    raise ValueError, ""
             elif self.max is not None and val > self.max:
-                val = self.max
+                if self.coerce:
+                    val = self.max
+                else:
+                    raise ValueError, ""
             return val
         except ValueError:
-            self.set_error(errors.BAD_NUMBER)
+            self.set_error(errors.BAD_NUMBER, msg_params = dict(min=self.min,
+                                                                max=self.max))
+
+class VInt(VNumber):
+    def cast(self, val):
+        return int(val)
+
+class VBid(VNumber):
+    def cast(self, val):
+        return float(val)
+
+    def __init__(self, param):
+        VNumber.__init__(self, param, min = g.min_promote_bid,
+                         max = g.max_promote_bid, coerce = False)
 
 class VCssName(Validator):
     """
@@ -894,3 +959,81 @@ class ValidDomain(Validator):
         if url and is_banned_domain(url):
             self.set_error(errors.BANNED_DOMAIN)
 
+
+
+
+
+class VDate(Validator):
+    """
+    Date checker that accepts string inputs in %m/%d/%Y format.
+
+    Optional parameters include 'past' and 'future' which specify how
+    far (in days) into the past or future the date must be to be
+    acceptable.
+
+    NOTE: the 'future' param will have precidence during evaluation.
+
+    Error conditions:
+       * BAD_DATE on mal-formed date strings (strptime parse failure)
+       * BAD_FUTURE_DATE and BAD_PAST_DATE on respective range errors.
+    
+    """
+    def __init__(self, param, future=None, past = None, admin_override = False):
+        def to_timedelta(param):
+            if isinstance(param, int):
+                return timedelta(param)
+            elif param is not None:
+                return timedelta(0)
+            return None
+
+        self.future = to_timedelta(future)
+        self.past = to_timedelta(past)
+
+        # do we let admins override date range checking?
+        self.override = admin_override
+        Validator.__init__(self, param)
+    
+    def run(self, date):
+        override = c.user_is_sponsor and self.override
+        try:
+            date = datetime.strptime(date, "%m/%d/%Y")
+            now = datetime.now()
+            if (not override and
+                self.future is not None and date <= now + self.future):
+                self.set_error(errors.BAD_FUTURE_DATE,
+                               {"day": self.future.days})
+            elif (not override and
+                  self.past is not None and date >= now - self.past):
+                self.set_error(errors.BAD_PAST_DATE,
+                               {"day": self.past.days})
+            return date.replace(tzinfo=g.tz)
+        except (ValueError, TypeError):
+            self.set_error(errors.BAD_DATE)
+
+class VDateRange(VDate):
+    """
+    Adds range validation to VDate.  In addition to satisfying
+    future/past requirements in VDate, two date fields must be
+    provided and they must be in order.
+
+    Additional Error conditions:
+      * BAD_DATE_RANGE if start_date is not less than end_date
+    """
+    def run(self, *a):
+        try:
+            start_date, end_date = [VDate.run(self, x) for x in a]
+            if not start_date or not end_date or end_date < start_date:
+                self.set_error(errors.BAD_DATE_RANGE)
+            return (start_date, end_date)
+        except ValueError:
+            # insufficient number of arguments provided (expect 2)
+            self.set_error(errors.BAD_DATE_RANGE)
+
+
+class VDestination(Validator):
+    def __init__(self, param = 'dest', default = "", **kw):
+        self.default = default
+        Validator.__init__(self, param, **kw)
+    
+    def run(self, dest):
+        return dest or request.referer or self.default

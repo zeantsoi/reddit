@@ -26,6 +26,7 @@ from r2.lib.emailer import opt_in, opt_out
 from pylons import request, c, g
 from validator import *
 from pylons.i18n import _
+from r2.models import *
 import sha
 
 def to_referer(func, **params):
@@ -37,7 +38,7 @@ def to_referer(func, **params):
 
 
 class PostController(ApiController):
-    def response_func(self, kw):
+    def api_wrapper(self, kw):
         return Storage(**kw)
 
 #TODO: feature disabled for now
@@ -122,7 +123,7 @@ class PostController(ApiController):
 
     @validate(over18 = nop('over18'),
               uh = nop('uh'),
-              dest = nop('dest'))
+              dest = VDestination(default = '/'))
     def POST_over18(self, over18, uh, dest):
         if over18 == 'yes':
             if c.user_is_loggedin and c.user.valid_hash(uh):
@@ -199,3 +200,9 @@ class PostController(ApiController):
 
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))
+
+
+    @validate(VUser(),
+              link = VByName("link"))
+    def POST_pay(self, link):
+        raise NotImplementedError

@@ -24,7 +24,9 @@ from r2.lib.wrapped import Wrapped
 from r2.models import LinkListing, make_wrapper, Link, IDBuilder, PromotedLink, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
-from pylons import c
+from r2.lib.promote import promo_edit_url
+from datetime import datetime
+from pylons import c, g
 
 class PrintableButtons(Styled):
     def __init__(self, style, thing,
@@ -61,6 +63,16 @@ class LinkButtons(PrintableButtons):
         show_distinguish = (is_author and thing.can_ban 
                             and getattr(thing, "expand_children", False))
 
+        kw = {}
+        if thing.promoted is not None:
+            now = datetime.now(g.tz)
+            promotable = (thing._date <= now and thing.promote_until > now)
+            kw = dict(promo_url = promo_edit_url(thing),
+                      promote_status = getattr(thing, "promote_status", 0),
+                      user_is_sponsor = thing.user_is_sponsor,
+                      promotable = promotable,
+                      is_author = thing.is_author)
+                      
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
                                   is_loggedin = c.user_is_loggedin,
@@ -76,7 +88,10 @@ class LinkButtons(PrintableButtons):
                                   show_delete = show_delete,
                                   show_report = show_report,
                                   show_distinguish = show_distinguish,
-                                  show_comments = comments)
+                                  show_comments = comments,
+                                  # promotion
+                                  promoted = thing.promoted,
+                                  **kw)
 
 class CommentButtons(PrintableButtons):
     def __init__(self, thing, delete = True, report = True):
@@ -120,7 +135,7 @@ def default_thing_wrapper(**params):
         w = Wrapped(thing)
         style = params.get('style', c.render_style)
         if isinstance(thing, Link):
-            if thing.promoted:
+            if thing.promoted is not None:
                 w.render_class = PromotedLink
                 w.rowstyle = 'promoted link'
             elif style == 'htmllite':

@@ -34,6 +34,7 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/login',    controller='front', action='login')
     mc('/logout',   controller='front', action='logout')
+    mc('/verify',    controller='front', action='verify')
     mc('/adminon',  controller='front', action='adminon')
     mc('/adminoff', controller='front', action='adminoff')
     mc('/submit',   controller='front', action='submit')
@@ -115,8 +116,15 @@ def make_map(global_conf={}, app_conf={}):
     mc('/framebuster/:what/:blah',
        controller='front', action = 'framebuster')
 
-    mc('/promote/edit_promo/:link', controller='promote', action = 'edit_promo')
-    mc('/promote/:action', controller='promote')
+    mc('/promoted/edit_promo/:link',
+       controller='promote', action = 'edit_promo')
+    mc('/promoted/graph',
+       controller='promote', action = 'graph')
+    mc('/promoted/:action', controller='promote',
+       requirements = dict(action = "new_promo"))
+    mc('/promoted/:sort', controller='promote', action = "listing")
+    mc('/promoted/', controller='promoted', action = "listing",
+       sort = "")
 
     mc('/', controller='hot', action='listing')
     
@@ -152,19 +160,23 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/resetpassword/:key', controller='front',
        action='resetpassword')
+    mc('/verification/:key', controller='front',
+       action='verify_email')
     mc('/resetpassword', controller='front',
        action='resetpassword')
 
     mc('/post/:action/:url_user', controller='post',
        requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',
-       requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
+       requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg|pay"))
     
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
+    mc('/api/:action', controller='promote',
+       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note"))
     mc('/api/:action', controller='api')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')

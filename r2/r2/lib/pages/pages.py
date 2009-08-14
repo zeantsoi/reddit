@@ -23,7 +23,7 @@ from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
 from r2.models import Account, Default
 from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
-from r2.models import Link, Printable
+from r2.models import Link, Printable, bidding, PromoteDates
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -31,6 +31,7 @@ from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort
 
+from r2.lib import promote
 from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8, unsafe
@@ -224,9 +225,8 @@ class Reddit(Templated):
         if c.user_is_loggedin:
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin'))
-
             if c.user_is_sponsor:
-                more_buttons.append(NamedButton('promote'))
+                more_buttons.append(NavButton(menu.promote, 'promoted'))
 
         #if there's only one button in the dropdown, get rid of the dropdown
         if len(more_buttons) == 1:
@@ -426,7 +426,8 @@ class PrefsPage(Reddit):
 
     def __init__(self, show_sidebar = False, *a, **kw):
         Reddit.__init__(self, show_sidebar = show_sidebar,
-                        title = "%s (%s)" %(_("preferences"), c.site.name.strip(' ')),
+                        title = "%s (%s)" %(_("preferences"),
+                                            c.site.name.strip(' ')),
                         *a, **kw)
 
     def build_toolbars(self):
@@ -444,7 +445,11 @@ class PrefOptions(Templated):
 
 class PrefUpdate(Templated):
     """Preference form for updating email address and passwords"""
-    pass
+    def __init__(self, email = True, password = True, verify = False):
+        self.email = email
+        self.password = password
+        self.verify = verify
+        Templated.__init__(self)
 
 class PrefDelete(Templated):
     """preference form for deleting a user's own account."""
@@ -948,6 +953,12 @@ class PasswordReset(Templated):
     entered their user name in Password.)"""
     pass
 
+class VerifyEmail(Templated):
+    pass
+
+class Promo_Email(Templated):
+    pass
+
 class ResetPassword(Templated):
     """Form for actually resetting a lost password, after the user has
     clicked on the link provided to them in the Password_Reset email
@@ -1425,41 +1436,46 @@ class PromotePage(Reddit):
     create_reddit_box  = False
     submit_box         = False
     extension_handling = False
+    searchbox          = False
 
     def __init__(self, title, nav_menus = None, *a, **kw):
-        buttons = [NamedButton('current_promos', dest = ''),
-                   NamedButton('new_promo')]
+        buttons = [NamedButton('new_promo')]
+        if c.user_is_admin:
+            buttons.append(NamedButton('current_promos', dest = ''))
+            buttons.append(NamedButton('future_promos'))
+        else:
+            buttons.append(NamedButton('my_current_promos', dest = ''))
 
-        menu  = NavMenu(buttons, base_path = '/promote', type='flatlist')
+        
+        buttons += [NamedButton('pending_promos'),
+                    NamedButton('live_promos')]
+
+        if c.user_is_sponsor:
+            buttons.append(NamedButton('graph'))
+
+        menu  = NavMenu(buttons, base_path = '/promoted',
+                        type='flatlist')
 
         if nav_menus:
             nav_menus.insert(0, menu)
         else:
             nav_menus = [menu]
 
+        kw['show_sidebar'] = False
         Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
-
-
-class PromotedLinks(Templated):
-    def __init__(self, current_list, *a, **kw):
-        self.things = current_list
-        
-        self.recent =  dict(load_summary("thing"))
-
-        if self.recent:
-            link_listing = wrap_links(self.recent.keys())
-            for t in link_listing:
-                self.recent[t._fullname].insert(0, t)
-
-            self.recent = self.recent.values()
-            self.recent.sort(key = lambda x: x[0]._date)
-        Templated.__init__(self, datefmt = datefmt, *a, **kw)
 
 class PromoteLinkForm(Templated):
     def __init__(self, sr = None, link = None, listing = '',
                  timedeltatext = '', *a, **kw):
+        bids = []
+        if c.user_is_admin and link:
+            try:
+                bids = bidding.Bid.lookup(thing_id = link._id)
+                bids.sort(key = lambda x: x.date, reverse = True)
+            except NotFound:
+                bids = []
         Templated.__init__(self, sr = sr, link = link,
-                         datefmt = datefmt,
+                         datefmt = datefmt, bids = bids, 
                          timedeltatext = timedeltatext,
                          listing = listing,
                          *a, **kw)
@@ -1574,8 +1590,6 @@ class PromotedTraffic(Traffic):
         now = datetime.datetime.now(g.tz)
         if not until:
             until = d + datetime.timedelta(1)
-        if until > now:
-            until - now
             
         self.traffic = load_traffic('hour', "thing", thing._fullname,
                                     start_time = d, stop_time = until)
@@ -1713,6 +1727,55 @@ class RedditTraffic(Traffic):
                                         "%5.2f%%" % f))
         return res
 
+
+class Promote_Graph(Templated):
+    def __init__(self):
+        now = datetime.datetime.now(g.tz)
+        start_date = (now - datetime.timedelta(7)).date()
+        end_date   = (now + datetime.timedelta(7)).date()
+
+        size = (end_date - start_date).days
+        
+        # grab promoted links
+        promos = PromoteDates.for_date_range(start_date, end_date)
+        promos.sort(key = lambda x: x.start_date)
+
+        # wrap the links
+        links = wrap_links([p.thing_name for p in promos])
+        links = dict((l._fullname, l) for l in links.things)
+
+        promote_blocks = []
+        market = {}
+        for p in promos:
+            starti = max((p.start_date - start_date).days, 0)
+            endi   = min((p.end_date   - start_date).days, size )
+            link = links[p.thing_name]
+            if (link.promoted is not None and
+                (link.promote_status != promote.STATUS.rejected and
+                 link.promote_status != promote.STATUS.unpaid)):
+                bid_day = link.promote_bid / (p.end_date - p.start_date).days
+                if link.promote_status != promote.STATUS.rejected:
+                    for i in xrange(starti, endi):
+                        market[i] = market.get(i, 0) + bid_day
+                promote_blocks.append( (link, starti, endi) )
+        
+        # load recent traffic as well:
+        self.recent =  dict(load_summary("thing"))
+
+        if self.recent:
+            link_listing = wrap_links(self.recent.keys())
+            for t in link_listing:
+                self.recent[t._fullname].insert(0, t)
+
+            self.recent = self.recent.values()
+            self.recent.sort(key = lambda x: x[0]._date)
+
+        Templated.__init__(self,
+                           total_size = size,
+                           market = market, 
+                           start_date = start_date,
+                           promote_blocks = promote_blocks)
+        
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):
         Templated.__init__(self, link = link, expanded = expanded)

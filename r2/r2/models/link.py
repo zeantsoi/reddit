@@ -48,9 +48,7 @@ class Link(Thing, Printable):
                      media_object = None,
                      has_thumbnail = False,
                      promoted = None,
-                     promoted_subscribersonly = False,
-                     promote_until = None,
-                     promoted_by = None,
+                     pending = False, 
                      disable_comments = False,
                      selftext = '',
                      ip = '0.0.0.0')
@@ -211,6 +209,13 @@ class Link(Thing, Printable):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
+        if wrapped.promoted is not None:
+            s.extend([getattr(wrapped, "promote_status", -1),
+                      wrapped.disable_comments,
+                      wrapped._date,
+                      wrapped.promote_until,
+                      c.user_is_sponsor,
+                      wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
              s.append(request.get.has_key('twocolumn'))
         elif style == "xml":
@@ -221,7 +226,11 @@ class Link(Thing, Printable):
     def make_permalink(self, sr, force_domain = False):
         from r2.lib.template_helpers import get_domain
         p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
-        if not c.cname and not force_domain:
+        # promoted links belong to a separate subreddit and shouldn't
+        # include that in the path
+        if self.promoted is not None:
+            res = "/%s" % p
+        elif not c.cname and not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
             res = "http://%s/%s" % (get_domain(cname = (c.cname and
@@ -370,6 +379,8 @@ class Link(Thing, Printable):
                                   item._deleted,
                                   item._spam))
 
+            item.is_author = (user == item.author)
+
             # bits that we will render stubs (to make the cached
             # version more flexible)
             item.num = CachedVariable("num")
@@ -377,7 +388,7 @@ class Link(Thing, Printable):
             item.commentcls = CachedVariable("commentcls")
             item.midcolmargin = CachedVariable("midcolmargin")
             item.comment_label = CachedVariable("numcomments")
-            
+
         if user_is_loggedin:
             incr_counts(wrapped)
 
@@ -402,32 +413,21 @@ class PromotedLink(Link):
 
     @classmethod
     def add_props(cls, user, wrapped):
+        # prevents cyclic dependencies
+        from r2.lib import promote
         Link.add_props(user, wrapped)
         user_is_sponsor = c.user_is_sponsor
-        try:
-            if user_is_sponsor:
-                promoted_by_ids = set(x.promoted_by
-                                      for x in wrapped
-                                      if hasattr(x,'promoted_by'))
-                promoted_by_accounts = Account._byID(promoted_by_ids,
-                                                     data=True)
-            else:
-                promoted_by_accounts = {}
 
-        except NotFound:
-            # since this is just cosmetic, we can skip it altogether
-            # if one isn't found or is broken
-            promoted_by_accounts = {}
-
+        status_dict = dict((v, k) for k, v in promote.STATUS.iteritems())
         for item in wrapped:
             # these are potentially paid for placement
             item.nofollow = True
             item.user_is_sponsor = user_is_sponsor
-            if item.promoted_by in promoted_by_accounts:
-                item.promoted_by_name = promoted_by_accounts[item.promoted_by].name
+            status = getattr(item, "promote_status", -1)
+            if item.is_author or c.user_is_sponsor:
+                item.rowstyle = "link " + promote.STATUS.name[status].lower()
             else:
-                # keep the template from trying to read it
-                item.promoted_by = None
+                item.rowstyle = "link promoted"
         # Run this last
         Printable.add_props(user, wrapped)
 
@@ -507,6 +507,7 @@ class Comment(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.models.builder import add_attr
+        from r2.lib import promote
 
         #fetch parent links
 
@@ -517,11 +518,13 @@ class Comment(Thing, Printable):
         for cm in wrapped:
             if not hasattr(cm, 'sr_id'):
                 cm.sr_id = links[cm.link_id].sr_id
-        
+
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True,return_dict=False)
+
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
+        can_reply_srs.add(promote.promo_subreddit()._id)
 
         min_score = user.pref_min_comment_score
 

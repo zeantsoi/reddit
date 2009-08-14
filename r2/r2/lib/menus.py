@@ -1,4 +1,3 @@
-
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -148,9 +147,14 @@ menu =   MenuHandler(hot          = _('hot'),
                      deleted      = _("deleted"),
                      reported     = _("reported"),
 
-                     promote      = _('promote'),
-                     new_promo    = _('new promoted link'),
-                     current_promos = _('promoted links'),
+                     promote        = _('promote'),
+                     new_promo      = _('create promotion'),
+                     my_current_promos = _('my promoted links'),
+                     current_promos = _('all promoted links'),
+                     future_promos = _('unapproved'),
+                     graph          = _('promo graph'),
+                     live_promos    = _('live'),
+                     pending_promos = _('pending')
                      )
 
 def menu_style(type):

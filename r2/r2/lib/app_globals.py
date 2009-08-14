@@ -33,6 +33,8 @@ class Globals(object):
 
     int_props = ['page_cache_time',
                  'solr_cache_time',
+                 'min_promote_bid',
+                 'max_promote_bid',
                  'MIN_DOWN_LINK',
                  'MIN_UP_KARMA',
                  'MIN_DOWN_KARMA',

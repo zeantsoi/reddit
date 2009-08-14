@@ -42,6 +42,7 @@ from Cookie import CookieError
 from datetime import datetime
 import sha, simplejson, locale
 from urllib import quote, unquote
+from simplejson import dumps
 
 from r2.lib.tracking import encrypt, decrypt
 
@@ -645,3 +646,11 @@ class RedditController(BaseController):
         merged = copy(request.get)
         merged.update(dict)
         return request.path + utils.query_string(merged)
+
+    def api_wrapper(self, kw):
+        data = dumps(kw)
+        if request.method == "GET" and request.GET.get("callback"):
+            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
+                               websafe_json(data))
+        return self.sendstring(data)
+

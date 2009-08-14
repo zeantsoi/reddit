@@ -556,14 +556,22 @@ before enabling */
 .organic-listing .nextprev img:hover  { cursor: pointer;  border: solid 1px #336699; }
 .organic-listing .nextprev img:active { margin: 6px 4px 1px 1px;}
 
-.promoted {
-    background-color: #EFF7FF;
+.link.promotedlink {
+    /*background-color: lightgreen; */
     border: 1px solid gray;
-    padding: 5px 0 5px 0;
+    padding: 5px 0 5px 3px;
     overflow: hidden;
     position: relative;
 }
-
+.link.promotedlink.unpaid   { background-color: #FFC; }
+.link.promotedlink.unseen   { background-color: #FFC; }
+.link.promotedlink.accepted { background-color: #9F9; }
+.link.promotedlink.rejected { background-color: #FF9A9A; }
+.link.promotedlink.accepted { background-color: #9F9; }
+.link.promotedlink.pending  { background-color: #BFC; }
+.link.promotedlink.promoted { background-color: #EFF7FF; }
+.link.promotedlink.finished { background-color: #DDD; }
+#promo-form + form #img-preview-container { display: none; }
 
 .promoted-list { font-size: larger; }
 .promoted-list .unpromote-button { display: inline }
@@ -2273,5 +2281,242 @@ ul.tabmenu.formtab {
     margin-left: 10px;
     margin-bottom: 10px; }
 
+/* Datepicker
+----------------------------------*/
+.datepicker { 
+    display: none;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+ }
+.datepicker.inuse { display: block; }
 
+.ui-datepicker-inline {
+    font-size: x-small; 
+    padding: 5px; 
+}
+.ui-datepicker-inline .ui-datepicker-prev {float: left; }
+.ui-datepicker-inline .ui-datepicker-next {float: right; }
+
+.ui-datepicker-inline .ui-datepicker-prev span, 
+.ui-datepicker-inline .ui-datepicker-next span {
+    display: block;
+    height: 1.5em;
+    width: 1.5em;
+    text-align: center;
+    color: black;
+    border: 1px solid #369;
+    margin-right: 1px;
+    margin-bottom: 1px; 
+}
+.ui-datepicker-inline .ui-datepicker-prev:active, 
+.ui-datepicker-inline .ui-datepicker-next:active {
+    padding: 6px 4px 4px 6px; 
+}
+
+
+
+.ui-datepicker-inline .ui-datepicker-prev.ui-state-disabled, 
+.ui-datepicker-inline .ui-datepicker-next.ui-state-disabled {
+    display: none; 
+}
+
+.ui-datepicker-inline .ui-datepicker-prev, 
+.ui-datepicker-inline .ui-datepicker-next {
+    display: block;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.ui-datepicker-inline .ui-datepicker-title {text-align: center; padding: 5px; }
+.ui-datepicker-inline table { 
+    clear: right; 
+}
+
+.ui-datepicker-inline .ui-datepicker-calendar th,
+.ui-datepicker-inline .ui-datepicker-calendar td {
+    padding: 0px;}
+
+.ui-datepicker-inline .ui-datepicker-calendar th span,
+.ui-datepicker-inline .ui-datepicker-calendar td span,
+.ui-datepicker-inline .ui-datepicker-calendar td a {
+    border: 1px outset #888; 
+    margin: 1px;
+    padding: 2px; 
+    display: block;
+    width: 2em; 
+    height: 2em;
+    text-align: right;
+    vertical-align: middle; 
+    padding-right: 4px; 
+    color: black; 
+}
+
+.ui-datepicker-inline .ui-datepicker-calendar th span { 
+    text-align: center; 
+    border: none; 
+}
+
+.ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today a,
+.ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today span
+ { 
+    border: 1px solid #DB8;
+    background-color: #FF8;
+    color: #888;
+}
+
+.ui-datepicker-inline .ui-datepicker-calendar td span { 
+    border-style: solid;
+    color: #888;
+    background-color: #EEE;
+}
+
+.ui-datepicker-inline .ui-datepicker-calendar td a.ui-state-hover  { 
+    border-color: red; 
+}
+
+.ui-datepicker-inline .ui-datepicker-calendar td a.ui-state-active { 
+    border: 1px solid red; 
+    background-color: #FCC;
+    font-weight: bold;
+}
+
+.date-input { 
+    display: inline;
+    position: relative; 
+}
+.date-input input { 
+    border: 1px solid #888; 
+    padding: 2px;
+    text-align: center; 
+    margin: 0 2px; 
+}
+.date-input .drop-choices {  
+    position: absolute;
+    border: 1px solid #666;
+    background-color: white;
+    margin: 10px 3px;
+}
+
+
+.payment-setup input[name=bid] { width: 6em; text-align: right; }
+
+.pay-form *[disabled],
+.pay-form input[disabled]
+ { 
+    border: none;
+    color: black;
+    font-weight: bold;
+    background-color: white;
+}
+
+.bid-table { margin: 5px 10px;  }
+.bid-table td, 
+.bid-table th 
+{ 
+    padding: 2px 5px; 
+    text-align: right; 
+}
+
+.bid-table th 
+{ 
+    text-align: center; 
+    font-weight: bold; 
+}
+
+.create-subreddit .delete-field { font-size: small; }
+
+.create-promo { padding: 10px; float: left; width: 500px; margin-right: 20px;} 
+.create-promo .infobar { margin-right: 0; width: 100%; }
+.create-promo h2 { margin-top: 10px; color: black; }
+.create-promo ol { margin: 0px 30px 10px 30px; }
+.create-promo ol > li { 
+    list-style-type: disc;  margin: 
+}
+
+.bidding-history { padding-top: 10px }
+.bidding-history .roundfield,
+#promotion-history .roundfield { width: auto; overflow: hidden;  }
+.bidding-history .roundfield .rounded,
+#promotion-history .roundfield .rounded { font-size: x-small; }
+#promotion-history .roundfield .rounded { margin-top: 5px;  }
+
+
+
+.pay-form tr.input-error th { 
+    color: red;
+    font-weight: bold;
+    font-style: italic; 
+}
+.pay-form th { padding: 0px }
+
+.pay-form tr.input-error input,
+.pay-form tr.input-error textarea,
+.pay-form tr.input-error select { border: 1px solid red; }
+
+.pay-form input[name=expirationDate],
+.pay-form input[name=cardCode] { width: 10ex; }
+
+.pay-form .optional { font-size: smaller; }
+.pay-form .disabled .optional { display: none; }
+.pay-form p.info { color: red; }
+
+
+.calendar { 
+    width: 100%; 
+    position: relative;
+    padding-top: 40px; 
+    padding-bottom: 20px; 
+    margin: 20px 0; 
+}
+
+.calendar div.grid { 
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+}
+
+.calendar div.grid.today { 
+    background-color: yellow; 
+}
+
+.calendar div.grid div.header { 
+    font-weight: bold; 
+    border-bottom: 2px solid gray;
+    text-align: center; 
+}
+
+.calendar div.grid + div.grid { 
+    border-left: 1px dashed gray; 
+}
+
+.calendar .blob { 
+    position: relative; 
+    margin-bottom: -1px;
+    z-index: 10; 
+    float: left;
+}
+
+.calendar .blob .bid { 
+    position: absolute;
+    top: 0px;
+    right: 0px; 
+    font-weight: bold;
+    z-index: 11; 
+    margin: 5px; 
+}
+
+.calendar .blob .tagline { 
+    margin-left: 2px; 
+    white-space: nowrap; 
+}
+
+.blob .promotedlink.link {
+    margin: 0; 
+    border: 1px solid black;
+    padding-right: 20px; 
+}
+
+.blob .promotedlink.link .title{
+    font-size: small; 
+}
 

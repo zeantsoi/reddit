@@ -253,6 +253,12 @@ class Builder(object):
     def must_skip(self, item):
         """whether or not to skip any item regardless of whether the builder
         was contructed with skip=true"""
+        from r2.lib import promote
+        article = getattr(item, "link", item)
+        if (article and getattr(article, "promoted", None) is not None
+            and (article.promote_status >= promote.STATUS.promoted
+                 or item.author == c.user)):
+            return False
         user = c.user if c.user_is_loggedin else None
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
             return True

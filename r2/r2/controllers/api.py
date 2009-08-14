@@ -31,9 +31,9 @@ from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, to36, timefromnow, link_from_url
+from r2.lib.utils import query_string, link_from_url
 from r2.lib.pages import FriendList, ContributorList, ModList, \
-    BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage, \
+    BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
@@ -49,25 +49,13 @@ from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking, sup, cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 
-from simplejson import dumps
-
 from datetime import datetime, timedelta
 from md5 import md5
-
-from r2.lib.promote import promote, unpromote, get_promoted
 
 class ApiController(RedditController):
     """
     Controller which deals with almost all AJAX site interaction.  
     """
-
-    def response_func(self, kw):
-        data = dumps(kw)
-        if request.method == "GET" and request.GET.get("callback"):
-            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
-                               websafe_json(data))
-        return self.sendstring(data)
-
 
     @validatedForm()
     def ajax_login_redirect(self, form, jquery, dest):
@@ -286,7 +274,7 @@ class ApiController(RedditController):
     @validatedForm(VRatelimit(rate_ip = True, prefix = 'login_',
                               error = errors.WRONG_PASSWORD),
                    user = VLogin(['user', 'passwd']),
-                   dest   = nop('dest'),
+                   dest   = VDestination(),
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_login(self, form, jquery, user, dest, rem, reason):
@@ -303,7 +291,7 @@ class ApiController(RedditController):
                    name = VUname(['user']),
                    email = ValidEmails("email", num = 1),
                    password = VPassword(['passwd', 'passwd2']),
-                   dest = nop('dest'),
+                   dest = VDestination(),
                    rem = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_register(self, form, jquery, name, email,
@@ -449,12 +437,16 @@ class ApiController(RedditController):
                         subj = subj % d
                         Message._new(c.user, friend, subj, msg, ip)
 
+                        if g.write_query_queue:
+                            queries.new_message(item, inbox_rel)
+
 
     @validatedForm(VUser('curpass', default = ''),
-                   VModhash(), 
+                   VModhash(),
                    email = ValidEmails("email", num = 1),
-                   password = VPassword(['newpass', 'verpass']))
-    def POST_update(self, form, jquery, email, password):
+                   password = VPassword(['newpass', 'verpass']),
+                   verify = VBoolean("verify"))
+    def POST_update(self, form, jquery, email, password, verify):
         """
         handles /prefs/update for updating email address and password.
         """
@@ -467,11 +459,20 @@ class ApiController(RedditController):
         # currently) apply it
         updated = False
         if (not form.has_errors("email", errors.BAD_EMAILS) and
-            email and (not hasattr(c.user,'email') or c.user.email != email)):
-            c.user.email = email
-            c.user._commit()
-            form.set_html('.status', _('your email has been updated'))
-            updated = True
+            email):
+            if (not hasattr(c.user,'email') or c.user.email != email):
+                c.user.email = email
+                # unverified email for now
+                c.user.email_verified = None
+                c.user._commit()
+                updated = True
+            if verify:
+                # TODO: rate limit this?
+                emailer.verify_email(c.user, request.referer)
+                form.set_html('.status',
+                     _("you should be getting a verification email shortly."))
+            else:
+                form.set_html('.status', _('your email has been updated'))
             
         # change password
         if (password and
@@ -512,6 +513,8 @@ class ApiController(RedditController):
         if not thing: return
         '''for deleting all sorts of things'''
         thing._deleted = True
+        if getattr(thing, "promoted", None) is not None:
+            thing.promoted = None
         thing._commit()
 
         # flag search indexer that something has changed
@@ -976,11 +979,8 @@ class ApiController(RedditController):
         if cname_sr and (not sr or sr != cname_sr):
             c.errors.add(errors.USED_CNAME)
 
-        if not sr and form.has_errors(None, errors.RATELIMIT):
-            # this form is a little odd in that the error field
-            # doesn't occur within the form, so we need to manually
-            # set this text
-            form.parent().find('.RATELIMIT').html(c.errors[errors.RATELIMIT].message).show()
+        if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
+            pass
         elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
                                         errors.BAD_SR_NAME):
             form.find('#example_name').hide()
@@ -1191,7 +1191,8 @@ class ApiController(RedditController):
             return
         else:
             emailer.password_email(user)
-            form.set_html(".status", _("an email will be sent to that account's address shortly"))
+            form.set_html(".status",
+                          _("an email will be sent to that account's address shortly"))
 
             
     @validatedForm(cache_evt = VCacheKey('reset', ('key', 'name')),
@@ -1299,113 +1300,6 @@ class ApiController(RedditController):
             if getattr(c.user, pref):
                 setattr(c.user, "pref_" + ui_elem, False)
                 c.user._commit()
-
-    @noresponse(VSponsor(),
-                thing = VByName('id'))
-    def POST_unpromote(self, thing):
-        if not thing: return
-        unpromote(thing)
-
-    @validatedForm(VSponsor(),
-                   ValidDomain('url'),
-                   ip               = ValidIP(),
-                   l                = VLink('link_id'),
-                   title            = VTitle('title'),
-                   url              = VUrl(['url', 'sr'], allow_self = False),
-                   sr               = VSubmitSR('sr'),
-                   subscribers_only = VBoolean('subscribers_only'),
-                   disable_comments = VBoolean('disable_comments'),
-                   expire           = VOneOf('expire', ['nomodify', 
-                                                        'expirein', 'cancel']),
-                   timelimitlength  = VInt('timelimitlength',1,1000),
-                   timelimittype    = VOneOf('timelimittype',
-                                             ['hours','days','weeks']))
-    def POST_edit_promo(self, form, jquery, ip,
-                        title, url, sr, subscribers_only,
-                        disable_comments,
-                        expire = None,
-                        timelimitlength = None, timelimittype = None,
-                        l = None):
-        if isinstance(url, str):
-            # VUrl may have modified the URL to make it valid, like
-            # adding http://
-            form.set_input('url', url)
-        elif isinstance(url, tuple) and isinstance(url[0], Link):
-            # there's already one or more links with this URL, but
-            # we're allowing mutliple submissions, so we really just
-            # want the URL
-            url = url[0].url
-        if form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG):
-            pass
-        elif form.has_errors('url', errors.NO_URL, errors.BAD_URL):
-            pass
-        elif ( (not l or url != l.url) and 
-               form.has_errors('url', errors.NO_URL, errors.ALREADY_SUB) ):
-            #if url == l.url, we're just editting something else
-            pass
-        elif form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                             errors.SUBREDDIT_NOTALLOWED):
-            pass
-        elif (expire == 'expirein' and 
-              form.has_errors('timelimitlength', errors.BAD_NUMBER)):
-            pass
-        elif l:
-            l.title = title
-            old_url = l.url
-            l.url = url
-            l.is_self = False
-
-            l.promoted_subscribersonly = subscribers_only
-            l.disable_comments = disable_comments
-
-            if expire == 'cancel':
-                l.promote_until = None
-            elif expire == 'expirein' and timelimitlength and timelimittype:
-                l.promote_until = timefromnow("%d %s" % (timelimitlength,
-                                                         timelimittype))
-            l._commit()
-            l.update_url_cache(old_url)
-
-            form.redirect('/promote/edit_promo/%s' % to36(l._id))
-        else:
-            l = Link._submit(title, url, c.user, sr, ip)
-
-            if expire == 'expirein' and timelimitlength and timelimittype:
-                promote_until = timefromnow("%d %s" % (timelimitlength,
-                                                       timelimittype))
-            else:
-                promote_until = None
-                
-            l._commit()
-
-            promote(l, subscribers_only = subscribers_only,
-                    promote_until = promote_until,
-                    disable_comments = disable_comments)
-
-            form.redirect('/promote/edit_promo/%s' % to36(l._id))
-
-    def GET_link_thumb(self, *a, **kw):
-        """
-        See GET_upload_sr_image for rationale
-        """
-        return "nothing to see here."
-
-    @validate(VSponsor(),
-              link = VByName('link_id'),
-              file = VLength('file', 500*1024))
-    def POST_link_thumb(self, link=None, file=None):
-        errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
-        try:
-            force_thumbnail(link, file)
-        except cssfilter.BadImage:
-            # if the image doesn't clean up nicely, abort
-            errors["IMAGE_ERROR"] = _("bad image")
-
-        if any(errors.values()):
-            return UploadedImage("", "", "upload", errors = errors).render()
-        else:
-            return UploadedImage(_('saved'), thumbnail_url(link), "",
-                                 errors = errors).render()
 
     @validatedForm(type = VOneOf('type', ('click'), default = 'click'),
                    links = VByName('ids', thing_cls = Link, multiple = True))

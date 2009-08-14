@@ -20,33 +20,58 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-  from r2.lib.utils import to36
-%>
-<%namespace file="utils.html" import="plain_link"/>
-<%namespace file="printablebuttons.html" import="ynbutton"/>
+   import datetime
+ %>
+<div class="calendar">
+  <%
+     today = datetime.datetime.now(g.tz).date()
+   %>
+  %for i in xrange(thing.total_size):
+    <%
+       left = "%.2f" % (100*float(i)/thing.total_size)
+       right = "%.2f" %  (100 - 100*float(i+1)/thing.total_size)
+       day = thing.start_date + datetime.timedelta(i) 
+     %>
+    <div class="grid ${'today' if day == today else ''}" 
+         style="left:${left}%; right:${right}%">
+      <div class="header">
+        ${day}
+      </div>
+      <div class="header total">
+        ${"$%.2f" % thing.market[i] if thing.market.has_key(i) else "---"}
+      </div>      
+    </div>
+  %endfor
 
-
-<div>
-  <h1>${_('current promotions')}</h1>
-  
-  <ul class="promoted-list">
-    %for t in thing.things:
-      <li class="entry">
-        ${plain_link(t.title,'/promote/edit_promo/%s' % to36(t._id))}&nbsp;
-        %if t.promote_until:
-            ${(_("(until %(until)s)")
-              % dict(until = t.promote_until.strftime(thing.datefmt)))}
-            &nbsp;
-        %endif
-        <ul class="buttons" style="display: inline;">
-          <li>
-            ${ynbutton(_("unpromote"), _("unpromoted"),
-                "unpromote", hidden_data = dict(id=t._fullname))}
-          </li>
-        </ul>
-      </li>
-    %endfor
-  </ul>
+<% 
+   prev_end = 0
+ %>
+%for link, start, end in thing.promote_blocks:
+  %if prev_end > start:
+    <% prev_end = 0 %>
+    <div class="clearleft"></div>
+  %endif
+  <%
+     margin = "%.2f" % (float(100*(start-prev_end))/thing.total_size)
+     width  = "%.2f" % (float(100*(end-start))/thing.total_size)
+     prev_end = end
+   %>  
+  <div class="blob" style="width: ${width}%; margin-left: ${margin}%">
+    <div class="bid">
+      $${int(link.promote_bid)}
+    </div>
+    <div class="promotedlink ${link.rowstyle} rounded">
+      <a class="title" href="/promoted/edit_promo/${link._id36}">
+        ${link.title}
+      </a>
+      &#32; 
+      <span class="tagline" style="whitespace: nowrap" >
+        by ${link.author.name}
+      </span>
+    </div>
+  </div>
+%endfor
+<div class="clearleft"></div>
 
   %if thing.recent:
   <h1>${_('promotions this month')}</h1>
@@ -59,6 +84,7 @@
       <th></th>
     </tr>
     <tr>
+      <th>date</th>
       <th>unique</th>
       <th>total</th>
       <th>unique</th>
@@ -68,11 +94,12 @@
     </tr>
     %for link, uimp, nimp, ucli, ncli in thing.recent:
     <tr>
+      <td>${thing._date.strftime("%Y-%m-$d")}</td>
       <td>${uimp}</td>
       <td>${nimp}</td>
       <td>${ucli}</td>
       <td>${ncli}</td>
-      <td>${link._ups - link._downs}</td>
+      <td style="align:left">${link._ups - link._downs}</td>
       <td>
         <a class="title" href="${link.permalink}">${link.title}</a>
       </td>
@@ -80,4 +107,3 @@
     %endfor
   </table>
   %endif
-</div>

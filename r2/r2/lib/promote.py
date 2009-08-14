@@ -22,50 +22,320 @@
 from __future__ import with_statement
 
 from r2.models import *
+from r2.models import bidding
+from r2.lib import emailer
 from r2.lib.memoize import memoize
-
-from datetime import datetime
+from r2.lib.utils import Enum
+from pylons import g, c
+from datetime import datetime, timedelta
+import random
 
 promoted_memo_lifetime = 30
-promoted_memo_key = 'cached_promoted_links'
-promoted_lock_key = 'cached_promoted_links_lock'
+promoted_memo_key = 'cached_promoted_links2'
+promoted_lock_key = 'cached_promoted_links_lock2'
 
-def promote(thing, subscribers_only = False, promote_until = None,
-            disable_comments = False):
+STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
+              "pending", "promoted", "finished")
 
-    thing.promoted = True
-    thing.promoted_on = datetime.now(g.tz)
+_promo_subreddit = None
+def promo_subreddit():
+    global _promo_subreddit
+    promoted_sr_name = "/promos/"
+    if not _promo_subreddit:
+        try:
+            # subreddit creation will generate a lock on that name, so
+            # the race condition among multiple apps should be
+            # avoided.
+            _promo_subreddit =  Subreddit._new(name = promoted_sr_name,
+                                               title = "promos",
+                                               author_id = -1,
+                                               type = "private", 
+                                               ip = '0.0.0.0')
+        except SubredditExists:
+            _promo_subreddit = Subreddit._by_name(promoted_sr_name)
+    return _promo_subreddit
 
+def promo_edit_url(l):
+    return "/promoted/edit_promo/%s" % l._id36
+
+
+def promotion_log(thing, text, commit = False):
+    """
+    For logging all sorts of things
+    """
     if c.user:
-        thing.promoted_by = c.user._id
+        log = list(getattr(thing, "promotion_log", []))
+        now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
+        text = "[%s: %s] %s" % (c.user.name, now, text)
+        log.append(text)
+        thing.promotion_log = log[::]
+        if commit:
+            thing._commit()
+        return text
+    
+def new_promotion(title, url, user, ip, promote_start, promote_until, bid,
+                  disable_comments = False,
+                  max_clicks = None, max_views = None):
+    """
+    Creates a new promotion with the provided title, etc, and sets it
+    status to be 'unpaid'.
+    """
+    # TODO: disable comments, etc.?
+    l = Link._submit(title, url, user, promo_subreddit(), ip)
+    l.promoted = True
+    l.promote_until = None
+    l.promote_status = STATUS.unpaid
+    l.promote_trans_id = 0
+    l.promote_bid    = bid
+    l.maximum_clicks = max_clicks
+    l.maximum_views  = max_views
+    l.disable_comments = disable_comments
+    update_promo_dates(l, promote_start, promote_until)
+    promotion_log(l, "promotion created")
+    l._commit()
+    return l
 
-    if promote_until:
-        thing.promote_until = promote_until
+def update_promo_dates(thing, start_date, end_date, commit = True):
+    if thing and thing.promote_status < STATUS.pending or c.user_is_admin:
+        if (thing._date != start_date or
+            thing.promote_until != end_date):
+            promotion_log(thing, "duration updated (was %s -> %s)" %
+                          (thing._date, thing.promote_until))
+            thing._date         = start_date
+            thing.promote_until = end_date
+            PromoteDates.update(thing, start_date, end_date)
+            if commit:
+                thing._commit()
+        return True
+    return False
 
-    if disable_comments:
-        thing.disable_comments = True
+def update_promo_data(thing, title, url, commit = True):
+    if thing and (thing.url != url or thing.title != title):
+        if thing.title != title:
+            promotion_log(thing, "title updated (was '%s')" %
+                          thing.title)
+        if thing.url != url:
+            promotion_log(thing, "url updated (was '%s')" %
+                          thing.url)
+        old_url = thing.url
+        thing.url = old_url
+        thing.title = title
+        if not c.user_is_sponsor:
+            unapproved_promo(thing)
+        thing.update_url_cache(old_url)
+        if commit:
+            thing._commit()
+        return True
+    return False
 
-    if subscribers_only:
-        thing.promoted_subscribersonly = True
+def refund_promo(thing, user, refund):
+    """
+    
+    """
+    promotion_log(thing, "payment update: refunded '%s'" % refund)
+    bidding.refund_transaction(user, thing.promote_trans_id)
+    
 
+def auth_paid_promo(thing, user, pay_id, bid):
+    """
+    promotes a promotion from 'unpaid' to 'unseen'.  
+    
+In the case that bid already exists on the current promotion, the
+    previous transaction is voided and repalced with the new bid.
+    """
+    if thing.promote_status == STATUS.finished:
+        return
+    elif (thing.promote_status > STATUS.unpaid and
+          thing.promote_trans_id):
+        # void the existing transaction
+        bidding.void_transaction(user, thing.promote_trans_id)
+
+    # create a new transaction and update the bid
+    trans_id = bidding.auth_transaction(bid, user, pay_id, thing)
+    thing.promote_bid = bid
+    
+    if trans_id:
+        # we won't reset to unseen if already approved and the payment went ok
+        promotion_log(thing, "updated payment and/or bid: SUCCESS")
+        if trans_id < 0:
+            promotion_log(thing, "FREEBIE")
+        thing.promote_status = max(thing.promote_status, STATUS.unseen)
+        thing.promote_trans_id = trans_id
+    else:
+        # something bad happend.  
+        promotion_log(thing, "updated payment and/or bid: FAILED")    
+        thing.promore_status = STATUS.unpaid
+        thing.promote_trans_id = None
     thing._commit()
+    emailer.promo_bid(thing)
 
-    with g.make_lock(promoted_lock_key):
-        promoted = get_promoted_direct()
-        promoted.append(thing._fullname)
-        set_promoted(promoted)
+    
+def unapproved_promo(thing):
+    """
+    revert status of a promoted link to unseen.
 
-def unpromote(thing):
-    thing.promoted = False
-    thing.unpromoted_on = datetime.now(g.tz)
-    thing.promote_until = None
+    NOTE: if the promotion is live, this has the side effect of
+    bumping it from the live queue pending an admin's intervention to
+    put it back in place.
+    """
+    # only reinforce pending if it hasn't been seen yet.
+    if thing.promote_status < STATUS.finished:
+        promotion_log(thing, "status update: unapproved")    
+        unpromote(thing, status = STATUS.unseen)
+
+def accept_promo(thing):
+    """
+    Accept promotion and set its status as accepted if not already
+    charged, else pending.
+    """
+    if thing.promote_status < STATUS.pending:
+        bid = Bid.one(thing.promote_trans_id)
+        if bid.status == Bid.STATUS.CHARGE:
+            thing.promote_status = STATUS.pending
+            # repromote if already promoted before
+            if hasattr(thing, "promoted_on"):
+                promote(thing)
+            else:
+                emailer.queue_promo(thing)
+        else:
+            thing.promote_status = STATUS.accepted
+            promotion_log(thing, "status update: accepted")    
+            emailer.accept_promo(thing)
+        thing._commit()
+
+def reject_promo(thing, reason = ""):
+    """
+    Reject promotion and set its status as rejected
+
+    Here, we use unpromote so that we can also remove a promotion from
+    the queue if it has become promoted.
+    """
+    unpromote(thing, status = STATUS.rejected)
+    promotion_log(thing, "status update: rejected. Reason: '%s'" % reason)
+    emailer.reject_promo(thing, reason)
+
+def pending_promo(thing):
+    """
+    For an accepted promotion within the proper time interval, charge
+    the account of the user and set the new status as pending. 
+    """
+    if thing.promote_status == STATUS.accepted and thing.promote_trans_id:
+        promotion_log(thing, "status update: pending")
+        user = Account._byID(thing.author_id)
+        # TODO: check for charge failures/recharges, etc
+        bidding.charge_transaction(user, thing.promote_trans_id)
+        thing.promote_status = STATUS.pending
+        thing.promote_paid = thing.promote_bid
+        thing._commit()
+        emailer.queue_promo(thing)
+
+
+def promote(thing, batch = False):
+    """
+    Given a promotion with pending status, set the status to promoted
+    and move it into the promoted queue.
+    """
+    if thing.promote_status == STATUS.pending:
+        promotion_log(thing, "status update: live")
+        PromoteDates.log_start(thing)
+        thing.promoted_on = datetime.now(g.tz)
+        thing.promote_status = STATUS.promoted
+        thing._commit()
+        emailer.live_promo(thing)
+        if not batch:
+            with g.make_lock(promoted_lock_key):
+                promoted = get_promoted_direct()
+                if thing._fullname not in promoted:
+                    promoted[thing._fullname] = auction_weight(thing)
+                    set_promoted(promoted)
+                
+def unpromote(thing, batch = False, status = STATUS.finished):
+    """
+    unpromote a link with provided status, removing it from the
+    current promotional queue.
+    """
+    if status == STATUS.finished:
+        PromoteDates.log_end(thing)
+        emailer.finished_promo(thing)
+        thing.unpromoted_on = datetime.now(g.tz)
+        promotion_log(thing, "status update: finished")
+    thing.promote_status = status
     thing._commit()
+    if not batch:
+        with g.make_lock(promoted_lock_key):
+            promoted = get_promoted_direct()
+            if thing._fullname in promoted:
+                del promoted[thing._fullname]
+                set_promoted(promoted)
 
+# batch methods for moving promotions into the pending queue, and
+# setting status as pending.
+# TODO: merge the two into one master batch job
+def generate_pending(date = None, test = False):
+    """
+    Look-up links that are to be promoted on the provided date (the
+    default is now plus one day) and set their status as pending if
+    they have been accepted.  This results in credit cards being charged.
+    """
+    date = date or (datetime.now(g.tz) + timedelta(1))
+    links = Link._by_fullname([p.thing_name for p in 
+                               PromoteDates.for_date(date)],
+                              return_dict = False)
+    for l in links:
+        if l.promote_status == STATUS.accepted:
+            if test:
+                print "Would have made pending: (%s, %s)" % \
+                      (l, l.make_permalink(None))
+            else:
+                pending_promo(l)
+
+
+def promote_promoted(test = False):
+    """
+    make promotions that are no longer supposed to be active
+    'finished' and find all pending promotions that are supposed to be
+    promoted and promote them.
+    """
     with g.make_lock(promoted_lock_key):
-        promoted = [ x for x in get_promoted_direct()
-                     if x != thing._fullname ]
+        now = datetime.now(g.tz)
 
-        set_promoted(promoted)
+        promoted =  Link._by_fullname(get_promoted_direct().keys(),
+                                      data = True, return_dict = False)
+        promos = {}
+        for l in promoted:
+            if l.promote_until < now:
+                if test:
+                    print "Would have unpromoted: (%s, %s)" % \
+                          (l, l.make_permalink(None))
+                else:
+                    unpromote(l, batch = True)
+
+        new_promos = Link._query(Link.c.promote_status == (STATUS.pending,
+                                                           STATUS.promoted),
+                                 Link.c.promoted == (True, False))
+        for l in new_promos:
+            if l.promote_until > now and l._date <= now:
+                if test:
+                    print "Would have promoted: %s" % l
+                else:
+                    promote(l, batch = True)
+                promos[l._fullname] = auction_weight(l)
+            elif l.promote_until <= now:
+                if test:
+                    print "Would have unpromoted: (%s, %s)" % \
+                          (l, l.make_permalink(None))
+                else:
+                    unpromote(l, batch = True)
+
+        if test:
+            print promos
+        else:
+            set_promoted(promos)
+        return promos
+
+def auction_weight(link):
+    duration = (link.promote_until - link._date).days
+    return duration and link.promote_bid / duration
 
 def set_promoted(link_names):
     # caller is assumed to execute me inside a lock if necessary
@@ -81,37 +351,14 @@ def get_promoted():
     return get_promoted_direct()
 
 def get_promoted_direct():
-    return g.permacache.get(promoted_memo_key, [])
+    return g.permacache.get(promoted_memo_key, {})
 
-def expire_promoted():
-    """
-        To be called periodically (e.g. by `cron') to clean up
-        promoted links past their expiration date
-    """
-    with g.make_lock(promoted_lock_key):
-        link_names = set(get_promoted_direct())
-        links = Link._by_fullname(link_names, data=True, return_dict = False)
-
-        link_names = []
-        expired_names = []
-
-        for x in links:
-            if (not x.promoted
-                or x.promote_until and x.promote_until < datetime.now(g.tz)):
-                g.log.info('Unpromoting %s' % x._fullname)
-                unpromote(x)
-                expired_names.append(x._fullname)
-            else:
-                link_names.append(x._fullname)
-
-        set_promoted(link_names)
-
-    return expired_names
 
 def get_promoted_slow():
     # to be used only by a human at a terminal
     with g.make_lock(promoted_lock_key):
-        links = Link._query(Link.c.promoted == True,
+        links = Link._query(Link.c.promote_status == STATUS.promoted,
+                            Link.c.promoted == (True, False),
                             data = True)
         link_names = [ x._fullname for x in links ]
 
@@ -119,17 +366,45 @@ def get_promoted_slow():
 
     return link_names
 
-#deprecated
-def promote_builder_wrapper(alternative_wrapper):
-    def wrapper(thing):
-        if isinstance(thing, Link) and thing.promoted:
-            w = Wrapped(thing)
-            w.render_class = PromotedLink
-            w.rowstyle = 'promoted link'
 
-            return w
-        else:
-            return alternative_wrapper(thing)
-    return wrapper
+def random_promoted():
+    """
+    return a list of the currently promoted items, randomly choosing
+    the order of the list based on the bid-weighing.
+    """
+    bids = get_promoted()
+    market = sum(bids.values())
+    if market: 
+       # get a list of current promotions, sorted by their bid amount
+        promo_list = bids.keys()
+        # sort by bids and use the thing_id as the tie breaker (for
+        # consistent sorting)
+        promo_list.sort(key = lambda x: (bids[x], x), reverse = True)
+        if len(bids) > 1:
+            # pick a number, any number
+            n = random.uniform(0, 1)
+            for i, p in enumerate(promo_list):
+                n -= bids[p] / market
+                if n < 0:
+                    return promo_list[i:] + promo_list[:i]
+        return promo_list
+        
 
-
+def test_random_promoted(n = 1000):
+    promos = get_promoted()
+    market = sum(promos.values())
+    if market:
+        res = {}
+        for i in xrange(n):
+            key = random_promoted()[0]
+            res[key] = res.get(key, 0) + 1
+    
+        print "%10s expected actual   E/A" % "thing"
+        print "------------------------------------"
+        for k, v in promos.iteritems():
+            expected = float(v) / market * 100
+            actual   = float(res.get(k, 0)) / n * 100
+            
+            print "%10s %6.2f%% %6.2f%% %6.2f" % \
+                  (k, expected, actual, expected / actual if actual else 0) 
+        

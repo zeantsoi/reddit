@@ -64,6 +64,8 @@ class Account(Thing):
                      pref_media = 'subreddit',
                      share = {},
                      wiki_override = None,
+                     email = "",
+                     email_verified = None
                      )
 
     def karma(self, kind, sr = None):

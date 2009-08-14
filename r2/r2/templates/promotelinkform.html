@@ -22,118 +22,327 @@
 <%!
   from r2.lib.utils import to36
   from r2.lib.media import thumbnail_url
+  from r2.lib.template_helpers import static
+  from r2.lib.promote import STATUS
+  from datetime import datetime, timedelta
 %>
-<%namespace file="utils.html" import="error_field, checkbox, plain_link, image_upload" />
+<%namespace file="utils.html" 
+            import="error_field, checkbox, plain_link, image_upload" />
 <%namespace file="printablebuttons.html" import="ynbutton"/>
-<%namespace file="utils.html" import="error_field, checkbox, image_upload" />
+<%namespace name="utils" file="utils.html"/>
+
+<script type="text/javascript" src="${static('ui.core.js')}"></script>
+<script type="text/javascript" src="${static('ui.datepicker.js')}"></script>
+<script type="text/javascript" src="${static('sponsored.js')}"></script>
+<script type="text/javascript">
+  $(function() { update_bid("#title-field"); }); 
+</script>
+
+
+<%def name="datepicker(name = 'date', value = '', minDateSrc = '', maxDateSrc ='')">
+  <div class="date-input">
+    <input name="${name}"
+           value="${value}" id="${name}" readonly="readonly" size="10" />
+    <div id="datepicker-${name}" class="datepicker"></div>
+    <script type="text/javascript">
+      attach_calendar("#${name}", "${minDateSrc}", "${maxDateSrc}",
+        ${caller.body()}
+      )
+    </script>
+  </div>
+</%def>
+
+<%
+   title = _("create a promotion") if not thing.link else _("edit promotion")
+ %>
+<h1>${title}</h1>
 
 %if thing.link:
   ${thing.listing}
 %endif
 
+<div class="create-promo">
+
+%if thing.link and not c.user_is_sponsor:
+  %if thing.link.promote_status == STATUS.unpaid:
+    <div class="spacer">
+      <div class="infobar">
+        ${_('NOTE:')}
+        <ol>
+          <li>${_('you have not set up payment for this promotion.  Please click "set up payment" to authorize payment.')}
+          </li>
+          <li>
+            ${_('once you set up payment, you will not be charged until the link is approved and scheduled for display')}
+          </li>
+        </ol>
+      </div>
+    </div>
+  %elif thing.link.promote_status == STATUS.rejected:
+    <div class="spacer">
+      <div class="infobar">
+        ${_("This promotion has been rejected.  Please edit and resubmit.")}
+      </div>
+    </div>
+  %elif thing.link.promote_status < STATUS.finished:
+    <div class="spacer">
+      <div class="infobar">
+      ${_("NOTE: changes to this promotion will result in its status being reverted to 'unapproved'")}
+    </div>
+    </div>
+  %else:
+    <div class="spacer">
+      <div class="infobar">
+      ${_("This promotion is finished.  Edits would be a little pointless.")}
+      </div>
+    </div>
+  %endif
+%endif
+
+
+
+%if not thing.link or thing.link.promote_status != STATUS.finished:
+  %if thing.link:
+  <% 
+     thumb = None if not thing.link.has_thumbnail else thumbnail_url(thing.link)   %>
+  <div class="spacer">
+    <%utils:round_field title="${_('look and feel')}">
+      <div class="rounded delete-field">
+        <%utils:image_upload post_target="/api/link_thumb" 
+                             current_image="${thumb}"
+                             label="${_('upload header image')}">
+         <input type="hidden" name="link_id" value="${thing.link._fullname}" />
+         ## overwrite the completed image function
+         <script type="text/javascript">
+           completedUploadImage = (function(cu) {
+              return function(status, img_src, name, errors) {
+                 cu(status, "", "", errors);
+                 $.things('${thing.link._fullname}').find(".thumbnail img")
+                    .attr("src", img_src + "?v=" + Math.random());
+              }})(completedUploadImage);
+         </script>
+        </%utils:image_upload>
+        <div class="clearleft"></div>
+      </div>
+     </%utils:round_field>
+   </div>
+  %else: 
+    <div class="spacer">
+      <div class="infobar">
+        ${_("You'll be able to submit an image for the thumbnail once the promotion is submitted.")}
+      </div>
+    </div>
+  %endif
+%endif
+
 <form class="pretty-form" method="POST" action="/post/new_promo"
-      id="promo_form" 
-      onsubmit="return post_form(this, 'edit_promo', null, null, true)">
+      id="promo-form" 
+      onsubmit="return post_form(this, 'new_promo')">
 
   %if thing.link:
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
   %endif
 
-  <table class="preftable">
-    <tr>
-      <th><label for="title">${_("title")}</label></th>
-      <td>
-        <input name="title" type="text" value="${thing.link.title if thing.link else ""}" />
-      </td>
-      <td>
-        ${error_field("NO_TEXT", "title")}
-        ${error_field("TOO_LONG", "title")}
-      </td>
-    </tr>
-    <tr>
-      <th><label for="url">${_("url")}</label></th>
-      <td>
-        <input name="url" type="text" 
-               value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"/>
-      </td>
-      <td>
-        ${error_field("NO_URL", "url")}
-        ${error_field("BAD_URL", "url")}
-        ${error_field("ALREADY_SUB", "url")}
-      </td>
-    </tr>
-    <tr>
-      <th><label for="sr">${_("reddit")}</label></th>
-      <td style="white-space: nowrap">
-        %if thing.link:
-          ${checkbox("subscribers_only",
-                     (_("show only to subscribers of %(reddit)s")
-                      % dict(reddit = thing.sr.name)),
-                     thing.link.promoted_subscribersonly)}
-          <input type="hidden" name="sr" value="${thing.sr.name}" />
+    <div class="spacer">
+      <%utils:round_field title="${_('title')}" id="title-field">
+        <textarea name="title" rows="2" cols="1" 
+               ${"disabled" if thing.link and \
+                               thing.link.promote_status == STATUS.finished \
+                            else ""}
+                  wrap="hard">${thing.link.title if thing.link else ''}</textarea>
+        ${error_field("NO_TEXT", "title", "div")}
+        ${error_field("TOO_LONG", "title", "div")}
+      </%utils:round_field>
+    </div>
+  
+  <div class="spacer">
+    <%utils:round_field title="${_('url')}" id="url-field">
+      <input name="kind" value="link" type="hidden"/>
+      <input id="url" name="url" type="text" 
+               ${"disabled" if thing.link and \
+                               thing.link.promote_status == STATUS.finished \
+                            else ""}
+                value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"/>
+      ${error_field("NO_URL", "url", "div")}
+      ${error_field("BAD_URL", "url", "div")}
+      ${error_field("ALREADY_SUB", "url", "div")}
+      <div>
+        <button type="button" tabindex="100" onclick="fetch_title()">
+          ${_("suggest title")}
+        </button>
+        <span class="title-status"></span>
+      </div>
+    </%utils:round_field>
+  </div>
+
+  <div class="spacer">
+    <% 
+       mindate   = (datetime.now() + timedelta(1)).strftime("%m/%d/%Y");
+
+       if thing.link:
+           startdate = thing.link._date
+           enddate   = thing.link.promote_until
+       else:
+           startdate = (datetime.now() + timedelta(2))
+           enddate   = (datetime.now() + timedelta(3));
+       
+       startdate = startdate.strftime("%m/%d/%Y")
+       enddate   = enddate  .strftime("%m/%d/%Y")
+    %>
+    <%utils:round_field title="${_('duration')}" id="duration-field">
+        %if thing.link and thing.link.promote_status >= STATUS.pending:
+          <div class="rounded delete-field">
+            <input type="hidden" name="startdate" 
+                   value="${startdate}"/>
+            <input type="hidden" name="enddate" 
+                   value="${enddate}"/>
+            ${thing.link._date.strftime(thing.datefmt)} -
+            ${thing.link.promote_until.strftime(thing.datefmt)}
+          </div>
         %else:
-          <input type="text" name="sr" value="${g.default_sr}" /> <br />
-          ${checkbox("subscribers_only",
-                     _("show only to subscribers of this reddit"),
-                     False)}
+        %if not c.user_is_sponsor:
+          <input type="hidden" id="date-min" value="${mindate}" />
         %endif
-      </td>
-      <td>
-        ${error_field("SUBREDDIT_NOEXIST", "sr")}
-      </td>
-    </tr>
-    <tr>
-      <th>${_("site options")}</th>
-      <td>
+        <%self:datepicker name="startdate", value="${startdate}"
+                          minDateSrc="#date-min">
+        function(elem) {
+          var other = $("#enddate");
+          if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
+             var newd = new Date();
+             newd.setTime($(elem).datepicker('getDate').getTime() + 86400*1000);
+             $("#enddate").val((newd.getMonth()+1) + "/" + 
+                               newd.getDate() + "/" + newd.getFullYear());
+          }
+          $("#datepicker-enddate").datepicker("destroy");
+          update_bid(elem);
+        }
+        </%self:datepicker>
+        -
+        <%self:datepicker name="enddate", value="${enddate}"
+                          minDateSrc="#startdate">
+          function(elem) { update_bid(elem); }
+        </%self:datepicker>
+       %endif
+       ${error_field("BAD_DATE", "sr")}
+       ${error_field("BAD_FUTURE_DATE", "sr")}
+       ${error_field("BAD_PAST_DATE", "sr")}
+       ${error_field("BAD_DATE_RANGE", "sr")}
+    </%utils:round_field>
+  </div>
+
+  <div class="spacer">
+    <%utils:round_field title="${_('options')}" id="commenting-field">
+      <div class="rounded delete-field">
+          <% 
+             clicks = views = 0
+             disable_comments = False
+             if thing.link:
+                disable_comments = getattr(thing.link, "disable_comments",
+                                           False)
+                clicks = getattr(thing.link, "maximum_clicks", 0) or 0
+                views  = getattr(thing.link, "maximum_views", 0) or 0
+           %>
         ${checkbox("disable_comments",
-                   _("disable comments"),
-                   thing.link.disable_comments if thing.link else False)} <br />
-      </td>
-      <td></td>
-    </tr>
-    <tr>
-      <th><label for="timelimit">${_("duration")}</label></th>
-      <td>
-        %if thing.link and thing.link.promote_until:
-          <input type="radio" name="expire" value="nomodify" checked="checked" />
-            ${(_('expire in %(timedelta)s (%(expires_at)s)')
-               % dict(timedelta = thing.timedeltatext,
-                      expires_at = thing.link.promote_until.strftime(thing.datefmt)))} <br />
-          <input type="radio" name="expire" value="expirein" />
-            ${_("expire in")} &nbsp;
-            <input name="timelimitlength" size="3" />
-            <select name="timelimittype">
-              <option value="hours">${_("hours")}</option>
-              <option value="days" selected="selected">${_("days")}</option>
-              <option value="weeks">${_("weeks")}</option>
-            </select><br />
-          <input type="radio" name="expire" value="cancel" />
-            ${_("don't expire")} <br />
-        %else:
-          <input type="radio" name="expire" value="nomodify" checked="checked" />
-            ${_("don't expire")} <br />
-          <input type="radio" name="expire" value="expirein" />
-            ${_("expire in")} &nbsp;
-            <input name="timelimitlength" size="3" />
-            <select name="timelimittype">
-              <option value="hours">${_("hours")}</option>
-              <option value="days" selected="selected">${_("days")}</option>
-              <option value="weeks">${_("weeks")}</option>
-            </select>
+                 _("disable comments"), disable_comments)} <br />
+        %if c.user_is_sponsor:
+          ${checkbox("set_maximum_clicks",
+                   unsafe("maximum clicks:&#32; " +
+                          "<input type='text' style='width:auto' " + 
+                                  "onfocus='update_box(this)' " +
+                                  "name='maximum_clicks' size='7' " +
+                                  "value='%s' />" % clicks),
+                   clicks)} <br />
+          ${checkbox("set_maximum_views",
+                   unsafe("maximum views:&#32;" +
+                          "<input type='text' style='width:auto' " + 
+                                  "onfocus='update_box(this)' " +
+                                  "name='maximum_views' size='7' " +
+                                  "value='%s' />" % views),
+                   views)} <br />
         %endif
-      </td>
-      <td>${error_field("BAD_NUMBER", "timelimitlength")}</td>
-    </tr>
-  </table>
+      </div>
+    </%utils:round_field>
+  </div>
+%if not thing.link or (c.user_is_sponsor and thing.link.promote_status < STATUS.pending):
+  <div class="spacer">
+    <%utils:round_field title="${_('bid amount')}" id="bid-field"
+                        description="${_('(total for the duration provided)')}">
+        $<input id="bid" name="bid" size="7" type="text"
+                style="width:auto"
+                onchange="update_bid(this)"
+                value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
+                                               g.min_promote_bid))}"
+                maxlenght="7"/>
+         %if getattr(thing.link, "promote_trans_id", 0) < 0:
+           <span class="status">
+             ${_("This link is currently a freebie.")}
+           </span>
+         %endif
+        ${error_field("BAD_NUMBER", "bid")}
+    </%utils:round_field>
+  </div>
 </form>
+%else:
 
-%if thing.link:
-  <% thumb = None if not thing.link.has_thumbnail else thumbnail_url(thing.link) %>
-<%call expr="image_upload('/api/link_thumb', thumb, tabular=True, label=_('thumbnail'))">
-   <input type="hidden" name="link_id" value="${thing.link._fullname}" />
-</%call>
-
+  <input id="bid" name="bid" size="7" type="hidden"
+         value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
+                g.min_promote_bid))}" />
+</form>
+  <div class="spacer">
+    <%utils:round_field title="${_('bid amount')}" id="bid-field"
+                        description="${_('(total for the duration provided)')}">
+      <div class="rounded delete-field">
+        $${"%.2f" % thing.link.promote_bid}
+         %if getattr(thing.link, "promote_trans_id", 0) < 0:
+           <span class="status">
+             ${_("This link is currently a freebie.  Enjoy")}
+           </span>
+         %else:
+         <form method="POST" action="/post/pay" 
+               style="display:inline; ">
+           <input type="hidden" name="link" value="${thing.link._fullname}"/>
+           %if thing.link.promote_status >= STATUS.pending:
+             <span class="status">
+               ${_("this amount has already been charged")}
+             </span>
+           %else:
+             <button name="pay" class="btn" type="submit">
+               %if thing.link.promote_status == STATUS.unpaid:
+                  ${_("set up payment")}
+               %elif thing.link.promote_status < STATUS.pending:
+                  ${_("change bid")}
+               %endif
+             </button>
+           %endif
+         </form>
+         %endif
+       </div>
+    </%utils:round_field>
+  </div>
 %endif
+
+## provide a way to give refunds, but only if the link isn't already a freebie
+%if c.user_is_sponsor and getattr(thing.link, "promote_paid", False) and \
+    getattr(thing.link, "promote_trans_id", -1) > 0:
+  <div class="spacer">
+    <%utils:round_field title="${_('refund')}" id="bid-field">
+      <form method="POST" action="/post/refund" 
+            style="display:inline; "
+            onsubmit="return post_form(this, 'new_promo')">
+        <input type="hidden" name="link" value="${thing.link._fullname}"/>
+        $<input id="refund" name="refund" size="7" type="text"
+                style="width:auto"
+                value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
+                                               g.min_promote_bid))}"
+                maxlenght="7"/>
+        ${error_field("BAD_NUMBER", "bid")}
+        <button name="pay" class="btn" type="submit">
+          ${_("refund")}
+        </button>
+      </form>
+    </%utils:round_field>
+  </div>
+%endif
+
 
 <div class="save-button">
   <%
@@ -142,12 +351,88 @@
           text = _("save options")
       else:
           name = "create"
-          text = _("create")
+          text = _("next ->")
   %>
   <button name="${name}" class="btn" type="button"
-         onclick="$('#promo_form').get(0).onsubmit()"
+         onclick="$('#promo-form').get(0).onsubmit()"
   >${text}</button>
+  
+  %if thing.link and thing.link.promote_status < STATUS.pending:
+    %if c.user_is_sponsor and getattr(thing.link, "promote_trans_id", 0) >= 0:
+      <form method="POST" action="/post/freebie" 
+            onsubmit="return post_form(this, 'freebie')"
+            style="display:inline; ">
+        <input type="hidden" name="link" value="${thing.link._fullname}"/>
+        <input id="bid" name="bid" size="7" type="hidden"
+               style="width:auto"
+               value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
+                      g.min_promote_bid))}" />
+        <button name="pay" class="btn" type="submit">
+          ${_("make this a freebie")}
+        </button>
+      </form>
+    %endif
+  %endif
   &#32;
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
 </div>
+</div>
+
+%if thing.link:
+  %if c.user_is_sponsor and thing.bids:
+  <div class="spacer bidding-history">
+    <%utils:round_field title="${_('bidding history')}">
+    <% 
+       from r2.models import Account, bidding
+       accounts = Account._byID(set(x.account_id for x in thing.bids), True)
+     %>
+    <div class="rounded delete-field">
+      <table class="bid-table">
+        <tr>
+          <th>date</th>
+          <th>user</th>
+          <th>transaction id</th>
+          <th>pay id</th>
+          <th>amount</th>
+          <th>status</th>
+        </tr>
+        %for bid in thing.bids:
+         <%
+            status = bidding.Bid.STATUS.name[bid.status].lower()
+          %>
+        <tr class="bid-${status}">
+          <td>${bid.date}</td>
+          <td>${accounts[bid.account_id].name}</td>
+          <td>${bid.transaction}</td>
+          <td>${bid.pay_id}</td>
+          <td>$${"%.2f" % bid.bid}</td>
+          <td class="bid-status">${status}</td>
+        </tr>
+        %endfor
+      </table>
+    </div>
+   </%utils:round_field>
+  </div>
+  %endif
+
+  %if c.user_is_sponsor:
+   <form id="promotion-history" method="post" action="/post/promote_note"
+         onsubmit="return post_form(this, 'promote_note')">
+     <div class="spacer">
+    <%utils:round_field title="${_('promotion history')}">
+      <input type="hidden" name="link" value="${thing.link._fullname}"/>
+      <label for="promote_note">add note:</label>
+      <input id="promote_note" name="note" value="" type="text" size="40" />
+      <button type="submit">save</button>
+      <div class="rounded delete-field notes">
+        %for line in getattr(thing.link, "promotion_log", []):
+          <p>${line}</p>
+        %endfor
+      </div>
+    </%utils:round_field>
+  </div>
+  </form>
+  %endif
+    
+%endif

@@ -20,7 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.utils import to36
+   from r2.lib.promote import promo_edit_url, STATUS
+   from r2.lib.pages.things import LinkButtons
 %>
 
 <%inherit file="link.html"/>
@@ -28,36 +29,55 @@
 <%namespace file="utils.html" import="plain_link" />
 
 <%def name="tagline()">
+%if c.user_is_sponsor:
+ <%
+    if thing.promote_status < STATUS.promoted:
+      taglinetext = _("to be promoted by %(author)s") 
+    else:
+      taglinetext = _("promoted %(when)s ago by %(author)s") 
+    taglinetext = taglinetext.replace(" ", "&#32;")
+  %>
+  ${unsafe(taglinetext % dict(when = thing.timesince, 
+                              author= self.author(attribs = thing.attribs)))}
+%endif
 </%def>
 
-<%def name="unpromote_button()" buffered="True" filter="unsafe">
-  %if c.user_is_sponsor:
-  <li>
-    ${plain_link(_('edit'),'/promote/edit_promo/%s' % to36(thing._id),
-                 _sr_path = False)}
-  </li>
-  <li>
-    ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
-  </li>
-  %endif
-</%def>
-
-<%def name="buttons()">
-  ${parent.buttons(comments=not thing.disable_comments,
-                   report=False,
-                   additional=unpromote_button())}
+<%def name="buttons(comments=True, delete=True, report=True, additional='')">
+  ${LinkButtons(thing, 
+                comments = not getattr(thing, "disable_comments", False), 
+                delete = delete, 
+                report = report)}
 </%def>
 
 <%def name="entry()">
   ${parent.entry()}
   <p class="sponsored-tagline">
-    ${_('sponsored link')} 
+    %if thing.is_author or c.user_is_sponsor:
+      %if thing.promote_status == STATUS.unpaid:
+        ${_('unverified sponsored link')} 
+      %elif thing.promote_status == STATUS.unseen:
+        ${_('unapproved sponsored link')} 
+      %elif thing.promote_status == STATUS.accepted:
+        ${_('pending sponsored link')} 
+      %elif thing.promote_status == STATUS.rejected:
+        ${_('rejected sponsored link')} 
+      %elif thing.promote_status == STATUS.pending:
+        ${_('queued sponsored link')} 
+      %elif thing.promote_status == STATUS.promoted:
+        ${_('sponsored link')} 
+      %else:
+        ${_('finished sponsored link')} 
+      %endif
+    %else:
+      ${_('sponsored link')} 
+    %endif
   </p>
-  <img class="promote-pixel"
-   id="promote_img_${thing._fullname}" 
-   src="/static/pixel.png" alt=" " />
-  <script type="text/javascript">
-    reddit.tofetch.push("${thing._fullname}");
-  </script>
+  %if thing.promote_status == STATUS.promoted:
+    <img class="promote-pixel" id="promote_img_${thing._fullname}" 
+         src="/static/pixel.png" alt=" " />
+    <script type="text/javascript">
+      reddit.tofetch.push("${thing._fullname}");
+    </script>
+  %endif
 </%def>
 

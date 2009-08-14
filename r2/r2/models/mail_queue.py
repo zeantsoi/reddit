@@ -27,11 +27,12 @@ from sqlalchemy.databases.postgres import PGInet, PGBigInteger
 
 from r2.lib.db.tdb_sql import make_metadata
 from r2.models.thing_changes import changed, index_str, create_table
-from r2.lib.utils import Storage, timeago
+from r2.lib.utils import Storage, timeago, Enum, tup
 from account import Account
 from r2.lib.db.thing import Thing
 from r2.lib.memoize import memoize
-from pylons import g
+from pylons import g, request
+from pylons.i18n import _
 
 def mail_queue(metadata):
     return sa.Table(g.db_app_name + '_mail_queue', metadata,
@@ -202,15 +203,20 @@ class EmailHandler(object):
         return res[0][0] if res and res[:1] else None
 
         
-    def add_to_queue(self, user, thing, emails, from_name, fr_addr, date, ip,
-                     kind, body = "", reply_to = ""):
+    def add_to_queue(self, user, emails, from_name, fr_addr, kind,
+                     date = None, ip = None,
+                     body = "", reply_to = "", thing = None):
         s = self.queue_table
         hashes = []
-        for email in emails:
+        if not date:
+            date = datetime.datetime.now(g.tz)
+        if not ip:
+            ip = getattr(request, "ip", "127.0.0.1")
+        for email in tup(emails):
             uid = user._id if user else 0
             tid = thing._fullname if thing else ""
             key = sha.new(str((email, from_name, uid, tid, ip, kind, body,
-                               datetime.datetime.now()))).hexdigest()
+                               datetime.datetime.now(g.tz)))).hexdigest()
             s.insert().values({s.c.to_addr : email,
                                s.c.account_id : uid,
                                s.c.from_name : from_name,
@@ -285,8 +291,29 @@ class EmailHandler(object):
 class Email(object):
     handler = EmailHandler()
 
-    Kind = ["SHARE", "FEEDBACK", "ADVERTISE", "OPTOUT", "OPTIN"]
-    Kind = Storage((e, i) for i, e in enumerate(Kind))
+    Kind = Enum("SHARE", "FEEDBACK", "ADVERTISE", "OPTOUT", "OPTIN",
+                "VERIFY_EMAIL", "RESET_PASSWORD",
+                "BID_PROMO",
+                "ACCEPT_PROMO",
+                "REJECT_PROMO",
+                "QUEUED_PROMO",
+                "LIVE_PROMO", "FINISHED_PROMO")
+
+    subjects = {
+        Kind.SHARE : _("[reddit] %(user)s has shared a link with you"),
+        Kind.FEEDBACK : _("[feedback] feedback from '%(user)s'"),
+        Kind.ADVERTISE :  _("[ad_inq] feedback from '%(user)s'"),
+        Kind.OPTOUT : _("[reddit] email removal notice"),
+        Kind.OPTIN  : _("[reddit] email addition notice"),
+        Kind.RESET_PASSWORD : _("[reddit] reset your password"),
+        Kind.VERIFY_EMAIL : _("[reddit] reset your password"),
+        Kind.BID_PROMO : _("[reddit] your bid has been accepted"),
+        Kind.ACCEPT_PROMO : _("[reddit] your promotion has been accepted"),
+        Kind.REJECT_PROMO : _("[reddit] your promotion has been rejected"),
+        Kind.QUEUED_PROMO : _("[reddit] your promotion has been queued"),
+        Kind.LIVE_PROMO   : _("[reddit] your promotion is now live"),
+        Kind.FINISHED_PROMO : _("[reddit] your promotion has finished"),
+        }
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,
                  kind, msg_hash, body = '', from_addr = '',
@@ -302,9 +329,14 @@ class Email(object):
         self.kind = kind
         self.sent = False
         self.body = body
-        self.subject = ''
         self.msg_hash = msg_hash
         self.reply_to = reply_to
+        self.subject = self.subjects.get(kind, "")
+        try:
+            self.subject = self.subject % dict(user = self.from_name())
+        except UnicodeDecodeError:
+            self.subject = self.subject % dict(user = "a user")
+        
 
     def from_name(self):
         if not self.user:

@@ -22,6 +22,7 @@
 <%namespace file="utils.html" import="plain_link" />
 <%!
    from r2.lib.strings import strings
+   from r2.lib.promote import STATUS
  %>
 
 <%def name="banbuttons()">
@@ -131,6 +132,50 @@
     </li>
   %endif
   ${self.banbuttons()}
+  %if thing.promoted is not None:
+    %if thing.promote_status != STATUS.finished:
+      %if thing.user_is_sponsor or thing.is_author:
+        <li>
+          ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
+        </li>
+        %if thing.promote_status == STATUS.promoted:
+          <li>
+            ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
+          </li>
+        %elif c.user_is_admin and thing.promote_status != STATUS.rejected:
+          <li>
+            <form action="/post/reject" class="rejection-form"
+                  style="display:none"
+                  method="post" onsubmit="reject post_form(this, 'unpromote')">
+              <br/>
+              <input type="hidden" name="executed" value="rejected" />
+              <label>Reason:</label><br/>
+              <textarea name="reason" value="" ></textarea>
+              <br/>
+              <a href="#" 
+                 onclick="change_state(this, 'unpromote', complete_reject_promo)">
+                submit
+              </a>/
+            </form>
+            ${toggle_button("reject_promo", \
+                            _("reject"), _("cancel"), \
+                            "reject_promo", "cancel_reject_promo")}
+          </li>
+        %endif
+      %endif
+      %if thing.user_is_sponsor:
+        %if thing.promote_status in (STATUS.unseen, STATUS.rejected):
+          <li>
+            ${ynbutton(_("accept"), _("accepted"), "promote")}
+          </li>
+        %elif thing.promotable and thing.promote_status in (STATUS.accepted, STATUS.pending):
+          <li>
+            ${ynbutton(_("promote"), _("promote"), "promote")}
+          </li>
+        %endif
+      %endif
+     %endif
+   %endif
   ${self.distinguish()}
 </%def>
 
