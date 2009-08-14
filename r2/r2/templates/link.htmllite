@@ -46,6 +46,9 @@
        >
     <a href="${thing.href_url}" class="reddit-link-title"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
+       %if thing.nofollow:
+         rel="nofollow"
+       %endif
        %if c.user.pref_newwindow:
          target="_blank"
        %elif c.cname:
