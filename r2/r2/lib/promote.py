@@ -40,14 +40,14 @@ STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
 _promo_subreddit = None
 def promo_subreddit():
     global _promo_subreddit
-    promoted_sr_name = "/promos/"
+    promoted_sr_name = "promos"
     if not _promo_subreddit:
         try:
             # subreddit creation will generate a lock on that name, so
             # the race condition among multiple apps should be
             # avoided.
             _promo_subreddit =  Subreddit._new(name = promoted_sr_name,
-                                               title = "promos",
+                                               title = "promoted links",
                                                author_id = -1,
                                                type = "private", 
                                                ip = '0.0.0.0')
