@@ -306,7 +306,7 @@ class Email(object):
         Kind.OPTOUT : _("[reddit] email removal notice"),
         Kind.OPTIN  : _("[reddit] email addition notice"),
         Kind.RESET_PASSWORD : _("[reddit] reset your password"),
-        Kind.VERIFY_EMAIL : _("[reddit] reset your password"),
+        Kind.VERIFY_EMAIL : _("[reddit] verify your email address"),
         Kind.BID_PROMO : _("[reddit] your bid has been accepted"),
         Kind.ACCEPT_PROMO : _("[reddit] your promotion has been accepted"),
         Kind.REJECT_PROMO : _("[reddit] your promotion has been rejected"),

@@ -66,6 +66,7 @@ def password_email(user):
     """
     For reseting a user's password.
     """
+    from r2.lib.pages import PasswordReset
     key = passhash(random.randint(0, 1000), user.email)
     passlink = 'http://' + g.domain + '/resetpassword/' + key
     print "Generated password reset link: " + passlink
