@@ -435,7 +435,8 @@ class ApiController(RedditController):
                                  title = container.title)
                         msg = msg % d
                         subj = subj % d
-                        Message._new(c.user, friend, subj, msg, ip)
+                        item, inbox_rel = Message._new(c.user, friend,
+                                                       subj, msg, ip)
 
                         if g.write_query_queue:
                             queries.new_message(item, inbox_rel)
