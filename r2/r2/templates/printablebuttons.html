@@ -133,7 +133,7 @@
   %endif
   ${self.banbuttons()}
   %if thing.promoted is not None:
-    %if thing.promote_status != STATUS.finished:
+    %if thing.promote_status != STATUS.finished or c.user_is_sponsor:
       %if thing.user_is_sponsor or thing.is_author:
         <li>
           ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}

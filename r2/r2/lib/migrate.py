@@ -45,6 +45,7 @@ def convert_promoted():
     q = Link._query(Link.c.promoted == (True, False),
                     sort = desc("_date"))
     sr_id = promo_subreddit()._id
+    bid = 100
     with g.make_lock(promoted_lock_key):
         promoted = {}
         set_promoted({})
@@ -54,8 +55,9 @@ def convert_promoted():
             # set it to accepted (since some of the update functions
             # check that it is not already promoted)
             l.promote_status = STATUS.accepted
-            l.promote_trans_id = -l._id
-            l.promote_bid = 300
+            author = Account._byID(l.author_id)
+            l.promote_trans_id = bidding.auth_transaction(bid, author, -1, l)
+            l.promote_bid = bid
             l.maximum_clicks = None
             l.maximum_views = None
             # set the dates
@@ -79,5 +81,5 @@ def convert_promoted():
         print promoted
         set_promoted(promoted)
     # run what is normally in a cron job to clear out finished promos
-    promote_promoted()
+    #promote_promoted()
 

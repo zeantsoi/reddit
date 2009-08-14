@@ -248,7 +248,7 @@ class Bid(Sessionized, Base):
     @classmethod
     def _new(cls, trans_id, user, pay_id, thing_id, bid):
         bid = Bid(trans_id, user, pay_id, 
-                  thing_id, request.ip, bid = bid)
+                  thing_id, getattr(request, 'ip', '0.0.0.0'), bid = bid)
         bid._commit()
         return bid
 
