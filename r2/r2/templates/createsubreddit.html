@@ -129,6 +129,8 @@ function update_title(elem) {
       %endif
     </%utils:round_field>
   </div>
+%else:
+  <input type="hidden" name="sr" id="name" value="${thing.site._fullname}"/>
 %endif
 
 <div class="spacer">
