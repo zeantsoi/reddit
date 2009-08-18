@@ -378,8 +378,10 @@ class FrontController(RedditController):
     @base_listing
     @validate(article = VLink('article'))
     def GET_duplicates(self, article, num, after, reverse, count):
-        links = link_duplicates(article)
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
 
+        links = link_duplicates(article)
         builder = IDBuilder([ link._fullname for link in links ],
                             num = num, after = after, reverse = reverse,
                             count = count, skip = False)

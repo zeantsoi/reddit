@@ -37,23 +37,15 @@ promoted_lock_key = 'cached_promoted_links_lock2'
 STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
               "pending", "promoted", "finished")
 
-_promo_subreddit = None
-def promo_subreddit():
-    global _promo_subreddit
-    promoted_sr_name = "promos"
-    if not _promo_subreddit:
-        try:
-            # subreddit creation will generate a lock on that name, so
-            # the race condition among multiple apps should be
-            # avoided.
-            _promo_subreddit =  Subreddit._new(name = promoted_sr_name,
-                                               title = "promoted links",
-                                               author_id = -1,
-                                               type = "private", 
-                                               ip = '0.0.0.0')
-        except SubredditExists:
-            _promo_subreddit = Subreddit._by_name(promoted_sr_name)
-    return _promo_subreddit
+PromoteSR = 'promos'
+try:
+    PromoteSR = Subreddit._new(name = PromoteSR,
+                               title = "promoted links",
+                               author_id = -1,
+                               type = "public", 
+                               ip = '0.0.0.0')
+except SubredditExists:
+    PromoteSR = Subreddit._by_name(PromoteSR)
 
 def promo_edit_url(l):
     return "/promoted/edit_promo/%s" % l._id36
@@ -81,7 +73,7 @@ def new_promotion(title, url, user, ip, promote_start, promote_until, bid,
     status to be 'unpaid'.
     """
     # TODO: disable comments, etc.?
-    l = Link._submit(title, url, user, promo_subreddit(), ip)
+    l = Link._submit(title, url, user, PromoteSR, ip)
     l.promoted = True
     l.promote_until = None
     l.promote_status = STATUS.unpaid
@@ -296,6 +288,7 @@ def promote_promoted(test = False):
     'finished' and find all pending promotions that are supposed to be
     promoted and promote them.
     """
+    from r2.lib.traffic import load_traffic
     with g.make_lock(promoted_lock_key):
         now = datetime.now(g.tz)
 
@@ -303,7 +296,26 @@ def promote_promoted(test = False):
                                       data = True, return_dict = False)
         promos = {}
         for l in promoted:
+            keep = True
             if l.promote_until < now:
+                keep = False
+            maximum_clicks = getattr(l, "maximum_clicks", None)
+            maximum_views = getattr(l, "maximum_views", None)
+            if maximum_clicks or maximum_views:
+                # grab the traffic
+                traffic = load_traffic("day", "thing", l._fullname)
+                if traffic:
+                    # (unique impressions, number impressions, 
+                    #  unique clicks, number of clicks)
+                    traffic = [y for x, y in traffic]
+                    traffic = map(sum, zip(*traffic))
+                    uimp, nimp, ucli, ncli = traffic
+                    if maximum_clicks and maximum_clicks < ncli:
+                        keep = False
+                    if maximum_views and maximum_views < nimp:
+                        keep = False
+
+            if not keep:
                 if test:
                     print "Would have unpromoted: (%s, %s)" % \
                           (l, l.make_permalink(None))

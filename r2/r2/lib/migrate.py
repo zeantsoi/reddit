@@ -44,7 +44,7 @@ def convert_promoted():
 
     q = Link._query(Link.c.promoted == (True, False),
                     sort = desc("_date"))
-    sr_id = promo_subreddit()._id
+    sr_id = Promote._id
     bid = 100
     with g.make_lock(promoted_lock_key):
         promoted = {}

@@ -367,7 +367,9 @@ class Link(Thing, Printable):
             else:
                 item.href_url = item.url
 
-            if pref_frame and not item.is_self:
+            # show the toolbar if the preference is set and the link
+            # is neither a promoted link nor a self post
+            if pref_frame and not item.is_self and not item.promoted:
                 item.mousedown_url = item.tblink
             else:
                 item.mousedown_url = None
@@ -524,7 +526,7 @@ class Comment(Thing, Printable):
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
-        can_reply_srs.add(promote.promo_subreddit()._id)
+        can_reply_srs.add(promote.PromoteSR._id)
 
         min_score = user.pref_min_comment_score
 

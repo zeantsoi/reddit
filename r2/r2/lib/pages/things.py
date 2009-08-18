@@ -71,6 +71,7 @@ class LinkButtons(PrintableButtons):
                       promote_status = getattr(thing, "promote_status", 0),
                       user_is_sponsor = thing.user_is_sponsor,
                       promotable = promotable,
+                      traffic_url = "/traffic/" + thing._id36, 
                       is_author = thing.is_author)
                       
         PrintableButtons.__init__(self, 'linkbuttons', thing, 

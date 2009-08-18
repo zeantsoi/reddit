@@ -67,15 +67,30 @@
          uimp, nimp, ucli, ncli = thing.totals
        %>
      <tr style="font-weight:bold">
-        <td>total (users approx)</td>
-        <td>${num(uimp)}</td>
+        <td>
+          total 
+          %if thing.preliminary:
+            (users approx)
+          %endif
+        </td>
+        <td ${"class='prelim'" if thing.preliminary else ''}>
+          ${num(uimp)}${'*' if thing.preliminary else ''}
+        </td>
         <td>${num(nimp)}</td>
-        <td>${num(ucli)}</td>
+        <td ${"class='prelim'" if thing.preliminary else ''}>
+          ${num(ucli)}${'*' if thing.preliminary else ''}
+        </td>
         <td>${num(ncli)}</td>
         <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
         <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
       </tr>
-      
+      %if thing.preliminary:
+      <tr>
+        <td colspan="7" class="prelim error">
+          * totals are preliminary until 24 hours after the end of the promotion.
+        </td>
+      </tr>
+      %endif
     %endif
   </table>
 %endif

@@ -224,9 +224,9 @@ class Reddit(Templated):
 
         if c.user_is_loggedin:
             if c.user_is_admin:
-                more_buttons.append(NamedButton('admin'))
+                more_buttons.append(NamedButton('admin', False))
             if c.user_is_sponsor:
-                more_buttons.append(NavButton(menu.promote, 'promoted'))
+                more_buttons.append(NavButton(menu.promote, 'promoted', False))
 
         #if there's only one button in the dropdown, get rid of the dropdown
         if len(more_buttons) == 1:
@@ -618,24 +618,31 @@ class LinkInfoPage(Reddit):
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
         base_path = _force_utf8(base_path)
+
+
         def info_button(name, **fmt_args):
             return NamedButton(name, dest = '/%s%s' % (name, base_path),
                                aliases = ['/%s/%s' % (name, self.link._id36)],
                                fmt_args = fmt_args)
+        buttons = []
+        if not getattr(self.link, "disable_comments", False):
+            buttons.extend([info_button('comments'),
+                            info_button('related')])
 
-        buttons = [info_button('comments'),
-                   info_button('related')]
+            if not self.link.is_self and self.duplicates:
+                buttons.append(info_button('duplicates',
+                                           num = len(self.duplicates)))
+            if len(self.link.title) < 200 and g.spreadshirt_url:
+                buttons += [info_button('shirt')]
 
-        if not self.link.is_self and self.duplicates:
-            buttons.append(info_button('duplicates', num = len(self.duplicates)))
         if c.user_is_admin:
             buttons += [info_button('details')]
-        if c.user_is_sponsor:
-            if self.link.promoted is not None:
-                buttons += [info_button('traffic')]
-        if len(self.link.title) < 200 and g.spreadshirt_url:
-            buttons += [info_button('shirt')]
-            
+
+        # should we show a traffic tab (promoted and author or sponsor)
+        if (self.link.promoted is not None and
+            (c.user_is_sponsor or
+             (c.user_is_loggedin and c.user._id == self.link.author_id))):
+            buttons += [info_button('traffic')]
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
@@ -1585,32 +1592,44 @@ class PromotedTraffic(Traffic):
         self.thing = thing
         d = thing._date.astimezone(g.tz) 
         d = d.replace(minute = 0, second = 0, microsecond = 0)
-        
         until = thing.promote_until
         now = datetime.datetime.now(g.tz)
-        if not until:
-            until = d + datetime.timedelta(1)
-            
+
+        # the results are preliminary until 1 day after the promotion ends
+        self.preliminary = (until + datetime.timedelta(1) > now)
+
         self.traffic = load_traffic('hour', "thing", thing._fullname,
                                     start_time = d, stop_time = until)
 
+        # load monthly totals if we have them, otherwise use the daily totals
         self.totals =  load_traffic('month', "thing", thing._fullname)
         if not self.totals:
             self.totals = load_traffic('day', "thing", thing._fullname)
+        # generate a list of
+        # (uniq impressions, # impressions, uniq clicks, # clicks)
         if self.totals:
             self.totals = map(sum, zip(*zip(*self.totals)[1]))
-               
+
         imp = self.slice_traffic(self.traffic, 0, 1)
 
         if len(imp) > 2:
-            imp_total = locale.format('%d', sum(x[2] for x in imp), True)
+            imp_total = sum(x[2] for x in imp)
+            # ensure total consistency:
+            if self.totals:
+                self.totals[1] = imp_total
+
+            imp_total = locale.format('%d', imp_total, True)
             chart = graph.LineGraph(imp)
             self.imp_graph = chart.google_chart(ylabels = ['uniques', 'total'],
                                                 title = ("impressions (%s)" %
                                                          imp_total))
-            
+
             cli = self.slice_traffic(self.traffic, 2, 3)
-            cli_total = locale.format('%d', sum(x[2] for x in cli), True)
+            cli_total = sum(x[2] for x in cli)
+            # ensure total consistency
+            if self.totals:
+                self.totals[3] = cli_total
+            cli_total = locale.format('%d', cli_total, True)
             chart = graph.LineGraph(cli)
             self.cli_graph = chart.google_chart(ylabels = ['uniques', 'total'],
                                                 title = ("clicks (%s)" %

@@ -625,7 +625,7 @@ class ApiController(RedditController):
                 Vote.vote(c.user, item, True, ip)
                 # flag search indexer that something has changed
                 tc.changed(item)
-    
+
                 #update last modified
                 set_last_modified(c.user, 'overview')
                 set_last_modified(c.user, 'commented')

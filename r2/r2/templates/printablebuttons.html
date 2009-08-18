@@ -138,6 +138,9 @@
         <li>
           ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
         </li>
+        <li>
+          ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+        </li>
         %if thing.promote_status == STATUS.promoted:
           <li>
             ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}

@@ -30,7 +30,7 @@ from r2.controllers import ListingController
 
 from r2.controllers.reddit_base import RedditController
 
-from r2.lib.promote import get_promoted, STATUS, promo_subreddit
+from r2.lib.promote import get_promoted, STATUS, PromoteSR
 from r2.lib.utils import timetext
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib import cssfilter
@@ -48,7 +48,7 @@ class PromoteController(ListingController):
     def query(self):
         if c.user_is_sponsor:
             # get all promotions for sponsors
-            q = Link._query(Link.c.sr_id == promo_subreddit()._id)
+            q = Link._query(Link.c.sr_id == PromoteSR._id)
         else:
             # get user's own promotions
             q = Link._query(Link.c.author_id == c.user._id)

@@ -540,6 +540,9 @@ before enabling */
 
 .organic-listing .link { 
     background-color: #F8F8F8; 
+}
+.organic-listing .link,
+.organic-listing .link.promotedlink { 
     padding: 5px 7em 10px 0;
     margin-bottom: 0px;  
 }
@@ -2274,6 +2277,8 @@ ul.tabmenu.formtab {
 .traffic-table tr.min  { border: 2px solid #336699; }
 .traffic-table tr.odd { background-color: #E0E0E0; }
 .traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
+
+.traffic-table .prelim { font-style: italic; }
 
 .traffic-graph {
     padding: 10px; 
