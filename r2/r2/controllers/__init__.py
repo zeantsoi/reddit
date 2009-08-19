@@ -37,6 +37,7 @@ from listingcontroller import MyredditsController
 
 from feedback import FeedbackController
 from front import FrontController
+from health import HealthController
 from buttons import ButtonsController
 from captcha import CaptchaController
 from embed import EmbedController

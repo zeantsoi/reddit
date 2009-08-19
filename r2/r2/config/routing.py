@@ -126,6 +126,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
 
+    mc('/health', controller='health', action='health')
+    mc('/shutdown', controller='health', action='shutdown')
+
     mc('/', controller='hot', action='listing')
     
     listing_controllers = "hot|saved|toplinks|new|recommended|randomrising|comments"

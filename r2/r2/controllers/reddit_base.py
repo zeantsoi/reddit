@@ -609,6 +609,7 @@ class RedditController(BaseController):
             and request.method == 'GET'
             and not c.user_is_loggedin
             and not c.used_cache
+            and not c.dontcache
             and response.status_code != 503
             and response.content and response.content[0]):
             g.rendercache.set(self.request_key(),

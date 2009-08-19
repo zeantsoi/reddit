@@ -61,7 +61,8 @@ class Globals(object):
                   'use_query_cache',
                   'write_query_queue',
                   'css_killswitch',
-                  'db_create_tables']
+                  'db_create_tables',
+                  'allow_shutdown']
 
     tuple_props = ['memcaches',
                    'rec_cache',
@@ -191,6 +192,9 @@ class Globals(object):
 
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
+
+        #the shutdown toggle
+        self.shutdown = False
 
     @staticmethod
     def to_bool(x):
