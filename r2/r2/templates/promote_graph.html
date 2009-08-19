@@ -20,7 +20,9 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   import datetime
+   import datetime, locale
+   def num(x):
+      return locale.format('%d', x, True)
  %>
 <div class="calendar">
   <%
@@ -56,17 +58,16 @@
      width  = "%.2f" % (float(100*(end-start))/thing.total_size)
      prev_end = end
    %>  
-  <div class="blob" style="width: ${width}%; margin-left: ${margin}%">
+  <div class="blob promotedlink ${link.rowstyle} rounded"
+         style="width: ${width}%; margin-left: ${margin}%">
     <div class="bid">
-      $${int(link.promote_bid)}
+        $${int(link.promote_bid)}
     </div>
-    <div class="promotedlink ${link.rowstyle} rounded">
-      <a class="title" 
-         href="/promoted/edit_promo/${link._id36}"
-         title="${link.title}">
-        ${link.author.name}
-      </a>
-    </div>
+    <a class="title" 
+       href="/promoted/edit_promo/${link._id36}"
+       title="${link.title}">
+      ${link.author.name}
+    </a>
   </div>
 %endfor
 </div>
@@ -92,13 +93,15 @@
     </tr>
     %for link, uimp, nimp, ucli, ncli in thing.recent:
     <tr>
-      <td>${link._date.strftime("%Y-%m-%d")}</td>
-      <td>${uimp}</td>
-      <td>${nimp}</td>
-      <td>${ucli}</td>
-      <td>${ncli}</td>
-      <td style="align:left">${link._ups - link._downs}</td>
-      <td>
+      <td style="white-space:nowrap">
+        ${link._date.strftime("%Y-%m-%d")}
+      </td>
+      <td>${num(uimp)}</td>
+      <td>${num(nimp)}</td>
+      <td>${num(ucli)}</td>
+      <td>${num(ncli)}</td>
+      <td>${link._ups - link._downs}</td>
+      <td style="text-align:left">
         <a class="title" href="${link.permalink}">${link.title}</a>
       </td>
     </tr>

@@ -43,15 +43,21 @@ def visible_promo(article):
     is_promo = getattr(article, "promoted", None) is not None
     is_author = (c.user_is_loggedin and
                  c.user._id == article.author_id)
-    return (is_promo and not article.disable_comments and
-            (is_author or article.promote_status >= promote.STATUS.promoted))
+    # promos are visible only if comments are not disabled and the
+    # user is either the author or the link is live/previously live.
+    if is_promo:
+        return (not article.disable_comments and
+                (is_author or
+                 article.promote_status >= promote.STATUS.promoted))
+    # not a promo, therefore it is visible
+    return True
 
 def can_view_link_comments(article):
-    return (article.subreddit_slow.can_view(c.user) or
+    return (article.subreddit_slow.can_view(c.user) and
             visible_promo(article))
 
 def can_comment_link(article):
-    return (article.subreddit_slow.can_comment(c.user) or
+    return (article.subreddit_slow.can_comment(c.user) and
             visible_promo(article))
 
 class Validator(object):

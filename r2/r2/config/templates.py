@@ -33,6 +33,7 @@ api('templated', NullJsonTemplate)
 
 # class specific overrides
 api('link',          LinkJsonTemplate)
+api('promotedlink',  PromotedLinkJsonTemplate)
 api('comment',       CommentJsonTemplate)
 api('message',       MessageJsonTemplate)
 api('subreddit',     SubredditJsonTemplate)

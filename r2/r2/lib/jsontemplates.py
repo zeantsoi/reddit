@@ -202,7 +202,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 domain       = "domain",
                                                 title        = "title",
                                                 url          = "url",
-                                                author       = "author", 
+                                                author       = "author",
                                                 thumbnail    = "thumbnail",
                                                 media        = "media_object",
                                                 media_embed  = "media_embed",
@@ -237,6 +237,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
         return d
 
 
+class PromotedLinkJsonTemplate(LinkJsonTemplate):
+    _data_attrs_ = LinkJsonTemplate.data_attrs(promoted = "promoted")
+    del _data_attrs_['author']
 
 class CommentJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",

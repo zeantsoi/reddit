@@ -1761,23 +1761,40 @@ class Promote_Graph(Templated):
 
         # wrap the links
         links = wrap_links([p.thing_name for p in promos])
-        links = dict((l._fullname, l) for l in links.things)
+        # remove rejected/unpaid promos
+        links = dict((l._fullname, l) for l in links.things
+                     if (l.promoted is not None and
+                         l.promote_status not in ( promote.STATUS.rejected,
+                                                   promote.STATUS.unpaid)) )
+        # filter promos accordingly
+        promos = filter(lambda p: links.has_key(p.thing_name), promos)
 
         promote_blocks = []
         market = {}
         for p in promos:
             starti = max((p.start_date - start_date).days, 0)
-            endi   = min((p.end_date   - start_date).days, size )
+            endi   = min((p.end_date   - start_date).days, size)
             link = links[p.thing_name]
-            if (link.promoted is not None and
-                (link.promote_status != promote.STATUS.rejected and
-                 link.promote_status != promote.STATUS.unpaid)):
-                bid_day = link.promote_bid / max((p.end_date - p.start_date).days, 1)
-                if link.promote_status != promote.STATUS.rejected:
-                    for i in xrange(starti, endi):
-                        market[i] = market.get(i, 0) + bid_day
-                promote_blocks.append( (link, starti, endi) )
-        
+            bid_day = link.promote_bid/max((p.end_date - p.start_date).days, 1)
+            for i in xrange(starti, endi):
+                market[i] = market.get(i, 0) + bid_day
+            promote_blocks.append( (link, starti, endi) )
+
+        # now sort the promoted_blocks into the most contiguous chuncks we can
+        sorted_blocks = []
+        while promote_blocks:
+            cur = promote_blocks.pop(0)
+            while True:
+                sorted_blocks.append(cur)
+                # get the future items (sort will be preserved)
+                future = filter(lambda x: x[1] >= cur[2], promote_blocks)
+                if future:
+                    # resort by date and give precidence to longest promo:
+                    cur = min(future, key = lambda x: (x[1], x[1]-x[2]))
+                    promote_blocks.remove(cur)
+                else:
+                    break
+
         # load recent traffic as well:
         self.recent =  dict(load_summary("thing"))
 
@@ -1793,7 +1810,7 @@ class Promote_Graph(Templated):
                            total_size = size,
                            market = market, 
                            start_date = start_date,
-                           promote_blocks = promote_blocks)
+                           promote_blocks = sorted_blocks)
         
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):

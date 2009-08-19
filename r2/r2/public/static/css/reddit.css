@@ -2495,33 +2495,26 @@ ul.tabmenu.formtab {
 }
 
 .calendar .blob { 
-    position: relative; 
-    margin-bottom: -1px;
+    margin: 0;
+    padding: 0px; 
     z-index: 10; 
     float: left;
 }
 
 .calendar .blob .bid { 
-    position: absolute;
-    top: 0px;
-    right: 0px; 
-    font-weight: bold;
-    z-index: 11; 
-    margin: 5px; 
+    text-align: right;
+    font-weight: bold; 
+    padding: 5px 5px 0px 5px; ; 
 }
 
-.calendar .blob .tagline { 
-    margin-left: 2px; 
-    white-space: nowrap; 
-}
-
-.blob .promotedlink.link {
-    margin: 0; 
+.blob.link {
+    margin: -1px -2px 0px -2px; 
     border: 1px solid black;
-    padding-right: 20px; 
 }
 
-.blob .promotedlink.link .title{
+.blob.link .title{
     font-size: small; 
+    padding: 0 5px 5px 5px; 
+    display: block; 
 }
 
