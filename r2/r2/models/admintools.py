@@ -30,17 +30,23 @@ from datetime import datetime
 from copy import copy
 
 class AdminTools(object):
+
     def spam(self, things, auto, moderator_banned, banner, date = None, **kw):
+        things = [x for x in tup(things) if not x._spam]
         Report.accept(things, True)
-        things = [ x for x in tup(things) if not x._spam ]
         for t in things:
             t._spam = True
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info.update(auto = auto,
                             moderator_banned = moderator_banned,
-                            banner = banner,
                             banned_at = date or datetime.now(g.tz),
                             **kw)
+
+            if isinstance(banner, dict):
+                ban_info['banner'] = banner[t._fullname]
+            else:
+                ban_info['banner'] = banner
+
             t.ban_info = ban_info
             t._commit()
             changed(t)
@@ -48,8 +54,8 @@ class AdminTools(object):
         queries.ban(things)
 
     def unspam(self, things, unbanner = None):
+        things = [x for x in tup(things) if x._spam]
         Report.accept(things, False)
-        things = [ x for x in tup(things) if x._spam ]
         for t in things:
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info['unbanned_at'] = datetime.now(g.tz)
