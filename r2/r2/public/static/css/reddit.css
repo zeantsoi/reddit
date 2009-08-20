@@ -2507,12 +2507,12 @@ ul.tabmenu.formtab {
     padding: 5px 5px 0px 5px; ; 
 }
 
-.blob.link {
+.calendar .blob.link {
     margin: -1px -2px 0px -2px; 
     border: 1px solid black;
 }
 
-.blob.link .title{
+.calendar .blob.link .title{
     font-size: small; 
     padding: 0 5px 5px 5px; 
     display: block; 
