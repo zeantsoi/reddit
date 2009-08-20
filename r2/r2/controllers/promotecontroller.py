@@ -37,7 +37,7 @@ from r2.lib import cssfilter
 from datetime import datetime
 
 class PromoteController(ListingController):
-    skip = True
+    skip = False
     where = 'promoted'
     render_cls = PromotePage
     
@@ -220,7 +220,8 @@ class PromoteController(ListingController):
                 return
 
         # dates have been validated at this point.  Next validate title, etc.
-        if (form.has_errors('title', errors.NO_TEXT) or
+        if (form.has_errors('title', errors.NO_TEXT,
+                            errors.TOO_LONG) or
             form.has_errors('url', errors.NO_URL, errors.BAD_URL) or
             form.has_errors('bid', errors.BAD_NUMBER) or
             (not l and form.has_errors('ratelimit', errors.RATELIMIT))):

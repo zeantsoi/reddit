@@ -69,7 +69,7 @@ class LinkButtons(PrintableButtons):
             promotable = (thing._date <= now and thing.promote_until > now)
             kw = dict(promo_url = promo_edit_url(thing),
                       promote_status = getattr(thing, "promote_status", 0),
-                      user_is_sponsor = thing.user_is_sponsor,
+                      user_is_sponsor = c.user_is_sponsor,
                       promotable = promotable,
                       traffic_url = "/traffic/" + thing._id36, 
                       is_author = thing.is_author)

@@ -29,17 +29,15 @@
 <%namespace file="utils.html" import="plain_link" />
 
 <%def name="tagline()">
-%if c.user_is_sponsor:
- <%
-    if thing.promote_status < STATUS.promoted:
-      taglinetext = _("to be promoted by %(author)s") 
-    else:
-      taglinetext = _("promoted %(when)s ago by %(author)s") 
-    taglinetext = taglinetext.replace(" ", "&#32;")
-  %>
-  ${unsafe(taglinetext % dict(when = thing.timesince, 
-                              author= self.author(attribs = thing.attribs)))}
-%endif
+<%
+   if thing.promote_status < STATUS.promoted and c.user_is_sponsor:
+     taglinetext = _("to be promoted by %(author)s") 
+   else:
+     taglinetext = _("promoted %(when)s ago by %(author)s") 
+   taglinetext = taglinetext.replace(" ", "&#32;")
+ %>
+${unsafe(taglinetext % dict(when = thing.timesince, 
+                            author= self.author(attribs = thing.attribs)))}
 </%def>
 
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">
