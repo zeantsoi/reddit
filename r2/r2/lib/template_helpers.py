@@ -76,14 +76,6 @@ def class_dict():
     res = ', '.join(classes)
     return unsafe('{ %s }' % res)
 
-def path_info():
-    loc = dict(path = request.path,
-               params = dict(request.get))
-    
-    return unsafe(simplejson.dumps(loc))
-    
-
-
 def replace_render(listing, item, render_func):
     def _replace_render(style = None, display = True):
         """

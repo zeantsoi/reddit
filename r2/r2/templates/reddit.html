@@ -21,7 +21,7 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, path_info,  get_domain
+   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
    from r2.lib.pages import SearchForm, ClickGadget
    from r2.lib import tracking
    from pylons import request
@@ -99,7 +99,6 @@
 </%def>
 
 <%def name="javascript_run()">
-   reddit.where = ${path_info()};
    reddit.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
 </%def>
 
