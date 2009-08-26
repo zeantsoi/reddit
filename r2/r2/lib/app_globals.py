@@ -114,6 +114,7 @@ class Globals(object):
 
         # initialize caches
         mc = Memcache(self.memcaches, pickleProtocol = 1)
+        self.memcache = mc
         self.cache = CacheChain((LocalCache(), mc))
         self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
         self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
@@ -195,6 +196,10 @@ class Globals(object):
 
         #the shutdown toggle
         self.shutdown = False
+
+        #if we're going to use the query_queue, we need amqp
+        if self.write_query_queue and not self.amqp_host:
+            raise Exception("amqp_host must be defined to use the query queue")
 
     @staticmethod
     def to_bool(x):

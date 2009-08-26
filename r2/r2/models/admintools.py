@@ -22,7 +22,6 @@
 from r2.lib.utils import tup
 from r2.models import Report, Account
 from r2.models.thing_changes import changed
-from r2.lib.db import queries
 
 from pylons import g
 
@@ -32,6 +31,8 @@ from copy import copy
 class AdminTools(object):
 
     def spam(self, things, auto, moderator_banned, banner, date = None, **kw):
+        from r2.lib.db import queries
+
         things = [x for x in tup(things) if not x._spam]
         Report.accept(things, True)
         for t in things:
@@ -54,6 +55,8 @@ class AdminTools(object):
         queries.ban(things)
 
     def unspam(self, things, unbanner = None):
+        from r2.lib.db import queries
+
         things = [x for x in tup(things) if x._spam]
         Report.accept(things, False)
         for t in things:

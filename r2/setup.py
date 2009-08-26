@@ -65,6 +65,14 @@ except ImportError:
     print "Installing Pylons 0.9.6.2 from the cheese shop"
     easy_install(["http://pypi.python.org/packages/source/P/Pylons/Pylons-0.9.6.2.tar.gz"])
 
+#install the devel version of py-amqplib until the cheesehop version is updated
+try:
+    import amqplib
+except ImportError:
+    print "Installing the py-amqplib"
+    easy_install(["http://addons.reddit.com/amqp/py-amqplib-0.6.1-devel.tgz"])
+
+
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
 
