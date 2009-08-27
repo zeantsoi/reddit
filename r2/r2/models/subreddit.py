@@ -290,7 +290,7 @@ class Subreddit(Thing, Printable):
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
                                                             'restricted'),
                                        sort=desc('_downs'),
-                                       limit = limit * 1.5 if limit else None,
+                                       limit = limit,
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
@@ -301,14 +301,7 @@ class Subreddit(Thing, Printable):
         if not c.over18:
             pop_reddits._filter(Subreddit.c.over_18 == False)
 
-        # evaluate the query and remove the ones with
-        # allow_top==False.  Note that because this filtering is done
-        # after the query is run, if there are a lot of top reddits
-        # with allow_top==False, we may return fewer than `limit`
-        # results.
-        srs = filter(lambda sr: sr.allow_top, pop_reddits)
-
-        return srs[:limit] if limit else srs
+        return list(pop_reddits)
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
