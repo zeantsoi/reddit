@@ -180,6 +180,9 @@ class Globals(object):
         if self.debug:
             self.log.setLevel(logging.DEBUG)
 
+        # set log level for pycountry which is chatty
+        logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
+
         if not self.media_domain:
             self.media_domain = self.domain
         if self.media_domain == self.domain:
