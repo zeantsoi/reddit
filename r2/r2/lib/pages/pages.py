@@ -46,7 +46,7 @@ from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
 
 import sys, random, datetime, locale, calendar, simplejson, re
-import graph
+import graph, pycountry
 from itertools import chain
 from urllib import quote
 
@@ -225,7 +225,7 @@ class Reddit(Templated):
         if c.user_is_loggedin:
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin', False))
-            if c.user_is_sponsor:
+            if c.user_is_sponsor or c.user_is_paid_sponsor:
                 more_buttons.append(NavButton(menu.promote, 'promoted', False))
 
         #if there's only one button in the dropdown, get rid of the dropdown
@@ -236,12 +236,12 @@ class Reddit(Templated):
         toolbar = [NavMenu(main_buttons, type='tabmenu')]
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
-        
+
         if c.site != Default and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
-                
+
     def __repr__(self):
         return "<Reddit>"
 
@@ -1454,7 +1454,8 @@ class PromotePage(Reddit):
             buttons.append(NamedButton('my_current_promos', dest = ''))
 
         
-        buttons += [NamedButton('pending_promos'),
+        buttons += [NamedButton('unpaid_promos'),
+                    NamedButton('pending_promos'),
                     NamedButton('live_promos')]
 
         if c.user_is_sponsor:
@@ -1741,11 +1742,15 @@ class RedditTraffic(Traffic):
                                         locale.format("%d", scaled, True)))
                     elif last_d and d[i] and last_d[i]:
                         f = 100 * (float(d[i])/last_d[i] - 1)
-                        
+
                         res[-1].append(("up" if f > 0 else "down", 
                                         "%5.2f%%" % f))
         return res
 
+class PaymentForm(Templated):
+    def __init__(self, **kw):
+        self.countries = pycountry.countries
+        Templated.__init__(self, **kw)
 
 class Promote_Graph(Templated):
     def __init__(self):
@@ -1754,7 +1759,7 @@ class Promote_Graph(Templated):
         end_date   = (now + datetime.timedelta(7)).date()
 
         size = (end_date - start_date).days
-        
+
         # grab promoted links
         promos = PromoteDates.for_date_range(start_date, end_date)
         promos.sort(key = lambda x: x.start_date)
@@ -1805,6 +1810,23 @@ class Promote_Graph(Templated):
 
             self.recent = self.recent.values()
             self.recent.sort(key = lambda x: x[0]._date)
+
+        self.promo_traffic = load_traffic('day', 'promos')
+        impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
+        if impressions:
+            chart = graph.LineGraph(impressions)
+            self.imp_graph = chart.google_chart(ylabels = ['total'],
+                                                title = "impressions")
+
+            clicks = [(d, k) for (d, (i, k)) in self.promo_traffic]
+            chart = graph.LineGraph(clicks)
+            self.cli_graph = chart.google_chart(ylabels = ['total'],
+                                                title = "clicks")
+
+        else:
+            self.imp_graph = self.cli_graph = None
+
+        self.promo_traffic = dict(self.promo_traffic)
 
         Templated.__init__(self,
                            total_size = size,

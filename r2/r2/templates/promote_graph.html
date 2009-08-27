@@ -32,12 +32,31 @@
     <%
        left = "%.2f" % (100*float(i)/thing.total_size)
        right = "%.2f" %  (100 - 100*float(i+1)/thing.total_size)
-       day = thing.start_date + datetime.timedelta(i) 
+       day = thing.start_date + datetime.timedelta(i)
+       CPC = CPM = imp_traffic = cli_traffic = "---"
+       if thing.promo_traffic.has_key(day):
+           imp_traffic, cli_traffic = thing.promo_traffic[day]
+           if thing.market.has_key(i):
+              CPM = "$%.2f CPM" % (thing.market[i] * 1000./max(imp_traffic, 1))
+              CPC = "$%.2f CPC" % (thing.market[i] * 1./max(cli_traffic, 1))
+           imp_traffic = num(imp_traffic)
+           cli_traffic = num(cli_traffic)
+           if day == today:
+              imp_traffic = "(%s)" % imp_traffic
+              cli_traffic = "(%s)" % cli_traffic
      %>
     <div class="grid ${'today' if day == today else ''}" 
          style="left:${left}%; right:${right}%">
       <div class="header">
         ${day}
+      </div>
+      <div class="header total">
+        ${imp_traffic}<br/>
+        ${CPM}
+      </div>
+      <div class="header total">
+        ${cli_traffic}<br/>
+        ${CPC}
       </div>
       <div class="header total">
         ${"$%.2f" % thing.market[i] if thing.market.has_key(i) else "---"}
@@ -49,6 +68,7 @@
    prev_end = 0
  %>
 %for link, start, end in thing.promote_blocks:
+ %if start != end:
   %if prev_end > start:
     <% prev_end = 0 %>
     <div class="clearleft"></div>
@@ -69,8 +89,21 @@
       ${link.author.name}
     </a>
   </div>
+ %endif
 %endfor
 </div>
+<div class="clear"></div>
+
+<h1>${_("total promotion traffic")}</h1>
+%if thing.imp_graph:
+  <img class="traffic-graph" src="${thing.imp_graph}"
+       alt="impressions graph"/>
+%endif
+%if thing.cli_graph:
+   <img class="traffic-graph" src="${thing.cli_graph}" 
+        alt="click graph"/>
+%endif
+
 <div class="clear"></div>
   %if thing.recent:
   <h1>${_('promotions this month')}</h1>

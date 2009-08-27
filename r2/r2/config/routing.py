@@ -118,6 +118,8 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/promoted/edit_promo/:link',
        controller='promote', action = 'edit_promo')
+    mc('/promoted/pay/:link',
+       controller='promote', action = 'pay')
     mc('/promoted/graph',
        controller='promote', action = 'graph')
     mc('/promoted/:action', controller='promote',
@@ -171,7 +173,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/post/:action/:url_user', controller='post',
        requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',
-       requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg|pay"))
+       requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
     
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     mc('/api/:action/:url_user', controller='api',
@@ -179,7 +181,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
     mc('/api/:action', controller='promote',
-       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note"))
+       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund"))
     mc('/api/:action', controller='api')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')

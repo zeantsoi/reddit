@@ -30,7 +30,7 @@
 
 <%def name="tagline()">
 <%
-   if thing.promote_status < STATUS.promoted and c.user_is_sponsor:
+   if thing.promote_status < STATUS.promoted and (c.user_is_sponsor or thing.is_author):
      taglinetext = _("to be promoted by %(author)s") 
    else:
      taglinetext = _("promoted %(when)s ago by %(author)s") 
@@ -52,15 +52,15 @@ ${unsafe(taglinetext % dict(when = thing.timesince,
   <p class="sponsored-tagline">
     %if thing.is_author or c.user_is_sponsor:
       %if thing.promote_status == STATUS.unpaid:
-        ${_('unverified sponsored link')} 
+        ${_('unpaid sponsored link')} 
       %elif thing.promote_status == STATUS.unseen:
         ${_('unapproved sponsored link')} 
       %elif thing.promote_status == STATUS.accepted:
-        ${_('pending sponsored link')} 
+        ${_('accepted sponsored link')} 
       %elif thing.promote_status == STATUS.rejected:
         ${_('rejected sponsored link')} 
       %elif thing.promote_status == STATUS.pending:
-        ${_('queued sponsored link')} 
+        ${_('pending sponsored link')} 
       %elif thing.promote_status == STATUS.promoted:
         ${_('sponsored link')} 
       %else:

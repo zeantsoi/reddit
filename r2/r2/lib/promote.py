@@ -22,7 +22,7 @@
 from __future__ import with_statement
 
 from r2.models import *
-from r2.models import bidding
+from r2.lib import authorize
 from r2.lib import emailer
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum
@@ -55,15 +55,15 @@ def promotion_log(thing, text, commit = False):
     """
     For logging all sorts of things
     """
-    if c.user:
-        log = list(getattr(thing, "promotion_log", []))
-        now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
-        text = "[%s: %s] %s" % (c.user.name, now, text)
-        log.append(text)
-        thing.promotion_log = log[::]
-        if commit:
-            thing._commit()
-        return text
+    name = c.user.name if c.user_is_loggedin else "<MAGIC>"
+    log = list(getattr(thing, "promotion_log", []))
+    now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
+    text = "[%s: %s] %s" % (name, now, text)
+    log.append(text)
+    thing.promotion_log = log[::]
+    if commit:
+        thing._commit()
+    return text
     
 def new_promotion(title, url, user, ip, promote_start, promote_until, bid,
                   disable_comments = False,
@@ -121,12 +121,15 @@ def update_promo_data(thing, title, url, commit = True):
     return False
 
 def refund_promo(thing, user, refund):
-    """
-    
-    """
-    promotion_log(thing, "payment update: refunded '%s'" % refund)
-    bidding.refund_transaction(user, thing.promote_trans_id)
-    
+    cur_refund = getattr(thing, "promo_refund", 0)
+    refund = min(refund, thing.promote_bid - cur_refund)
+    if refund > 0:
+        thing.promo_refund = cur_refund + refund
+        if authorize.refund_transaction(refund, user, thing.promote_trans_id):
+            promotion_log(thing, "payment update: refunded '%.2f'" % refund)
+        else:
+            promotion_log(thing, "payment update: refund failed")
+        thing._commit()
 
 def auth_paid_promo(thing, user, pay_id, bid):
     """
@@ -140,10 +143,10 @@ In the case that bid already exists on the current promotion, the
     elif (thing.promote_status > STATUS.unpaid and
           thing.promote_trans_id):
         # void the existing transaction
-        bidding.void_transaction(user, thing.promote_trans_id)
+        authorize.void_transaction(user, thing.promote_trans_id)
 
     # create a new transaction and update the bid
-    trans_id = bidding.auth_transaction(bid, user, pay_id, thing)
+    trans_id = authorize.auth_transaction(bid, user, pay_id, thing)
     thing.promote_bid = bid
     
     if trans_id:
@@ -157,9 +160,10 @@ In the case that bid already exists on the current promotion, the
         # something bad happend.  
         promotion_log(thing, "updated payment and/or bid: FAILED")    
         thing.promore_status = STATUS.unpaid
-        thing.promote_trans_id = None
+        thing.promote_trans_id = 0
     thing._commit()
     emailer.promo_bid(thing)
+    return bool(trans_id)
 
     
 def unapproved_promo(thing):
@@ -212,14 +216,18 @@ def pending_promo(thing):
     the account of the user and set the new status as pending. 
     """
     if thing.promote_status == STATUS.accepted and thing.promote_trans_id:
-        promotion_log(thing, "status update: pending")
         user = Account._byID(thing.author_id)
         # TODO: check for charge failures/recharges, etc
-        bidding.charge_transaction(user, thing.promote_trans_id)
-        thing.promote_status = STATUS.pending
-        thing.promote_paid = thing.promote_bid
-        thing._commit()
-        emailer.queue_promo(thing)
+        if authorize.charge_transaction(user, thing.promote_trans_id):
+            promotion_log(thing, "status update: pending")
+            thing.promote_status = STATUS.pending
+            thing.promote_paid = thing.promote_bid
+            thing._commit()
+            emailer.queue_promo(thing)
+        else:
+            promotion_log(thing, "status update: charge failure")
+            #TODO: email rejection?
+
 
 
 def promote(thing, batch = False):
@@ -400,7 +408,7 @@ def random_promoted():
                 if n < 0:
                     return promo_list[i:] + promo_list[:i]
         return promo_list
-        
+
 
 def test_random_promoted(n = 1000):
     promos = get_promoted()
@@ -410,13 +418,13 @@ def test_random_promoted(n = 1000):
         for i in xrange(n):
             key = random_promoted()[0]
             res[key] = res.get(key, 0) + 1
-    
+
         print "%10s expected actual   E/A" % "thing"
         print "------------------------------------"
         for k, v in promos.iteritems():
             expected = float(v) / market * 100
             actual   = float(res.get(k, 0)) / n * 100
-            
+
             print "%10s %6.2f%% %6.2f%% %6.2f" % \
                   (k, expected, actual, expected / actual if actual else 0) 
-        
+

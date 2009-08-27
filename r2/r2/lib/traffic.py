@@ -60,10 +60,18 @@ def load_traffic_uncached(interval, what, iden,
     except socket.error:
         return []
 
-@memoize("cached_traffic", time = 60)
-def load_traffic(interval, what, iden, 
+#@memoize("cached_traffic", time = 60)
+def load_traffic(interval, what, iden = '', 
                  start_time = None, stop_time = None,
                  npoints = None):
+    """
+     interval = (hour, day, month)
+     
+     what = (reddit, lang, thing, promos)
+     
+     iden is the specific thing (reddit name, language name, thing
+     fullname) that one is seeking traffic for.
+    """
     res = load_traffic_uncached(interval, what, iden, 
                                 start_time = start_time, stop_time = stop_time,
                                 npoints = npoints)

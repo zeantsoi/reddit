@@ -201,8 +201,3 @@ class PostController(ApiController):
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))
 
-
-    @validate(VUser(),
-              link = VByName("link"))
-    def POST_pay(self, link):
-        raise NotImplementedError

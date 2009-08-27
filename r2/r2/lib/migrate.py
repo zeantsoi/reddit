@@ -41,6 +41,7 @@ def convert_promoted():
     to the new style.
     """
     from r2.lib.utils import fetch_things2
+    from r2.lib import authorize
 
     q = Link._query(Link.c.promoted == (True, False),
                     sort = desc("_date"))
@@ -59,7 +60,7 @@ def convert_promoted():
                 # check that it is not already promoted)
                 l.promote_status = STATUS.accepted
                 author = Account._byID(l.author_id)
-                l.promote_trans_id = bidding.auth_transaction(bid, author, -1, l)
+                l.promote_trans_id = authorize.auth_transaction(bid, author, -1, l)
                 l.promote_bid = bid
                 l.maximum_clicks = None
                 l.maximum_views = None

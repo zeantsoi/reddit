@@ -83,6 +83,12 @@
         ${_("This promotion has been rejected.  Please edit and resubmit.")}
       </div>
     </div>
+  %elif thing.link.promote_status == STATUS.unseen:
+    <div class="spacer">
+      <div class="error">
+      ${_("Your bid has been registered and your submission is awaiting review.  We will notify you by email of status updates.")}
+    </div>
+    </div>
   %elif thing.link.promote_status < STATUS.finished:
     <div class="spacer">
       <div class="infobar">
@@ -109,7 +115,7 @@
       <div class="rounded delete-field">
         <%utils:image_upload post_target="/api/link_thumb" 
                              current_image="${thumb}"
-                             label="${_('upload header image')}">
+                             label="${_('upload header image:')}">
          <input type="hidden" name="link_id" value="${thing.link._fullname}" />
          ## overwrite the completed image function
          <script type="text/javascript">
@@ -277,7 +283,7 @@
              ${_("This link is currently a freebie.")}
            </span>
          %endif
-        ${error_field("BAD_NUMBER", "bid")}
+        ${error_field("BAD_BID", "bid")}
     </%utils:round_field>
   </div>
 </form>
@@ -292,28 +298,25 @@
                         description="${_('(total for the duration provided)')}">
       <div class="rounded delete-field">
         $${"%.2f" % thing.link.promote_bid}
-         %if getattr(thing.link, "promote_trans_id", 0) < 0:
+         <%
+            trans_id = getattr(thing.link, "promote_trans_id", None)
+          %>
+         %if trans_id and trans_id < 0:
            <span class="status">
              ${_("This link is currently a freebie.  Enjoy")}
            </span>
+         %elif thing.link.promote_status >= STATUS.pending:
+          <span class="status">
+            ${_("this amount has already been charged")}
+          </span>
          %else:
-         <form method="POST" action="/post/pay" 
-               style="display:inline; ">
-           <input type="hidden" name="link" value="${thing.link._fullname}"/>
-           %if thing.link.promote_status >= STATUS.pending:
-             <span class="status">
-               ${_("this amount has already been charged")}
-             </span>
-           %else:
-             <button name="pay" class="btn" type="submit">
+             <a href="/promoted/pay/${thing.link._id36}" class="pay-link">
                %if thing.link.promote_status == STATUS.unpaid:
                   ${_("set up payment")}
                %elif thing.link.promote_status < STATUS.pending:
                   ${_("change bid")}
                %endif
-             </button>
-           %endif
-         </form>
+             </a>
          %endif
        </div>
     </%utils:round_field>
@@ -321,18 +324,22 @@
 %endif
 
 ## provide a way to give refunds, but only if the link isn't already a freebie
+<%
+   cur_bid = getattr(thing.link, "promote_bid", g.min_promote_bid)
+   cur_refund = cur_bid - getattr(thing.link, "promo_refund", 0)
+%>
 %if c.user_is_sponsor and getattr(thing.link, "promote_paid", False) and \
-    getattr(thing.link, "promote_trans_id", -1) > 0:
+    getattr(thing.link, "promote_trans_id", -1) > 0 and cur_refund > 0:
   <div class="spacer">
     <%utils:round_field title="${_('refund')}" id="bid-field">
       <form method="POST" action="/post/refund" 
             style="display:inline; "
-            onsubmit="return post_form(this, 'new_promo')">
+            onsubmit="return post_form(this, 'refund')">
         <input type="hidden" name="link" value="${thing.link._fullname}"/>
+
         $<input id="refund" name="refund" size="7" type="text"
                 style="width:auto"
-                value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
-                                               g.min_promote_bid))}"
+                value="${'%.2f'% float(cur_refund)}"
                 maxlenght="7"/>
         ${error_field("BAD_NUMBER", "bid")}
         <button name="pay" class="btn" type="submit">
@@ -353,6 +360,7 @@
           name = "create"
           text = _("next ->")
   %>
+  ${error_field("RATELIMIT", "ratelimit")}
   <button name="${name}" class="btn" type="button"
          onclick="$('#promo-form').get(0).onsubmit()"
   >${text}</button>

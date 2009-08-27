@@ -36,6 +36,7 @@ from r2.lib.db.thing import Thing, NotFound
 from pylons import request
 import datetime
 
+
 engine = g.dbm.engines['authorize']
 # Allocate a session maker for communicating object changes with the back end  
 Session = sessionmaker(autocommit = True, autoflush = True, bind = engine)
@@ -202,6 +203,32 @@ class Sessionized(object):
         except NotFound:
             return []
 
+class CustomerID(Sessionized, Base):
+    __tablename__  = "authorize_account_id"
+
+    account_id    = Column(BigInteger, primary_key = True,
+                           autoincrement = False)
+    authorize_id  = Column(BigInteger)
+
+    def __repr__(self):
+        return "<AuthNetID(%s)>" % self.authorize_id
+
+    @classmethod
+    def set(cls, user, _id):
+        try:
+            existing = cls.one(user)
+            existing.authorize_id = _id
+            existing._commit()
+        except NotFound:
+            cls(user, _id)._commit()
+    
+    @classmethod
+    def get_id(cls, user):
+        try:
+            return cls.one(user).authorize_id
+        except NotFound:
+            return
+
 class PayID(Sessionized, Base):
     __tablename__ = "authorize_pay_id"
 
@@ -217,11 +244,22 @@ class PayID(Sessionized, Base):
     def get_ids(cls, key):
         return [int(x.pay_id) for x in cls.get(key)]
 
+class ShippingAddress(Sessionized, Base):
+    __tablename__ = "authorize_ship_id"
+
+    account_id    = Column(BigInteger, primary_key = True,
+                           autoincrement = False)
+    ship_id       = Column(BigInteger, primary_key = True,
+                           autoincrement = False)
+
+    def __repr__(self):
+        return "<%s(%d)>" % (self.__class__.__name__, self.authorize_id)
+
 class Bid(Sessionized, Base):
     __tablename__ = "bids"
 
     STATUS        = Enum("AUTH", "CHARGE", "REFUND", "VOID")
-    
+
     # will be unique from authorize
     transaction   = Column(BigInteger, primary_key = True,
                            autoincrement = False)
@@ -309,7 +347,7 @@ class PromoteDates(Sessionized, Base):
         q = cls.query().filter(and_(cls.start_date <= date,
                                     cls.end_date > date))
         return q.all()
-    
+
     @classmethod
     def for_date_range(cls, start_date, end_date):
         if isinstance(start_date, datetime.datetime):
@@ -326,53 +364,10 @@ class PromoteDates(Sessionized, Base):
         # 3) interval is a subset of a promoted interval
         surrounds    = and_(cls.start_date <= start_date,
                             cls.end_date   >= end_date)
-            
+
         q = cls.query().filter(or_(start_inside, end_inside, surrounds))
         return q.all()
-        
+
 
 Base.metadata.create_all()
 
-# negative transaction ids indicate no payment was actually involved.
-# For now, we will raise if any positive transaction ids come up.
-def get_account_info(user):
-    raise NotImplementedError
-
-def edit_profile(user, address, creditcard, pay_id = None):
-    raise NotImplementedError
-
-def refund_transaction(amount, user, trans_id):
-    if trans_id > 0:
-        raise NotImplementedError
-    bid =  Bid.one(trans_id)
-    bid.refund()
-
-def void_transaction(user, trans_id):
-    if trans_id > 0:
-        raise NotImplementedError
-    bid =  Bid.one(trans_id)
-    bid.void()
- 
-def auth_transaction(amount, user, payid, thing):
-    # use negative pay_ids to identify freebies, coupons, or anything
-    # that doesn't require a CC.
-    if payid < 0:
-        trans_id = -thing._id
-        # update previous freebie transactions if we can
-        try:
-            bid = Bid.one(thing_id = thing._id,
-                          pay_id = payid)
-            bid.bid = amount
-            bid.auth()
-        except NotFound:
-            bid = Bid._new(trans_id, user, payid, thing._id, amount)
-        return bid.transaction
-        
-    elif int(payid) in PayID.get_ids(user):
-        raise NotImplementedError
-
-def charge_transaction(user, trans_id):
-    if trans_id > 0:
-        raise NotImplementedError
-    bid =  Bid.one(trans_id)
-    bid.charged()

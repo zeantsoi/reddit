@@ -30,6 +30,7 @@ from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.jsontemplates import api_type
 
 from r2.models import *
+from r2.lib.authorize import Address, CreditCard
 
 from r2.controllers.errors import errors, UserRequiredException
 from r2.controllers.errors import VerifiedUserRequiredException
@@ -37,7 +38,7 @@ from r2.controllers.errors import VerifiedUserRequiredException
 from copy import copy
 from datetime import datetime, timedelta
 import re, inspect
-#import pycountry
+import pycountry
 
 def visible_promo(article):
     is_promo = getattr(article, "promoted", None) is not None
@@ -477,6 +478,14 @@ class VSponsor(VVerifiedUser):
                 pass
         abort(403, 'forbidden')
 
+# TODO: tempoary validator to be replaced with Vuser once we get he
+# bugs worked out
+class VPaidSponsor(VSponsor):
+    def run(self, link_id = None):
+        if c.user_is_paid_sponsor:
+            return
+        VSponsor.run(self, link_id)
+
 class VSrModerator(Validator):
     def run(self):
         if not (c.user_is_loggedin and c.site.is_moderator(c.user) 
@@ -686,10 +695,12 @@ class VBoolean(Validator):
         return val != "off" and bool(val)
 
 class VNumber(Validator):
-    def __init__(self, param, min=None, max=None, coerce = True, *a, **kw):
+    def __init__(self, param, min=None, max=None, coerce = True,
+                 error = errors.BAD_NUMBER, *a, **kw):
         self.min = self.cast(min) if min is not None else None
         self.max = self.cast(max) if max is not None else None
         self.coerce = coerce
+        self.error = error
         Validator.__init__(self, param, *a, **kw)
 
     def cast(self, val):
@@ -712,20 +723,38 @@ class VNumber(Validator):
                     raise ValueError, ""
             return val
         except ValueError:
-            self.set_error(errors.BAD_NUMBER, msg_params = dict(min=self.min,
-                                                                max=self.max))
+            self.set_error(self.error, msg_params = dict(min=self.min,
+                                                         max=self.max))
 
 class VInt(VNumber):
     def cast(self, val):
         return int(val)
 
-class VBid(VNumber):
+class VFloat(VNumber):
     def cast(self, val):
         return float(val)
 
-    def __init__(self, param):
-        VNumber.__init__(self, param, min = g.min_promote_bid,
-                         max = g.max_promote_bid, coerce = False)
+class VBid(VNumber):
+    def __init__(self, bid, link_id):
+        self.duration = 1
+        VNumber.__init__(self, (bid, link_id), min = g.min_promote_bid,
+                         max = g.max_promote_bid, coerce = False,
+                         error = errors.BAD_BID)
+
+    def cast(self, val):
+        return float(val)/self.duration
+
+    def run(self, bid, link_id):
+        if link_id:
+            try:
+                link = Thing._by_fullname(link_id, return_dict = False,
+                                          data=True)
+                self.duration = max((link.promote_until - link._date).days, 1)
+            except NotFound:
+                pass
+        if VNumber.run(self, bid):
+            return float(bid)
+
 
 class VCssName(Validator):
     """
@@ -799,7 +828,7 @@ class VRatelimit(Validator):
                                field = 'ratelimit')
             else:
                 self.set_error(self.error)
-                
+
     @classmethod
     def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_",
                   seconds = None):
@@ -1043,3 +1072,57 @@ class VDestination(Validator):
     
     def run(self, dest):
         return dest or request.referer or self.default
+
+class ValidAddress(Validator):
+    def set_error(self, msg, field):
+        Validator.set_error(self, errors.BAD_ADDRESS,
+                            dict(message=msg), field = field)
+
+    def run(self, firstName, lastName, company, address,
+            city, state, zipCode, country, phoneNumber):
+        if not firstName:
+            self.set_error(_("please provide a first name"), "firstName")
+        elif not lastName:
+            self.set_error(_("please provide a last name"), "lastName")
+        elif not address:
+            self.set_error(_("please provide an address"), "address")
+        elif not city: 
+            self.set_error(_("please provide your city"), "city")
+        elif not state: 
+            self.set_error(_("please provide your state"), "state")
+        elif not zipCode:
+            self.set_error(_("please provide your zip or post code"), "zip")
+        elif not country or not pycountry.countries.get(alpha2=country):
+            self.set_error(_("please pick a country"), "country")
+        else:
+            # TODO: update object class when opening up
+            country = pycountry.countries.get(alpha2=country).name
+            return Address(firstName = firstName,
+                           lastName = lastName,
+                           company = company or "",
+                           address = address,
+                           city = city, state = state,
+                           zip = zipCode, country = country,
+                           phoneNumber = phoneNumber or "")
+
+class ValidCard(Validator):
+    valid_ccn  = re.compile(r"\d{13,16}")
+    valid_date = re.compile(r"\d\d\d\d-\d\d")
+    valid_ccv  = re.compile(r"\d{3,4}")
+    def set_error(self, msg, field):
+        Validator.set_error(self, errors.BAD_CARD,
+                            dict(message=msg), field = field)
+
+    def run(self, cardNumber, expirationDate, cardCode):
+        if not self.valid_ccn.match(cardNumber or ""):
+            self.set_error(_("credit card numbers should be 13 to 16 digits"),
+                           "cardNumber")
+        elif not self.valid_date.match(expirationDate or ""):
+            self.set_error(_("dates should be YYYY-MM"), "expirationDate")
+        elif not self.valid_ccv.match(cardCode or ""):
+            self.set_error(_("card verification codes should be 3 or 4 digits"),
+                           "cardCode")
+        else:
+            return CreditCard(cardNumber = cardNumber,
+                              expirationDate = expirationDate,
+                              cardCode = cardCode)

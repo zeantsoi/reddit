@@ -70,6 +70,8 @@ class Globals(object):
                    'rendercaches',
                    'admins',
                    'sponsors',
+                   # TODO: temporary until we open it up to all users
+                   'paid_sponsors',
                    'monitored_servers',
                    'default_srs',
                    'agents',

@@ -154,6 +154,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      future_promos = _('unapproved'),
                      graph          = _('promo graph'),
                      live_promos    = _('live'),
+                     unpaid_promos  = _('unpaid'),
                      pending_promos = _('pending')
                      )
 

@@ -507,6 +507,8 @@ class RedditController(BaseController):
                 c.have_messages = c.user.msgtime
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
+            #TODO: temporary
+            c.user_is_paid_sponsor = c.user.name in g.paid_sponsors
 
         c.over18 = over18()
 

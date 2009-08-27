@@ -22,7 +22,7 @@
 from validator import *
 from pylons.i18n import _
 from r2.models import *
-from r2.models import bidding
+from r2.lib.authorize import get_account_info, edit_profile
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import *
@@ -56,7 +56,7 @@ class PromoteController(ListingController):
                   Link.c.promoted == (True, False))
         q._sort = desc('_date')
 
-        if c.user_is_admin and self.sort == "future_promos":
+        if c.user_is_sponsor and self.sort == "future_promos":
             q._filter(Link.c.promote_status == STATUS.unseen)
         elif self.sort == "pending_promos":
             if c.user_is_admin:
@@ -66,12 +66,14 @@ class PromoteController(ListingController):
                                                     STATUS.unseen,
                                                     STATUS.accepted,
                                                     STATUS.rejected))
+        elif self.sort == "unpaid_promos":
+            q._filter(Link.c.promote_status == STATUS.unpaid)
         elif self.sort == "live_promos":
             q._filter(Link.c.promote_status == STATUS.promoted)
 
         return q
 
-    @validate(VSponsor())
+    @validate(VPaidSponsor())
     def GET_listing(self, sort = "", **env):
         self.sort = sort
         return ListingController.GET_listing(self, **env)
@@ -79,7 +81,7 @@ class PromoteController(ListingController):
     GET_index = GET_listing
     
     # To open up: VSponsor -> VVerifiedUser
-    @validate(VSponsor(),
+    @validate(VPaidSponsor(),
               VVerifiedUser())
     def GET_new_promo(self):
         return PromotePage('content', content = PromoteLinkForm()).render()
@@ -110,7 +112,7 @@ class PromoteController(ListingController):
     ### POST controllers below
     @validatedForm(VSponsor(),
                    link = VByName("link"),
-                   bid   = VBid('bid'))
+                   bid   = VBid('bid', "link"))
     def POST_freebie(self, form, jquery, link, bid):
         if link and link.promoted is not None:
             promote.auth_paid_promo(link, c.user, -1, bid)
@@ -127,12 +129,12 @@ class PromoteController(ListingController):
 
     @validatedForm(VSponsor(),
                    link = VByName("link"),
-                   refund   = VBid('bid'))
+                   refund   = VFloat("refund"))
     def POST_refund(self, form, jquery, link, refund):
         if link:
             # make sure we don't refund more than we should
-            refund = min(refund, link.promote_bid)
-            promote.refund_promo(link, c.user, -1, bid)
+            author = Account._byID(link.author_id)
+            promote.refund_promo(link, author, refund)
         jquery.refresh()
 
     @noresponse(VSponsor(),
@@ -166,7 +168,7 @@ class PromoteController(ListingController):
                 promote.unpromote(thing)
 
     # TODO: when opening up, may have to refactor 
-    @validatedForm(VSponsor('link_id'),
+    @validatedForm(VPaidSponsor('link_id'),
                    VModhash(),
                    VRatelimit(rate_user = True,
                               rate_ip = True,
@@ -183,7 +185,7 @@ class PromoteController(ListingController):
                    max_clicks = VInt("maximum_clicks", min = 0),
                    set_views = VBoolean("set_maximum_views"),
                    max_views = VInt("maximum_views", min = 0),
-                   bid   = VBid('bid'))
+                   bid   = VBid('bid', 'link_id'))
     def POST_new_promo(self, form, jquery, l, ip, title, url, dates,
                        disable_comments, 
                        set_clicks, max_clicks, set_views, max_views, bid):
@@ -223,8 +225,8 @@ class PromoteController(ListingController):
         if (form.has_errors('title', errors.NO_TEXT,
                             errors.TOO_LONG) or
             form.has_errors('url', errors.NO_URL, errors.BAD_URL) or
-            form.has_errors('bid', errors.BAD_NUMBER) or
-            (not l and form.has_errors('ratelimit', errors.RATELIMIT))):
+            form.has_errors('bid', errors.BAD_BID) or
+            (not l and jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
         elif l:
             if l.promote_status == promote.STATUS.finished:
@@ -265,27 +267,103 @@ class PromoteController(ListingController):
         # no link so we are creating a new promotion
         elif dates:
             promote_start, promote_end = dates
-            l = promote.new_promotion(title, url, c.user, ip,
-                                      promote_start, promote_end, bid,
-                                      disable_comments = disable_comments,
-                                      max_clicks = max_clicks,
-                                      max_views = max_views)
-            # if the submitter is a sponsor (or implicitly an admin) we can
-            # fast-track the approval and auto-accept the bid
-            if c.user_is_sponsor:
-                promote.auth_paid_promo(l, c.user, -1, bid)
-                promote.accept_promo(l)
+            # check that the bid satisfies the minimum
+            duration = max((promote_end - promote_start).days, 1)
+            if bid / duration >= g.min_promote_bid:
+                l = promote.new_promotion(title, url, c.user, ip,
+                                          promote_start, promote_end, bid,
+                                          disable_comments = disable_comments,
+                                          max_clicks = max_clicks,
+                                          max_views = max_views)
+                # if the submitter is a sponsor (or implicitly an admin) we can
+                # fast-track the approval and auto-accept the bid
+                if c.user_is_sponsor:
+                    promote.auth_paid_promo(l, c.user, -1, bid)
+                    promote.accept_promo(l)
 
-            # register a vote
-            v = Vote.vote(c.user, l, True, ip)
+                # register a vote
+                v = Vote.vote(c.user, l, True, ip)
 
-            # set the rate limiter
-            if should_ratelimit:
-                VRatelimit.ratelimit(rate_user=True, rate_ip = True, 
-                                     prefix = "create_promo_")
+                # set the rate limiter
+                if should_ratelimit:
+                    VRatelimit.ratelimit(rate_user=True, rate_ip = True, 
+                                         prefix = "create_promo_",
+                                         seconds = 60)
 
-            form.redirect(promote.promo_edit_url(l))
+                form.redirect(promote.promo_edit_url(l))
+            else:
+                c.errors.add(errors.BAD_BID,
+                             msg_params = dict(min=g.min_promote_bid,
+                                               max=g.max_promote_bid),
+                             field = 'bid')
+                form.set_error(errors.BAD_BID, "bid")
 
+
+    @validatedForm(VSponsor('link'),
+                   link = VByName("link"),
+                   customer_id = VInt("customer_id", min = 0),
+                   bid   = VBid("bid", "link"),
+                   pay_id = VInt("account", min = 0),
+                   edit   = VBoolean("edit"),
+                   address = ValidAddress(["firstName", "lastName",
+                                           "company", "address",
+                                           "city", "state", "zip",
+                                           "country", "phoneNumber"]),
+                   creditcard = ValidCard(["cardNumber", "expirationDate",
+                                           "cardCode"]))
+    def POST_update_pay(self, form, jquery, bid, link, customer_id, pay_id,
+                        edit, address, creditcard):
+        address_modified = not pay_id or edit
+        if address_modified:
+            if (form.has_errors(["firstName", "lastName", "company", "address",
+                                 "city", "state", "zip",
+                                 "country", "phoneNumber"],
+                                errors.BAD_ADDRESS) or
+                form.has_errors(["cardNumber", "expirationDate", "cardCode"],
+                                errors.BAD_CARD)):
+                pass
+            else:
+                pay_id = edit_profile(c.user, address, creditcard, pay_id)
+        if form.has_errors('bid', errors.BAD_BID) or not bid:
+            pass
+        # if link is in use or finished, don't make a change
+        elif link.promote_status == promote.STATUS.promoted:
+            form.set_html(".status",
+                          _("that link is currently promoted.  "
+                            "you can't update your bid now."))
+        elif link.promote_status == promote.STATUS.finished:
+            form.set_html(".status",
+                          _("that promotion is already over, so updating "
+                            "your bid is kind of pointless, don't you think?"))
+        # don't create or modify a transaction if no changes have been made.
+        elif (link.promote_status > promote.STATUS.unpaid and
+              not address_modified and
+              getattr(link, "promote_bid", "") == bid):
+            form.set_html(".status",
+                          _("no changes needed to be made"))
+        elif pay_id:
+            # valid bid and created or existing bid id.
+            # check if already a transaction
+            if promote.auth_paid_promo(link, c.user, pay_id, bid):
+                form.redirect(promote.promo_edit_url(link))
+            else:
+                form.set_html(".status",
+                              _("failed to authenticate card.  sorry."))
+
+    @validate(VSponsor("link"),
+              article = VLink("link"))
+    def GET_pay(self, article):
+        data = get_account_info(c.user)
+        # no need for admins to play in the credit card area
+        if c.user_is_loggedin and c.user._id != article.author_id:
+            return self.abort404()
+
+        content = PaymentForm(link = article,
+                              customer_id = data.customerProfileId,
+                              profiles = data.paymentProfiles)
+        res =  LinkInfoPage(link = article,
+                            content = content)
+        return res.render()
 
     def GET_link_thumb(self, *a, **kw):
         """

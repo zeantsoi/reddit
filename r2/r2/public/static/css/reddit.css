@@ -94,7 +94,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .selected { font-weight: bold; }
 
 .flat-list {list-style-type: none; display: inline;}
-.flat-list li {display: inline;}
+.flat-list li {display: inline; }
 .flat-list form {display: inline; }
 .flat-list .selected a { color: orangered; }
 
@@ -611,7 +611,8 @@ before enabling */
 .menuarea {
     border-bottom: 1px dotted gray;
     padding: 5px 10px;
-    margin: 5px 310px 5px 5px;
+    margin: 5px;
+    overflow: hidden; 
     font-size: larger;
 }
 
@@ -2404,7 +2405,13 @@ ul.tabmenu.formtab {
 
 
 .payment-setup input[name=bid] { width: 6em; text-align: right; }
+.payment-setup form { margin: 20px;  }
+.payment-setup p { margin-bottom: 10px; }
 
+.pay-form textarea[disabled] { 
+    font-size:smaller;
+    padding: 0; 
+}
 .pay-form *[disabled],
 .pay-form input[disabled]
  { 
@@ -2438,6 +2445,7 @@ ul.tabmenu.formtab {
     list-style-type: disc;  margin: 
 }
 
+.roundfield label { font-size: smaller; padding-right: 2px;  }
 .bidding-history { padding-top: 10px }
 .bidding-history .roundfield,
 #promotion-history .roundfield { width: auto; overflow: hidden;  }
@@ -2464,13 +2472,14 @@ ul.tabmenu.formtab {
 .pay-form .optional { font-size: smaller; }
 .pay-form .disabled .optional { display: none; }
 .pay-form p.info { color: red; }
+.pay-link { font-size: smaller; margin-left: 10px;  }
 
 
 .calendar { 
     width: 100%; 
     position: relative;
-    padding-top: 40px; 
-    padding-bottom: 20px; 
+    padding-top: 100px; 
+    padding-bottom: 100px; 
     margin: 20px 0; 
 }
 
