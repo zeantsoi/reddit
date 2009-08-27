@@ -178,7 +178,7 @@ def get_domain(cname = False, subreddit = True, no_www = False):
     """
     # locally cache these lookups as this gets run in a loop in add_props
     domain = g.domain
-    domain_prefix = g.domain_prefix
+    domain_prefix = c.domain_prefix
     site  = c.site
     ccname = c.cname
     if not no_www and domain_prefix:

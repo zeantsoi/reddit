@@ -297,6 +297,7 @@ class DomainMiddleware(object):
                 environ['reddit-domain-extension'] = sd
             elif (len(sd) == 2 or (len(sd) == 5 and sd[2] == '-')) and self.lang_re.match(sd):
                 environ['reddit-prefer-lang'] = sd
+                environ['reddit-domain-prefix'] = sd
             else:
                 sr_redirect = sd
                 sub_domains.remove(sd)

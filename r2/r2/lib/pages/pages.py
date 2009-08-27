@@ -225,6 +225,7 @@ class Reddit(Templated):
         if c.user_is_loggedin:
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin', False))
+                more_buttons.append(NamedButton('traffic', False))
             if c.user_is_sponsor or c.user_is_paid_sponsor:
                 more_buttons.append(NavButton(menu.promote, 'promoted', False))
 
@@ -769,7 +770,7 @@ class ProfilePage(Reddit):
     def build_toolbars(self):
         path = "/user/%s/" % self.user.name
         main_buttons = [NavButton(menu.overview, '/', aliases = ['/overview']),
-                   NavButton(plurals.comments, 'comments'),
+                   NamedButton('comments'),
                    NamedButton('submitted')]
         
         if votes_visible(self.user):

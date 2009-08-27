@@ -457,6 +457,8 @@ class RedditController(BaseController):
     def pre(self):
         g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
 
+        c.domain_prefix = request.environ.get("reddit-domain-prefix", 
+                                              g.domain_prefix)
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
             ratelimit_agents()
