@@ -90,6 +90,7 @@ class Vote(MultiRelation('vote',
             oldamount = 0
             v = rel(sub, obj, str(amount))
             v.author_id = obj.author_id
+            v.sr_id = sr._id
             v.ip = ip
             old_valid_thing = v.valid_thing = (valid_thing(v, karma))
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
