@@ -1098,7 +1098,7 @@ def link_from_url(path, filter_spam = False, multiple = True):
         elif a.sr_id not in subs and b.sr_id in subs:
             return 1
         else:
-            return cmp(a._hot, b._hot)
+            return cmp(b._hot, a._hot)
     links = sorted(links, cmp = cmp_links)
 
     # among those, show them the hottest one
