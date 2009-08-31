@@ -64,10 +64,9 @@ class Vote(MultiRelation('vote',
         
         #check for old vote
         rel = cls.rel(sub, obj)
-        oldvote = list(rel._query(rel.c._thing1_id == sub._id,
-                                  rel.c._thing2_id == obj._id,
-                                  data = True))
-        
+        oldvote = rel._fast_query(sub, obj, ['-1', '0', '1']).values()
+        oldvote = filter(None, oldvote)
+
         amount = 1 if dir is True else 0 if dir is None else -1
 
         is_new = False
