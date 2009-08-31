@@ -20,7 +20,6 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%namespace file="utils.html" import="optionalstyle"/>
-<%namespace file="printable.html" import="score"/>
 
 <%!
    from pylons.i18n import _, ungettext
@@ -71,7 +70,17 @@
        %endif
        >
       %if not expanded:
-      ${score(thing, thing.likes, tag='span')}
+      <% 
+       if thing.likes is False:
+           score, cls = thing.display_score[0], "dislikes"
+       elif thing.likes is None:
+           score, cls = thing.display_score[1], "unvoted"
+       else:
+           score, cls = thing.display_score[2], "likes"
+       %>
+      <span class="score ${cls}">
+         ${score}
+      </span>
       &#32;|&#32;
       %endif
       <a class="reddit-comment-link"
