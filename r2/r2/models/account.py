@@ -152,7 +152,7 @@ class Account(Thing):
 
         # temporary measure to even out database load
         key = "last_visit_global_throttle"
-        if not g.memcache.add(key, "t", time=60):
+        if not g.memcache.add(key, "t", time=8):
             return
 
         apply_updates(self)
