@@ -160,9 +160,7 @@ thing id-${what._fullname}
     %endif
   %endif
 
-  %if c.user_is_admin and hasattr(thing, 'ip') and thing.ip:
-    <span class="ip" style="display: none;">${thing.ip}</span>
-  %endif
+  ${unsafe(thing.ip_span)}
 </%def>
 
 

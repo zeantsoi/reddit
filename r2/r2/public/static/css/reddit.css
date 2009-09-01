@@ -2527,3 +2527,27 @@ ul.tabmenu.formtab {
     display: block; 
 }
 
+
+a.ip {
+    border: solid 1px #eeeeee;
+    color: #cdcdcd;
+    font-family: monospace;
+    text-size: x-small;
+}
+
+a.ip:hover {
+    text-decoration: none;
+    color: orangered;
+    border: solid 1px orangered;
+}
+
+.lined-table, .lined-table th, .lined-table td {
+  border: solid #cdcdcd 1px;
+  border-collapse: collapse;
+  padding: 2px;
+  margin-bottom: 10px;
+}
+
+.lined-table th {
+  font-weight: bold;
+}

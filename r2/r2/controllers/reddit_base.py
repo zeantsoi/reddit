@@ -455,6 +455,8 @@ class RedditController(BaseController):
         c.cookies[g.login_cookie] = Cookie(value='')
 
     def pre(self):
+        c.start_time = datetime.now(g.tz)
+
         g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix", 
@@ -509,6 +511,8 @@ class RedditController(BaseController):
                 c.have_messages = c.user.msgtime
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
+            c.user.update_last_visit(c.start_time)
+
             #TODO: temporary
             c.user_is_paid_sponsor = c.user.name in g.paid_sponsors
 

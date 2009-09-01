@@ -216,16 +216,18 @@ class Globals(object):
 
     def load_db_params(self, gc):
         self.databases = tuple(self.to_iter(gc['databases']))
+        self.db_params = {}
         if not self.databases:
             return
 
         dbm = db_manager.db_manager()
-        db_params = ('name', 'db_host', 'db_user', 'db_pass',
-                     'pool_size', 'max_overflow')
+        db_param_names = ('name', 'db_host', 'db_user', 'db_pass',
+                          'pool_size', 'max_overflow')
         for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
-            params = dict(zip(db_params, conf_params))
+            params = dict(zip(db_param_names, conf_params))
             dbm.engines[db_name] = db_manager.get_engine(**params)
+            self.db_params[db_name] = params
 
         dbm.type_db = dbm.engines[gc['type_db']]
         dbm.relation_type_db = dbm.engines[gc['rel_type_db']]

@@ -23,11 +23,12 @@ from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr 
+from r2.lib.utils        import modhash, valid_hash, randstr
 
 from pylons import g
 import time, sha
 from copy import copy
+from datetime import timedelta
 
 class AccountExists(Exception): pass
 
@@ -145,7 +146,26 @@ class Account(Thing):
                        self._t.get('comment_karma', 0)))
 
         return karmas
-        
+
+    def update_last_visit(self, current_time):
+        from admintools import apply_updates
+
+        # temporary measure to even out database load
+        key = "last_visit_global_throttle"
+        if not g.memcache.add(key, "t", time=60):
+            return
+
+        apply_updates(self)
+
+        prev_visit = getattr(self, 'last_visit', None)
+
+        if prev_visit and current_time - prev_visit < timedelta(0, 3600):
+            return
+
+        self.last_visit = current_time
+
+        self._commit()
+
     def make_cookie(self, timestr = None, admin = False):
         if not self._loaded:
             self._load()

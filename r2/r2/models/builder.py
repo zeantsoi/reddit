@@ -40,7 +40,7 @@ from copy import deepcopy, copy
 
 import time
 from datetime import datetime,timedelta
-from admintools import compute_votes, admintools
+from admintools import compute_votes, admintools, ip_span
 
 EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
@@ -213,6 +213,11 @@ class Builder(object):
             w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
 
             count += 1
+
+            if c.user_is_admin and getattr(item, 'ip', None):
+                w.ip_span = ip_span(item.ip)
+            else:
+                w.ip_span = ""
 
             # if the user can ban things on a given subreddit, or an
             # admin, then allow them to see that the item is spam, and

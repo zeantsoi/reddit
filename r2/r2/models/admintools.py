@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.utils import tup
+from r2.lib.filters import websafe
 from r2.models import Report, Account
 from r2.models.thing_changes import changed
 
@@ -100,6 +101,9 @@ def valid_thing(v, karma):
 def valid_user(v, sr, karma):
     return True
 
+def apply_updates(user):
+    pass
+
 def update_score(obj, up_change, down_change, new_valid_thing, old_valid_thing):
      obj._incr('_ups',   up_change)
      obj._incr('_downs', down_change)
@@ -108,6 +112,9 @@ def compute_votes(wrapper, item):
     wrapper.upvotes   = item._ups
     wrapper.downvotes = item._downs
 
+def ip_span(ip):
+    ip = websafe(ip)
+    return '<!-- %s -->' % ip
 
 try:
     from r2admin.models.admintools import *
