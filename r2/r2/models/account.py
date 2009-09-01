@@ -150,11 +150,6 @@ class Account(Thing):
     def update_last_visit(self, current_time):
         from admintools import apply_updates
 
-        # temporary measure to even out database load
-        key = "last_visit_global_throttle"
-        if not g.memcache.add(key, "t", time=8):
-            return
-
         apply_updates(self)
 
         prev_visit = getattr(self, 'last_visit', None)
