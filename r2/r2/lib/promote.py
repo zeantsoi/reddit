@@ -229,6 +229,7 @@ def pending_promo(thing):
             emailer.queue_promo(thing)
         else:
             promotion_log(thing, "status update: charge failure")
+            thing._commit()
             #TODO: email rejection?
 
 

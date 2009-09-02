@@ -130,12 +130,16 @@ def void_transaction(user, trans_id, test = None):
 def charge_transaction(user, trans_id, test = None):
     bid =  Bid.one(trans_id)
     bid.charged()
-    if bid.account_id == user._id and trans_id > 0:
+    if trans_id < 0:
+        # freebies are automatically approved
+        return True
+    elif bid.account_id == user._id:
         res = _make_transaction(ProfileTransPriorAuthCapture,
                                 bid.bid, user,
                                 bid.pay_id, trans_id = trans_id,
                                 test = test)
-        return res
+        return bool(res)
+
 
 def refund_transaction(amount, user, trans_id, test = None):
     bid = Bid.one(trans_id)
