@@ -370,6 +370,9 @@ class SubredditInfoBar(CachedTemplate):
 
     def __init__(self, site = None):
         site = site or c.site
+
+        self.sr = list(wrap_links(site))[0]
+        
         self.spam = site._spam
         self.name = site.name
         self.type = site.type
@@ -1201,7 +1204,7 @@ class ButtonEmbed(Templated):
         Templated.__init__(self, button = button,
                            width = width, height = height,
                            referer=referer, url = url, **kw)
-        
+
 class Button(Wrapped):
     cachable = True
     extension_handling = False
@@ -1209,8 +1212,8 @@ class Button(Wrapped):
         Wrapped.__init__(self, link, **kw)
         if link is None:
             self.add_props(c.user, [self])
-            
-    
+
+
     @classmethod
     def add_props(cls, user, wrapped):
         # unlike most wrappers we can guarantee that there is a link
@@ -1812,20 +1815,62 @@ class Promote_Graph(Templated):
             self.recent = self.recent.values()
             self.recent.sort(key = lambda x: x[0]._date)
 
+        # graphs of money
+        history = now - datetime.timedelta(30)
+        pool = bidding.PromoteDates.bid_history(history)
+        if pool:
+            # we want to generate a stacked line graph, so store the
+            # bids and the total including refunded amounts
+            chart = graph.LineGraph([(d, b, r) for (d, b, r) in pool],
+                                    colors = ("008800", "FF0000"))
+            total_sale = sum(b for (d, b, r) in pool)
+            total_refund = sum(r for (d, b, r) in pool)
+            self.money_graph = chart.google_chart(
+                ylabels = ['total ($)'],
+                title = ("monthly sales ($%.2f total, $%.2f credits)" %
+                         (total_sale, total_refund)),
+                multiy = False)
+
+            self.top_promoters = bidding.PromoteDates.top_promoters(history)
+        else:
+            self.money_graph = None
+            self.top_promoters = []
+
+        # graphs of impressions and clicks
         self.promo_traffic = load_traffic('day', 'promos')
         impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
+
+        pool = dict((d, b+r) for (d, b, r) in pool)
+
         if impressions:
             chart = graph.LineGraph(impressions)
             self.imp_graph = chart.google_chart(ylabels = ['total'],
                                                 title = "impressions")
 
             clicks = [(d, k) for (d, (i, k)) in self.promo_traffic]
+
+            CPM = [(d, (pool.get(d, 0) * 1000. / i) if i else 0)
+                   for (d, (i, k)) in self.promo_traffic]
+
+            CPC = [(d, (100 * pool.get(d, 0) / k) if k else 0)
+                   for (d, (i, k)) in self.promo_traffic]
+
+
             chart = graph.LineGraph(clicks)
             self.cli_graph = chart.google_chart(ylabels = ['total'],
                                                 title = "clicks")
 
+            chart = graph.LineGraph(CPM, colors = ["336699"])
+            self.cpm_graph = chart.google_chart(ylabels = ['CPM ($)'],
+                                       title = "cost per 10k impressions")
+
+            chart = graph.LineGraph(CPC, colors = ["336699"])
+            self.cpc_graph = chart.google_chart(ylabels = ['CPC ($0.01)'],
+                                                title = "cost per click")
+
         else:
             self.imp_graph = self.cli_graph = None
+            self.cpc_graph = self.cpm_graph = None
 
         self.promo_traffic = dict(self.promo_traffic)
 

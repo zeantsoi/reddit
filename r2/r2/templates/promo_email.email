@@ -29,7 +29,7 @@
                                 promote.promo_edit_url(thing.link))
  %>
 %if thing.kind == Email.Kind.ACCEPT_PROMO:
-You're bid of $$ ${thing.body} has been accepted.  To update your bid:
+You're bid of $${"%.2f" % thing.link.promote_bid} has been accepted.  To update your bid:
    ${edit_url}
 %elif thing.kind == Email.Kind.ACCEPT_PROMO:
 Your promotion has been accepted.  To update the link's bid or duration, please visit its edit page:
@@ -57,4 +57,10 @@ You can also track it's traffic with the traffic tab.
 NOTE: changing your promotion's title and/or url will result in it getting dequeued and subject to reapproval.   
 %elif thing.kind == Email.Kind.FINISHED_PROMO:
 Your promotion has finished.  Traffic totals will be finalized within the next two hours.  
+%elif thing.kind == Email.Kind.BID_PROMO:
+Your bid on the promotion
+   ${edit_url}
+has been updated and is now $${"%.2f" % thing.link.promote_bid}.
+
+You have until 24 hours before the promotion is scheduled to go live to update your bid. 
 %endif

@@ -19,7 +19,6 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from __future__ import with_statement
 from sqlalchemy import Column, String, DateTime, Date, Float, Integer, \
      func as safunc, and_, or_
 from sqlalchemy.exceptions import IntegrityError
@@ -34,6 +33,7 @@ from r2.lib.utils import Enum
 from r2.models.account import Account
 from r2.lib.db.thing import Thing, NotFound
 from pylons import request
+from r2.lib.memoize import memoize
 import datetime
 
 
@@ -124,7 +124,7 @@ class Sessionized(object):
             else:
                 raise TypeError,\
                       "got multiple arguments for '%s'" % k.name
-        
+
         cols = dict((x.name, x) for x in cls.__table__.c)
         for k, v in kw.iteritems():
             if cols.has_key(k):
@@ -277,7 +277,6 @@ class Bid(Sessionized, Base):
     # bid information:
     bid           = Column(Float, nullable = False)
     charge        = Column(Float)
-    refund        = Column(Float)
 
     status        = Column(Integer, nullable = False,
                            default = STATUS.AUTH)
@@ -312,11 +311,16 @@ class PromoteDates(Sessionized, Base):
 
     thing_name   = Column(String, primary_key = True, autoincrement = False)
 
-    start_date = Column(Date(), nullable = False)
-    end_date   = Column(Date(), nullable = False)
+    account_id   = Column(BigInteger, index = True,  autoincrement = False)
 
-    actual_start = Column(DateTime(timezone = True))
-    actual_end   = Column(DateTime(timezone = True))
+    start_date = Column(Date(), nullable = False, index = True)
+    end_date   = Column(Date(), nullable = False, index = True)
+
+    actual_start = Column(DateTime(timezone = True), index = True)
+    actual_end   = Column(DateTime(timezone = True), index = True)
+
+    bid          = Column(Float)
+    refund       = Column(Float)
 
     @classmethod
     def update(cls, thing, start_date, end_date):
@@ -326,19 +330,34 @@ class PromoteDates(Sessionized, Base):
             promo.end_date   = end_date.date()
             promo._commit()
         except NotFound:
-            promo = cls._new(thing, start_date, end_date)
+            promo = cls._new(thing, thing.author_id, start_date, end_date)
+
+    @classmethod
+    def update_bid(cls, thing):
+        bid = thing.promote_bid
+        refund = 0
+        if thing.promote_trans_id < 0:
+            refund = bid
+        elif hasattr(thing, "promo_refund"):
+            refund = thing.promo_refund
+        promo = cls.one(thing)
+        promo.bid = bid
+        promo.refund = refund
+        promo._commit()
 
     @classmethod
     def log_start(cls, thing):
         promo = cls.one(thing)
         promo.actual_start = datetime.datetime.now(g.tz)
         promo._commit()
+        cls.update_bid(thing)
 
     @classmethod
     def log_end(cls, thing):
         promo = cls.one(thing)
         promo.actual_end = datetime.datetime.now(g.tz)
         promo._commit()
+        cls.update_bid(thing)
 
     @classmethod
     def for_date(cls, date):
@@ -349,11 +368,11 @@ class PromoteDates(Sessionized, Base):
         return q.all()
 
     @classmethod
-    def for_date_range(cls, start_date, end_date):
+    def for_date_range(cls, start_date, end_date, account_id = None):
         if isinstance(start_date, datetime.datetime):
             start_date = start_date.date()
         if isinstance(end_date, datetime.datetime):
-            start_date = end_date.date()
+            end_date = end_date.date()
         # Three cases to be included:
         # 1) start date is in the provided interval
         start_inside = and_(cls.start_date >= start_date,
@@ -366,8 +385,58 @@ class PromoteDates(Sessionized, Base):
                             cls.end_date   >= end_date)
 
         q = cls.query().filter(or_(start_inside, end_inside, surrounds))
+        if account_id is not None:
+            q = q.filter(cls.account_id == account_id)
+
         return q.all()
 
+    @classmethod
+    @memoize('promodates.bid_history', time = 10 * 60)
+    def bid_history(cls, start_date, end_date = None, account_id = None):
 
+        end_date = end_date or datetime.datetime.now(g.tz)
+        q = cls.for_date_range(start_date, end_date, account_id = account_id)
+
+        d = start_date.date()
+        end_date = end_date.date()
+        res = []
+        while d < end_date:
+            bid = 0
+            refund = 0
+            for i in q:
+                end = i.actual_end.date() if i.actual_end else i.end_date
+                start = i.actual_start.date() if i.actual_start else None
+                if start and start <= d and end > d:
+                    duration = float((end - start).days)
+                    bid += i.bid / duration
+                    refund += i.refund / duration
+            res.append([d, bid, refund])
+            d += datetime.timedelta(1)
+        return res
+
+    @classmethod
+    @memoize('promodates.top_promoters', time = 10 * 60)
+    def top_promoters(cls, start_date, end_date = None):
+        end_date = end_date or datetime.datetime.now(g.tz)
+        q = cls.for_date_range(start_date, end_date)
+
+        d = start_date
+        res = []
+        accounts = Account._byID([i.account_id for i in q],
+                                 return_dict = True, data = True)
+        res = {}
+        for i in q:
+            if i.bid is not None and i.actual_start is not None:
+                r = res.setdefault(i.account_id, [0, 0, set()])
+                r[0] += i.bid
+                r[1] += i.refund
+                r[2].add(i.thing_name)
+        res = [ ([accounts[k]] + v) for (k, v) in res.iteritems() ]
+        res.sort(key = lambda x: x[1] - x[2], reverse = True)
+
+        return res
+
+
+# do all the leg work of creating/connecting to tables
 Base.metadata.create_all()
 

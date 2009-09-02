@@ -2280,6 +2280,7 @@ ul.tabmenu.formtab {
 .traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
 
 .traffic-table .prelim { font-style: italic; }
+.traffic-table .totals { font-style: italic; border-top: 1px solid black; }
 
 .traffic-graph {
     padding: 10px; 

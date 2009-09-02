@@ -129,13 +129,15 @@ def refund_promo(thing, user, refund):
             promotion_log(thing, "payment update: refunded '%.2f'" % refund)
         else:
             promotion_log(thing, "payment update: refund failed")
+        if thing.promote_status in (STATUS.promoted, STATUS.finished):
+            PromoteDates.update_bid(thing)
         thing._commit()
 
 def auth_paid_promo(thing, user, pay_id, bid):
     """
     promotes a promotion from 'unpaid' to 'unseen'.  
     
-In the case that bid already exists on the current promotion, the
+    In the case that bid already exists on the current promotion, the
     previous transaction is voided and repalced with the new bid.
     """
     if thing.promote_status == STATUS.finished:
@@ -162,6 +164,7 @@ In the case that bid already exists on the current promotion, the
         thing.promore_status = STATUS.unpaid
         thing.promote_trans_id = 0
     thing._commit()
+    PromoteDates.update_bid(thing)
     emailer.promo_bid(thing)
     return bool(trans_id)
 
@@ -248,7 +251,7 @@ def promote(thing, batch = False):
                 if thing._fullname not in promoted:
                     promoted[thing._fullname] = auction_weight(thing)
                     set_promoted(promoted)
-                
+
 def unpromote(thing, batch = False, status = STATUS.finished):
     """
     unpromote a link with provided status, removing it from the

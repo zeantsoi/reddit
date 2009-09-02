@@ -148,6 +148,7 @@ def send_queued_mail(test = False):
                                 Email.Kind.REJECT_PROMO,
                                 Email.Kind.QUEUED_PROMO,
                                 Email.Kind.LIVE_PROMO,
+                                Email.Kind.BID_PROMO,
                                 Email.Kind.FINISHED_PROMO):
                 email.body = Promo_Email(link = email.thing,
                                     kind = email.kind,
@@ -193,7 +194,7 @@ def _promo_email(thing, kind, body = ""):
 
 
 def promo_bid(thing):
-    return _promo_email(thing, Email.Kind.BID_PROMO, thing.promote_bid)
+    return _promo_email(thing, Email.Kind.BID_PROMO)
 
 def accept_promo(thing):
     return _promo_email(thing, Email.Kind.ACCEPT_PROMO)

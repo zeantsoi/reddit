@@ -23,6 +23,8 @@
    import datetime, locale
    def num(x):
       return locale.format('%d', x, True)
+   def money(x):
+      return "$%.2f" % x
  %>
 <div class="calendar">
   <%
@@ -95,6 +97,7 @@
 <div class="clear"></div>
 
 <h1>${_("total promotion traffic")}</h1>
+<div>
 %if thing.imp_graph:
   <img class="traffic-graph" src="${thing.imp_graph}"
        alt="impressions graph"/>
@@ -103,8 +106,64 @@
    <img class="traffic-graph" src="${thing.cli_graph}" 
         alt="click graph"/>
 %endif
+%if thing.money_graph:
+   <img class="traffic-graph" src="${thing.money_graph}" 
+        alt="money graph"/>
+%endif
+</div>
+<div>
+%if thing.cpm_graph:
+   <img class="traffic-graph" src="${thing.cpm_graph}" 
+        alt="CPM graph"/>
+%endif
+%if thing.cpc_graph:
+   <img class="traffic-graph" src="${thing.cpc_graph}" 
+        alt="CPC graph"/>
+%endif
+</div>
 
 <div class="clear"></div>
+  %if thing.top_promoters:
+  <h1>${_('top promoters this month')}</h1>
+  
+  <table class="traffic-table">
+    <tr>
+      <th>user</th>
+      <th>promos</th>
+      <th>bids</th>
+      <th>credits</th>
+      <th>total</th>
+      <th>per promo</th>
+    </tr>
+    %for account, bid, refund, promos in thing.top_promoters:
+      <tr>
+        <td>${account.name}</td>
+        <td>${len(promos)}</td>
+        <td>${money(bid)}</td>
+        <td>${money(refund)}</td>
+        <td>${money(bid - refund)}</td>
+        <td>${money((bid - refund)/len(promos))}</td>
+      </tr>
+    %endfor
+    %if len(thing.top_promoters) != 1:
+      <% 
+         totals = zip(*thing.top_promoters)
+         total_bid = sum(totals[1])
+         total_refund = sum(totals[2])
+         total_promos = sum(map(len, totals[3]))
+       %>
+      <tr class="totals">
+        <td>Total</td>
+        <td>${total_promos}</td>
+        <td>${money(total_bid)}</td>
+        <td>${money(total_refund)}</td>
+        <td>${money(total_bid - total_refund)}</td>
+        <td>${money((total_bid - total_refund)/total_promos)}</td>
+      </tr>
+   %endif
+  </table>
+  %endif
+
   %if thing.recent:
   <h1>${_('promotions this month')}</h1>
   

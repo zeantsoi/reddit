@@ -89,3 +89,25 @@ def convert_promoted():
     # run what is normally in a cron job to clear out finished promos
     #promote_promoted()
 
+def store_market():
+
+    """
+    create index ix_promote_date_actual_end on promote_date(actual_end);
+    create index ix_promote_date_actual_start on promote_date(actual_start);
+    create index ix_promote_date_start_date on promote_date(start_date);
+    create index ix_promote_date_end_date on promote_date(end_date);
+
+    alter table promote_date add column account_id bigint;
+    create index ix_promote_date_account_id on promote_date(account_id);
+    alter table promote_date add column bid real;
+    alter table promote_date add column refund real;
+
+    """
+
+    for p in PromoteDates.query().all():
+        l = Link._by_fullname(p.thing_name, True)
+        if hasattr(l, "promote_bid") and hasattr(l, "author_id"):
+            p.account_id = l.author_id
+            p._commit()
+            PromoteDates.update(l, l._date, l.promote_until)
+            PromoteDates.update_bid(l)

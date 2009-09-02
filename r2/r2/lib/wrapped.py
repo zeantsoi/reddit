@@ -147,7 +147,7 @@ class Templated(object):
                                style, cache = not debug)
         except AttributeError:
             raise NoTemplateFound, (repr(self), style)
-                
+
         return template
 
     def cache_key(self, *a):

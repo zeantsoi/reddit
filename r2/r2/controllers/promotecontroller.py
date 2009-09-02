@@ -386,7 +386,7 @@ class PromoteController(ListingController):
             return UploadedImage("", "", "upload", errors = errors).render()
         else:
             if not c.user_is_sponsor:
-                promote.unapproved_promo(l)
+                promote.unapproved_promo(link)
             return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()
 
