@@ -147,9 +147,8 @@ class Reddit(Templated):
                         css_class = "icon-menu",  separator = '')]
 
     def sr_moderators(self):
-        return [WrappedUser(Account._byID(uid, True))
-                for uid in c.site.moderators]
-
+        accounts = [Account._byID(uid, True) for uid in c.site.moderators]
+        return [WrappedUser(a) for a in accounts if not a._deleted]
 
     def rightbox(self):
         """generates content in <div class="rightbox">"""
