@@ -82,7 +82,7 @@ function update_title(elem) {
 
 %if not thing.site:
     <%utils:line_field title="${_('name')}"
-                        description='${_("no spaces, e.g. slashdot")}'>
+                        description='${_("no spaces, e.g., slashdot")}'>
      <input type="text" name="name" id="name" class="text"
             value="${thing.name}"
             onchange="update_title(this)"/>
@@ -96,7 +96,7 @@ function update_title(elem) {
 %endif
 
   <%utils:line_field title="${_('title')}"
-       description='${_("e.g. slashdot: news for nerds, stuff that matters")}'>
+       description='${_("e.g., slashdot: news for nerds, stuff that matters")}'>
     %if thing.site:
       <input id="title" type="text" name="title" class="text"
              value="${thing.site.title}"/>

@@ -2,3 +2,6 @@
     border: none;
     height: 17px;
 }
+
+.score { display: inline;  }
+div.score { display: block; }

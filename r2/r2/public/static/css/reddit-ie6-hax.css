@@ -144,3 +144,5 @@ div.popup {
 .shirt .shirt-container .main.red   .caption.big .byline {
     background-image: non; 
 }
+
+.usertext .bottom-area .usertext-buttons {display: inline;  }

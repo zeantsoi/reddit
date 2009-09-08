@@ -954,7 +954,7 @@ class ApiController(RedditController):
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
                    domain = VCnameDomain("domain"),
-                   description = VLength("description", max_length = 500),
+                   description = VLength("description", max_length = 1000),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    show_media = VBoolean('show_media'),
