@@ -512,8 +512,7 @@ class AllSR(FakeSubreddit):
         from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(Link.c.sr_id != promote.PromoteSR._id,
-                        sort = queries.db_sort(sort))
+        q = Link._query(sort = queries.db_sort(sort))
         if time != 'all':
             q._filter(queries.db_times[time])
         return q

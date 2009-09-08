@@ -259,6 +259,10 @@ class Builder(object):
         """whether or not to skip any item regardless of whether the builder
         was contructed with skip=true"""
         user = c.user if c.user_is_loggedin else None
+        # no news (i.e. promoted links) from the future please
+        if item._date > datetime.now(g.tz):
+            return True
+        # if the user isn't allowed to see the subreddit, don't show the item
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
             return True
 

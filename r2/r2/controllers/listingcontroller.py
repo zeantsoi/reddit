@@ -281,7 +281,7 @@ class NewController(ListingController):
             for things like the spam filter and thumbnail fetcher to
             act on them before releasing them into the wild"""
             wouldkeep = item.keep_item(item)
-            if item.promoted:
+            if item.promoted is not None:
                 return False
             elif c.user_is_loggedin and (c.user_is_admin or
                                          item.subreddit.is_moderator(c.user)):
