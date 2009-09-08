@@ -22,7 +22,7 @@
 
 <%! 
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
-   from r2.lib.pages import SearchForm, ClickGadget
+   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
@@ -170,7 +170,9 @@
   %endif
 
   ##cheating... we should move ads into a template of its own
-  ${ClickGadget(c.recent_clicks)}
+  %if c.user.pref_clickgadget and c.recent_clicks:
+    ${SideContentBox(_("Recently viewed links"), [ClickGadget(c.recent_clicks)])}
+  %endif
 </%def>
 
 

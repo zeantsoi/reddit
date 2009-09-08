@@ -34,7 +34,7 @@ from pylons.controllers.util import abort
 from r2.lib import promote
 from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8, unsafe
+from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8, unsafe, websafe
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
@@ -129,6 +129,28 @@ class Reddit(Templated):
         
         self.toolbars = self.build_toolbars()
 
+    def sr_admin_menu(self):
+        buttons = [NamedButton('edit', css_class = 'reddit-edit'),
+                   NamedButton('moderators', css_class = 'reddit-moderators')]
+
+        if c.site.type != 'public':
+            buttons.append(NamedButton('contributors',
+                                       css_class = 'reddit-contributors'))
+
+        buttons.extend([
+                NamedButton('traffic', css_class = 'reddit-traffic'),
+                NamedButton('reports', css_class = 'reddit-reported'),
+                NamedButton('spam', css_class = 'reddit-spam'),
+                NamedButton('banned', css_class = 'reddit-ban'),
+                ])
+        return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
+                        css_class = "icon-menu",  separator = '')]
+
+    def sr_moderators(self):
+        return [WrappedUser(Account._byID(uid, True))
+                for uid in c.site.moderators]
+
+
     def rightbox(self):
         """generates content in <div class="rightbox">"""
         
@@ -143,6 +165,15 @@ class Reddit(Templated):
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
+
+            moderators = self.sr_moderators()
+            if moderators:
+                ps.append(SideContentBox(_('moderators'), moderators))
+
+            if (c.user_is_loggedin and
+                (c.site.is_moderator(c.user) or c.user_is_admin)):
+                ps.append(SideContentBox(_('admin box'), self.sr_admin_menu()))
+
 
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
@@ -371,25 +402,8 @@ class SubredditInfoBar(CachedTemplate):
     def __init__(self, site = None):
         site = site or c.site
 
+        #hackity hack. do i need to add all the others props?
         self.sr = list(wrap_links(site))[0]
-        
-        self.spam = site._spam
-        self.name = site.name
-        self.type = site.type
-        self.is_fake = isinstance(site, FakeSubreddit)
-        self.is_loggedin = c.user_is_loggedin
-        self.is_admin  = c.user_is_admin
-        self.fullname = site._fullname
-        self.is_subscriber = bool(c.user_is_loggedin and \
-                                  site.is_subscriber_defaults(c.user))
-        self.is_moderator = bool(c.user_is_loggedin and \
-                                 site.is_moderator(c.user))
-        self.is_contributor = bool(site.type in ("private", "restricted") and \
-                                   c.user_is_loggedin and \
-                                   site.is_contributor(c.user))
-        self.subscribers = site._ups
-        self.date = site._date
-        self.banner = getattr(site, "banner", None)
 
         #so the menus cache properly
         self.path = request.path
@@ -411,13 +425,17 @@ class SubredditInfoBar(CachedTemplate):
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         separator = '')]
 
+class SideContentBox(Templated):
+    def __init__(self, title, content):
+        Templated.__init__(self, title = title, content = content)
+
 class SideBox(CachedTemplate):
     """
     Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
     """
     def __init__(self, title, link, css_class='', subtitles = [],
                  show_cover = False, nocname=False, sr_path = False):
-        Templated.__init__(self, link = link, target = '_top',
+        CachedTemplate.__init__(self, link = link, target = '_top',
                            title = title, css_class = css_class,
                            sr_path = sr_path, subtitles = subtitles,
                            show_cover = show_cover, nocname=nocname)
@@ -736,7 +754,7 @@ class SubredditsPage(Reddit):
 
     def rightbox(self):
         ps = Reddit.rightbox(self)
-        ps.append(SubscriptionBox())
+        ps.append(SideContentBox(_("your front page reddits"), [SubscriptionBox()]))
         return ps
 
 class MySubredditsPage(SubredditsPage):
@@ -803,9 +821,10 @@ class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
         Templated.__init__(self, user = user)
-        self.isFriend = self.user._id in c.user.friends \
-            if c.user_is_loggedin else False
-        self.isMe = (self.user == c.user)
+        self.is_friend = None
+        self.my_fullname = c.user_is_loggedin and c.user._fullname
+        if c.user_is_loggedin:
+            self.is_friend = self.user._id in c.user.friends
 
 class MenuArea(Templated):
     """Draws the gray box at the top of a page for sort menus"""
@@ -1294,6 +1313,39 @@ class Page_down(Templated):
         message = kw.get('message', _("This feature is currently unavailable. Sorry"))
         Templated.__init__(self, message = message)
 
+class WrappedUser(CachedTemplate):
+    def __init__(self, user, attribs = [], context_thing = None, gray = False):
+        attribs.sort()
+
+        author_cls = 'author'
+        if gray:
+            author_cls += ' gray'
+
+        for priority, abbv, css_class, label, attr_link in attribs:
+            author_cls += " " + css_class
+
+        target = None
+        ip_span = None
+        context_deleted = None
+        if context_thing:
+            target = getattr(context_thing, 'target', None)
+            ip_span = getattr(context_thing, 'ip_span', None)
+            context_deleted = context_thing.deleted
+
+        karma = ''
+        if c.user_is_admin:
+            karma = ' (%d)' % user.link_karma
+
+        CachedTemplate.__init__(self,
+                                name = user.name,
+                                author_cls = author_cls,
+                                attribs = attribs,
+                                context_thing = context_thing,
+                                karma = karma,
+                                ip_span = ip_span,
+                                context_deleted = context_deleted,
+                                user_deleted = user._deleted)
+
 # Classes for dealing with friend/moderator/contributor/banned lists
 
 
@@ -1556,7 +1608,8 @@ class UserText(CachedTemplate):
                  display = True,
                  post_form = 'editusertext',
                  cloneable = False,
-                 extra_css = ''):
+                 extra_css = '',
+                 name = "text"):
 
         css_class = "usertext"
         if cloneable:
@@ -1575,7 +1628,8 @@ class UserText(CachedTemplate):
                                 display = display,
                                 post_form = post_form,
                                 cloneable = cloneable,
-                                css_class = css_class)
+                                css_class = css_class,
+                                name = name)
 
 class MediaEmbedBody(CachedTemplate):
     """What's rendered inside the iframe that contains media objects"""
@@ -1726,22 +1780,55 @@ class RedditTraffic(Traffic):
         res = []
         if c.default_sr:
             data = self.month_data
+
+            # figure out the mean number of users last month
+            days = self.day_data
+            now = datetime.datetime.utcnow()
+            # project based on traffic so far
+            # totals are going to be up to yesterday
+            month_len = calendar.monthrange(now.year, now.month)[1]
+
+            lastmonth = datetime.datetime.utcnow().month
+            lastmonthyear = datetime.datetime.utcnow().year
+            if lastmonth == 1:
+                lastmonthyear -= 1
+                lastmonth = 1
+            else:
+                lastmonth = (lastmonth - 1) if lastmonth != 1 else 12
+            # length of last month
+            lastmonthlen = calendar.monthrange(lastmonthyear, lastmonth)[1]
+
+            lastdays = filter(lambda x: x[0].month == lastmonth, days) 
+            thisdays = filter(lambda x: x[0].month == now.month, days) 
+            user_scale = 0
+            if lastdays:
+                last_mean = (sum(u for (d, (u, v)) in lastdays) / 
+                             float(len(lastdays)))
+                day_mean = (sum(u for (d, (u, v)) in thisdays) / 
+                            float(len(thisdays)))
+                if last_mean and day_mean:
+                    user_scale = ( (day_mean * month_len) /
+                                   (last_mean * lastmonthlen) )
+            last_month_users = 0
             for x, (date, d) in enumerate(data):
                 res.append([("date", date.strftime("%Y-%m")),
                             ("", locale.format("%d", d[0], True)),
                             ("", locale.format("%d", d[1], True))])
                 last_d = data[x-1][1] if x else None
                 for i in range(2):
+                    # store last month's users for this month's projection
+                    if x == len(data) - 2 and i == 0:
+                        last_month_users = d[i]
                     if x == 0:
                         res[-1].append(("",""))
                     elif x == len(data) - 1:
-                        # project based on traffic so far
-                        # totals are going to be up to yesterday
-                        month_len = calendar.monthrange(date.year,
-                                                        date.month)[1]
+                        # yesterday
                         yday = (datetime.datetime.utcnow()
                                 -datetime.timedelta(1)).day
-                        scaled = float(d[i] * month_len) / yday
+                        if i == 0:
+                            scaled = int(last_month_users * user_scale)
+                        else:
+                            scaled = float(d[i] * month_len) / yday
                         res[-1].append(("gray",
                                         locale.format("%d", scaled, True)))
                     elif last_d and d[i] and last_d[i]:

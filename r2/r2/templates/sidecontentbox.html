@@ -20,29 +20,11 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="plain_link"/>
-
-<div class="sidebox ${thing.css_class}">
-  <%
-     if not c.user_is_loggedin and thing.show_cover:
-         onclick="return(showcover(true, 'redirect_%s'));" % thing.link
-     else:
-         onclick = None
-
-     nocname = thing.nocname
-  %>
-
-  <div class="morelink">
-    ${plain_link(thing.title,thing.link, _sr_path = thing.sr_path,
-                 onclick=onclick, nocname=nocname)}
-    <div class="nub"> </div>
+<div class="sidecontentbox">
+  <h1>${thing.title.upper()}</h1>
+  <div class="content">
+    %for c in thing.content:
+      ${c}
+    %endfor
   </div>
-
-  %if thing.subtitles:
-    <div class="spacer">
-      %for subtitle in thing.subtitles:
-        <div class="subtitle">${subtitle}</div>
-      %endfor
-    </div>
-  %endif
 </div>

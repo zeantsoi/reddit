@@ -209,7 +209,6 @@ class Templated(object):
         """
         from pylons import c, g
         style = style or c.render_style or 'html'
-        
         # prepare (and store) the list of cachable items. 
         primary = False
         if not isinstance(c.render_tracker, dict):

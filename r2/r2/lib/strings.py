@@ -58,7 +58,7 @@ string_dict = dict(
     float_label = _("%(num)5.3f %(thing)s"),
 
     # this is for Japanese which treats people counds differently
-    person_label = _("%(num)d %(persons)s"),
+    person_label = _('<span class="number">%(num)s</span>&#32;<span class="word">%(persons)s</span>'),
 
     firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"),
 
@@ -96,7 +96,7 @@ string_dict = dict(
         moderator = _('below are the reddits that you have moderator access to.')
         ),
     
-    sr_subscribe =  _('click the `add` or `remove` buttons to choose which reddits appear on your front page.'),
+    sr_subscribe =  _('click the `+frontpage` or `-frontpage` buttons to choose which reddits appear on your front page.'),
 
     searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
                            'you can also search within [all reddits](%(all_reddits_link)s)'),

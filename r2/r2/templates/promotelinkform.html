@@ -52,6 +52,9 @@
   </div>
 </%def>
 
+
+<div class="create-promotion">
+
 <%
    title = _("create a promotion") if not thing.link else _("edit promotion")
  %>
@@ -104,42 +107,6 @@
   %endif
 %endif
 
-
-
-%if not thing.link or thing.link.promote_status != STATUS.finished:
-  %if thing.link:
-  <% 
-     thumb = None if not thing.link.has_thumbnail else thumbnail_url(thing.link)   %>
-  <div class="spacer">
-    <%utils:round_field title="${_('look and feel')}">
-      <div class="rounded delete-field">
-        <%utils:image_upload post_target="/api/link_thumb" 
-                             current_image="${thumb}"
-                             label="${_('upload header image:')}">
-         <input type="hidden" name="link_id" value="${thing.link._fullname}" />
-         ## overwrite the completed image function
-         <script type="text/javascript">
-           completedUploadImage = (function(cu) {
-              return function(status, img_src, name, errors) {
-                 cu(status, "", "", errors);
-                 $.things('${thing.link._fullname}').find(".thumbnail img")
-                    .attr("src", img_src + "?v=" + Math.random());
-              }})(completedUploadImage);
-         </script>
-        </%utils:image_upload>
-        <div class="clearleft"></div>
-      </div>
-     </%utils:round_field>
-   </div>
-  %else: 
-    <div class="spacer">
-      <div class="infobar">
-        ${_("You'll be able to submit an image for the thumbnail once the promotion is submitted.")}
-      </div>
-    </div>
-  %endif
-%endif
-
 <form class="pretty-form" method="POST" action="/post/new_promo"
       id="promo-form" 
       onsubmit="return post_form(this, 'new_promo')">
@@ -148,8 +115,7 @@
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
   %endif
 
-    <div class="spacer">
-      <%utils:round_field title="${_('title')}" id="title-field">
+      <%utils:line_field title="${_('title')}" id="title-field">
         <textarea name="title" rows="2" cols="1" 
                ${"disabled" if thing.link and \
                                thing.link.promote_status == STATUS.finished \
@@ -157,11 +123,9 @@
                   wrap="hard">${thing.link.title if thing.link else ''}</textarea>
         ${error_field("NO_TEXT", "title", "div")}
         ${error_field("TOO_LONG", "title", "div")}
-      </%utils:round_field>
-    </div>
-  
-  <div class="spacer">
-    <%utils:round_field title="${_('url')}" id="url-field">
+      </%utils:line_field>
+
+    <%utils:line_field title="${_('url')}" id="url-field">
       <input name="kind" value="link" type="hidden"/>
       <input id="url" name="url" type="text" 
                ${"disabled" if thing.link and \
@@ -177,10 +141,8 @@
         </button>
         <span class="title-status"></span>
       </div>
-    </%utils:round_field>
-  </div>
+    </%utils:line_field>
 
-  <div class="spacer">
     <% 
        mindate   = (datetime.now() + timedelta(1)).strftime("%m/%d/%Y");
 
@@ -194,9 +156,9 @@
        startdate = startdate.strftime("%m/%d/%Y")
        enddate   = enddate  .strftime("%m/%d/%Y")
     %>
-    <%utils:round_field title="${_('duration')}" id="duration-field">
+    <%utils:line_field title="${_('duration')}" id="duration-field">
         %if thing.link and thing.link.promote_status >= STATUS.pending:
-          <div class="rounded delete-field">
+          <div class="delete-field">
             <input type="hidden" name="startdate" 
                    value="${startdate}"/>
             <input type="hidden" name="enddate" 
@@ -232,12 +194,10 @@
        ${error_field("BAD_FUTURE_DATE", "sr")}
        ${error_field("BAD_PAST_DATE", "sr")}
        ${error_field("BAD_DATE_RANGE", "sr")}
-    </%utils:round_field>
-  </div>
+    </%utils:line_field>
 
-  <div class="spacer">
-    <%utils:round_field title="${_('options')}" id="commenting-field">
-      <div class="rounded delete-field">
+    <%utils:line_field title="${_('options')}" id="commenting-field">
+      <div class="delete-field">
           <% 
              clicks = views = 0
              disable_comments = False
@@ -266,11 +226,10 @@
                    views)} <br />
         %endif
       </div>
-    </%utils:round_field>
-  </div>
+    </%utils:line_field>
+
 %if not thing.link or (c.user_is_sponsor and thing.link.promote_status < STATUS.pending):
-  <div class="spacer">
-    <%utils:round_field title="${_('bid amount')}" id="bid-field"
+    <%utils:line_field title="${_('bid amount')}" id="bid-field"
                         description="${_('(total for the duration provided)')}">
         $<input id="bid" name="bid" size="7" type="text"
                 style="width:auto"
@@ -284,8 +243,7 @@
            </span>
          %endif
         ${error_field("BAD_BID", "bid")}
-    </%utils:round_field>
-  </div>
+    </%utils:line_field>
 </form>
 %else:
 
@@ -293,20 +251,18 @@
          value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
                 g.min_promote_bid))}" />
 </form>
-  <div class="spacer">
-    <%utils:round_field title="${_('bid amount')}" id="bid-field"
+    <%utils:line_field title="${_('bid amount')}" id="bid-field"
                         description="${_('(total for the duration provided)')}">
-      <div class="rounded delete-field">
-        $${"%.2f" % thing.link.promote_bid}
+         <span>$${"%.2f" % thing.link.promote_bid}</span>
          <%
             trans_id = getattr(thing.link, "promote_trans_id", None)
           %>
          %if trans_id and trans_id < 0:
-           <span class="status">
+           <span class="info">
              ${_("This link is currently a freebie.  Enjoy")}
            </span>
          %elif thing.link.promote_status >= STATUS.pending:
-          <span class="status">
+          <span class="info">
             ${_("this amount has already been charged")}
           </span>
          %else:
@@ -318,9 +274,7 @@
                %endif
              </a>
          %endif
-       </div>
-    </%utils:round_field>
-  </div>
+    </%utils:line_field>
 %endif
 
 ## provide a way to give refunds, but only if the link isn't already a freebie
@@ -330,8 +284,7 @@
 %>
 %if c.user_is_sponsor and getattr(thing.link, "promote_paid", False) and \
     getattr(thing.link, "promote_trans_id", -1) > 0 and cur_refund > 0:
-  <div class="spacer">
-    <%utils:round_field title="${_('refund')}" id="bid-field">
+    <%utils:line_field title="${_('refund')}" id="bid-field">
       <form method="POST" action="/post/refund" 
             style="display:inline; "
             onsubmit="return post_form(this, 'refund')">
@@ -346,8 +299,39 @@
           ${_("refund")}
         </button>
       </form>
-    </%utils:round_field>
-  </div>
+    </%utils:line_field>
+%endif
+
+%if not thing.link or thing.link.promote_status != STATUS.finished:
+  %if thing.link:
+  <% 
+     thumb = None if not thing.link.has_thumbnail else thumbnail_url(thing.link)   %>
+    <%utils:line_field title="${_('look and feel')}">
+      <div class="delete-field">
+        <%utils:image_upload post_target="/api/link_thumb" 
+                             current_image="${thumb}"
+                             label="${_('upload header image:')}">
+         <input type="hidden" name="link_id" value="${thing.link._fullname}" />
+         ## overwrite the completed image function
+         <script type="text/javascript">
+           completedUploadImage = (function(cu) {
+              return function(status, img_src, name, errors) {
+                 cu(status, "", "", errors);
+                 $.things('${thing.link._fullname}').find(".thumbnail img")
+                    .attr("src", img_src + "?v=" + Math.random());
+              }})(completedUploadImage);
+         </script>
+        </%utils:image_upload>
+        <div class="clearleft"></div>
+      </div>
+     </%utils:line_field>
+  %else: 
+    <div class="spacer">
+      <div class="infobar">
+        ${_("You'll be able to submit an image for the thumbnail once the promotion is submitted.")}
+      </div>
+    </div>
+  %endif
 %endif
 
 
@@ -387,15 +371,14 @@
 </div>
 </div>
 
-%if thing.link:
-  %if c.user_is_sponsor and thing.bids:
+%if thing.link and c.user_is_sponsor:
   <div class="spacer bidding-history">
-    <%utils:round_field title="${_('bidding history')}">
+   %if thing.bids:
+    <%utils:line_field title="${_('bidding history')}">
     <% 
        from r2.models import Account, bidding
        accounts = Account._byID(set(x.account_id for x in thing.bids), True)
      %>
-    <div class="rounded delete-field">
       <table class="bid-table">
         <tr>
           <th>date</th>
@@ -419,28 +402,24 @@
         </tr>
         %endfor
       </table>
-    </div>
-   </%utils:round_field>
-  </div>
+   </%utils:line_field>
   %endif
 
-  %if c.user_is_sponsor:
    <form id="promotion-history" method="post" action="/post/promote_note"
          onsubmit="return post_form(this, 'promote_note')">
-     <div class="spacer">
-    <%utils:round_field title="${_('promotion history')}">
+    <%utils:line_field title="${_('promotion history')}">
       <input type="hidden" name="link" value="${thing.link._fullname}"/>
       <label for="promote_note">add note:</label>
       <input id="promote_note" name="note" value="" type="text" size="40" />
       <button type="submit">save</button>
-      <div class="rounded delete-field notes">
+      <div class="notes">
         %for line in getattr(thing.link, "promotion_log", []):
           <p>${line}</p>
         %endfor
       </div>
-    </%utils:round_field>
+     </%utils:line_field>
+   </form>
+
   </div>
-  </form>
-  %endif
-    
 %endif
+</div> 

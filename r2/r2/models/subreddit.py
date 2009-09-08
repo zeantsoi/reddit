@@ -265,8 +265,9 @@ class Subreddit(Thing, Printable):
             else:
                 item.subscriber = bool(rels.get((item, user, 'subscriber')))
             item.moderator = bool(rels.get((item, user, 'moderator')))
-            item.contributor = bool(item.moderator or \
-                                    rels.get((item, user, 'contributor')))
+            item.contributor = bool(item.type != 'public' and
+                                    (item.moderator or
+                                     rels.get((item, user, 'contributor'))))
             item.score = item._ups
             # override "voting" score behavior (it will override the use of
             # item.score in builder.py to be ups-downs)
@@ -274,6 +275,12 @@ class Subreddit(Thing, Printable):
             base_score = item.score - (1 if item.likes else 0)
             item.voting_score = [(base_score + x - 1) for x in range(3)]
             item.score_fmt = Score.subscribers
+
+            #will seem less horrible when add_props is in pages.py
+            from r2.lib.pages import UserText
+            item.usertext = UserText(item, item.description)
+
+
         Printable.add_props(user, wrapped)
     #TODO: make this work
     cache_ignore = set(["subscribers"]).union(Printable.cache_ignore)

@@ -119,13 +119,15 @@ menu =   MenuHandler(hot          = _('hot'),
                      details      = _("details"),
                      duplicates   = _("other discussions (%(num)s)"),
                      shirt        = _("shirt"),
-                     traffic      = _("traffic"),
+                     traffic      = _("traffic stats"),
 
                      # reddits
                      home         = _("home"),
                      about        = _("about"),
-                     edit         = _("edit"),
-                     banned       = _("banned"),
+                     edit         = _("edit this reddit"),
+                     moderators   = _("edit moderators"),
+                     contributors = _("edit contributors"),
+                     banned       = _("ban users"),
                      banusers     = _("ban users"),
 
                      popular      = _("popular"),
@@ -135,7 +137,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      i18n         = _("translate site"),
                      promoted     = _("promoted"),
                      reporters    = _("reporters"),
-                     reports      = _("reports"),
+                     reports      = _("reported links"),
                      reportedauth = _("reported authors"),
                      info         = _("info"),
                      share        = _("share"),
@@ -185,7 +187,10 @@ class NavMenu(Styled):
                  base_path = '', separator = '|', **kw):
         self.options = options
         self.base_path = base_path
-        kw['style'], kw['css_class'] = menu_style(type)
+
+        #add the menu style, but preserve existing css_class parameter
+        kw['style'], css_class = menu_style(type)
+        kw['css_class'] = css_class + ' ' + kw.get('css_class', '')
 
         #used by flatlist to delimit menu items
         self.separator = separator

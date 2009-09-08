@@ -99,6 +99,7 @@ class Builder(object):
         #get authors
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
+
         try:
             aids = set(l.author_id for l in items)
         except AttributeError:

@@ -335,7 +335,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 container = VByName('id'))
-    def POST_leave_moderator(self, container):
+    def POST_leavemoderator(self, container):
         """
         Handles self-removal as moderator from a subreddit as rendered
         in the subreddit sidebox on any of that subreddit's pages.
@@ -346,7 +346,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 container = VByName('id'))
-    def POST_leave_contributor(self, container):
+    def POST_leavecontributor(self, container):
         """
         same comment as for POST_leave_moderator.
         """

@@ -296,8 +296,13 @@ class MoreCommentJsonTemplate(CommentJsonTemplate):
     def kind(self, wrapped):
         return "more"
 
+    def thing_attr(self, thing, attr):
+        if attr in ('body', 'body_html'):
+            return ""
+        return CommentJsonTemplate.thing_attr(self, thing, attr)
+
     def rendered_data(self, wrapped):
-        return ThingJsonTemplate.rendered_data(self, wrapped)
+        return CommentJsonTemplate.rendered_data(self, wrapped)
 
 class MessageJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(new          = "new",

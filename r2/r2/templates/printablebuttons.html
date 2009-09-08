@@ -105,7 +105,7 @@
   %endif
   %if thing.editable:
     <li>
-      ${self.simple_button(_("edit"), "edit_usertext")}
+      ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
     </li>
   %endif
   <li class="share">
@@ -201,7 +201,7 @@
       %endif
       %if thing.is_author:
         <li>
-          ${self.simple_button(_("edit"), "edit_usertext")}
+          ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
         </li>
       %endif
     %endif
@@ -298,8 +298,9 @@
   </form>
 </%def>
 
-<%def name="simple_button(title, nameFunc)">
- <a class="" href="javascript:void(0)" 
+
+<%def name="simple_button(title, nameFunc, css_class='')">
+ <a class="${css_class}" href="javascript:void(0)" 
     onclick="return ${nameFunc}(this)">${title}</a>
 </%def>
 
@@ -323,9 +324,19 @@
       onclick="return toggle(this, ${callback}, ${cancelback})"
     %endif
     >
-   ${title}
+   %if title:
+     ${title}
+   %else:
+    &nbsp;
+   %endif
  </a>
- <a class="option ${alt_css_class}" href="#">${alt_title}</a>
+ <a class="option ${alt_css_class}" href="#">
+   %if alt_title:
+     ${alt_title}
+   %else:
+    &nbsp;
+   %endif
+ </a>
 </span>
 </%def>
 

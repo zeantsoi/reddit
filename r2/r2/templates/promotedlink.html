@@ -22,6 +22,7 @@
 <%!
    from r2.lib.promote import promo_edit_url, STATUS
    from r2.lib.pages.things import LinkButtons
+   from r2.lib.pages import WrappedUser
 %>
 
 <%inherit file="link.html"/>
@@ -35,9 +36,10 @@
    else:
      taglinetext = _("promoted %(when)s ago by %(author)s") 
    taglinetext = taglinetext.replace(" ", "&#32;")
+   author = WrappedUser(thing.author, thing.attribs, thing).render()
  %>
 ${unsafe(taglinetext % dict(when = thing.timesince, 
-                            author= self.author(attribs = thing.attribs)))}
+                            author= author))}
 </%def>
 
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">

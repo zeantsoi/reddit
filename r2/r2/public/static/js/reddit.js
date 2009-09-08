@@ -274,8 +274,13 @@ function unsubscribe(reddit_name) {
 
 function friend(user_name, container_name, type) {
     return function() {
-        $.request("friend", 
-                  {name: user_name, container: container_name, type: type});
+        if (!reddit.logged)  {
+            showcover();
+        }
+        else {
+            $.request("friend", 
+                      {name: user_name, container: container_name, type: type});
+        }
     }
 };
 
@@ -891,14 +896,20 @@ function comment_reply_for_elem(elem) {
 }
 
 function edit_usertext(elem) {
-    show_edit_usertext($(elem).thing().find(".usertext:first"));
+    var t = $(elem).thing();
+    t.find(".edit-usertext:first").parent("li").andSelf().hide();
+    show_edit_usertext(t.find(".usertext:first"));
 }
 
 function cancel_usertext(elem) {
-    hide_edit_usertext($(elem).thing().find(".usertext:first"));
+    var t = $(elem).thing();
+    t.find(".edit-usertext:first").parent("li").andSelf().show(); 
+    hide_edit_usertext(t.find(".usertext:first"));
 }
 
 function save_usertext(elem) {
+    var t = $(elem).thing();
+    t.find(".edit-usertext:first").parent("li").andSelf().show(); 
 }
 
 function reply(elem) {
