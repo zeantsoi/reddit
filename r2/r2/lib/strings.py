@@ -30,7 +30,7 @@ hooks to the UI are the same.
 import helpers as h
 from pylons import g
 from pylons.i18n import _, ungettext
-import random
+import random, locale
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
            'Score', 'rand_strings']
@@ -197,6 +197,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("subreddit",   "subreddits"),
                          
                          # people
+                         P_("reader",  "readers"),
                          P_("subscriber",  "subscribers"),
                          P_("contributor", "contributors"),
                          P_("moderator",   "moderators"),
@@ -229,9 +230,18 @@ class Score(object):
                                             point=plurals.N_points(x))
 
     @staticmethod
+    def _people(x, label):
+        return strings.person_label % \
+            dict(num = locale.format("%d", x, True),
+                 persons = label(x))
+
+    @staticmethod
     def subscribers(x):
-        return  strings.person_label % \
-            dict(num = x, persons = plurals.N_subscribers(x))
+        return  Score._people(x, plurals.N_subscribers)
+
+    @staticmethod
+    def readers(x):
+        return  Score._people(x, plurals.N_readers)
 
     @staticmethod
     def none(x):

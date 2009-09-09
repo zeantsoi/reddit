@@ -23,7 +23,7 @@
 <%!
    import locale
    from r2.lib.utils import timesince
-   from r2.lib.strings import strings
+   from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser
  %>
 
@@ -40,9 +40,7 @@
   <h1>${thing.sr.name}</h1>
 
   ${addremove_button(thing.sr)}
-  ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.sr._ups, True),
-                                      persons = ungettext("reader", "readers", 
-                                      thing.sr._ups)))}
+  ${unsafe(Score.readers(thing.subscribers))}
 
   %if thing.sr.moderator:
     ${moderate_button("leavemoderator",

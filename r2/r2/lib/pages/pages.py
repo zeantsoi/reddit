@@ -404,6 +404,9 @@ class SubredditInfoBar(CachedTemplate):
         #hackity hack. do i need to add all the others props?
         self.sr = list(wrap_links(site))[0]
 
+        # we want to cache on the number of subscribers
+        self.subscribers = self.sr._ups
+        
         #so the menus cache properly
         self.path = request.path
         CachedTemplate.__init__(self)

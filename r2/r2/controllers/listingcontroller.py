@@ -135,7 +135,12 @@ class ListingController(RedditController):
         return b
 
     def keep_fn(self):
-        return None
+        def keep(item):
+            wouldkeep = item.keep_item(item)
+            if getattr(item, "promoted", None) is not None:
+                return False
+            return wouldkeep
+        return keep
 
     def listing(self):
         """Listing to generate from the builder"""
