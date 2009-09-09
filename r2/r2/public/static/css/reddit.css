@@ -320,11 +320,11 @@ ul.flat-vert {text-align: left;}
     display: block;
     width: 100%;
     color:#369;
- }
+}
 
 .morelink:hover a {
-    color:white;
- }
+     color:white;
+}
 
 .morelink .nub {
     position: absolute;
@@ -343,7 +343,7 @@ ul.flat-vert {text-align: left;}
 /* raised box */
 
 .raisedbox {
-    padding: 5px; 
+    padding: 5px;
     background: #E0E0E0;
     border: 1px solid gray;
 }
@@ -452,7 +452,7 @@ ul.flat-vert {text-align: left;}
 .tagline .friend    { color: orangered }
 .tagline .submitter { color: #0055df }
 .tagline .moderator { color: #228822 }
-.tagline .admin { color: #ff0000; }
+.tagline .admin { color: #ff0011; }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
 
@@ -661,7 +661,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     padding-right: 4px;
 }
 .entry .buttons li + li {
-    padding-left: 4px; 
+    padding-left: 4px;
 }
 
 
@@ -2265,10 +2265,10 @@ ul.tabmenu.formtab {
     font-size: smaller; 
 }
 
-.linefield span + span {
+.linefield span + span { 
     margin-left: 10px; 
 }
-.linefield .info {
+.linefield .info { 
     font-style: italic;
     color: red;
     font-size: small;
@@ -2284,12 +2284,12 @@ ul.tabmenu.formtab {
 }
 
 .linefield.usertext .usertext-edit {
-    font-size: small; 
+    font-size: small;
 }
 
 .linefield.usertext .edit-usertext {
     font-size: x-small;
-    float: right; 
+    float: right;
 }
 
 .linefield .upload {
@@ -2300,7 +2300,7 @@ ul.tabmenu.formtab {
 }
 
 .linefield.usertext .infobar {
-    width: 100%; 
+    width: 100%;
 }
 
 .linefield.usertext .usertext-buttons {
@@ -2351,7 +2351,48 @@ ul.tabmenu.formtab {
     padding: 10px; 
     border: 1px solid #B0B0B0; 
     margin-left: 10px;
-    margin-bottom: 10px; }
+    margin-bottom: 10px;
+}
+
+.award-table {
+    margin: 5px;
+}
+
+table.award-table {
+    margin: 5px 3px;
+}
+
+.award-table th, .award-table td {
+    border: solid #cdcdcd 1px;
+    padding: 3px;
+}
+
+.award-table th {
+    text-align: center;
+    font-weight: bold;
+}
+
+.trophy-area {
+    text-align: center;
+}
+
+.trophy-info {
+  display: inline-block;
+  width: 130px;
+  vertical-align: top;
+  margin: 25px 0 15px;
+}
+
+.trophy-info.left {
+  margin-right: 10px;
+}
+
+.trophy-info.right {
+}
+
+.removecup-button {
+    display: inline;
+}
 
 /* Datepicker
 ----------------------------------*/
@@ -2608,10 +2649,14 @@ ul.tabmenu.formtab {
     display: block; 
 }
 
+.borderless td {
+  border: none;
+}
+
 /* title box */
 .titlebox {
     font-size: larger;
- }
+}
 
 .titlebox h1 {
     font-family:arial,verdana,helvetica,sans-serif;

@@ -299,3 +299,52 @@ def choose_width(link, width):
 def panel_size(state):
     "the frame.cols of the reddit-toolbar's inner frame"
     return '400px, 100%' if state =='expanded' else '0px, 100%x'
+
+# Appends to the list "attrs" a tuple of:
+# <priority (higher trumps lower), letter,
+#  css class, i18n'ed mouseover label, hyperlink (opt), img (opt)>
+def add_attr(attrs, code, label=None, link=None):
+    from r2.lib.template_helpers import static
+
+    img = None
+
+    if code == 'F':
+        priority = 1
+        cssclass = 'friend'
+        if not label:
+            label = _('friend')
+        if not link:
+            link = '/prefs/friends'
+    elif code == 'S':
+        priority = 2
+        cssclass = 'submitter'
+        if not label:
+            label = _('submitter')
+        if not link:
+            raise ValueError ("Need a link")
+    elif code == 'M':
+        priority = 3
+        cssclass = 'moderator'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
+    elif code == 'A':
+        priority = 4
+        cssclass = 'admin'
+        if not label:
+            label = _('reddit admin, speaking officially')
+        if not link:
+            link = '/help/faq#Whomadereddit'
+    elif code == 'trophy':
+        img = (static('award.png'), '!', 11, 8)
+        priority = 99
+        cssclass = 'recent-trophywinner'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
+    else:
+        raise ValueError ("Got weird code [%s]" % code)
+
+    attrs.append( (priority, code, cssclass, label, link, img) )

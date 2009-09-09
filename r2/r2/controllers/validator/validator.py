@@ -238,21 +238,45 @@ class VRequired(Validator):
         else:
             return item
 
-class VLink(Validator):
-    def __init__(self, param, redirect = True, *a, **kw):
+class VThing(Validator):
+    def __init__(self, param, thingclass, redirect = True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
+        self.thingclass = thingclass
         self.redirect = redirect
-    
-    def run(self, link_id):
-        if link_id:
+
+    def run(self, thing_id):
+        if thing_id:
             try:
-                aid = int(link_id, 36)
-                return Link._byID(aid, True)
+                tid = int(thing_id, 36)
+                thing = self.thingclass._byID(tid, True)
+                if thing.__class__ != self.thingclass:
+                    raise TypeError("Expected %s, got %s" %
+                                    (self.thingclass, thing.__class__))
+                return thing
             except (NotFound, ValueError):
                 if self.redirect:
                     abort(404, 'page not found')
                 else:
                     return None
+
+class VLink(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Link, *a, **kw)
+
+class VAward(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Award, *a, **kw)
+
+class VAwardByCodename(Validator):
+    def run(self, codename):
+        try:
+            return Award._by_codename(codename)
+        except NotFound:
+            abort(404, 'page not found')
+
+class VTrophy(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Trophy, *a, **kw)
 
 class VMessage(Validator):
     def run(self, message_id):
@@ -754,6 +778,7 @@ class VBid(VNumber):
                 pass
         if VNumber.run(self, bid):
             return float(bid)
+
 
 
 class VCssName(Validator):

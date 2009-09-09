@@ -81,6 +81,10 @@ def make_map(global_conf={}, app_conf={}):
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
 
+    mc('/admin/awards', controller='awards')
+    mc('/admin/awards/:awardcn/:action', controller='awards',
+       requirements=dict(action="give|winners"))
+
     mc('/admin/:action', controller='admin')
     
     mc('/user/:username/about', controller='user', action='about',

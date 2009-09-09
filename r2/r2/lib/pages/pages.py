@@ -23,7 +23,7 @@ from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
 from r2.models import Account, Default
 from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
-from r2.models import Link, Printable, bidding, PromoteDates
+from r2.models import Link, Printable, Trophy, bidding, PromoteDates
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -817,7 +817,16 @@ class ProfilePage(Reddit):
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.append(AdminSidebar(self.user))
+        if g.show_awards:
+            rb.append(TrophyCase(self.user))
         return rb
+
+class TrophyCase(Templated):
+    def __init__(self, user):
+        self.user = user
+        self.trophies = Trophy.by_account(user)
+        self.cup_date = user.should_show_cup()
+        Templated.__init__(self)
 
 class ProfileBar(Templated): 
     """Draws a right box for info about the user (karma, etc)"""
@@ -1302,7 +1311,28 @@ class AdminTranslations(Templated):
         from r2.lib.translation import list_translations
         Templated.__init__(self)
         self.translations = list_translations()
-        
+
+class AdminAwards(Templated):
+    """The page for editing awards"""
+    def __init__(self):
+        from r2.models import Award
+        Templated.__init__(self)
+        self.awards = Award.all_awards()
+
+class AdminAwardGive(Templated):
+    """The interface for giving an award"""
+    def __init__(self, award):
+        now = datetime.datetime.now(g.display_tz)
+        self.description = "??? -- " + now.strftime("%Y-%m-%d")
+
+        Templated.__init__(self, award = award)
+
+class AdminAwardWinners(Templated):
+    """The list of winners of an award"""
+    def __init__(self, award):
+        trophies = Trophy.by_award(award)
+        Templated.__init__(self, award = award, trophies = trophies)
+
 
 class Embed(Templated):
     """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
@@ -1318,13 +1348,12 @@ class Page_down(Templated):
 class WrappedUser(CachedTemplate):
     def __init__(self, user, attribs = [], context_thing = None, gray = False):
         attribs.sort()
-
         author_cls = 'author'
+
         if gray:
             author_cls += ' gray'
-
-        for priority, abbv, css_class, label, attr_link in attribs:
-            author_cls += " " + css_class
+        for tup in attribs:
+            author_cls += " " + tup[2]
 
         target = None
         ip_span = None

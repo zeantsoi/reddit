@@ -19,16 +19,30 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from account import *
-from link import *
-from listing import *
-from builder import *
-from vote import *
-from report import *
-from subreddit import *
-from award import *
-from bidding import *
-from mail_queue import Email, has_opted_out, opt_count
-from admintools import *
-import thing_changes
+from pylons import request, g
+from reddit_base import RedditController
+from r2.lib.pages import AdminPage, AdminAwards
+from r2.lib.pages import AdminAwardGive, AdminAwardWinners
+from validator import *
 
+class AwardsController(RedditController):
+
+    @validate(VAdmin())
+    def GET_index(self):
+        res = AdminPage(content = AdminAwards(),
+                        title = 'awards').render()
+        return res
+
+    @validate(VAdmin(),
+              award = VAwardByCodename('awardcn'))
+    def GET_give(self, award):
+        res = AdminPage(content = AdminAwardGive(award),
+                        title='give an award').render()
+        return res
+
+    @validate(VAdmin(),
+              award = VAwardByCodename('awardcn'))
+    def GET_winners(self, award):
+        res = AdminPage(content = AdminAwardWinners(award),
+                        title='award winners').render()
+        return res

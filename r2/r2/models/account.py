@@ -28,7 +28,7 @@ from r2.lib.utils        import modhash, valid_hash, randstr
 from pylons import g
 import time, sha
 from copy import copy
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 class AccountExists(Exception): pass
 
@@ -59,6 +59,7 @@ class Account(Thing):
                      report_made = 0,
                      report_correct = 0,
                      report_ignored = 0,
+                     cup_date = None,
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
@@ -252,9 +253,24 @@ class Account(Thing):
         share['recent'] = emails
 
         self.share = share
-        
-            
-            
+
+    def extend_cup(self, new_expiration):
+        if self.cup_date and self.cup_date > new_expiration:
+            return
+        self.cup_date = new_expiration
+        self._commit()
+
+    def remove_cup(self):
+        if not self.cup_date:
+            return
+        self.cup_date = None
+        self._commit()
+
+    def should_show_cup(self):
+        if self.cup_date and self.cup_date < datetime.now(g.tz):
+            self.cup_date = None
+            self._commit()
+        return self.cup_date
 
 class FakeAccount(Account):
     _nodb = True
@@ -331,6 +347,7 @@ def register(name, password):
         return a
 
 class Friend(Relation(Account, Account)): pass
+
 Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn = True),)
 
 class DeletedUser(FakeAccount):

@@ -59,7 +59,7 @@ class Subreddit(Thing, Printable):
     sr_limit = 50
 
     @classmethod
-    def _new(self, name, title, author_id, ip, lang = g.lang, type = 'public',
+    def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
              over_18 = False, **kw):
         with g.make_lock('create_sr_' + name.lower()):
             try:

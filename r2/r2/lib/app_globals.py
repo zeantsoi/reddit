@@ -60,6 +60,7 @@ class Globals(object):
                   'enable_doquery',
                   'use_query_cache',
                   'write_query_queue',
+                  'show_awards',
                   'css_killswitch',
                   'db_create_tables',
                   'allow_shutdown']

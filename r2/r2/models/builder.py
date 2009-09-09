@@ -35,7 +35,6 @@ from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
 from r2.lib.comment_tree import link_comments
-
 from copy import deepcopy, copy
 
 import time
@@ -44,43 +43,6 @@ from admintools import compute_votes, admintools, ip_span
 
 EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
-
-# Appends to the list "attrs" a tuple of:
-# <priority (higher trumps lower), letter,
-#  css class, i18n'ed mouseover label, hyperlink (or None)>
-def add_attr(attrs, code, label=None, link=None):
-    if code == 'F':
-        priority = 1
-        cssclass = 'friend'
-        if not label:
-            label = _('friend')
-        if not link:
-            link = '/prefs/friends'
-    elif code == 'S':
-        priority = 2
-        cssclass = 'submitter'
-        if not label:
-            label = _('submitter')
-        if not link:
-            raise ValueError ("Need a link")
-    elif code == 'M':
-        priority = 3
-        cssclass = 'moderator'
-        if not label:
-            raise ValueError ("Need a label")
-        if not link:
-            raise ValueError ("Need a link")
-    elif code == 'A':
-        priority = 4
-        cssclass = 'admin'
-        if not label:
-            label = _('reddit admin, speaking officially')
-        if not link:
-            link = '/help/faq#Whomadereddit'
-    else:
-        raise ValueError ("Got weird code [%s]" % code)
-
-    attrs.append( (priority, code, cssclass, label, link) )
 
 class Builder(object):
     def __init__(self, wrap = Wrapped, keep_fn = None):
@@ -94,6 +56,7 @@ class Builder(object):
             return item.keep_item(item)
 
     def wrap_items(self, items):
+        from r2.lib.template_helpers import add_attr
         user = c.user if c.user_is_loggedin else None
 
         #get authors
@@ -152,8 +115,7 @@ class Builder(object):
             w.author = None
             w.friend = False
 
-            # List of tuples <priority (higher trumps lower), letter,
-            # css class, i18n'ed mouseover label, hyperlink (or None)>
+            # List of tuples (see add_attr() for details)
             w.attribs = []
 
             w.distinguished = None
@@ -181,6 +143,13 @@ class Builder(object):
             if (w.distinguished == 'moderator' and
                 getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
+
+            if (g.show_awards and w.author
+                              and w.author.should_show_cup()):
+                add_attr(w.attribs, 'trophy', label=
+                    _("%(user)s recently won a trophy! click here to see it.")
+                         % {'user':w.author.name},
+                     link = "/user/%s" % w.author.name)
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]

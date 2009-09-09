@@ -512,7 +512,7 @@ class Comment(Thing, Printable):
     
     @classmethod
     def add_props(cls, user, wrapped):
-        from r2.models.builder import add_attr
+        from r2.lib.template_helpers import add_attr
         from r2.lib import promote
 
         #fetch parent links

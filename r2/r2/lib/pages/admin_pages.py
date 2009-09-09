@@ -46,7 +46,9 @@ class AdminPage(Reddit):
             buttons = []
 
             if g.translator:
-                buttons.append(NavButton(menu.i18n, ""))
+                buttons.append(NavButton(menu.i18n, "i18n"))
+
+            buttons.append(NavButton(menu.awards, "awards"))
 
             admin_menu = NavMenu(buttons, title='show', base_path = '/admin',
                                  type="lightdrop")

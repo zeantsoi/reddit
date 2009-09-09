@@ -31,7 +31,7 @@ from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, link_from_url
+from r2.lib.utils import query_string, link_from_url, timefromnow
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
@@ -1281,6 +1281,55 @@ class ApiController(RedditController):
         if tr:
             tr._is_enabled = True
 
+
+    @validatedForm(VAdmin(),
+                   award = VByName("fullname"),
+                   codename = VLength("codename", max_length = 100),
+                   title = VLength("title", max_length = 100),
+                   imgurl = VLength("imgurl", max_length = 1000))
+    def POST_editaward(self, form, jquery, award, codename, title, imgurl):
+        if award is None:
+            Award._new(codename, title, imgurl)
+            form.set_html(".status", _('saved. reload to see it.'))
+        else:
+            award.codename = codename
+            award.title = title
+            award.imgurl = imgurl
+            award._commit()
+            form.set_html(".status", _('saved'))
+
+    @validatedForm(VAdmin(),
+                   award = VByName("fullname"),
+                   description = VLength("description", max_length=1000),
+                   cup_hours = VFloat("cup_hours"),
+                   recipient = VExistingUname("recipient"))
+    def POST_givetrophy(self, form, jquery, award,
+                       description, cup_hours, recipient):
+        if not (award and recipient):
+            return self.abort404()
+
+        if cup_hours:
+            cup_seconds = int(cup_hours * 3600)
+            cup_expiration = timefromnow("%s seconds" % cup_seconds)
+
+        t = Trophy._new(recipient, award, description=description,
+                        cup_expiration=cup_expiration)
+
+        form.set_html(".status", _('saved'))
+
+    @validatedForm(VAdmin(),
+                   account = VExistingUname("account"))
+    def POST_removecup(self, form, jquery, account):
+        if not account:
+            return self.abort404()
+        account.remove_cup()
+
+    @validatedForm(VAdmin(),
+                   trophy = VTrophy("trophy_fn"))
+    def POST_removetrophy(self, form, jquery, trophy):
+        if not trophy:
+            return self.abort404()
+        trophy._delete()
 
     @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
                    show = VByName('show', thing_cls = Link, multiple = False))
