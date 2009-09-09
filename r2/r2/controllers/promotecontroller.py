@@ -308,7 +308,8 @@ class PromoteController(ListingController):
                    address = ValidAddress(["firstName", "lastName",
                                            "company", "address",
                                            "city", "state", "zip",
-                                           "country", "phoneNumber"]),
+                                           "country", "phoneNumber"],
+                                          usa_only = True),
                    creditcard = ValidCard(["cardNumber", "expirationDate",
                                            "cardCode"]))
     def POST_update_pay(self, form, jquery, bid, link, customer_id, pay_id,

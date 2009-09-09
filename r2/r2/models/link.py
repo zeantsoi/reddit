@@ -464,12 +464,16 @@ class Comment(Thing, Printable):
 
         link._incr('num_comments', 1)
 
-        inbox_rel = None
+        to = None
         if parent:
             to = Account._byID(parent.author_id)
-            # only global admins can be message spammed.
-            if not c._spam or to.name in g.admins:
-                inbox_rel = Inbox._add(to, c, 'inbox')
+        elif link.is_self:
+            to = Account._byID(link.author_id)
+
+        inbox_rel = None
+        # only global admins can be message spammed.
+        if to and (not c._spam or to.name in g.admins):
+            inbox_rel = Inbox._add(to, c, 'inbox')
 
         return (c, inbox_rel)
 

@@ -1074,6 +1074,10 @@ class VDestination(Validator):
         return dest or request.referer or self.default
 
 class ValidAddress(Validator):
+    def __init__(self, param, usa_only = False):
+        self.usa_only = usa_only
+        Validator.__init__(self, param)
+
     def set_error(self, msg, field):
         Validator.set_error(self, errors.BAD_ADDRESS,
                             dict(message=msg), field = field)
@@ -1092,11 +1096,14 @@ class ValidAddress(Validator):
             self.set_error(_("please provide your state"), "state")
         elif not zipCode:
             self.set_error(_("please provide your zip or post code"), "zip")
-        elif not country or not pycountry.countries.get(alpha2=country):
+        elif (not self.usa_only and
+              not country or not pycountry.countries.get(alpha2=country)):
             self.set_error(_("please pick a country"), "country")
         else:
-            # TODO: update object class when opening up
-            country = pycountry.countries.get(alpha2=country).name
+            if self.usa_only:
+                country = 'United States'
+            else:
+                country = pycountry.countries.get(alpha2=country).name
             return Address(firstName = firstName,
                            lastName = lastName,
                            company = company or "",
