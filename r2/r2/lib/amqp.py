@@ -142,10 +142,8 @@ def add_item(routing_key, body, message_id = None):
     """adds an item onto a queue. If the connection to amqp is lost it
     will try to reconnect and then call itself again."""
     if not amqp_host:
-        g.log.warning("Ignoring amqp message %r to %r" % (body, routing_key))
+        print "Ignoring amqp message %r to %r" % (body, routing_key)
         return
-
-    g.log.info("Sending amqp message %r to %r" % (body, routing_key))
 
     chan = get_channel()
     msg = amqp.Message(body,
