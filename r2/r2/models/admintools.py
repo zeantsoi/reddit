@@ -87,6 +87,9 @@ class AdminTools(object):
                 author = authors[aid]
                 author._incr('spammer', len(author_things) if spam else -len(author_things))
 
+    def admin_queues(self, chan, exchange):
+        pass
+
 admintools = AdminTools()
 
 def is_banned_IP(ip):

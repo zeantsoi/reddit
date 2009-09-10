@@ -180,6 +180,8 @@ class Globals(object):
         self.log.addHandler(logging.StreamHandler())
         if self.debug:
             self.log.setLevel(logging.DEBUG)
+        else:
+            self.log.setLevel(logging.WARNING)
 
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)

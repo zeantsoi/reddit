@@ -44,6 +44,7 @@ from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.db import queries
+from r2.lib import amqp
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking, sup, cssfilter, emailer
@@ -122,8 +123,6 @@ class ApiController(RedditController):
             if g.write_query_queue:
                 queries.new_message(m, inbox_rel)
 
-
-
     @validatedForm(VUser(),
                    VCaptcha(),
                    ValidDomain('url'),
@@ -136,7 +135,8 @@ class ApiController(RedditController):
                    save = VBoolean('save'),
                    selftext = VSelfText('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
-                   then = VOneOf('then', ('tb', 'comments'), default='comments'))
+                   then = VOneOf('then', ('tb', 'comments'),
+                                 default='comments'))
     def POST_submit(self, form, jquery, url, selftext, kind, title, save,
                     sr, ip, then):
         #backwards compatability
@@ -211,13 +211,16 @@ class ApiController(RedditController):
 
         #set the ratelimiter
         if should_ratelimit:
-            VRatelimit.ratelimit(rate_user=True, rate_ip = True, 
+            VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
 
         #update the queries
         if g.write_query_queue:
             queries.new_link(l)
             queries.new_vote(v)
+
+        # also notifies the searchchanges
+        amqp.add_item('new_link', l._fullname)
 
         #update the modified flags
         set_last_modified(c.user, 'overview')
@@ -227,9 +230,6 @@ class ApiController(RedditController):
         #update sup listings
         sup.add_update(c.user, 'submitted')
         
-        # flag search indexer that something has changed
-        tc.changed(l)
-        
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
         elif then == 'tb':
@@ -237,7 +237,6 @@ class ApiController(RedditController):
             path = add_sr('/tb/%s' % l._id36)
 
         form.redirect(path)
-
 
     @validatedForm(VRatelimit(rate_ip = True,
                               rate_user = True,
@@ -620,11 +619,12 @@ class ApiController(RedditController):
                                                comment, ip)
                 item.parent_id = parent._id
             else:
-                item, inbox_rel =  Comment._new(c.user, link, parent_comment,
-                                                comment, ip)
+                item, inbox_rel = Comment._new(c.user, link, parent_comment,
+                                               comment, ip)
                 Vote.vote(c.user, item, True, ip)
-                # flag search indexer that something has changed
-                tc.changed(item)
+
+                # will also update searchchanges as appropriate
+                amqp.add_item('new_comment', item._fullname)
 
                 #update last modified
                 set_last_modified(c.user, 'overview')
@@ -997,13 +997,17 @@ class ApiController(RedditController):
             #sending kw is ok because it was sanitized above
             sr = Subreddit._new(name = name, author_id = c.user._id, ip = ip,
                                 **kw)
+
+            # will also update search
+            amqp.add_item('new_subreddit', sr._fullname)
+
             Subreddit.subscribe_defaults(c.user)
             # make sure this user is on the admin list of that site!
             if sr.add_subscriber(c.user):
                 sr._incr('_ups', 1)
             sr.add_moderator(c.user)
             sr.add_contributor(c.user)
-            redir =  sr.path + "about/edit/?created=true"
+            redir = sr.path + "about/edit/?created=true"
             if not c.user_is_admin:
                 VRatelimit.ratelimit(rate_user=True,
                                      rate_ip = True,

@@ -25,8 +25,7 @@ from email.MIMEText import MIMEText
 import sqlalchemy as sa
 from sqlalchemy.databases.postgres import PGInet, PGBigInteger
 
-from r2.lib.db.tdb_sql import make_metadata
-from r2.models.thing_changes import changed, index_str, create_table
+from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from r2.lib.utils import Storage, timeago, Enum, tup
 from account import Account
 from r2.lib.db.thing import Thing
@@ -130,11 +129,11 @@ class EmailHandler(object):
         self.queue_table = mail_queue(self.metadata)
         indices = [index_str(self.queue_table, "date", "date"),
                    index_str(self.queue_table, 'kind', 'kind')]
-        create_table(self.queue_table, indices, force = force)
+        create_table(self.queue_table, indices)
 
         self.opt_table = opt_out(self.metadata)
         indices = [index_str(self.opt_table, 'email', 'email')]
-        create_table(self.opt_table, indices, force = force)
+        create_table(self.opt_table, indices)
 
         self.track_table = sent_mail_table(self.metadata)
         self.reject_table = sent_mail_table(self.metadata, name = "reject_mail")
@@ -149,8 +148,8 @@ class EmailHandler(object):
                        index_str(tab, 'msg_hash', 'msg_hash'),
                        ]
         
-        create_table(self.track_table, sent_indices(self.track_table), force = force)
-        create_table(self.reject_table, sent_indices(self.reject_table), force = force)
+        create_table(self.track_table, sent_indices(self.track_table))
+        create_table(self.reject_table, sent_indices(self.reject_table))
 
     def __repr__(self):
         return "<email-handler>"

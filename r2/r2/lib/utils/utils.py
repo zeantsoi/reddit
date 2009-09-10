@@ -954,21 +954,6 @@ def lineno():
     import inspect
     print "%s\t%s" % (datetime.now(),inspect.currentframe().f_back.f_lineno)
 
-class IteratorChunker(object):
-    def __init__(self,it):
-        self.it = it
-        self.done=False
-
-    def next_chunk(self,size):
-        chunk = []
-        if not self.done:
-            try:
-                for i in xrange(size):
-                    chunk.append(self.it.next())
-            except StopIteration:
-                self.done=True
-        return chunk
-
 def IteratorFilter(iterator, fn):
     for x in iterator:
         if fn(x):
