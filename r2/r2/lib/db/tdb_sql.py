@@ -23,6 +23,7 @@ from datetime import datetime
 import cPickle as pickle
 from copy import deepcopy
 import random
+from threading import local
 
 import sqlalchemy as sa
 from sqlalchemy.databases import postgres
@@ -30,7 +31,7 @@ from sqlalchemy.databases import postgres
 from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
 from r2.lib.services import AppServiceMonitor
 import operators
-from pylons import g, c
+from pylons import g
 dbm = g.dbm
 
 import logging
@@ -336,18 +337,22 @@ def get_read_table(tables):
     print 'yer stupid'
     return  random.choice(tables)
 
+use_write_db = local()
+
 def get_table(kind, action, tables):
+    # get or create our thread-local configuration
+    use_write_db.dbs = getattr(use_write_db, 'dbs', {})
+
     if action == 'write':
-        #if this is a write, store the kind in the c.use_write_db dict
-        #so that all future requests use the write db
-        if not isinstance(c.use_write_db, dict):
-            c.use_write_db = {}
-        c.use_write_db[kind] = True
+        # if this is a write, store the kind in the use_write_db.dbs
+        # dict so that all future db requests in this thread use the
+        # write db
+        use_write_db.dbs[kind] = True
 
         return get_write_table(tables)
     elif action == 'read':
         #check to see if we're supposed to use the write db again
-        if c.use_write_db and c.use_write_db.has_key(kind):
+        if use_write_db.dbs.get(kind, False):
             return get_write_table(tables)
         else:
             return get_read_table(tables)
