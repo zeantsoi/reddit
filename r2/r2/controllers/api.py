@@ -31,7 +31,7 @@ from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, link_from_url, timefromnow
+from r2.lib.utils import query_string, link_from_url, timefromnow, worker
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
@@ -220,7 +220,7 @@ class ApiController(RedditController):
             queries.new_vote(v)
 
         # also notifies the searchchanges
-        amqp.add_item('new_link', l._fullname)
+        worker.do(lambda: amqp.add_item('new_link', l._fullname))
 
         #update the modified flags
         set_last_modified(c.user, 'overview')
@@ -624,7 +624,7 @@ class ApiController(RedditController):
                 Vote.vote(c.user, item, True, ip)
 
                 # will also update searchchanges as appropriate
-                amqp.add_item('new_comment', item._fullname)
+                worker.do(lambda: amqp.add_item('new_comment', item._fullname))
 
                 #update last modified
                 set_last_modified(c.user, 'overview')
@@ -999,7 +999,7 @@ class ApiController(RedditController):
                                 **kw)
 
             # will also update search
-            amqp.add_item('new_subreddit', sr._fullname)
+            worker.do(lambda: amqp.add_item('new_subreddit', sr._fullname))
 
             Subreddit.subscribe_defaults(c.user)
             # make sure this user is on the admin list of that site!

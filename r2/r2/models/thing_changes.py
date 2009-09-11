@@ -24,8 +24,11 @@ import sqlalchemy as sa
 from pylons import g
 
 from r2.lib import amqp
+from r2.lib.utils import worker
 
 
 def changed(thing):
-    amqp.add_item('searchchanges_q', thing._fullname,
-                  message_id = thing._fullname)
+    def _changed():
+        amqp.add_item('searchchanges_q', thing._fullname,
+                      message_id = thing._fullname)
+    worker.do(_changed)
