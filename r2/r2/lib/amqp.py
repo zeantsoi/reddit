@@ -36,6 +36,7 @@ from pylons import g
 amqp_host = g.amqp_host
 amqp_user = g.amqp_user
 amqp_pass = g.amqp_pass
+log = g.log
 amqp_virtual_host = g.amqp_virtual_host
 
 connection = None
@@ -72,6 +73,14 @@ def get_connection():
 def get_channel(reconnect = False):
     global connection
     global channel
+    global log
+
+    # Periodic (and increasing with uptime) errors appearing when
+    # connection object is still present, but appears to have been
+    # closed.  This checks that the the connection is still open.
+    if connection and connection.channels is None:
+        log.error("Error: amqp.py, connection object with no available channels.  Reconnecting...")
+        connection = None
 
     if not connection or reconnect:
         channel.chan = None
