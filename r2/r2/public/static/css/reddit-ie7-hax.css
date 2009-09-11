@@ -3,5 +3,5 @@
     height: 17px;
 }
 
-.score { display: inline;  }
-div.score { display: block; }
+.entry.unvoted .score.unvoted { display: inline;  }
+.entry.unvoted div.score.unvoted { display: inline;  }

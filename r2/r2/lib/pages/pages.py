@@ -1876,9 +1876,9 @@ class PaymentForm(Templated):
 
 class Promote_Graph(Templated):
     def __init__(self):
-        now = datetime.datetime.now(g.tz)
-        start_date = (now - datetime.timedelta(7)).date()
-        end_date   = (now + datetime.timedelta(7)).date()
+        self.now = datetime.datetime.now(g.tz) + promote.timezone_offset
+        start_date = (self.now - datetime.timedelta(7)).date()
+        end_date   = (self.now + datetime.timedelta(7)).date()
 
         size = (end_date - start_date).days
 
@@ -1934,7 +1934,7 @@ class Promote_Graph(Templated):
             self.recent.sort(key = lambda x: x[0]._date)
 
         # graphs of money
-        history = now - datetime.timedelta(30)
+        history = self.now - datetime.timedelta(30)
         pool = bidding.PromoteDates.bid_history(history)
         if pool:
             # we want to generate a stacked line graph, so store the

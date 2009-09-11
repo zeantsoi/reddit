@@ -107,6 +107,8 @@ def cached_organic_links(user_id, langs):
                 new_item = random.choice(items[1:4])
             link_names.insert(0, new_item._fullname)
 
+    insert_promoted(link_names, sr_ids, user_id is not None)
+
     # remove any that the user has acted on
     builder = IDBuilder(link_names,
                         skip = True, keep_fn = keep_link,
@@ -117,8 +119,6 @@ def cached_organic_links(user_id, langs):
     #cycle where the cache will return the same link over and over
     if user_id:
         update_pos(0)
-
-    insert_promoted(link_names, sr_ids, user_id is not None)
 
     # remove any duplicates caused by insert_promoted if the user is logged in
     if user_id:

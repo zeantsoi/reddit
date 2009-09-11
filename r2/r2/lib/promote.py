@@ -163,8 +163,9 @@ def auth_paid_promo(thing, user, pay_id, bid):
         promotion_log(thing, "updated payment and/or bid: FAILED")    
         thing.promore_status = STATUS.unpaid
         thing.promote_trans_id = 0
-    thing._commit()
     PromoteDates.update_bid(thing)
+    # commit last to guarantee consistency
+    thing._commit()
     emailer.promo_bid(thing)
     return bool(trans_id)
 
@@ -274,14 +275,20 @@ def unpromote(thing, batch = False, status = STATUS.finished):
 
 # batch methods for moving promotions into the pending queue, and
 # setting status as pending.
-# TODO: merge the two into one master batch job
+
+# dates are referenced to UTC, while we want promos to change at (roughly)
+# midnight eastern-US.
+# TODO: make this a config parameter
+timezone_offset = -5 # hours
+timezone_offset = timedelta(0, timezone_offset * 3600)
+
 def generate_pending(date = None, test = False):
     """
     Look-up links that are to be promoted on the provided date (the
     default is now plus one day) and set their status as pending if
     they have been accepted.  This results in credit cards being charged.
     """
-    date = date or (datetime.now(g.tz) + timedelta(1))
+    date = date or (datetime.now(g.tz) + timedelta(1) + timezone_offset)
     links = Link._by_fullname([p.thing_name for p in 
                                PromoteDates.for_date(date)],
                               return_dict = False)
@@ -302,7 +309,7 @@ def promote_promoted(test = False):
     """
     from r2.lib.traffic import load_traffic
     with g.make_lock(promoted_lock_key):
-        now = datetime.now(g.tz)
+        now = datetime.now(g.tz) + timezone_offset
 
         promoted =  Link._by_fullname(get_promoted_direct().keys(),
                                       data = True, return_dict = False)

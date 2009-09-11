@@ -157,7 +157,7 @@
        enddate   = enddate  .strftime("%m/%d/%Y")
     %>
     <%utils:line_field title="${_('duration')}" id="duration-field">
-        %if thing.link and thing.link.promote_status >= STATUS.pending:
+        %if (thing.link and thing.link.promote_status >= STATUS.pending) and not c.user_is_sponsor:
           <div class="delete-field">
             <input type="hidden" name="startdate" 
                    value="${startdate}"/>

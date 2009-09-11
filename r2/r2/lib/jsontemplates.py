@@ -207,6 +207,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 media        = "media_object",
                                                 media_embed  = "media_embed",
                                                 selftext     = "selftext",
+                                                selftext_html= "selftext_html",
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id")
@@ -228,6 +229,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
         elif attr == 'subreddit_id':
             return thing.subreddit._fullname
         elif attr == 'selftext':
+            return thing.selftext
+        elif attr == 'selftext_html':
             return safemarkdown(thing.selftext)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 

@@ -114,7 +114,7 @@ class PromoteController(ListingController):
                    link = VByName("link"),
                    bid   = VBid('bid', "link"))
     def POST_freebie(self, form, jquery, link, bid):
-        if link and link.promoted is not None:
+        if link and link.promoted is not None and bid:
             promote.auth_paid_promo(link, c.user, -1, bid)
         jquery.refresh()
 

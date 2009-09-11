@@ -145,7 +145,7 @@
           <li>
             ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
           </li>
-        %elif c.user_is_admin and thing.promote_status != STATUS.rejected:
+        %elif c.user_is_sponsor and thing.promote_status != STATUS.rejected:
           <li>
             <form action="/post/reject" class="rejection-form"
                   style="display:none"
