@@ -923,6 +923,7 @@ textarea.gray { color: gray; }
     border-bottom: #E0E0E0 solid 1px;
     border-right: #E0E0E0 solid 1px;
     margin-bottom: 5px; 
+    width: 290px;
 }
 .server-status td { padding-right: 2px; padding-left: 2px; }
 .server-status .bar { height: 5px; background-color: blue; }
