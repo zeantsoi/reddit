@@ -117,7 +117,7 @@ class FrontController(RedditController):
         return BoringPage(_("verify email"), content = content).render()
 
     @validate(VUser(),
-              cache_evt = VCacheKey('email_verify', ('key', 'name')),
+              cache_evt = VCacheKey('email_verify', ('key',)),
               key = nop('key'),
               dest = VDestination(default = "/prefs/update"))
     def GET_verify_email(self, cache_evt, key, dest):
@@ -141,7 +141,7 @@ class FrontController(RedditController):
             c.user._commit()
             return self.redirect(dest)
 
-    @validate(cache_evt = VCacheKey('reset', ('key', 'name')),
+    @validate(cache_evt = VCacheKey('reset', ('key',)),
               key = nop('key'))
     def GET_resetpassword(self, cache_evt, key):
         """page hit once a user has been sent a password reset email

@@ -1200,7 +1200,7 @@ class ApiController(RedditController):
                           _("an email will be sent to that account's address shortly"))
 
             
-    @validatedForm(cache_evt = VCacheKey('reset', ('key', 'name')),
+    @validatedForm(cache_evt = VCacheKey('reset', ('key',)),
                    password  = VPassword(['passwd', 'passwd2']))
     def POST_resetpassword(self, form, jquery, cache_evt, password):
         if form.has_errors('name', errors.EXPIRED):

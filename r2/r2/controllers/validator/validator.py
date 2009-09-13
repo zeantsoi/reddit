@@ -875,28 +875,33 @@ class VCommentIDs(Validator):
         comments = Comment._byID(cids, data=True, return_dict = False)
         return comments
 
-class VCacheKey(Validator):
-    def __init__(self, cache_prefix, param, *a, **kw):
+
+class CachedUser(object):
+    def __init__(self, cache_prefix, user, key):
         self.cache_prefix = cache_prefix
-        self.user = None
-        self.key = None
-        Validator.__init__(self, param, *a, **kw)
+        self.user = user
+        self.key = key
 
     def clear(self):
         if self.key and self.cache_prefix:
             g.cache.delete(str(self.cache_prefix + "_" + self.key))
 
-    def run(self, key, name):
-        self.key = key
+
+class VCacheKey(Validator):
+    def __init__(self, cache_prefix, param, *a, **kw):
+        self.cache_prefix = cache_prefix
+        Validator.__init__(self, param, *a, **kw)
+
+    def run(self, key):
+        c_user = CachedUser(self.cache_prefix, None, key)
         if key:
-            uid = g.cache.get(str(self.cache_prefix + "_" + self.key))
+            uid = g.cache.get(str(self.cache_prefix + "_" + key))
             if uid:
                 try:
-                    self.user = Account._byID(uid, data = True)
+                    c_user.user = Account._byID(uid, data = True)
                 except NotFound:
                     return
-            #found everything we need
-            return self
+            return c_user
         self.set_error(errors.EXPIRED)
 
 class VOneOf(Validator):
