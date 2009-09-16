@@ -23,6 +23,7 @@ from urllib import unquote_plus, quote_plus, urlopen, urlencode
 from urlparse import urlparse, urlunparse
 from threading import local, Thread
 import Queue
+import signal
 from copy import deepcopy
 import cPickle as pickle
 import re, datetime, math, random, string, sha, os
@@ -1102,3 +1103,26 @@ def link_duplicates(article):
 
     return duplicates
 
+class TimeoutFunctionException(Exception):
+    pass
+
+class TimeoutFunction:
+    """Force an operation to timeout after N seconds. Works with POSIX
+       signals, so it's not safe to use in a multi-treaded environment"""
+    def __init__(self, function, timeout):
+        self.timeout = timeout
+        self.function = function
+
+    def handle_timeout(self, signum, frame):
+        raise TimeoutFunctionException()
+
+    def __call__(self, *args):
+        # can only be called from the main thread
+        old = signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.timeout)
+        try:
+            result = self.function(*args)
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old)
+        return result

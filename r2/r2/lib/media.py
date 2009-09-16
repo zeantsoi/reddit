@@ -23,14 +23,15 @@
 from pylons import g, config
 
 from r2.models.link import Link
-from r2.lib.workqueue import WorkQueue
 from r2.lib import s3cp
 from r2.lib.utils import timeago, fetch_things2
+from r2.lib.utils import TimeoutFunction, TimeoutFunctionException
 from r2.lib.db.operators import desc
 from r2.lib.scraper import make_scraper, str_to_image, image_to_str, prepare_image
 from r2.lib import amqp
 
 import tempfile
+import traceback
 
 s3_thumbnail_bucket = g.s3_thumb_bucket
 threads = 20
@@ -65,34 +66,23 @@ def update_link(link, thumbnail, media_object):
     link._commit()
 
 
-def set_media(link, wq = None, force = False):
-
-    def _process_link():
-        if link.is_self or link.promoted:
-            return
-        elif not force and (link.has_thumbnail or link.media_object):
-            return
+def set_media(link, force = False):
+    if link.is_self:
+        return
+    if not force and link.promoted:
+        return
+    elif not force and (link.has_thumbnail or link.media_object):
+        return
         
-        try:
-            scraper = make_scraper(link.url)
+    scraper = make_scraper(link.url)
 
-            thumbnail = scraper.thumbnail()
-            media_object = scraper.media_object()
+    thumbnail = scraper.thumbnail()
+    media_object = scraper.media_object()
 
-            if thumbnail:
-                upload_thumb(link, thumbnail)
+    if thumbnail:
+        upload_thumb(link, thumbnail)
 
-            update_link(link, thumbnail, media_object)
-
-        except:
-            log.warning('error fetching %s %s' % (link._fullname, link.url))
-            raise
-
-    if wq:
-        wq.add(_process_link)
-    else:
-        _process_link()
-
+    update_link(link, thumbnail, media_object)
 
 def force_thumbnail(link, image_data):
     image = str_to_image(image_data)
@@ -100,22 +90,23 @@ def force_thumbnail(link, image_data):
     upload_thumb(link, image)
     update_link(link, thumbnail = True, media_object = None)
 
-
 def run():
-    wq = WorkQueue(num_workers = 20, timeout = 30)
-    wq.start()
-
     def process_msgs(msgs):
-        print "media: Processing %d items" % len(msgs)
+        def _process_link(fname):
+            print "media: Processing %s" % fname
 
-        fullnames = [x.body for x in msgs]
-        links = Link._by_fullname(fullnames, data=True, return_dict=False)
-        for link in links:
-            set_media(link, wq = wq)
+            link = Link._by_fullname(fname, data=True, return_dict=False)
+            set_media(link)
+        for msg in msgs:
+            fname = msg.body
+            try:
+                TimeoutFunction(_process_link, 30)(fname)
+            except TimeoutFunctionException:
+                print "Timed out on %s" % fname
+            except KeyboardInterrupt:
+                raise
+            except:
+                print "Error fetching %s" % fname
+                print traceback.format_exc()
 
     amqp.handle_items('scraper_q', process_msgs, limit=1)
-
-    wq.wait() # we'll never get here
-
-
-    
