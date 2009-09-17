@@ -320,9 +320,9 @@ class MessageJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         if attr == "was_comment":
-            return hasattr(thing, "was_comment")
+            return thing.was_comment
         elif attr == "context":
-            return ("" if not hasattr(thing, "was_comment")
+            return ("" if not thing.was_comment
                     else thing.permalink + "?context=3")
         elif attr == "dest":
             return thing.to.name
