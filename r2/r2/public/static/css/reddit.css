@@ -804,7 +804,10 @@ textarea.gray { color: gray; }
 .morecomments a:hover { text-decoration: underline}
 .morecomments .gray {font-weight: normal; color: gray}
 
-.message {margin: 10px}
+.message {margin: 10px; margin-bottom: 20px;}
+.message .buttons,
+.message .md { margin-left: 15px; }
+
 .message .head.new {color:orangered  }
 .message .subject { font-weight: bold; font-size: larger; }
 

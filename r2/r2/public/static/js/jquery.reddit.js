@@ -198,6 +198,8 @@ var upmod_cls = "upmod";
 var down_cls = "down";
 var downmod_cls = "downmod";
 
+var last_vote = new Date(); 
+
 $.fn.vote = function(vh, callback) {
     /* for vote to work, $(this) should be the clicked arrow */
     if($(this).hasClass("arrow")) {
@@ -230,9 +232,12 @@ $.fn.vote = function(vh, callback) {
                         entry.addClass('unvoted')
                             .removeClass('likes dislikes');
                 });
-            
-            $.request("vote", {id: things.filter(":first").thing_id(), 
-                        dir : dir, vh : vh});
+
+            var now = new Date()
+            if (now - last_vote > 333) 
+                $.request("vote", {id: things.filter(":first").thing_id(), 
+                            dir : dir, vh : vh});
+            last_vote = now;
         }
         /* execute any callbacks passed in.  */
         if(callback) 

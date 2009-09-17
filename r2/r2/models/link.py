@@ -265,6 +265,7 @@ class Link(Thing, Printable):
 
         saved = Link._saved(user, wrapped) if user_is_loggedin else {}
         hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
+
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
 
@@ -548,7 +549,6 @@ class Comment(Thing, Printable):
 
             if (item.link._score <= 1 or item.score < 3 or
                 item.link._spam or item._spam or item.author._spam):
-                
                 item.nofollow = True
             else:
                 item.nofollow = False
@@ -660,7 +660,7 @@ class MoreChildren(MoreComments):
     pass
     
 class Message(Thing, Printable):
-    _defaults = dict(reported = 0,)
+    _defaults = dict(reported = 0, was_comment = False)
     _data_int_props = Thing._data_int_props + ('reported', )
     cache_ignore = set(["to"]).union(Printable.cache_ignore)
     
@@ -693,6 +693,9 @@ class Message(Thing, Printable):
         #load the "to" field if required
         to_ids = set(w.to_id for w in wrapped)
         tos = Account._byID(to_ids, True) if to_ids else {}
+        links = Link._byID(set(l.link_id for l in wrapped if l.was_comment),
+                           data = True,
+                           return_dict = True)
 
         for item in wrapped:
             item.to = tos[item.to_id]
@@ -701,6 +704,18 @@ class Message(Thing, Printable):
             else:
                 item.new = False
             item.score_fmt = Score.none
+
+            item.message_style = ""
+            if item.was_comment:
+                link = links[item.link_id]
+                if hasattr(item, "parent_id"):
+                    item.subject = _('comment reply')
+                    item.message_style = "comment-reply"
+                else:
+                    item.subject = _('post reply: "%(title)s"') \
+                                   % dict(title = link.title)
+                    item.message_style = "post-reply"
+
         # Run this last
         Printable.add_props(user, wrapped)
 

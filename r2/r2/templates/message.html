@@ -74,7 +74,7 @@ ${unsafe(safemarkdown(thing.body))}
 </%def>
 
 <%def name="entry()">
-<div class="uncollapsed">
+<div class="uncollapsed ${thing.message_style}">
   <p class="tagline">
     ${self.tagline()}
   </p>
