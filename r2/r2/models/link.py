@@ -699,7 +699,7 @@ class Message(Thing, Printable):
         subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
                                      data = True, return_dict = True)
         parents = Comment._byID(set(l.parent_id for l in wrapped
-                                    if hasattr(l, "parent_id")),
+                                  if hasattr(l, "parent_id") and l.was_comment),
                                 data = True, return_dict = True)
 
         for item in wrapped:
