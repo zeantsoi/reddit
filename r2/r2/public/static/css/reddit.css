@@ -807,6 +807,22 @@ textarea.gray { color: gray; }
 .message {margin: 10px; margin-bottom: 20px;}
 .message .buttons,
 .message .md { margin-left: 15px; }
+.message .entry .parent { 
+    border: 1px solid #336699; 
+    max-width: 60em;
+    margin: 3px 10px; 
+}
+.message .subject .title { 
+    font-weight: normal;
+    font-style: italic;
+    margin-left: 10px; 
+}
+.message .parent-link { 
+    margin-left: 12px; 
+    padding: 0 2px;
+    font-weight: bold; 
+}
+.message .child { margin-left: 15px;  }
 
 .message .head.new {color:orangered  }
 .message .subject { font-weight: bold; font-size: larger; }

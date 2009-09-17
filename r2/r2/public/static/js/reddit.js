@@ -623,7 +623,7 @@ function fetch_title() {
     var status = url_field.find(".title-status");
     var url = $("#url").val();
     if (url) {
-        status.show().text("loading...");
+        status.show().text(reddit.status_msg.loading);
         error.hide();
         $.request("fetch_title", {url: url});
     }
@@ -1066,6 +1066,34 @@ function clear_all_langs(elem) {
 
 function check_some_langs(elem) {
     $(elem).parents("form").find("#some-langs").attr("checked", true);
+}
+
+function fetch_parent(elem, parent_permalink, parent_id) {
+    $(elem).css("color", "red").html(reddit.status_msg.loading);
+    var thing = $(elem).thing();
+    var parentdiv = thing.find(".body .parent");
+    if (parentdiv.length == 0) {
+        var parent = '';
+        $.getJSON(parent_permalink, function(response) {
+                $.each(response, function() {
+                        if (this && this.data.children) {
+                            $.each(this.data.children, function() {
+                                    if(this.data.name == parent_id) {
+                                        parent= this.data.body_html; 
+                                    }
+                                });
+                        }
+                    });
+                if(parent) {
+                    /* make a parent div for the contents of the fetch */
+                    thing.find(".body .md").before('<div class="parent rounded">' +
+                                                   $.unsafe(parent) +
+                                                   '</div>'); 
+                }
+                $(elem).parent("li").andSelf().remove();
+            });
+    }
+    return false;
 }
 
 /* The ready method */

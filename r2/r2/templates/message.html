@@ -60,6 +60,17 @@
   </p>
   <p class="subject">
     ${thing.subject}
+  %if thing.was_comment:
+    <a href="${thing.link_permalink}" class="title">${thing.link_title}</a>
+    %if hasattr(thing, "parent"):
+    </p>
+    <p>
+      <a href="#" class="parent-link"
+         onclick="return fetch_parent(this, '${thing.parent_permalink}/.json', '${thing.parent}')">
+        ${_("show parent")}
+      </a>
+    %endif
+  %endif
 </%def>
 
 <%def name="ParentDiv()">

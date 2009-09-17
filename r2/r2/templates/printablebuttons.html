@@ -224,11 +224,9 @@
   %endif
   ${self.banbuttons()}
   %if thing.can_reply:
-    %if not thing.was_comment or thing.parent_id is None:
-      <li>
-         ${self.simple_button(_("reply {verb}"), "reply")}
-      </li>
-    %endif
+    <li>
+       ${self.simple_button(_("reply {verb}"), "reply")}
+    </li>
   %endif
 </%def>
 

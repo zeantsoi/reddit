@@ -121,11 +121,11 @@ class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):
         was_comment = getattr(thing, 'was_comment', False)
         permalink = thing.permalink if was_comment else ""
-        
+
         PrintableButtons.__init__(self, "messagebuttons", thing,
                                   profilepage = c.profilepage,
                                   permalink = permalink,
-                                  was_comment = was_comment, 
+                                  was_comment = was_comment,
                                   can_reply = c.user_is_loggedin,
                                   parent_id = getattr(thing, "parent_id", None),
                                   show_report = True,

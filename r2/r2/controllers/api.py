@@ -538,7 +538,7 @@ class ApiController(RedditController):
                 thing = VByName('id'))
     def POST_report(self, thing):
         '''for reporting...'''
-        if (thing and not thing._deleted and
+        if (thing and not thing._deleted and not c.user._spam and 
             not (hasattr(thing, "promoted") and thing.promoted)):
             Report.new(c.user, thing)
 

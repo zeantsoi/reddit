@@ -696,6 +696,11 @@ class Message(Thing, Printable):
         links = Link._byID(set(l.link_id for l in wrapped if l.was_comment),
                            data = True,
                            return_dict = True)
+        subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
+                                     data = True, return_dict = True)
+        parents = Comment._byID(set(l.parent_id for l in wrapped
+                                    if hasattr(l, "parent_id")),
+                                data = True, return_dict = True)
 
         for item in wrapped:
             item.to = tos[item.to_id]
@@ -708,12 +713,17 @@ class Message(Thing, Printable):
             item.message_style = ""
             if item.was_comment:
                 link = links[item.link_id]
+                sr = subreddits[link.sr_id]
+                item.link_title = link.title
+                item.link_permalink = link.make_permalink(sr)
                 if hasattr(item, "parent_id"):
                     item.subject = _('comment reply')
                     item.message_style = "comment-reply"
+                    parent = parents[item.parent_id]
+                    item.parent = parent._fullname
+                    item.parent_permalink = parent.make_permalink(link, sr)
                 else:
-                    item.subject = _('post reply: "%(title)s"') \
-                                   % dict(title = link.title)
+                    item.subject = _('post reply')
                     item.message_style = "post-reply"
 
         # Run this last
