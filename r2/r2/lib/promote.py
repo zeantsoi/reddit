@@ -179,7 +179,7 @@ def unapproved_promo(thing):
     put it back in place.
     """
     # only reinforce pending if it hasn't been seen yet.
-    if thing.promote_status < STATUS.finished:
+    if STATUS.unseen < thing.promote_status < STATUS.finished:
         promotion_log(thing, "status update: unapproved")    
         unpromote(thing, status = STATUS.unseen)
 

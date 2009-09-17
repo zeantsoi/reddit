@@ -311,7 +311,7 @@ ul.flat-vert {text-align: left;}
     height: 29px;
 }
 
-.morelink:hover {
+.morelink:hover, .mlh {
     border-color: #879eb4;
     background-image: url(/static/gradient-button-hover.png);
 }
@@ -336,7 +336,7 @@ ul.flat-vert {text-align: left;}
     background-image: url(/static/gradient-nub.png);
 }
 
-.morelink:hover .nub, .mlh {
+.morelink:hover .nub, .mlhn {
     background-image: url(/static/gradient-nub-hover.png);
 }
 
