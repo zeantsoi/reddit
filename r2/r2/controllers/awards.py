@@ -36,6 +36,9 @@ class AwardsController(RedditController):
     @validate(VAdmin(),
               award = VAwardByCodename('awardcn'))
     def GET_give(self, award):
+        if award is None:
+            abort(404, 'page not found')
+
         res = AdminPage(content = AdminAwardGive(award),
                         title='give an award').render()
         return res
@@ -43,6 +46,9 @@ class AwardsController(RedditController):
     @validate(VAdmin(),
               award = VAwardByCodename('awardcn'))
     def GET_winners(self, award):
+        if award is None:
+            abort(404, 'page not found')
+
         res = AdminPage(content = AdminAwardWinners(award),
                         title='award winners').render()
         return res

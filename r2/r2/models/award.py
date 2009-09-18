@@ -29,6 +29,7 @@ from pylons import c, g, request
 
 class Award (Thing):
     @classmethod
+    # TODO: needs @memoize() once non-admins can do it
     def all_awards(cls):
         return Award._query(limit=100,data=True)
 
@@ -72,19 +73,25 @@ class Trophy(Relation(Account, Award)):
             recipient.extend_cup(cup_expiration)
 
         t._commit()
+        Trophy.by_account(recipient, _update=True)
+        Trophy.by_award(award, _update=True)
 
     @staticmethod
+    @memoize('trophy.by_account')
     def by_account(account):
         q = Trophy._query(Trophy.c._thing1_id == account._id,
                           eager_load = True, thing_data = True,
+                          data = True,
                           sort = desc('_date'))
         q._limit = 50
         return list(q)
 
     @staticmethod
+    @memoize('trophy.by_award')
     def by_award(award):
         q = Trophy._query(Trophy.c._thing2_id == award._id,
                           eager_load = True, thing_data = True,
+                          data = True,
                           sort = desc('_date'))
         q._limit = 500
         return list(q)

@@ -268,11 +268,19 @@ class VAward(VThing):
         VThing.__init__(self, param, Award, *a, **kw)
 
 class VAwardByCodename(Validator):
-    def run(self, codename):
+    def run(self, codename, required_fullname=None):
+        if not codename:
+            return self.set_error(errors.NO_TEXT)
+
         try:
-            return Award._by_codename(codename)
+            a = Award._by_codename(codename)
         except NotFound:
-            abort(404, 'page not found')
+            a = None
+
+        if a and required_fullname and a._fullname != required_fullname:
+            return self.set_error(errors.INVALID_OPTION)
+        else:
+            return a
 
 class VTrophy(VThing):
     def __init__(self, param, redirect = True, *a, **kw):

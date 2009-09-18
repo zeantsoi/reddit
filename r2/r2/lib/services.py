@@ -98,8 +98,9 @@ class AppServiceMonitor(Templated):
 
         self._db_info = db_info
         q_host = g.amqp_host.split(':')[0]
-        # list of machines that have amqp queues
-        self._queue_hosts = set([q_host, socket.gethostbyaddr(q_host)[0]])
+        if q_host:
+            # list of machines that have amqp queues
+            self._queue_hosts = set([q_host, socket.gethostbyaddr(q_host)[0]])
         # dictionary of max lengths for each queue 
         self._queue_length_max = queue_length_max
 

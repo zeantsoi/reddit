@@ -20,7 +20,12 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<div class="sidecontentbox">
+<div class="sidecontentbox ${thing.extra_class or ''}">
+  %if thing.helplink:
+     <a class="helplink" href="${thing.helplink[0]}">
+       ${thing.helplink[1]}
+     </a>
+  %endif
   <h1>${thing.title.upper()}</h1>
   <div class="content">
     %for c in thing.content:

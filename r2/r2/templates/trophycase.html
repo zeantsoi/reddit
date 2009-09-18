@@ -22,58 +22,58 @@
 
 <%namespace file="printablebuttons.html" import="ynbutton" />
 
-<%def name="trophy_info(trophy, even)">
-    %if even:
-      <div class="trophy-info right">
-    %else:
-      <div class="trophy-info left">
-    %endif
-    <div style="display: inline-block; border: solid black 2px">
-       <img src="${trophy._thing2.imgurl}" />
-    </div>
-    <div>${trophy._thing2.title}</div>
-    %if hasattr(trophy, "description"):
-      <div>${trophy.description}</div>
-    %endif
-    %if c.user_is_admin:
+<%def name="trophy_info(trophy, center)">
+  <td class="trophy-info"
+      %if center:
+        colspan="2"
+      %endif
+      >
     <div>
-       ${ynbutton(_("remove"), _("removed"), "removetrophy", "hide_thing",
-                  hidden_data=dict(trophy_fn=trophy._id36))}
+      <img class="trophy-icon" src="${trophy._thing2.imgurl}" />
+      <br/>
+      ${trophy._thing2.title}
+      <br/>
+      %if hasattr(trophy, "description"):
+      <span class="trophy-description">${trophy.description}</span>
+      <br/>
+      %endif
+      %if c.user_is_admin:
+      ${ynbutton(_("remove"), _("removed"), "removetrophy", "hide_thing",
+      hidden_data=dict(trophy_fn=trophy._id36))}
+      %endif
     </div>
-    %endif
-  </div>
-  %if even:
-    <br/>
-  %endif
+  </td>
 </%def>
 
-<div class="raisedbox spacer trophycase">
-   <p>
-     <b>${_("trophy case")}</b>
-   </p>
+%if c.user_is_admin and thing.cup_date:
+  <div>
+    show cup until:
+    ${thing.cup_date.astimezone(g.display_tz).strftime("%Y-%m-%d %H:%M:%S %Z")}
+    &#32;
+    ${ynbutton(_("remove"), _("removed"), "removecup", "hide_thing",
+               hidden_data=dict(account=thing.user.name))}
+  </div>
+%endif
 
-   %if c.user_is_admin and thing.cup_date:
-   <div>
-       show cup until:
-       ${thing.cup_date.astimezone(g.display_tz).strftime("%Y-%m-%d %H:%M:%S %Z")}
-       &#32;
-       ${ynbutton(_("remove"), _("removed"), "removecup", "hide_thing",
-                  hidden_data=dict(account=thing.user.name))}
-   </div>
+## for now
+%if not thing.trophies:
+  <div class="dust">${_("dust")}</div>
+%endif
+
+<table class="trophy-table">
+ %for i, trophy in enumerate(thing.trophies):
+   %if i % 2 == 0:
+    <tr>
    %endif
 
-   ## for now
-   <div class="trophy-area">
+   ${trophy_info(trophy, i == len(thing.trophies) - 1)}
 
-   %if not thing.trophies:
-     <div style="height: 80px;">&nbsp;</div>
-     <span class="gray">${_("dust")}</span>
-     <div style="height: 80px;">&nbsp;</div>
+   %if i % 2 == 1:
+    </tr>
    %endif
+ %endfor
 
-   %for i, trophy in enumerate(thing.trophies):
-     ${trophy_info(trophy, i % 2 == 1)}
-   %endfor
-
-   </div>
-</div>
+ %if len(thing.trophies) % 2 == 1:
+  </tr>
+ %endif
+</table>

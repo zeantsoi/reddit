@@ -20,6 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%namespace file="utils.html" import="error_field"/>
+
 <form action="/post/givetrophy" method="post" class="pretty-form medium-text"
       onsubmit="return post_form(this, 'givetrophy');">
 
@@ -40,6 +42,8 @@
       </td>
       <td>
         <input type="text" name="recipient" />
+        ${error_field("NO_USER", "recipient", "span")}
+        ${error_field("USER_DOESNT_EXIST", "recipient", "span")}
       </td>
     </tr>
     <tr>
@@ -56,6 +60,7 @@
       </td>
       <td>
         <input type="text" name="cup_hours" value="24" />
+        ${error_field("BAD_NUMBER", "cup_hours", "span")}
       </td>
     </tr>
   </table>

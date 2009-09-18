@@ -1288,33 +1288,64 @@ class ApiController(RedditController):
 
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),
+                   colliding_award=VAwardByCodename(("codename", "fullname")),
                    codename = VLength("codename", max_length = 100),
                    title = VLength("title", max_length = 100),
                    imgurl = VLength("imgurl", max_length = 1000))
-    def POST_editaward(self, form, jquery, award, codename, title, imgurl):
+    def POST_editaward(self, form, jquery, award, colliding_award, codename,
+                       title, imgurl):
+        if form.has_errors(("codename", "title", "imgurl"), errors.NO_TEXT):
+            pass
+
+        if form.has_errors(("codename"), errors.INVALID_OPTION):
+            form.set_html(".status", "some other award has that codename")
+            pass
+
+        if form.has_error():
+            return
+
         if award is None:
             Award._new(codename, title, imgurl)
-            form.set_html(".status", _('saved. reload to see it.'))
-        else:
-            award.codename = codename
-            award.title = title
-            award.imgurl = imgurl
-            award._commit()
-            form.set_html(".status", _('saved'))
+            form.set_html(".status", "saved. reload to see it.")
+            return
+
+        award.codename = codename
+        award.title = title
+        award.imgurl = imgurl
+        award._commit()
+        form.set_html(".status", _('saved'))
 
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),
                    description = VLength("description", max_length=1000),
-                   cup_hours = VFloat("cup_hours"),
+                   cup_hours = VFloat("cup_hours",
+                                      coerce=False, min=0, max=24 * 365),
                    recipient = VExistingUname("recipient"))
     def POST_givetrophy(self, form, jquery, award,
                        description, cup_hours, recipient):
-        if not (award and recipient):
-            return self.abort404()
+        if form.has_errors("award", errors.NO_TEXT):
+            pass
+
+        if form.has_errors("recipient", errors.USER_DOESNT_EXIST):
+            pass
+
+        if form.has_errors("recipient", errors.NO_USER):
+            pass
+
+        if form.has_errors("fullname", errors.NO_TEXT):
+            pass
+
+        if form.has_errors("cup_hours", errors.BAD_NUMBER):
+            pass
+
+        if form.has_error():
+            return
 
         if cup_hours:
             cup_seconds = int(cup_hours * 3600)
             cup_expiration = timefromnow("%s seconds" % cup_seconds)
+        else:
+            cup_expiration = None
 
         t = Trophy._new(recipient, award, description=description,
                         cup_expiration=cup_expiration)
@@ -1333,7 +1364,11 @@ class ApiController(RedditController):
     def POST_removetrophy(self, form, jquery, trophy):
         if not trophy:
             return self.abort404()
+        recipient = trophy._thing1
+        award = trophy._thing2
         trophy._delete()
+        Trophy.by_account(recipient, _update=True)
+        Trophy.by_award(award, _update=True)
 
     @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
                    show = VByName('show', thing_cls = Link, multiple = False))

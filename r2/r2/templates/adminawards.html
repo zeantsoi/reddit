@@ -20,9 +20,13 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%namespace file="utils.html" import="error_field"/>
+
 <%def name="awardbuttons(codename)">
   <ul class="flat-list buttons">
-    <li><a href="#" onclick="$(this).parents('td').find('form').toggle()">edit</a></li>
+    <li><a href="#"
+        onclick="$(this).parents('td').find('form').toggle(); return false;">
+        edit</a></li>
     <li><a href="/admin/awards/${codename}/give">give</a></li>
     <li><a href="/admin/awards/${codename}/winners">winners</a></li>
   </ul>
@@ -37,15 +41,25 @@
   <table class="award-table borderless">
     <tr>
       <td>codename</td>
-      <td><input type="text" name="codename" value="${codename}" /></td>
+      <td>
+        <input type="text" name="codename" value="${codename}" />
+        ${error_field("NO_TEXT", "codename", "span")}
+        ${error_field("INVALID_OPTION", "codename", "span")}
+      </td>
     </tr>
     <tr>
       <td>title</td>
-      <td><input type="text" name="title" value="${title}" /></td>
+      <td>
+        <input type="text" name="title" value="${title}" />
+        ${error_field("NO_TEXT", "title", "span")}
+      </td>
     </tr>
     <tr>
       <td>img url</td>
-      <td><input type="text" name="imgurl" value="${imgurl}" /></td>
+      <td>
+        <input type="text" name="imgurl" value="${imgurl}" />
+        ${error_field("NO_TEXT", "imgurl", "span")}
+      </td>
     </tr>
   </table>
   <button class="btn" type="submit">save</button>

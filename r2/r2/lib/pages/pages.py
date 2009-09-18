@@ -428,8 +428,9 @@ class SubredditInfoBar(CachedTemplate):
                         separator = '')]
 
 class SideContentBox(Templated):
-    def __init__(self, title, content):
-        Templated.__init__(self, title = title, content = content)
+    def __init__(self, title, content, helplink=None, extra_class=None):
+        Templated.__init__(self, title=title, helplink=helplink,
+                           content=content, extra_class=extra_class)
 
 class SideBox(CachedTemplate):
     """
@@ -818,7 +819,12 @@ class ProfilePage(Reddit):
             from admin_pages import AdminSidebar
             rb.append(AdminSidebar(self.user))
         if g.show_awards:
-            rb.append(TrophyCase(self.user))
+            tc = TrophyCase(self.user)
+            helplink = ( "/help/awards", _("what's this?") )
+            scb = SideContentBox(title=_("trophy case"),
+                     helplink=helplink, content=[tc],
+                     extra_class="trophy-area")
+            rb.append(scb)
         return rb
 
 class TrophyCase(Templated):
