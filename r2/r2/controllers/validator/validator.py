@@ -263,6 +263,10 @@ class VLink(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Link, *a, **kw)
 
+class VCommentByID(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Comment, *a, **kw)
+
 class VAward(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Award, *a, **kw)

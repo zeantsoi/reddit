@@ -537,6 +537,13 @@ class FrontController(RedditController):
             c.response.content = ''
         return c.response
 
+    @validate(VAdmin(),
+              comment = VCommentByID('comment_id'))
+    def GET_comment_by_id(self, comment):
+        href = comment.make_permalink_slow()
+        href += "?context=5#%s" % comment._id36
+        return self.redirect(href)
+
     @validate(VUser(), 
               VSRSubmitPage(),
               url = VRequired('url', None),

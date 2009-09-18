@@ -163,6 +163,8 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="toolbar|inner|login"))
     mc('/toolbar/comments/:id', controller='toolbar', action='comments')
 
+    mc('/c/:comment_id', controller='front', action='comment_by_id')
+
     mc('/s/*rest', controller='toolbar', action='s')
     # additional toolbar-related rules just above the catchall
 
