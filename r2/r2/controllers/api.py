@@ -1113,7 +1113,7 @@ class ApiController(RedditController):
         user = c.user if c.user_is_loggedin else None
         if not link or not link.subreddit_slow.can_view(user):
             return self.abort(403,'forbidden')
-            
+
         if children:
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
                                      children)
@@ -1129,7 +1129,7 @@ class ApiController(RedditController):
                             cm.child = None
                         else:
                             items.append(cm.child)
-                        
+
                 return items
             # assumes there is at least one child
             # a = _children(items[0].child.things)
@@ -1417,7 +1417,7 @@ class ApiController(RedditController):
 
         wrapped = wrap_links(link)
         wrapped = list(wrapped)[0]
-        return spaceCompress(websafe(wrapped.link_child.content()))
+        return websafe(spaceCompress(wrapped.link_child.content()))
 
     @validatedForm(link = VByName('name', thing_cls = Link, multiple = False),
                    color = VOneOf('color', spreadshirt.ShirtPane.colors),
