@@ -193,7 +193,8 @@ class FrontController(RedditController):
         sr = Subreddit._byID(article.sr_id, True)
 
         if sr.name == g.takedown_sr:
-            return BoringPage(_("bummer"), content = TakedownPane(article)).render()
+            request.environ['REDDIT_TAKEDOWN'] = article._fullname
+            return self.abort404()
 
         if not c.default_sr and c.site._id != sr._id:
             return self.abort404()

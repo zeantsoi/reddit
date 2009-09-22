@@ -25,8 +25,11 @@
 %>
 
 <div class="infobar red">
-<img src="/static/gagged-alien.png"/>
-<% explanation = getattr(thing.link, "explanation", "this page is no longer available due to a copyright claim.") %>
-${unsafe(safemarkdown(explanation))}
+%if getattr(thing.link, "takedown_img", True):
+  <img src="/static/gagged-alien.png"/>
+%else:
+  <img src="/static/noimage.png"/>
+%endif
+${unsafe(safemarkdown(thing.explanation, nofollow=True))}
 <div class="clearleft"></div>
 </div>

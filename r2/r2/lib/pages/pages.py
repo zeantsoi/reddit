@@ -581,9 +581,21 @@ class SearchPage(BoringPage):
         return self.content_stack((self.searchbar, self.infobar,
                                    self.nav_menu, self._content))
 
+class TakedownPage(BoringPage):
+    def __init__(self, link):
+        BoringPage.__init__(self, getattr(link, "takedown_title", _("bummer")), 
+                            content = TakedownPane(link))
+
+    def render(self, *a, **kw):
+        response = BoringPage.render(self, *a, **kw)
+        return response
+
+
 class TakedownPane(Templated):
     def __init__(self, link, *a, **kw):
         self.link = link
+        self.explanation = getattr(self.link, "explanation", 
+                                   _("this page is no longer available due to a copyright claim."))
         Templated.__init__(self, *a, **kw)
 
 class CommentsPanel(Templated):

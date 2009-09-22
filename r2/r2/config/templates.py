@@ -47,3 +47,4 @@ api('account',       AccountJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)
 api('reddittraffic', TrafficJsonTemplate)
+api('takedownpane', TakedownJsonTemplate)

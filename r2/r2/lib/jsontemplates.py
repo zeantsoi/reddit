@@ -74,6 +74,10 @@ class JsonTemplate(Template):
     def render(self, thing = None, *a, **kw):
         return ObjectTemplate({})
 
+class TakedownJsonTemplate(JsonTemplate):
+    def render(self, thing = None, *a, **kw):
+        return thing.explanation
+
 class TableRowTemplate(JsonTemplate):
     def cells(self, thing):
         raise NotImplementedError

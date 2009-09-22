@@ -60,6 +60,8 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             d['cnameframe'] = 1
         if environ.get('REDDIT_NAME'):
             d['srname'] = environ.get('REDDIT_NAME')
+        if environ.get('REDDIT_TAKEDOWN'):
+            d['takedown'] = environ.get('REDDIT_TAKEDOWN')
 
         #preserve x-sup-id when 304ing
         if code == 304:
