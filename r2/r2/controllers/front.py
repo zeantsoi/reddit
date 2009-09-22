@@ -188,9 +188,14 @@ class FrontController(RedditController):
     def GET_comments(self, article, comment, context, sort, num_comments):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
-            return self.abort404()    
+            return self.abort404()
 
-        if not c.default_sr and c.site._id != article.sr_id: 
+        sr = Subreddit._byID(article.sr_id, True)
+
+        if sr.name == g.takedown_sr:
+            return BoringPage(_("bummer"), content = TakedownPane(article)).render()
+
+        if not c.default_sr and c.site._id != sr._id:
             return self.abort404()
 
         if not can_view_link_comments(article):

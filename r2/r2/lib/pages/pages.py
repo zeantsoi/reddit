@@ -581,6 +581,11 @@ class SearchPage(BoringPage):
         return self.content_stack((self.searchbar, self.infobar,
                                    self.nav_menu, self._content))
 
+class TakedownPane(Templated):
+    def __init__(self, link, *a, **kw):
+        self.link = link
+        Templated.__init__(self, *a, **kw)
+
 class CommentsPanel(Templated):
     """the side-panel on the reddit toolbar frame that shows the top
        comments of a link"""

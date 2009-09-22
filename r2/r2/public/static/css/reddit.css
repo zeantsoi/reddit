@@ -628,6 +628,18 @@ ul.flat-vert {text-align: left;}
     vertical-align: middle;
 }
 
+.infobar.red { 
+    padding: 5px;
+    background-color: #FFAEAE;
+    border-color: red;
+}
+
+.infobar.red img {
+    float: left;
+    margin-right: 5px;
+}
+
+
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
 .md p, .md h1 { margin: 5px 0}
