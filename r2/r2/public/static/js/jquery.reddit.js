@@ -20,7 +20,11 @@ $.log = function(message) {
         alert(message);
 };
 
-$.debug = $.log;
+$.debug = function(message) {
+    if ($.with_default(reddit.debug, false)) {
+        return $.log(message);
+    }
+}
 $.fn.debug = function() { 
     $.debug($(this));
     return $(this);

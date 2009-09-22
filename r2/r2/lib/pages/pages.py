@@ -1261,6 +1261,8 @@ class Button(Wrapped):
         # that this wrapper is wrapping.
         Link.add_props(user, [w for w in wrapped if hasattr(w, "_fullname")])
         for w in wrapped:
+            # caching: store the user name since each button has a modhash
+            w.user_name = c.user.name if c.user_is_loggedin else ""
             if not hasattr(w, '_fullname'):
                 w._fullname = None
 
