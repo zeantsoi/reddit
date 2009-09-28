@@ -126,6 +126,7 @@ href_re = re.compile('<a href="([^"]+)"', re.I)
 code_re = re.compile('<code>([^<]+)</code>')
 a_re    = re.compile('>([^<]+)</a>')
 fix_url = re.compile('&lt;(http://[^\s\'\"\]\)]+)&gt;')
+mouseover = re.compile('onmouseover', re.I | re.S)
 
 
 #TODO markdown should be looked up in batch?
@@ -143,6 +144,8 @@ def safemarkdown(text, nofollow=False, target=None):
             text = "<p><em>Comment Broken</em></p>"
         #remove images
         text = img.sub('', text)
+        # REMOVE WORM #
+        text = mouseover.sub('', text)
         #wipe malicious javascript
         text = jscript_url.sub('', text)
         def href_handler(m):
