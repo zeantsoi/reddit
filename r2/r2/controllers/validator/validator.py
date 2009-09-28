@@ -261,15 +261,15 @@ class VThing(Validator):
 
 class VLink(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
-        VThing.__init__(self, param, Link, *a, **kw)
+        VThing.__init__(self, param, Link, redirect=redirect, *a, **kw)
 
 class VCommentByID(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
-        VThing.__init__(self, param, Comment, *a, **kw)
+        VThing.__init__(self, param, Comment, redirect=redirect, *a, **kw)
 
 class VAward(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
-        VThing.__init__(self, param, Award, *a, **kw)
+        VThing.__init__(self, param, Award, redirect=redirect, *a, **kw)
 
 class VAwardByCodename(Validator):
     def run(self, codename, required_fullname=None):
@@ -288,7 +288,7 @@ class VAwardByCodename(Validator):
 
 class VTrophy(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
-        VThing.__init__(self, param, Trophy, *a, **kw)
+        VThing.__init__(self, param, Trophy, redirect=redirect, *a, **kw)
 
 class VMessage(Validator):
     def run(self, message_id):
@@ -708,6 +708,13 @@ class VExistingUname(VRequired):
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
 
     def run(self, name):
+        if name.startswith('~') and c.user_is_admin:
+            try:
+                user_id = int(name[1:])
+                return Account._byID(user_id)
+            except (NotFound, ValueError):
+                return self.error(errors.USER_DOESNT_EXIST)
+
         # make sure the name satisfies our user name regexp before
         # bothering to look it up.
         name = chkuser(name)

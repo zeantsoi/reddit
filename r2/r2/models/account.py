@@ -204,6 +204,14 @@ class Account(Thing):
         else:
             raise NotFound, 'Account %s' % name
 
+    # Admins only, since it's not memoized
+    @classmethod
+    def _by_name_multiple(cls, name):
+        q = cls._query(lower(Account.c.name) == name.lower(),
+                       Account.c._spam == (True, False),
+                       Account.c._deleted == (True, False))
+        return list(q)
+
     @property
     def friends(self):
         return self.friend_ids()

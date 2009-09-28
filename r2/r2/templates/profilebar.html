@@ -30,7 +30,24 @@
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
 <div class="titlebox">
-  <h1>${thing.user.name}</h1>
+  <h1>
+    ${thing.user.name}
+
+    %if c.user_is_admin:
+      <span class="account-notes">
+        #${thing.user._id}
+
+        %if thing.user._deleted:
+          <span class="unusual">(deleted)</span>
+        %endif
+
+        %if thing.user._spam:
+          <span class="unusual">(banned)</span>
+        %endif
+      </span>
+    %endif
+
+  </h1>
 
   %if c.user != thing.user:
     <div>
@@ -43,9 +60,6 @@
   %endif
 
   %if c.user_is_admin:
-    %if thing.user._spam:
-      <b>(banned)</b>
-    %endif
     <table>
      <%
        karmas = thing.user.all_karmas()
