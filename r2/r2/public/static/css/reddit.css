@@ -1663,6 +1663,10 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     padding: 10px;
 }
 
+.delete-field td {
+    vertical-align: top;
+}
+
 /*pref page boxes*/
 .pretty-form.short-text input[type=text],
 .pretty-form.short-text textarea,
@@ -2358,6 +2362,11 @@ ul.tabmenu.formtab {
 }
 .linefield label { font-size: smaller; padding-right: 2px;  }
 .linefield span{ font-size: smaller; }
+
+.linefield input[type="text"].small-text { 
+    font-size: smaller;
+    width: 100%; 
+}
 
 /***traffic stuff***/
 .traffic-table {margin: 10px 20px; }

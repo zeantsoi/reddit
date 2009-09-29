@@ -960,8 +960,11 @@ class ApiController(RedditController):
                    show_media = VBoolean('show_media'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    ip = ValidIP(),
+                   ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
+                   ad_file = VLength('ad-location', max_length = 500),
                    )
-    def POST_site_admin(self, form, jquery, name ='', ip = None, sr = None, **kw):
+    def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
+                        **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -1015,6 +1018,13 @@ class ApiController(RedditController):
 
         #editting an existing reddit
         elif sr.is_moderator(c.user) or c.user_is_admin:
+
+            if c.user_is_admin:
+                sr.ad_type = ad_type
+                if ad_type != "custom":
+                    ad_file = Subreddit._defaults['ad_file']
+                sr.ad_file = ad_file
+
             #assume sr existed, or was just built
             old_domain = sr.domain
 

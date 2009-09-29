@@ -679,3 +679,7 @@ class FrontController(RedditController):
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
+
+
+    def GET_ad(self, reddit = None):
+        return Dart_Ad(reddit).render(style="html")

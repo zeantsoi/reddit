@@ -50,6 +50,7 @@ class Subreddit(Thing, Printable):
                      description = '',
                      allow_top = True,
                      images = {},
+                     ad_type = None,
                      ad_file = os.path.join(g.static_path, 'ad_default.html'),
                      reported = 0,
                      valid_votes = 0,
