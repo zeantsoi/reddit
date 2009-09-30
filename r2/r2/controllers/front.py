@@ -670,11 +670,15 @@ class FrontController(RedditController):
     @validate(VSponsor(),
               article = VLink('article'))
     def GET_traffic(self, article):
-        res = LinkInfoPage(link = article,
+        content = PromotedTraffic(article)
+        if c.render_style == 'csv':
+            c.response.content = content.as_csv()
+            return c.response
+
+        return LinkInfoPage(link = article,
                            comment = None,
-                           content = PromotedTraffic(article)).render()
-        return res
-        
+                           content = content).render()
+
     @validate(VAdmin())
     def GET_site_traffic(self):
         return BoringPage("traffic",

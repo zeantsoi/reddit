@@ -360,6 +360,7 @@ class ExtensionMiddleware(object):
                   'mobile' : ('mobile', 'text/html; charset=UTF-8'),
                   'png' : ('png', 'image/png'),
                   'css' : ('css', 'text/css'),
+                  'csv' : ('csv', 'text/csv; charset=UTF-8'),
                   'api' : (api_type(), 'application/json; charset=UTF-8'),
                   'json' : (api_type(), 'application/json; charset=UTF-8'),
                   'json-html' : (api_type('html'), 'application/json; charset=UTF-8')}

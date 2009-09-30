@@ -25,8 +25,14 @@
    def num(x):
       return locale.format('%d', x, True)
  %>
-
+<div class="promoted-traffic">
 %if thing.traffic:
+  <h1>
+    ${_("Promotion Traffic")}
+      <a href="/traffic/${thing.thing._id36}.csv">
+      ${_("(download as .csv)")}
+      </a>
+  </h1>
   %if thing.imp_graph:
     <img class="traffic-graph" src="${thing.imp_graph}"
          alt="impressions graph"/>
@@ -51,16 +57,12 @@
       <th>unique</th>
       <th>total</th>
     </tr>
-    %for date, (uimp, nimp, ucli, ncli) in thing.traffic:
-      <tr>
-        <td>${date.strftime("%Y-%m-%d %H:%M")}</td>
-        <td>${num(uimp)}</td>
-        <td>${num(nimp)}</td>
-        <td>${num(ucli)}</td>
-        <td>${num(ncli)}</td>
-        <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
-        <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
-      </tr>
+    %for x in thing.to_iter():
+       <tr>
+         %for y in x:
+           <td>${y}</td>
+         %endfor
+       </tr>
     %endfor
     %if thing.totals:
       <% 
@@ -94,3 +96,4 @@
     %endif
   </table>
 %endif
+</div>

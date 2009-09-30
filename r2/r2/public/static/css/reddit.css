@@ -2395,6 +2395,16 @@ ul.tabmenu.formtab {
     margin-bottom: 10px;
 }
 
+.promoted-traffic h1 { 
+    border: none;
+    margin-bottom: 10px; 
+}
+.promoted-traffic h1 a { 
+    font-size: small;
+    margin-left: 10px; 
+}
+
+
 .award-table {
     margin: 5px;
 }

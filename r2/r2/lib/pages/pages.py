@@ -1754,6 +1754,28 @@ class PromotedTraffic(Traffic):
             self.imp_graph = self.cli_graph = None
         Templated.__init__(self)
 
+    def to_iter(self, localize = True, total = False):
+        def num(x):
+            if localize:
+                return locale.format('%d', x, True)
+            return str(x)
+        def row(label, data):
+            uimp, nimp, ucli, ncli = data
+            return (label,
+                   num(uimp), num(nimp), num(ucli), num(ncli),
+                   ("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%", 
+                   ("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%")
+
+        for date, data in self.traffic:
+            yield row(date.strftime("%Y-%m-%d %H:%M"), data)
+        if total:
+            yield row("total", self.totals)
+
+
+    def as_csv(self):
+        return"\n".join(','.join(x) for x in self.to_iter(localize = False,
+                                                        total = True))
+
 class RedditTraffic(Traffic):
     """
     fetches hourly and daily traffic for the current reddit.  If the
