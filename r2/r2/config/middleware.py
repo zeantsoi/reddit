@@ -290,7 +290,7 @@ class DomainMiddleware(object):
         sr_redirect = None
         for sd in list(sub_domains):
             # subdomains to disregard completely
-            if sd in ('www', 'origin', 'beta'):
+            if sd in ('www', 'origin', 'beta', 'pay'):
                 continue
             # subdomains which change the extension
             elif sd == 'm':

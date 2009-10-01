@@ -266,7 +266,7 @@
             ${_("this amount has already been charged")}
           </span>
          %else:
-             <a href="/promoted/pay/${thing.link._id36}" class="pay-link">
+             <a href="${g.payment_domain}promoted/pay/${thing.link._id36}" class="pay-link">
                %if thing.link.promote_status == STATUS.unpaid:
                   ${_("set up payment")}
                %elif thing.link.promote_status < STATUS.pending:
