@@ -106,7 +106,11 @@ class PromoteController(ListingController):
 
     @validate(VSponsor())
     def GET_graph(self):
-        return PromotePage("graph", content = Promote_Graph()).render()
+        content = Promote_Graph()
+        if c.render_style == 'csv':
+            c.response.content = content.as_csv()
+            return c.response
+        return PromotePage("graph", content = content).render()
 
 
     ### POST controllers below

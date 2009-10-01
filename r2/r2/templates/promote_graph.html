@@ -165,7 +165,7 @@
   %endif
 
   %if thing.recent:
-  <h1>${_('promotions this month')}</h1>
+  <h1>${_('promotions this month')}&nbsp;<a href="/promoted/graph.csv">[CSV]</a></h1>
   
   <table class="traffic-table">
     <tr>
@@ -180,6 +180,7 @@
       <th>total</th>
       <th>unique</th>
       <th>total</th>
+      <th>price</th>
       <th>points</th>
       <th>title</th>
     </tr>
@@ -192,6 +193,7 @@
       <td>${num(nimp)}</td>
       <td>${num(ucli)}</td>
       <td>${num(ncli)}</td>
+      <td>${money(link.promote_bid)}</td>
       <td>${link._ups - link._downs}</td>
       <td style="text-align:left">
         <a class="title" href="${link.permalink}">${link.title}</a>

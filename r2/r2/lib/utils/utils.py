@@ -1126,3 +1126,13 @@ class TimeoutFunction:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old)
         return result
+
+def to_csv(table):
+    # commas and linebreaks must result in a quoted string
+    def quote_commas(x):
+        if ',' in x or '\n' in x:
+            return u'"%s"' % x.replace('"', '""')
+        return x
+    return u"\n".join(u','.join(quote_commas(y) for y in x)
+                      for x in table)
+    

@@ -41,7 +41,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
-from r2.lib.utils import link_duplicates
+from r2.lib.utils import link_duplicates, to_csv
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
@@ -1773,8 +1773,7 @@ class PromotedTraffic(Traffic):
 
 
     def as_csv(self):
-        return"\n".join(','.join(x) for x in self.to_iter(localize = False,
-                                                        total = True))
+        return to_csv(self.to_iter(localize = False, total = True))
 
 class RedditTraffic(Traffic):
     """
@@ -2051,6 +2050,22 @@ class Promote_Graph(Templated):
                            market = market, 
                            start_date = start_date,
                            promote_blocks = sorted_blocks)
+
+    def to_iter(self, localize = True):
+        def num(x):
+            if localize:
+                return locale.format('%d', x, True)
+            return str(x)
+        for link, uimp, nimp, ucli, ncli in self.recent:
+            yield (link._date.strftime("%Y-%m-%d"),
+                   num(uimp), num(nimp), num(ucli), num(ncli),
+                   num(link._ups - link._downs), 
+                   "$%.2f" % link.promote_bid,
+                   _force_unicode(link.title))
+
+    def as_csv(self):
+        return to_csv(self.to_iter(localize = False))
+        
         
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):
