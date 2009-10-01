@@ -1860,34 +1860,36 @@ class RedditTraffic(Traffic):
         if c.default_sr:
             data = self.month_data
 
-            # figure out the mean number of users last month
+            # figure out the mean number of users last month, 
+            # unless today is the first and there is no data
             days = self.day_data
             now = datetime.datetime.utcnow()
-            # project based on traffic so far
-            # totals are going to be up to yesterday
-            month_len = calendar.monthrange(now.year, now.month)[1]
-
-            lastmonth = datetime.datetime.utcnow().month
-            lastmonthyear = datetime.datetime.utcnow().year
-            if lastmonth == 1:
-                lastmonthyear -= 1
-                lastmonth = 1
-            else:
-                lastmonth = (lastmonth - 1) if lastmonth != 1 else 12
-            # length of last month
-            lastmonthlen = calendar.monthrange(lastmonthyear, lastmonth)[1]
-
-            lastdays = filter(lambda x: x[0].month == lastmonth, days) 
-            thisdays = filter(lambda x: x[0].month == now.month, days) 
-            user_scale = 0
-            if lastdays:
-                last_mean = (sum(u for (d, (u, v)) in lastdays) / 
-                             float(len(lastdays)))
-                day_mean = (sum(u for (d, (u, v)) in thisdays) / 
-                            float(len(thisdays)))
-                if last_mean and day_mean:
-                    user_scale = ( (day_mean * month_len) /
-                                   (last_mean * lastmonthlen) )
+            if now.day != 1:
+                # project based on traffic so far
+                # totals are going to be up to yesterday
+                month_len = calendar.monthrange(now.year, now.month)[1]
+    
+                lastmonth = datetime.datetime.utcnow().month
+                lastmonthyear = datetime.datetime.utcnow().year
+                if lastmonth == 1:
+                    lastmonthyear -= 1
+                    lastmonth = 1
+                else:
+                    lastmonth = (lastmonth - 1) if lastmonth != 1 else 12
+                # length of last month
+                lastmonthlen = calendar.monthrange(lastmonthyear, lastmonth)[1]
+    
+                lastdays = filter(lambda x: x[0].month == lastmonth, days) 
+                thisdays = filter(lambda x: x[0].month == now.month, days) 
+                user_scale = 0
+                if lastdays:
+                    last_mean = (sum(u for (d, (u, v)) in lastdays) / 
+                                 float(len(lastdays)))
+                    day_mean = (sum(u for (d, (u, v)) in thisdays) / 
+                                float(len(thisdays)))
+                    if last_mean and day_mean:
+                        user_scale = ( (day_mean * month_len) /
+                                       (last_mean * lastmonthlen) )
             last_month_users = 0
             for x, (date, d) in enumerate(data):
                 res.append([("date", date.strftime("%Y-%m")),
@@ -1900,7 +1902,8 @@ class RedditTraffic(Traffic):
                         last_month_users = d[i]
                     if x == 0:
                         res[-1].append(("",""))
-                    elif x == len(data) - 1:
+                    # project, unless today is the first of the month
+                    elif x == len(data) - 1 and now.day != 1:
                         # yesterday
                         yday = (datetime.datetime.utcnow()
                                 -datetime.timedelta(1)).day
@@ -1971,7 +1974,10 @@ class Promote_Graph(Templated):
                     break
 
         # load recent traffic as well:
-        self.recent =  dict(load_summary("thing"))
+        self.recent = {}
+        for k, v in load_summary("thing"):
+            if k.startswith('t%d_' % Link._type_id):
+                self.recent[k] = v
 
         if self.recent:
             link_listing = wrap_links(self.recent.keys())

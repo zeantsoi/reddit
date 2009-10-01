@@ -60,7 +60,7 @@ def load_traffic_uncached(interval, what, iden,
     except socket.error:
         return []
 
-#@memoize("cached_traffic", time = 60)
+@memoize("cached_traffic", time = 60)
 def load_traffic(interval, what, iden = '', 
                  start_time = None, stop_time = None,
                  npoints = None):
