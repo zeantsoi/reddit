@@ -24,7 +24,6 @@
   from r2.lib.media import thumbnail_url
   from r2.lib.template_helpers import static
   from r2.lib.promote import STATUS
-  from datetime import datetime, timedelta
 %>
 <%namespace file="utils.html" 
             import="error_field, checkbox, plain_link, image_upload" />
@@ -143,34 +142,21 @@
       </div>
     </%utils:line_field>
 
-    <% 
-       mindate   = (datetime.now() + timedelta(1)).strftime("%m/%d/%Y");
-
-       if thing.link:
-           startdate = thing.link._date
-           enddate   = thing.link.promote_until
-       else:
-           startdate = (datetime.now() + timedelta(2))
-           enddate   = (datetime.now() + timedelta(3));
-       
-       startdate = startdate.strftime("%m/%d/%Y")
-       enddate   = enddate  .strftime("%m/%d/%Y")
-    %>
     <%utils:line_field title="${_('duration')}" id="duration-field">
         %if (thing.link and thing.link.promote_status >= STATUS.pending) and not c.user_is_sponsor:
           <div class="delete-field">
             <input type="hidden" name="startdate" 
-                   value="${startdate}"/>
+                   value="${thing.startdate}"/>
             <input type="hidden" name="enddate" 
-                   value="${enddate}"/>
+                   value="${thing.enddate}"/>
             ${thing.link._date.strftime(thing.datefmt)} -
             ${thing.link.promote_until.strftime(thing.datefmt)}
           </div>
         %else:
         %if not c.user_is_sponsor:
-          <input type="hidden" id="date-min" value="${mindate}" />
+          <input type="hidden" id="date-min" value="${thing.mindate}" />
         %endif
-        <%self:datepicker name="startdate", value="${startdate}"
+        <%self:datepicker name="startdate", value="${thing.startdate}"
                           minDateSrc="#date-min">
         function(elem) {
           var other = $("#enddate");
@@ -185,7 +171,7 @@
         }
         </%self:datepicker>
         -
-        <%self:datepicker name="enddate", value="${enddate}"
+        <%self:datepicker name="enddate", value="${thing.enddate}"
                           minDateSrc="#startdate">
           function(elem) { update_bid(elem); }
         </%self:datepicker>

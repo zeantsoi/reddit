@@ -41,7 +41,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
-from r2.lib.utils import link_duplicates, to_csv
+from r2.lib.utils import link_duplicates, make_offset_date, to_csv
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
@@ -1595,6 +1595,26 @@ class PromoteLinkForm(Templated):
                 bids.sort(key = lambda x: x.date, reverse = True)
             except NotFound:
                 bids = []
+
+        # reference "now" to what we use for promtions
+        now = promote.promo_datetime_now()
+
+        # min date is the day before the first possible start date.
+        mindate = (make_offset_date(now, g.min_promote_future,
+                                    business_days = True) -
+                   datetime.timedelta(1))
+
+        if link:
+            startdate = link._date
+            enddate   = link.promote_until
+        else:
+            startdate = mindate + datetime.timedelta(1)
+            enddate   = startdate + datetime.timedelta(1)
+
+        self.startdate = startdate.strftime("%m/%d/%Y")
+        self.enddate   = enddate  .strftime("%m/%d/%Y")
+        self.mindate   = mindate  .strftime("%m/%d/%Y")
+
         Templated.__init__(self, sr = sr, link = link,
                          datefmt = datefmt, bids = bids, 
                          timedeltatext = timedeltatext,
@@ -1849,7 +1869,7 @@ class RedditTraffic(Traffic):
                 d[0] = name
             return data
         return res
-        
+
     def monthly_summary(self):
         """
         Convenience method b/c it is bad form to do this much math
@@ -1867,7 +1887,7 @@ class RedditTraffic(Traffic):
                 # project based on traffic so far
                 # totals are going to be up to yesterday
                 month_len = calendar.monthrange(now.year, now.month)[1]
-    
+
                 lastmonth = datetime.datetime.utcnow().month
                 lastmonthyear = datetime.datetime.utcnow().year
                 if lastmonth == 1:
@@ -1926,7 +1946,7 @@ class PaymentForm(Templated):
 
 class Promote_Graph(Templated):
     def __init__(self):
-        self.now = datetime.datetime.now(g.tz) + promote.timezone_offset
+        self.now = promote.promo_datetime_now()
         start_date = (self.now - datetime.timedelta(7)).date()
         end_date   = (self.now + datetime.timedelta(7)).date()
 

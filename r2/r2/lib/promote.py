@@ -23,7 +23,7 @@ from __future__ import with_statement
 
 from r2.models import *
 from r2.lib import authorize
-from r2.lib import emailer
+from r2.lib import emailer, filters
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum
 from pylons import g, c
@@ -60,7 +60,8 @@ def promotion_log(thing, text, commit = False):
     now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
     text = "[%s: %s] %s" % (name, now, text)
     log.append(text)
-    thing.promotion_log = log[::]
+    # copy (and fix encoding) to make _dirty
+    thing.promotion_log = map(filters._force_utf8, log)
     if commit:
         thing._commit()
     return text
@@ -282,13 +283,16 @@ def unpromote(thing, batch = False, status = STATUS.finished):
 timezone_offset = -5 # hours
 timezone_offset = timedelta(0, timezone_offset * 3600)
 
+def promo_datetime_now():
+    return datetime.now(g.tz) + timezone_offset
+
 def generate_pending(date = None, test = False):
     """
     Look-up links that are to be promoted on the provided date (the
     default is now plus one day) and set their status as pending if
     they have been accepted.  This results in credit cards being charged.
     """
-    date = date or (datetime.now(g.tz) + timedelta(1) + timezone_offset)
+    date = date or (promo_datetime_now() + timedelta(1))
     links = Link._by_fullname([p.thing_name for p in 
                                PromoteDates.for_date(date)],
                               return_dict = False)
@@ -309,7 +313,7 @@ def promote_promoted(test = False):
     """
     from r2.lib.traffic import load_traffic
     with g.make_lock(promoted_lock_key):
-        now = datetime.now(g.tz) + timezone_offset
+        now = promo_datetime_now()
 
         promoted =  Link._by_fullname(get_promoted_direct().keys(),
                                       data = True, return_dict = False)

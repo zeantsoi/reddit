@@ -1127,6 +1127,33 @@ class TimeoutFunction:
             signal.signal(signal.SIGALRM, old)
         return result
 
+def make_offset_date(start_date, interval, future = True,
+                     business_days = False):
+    """
+    Generates a date in the future or past "interval" days from start_date.
+
+    Can optionally give weekends no weight in the calculation if
+    "business_days" is set to true.
+    """
+    if interval is not None:
+        interval = int(interval)
+        if business_days:
+            weeks = interval / 7
+            dow = start_date.weekday()
+            if future:
+                future_dow = (dow + interval) % 7
+                if dow > future_dow or future_dow > 4:
+                    weeks += 1
+            else:
+                future_dow = (dow - interval) % 7
+                if dow < future_dow or future_dow > 4:
+                    weeks += 1
+            interval += 2 * weeks;
+        if future:
+            return start_date + timedelta(interval)
+        return start_date - timedelta(interval)
+    return start_date
+
 def to_csv(table):
     # commas and linebreaks must result in a quoted string
     def quote_commas(x):
@@ -1135,4 +1162,3 @@ def to_csv(table):
         return x
     return u"\n".join(u','.join(quote_commas(y) for y in x)
                       for x in table)
-    

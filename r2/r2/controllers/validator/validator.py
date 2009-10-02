@@ -1062,34 +1062,40 @@ class VDate(Validator):
        * BAD_FUTURE_DATE and BAD_PAST_DATE on respective range errors.
     
     """
-    def __init__(self, param, future=None, past = None, admin_override = False):
-        def to_timedelta(param):
-            if isinstance(param, int):
-                return timedelta(param)
-            elif param is not None:
-                return timedelta(0)
-            return None
+    def __init__(self, param, future=None, past = None,
+                 admin_override = False,
+                 reference_date = lambda : datetime.now(g.tz), 
+                 business_days = False):
+        self.future = future
+        self.past   = past
 
-        self.future = to_timedelta(future)
-        self.past = to_timedelta(past)
+        # are weekends to be exluded from the interval?
+        self.business_days = business_days
+
+        # function for generating "now"
+        self.reference_date = reference_date
 
         # do we let admins override date range checking?
         self.override = admin_override
         Validator.__init__(self, param)
-    
+
     def run(self, date):
+        now = self.reference_date()
         override = c.user_is_sponsor and self.override
         try:
             date = datetime.strptime(date, "%m/%d/%Y")
-            now = datetime.now()
-            if (not override and
-                self.future is not None and date <= now + self.future):
-                self.set_error(errors.BAD_FUTURE_DATE,
+            if not override:
+                # can't put in __init__ since we need the date on the fly
+                future = utils.make_offset_date(now, self.future,
+                                          business_days = self.business_days)
+                past = utils.make_offset_date(now, self.past, future = False,
+                                          business_days = self.business_days)
+                if self.future is not None and date.date() < future.date():
+                    self.set_error(errors.BAD_FUTURE_DATE,
                                {"day": self.future.days})
-            elif (not override and
-                  self.past is not None and date >= now - self.past):
-                self.set_error(errors.BAD_PAST_DATE,
-                               {"day": self.past.days})
+                elif self.past is not None and date.date() > past.date():
+                    self.set_error(errors.BAD_PAST_DATE,
+                                   {"day": self.past.days})
             return date.replace(tzinfo=g.tz)
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)
