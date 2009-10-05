@@ -56,7 +56,10 @@ class Subreddit(Thing, Printable):
                      valid_votes = 0,
                      show_media = False,
                      domain = None,
+                     mod_actions = 0,
                      )
+    _data_int_props = ('mod_actions',)
+
     sr_limit = 50
 
     @classmethod

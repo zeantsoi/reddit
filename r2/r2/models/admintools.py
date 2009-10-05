@@ -52,7 +52,12 @@ class AdminTools(object):
             t.ban_info = ban_info
             t._commit()
             changed(t)
-        self.author_spammer(things, True)
+
+
+        if not auto:
+            self.author_spammer(things, True)
+            self.set_last_sr_ban(things)
+
         queries.ban(things)
 
     def unspam(self, things, unbanner = None):
@@ -69,7 +74,11 @@ class AdminTools(object):
             t._spam = False
             t._commit()
             changed(t)
+
+        # auto is always False for unbans
         self.author_spammer(things, False)
+        self.set_last_sr_ban(things)
+
         queries.unban(things)
 
     def author_spammer(self, things, spam):
@@ -86,6 +95,21 @@ class AdminTools(object):
             for aid, author_things in by_aid.iteritems():
                 author = authors[aid]
                 author._incr('spammer', len(author_things) if spam else -len(author_things))
+
+    def set_last_sr_ban(self, things):
+        by_srid = {}
+        for thing in things:
+            if hasattr(thing, 'sr_id'):
+                by_srid.setdefault(thing.sr_id, []).append(thing)
+
+        if by_srid:
+            srs = Subreddit._byID(by_srid.keys(), data=True, return_dict=True)
+            for sr_id, sr_things in by_srid.iteritems():
+                sr = srs[sr_id]
+
+                sr.last_mod_action = datetime.now(g.tz)
+                sr._commit()
+                sr._incr('mod_actions', len(sr_things))
 
     def admin_queues(self, chan, exchange):
         pass
