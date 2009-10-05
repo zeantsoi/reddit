@@ -50,7 +50,34 @@ except SubredditExists:
 def promo_edit_url(l):
     return "/promoted/edit_promo/%s" % l._id36
 
+# These could be done with relationships, but that seeks overkill as
+# we never query based on user and only check per-thing
+def is_traffic_viewer(thing, user):
+    return (c.user_is_sponsor or user._id == thing.author_id or
+            user._id in getattr(thing, "promo_traffic_viewers", set()))
 
+def add_traffic_viewer(thing, user):
+    viewers = getattr(thing, "promo_traffic_viewers", set()).copy()
+    if user._id not in viewers:
+        viewers.add(user._id)
+        thing.promo_traffic_viewers = viewers
+        thing._commit()
+        return True
+    return False
+
+def rm_traffic_viewer(thing, user):
+    viewers = getattr(thing, "promo_traffic_viewers", set()).copy()
+    if user._id in viewers:
+        viewers.remove(user._id)
+        thing.promo_traffic_viewers = viewers
+        thing._commit()
+        return True
+    return False
+
+def traffic_viewers(thing):
+    return sorted(getattr(thing, "promo_traffic_viewers", set()))
+
+# logging routine for keeping track of diffs
 def promotion_log(thing, text, commit = False):
     """
     For logging all sorts of things

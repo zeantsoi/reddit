@@ -188,7 +188,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
     mc('/api/:action', controller='promote',
-       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund"))
+       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer"))
     mc('/api/:action', controller='api')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')

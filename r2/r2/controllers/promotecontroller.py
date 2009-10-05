@@ -304,6 +304,29 @@ class PromoteController(ListingController):
                              field = 'bid')
                 form.set_error(errors.BAD_BID, "bid")
 
+    @validatedForm(VSponsor('container'),
+                   VModhash(),
+                   user = VExistingUname('name'),
+                   thing = VByName('container'))
+    def POST_traffic_viewer(self, form, jquery, user, thing):
+        print (user, thing)
+        if not form.has_errors("name",
+                               errors.USER_DOESNT_EXIST, errors.NO_USER):
+            form.set_inputs(name = "")
+            form.set_html(".status:first", _("added"))
+            if promote.add_traffic_viewer(thing, user):
+                user_row = TrafficViewerList(thing).user_row(user)
+                jquery("#traffic-table").show(
+                    ).find("table").insert_table_rows(user_row)
+
+    @validatedForm(VSponsor('container'),
+                   VModhash(),
+                   iuser = VByName('id'),
+                   thing = VByName('container'))
+    def POST_rm_traffic_viewer(self, form, jquery, iuser, thing):
+        if thing and iuser:
+            promote.rm_traffic_viewer(thing, iuser)
+
 
     @validatedForm(VSponsor('link'),
                    link = VByName("link"),

@@ -346,7 +346,7 @@ class FrontController(RedditController):
             return self.abort404()
 
         return EditReddit(content = pane).render()
-                              
+
     def GET_stats(self):
         """The stats page."""
         return BoringPage(_("stats"), content = UserStats()).render()
@@ -667,7 +667,7 @@ class FrontController(RedditController):
             return self.abort404()
 
 
-    @validate(VSponsor(),
+    @validate(VTrafficViewer('article'),
               article = VLink('article'))
     def GET_traffic(self, article):
         content = PromotedTraffic(article)

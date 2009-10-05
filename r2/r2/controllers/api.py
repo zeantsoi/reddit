@@ -358,7 +358,7 @@ class ApiController(RedditController):
                 nuser = VExistingUname('name'),
                 iuser = VByName('id'),
                 container = VByName('container'),
-                type = VOneOf('type', ('friend', 'moderator',
+                type = VOneOf('type', ('friend', 'moderator', 
                                        'contributor', 'banned')))
     def POST_unfriend(self, nuser, iuser, container, type):
         """
@@ -422,8 +422,9 @@ class ApiController(RedditController):
             form.set_html(".status:first", _("added"))
             if new and cls:
                 user_row = cls().user_row(friend)
-                jquery("table").insert_table_rows(user_row)
-                
+                jquery("#" + type + "-table").show(
+                    ).find("table").insert_table_rows(user_row)
+
                 if type != 'friend':
                     msg = strings.msg_add_friend.get(type)
                     subj = strings.subj_add_friend.get(type)

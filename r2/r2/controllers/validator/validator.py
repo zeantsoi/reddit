@@ -495,8 +495,11 @@ class VVerifiedUser(VUser):
         VUser.run(self)
         if not c.user.email_verified:
             raise VerifiedUserRequiredException
-        
+
 class VSponsor(VVerifiedUser):
+    def user_test(self, thing):
+        return (thing.author_id == c.user._id)
+
     def run(self, link_id = None):
         VVerifiedUser.run(self)
         if c.user_is_sponsor:
@@ -508,11 +511,16 @@ class VSponsor(VVerifiedUser):
                 else:
                     aid = int(link_id, 36)
                     t = Link._byID(aid, True)
-                if t.author_id == c.user._id:
+                if self.user_test(t):
                     return
             except (NotFound, ValueError):
                 pass
         abort(403, 'forbidden')
+
+class VTrafficViewer(VSponsor):
+    def user_test(self, thing):
+        return (VSponsor.user_test(self, thing) or
+                promote.is_traffic_viewer(thing, c.user))
 
 # TODO: tempoary validator to be replaced with Vuser once we get he
 # bugs worked out

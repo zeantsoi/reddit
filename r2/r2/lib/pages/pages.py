@@ -1412,10 +1412,12 @@ class UserTableItem(Templated):
     will determine what order the different columns are rendered in.
     Currently, this list can consist of 'user', 'sendmessage' and
     'remove'."""
-    def __init__(self, user, type, cellnames, container_name, editable):
+    def __init__(self, user, type, cellnames, container_name, editable,
+                 remove_action):
         self.user, self.type, self.cells = user, type, cellnames
         self.container_name = container_name
         self.editable       = editable
+        self.remove_action  = remove_action
         Templated.__init__(self)
 
     def __repr__(self):
@@ -1429,6 +1431,8 @@ class UserList(Templated):
     container_name = ''
     cells          = ('user', 'sendmessage', 'remove')
     _class         = ""
+    destination    = "friend"
+    remove_action  = "unfriend"
 
     def __init__(self, editable = True):
         self.editable = editable
@@ -1439,7 +1443,7 @@ class UserList(Templated):
         instance of the user with type, container_name, etc. of this
         UserList instance"""
         return UserTableItem(user, self.type, self.cells, self.container_name,
-                             self.editable)
+                             self.editable, self.remove_action)
 
     @property
     def users(self, site = None):
@@ -1524,6 +1528,32 @@ class BannedList(UserList):
 
     def user_ids(self):
         return c.site.banned
+
+class TrafficViewerList(UserList):
+    """Friend list on /pref/friends"""
+    destination = "traffic_viewer"
+    remove_action = "rm_traffic_viewer"
+    type = 'traffic'
+
+    def __init__(self, link, editable = True):
+        self.link = link
+        UserList.__init__(self, editable = editable)
+
+    @property
+    def form_title(self):
+        return _('share traffic')
+
+    @property
+    def table_title(self):
+        return _('current viewers')
+
+    def user_ids(self):
+        return promote.traffic_viewers(self.link)
+
+    @property
+    def container_name(self):
+        return self.link._fullname
+
 
 
 class DetailsPage(LinkInfoPage):
@@ -1772,6 +1802,9 @@ class PromotedTraffic(Traffic):
                                                          cli_total))
         else:
             self.imp_graph = self.cli_graph = None
+
+        editable = c.user_is_sponsor or c.user._id == thing.author_id
+        self.viewers = TrafficViewerList(thing, editable = editable)
         Templated.__init__(self)
 
     def to_iter(self, localize = True, total = False):
