@@ -899,7 +899,7 @@ def set_emptying_cache():
     from r2.lib.cache import SelfEmptyingCache
     g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
 
-def find_recent_broken_things(from_time = None, delete = False):
+def find_recent_broken_things(from_time = None, to_time = None, delete = False):
     """
         Occasionally (usually during app-server crashes), Things will
         be partially written out to the database. Things missing data
@@ -908,11 +908,10 @@ def find_recent_broken_things(from_time = None, delete = False):
         them as appropriate.
     """
     from r2.models import Link,Comment
+    from pylons import g
 
-    if not from_time:
-        from_time = timeago("1 hour")
-
-    to_time = timeago("60 seconds")
+    from_time = from_time or timeago('1 hour')
+    to_time = to_time or datetime.now(g.tz)
 
     for (cls,attrs) in ((Link,('author_id','sr_id')),
                         (Comment,('author_id','sr_id','body','link_id'))):
@@ -933,7 +932,6 @@ def find_broken_things(cls,attrs,from_time,to_time,delete = False):
                 getattr(t,a)
             except AttributeError:
                 # that failed; let's explicitly load it, and try again
-                print "Reloading %s" % t._fullname
                 t._load()
                 try:
                     getattr(t,a)
