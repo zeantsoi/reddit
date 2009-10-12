@@ -46,3 +46,12 @@ def controversy(ups, downs):
     """The controversy sort."""
     return float(ups + downs) / max(abs(score(ups, downs)), 1)
 
+def confidence(ups, downs):
+    """The confidence sort.
+       http://www.evanmiller.org/how-not-to-sort-by-average-rating.html"""
+    n = float(ups + downs)
+    if n == 0:
+        return 0
+    z = 1.0 #0.64485364660836
+    phat = float(ups) / n
+    return (phat+z*z/(2*n)-z*((phat*(1-phat)+z*z/(4*n))/n))**(0.5)/(1+z*z/n)

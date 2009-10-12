@@ -61,6 +61,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      more         = _('more'),
                      relevance    = _('relevance'),
                      controversial  = _('controversial'),
+                     confidence   = _('best'),
                      saved        = _('saved {toolbar}'),
                      recommended  = _('recommended'),
                      rising       = _('rising'), 
@@ -400,10 +401,12 @@ class SortMenu(SimpleGetMenu):
             return operators.desc('_score')
         elif sort == 'controversial':
             return operators.desc('_controversy')
+        elif sort == 'confidence':
+            return operators.desc('_confidence')
 
 class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
-    options   = ('hot', 'new', 'controversial', 'top', 'old')
+    options   = ('hot', 'new', 'controversial', 'top', 'old', 'confidence')
 
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
