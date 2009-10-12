@@ -595,7 +595,8 @@ class ApiController(RedditController):
                 link = Link._byID(parent.link_id, data = True)
                 parent_comment = parent
             sr = parent.subreddit_slow
-            if not sr.should_ratelimit(c.user, 'comment'):
+            if ((link.is_self and link.author_id == c.user._id)
+                or not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
 
         #remove the ratelimit error if the user's karma is high
