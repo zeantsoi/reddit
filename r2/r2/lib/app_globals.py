@@ -63,6 +63,7 @@ class Globals(object):
                   'show_awards',
                   'css_killswitch',
                   'db_create_tables',
+                  'disallow_db_writes',
                   'allow_shutdown']
 
     tuple_props = ['memcaches',

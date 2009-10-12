@@ -273,7 +273,10 @@ def get_rel_type_id(name):
     return rel_types_name[name][0]
 
 def get_write_table(tables):
-    return tables[0]
+    if g.disallow_db_writes:
+        raise Exception("not so fast! writes are not allowed on this app.")
+    else:
+        return tables[0]
 
 def get_read_table(tables):
     #shortcut with 1 entry
