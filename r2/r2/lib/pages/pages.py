@@ -299,7 +299,6 @@ class RedditFooter(CachedTemplate):
                          NamedButton("mobile", False, nocname=True),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
-                         NamedButton("stats", False, nocname=True),
                          NamedButton('random', False, nocname=False),
                          NamedButton("feedback", False),],
                         title = _('site links'), type = 'flat_vert',
@@ -1229,28 +1228,6 @@ class OptIn(Templated):
     pass
 
 
-class UserStats(Templated):
-    """For drawing the stats page, which is fetched from the cache."""
-    def __init__(self):
-        Templated.__init__(self)
-        cache_stats = cache.get('stats')
-        if cache_stats:
-            top_users, top_day, top_week = cache_stats
-
-            #lookup user objs
-            uids = []
-            uids.extend(u    for u in top_users)
-            uids.extend(u[0] for u in top_day)
-            uids.extend(u[0] for u in top_week)
-            users = Account._byID(uids, data = True)
-
-            self.top_users = (users[u]            for u in top_users)
-            self.top_day   = ((users[u[0]], u[1]) for u in top_day)
-            self.top_week  = ((users[u[0]], u[1]) for u in top_week)
-        else:
-            self.top_users = self.top_day = self.top_week = ()
-
-
 class ButtonEmbed(Templated):
     """Generates the JS wrapper around the buttons for embedding."""
     def __init__(self, button = None, width = 100,
@@ -1338,12 +1315,31 @@ class AdminTranslations(Templated):
         Templated.__init__(self)
         self.translations = list_translations()
 
+class UserAwards(Templated):
+    """For drawing the regular-user awards page."""
+    def __init__(self):
+        from r2.models import Award, Trophy
+        Templated.__init__(self)
+
+        if not g.show_awards:
+            abort(404, "not found");
+
+        self.winners = []
+        for award in Award._all_awards():
+            trophies = Trophy.by_award(award)
+            # Don't show awards that nobody's ever won
+            # (e.g., "9-Year Club")
+            if trophies:
+                winner = trophies[0]._thing1.name
+                self.winners.append( (award, winner, trophies[0]) )
+
+
 class AdminAwards(Templated):
-    """The page for editing awards"""
+    """The admin page for editing awards"""
     def __init__(self):
         from r2.models import Award
         Templated.__init__(self)
-        self.awards = Award.all_awards()
+        self.awards = Award._all_awards()
 
 class AdminAwardGive(Templated):
     """The interface for giving an award"""

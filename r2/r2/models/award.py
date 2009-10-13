@@ -29,16 +29,22 @@ from pylons import c, g, request
 
 class Award (Thing):
     @classmethod
-    # TODO: needs @memoize() once non-admins can do it
-    def all_awards(cls):
-        return Award._query(limit=100,data=True)
+    @memoize('award.all_awards')
+    def _all_awards_cache(cls):
+        return [ a._id for a in Award._query(limit=100) ]
 
-    @staticmethod
-    def _new(codename, title, imgurl):
+    @classmethod
+    def _all_awards(cls, _update=False):
+        all = Award._all_awards_cache(_update=_update)
+        return Award._byID(all, data=True).values()
+
+    @classmethod
+    def _new(cls, codename, title, imgurl):
 #        print "Creating new award codename=%s title=%s imgurl=%s" % (
 #            codename, title, imgurl)
         a = Award(codename=codename, title=title, imgurl=imgurl)
         a._commit()
+        Award._all_awards_cache(_update=True)
 
     @classmethod
     def _by_codename(cls, codename):
@@ -52,8 +58,8 @@ class Award (Thing):
             raise NotFound, 'Award %s' % codename
 
 class Trophy(Relation(Account, Award)):
-    @staticmethod
-    def _new(recipient, award, description = None,
+    @classmethod
+    def _new(cls, recipient, award, description = None,
              cup_expiration = None):
 
         # The "name" column of the relation can't be a constant or else a
@@ -76,9 +82,9 @@ class Trophy(Relation(Account, Award)):
         Trophy.by_account(recipient, _update=True)
         Trophy.by_award(award, _update=True)
 
-    @staticmethod
+    @classmethod
     @memoize('trophy.by_account')
-    def by_account(account):
+    def by_account(cls, account):
         q = Trophy._query(Trophy.c._thing1_id == account._id,
                           eager_load = True, thing_data = True,
                           data = True,
@@ -86,9 +92,9 @@ class Trophy(Relation(Account, Award)):
         q._limit = 50
         return list(q)
 
-    @staticmethod
+    @classmethod
     @memoize('trophy.by_award')
-    def by_award(award):
+    def by_award(cls, award):
         q = Trophy._query(Trophy.c._thing2_id == award._id,
                           eager_load = True, thing_data = True,
                           data = True,

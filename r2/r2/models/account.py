@@ -278,6 +278,7 @@ class Account(Thing):
         if self.cup_date and self.cup_date < datetime.now(g.tz):
             self.cup_date = None
             self._commit()
+        return False # temporarily disable cups
         return self.cup_date
 
 class FakeAccount(Account):

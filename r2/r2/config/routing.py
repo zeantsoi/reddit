@@ -71,7 +71,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/widget', controller='buttons', action='widget_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
     
-    mc('/stats', controller='front', action='stats')
+    mc('/awards', controller='front', action='awards')
     
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')

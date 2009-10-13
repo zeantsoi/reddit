@@ -2404,6 +2404,40 @@ ul.tabmenu.formtab {
     margin-left: 10px; 
 }
 
+.award-square-container {
+    max-width: 1000px;
+    overflow: hidden;
+}
+
+.award-square {
+    display: inline-block;
+    padding: 25px 0px 15px 40px;
+    white-space: nowrap;
+    width: 300px;
+}
+
+.award-square img {
+    float: left;
+    margin: 0 10px;
+    width: 70px;
+    height: 70px;
+}
+
+.award-square .award-name {
+    color: black;
+    font-size: 22px;
+    font-family: verdana, arial, helvetica, sans-serif;
+    font-weight: bold;
+}
+
+.award-square .won-on {
+    color: gray;
+    margin-top: 5px;
+}
+
+.award-square .winner {
+    font-size: 18px;
+}
 
 .award-table {
     margin: 5px;
