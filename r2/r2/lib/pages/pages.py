@@ -299,8 +299,9 @@ class RedditFooter(CachedTemplate):
                          NamedButton("mobile", False, nocname=True),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
+                         NamedButton("awards", False, nocname=True),
                          NamedButton('random', False, nocname=False),
-                         NamedButton("feedback", False),],
+                         ],
                         title = _('site links'), type = 'flat_vert',
                         separator = ''),
                 
@@ -308,7 +309,8 @@ class RedditFooter(CachedTemplate):
                          OffsiteButton(_("FAQ"), dest = '/help/faq',
                                        nocname=True),
                          OffsiteButton(_("reddiquette"), nocname=True,
-                                       dest = '/help/reddiquette')],
+                                       dest = '/help/reddiquette'),
+                         NamedButton("feedback", False),],
                         title = _('help'), type = 'flat_vert',
                         separator = ''),
                 
