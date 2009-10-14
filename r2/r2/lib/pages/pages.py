@@ -25,7 +25,7 @@ from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
 from r2.models import Link, Printable, Trophy, bidding, PromoteDates
 from r2.config import cache
-from r2.lib.tracking import PromotedLinkInfo
+from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
 from pylons.i18n import _, ungettext
@@ -2130,6 +2130,6 @@ class RawString(Templated):
 class Dart_Ad(Templated):
     def __init__(self, tag = None):
         tag = tag or "homepage"
-        tracker_url = PromotedLinkInfo.gen_url(fullname = "dart_" + tag,
-                                               ip = request.ip)
+        tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
+                                          ip = request.ip)
         Templated.__init__(self, tag = tag, tracker_url = tracker_url)
