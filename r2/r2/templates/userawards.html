@@ -31,9 +31,13 @@
       </a>
 
       <div class="won-on">
-        won on
-        ${trophy.description}
-        by
+        %if hasattr(trophy, "description"):
+          won on
+          ${trophy.description}
+          by
+        %else:
+          recently won by
+        %endif
       </div>
 
       <div class="winner">
