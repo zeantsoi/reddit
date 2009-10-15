@@ -275,10 +275,15 @@ class Account(Thing):
         self._commit()
 
     def should_show_cup(self):
+        # FIX ME.
+        # this is being called inside builder (Bad #1) in the
+        # listing loop. On machines that are not allowed to write to
+        # the db, this generates an exception (Bad #2) on every
+        # listing page with users with cups.
+        return False # temporarily disable cups
         if self.cup_date and self.cup_date < datetime.now(g.tz):
             self.cup_date = None
             self._commit()
-        return False # temporarily disable cups
         return self.cup_date
 
 class FakeAccount(Account):
