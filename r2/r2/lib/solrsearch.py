@@ -698,7 +698,12 @@ def get_after(fullnames, fullname, num):
         return fullnames[:num]
 
 
-def run_changed(commit=True, optimize=False):
+def run_commit(optimize=False):
+    with SolrConnection(commit=True, optimize=optimize) as s:
+        pass
+
+
+def run_changed(drain=False):
     """
         Run by `cron` (through `paster run`) on a schedule to update
         all Things that have been created or have changed since the
@@ -716,7 +721,7 @@ def run_changed(commit=True, optimize=False):
         update_things = [x for x in things if not x._spam and not x._deleted]
         delete_things = [x for x in things if x._spam or x._deleted]
 
-        with SolrConnection(commit=commit, optimize=optimize) as s:
+        with SolrConnection() as s:
             if update_things:
                 tokenized = tokenize_things(update_things)
                 s.add(tokenized)
@@ -725,4 +730,4 @@ def run_changed(commit=True, optimize=False):
                     s.delete(id=i._fullname)
 
     amqp.handle_items('searchchanges_q', _run_changed, limit=1000,
-                      drain=True)
+                      drain=drain)
