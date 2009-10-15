@@ -292,10 +292,11 @@ class RedditHeader(Templated):
 
 class RedditFooter(CachedTemplate):
     def cachable_attrs(self):
-        return [('path', request.path)]
-    
-    def nav(self):
-        return [NavMenu([NamedButton("toplinks", False),
+        return [('path', request.path),
+                ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
+
+    def __init__(self):
+        self.nav = [NavMenu([NamedButton("toplinks", False),
                          NamedButton("mobile", False, nocname=True),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
@@ -304,8 +305,8 @@ class RedditFooter(CachedTemplate):
                          ],
                         title = _('site links'), type = 'flat_vert',
                         separator = ''),
-                
-                NavMenu([NamedButton("help", False, nocname=True),
+
+                    NavMenu([NamedButton("help", False, nocname=True),
                          OffsiteButton(_("FAQ"), dest = '/help/faq',
                                        nocname=True),
                          OffsiteButton(_("reddiquette"), nocname=True,
@@ -313,8 +314,7 @@ class RedditFooter(CachedTemplate):
                          NamedButton("feedback", False),],
                         title = _('help'), type = 'flat_vert',
                         separator = ''),
-                
-                NavMenu([NamedButton("bookmarklets", False),
+                    NavMenu([NamedButton("bookmarklets", False),
                          NamedButton("buttons", True),
                          NamedButton("code", False, nocname=True),
                          NamedButton("socialite", False),
@@ -322,8 +322,7 @@ class RedditFooter(CachedTemplate):
                          NamedButton("iphone", False),],
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
-                
-                NavMenu([NamedButton("blog", False, nocname=True),
+                    NavMenu([NamedButton("blog", False, nocname=True),
                          NamedButton("ad_inq", False, nocname=True),
                          OffsiteButton('reddit.tv', "http://www.reddit.tv"),
                          OffsiteButton('redditall', "http://www.redditall.com"),
@@ -331,7 +330,7 @@ class RedditFooter(CachedTemplate):
                                        "http://www.redditjobs.com")],
                         title = _('about us'), type = 'flat_vert',
                         separator = ''),
-                NavMenu([OffsiteButton('BaconBuzz',
+                    NavMenu([OffsiteButton('BaconBuzz',
                                        "http://www.baconbuzz.com"),
                          OffsiteButton('Destructoid reddit',
                                        "http://reddit.destructoid.com"),
@@ -347,7 +346,7 @@ class RedditFooter(CachedTemplate):
                                        "http://www.idealistnews.com"),],
                         title = _('brothers'), type = 'flat_vert',
                         separator = ''),
-                NavMenu([OffsiteButton('Wired.com',
+                    NavMenu([OffsiteButton('Wired.com',
                                        "http://www.wired.com"),
                          OffsiteButton('Ars Technica',
                                        "http://www.arstechnica.com"),
@@ -360,7 +359,7 @@ class RedditFooter(CachedTemplate):
                         title = _('sisters'), type = 'flat_vert',
                         separator = '')
                     ]
-
+        CachedTemplate.__init__(self)
 
 class ClickGadget(Templated):
     def __init__(self, links, *a, **kw):
