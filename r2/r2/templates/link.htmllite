@@ -24,6 +24,9 @@
 <%!
    from pylons.i18n import _, ungettext
    from r2.lib.template_helpers import get_domain
+   import re
+
+   target_re = re.compile("^[\w_-]{3,20}$") 
 %>
 <%inherit file="printable.htmllite" />
 
@@ -34,6 +37,9 @@
    permalink = "http://%s%s" % (domain, thing.permalink)
    expanded = request.get.get("expanded")
    two_col = request.get.has_key("twocolumn") if l else False
+   target = request.get.get("target")
+   if target and not target_re.match(target):
+       target = None
  %>
   ${self.arrows(thing)}
   <div class="reddit-entry entry ${thing.like_cls}" 
@@ -48,7 +54,9 @@
        %if thing.nofollow:
          rel="nofollow"
        %endif
-       %if c.user.pref_newwindow:
+       %if target:
+         target="${target}"
+       %elif c.user.pref_newwindow:
          target="_blank"
        %elif c.cname:
          target="_top"
@@ -85,6 +93,9 @@
       %endif
       <a class="reddit-comment-link"
          ${optionalstyle("color:gray")}
+         %if target:
+           target="${target}"
+         %endif
          href="${permalink}">${thing.comment_label}</a>
     </small>
   </div>
