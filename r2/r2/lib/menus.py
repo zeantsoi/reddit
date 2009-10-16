@@ -405,6 +405,7 @@ class SortMenu(SimpleGetMenu):
 
 class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
+    default   = 'confidence'
     options   = ('hot', 'new', 'controversial', 'top', 'old', 'confidence')
 
 class SearchSortMenu(SortMenu):
