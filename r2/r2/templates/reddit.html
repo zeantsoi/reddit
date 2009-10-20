@@ -165,9 +165,9 @@
 
   %if c.user_is_admin:
     <%include file="admin_rightbox.html"/>
-  %else:
-    <%include file="ads.html"/>
   %endif
+
+  <%include file="ads.html"/>
 
   ##cheating... we should move ads into a template of its own
   %if c.user.pref_clickgadget and c.recent_clicks:
