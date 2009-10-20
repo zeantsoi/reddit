@@ -239,6 +239,11 @@ class Link(Thing, Printable):
                                                subreddit = not c.cname), p)
         else:
             res = "/%s" % p
+
+        # WARNING: If we ever decide to add any ?foo=bar&blah parameters
+        # here, Comment.make_permalink will need to be updated or else
+        # it will fail.
+
         return res
 
     def make_permalink_slow(self, force_domain = False):
@@ -447,7 +452,7 @@ class Comment(Thing, Printable):
     def _delete(self):
         link = Link._byID(self.link_id, data = True)
         link._incr('num_comments', -1)
-    
+
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         c = Comment(body = body,
@@ -505,13 +510,19 @@ class Comment(Thing, Printable):
         s.extend([wrapped.body])
         return s
 
-    def make_permalink(self, link, sr=None):
-        return link.make_permalink(sr) + self._id36
+    def make_permalink(self, link, sr=None, context=None, anchor=False):
+        url = link.make_permalink(sr) + self._id36
+        if context:
+            url += "?context=%d" % context
+        if anchor:
+            url += "#%s" % self._id36
+        return url
 
-    def make_permalink_slow(self):
+    def make_permalink_slow(self, context=None, anchor=False):
         l = Link._byID(self.link_id, data=True)
-        return self.make_permalink(l, l.subreddit_slow)
-    
+        return self.make_permalink(l, l.subreddit_slow,
+                                   context=context, anchor=anchor)
+
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_attr
