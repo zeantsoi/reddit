@@ -626,7 +626,10 @@ class LinkInfoPage(Reddit):
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, duplicates = None,
                  *a, **kw):
-        wrapper = default_thing_wrapper(expand_children = True)
+
+        expand_children = kw.get("expand_children", not bool(comment))
+
+        wrapper = default_thing_wrapper(expand_children=expand_children)
 
         # link_listing will be the one-element listing at the top
         self.link_listing = wrap_links(link, wrapper = wrapper)
@@ -1347,6 +1350,7 @@ class AdminAwardGive(Templated):
     def __init__(self, award):
         now = datetime.datetime.now(g.display_tz)
         self.description = "??? -- " + now.strftime("%Y-%m-%d")
+        self.url = ""
 
         Templated.__init__(self, award = award)
 

@@ -30,18 +30,31 @@
         <span class="award-name">${award.title}</span>
       </a>
 
-      <div class="won-on">
+      <div class="winner-info">
         %if hasattr(trophy, "description"):
-          won on
-          ${trophy.description}
-          by
+          ${_("won by")}
         %else:
-          recently won by
+          <br/>
+          ${_("recently won by")}
         %endif
-      </div>
+        <span class="winner-name">
+          &#32;
+          <a href="/user/${winner}">${winner}</a>
+        </span>
 
-      <div class="winner">
-        <a href="/user/${winner}">${winner}</a>
+        <br/>
+
+        %if hasattr(trophy, "description"):
+          on
+          ${trophy.description}
+        %endif
+
+        %if hasattr(trophy, "url"):
+         &#32;
+         <a href="${trophy.url}">
+           ${_("for this")}
+         </a>
+        %endif
       </div>
 
     </div>

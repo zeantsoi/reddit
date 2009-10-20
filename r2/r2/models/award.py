@@ -60,7 +60,7 @@ class Award (Thing):
 class Trophy(Relation(Account, Award)):
     @classmethod
     def _new(cls, recipient, award, description = None,
-             cup_expiration = None):
+             url = None, cup_expiration = None):
 
         # The "name" column of the relation can't be a constant or else a
         # given account would not be allowed to win a given award more than
@@ -74,6 +74,9 @@ class Trophy(Relation(Account, Award)):
 
         if description:
             t.description = description
+
+        if url:
+            t.url = url
 
         if cup_expiration:
             recipient.extend_cup(cup_expiration)

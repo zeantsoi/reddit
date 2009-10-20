@@ -1330,11 +1330,12 @@ class ApiController(RedditController):
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),
                    description = VLength("description", max_length=1000),
+                   url = VLength("url", max_length=1000),
                    cup_hours = VFloat("cup_hours",
                                       coerce=False, min=0, max=24 * 365),
                    recipient = VExistingUname("recipient"))
-    def POST_givetrophy(self, form, jquery, award,
-                       description, cup_hours, recipient):
+    def POST_givetrophy(self, form, jquery, award, description,
+                        url, cup_hours, recipient):
         if form.has_errors("award", errors.NO_TEXT):
             pass
 
@@ -1360,7 +1361,7 @@ class ApiController(RedditController):
             cup_expiration = None
 
         t = Trophy._new(recipient, award, description=description,
-                        cup_expiration=cup_expiration)
+                        url=url, cup_expiration=cup_expiration)
 
         form.set_html(".status", _('saved'))
 

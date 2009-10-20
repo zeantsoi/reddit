@@ -168,7 +168,7 @@ class FrontController(RedditController):
         """The (now depricated) details page.  Content on this page
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
-        return DetailsPage(link = article).render()
+        return DetailsPage(link = article, expand_children=False).render()
 
 
     @validate(article = VLink('article'))

@@ -29,13 +29,19 @@
       %endif
       >
     <div>
-      <img class="trophy-icon" src="${trophy._thing2.imgurl % 40}" />
-      <br/>
-      ${trophy._thing2.title}
-      <br/>
-      %if hasattr(trophy, "description"):
-      <span class="trophy-description">${trophy.description}</span>
-      <br/>
+      %if hasattr(trophy, "url"):
+       <a href="${trophy.url}">
+      %endif
+       <img class="trophy-icon" src="${trophy._thing2.imgurl % 40}" />
+       <br/>
+       <span class="trophy-name">${trophy._thing2.title}</span>
+       <br/>
+       %if hasattr(trophy, "description"):
+       <span class="trophy-description">${trophy.description}</span>
+       <br/>
+       %endif
+      %if hasattr(trophy, "url"):
+       </a>
       %endif
       %if c.user_is_admin:
       ${ynbutton(_("remove"), _("removed"), "removetrophy", "hide_thing",

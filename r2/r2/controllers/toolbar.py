@@ -160,7 +160,7 @@ class ToolbarController(RedditController):
 
         wrapper = make_wrapper(render_class = StarkComment,
                                target = "_top")
-        b = TopCommentBuilder(link, CommentSortMenu.operator('top'),
+        b = TopCommentBuilder(link, CommentSortMenu.operator('confidence'),
                               wrap = wrapper)
 
         listing = NestedListing(b, num = 10, # TODO: add config var

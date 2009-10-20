@@ -2410,7 +2410,7 @@ ul.tabmenu.formtab {
 }
 
 .award-square {
-    display: inline-block;
+    float: left;
     padding: 25px 0px 15px 40px;
     white-space: nowrap;
     width: 300px;
@@ -2428,15 +2428,18 @@ ul.tabmenu.formtab {
     font-size: 22px;
     font-family: verdana, arial, helvetica, sans-serif;
     font-weight: bold;
+    line-height: 1em;
 }
 
-.award-square .won-on {
+.award-square .winner-info {
+    line-height: 15px;
+    margin-top: 15px;
     color: gray;
-    margin-top: 5px;
 }
 
-.award-square .winner {
+.award-square .winner-name {
     font-size: 18px;
+    color: #336699;
 }
 
 .award-table {
@@ -2495,6 +2498,10 @@ table.award-table {
 }
 
 .trophy-info.right {
+}
+
+.trophy-name {
+    color: black !important;
 }
 
 .trophy-description {

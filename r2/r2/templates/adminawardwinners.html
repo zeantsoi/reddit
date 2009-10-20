@@ -20,13 +20,21 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%def name="winnerline(winnername, description)">
+<%def name="winnerline(trophy)">
     <tr>
       <td>
-        <a href="/user/${winnername}">${winnername}</a>
+        <a href="/user/${trophy._thing1.name}">${trophy._thing1.name}</a>
       </td>
       <td>
-        ${description}
+        ${trophy._name}
+      </td>
+      <td>
+        ${getattr(trophy, "description", "")}
+      </td>
+      <td>
+        %if hasattr(trophy, "url"):
+         <a href="${trophy.url}">${trophy.url}</a>
+        %endif
       </td>
     </tr>
 </%def>
@@ -39,9 +47,15 @@
     <td>
       <h1>${thing.award.title}</h1>
     </td>
+    <th>
+      description
+    </th>
+    <th>
+      url
+    </th>
   </tr>
   %for trophy in thing.trophies:
-    ${winnerline(trophy._thing1.name, trophy._name)}
+    ${winnerline(trophy)}
   %endfor
 </table>
 
