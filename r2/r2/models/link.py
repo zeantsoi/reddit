@@ -218,7 +218,7 @@ class Link(Thing, Printable):
                       wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
              s.extend([request.get.has_key('twocolumn'),
-                       request.get.get('target')])
+                       c.link_target])
         elif style == "xml":
             s.append(request.GET.has_key("nothumbs"))
         s.append(getattr(wrapped, 'media_object', {}))

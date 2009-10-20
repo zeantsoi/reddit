@@ -410,10 +410,16 @@ def base_listing(fn):
     @validate(num    = VLimit('limit'),
               after  = VByName('after'),
               before = VByName('before'),
-              count  = VCount('count'))
+              count  = VCount('count'),
+              target = VTarget("target"))
     def new_fn(self, before, **env):
+        if c.render_style == "htmllite":
+            c.link_target = env.get("target")
+        elif "target" in env:
+            del env["target"]
+
         kw = build_arg_list(fn, env)
-        
+
         #turn before into after/reverse
         kw['reverse'] = False
         if before:

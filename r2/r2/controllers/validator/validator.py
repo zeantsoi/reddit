@@ -1196,3 +1196,9 @@ class ValidCard(Validator):
             return CreditCard(cardNumber = cardNumber,
                               expirationDate = expirationDate,
                               cardCode = cardCode)
+
+class VTarget(Validator):
+    target_re = re.compile("^[\w_-]{3,20}$") 
+    def run(self, name):
+        if name and self.target_re.match(name):
+            return name
