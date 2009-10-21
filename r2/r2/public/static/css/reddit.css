@@ -847,10 +847,10 @@ textarea.gray { color: gray; }
     background-color:#fffdd7;
     border: solid black 1px;
     width: 350px;
-    -moz-border-radius: 2%;
-    -webkit-border-radius: 2%;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
     margin-left: 5px;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
     padding: 7px;
     float: left;
 }
