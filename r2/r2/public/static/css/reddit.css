@@ -839,6 +839,37 @@ textarea.gray { color: gray; }
 .message .head.new {color:orangered  }
 .message .subject { font-weight: bold; font-size: larger; }
 
+.clippy img {
+    float: left;
+}
+
+.clippy-bubble {
+    background-color:#fffdd7;
+    border: solid black 1px;
+    width: 350px;
+    -moz-border-radius: 2%;
+    -webkit-border-radius: 2%;
+    margin-left: 5px;
+    margin-bottom: 5px;
+    padding: 7px;
+    float: left;
+}
+
+.clippy-headline {
+    font-weight:bold;
+    margin-bottom: 0.5em;
+}
+
+.clippy-bubble ul {
+    list-style-type: disc;
+    list-style-image: url(/static/clippy-bullet.png);
+    padding-left: 15px;
+}
+
+.clippy-bubble li {
+    margin-top: 0.5em;
+}
+
 .subreddit { margin-bottom: 10px; }
 .subreddit p { margin-top: 0px; margin-bottom: 1px; }
 .subreddit .description {font-size: small; max-width: 60em;}
