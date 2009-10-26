@@ -2491,6 +2491,19 @@ table.award-table {
     font-weight: bold;
 }
 
+.sponsorshipbox { 
+    max-width: 300px;
+}
+
+.sponsorshipbox span { 
+    color: gray;
+}
+
+.sponsorshipbox div { 
+    border: 1px solid #D0D0D0; 
+    width: 300px; 
+}
+
 .sidecontentbox a.helplink {
     float: right;
     font-size: x-small;

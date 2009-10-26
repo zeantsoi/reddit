@@ -19,21 +19,23 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%! 
-   import simplejson
- %>
-<html>
-  <head>
-    <script type="text/javascript">
-      <%
-         errors = simplejson.dumps(thing.errors)
-       %>
-      parent.completedUploadImage('${thing.status}','${thing.img_src or ""}',
-                                  '${thing.name or ""}', ${unsafe(errors)},
-                                  '${thing.form_id}');
-    </script>
-  </head>
-  <body>
-    you shouldn't be here
-  </body>
-</html>
+
+%if c.site.sponsorship_url and c.site.sponsorship_img:
+<% 
+   name = c.site._fullname
+%>
+<div class="thing sponsorshipbox id-${name}">
+  <span>${_("this reddit is sponsored by")}</span>
+  <div> 
+    <a class="title" href="${c.site.sponsorship_url}"
+       <img alt="sponsor" src="${c.site.sponsorship_img}" />
+    </a>
+  </div>
+  <img class="promote-pixel"
+       id="promote_img_${name}"
+       src="/static/pixel.png" alt=" " />
+  <script type="text/javascript">
+    reddit.tofetch.push("${name}");
+  </script>
+</div>
+%endif

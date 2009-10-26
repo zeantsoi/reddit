@@ -57,6 +57,9 @@ class Subreddit(Thing, Printable):
                      show_media = False,
                      domain = None,
                      mod_actions = 0,
+                     sponsorship_url = None,
+                     sponsorship_img = None,
+                     sponsorship_name = None,
                      )
     _data_int_props = ('mod_actions',)
 

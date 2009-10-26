@@ -481,7 +481,8 @@ function updateEventHandlers(thing) {
     thing = $(thing);
     var listing = thing.parent();
 
-    $(thing).filter(".promotedlink").bind("onshow", function() {
+    $(thing).filter(".promotedlink, .sponsorshipbox")
+        .bind("onshow", function() {
             var id = $(this).thing_id();
             if($.inArray(id, reddit.tofetch) != -1) {
                 $.request("onload", {ids: reddit.tofetch.join(",")});

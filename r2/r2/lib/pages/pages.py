@@ -165,6 +165,7 @@ class Reddit(Templated):
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
+            ps.append(SponsorshipBox())
 
             moderators = self.sr_moderators()
             if moderators:
@@ -427,6 +428,9 @@ class SubredditInfoBar(CachedTemplate):
                     ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         separator = '')]
+
+class SponsorshipBox(Templated):
+    pass
 
 class SideContentBox(Templated):
     def __init__(self, title, content, helplink=None, extra_class=None):
@@ -1006,9 +1010,10 @@ class CssError(Templated):
 
 class UploadedImage(Templated):
     "The page rendered in the iframe during an upload of a header image"
-    def __init__(self,status,img_src, name="", errors = {}):
+    def __init__(self,status,img_src, name="", errors = {}, form_id = ""):
         self.errors = list(errors.iteritems())
-        Templated.__init__(self, status=status, img_src=img_src, name = name)
+        Templated.__init__(self, status=status, img_src=img_src, name = name,
+                           form_id = form_id)
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""

@@ -195,7 +195,7 @@ function update_title(elem) {
           <%utils:image_upload post_target="/api/upload_sr_img" 
                                current_image="${thing.site.header}"
                                label="${_('upload header image')}">
-            <button id="delete-img"
+            <button id="delete-img" class="delete-img"
                     %if not thing.site.header:
                        style="display: none;"
                     %endif
@@ -209,9 +209,7 @@ function update_title(elem) {
   
             <script type="text/javascript">
               function on_image_success(img) {
-                 $("#header-img").attr("src", img.attr("src"));
-                 $('#delete-img').show();
-                 $('#submit-img').hide();
+                 $("#header-img").log().attr("src", img.attr("src"));
               }
             </script>
           </%utils:image_upload>
@@ -270,6 +268,48 @@ function update_title(elem) {
     </table>
     </div>
     </%utils:line_field>
+
+    <%utils:line_field title="${_('sponsorship')}">
+      <ul class="upload">
+        <li>
+          <input type="text" name="sponsorship-name" 
+                 %if thing.site.sponsorship_name:
+                     value="${thing.site.sponsorship_name}"
+                 %else:
+                     value="${'name this campaign (for traffic)'}" class="gray"
+                 %endif
+                 />
+        </li>
+        <li>
+          <input type="text" name="sponsorship-url" 
+                 %if thing.site.sponsorship_url:
+                     value="${thing.site.sponsorship_url}"
+                 %else:
+                     value="${'enter link url here'}" class="gray"
+                 %endif
+                 />
+        </li>
+        <li>
+          <%utils:image_upload post_target="/api/upload_sr_img" 
+                               current_image="${thing.site.sponsorship_img}"
+                               label="${_('upload sponsorship image')}"
+                               form_id="sponsor-upload">
+            <button id="delete-sponsor" class="delete-img"
+                   %if not thing.site.sponsorship_img:
+                      style="display: none;"
+                   %endif
+                   onclick="return post_form(this.form, 'delete_sr_header');">
+              ${_('delete')}
+            </button>
+            <div class="clearleft"></div>
+            <input type="hidden" name="uh" value="${c.modhash}" />
+            <input type="hidden" name="r"  value="${c.site.name}" />
+            <input type="hidden" name="sponsor" value="1" />
+          </%utils:image_upload>
+        </li>
+      </ul>
+    </%utils:line_field>
+
   %endif
 
 %endif

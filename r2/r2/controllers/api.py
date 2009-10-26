@@ -852,26 +852,30 @@ class ApiController(RedditController):
             return self.abort(403,'forbidden')
         c.site.del_image(name)
         c.site._commit()
-    
+
 
     @validatedForm(VSrModerator(),
-                   VModhash())
-    def POST_delete_sr_header(self, form, jquery):
+                   VModhash(),
+                   sponsor = VInt("sponsor", min = 0, max = 1))
+    def POST_delete_sr_header(self, form, jquery, sponsor):
         """
         Called when the user request that the header on a sr be reset.
         """
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
             return self.abort(403,'forbidden')
-        if c.site.header:
+        if sponsor and c.user_is_admin:
+            c.site.sponsorship_img = None
+            c.site._commit()
+        elif c.site.header:
+            # reset the header image on the page
+            jquery('#header-img').attr("src", DefaultSR.header)
             c.site.header = None
             c.site._commit()
-        # reset the header image on the page
-        form.find('#header-img').attr("src", DefaultSR.header)
         # hide the button which started this
-        form.find('#delete-img').hide()
+        form.find('.delete-img').hide()
         # hide the preview box
-        form.find('#img-preview-container').hide()
+        form.find('.img-preview-container').hide()
         # reset the status boxes
         form.set_html('.img-status', _("deleted"))
         
@@ -891,8 +895,10 @@ class ApiController(RedditController):
               VModhash(),
               file = VLength('file', max_length=1024*500),
               name = VCssName("name"),
-              header = nop('header'))
-    def POST_upload_sr_img(self, file, header, name):
+              form_id = VLength('formid', max_length = 100), 
+              header = VInt('header', max=1, min=0),
+              sponsor = VInt('sponsor', max=1, min=0))
+    def POST_upload_sr_img(self, file, header, sponsor, name, form_id):
         """
         Called on /about/stylesheet when an image needs to be replaced
         or uploaded, as well as on /about/edit for updating the
@@ -915,13 +921,16 @@ class ApiController(RedditController):
         try:
             cleaned = cssfilter.clean_image(file,'PNG')
             if header:
-                num = None # there is one and only header, and it is unnumbered
+                # there is one and only header, and it is unnumbered
+                resource = None 
+            elif sponsor and c.user_is_admin:
+                resource = "sponsor"
             elif not name:
                 # error if the name wasn't specified or didn't satisfy
                 # the validator
                 errors['BAD_CSS_NAME'] = _("bad image name")
             else:
-                num = c.site.add_image(name, max_num = g.max_sr_images)
+                resource = c.site.add_image(name, max_num = g.max_sr_images)
                 c.site._commit()
 
         except cssfilter.BadImage:
@@ -937,15 +946,18 @@ class ApiController(RedditController):
         else: 
             # with the image num, save the image an upload to s3.  the
             # header image will be of the form "${c.site._fullname}.png"
-            # while any other image will be ${c.site._fullname}_${num}.png
-            new_url = cssfilter.save_sr_image(c.site, cleaned, num = num)
+            # while any other image will be ${c.site._fullname}_${resource}.png
+            new_url = cssfilter.save_sr_image(c.site, cleaned,
+                                              resource = resource)
             if header:
                 c.site.header = new_url
+            elif sponsor and c.user_is_admin:
+                c.site.sponsorship_img = new_url
             c.site._commit()
-    
+
             return UploadedImage(_('saved'), new_url, name, 
-                                 errors = errors).render()
-    
+                                 errors = errors, form_id = form_id).render()
+
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -964,9 +976,11 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
                    ad_file = VLength('ad-location', max_length = 500),
+                   sponsor_name =VLength('sponsorship-name', max_length = 500),
+                   sponsor_url = VLength('sponsorship-url', max_length = 500),
                    )
     def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
-                        **kw):
+                        sponsor_url, sponsor_name,  **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -1026,6 +1040,8 @@ class ApiController(RedditController):
                 if ad_type != "custom":
                     ad_file = Subreddit._defaults['ad_file']
                 sr.ad_file = ad_file
+                sr.sponsorship_url = sponsor_url or None
+                sr.sponsorship_name = sponsor_name or None
 
             #assume sr existed, or was just built
             old_domain = sr.domain
@@ -1430,25 +1446,32 @@ class ApiController(RedditController):
         c.user.pref_frame_commentspanel = False
         c.user._commit()
 
-    @validatedForm(promoted = VByName('ids', thing_cls = Link, multiple = True))
-    def POST_onload(self, form, jquery, promoted, *a, **kw):
-        if not promoted:
-            return
-
-        # make sure that they are really promoted
-        promoted = [ l for l in promoted if l.promoted ]
-
-        for l in promoted:
-            dest = l.url
-            
+    @validatedForm(promoted = VByName('ids', thing_cls = Link,
+                                      multiple = True),
+                   sponsorships = VByName('ids', thing_cls = Subreddit,
+                                          multiple = True))
+    def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
+        def add_tracker(dest, where, what):
             jquery.set_tracker(
-                l._fullname,
-                tracking.PromotedLinkInfo.gen_url(fullname=l._fullname,
+                where,
+                tracking.PromotedLinkInfo.gen_url(fullname=what,
                                                   ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname = l._fullname,
+                tracking.PromotedLinkClickInfo.gen_url(fullname = what,
                                                        dest = dest,
                                                        ip = request.ip)
                 )
+
+        if promoted:
+            # make sure that they are really promoted
+            promoted = [ l for l in promoted if l.promoted ]
+            for l in promoted:
+                add_tracker(l.url, l._fullname, l._fullname)
+
+        if sponsorships:
+            for s in sponsorships:
+                add_tracker(s.sponsorship_url, s._fullname,
+                            "%s_%s" % (s._fullname, s.sponsorship_name))
+
 
     @json_validate(query = nop('query'))
     def POST_search_reddit_names(self, query):
