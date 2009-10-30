@@ -76,9 +76,7 @@ function update_title(elem) {
   <h1>${_("create a reddit")}</h1>
 %endif
 
-<form class="pretty-form" action="/post/site_admin"
-      id="sr_form" method="post" 
-      onsubmit="return post_form(this, 'site_admin', null, null, true)">
+<div class="pretty-form" id="sr-form">
 
 %if not thing.site:
     <%utils:line_field title="${_('name')}"
@@ -110,9 +108,9 @@ function update_title(elem) {
   <%utils:line_field title="${_('description')}" css_class="usertext"
                      description="${_('500 characters max.  Make them count.')}">
     %if thing.site and thing.site.description:
-     ${UserText(None, text = thing.site.description or "", editable = True, creating = True, name="description")}
+     ${UserText(None, text = thing.site.description or "", editable = True, creating = True, name="description", have_form = False)}
     %else:
-     ${UserText(None, text = "", creating = True, name="description")}
+     ${UserText(None, text = "", creating = True, name="description", have_form = False)}
     %endif
   </%utils:line_field>
 
@@ -178,7 +176,6 @@ function update_title(elem) {
       </div>
     </div>
   </%utils:line_field>
-</form>
 
 %if thing.site:
   <input type="hidden" name="sr" value="${thing.site._fullname}"/> 
@@ -315,8 +312,7 @@ function update_title(elem) {
 %endif
 
 
-
-<div class="save-button">
+  <div class="save-button">
   <%
      if thing.site:
          name = "edit"
@@ -326,11 +322,13 @@ function update_title(elem) {
          text = _("create")
   %>
   <button name="${name}" class="btn" type="button"
-          onclick="$('#sr_form').get(0).onsubmit()"
-  >${text}</button>
+          onclick="return post_pseudo_form('#sr-form', 'site_admin')">
+    ${text}
+  </button>
   &#32;
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
+  </div>
 </div>
 </div>
 

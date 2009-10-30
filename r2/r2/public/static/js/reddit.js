@@ -53,13 +53,16 @@ function post_form(form, where, statusfunc, nametransformfunc, block) {
     }
 };
 
-function get_form_fields(form, fields) {
+function get_form_fields(form, fields, filter_func) {
     fields = fields || {};
+    if (!filter_func)
+        filter_func = function(x) { return true; };
     /* consolidate the form's inputs for submission */
     $(form).find("select, input, textarea").not(".gray, :disabled").each(function() {
-            if (($(this).attr("type") != "radio" &&
-                 $(this).attr("type") != "checkbox") ||
-                $(this).attr("checked"))
+            var type = $(this).attr("type");
+            if (filter_func(this) && 
+                ( (type != "radio" && type != "checkbox") || 
+                  $(this).attr("checked")) )
                 fields[$(this).attr("name")] = $(this).attr("value");
         });
     if (fields.id == null) {
@@ -73,6 +76,16 @@ function simple_post_form(form, where, fields, block) {
     return false;
 };
 
+function post_pseudo_form(form, where, block) {
+    var filter_func = function(x) {
+        var parent = $(x).parents("form:first");
+        return (parent.length == 0 || parent.get(0) == $(form).get(0))
+    };
+    $(form).find(".error").not(".status").hide();
+    $(form).find(".status").html(reddit.status_msg.submitting).show();
+    $.request(where, get_form_fields(form, {}, filter_func), null, block);
+    return false;
+}
 
 function emptyInput(elem, msg) {
     if (! $(elem).attr("value") || $(elem).attr("value") == msg ) 
