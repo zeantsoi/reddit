@@ -2504,6 +2504,11 @@ table.award-table {
     width: 300px; 
 }
 
+/* otherwise the pixel will cause a horizontal scrollbar in firefox */
+.sponsorshipbox .promote-pixel {
+  right:0;
+}
+
 .sidecontentbox a.helplink {
     float: right;
     font-size: x-small;
