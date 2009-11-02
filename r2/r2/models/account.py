@@ -67,7 +67,8 @@ class Account(Thing):
                      share = {},
                      wiki_override = None,
                      email = "",
-                     email_verified = None
+                     email_verified = None,
+                     ignorereports = False,
                      )
 
     def karma(self, kind, sr = None):

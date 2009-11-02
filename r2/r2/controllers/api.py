@@ -32,6 +32,7 @@ import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, link_from_url, timefromnow, worker
+from r2.lib.utils import timeago
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
@@ -539,9 +540,13 @@ class ApiController(RedditController):
                 thing = VByName('id'))
     def POST_report(self, thing):
         '''for reporting...'''
-        if (thing and not thing._deleted and not c.user._spam and 
-            not (hasattr(thing, "promoted") and thing.promoted)):
-            Report.new(c.user, thing)
+        if not thing or thing._deleted:
+            return
+        elif c.user._spam or c.user.ignorereports:
+            return
+        elif getattr(thing, 'promoted', False):
+            return
+        Report.new(c.user, thing)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -559,7 +564,10 @@ class ApiController(RedditController):
                 kind = 'link'
                 item.selftext = text
 
-            item.editted = True
+            if (thing._date < timeago('60 seconds')
+                or (thing._ups + thing._downs > 2)):
+                item.editted = True
+
             item._commit()
 
             tc.changed(item)

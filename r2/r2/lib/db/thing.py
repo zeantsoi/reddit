@@ -109,7 +109,7 @@ class DataThing(object):
     def __getattr__(self, attr):
         #makes pickling work for some reason
         if attr.startswith('__'):
-            raise AttributeError
+            raise AttributeError, attr
 
         try:
             if hasattr(self, '_t'):
