@@ -564,8 +564,8 @@ class ApiController(RedditController):
                 kind = 'link'
                 item.selftext = text
 
-            if (thing._date < timeago('60 seconds')
-                or (thing._ups + thing._downs > 2)):
+            if (item._date < timeago('60 seconds')
+                or (item._ups + item._downs > 2)):
                 item.editted = True
 
             item._commit()
