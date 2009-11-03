@@ -65,6 +65,7 @@ def edit_profile(user, address, creditcard, pay_id = None):
 
 def _make_transaction(trans_cls, amount, user, pay_id,
                       order = None, trans_id = None, test = None):
+    from pylons import g
     if amount:
         amount = "%.2f" % amount
     cust_id = CustomerID.get_id(user)
@@ -78,7 +79,8 @@ def _make_transaction(trans_cls, amount, user, pay_id,
     
     req = CreateCustomerProfileTransactionRequest(transaction = trans,
                                                   extraOptions = extra)
-    print req.toXML()
+    if g.debug:
+        g.log.error(req.toXML())
     return req.make_request()
 
 
