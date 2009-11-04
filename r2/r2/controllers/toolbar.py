@@ -89,6 +89,8 @@ class ToolbarController(RedditController):
         "/tb/$id36, show a given link with the toolbar"
         if not link:
             return self.abort404()
+        elif link.is_self:
+            return self.redirect(link.url)
 
         res = Frame(title = link.title,
                     url = link.url,
