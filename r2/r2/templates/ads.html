@@ -21,6 +21,7 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import get_domain, static
+   from r2.lib.tracking import AdframeInfo
    import random
  %>
 
@@ -38,3 +39,15 @@
            src="/ads/">
    </iframe>
 %endif
+<script type="text/javascript">
+    <% 
+      tracker_url = AdframeInfo.gen_url(fullname = "adblock", ip = request.ip)
+     %>
+    $(function() {
+      var ad = $("#ad-frame");
+      if(ad.height() == 0 || ad.width() == 0) {
+        $(".footer").append("<img alt='' src='${unsafe(tracker_url)}&random=" +
+                                    Math.random()*10000000000000000 + "'/>");
+      }
+    });
+</script>

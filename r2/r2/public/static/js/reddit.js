@@ -1140,5 +1140,4 @@ $(function() {
         /* visually mark the last-clicked entry */
         last_click();
 
-
     });
