@@ -1137,7 +1137,7 @@ class VDestination(Validator):
         return dest or request.referer or self.default
 
 class ValidAddress(Validator):
-    def __init__(self, param, usa_only = False):
+    def __init__(self, param, usa_only = True):
         self.usa_only = usa_only
         Validator.__init__(self, param)
 
@@ -1160,7 +1160,7 @@ class ValidAddress(Validator):
         elif not zipCode:
             self.set_error(_("please provide your zip or post code"), "zip")
         elif (not self.usa_only and
-              not country or not pycountry.countries.get(alpha2=country)):
+              (not country or not pycountry.countries.get(alpha2=country))):
             self.set_error(_("please pick a country"), "country")
         else:
             if self.usa_only:

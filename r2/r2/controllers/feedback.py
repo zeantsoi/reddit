@@ -22,15 +22,16 @@
 from reddit_base import RedditController
 from pylons import c, request
 from pylons.i18n import _
-from r2.lib.pages import FormPage, Feedback, Captcha
+from r2.lib.pages import FormPage, Feedback, Captcha, PaneStack, SelfServeBlurb
 
 class FeedbackController(RedditController):
 
     def GET_ad_inq(self):
         title = _("inquire about advertising on reddit")
         return FormPage('advertise',
-                        content = Feedback(title=title,
-                                           action='ad_inq'),
+                        content = PaneStack([SelfServeBlurb(),
+                                             Feedback(title=title,
+                                                      action='ad_inq')]),
                         loginbox = False).render()
 
     def GET_feedback(self):

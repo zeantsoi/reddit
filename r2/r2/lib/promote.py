@@ -113,6 +113,11 @@ def new_promotion(title, url, user, ip, promote_start, promote_until, bid,
     update_promo_dates(l, promote_start, promote_until)
     promotion_log(l, "promotion created")
     l._commit()
+    # the user has posted a promotion, so enable the promote menu unless
+    # they have already opted out
+    if user.pref_show_promote is not False:
+        user.pref_show_promote = True
+        user._commit()
     return l
 
 def update_promo_dates(thing, start_date, end_date, commit = True):
@@ -179,7 +184,7 @@ def auth_paid_promo(thing, user, pay_id, bid):
     trans_id = authorize.auth_transaction(bid, user, pay_id, thing)
     thing.promote_bid = bid
     
-    if trans_id:
+    if trans_id is not None:
         # we won't reset to unseen if already approved and the payment went ok
         promotion_log(thing, "updated payment and/or bid: SUCCESS")
         if trans_id < 0:

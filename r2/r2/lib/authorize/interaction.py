@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from api import *
+from pylons import g
 from r2.models.bidding import Bid
 
 # useful test data:
@@ -38,18 +39,25 @@ test_address = Address(firstName = "John", lastName = "Doe",
                        address = "123 Fake St.",
                        city = "Anytown", state = "MN", zip = "12346")
 
-# negative transaction ids indicate no payment was actually involved.
-# For now, we will raise if any positive transaction ids come up.
 def get_account_info(user, recursed = False): 
+    # if we don't have an ID for the user, try to make one
     if not CustomerID.get_id(user):
         cust_id = CreateCustomerProfileRequest(user).make_request()
-    u, data =  GetCustomerProfileRequest(user).make_request()
+
+    # if we do have a customerid, we should be able to fetch it from authorize
+    try:
+        u, data = GetCustomerProfileRequest(user).make_request()
+    except AuthorizeNetException:
+        u = None
+
+    # if the user and the returned user don't match, delete the
+    # current customer_id and recurse
     if u != user:
         if not recursed:
             CustomerID.delete(user)
             return get_account_info(user, True)
         else:
-            raise "well fuck"
+            raise AuthorizeNetException, "error creating user"
     return data
 
 def edit_profile(user, address, creditcard, pay_id = None):
@@ -65,22 +73,29 @@ def edit_profile(user, address, creditcard, pay_id = None):
 
 def _make_transaction(trans_cls, amount, user, pay_id,
                       order = None, trans_id = None, test = None):
-    from pylons import g
+    """
+    private function for handling transactions (since the data is
+    effectively the same regardless of trans_cls)
+    """
+    # format the amount
     if amount:
         amount = "%.2f" % amount
+    # lookup customer ID
     cust_id = CustomerID.get_id(user)
+    # create a new transaction
     trans = trans_cls(amount, cust_id, pay_id, trans_id = trans_id,
                       order = order)
     extra = {}
+    # the optional test field makes the transaction a test, and will
+    # make the response be the error code corresponding to int(test).
     if isinstance(test, int):
         extra = dict(x_test_request = "TRUE",
                      x_card_num = test_card.ERRORCARD.cardNumber,
                      x_amount = test)
-    
+
+    # using the transaction, generate a transaction request and make it
     req = CreateCustomerProfileTransactionRequest(transaction = trans,
                                                   extraOptions = extra)
-    if g.debug:
-        g.log.error(req.toXML())
     return req.make_request()
 
 
@@ -107,6 +122,9 @@ def auth_transaction(amount, user, payid, thing, test = None):
         if success:
             Bid._new(res.trans_id, user, payid, thing._id, amount)
             return res.trans_id
+        elif res is None:
+            # we are in test mode!
+            return auth_transaction(amount, user, -1, thing, test = test)
         # duplicate transaction, which is bad, but not horrible.  Log
         # the transaction id, creating a new bid if necessary. 
         elif (res.response_code, res.response_reason_code) == (3,11):
@@ -115,7 +133,7 @@ def auth_transaction(amount, user, payid, thing, test = None):
             except NotFound:
                 Bid._new(res.trans_id, user, payid, thing._id, amount)
             return res.trans_id
-        
+
 
 
 def void_transaction(user, trans_id, test = None):

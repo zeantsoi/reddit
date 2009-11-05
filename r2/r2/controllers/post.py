@@ -104,11 +104,16 @@ class PostController(ApiController):
               pref_num_comments = VInt('num_comments', 1, g.max_comments,
                                        default = g.num_comments),
               pref_show_stylesheets = VBoolean('show_stylesheets'),
+              pref_show_promote = VBoolean('show_promote'),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an
         #integer preference
         kw['pref_clickgadget'] = kw['pref_clickgadget'] and 5 or 0
+        if c.user.pref_show_promote is None:
+            kw['pref_show_promote'] = None
+        elif not kw.get('pref_show_promote'):
+            kw['pref_show_promote'] = False
 
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")
@@ -116,7 +121,7 @@ class PostController(ApiController):
         if c.cname:
             u.put_in_frame()
         return self.redirect(u.unparse())
-            
+
     def GET_over18(self):
         return BoringPage(_("over 18?"),
                           content = Over18()).render()

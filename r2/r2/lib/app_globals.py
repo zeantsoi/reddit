@@ -33,8 +33,6 @@ class Globals(object):
 
     int_props = ['page_cache_time',
                  'solr_cache_time',
-                 'min_promote_bid',
-                 'max_promote_bid',
                  'MIN_DOWN_LINK',
                  'MIN_UP_KARMA',
                  'MIN_DOWN_KARMA',
@@ -52,7 +50,11 @@ class Globals(object):
                  'num_serendipity',
                  'sr_dropdown_threshold',
                  ]
-    
+
+    float_props = ['min_promote_bid',
+                   'max_promote_bid',
+                   ]
+
     bool_props = ['debug', 'translator', 
                   'sqlprinting',
                   'template_debug',
@@ -110,6 +112,8 @@ class Globals(object):
             if not k.startswith("_") and not hasattr(self, k):
                 if k in self.int_props:
                     v = int(v)
+                elif k in self.float_props:
+                    v = float(v)
                 elif k in self.bool_props:
                     v = self.to_bool(v)
                 elif k in self.tuple_props:

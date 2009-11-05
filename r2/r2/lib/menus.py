@@ -151,7 +151,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      deleted      = _("deleted"),
                      reported     = _("reported"),
 
-                     promote        = _('promote'),
+                     promote        = _('self-serve'),
                      new_promo      = _('create promotion'),
                      my_current_promos = _('my promoted links'),
                      current_promos = _('all promoted links'),
@@ -275,6 +275,8 @@ class NavButton(Styled):
             return self.request_params.get(self.opt, '') in self.aliases
         else:
             if self.stripped_path == self.bare_path:
+                return True
+            if self.bare_path and self.stripped_path.startswith(self.bare_path):
                 return True
             if self.stripped_path in self.aliases:
                 return True

@@ -516,7 +516,7 @@ class ApiController(RedditController):
         '''for deleting all sorts of things'''
         thing._deleted = True
         if getattr(thing, "promoted", None) is not None:
-            thing.promoted = None
+            thing.promoted = False
         thing._commit()
 
         # flag search indexer that something has changed

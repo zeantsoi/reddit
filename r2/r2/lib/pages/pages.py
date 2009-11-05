@@ -258,7 +258,7 @@ class Reddit(Templated):
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin', False))
                 more_buttons.append(NamedButton('traffic', False))
-            if c.user_is_sponsor or c.user_is_paid_sponsor:
+            if c.user.pref_show_promote or c.user_is_sponsor:
                 more_buttons.append(NavButton(menu.promote, 'promoted', False))
 
         #if there's only one button in the dropdown, get rid of the dropdown
@@ -1278,6 +1278,9 @@ class ButtonDemoPanel(Templated):
     pass
 
 
+class SelfServeBlurb(Templated):
+    pass
+
 class Feedback(Templated):
     """The feedback and ad inquery form(s)"""
     def __init__(self, title, action):
@@ -2124,8 +2127,7 @@ class Promote_Graph(Templated):
 
     def as_csv(self):
         return to_csv(self.to_iter(localize = False))
-        
-        
+
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):
         Templated.__init__(self, link = link, expanded = expanded)

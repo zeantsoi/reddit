@@ -37,16 +37,23 @@ from r2.models import NotFound
 from r2.models.bidding import CustomerID, PayID, ShippingAddress
 
 # list of the most common errors.
-Errors = Storage(TRANSACTION_FAIL = "E00027",
+Errors = Storage(TESTMODE = "E00009",
+                 TRANSACTION_FAIL = "E00027",
                  DUPLICATE_RECORD = "E00039", 
                  RECORD_NOT_FOUND = "E00040",
                  TOO_MANY_PAY_PROFILES = "E00042",
                  TOO_MANY_SHIP_ADDRESSES = "E00043")
 
-
+class AuthorizeNetException(Exception):
+    pass
 
 
 class SimpleXMLObject(object):
+    """
+    All API transactions are done with authorize.net using XML, so
+    here's a class for generating and extracting structured data from
+    XML.
+    """
     _keys = []
     def __init__(self, **kw):
         self._used_keys = self._keys if self._keys else kw.keys()
@@ -68,7 +75,7 @@ class SimpleXMLObject(object):
                 v = v.toXML()
             if v is not None:
                 content.append(self.simple_tag(k, v))
-            
+
         for k in self._used_keys:
             v = getattr(self, k)
             if isinstance(v, iters):
@@ -151,13 +158,12 @@ class PaymentProfile(SimpleXMLObject):
     def fromXML(cls, res):
         payid = int(res.customerpaymentprofileid.contents[0])
         return cls(Address.fromXML(res.billto),
-                   CreditCard.fromXML(res.payment), payid)           
-            
+                   CreditCard.fromXML(res.payment), payid)
+
 class Order(SimpleXMLObject):
     _keys = ["invoiceNumber", "description", "purchaseOrderNumber"]
 
 class Transaction(SimpleXMLObject):
-    # TODO: add line items for billing?
     _keys = ["amount", "customerProfileId", "customerPaymentProfileId",
              "transId", "order"]
 
@@ -203,6 +209,8 @@ class AuthorizeNetRequest(SimpleXMLObject):
                              xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"))
 
     def make_request(self):
+        g.log.error("Authorize.net request:")
+        g.log.error(self.toXML())
         u = urlparse(g.authorizenetapi)
         try:
             conn = HTTPSConnection(u.hostname, u.port)
@@ -218,16 +226,18 @@ class AuthorizeNetRequest(SimpleXMLObject):
     def is_error_code(self, res, code):
         return (res.message.code and res.message.code.contents and
                 res.message.code.contents[0] == code)
-                
+
 
     def process_error(self, res):
-        raise Exception, res
+        raise AuthorizeNetException, res
 
     _autoclose_re = re.compile("<([^/]+)/>")
     def _autoclose_handler(self, m):
         return "<%(m)s></%(m)s>" % dict(m = m.groups()[0])
-    
+
     def handle_response(self, res):
+        print "RESPONSE:"
+        print res
         res = self._autoclose_re.sub(self._autoclose_handler, res)
         res = BeautifulStoneSoup(res, markupMassage=False)
         if res.resultcode.contents[0] == u"Ok":
@@ -237,7 +247,7 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
     def process_response(self, res):
         raise NotImplementedError
-        
+
 class CustomerRequest(AuthorizeNetRequest):
     _keys = AuthorizeNetRequest._keys + ["customerProfileId"]
     def __init__(self, user, **kw):
@@ -252,7 +262,6 @@ class CustomerRequest(AuthorizeNetRequest):
 
 # --- real request classes below
 
-        
 class CreateCustomerProfileRequest(AuthorizeNetRequest):
     """
     Create a new user object on authorize.net and return the new object ID.
@@ -311,6 +320,10 @@ class CreateCustomerPaymentProfileRequest(CustomerRequest):
 
     def process_error(self, res):
         if self.is_error_code(res, Errors.DUPLICATE_RECORD):
+            u, data = GetCustomerProfileRequest(self._user).make_request()
+            profiles = data.paymentProfiles
+            if len(profiles) == 1:
+                return profiles[0].customerPaymentProfileId
             return
         return CustomerRequest.process_error(self,res)
 
@@ -328,8 +341,8 @@ class CreateCustomerShippingAddressRequest(CustomerRequest):
         if self.is_error_code(res, Errors.DUPLICATE_RECORD):
             return
         return CustomerRequest.process_error(self, res)
-    
-    
+
+
 class GetCustomerPaymentProfileRequest(CustomerRequest):
     _keys = CustomerRequest._keys + ["customerPaymentProfileId"]
     """
@@ -353,8 +366,7 @@ class GetCustomerPaymentProfileRequest(CustomerRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
             PayID.delete(self._user, self.customerPaymentProfileId)
-        else:
-            return CustomerRequest.process_error(self,res)
+        return CustomerRequest.process_error(self,res)
 
 
 class GetCustomerShippingAddressRequest(CustomerRequest):
@@ -376,9 +388,8 @@ class GetCustomerShippingAddressRequest(CustomerRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
             ShippingAddress.delete(self._user, self.customerAddressId)
-        else:
-            return CustomerRequest.process_error(self,res)
-        
+        return CustomerRequest.process_error(self,res)
+
 class GetCustomerProfileIdsRequest(AuthorizeNetRequest):
     """
     Get a list of all customer ids that have been recorded with
@@ -390,8 +401,6 @@ class GetCustomerProfileIdsRequest(AuthorizeNetRequest):
 class GetCustomerProfileRequest(CustomerRequest): 
     """
     Given a user, find their customer information.
-    TODO: error handling
-    TODO: unregistered user handling
     """
     def process_response(self, res):
         from r2.models import Account
@@ -404,8 +413,9 @@ class GetCustomerProfileRequest(CustomerRequest):
         if acct.name == name:
             CustomerID.set(acct, customer_id)
         else:
-            raise Exception, "something went wrong"
-        
+            raise AuthorizeNetException, \
+                  "account name doesn't match authorize.net account"
+
         # parse the ship-to list, and make sure the Account is up todate
         ship_to = []
         for profile in res.findAll("shiptolist"):
@@ -427,7 +437,6 @@ class GetCustomerProfileRequest(CustomerRequest):
 class DeleteCustomerProfileRequest(CustomerRequest):
     """
     Delete a customer shipping address
-    TODO: more error handling
     """
     def process_response(self, res):
         if self._user:
@@ -437,14 +446,11 @@ class DeleteCustomerProfileRequest(CustomerRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
             CustomerID.delete(self._user)
-        else:
-            return CustomerRequest.process_error(self, res)
-        
+        return CustomerRequest.process_error(self,res)
 
 class DeleteCustomerPaymentProfileRequest(GetCustomerPaymentProfileRequest):
     """
     Delete a customer shipping address
-    TODO: more error handling
     """
     def process_response(self, res):
         PayID.delete(self._user,self.customerPaymentProfileId)
@@ -453,13 +459,11 @@ class DeleteCustomerPaymentProfileRequest(GetCustomerPaymentProfileRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
             PayID.delete(self._user,self.customerPaymentProfileId)
-        else:
-            return GetCustomerPaymentProfileRequest.process_error(self,res)
+        return GetCustomerPaymentProfileRequest.process_error(self,res)
 
 class DeleteCustomerShippingAddressRequest(GetCustomerShippingAddressRequest):
     """
     Delete a customer shipping address
-    TODO: more error handling
     """
     def process_response(self, res):
         ShippingAddress.delete(self._user, self.customerAddressId)
@@ -468,9 +472,8 @@ class DeleteCustomerShippingAddressRequest(GetCustomerShippingAddressRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
             ShippingAddress.delete(self._user, self.customerAddressId)
-        else:
-            GetCustomerShippingAddressRequest.process_error(self,res)
-            
+        GetCustomerShippingAddressRequest.process_error(self,res)
+
 
 
 
@@ -483,6 +486,9 @@ class DeleteCustomerShippingAddressRequest(GetCustomerShippingAddressRequest):
 #        AuthorizeNetRequest.__init__(self, profile = profile)
 
 class UpdateCustomerPaymentProfileRequest(CreateCustomerPaymentProfileRequest):
+    """
+    For updating the user's payment profile
+    """
     def __init__(self, user, paymentid, address, creditcard, 
                  validationMode = None):
         CustomerRequest.__init__(self, user,
@@ -497,6 +503,9 @@ class UpdateCustomerPaymentProfileRequest(CreateCustomerPaymentProfileRequest):
 
 class UpdateCustomerShippingAddressRequest(
     CreateCustomerShippingAddressRequest):
+    """
+    For updating the user's shipping address
+    """
     def __init__(self, user, address_id, address):
         address.customerAddressId = address_id
         CreateCustomerShippingAddressRequest.__init__(self, user,
@@ -546,7 +555,10 @@ class CreateCustomerProfileTransactionRequest(AuthorizeNetRequest):
                           trans_id = int)
 
     def __init__(self, **kw):
+        from pylons import g
         self._extra = kw.get("extraOptions", {})
+        #if g.debug:
+        #    self._extra['x_test_request'] = "TRUE"
         AuthorizeNetRequest.__init__(self, **kw)
 
     @property
@@ -560,6 +572,10 @@ class CreateCustomerProfileTransactionRequest(AuthorizeNetRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.TRANSACTION_FAIL):
             return (False, self.package_response(res))
+        elif self.is_error_code(res, Errors.TESTMODE):
+            return (None, None)
+        return AuthorizeNetRequest.process_error(self,res)
+
 
     def package_response(self, res):
         content = res.directresponse.contents[0]
