@@ -235,11 +235,11 @@ class NavButton(Styled):
                  nocname=False, opt = '', aliases = [],
                  target = "", style = "plain", **kw):
         # keep original dest to check against c.location when rendering
-        aliases = set(a.rstrip('/') for a in aliases)
-        aliases.add(dest.rstrip('/'))
+        aliases = set(_force_unicode(a.rstrip('/')) for a in aliases)
+        aliases.add(_force_unicode(dest.rstrip('/')))
 
         self.request_params = dict(request.GET)
-        self.stripped_path = request.path.rstrip('/').lower()
+        self.stripped_path = _force_unicode(request.path.rstrip('/').lower())
 
         Styled.__init__(self, style = style, sr_path = sr_path, 
                         nocname = nocname, target = target,
