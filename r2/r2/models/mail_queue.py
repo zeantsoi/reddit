@@ -296,7 +296,10 @@ class Email(object):
                 "ACCEPT_PROMO",
                 "REJECT_PROMO",
                 "QUEUED_PROMO",
-                "LIVE_PROMO", "FINISHED_PROMO")
+                "LIVE_PROMO",
+                "FINISHED_PROMO",
+                "NEW_PROMO"
+                )
 
     subjects = {
         Kind.SHARE : _("[reddit] %(user)s has shared a link with you"),
@@ -312,6 +315,7 @@ class Email(object):
         Kind.QUEUED_PROMO : _("[reddit] your promotion has been queued"),
         Kind.LIVE_PROMO   : _("[reddit] your promotion is now live"),
         Kind.FINISHED_PROMO : _("[reddit] your promotion has finished"),
+        Kind.FINISHED_PROMO : _("[reddit] your promotion has been created"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,

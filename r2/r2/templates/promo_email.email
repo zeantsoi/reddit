@@ -28,39 +28,53 @@
     edit_url = "http://%s%s" % (get_domain(cname = False, subreddit = False),
                                 promote.promo_edit_url(thing.link))
  %>
-%if thing.kind == Email.Kind.ACCEPT_PROMO:
-You're bid of $${"%.2f" % thing.link.promote_bid} has been accepted.  To update your bid:
+
+%if thing.kind == Email.Kind.NEW_PROMO:
+This email is to confirm reddit.com's receipt of your submitted self-serve ad.  Please note that your ad must be approved before it goes live on your selected date.
+
+Your credit card will not be charged until 24 hours prior to your ad going live on reddit.
+
+If your ad is rejected your credit card will not be charged. 
+%elif thing.kind == Email.Kind.BID_PROMO:
+This email is to confirm that your bid of $${"%.2f" % thing.link.promote_bid} for a self-serve ad on reddit.com has been accepted.  The credit card number you provided will be charged 24 hours prior to the date your self-serve ad is set to run.  To update your bid, please go to:
    ${edit_url}
 %elif thing.kind == Email.Kind.ACCEPT_PROMO:
-Your promotion has been accepted.  To update the link's bid or duration, please visit its edit page:
-   ${edit_url}
-NOTE: Changing the link's title or url at this point will make it subject to reapproval.
+This email is to confirm that your self-serve reddit.com ad has been approved by reddit!  The credit card you provided will not be charged until 24 hours prior to the date you have set your ad to run.  If you make any changes to your ad, they will have to be re-approved.  Keep in mind that after we have charged your credit card you will not be able to change your ad. 
 %elif thing.kind == Email.Kind.REJECT_PROMO:
+This email is to inform you that the self-serve ad you submitted to reddit.com has been rejected.  :( Please view the included explanation, and consult reddit's Terms of Service for information on conditions for approval.  If you have any questions please reply to this email.
+
 %if thing.body:
 Your promotion has been rejected for the following reason:
    ${thing.body}
-Please update it accordingly 
-%else:
-Your promotion has been rejected.  To update it, please visit:
-%endif
+%endif:
+
+To update your promotion pleaase go to:
    ${edit_url}
 and we'll reconsider it for sumbission.
 %elif thing.kind == Email.Kind.QUEUED_PROMO:
-Your promotion has been queued and will be displayed within the next 24 hours.  You can no longer change your bid, and your credit card has been charged. 
-
-NOTE: changing your promotion's title and/or url will result in it getting dequeued and subject to reapproval.   
+This email is to inform you that your self-serve ad on reddit.com is about to go live.  Your credit card has been successfully charged by reddit for the amount you bid ( $${"%.2f" % thing.link.promote_bid} ).  Please refer to the included receipt, and feel free to reply to this message if you have any questions.
 %elif thing.kind == Email.Kind.LIVE_PROMO:
-You're promotion is now live.  You can view it here:
+This email is to inform you that your self-serve ad on reddit.com is now live and can be found at the following link:
+
   ${thing.link.make_permalink_slow()}
-You can also track it's traffic with the traffic tab.
 
-NOTE: changing your promotion's title and/or url will result in it getting dequeued and subject to reapproval.   
+ Thank you for your business!  You can track your promotion's traffic with the 'traffic' tab on the page mentioned above.  Note that there is a 2 hour delay on tracking so at first you may not see any data.
+ 
+Remember to log in to reddit.com using the username and password you used when you bought this self-serve ad.  Please let us know if you have any questions.
 %elif thing.kind == Email.Kind.FINISHED_PROMO:
-Your promotion has finished.  Traffic totals will be finalized within the next two hours.  
-%elif thing.kind == Email.Kind.BID_PROMO:
-Your bid on the promotion
-   ${edit_url}
-has been updated and is now $${"%.2f" % thing.link.promote_bid}.
+This email is to inform you that your self-serve ad on reddit.com has concluded.  Please visit the 'traffic' tab on the following link for traffic results for your ad, and note that complete results will not appear until 24 hours after receipt of this email.
 
-You have until 24 hours before the promotion is scheduled to go live to update your bid. 
+  ${thing.link.make_permalink_slow()}
+
+Remember to log in to reddit.com using the username and password you used when you bought this self-serve ad.
+
+Thank you again for advertising on reddit, we hope you'll come back and do business with us again.  We'd love to know how your experience with reddit's self-serve ad was, feel free to reply to this email to let us know. 
 %endif
+
+Thank you,
+
+The Reddit Team
+selfservicepromotion@reddit.com
+
+_____
+http://www.reddit.com/help/selfservicepromotion

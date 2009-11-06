@@ -354,7 +354,7 @@ ul.flat-vert {text-align: left;}
 .sidebox .spacer {
     margin-top: 10px;
     padding: 5px 0 0 44px;
-    height: 41px;
+    min-height: 41px;
     background: white none no-repeat scroll top left;
 }
 
@@ -2723,6 +2723,7 @@ table.award-table {
 .create-promo ol > li {
     list-style-type: disc;  margin: 
 }
+.create-promo .rules { text-align: right; }
 
 .create-reddit h1,
 .create-promotion h1 { font-size: 200%; color: #999; xmargin:10px 0 0 5px;  }

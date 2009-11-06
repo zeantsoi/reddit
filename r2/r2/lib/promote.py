@@ -100,7 +100,6 @@ def new_promotion(title, url, user, ip, promote_start, promote_until, bid,
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    # TODO: disable comments, etc.?
     l = Link._submit(title, url, user, PromoteSR, ip)
     l.promoted = True
     l.promote_until = None
@@ -118,6 +117,7 @@ def new_promotion(title, url, user, ip, promote_start, promote_until, bid,
     if user.pref_show_promote is not False:
         user.pref_show_promote = True
         user._commit()
+    emailer.new_promo(l)
     return l
 
 def update_promo_dates(thing, start_date, end_date, commit = True):

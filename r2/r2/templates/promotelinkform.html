@@ -317,6 +317,11 @@
         ${_("You'll be able to submit an image for the thumbnail once the promotion is submitted.")}
       </div>
     </div>
+    <div class="spacer">
+      <div class="rules">
+        By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/help/selfservicepromotion">Self Serve Advertising Rules.</a>
+      </div>
+    </div>
   %endif
 %endif
 
@@ -331,10 +336,6 @@
           text = _("next ->")
   %>
   ${error_field("RATELIMIT", "ratelimit")}
-  <button name="${name}" class="btn" type="button"
-         onclick="$('#promo-form').get(0).onsubmit()"
-  >${text}</button>
-  
   %if thing.link and thing.link.promote_status < STATUS.pending:
     %if c.user_is_sponsor and getattr(thing.link, "promote_trans_id", 0) >= 0:
       <form method="POST" action="/post/freebie" 
@@ -354,6 +355,10 @@
   &#32;
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
+  <button name="${name}" class="btn" type="button"
+         onclick="$('#promo-form').get(0).onsubmit()"
+          >${text}</button>
+
 </div>
 </div>
 

@@ -87,7 +87,6 @@ def ad_inq_email(email, body, name='', reply_to = ''):
     return _feedback_email(email, body,  Email.Kind.ADVERTISE, name = name,
                            reply_to = reply_to)
 
-    
 def share(link, emails, from_name = "", reply_to = "", body = ""):
     """Queues a 'share link' email."""
     now = datetime.datetime.now(g.tz)
@@ -97,7 +96,7 @@ def share(link, emails, from_name = "", reply_to = "", body = ""):
                                Email.Kind.SHARE, date = date,
                                body = body, reply_to = reply_to,
                                thing = link)
-                               
+
 def send_queued_mail(test = False):
     """sends mail from the mail queue to smtplib for delivery.  Also,
     on successes, empties the mail queue and adds all emails to the
@@ -122,10 +121,10 @@ def send_queued_mail(test = False):
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
                 UnicodeDecodeError):
             # handle error and print, but don't stall the rest of the queue
-	    print "Handled error sending mail (traceback to follow)"
-	    traceback.print_exc(file = sys.stdout)
+            print "Handled error sending mail (traceback to follow)"
+            traceback.print_exc(file = sys.stdout)
             email.set_sent(rejected = True)
-        
+
 
     try:
         for email in Email.get_unsent(now):
@@ -149,11 +148,12 @@ def send_queued_mail(test = False):
                                 Email.Kind.QUEUED_PROMO,
                                 Email.Kind.LIVE_PROMO,
                                 Email.Kind.BID_PROMO,
-                                Email.Kind.FINISHED_PROMO):
+                                Email.Kind.FINISHED_PROMO,
+                                Email.Kind.NEW_PROMO):
                 email.body = Promo_Email(link = email.thing,
                                     kind = email.kind,
                                     body = email.body).render(style="email")
-                
+
             # handle unknown types here
             elif email.kind not in Email.Kind:
                 email.set_sent(rejected = True)
@@ -189,9 +189,12 @@ def opt_in(msg_hash):
 
 def _promo_email(thing, kind, body = ""):
     a = Account._byID(thing.author_id)
-    # TODO: make sure the user has an email address.
-    return _system_email(a.email, body, kind, thing = thing)
+    return _system_email(a.email, body, kind, thing = thing,
+                         reply_to = "selfservicesupport@reddit.com")
 
+
+def new_promo(thing):
+    return _promo_email(thing, Email.Kind.NEW_PROMO)
 
 def promo_bid(thing):
     return _promo_email(thing, Email.Kind.BID_PROMO)
