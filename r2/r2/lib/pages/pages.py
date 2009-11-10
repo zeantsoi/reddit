@@ -451,7 +451,7 @@ class SideBox(CachedTemplate):
 
 class PrefsPage(Reddit):
     """container for pages accessible via /prefs.  No extension handling."""
-    
+
     extension_handling = False
 
     def __init__(self, show_sidebar = False, *a, **kw):
@@ -463,8 +463,10 @@ class PrefsPage(Reddit):
     def build_toolbars(self):
         buttons = [NavButton(menu.options, ''),
                    NamedButton('friends'),
-                   NamedButton('update'),
-                   NamedButton('delete')]
+                   NamedButton('update')]
+        if CustomerID.get_id(user):
+            buttons += [NamedButton('payment')]
+        buttons += [NamedButton('delete')]
         return [PageNameNav('nomenu', title = _("preferences")), 
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
@@ -2049,7 +2051,7 @@ class Promote_Graph(Templated):
             self.recent.sort(key = lambda x: x[0]._date)
 
         # graphs of money
-        history = self.now - datetime.timedelta(30)
+        history = self.now - datetime.timedelta(60)
         pool = bidding.PromoteDates.bid_history(history)
         if pool:
             # we want to generate a stacked line graph, so store the
@@ -2088,6 +2090,8 @@ class Promote_Graph(Templated):
             CPC = [(d, (100 * pool.get(d, 0) / k) if k else 0)
                    for (d, (i, k)) in self.promo_traffic]
 
+            CTR = [(d, (100 * float(k) / i if i else 0))
+                   for (d, (i, k)) in self.promo_traffic]
 
             chart = graph.LineGraph(clicks)
             self.cli_graph = chart.google_chart(ylabels = ['total'],
@@ -2101,9 +2105,14 @@ class Promote_Graph(Templated):
             self.cpc_graph = chart.google_chart(ylabels = ['CPC ($0.01)'],
                                                 title = "cost per click")
 
+            chart = graph.LineGraph(CTR, colors = ["336699"])
+            self.ctr_graph = chart.google_chart(ylabels = ['CTR (%)'],
+                                                title = "Click Thru Rate")
+
         else:
             self.imp_graph = self.cli_graph = None
             self.cpc_graph = self.cpm_graph = None
+            self.ctr_graph = None
 
         self.promo_traffic = dict(self.promo_traffic)
 

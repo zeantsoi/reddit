@@ -315,7 +315,7 @@ class Email(object):
         Kind.QUEUED_PROMO : _("[reddit] your promotion has been queued"),
         Kind.LIVE_PROMO   : _("[reddit] your promotion is now live"),
         Kind.FINISHED_PROMO : _("[reddit] your promotion has finished"),
-        Kind.FINISHED_PROMO : _("[reddit] your promotion has been created"),
+        Kind.NEW_PROMO : _("[reddit] your promotion has been created"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,

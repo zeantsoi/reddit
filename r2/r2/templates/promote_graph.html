@@ -120,6 +120,10 @@
    <img class="traffic-graph" src="${thing.cpc_graph}" 
         alt="CPC graph"/>
 %endif
+%if thing.cpc_graph:
+   <img class="traffic-graph" src="${thing.ctr_graph}" 
+        alt="CTR graph"/>
+%endif
 </div>
 
 <div class="clear"></div>
