@@ -121,8 +121,7 @@ class DataThing(object):
                 return getattr(self, '_defaults')[attr]
             except KeyError:
                 if self._loaded:
-                    raise AttributeError, '%s not found [%s, %s]' % \
-                        (attr, self.__class__.__name__, self._id)
+                    raise AttributeError, '%s not found' % attr
                 else:
                     raise AttributeError,\
                               attr + ' not found. thing is not loaded'
