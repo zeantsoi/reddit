@@ -20,6 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
+    from datetime import datetime, timedelta
     from r2.models import Email
     from r2.lib import promote
     from r2.lib.template_helpers import get_domain
@@ -34,12 +35,21 @@ This email is to confirm reddit.com's receipt of your submitted self-serve ad.  
 
 Your credit card will not be charged until 24 hours prior to your ad going live on reddit.
 
-If your ad is rejected your credit card will not be charged. 
+If your ad is rejected your credit card will not be charged.  Don't take it personally if it happens, it's because of these guidelines:
+
+http://www.reddit.com/help/selfservicepromotion
+
 %elif thing.kind == Email.Kind.BID_PROMO:
-This email is to confirm that your bid of $${"%.2f" % thing.link.promote_bid} for a self-serve ad on reddit.com has been accepted.  The credit card number you provided will be charged 24 hours prior to the date your self-serve ad is set to run.  To update your bid, please go to:
+This email is to confirm that your bid of $${"%.2f" % thing.link.promote_bid} for a self-serve ad on reddit.com has been accepted.  The credit card number you provided will be charged 24 hours prior to the date your self-serve ad is set to run. 
+
+Having second thoughts about your bid? Want to be sure you're outbidding the competition?  You'll have until ${(thing.link._date - timedelta(1)).strftime("%Y-%m-%d")} to change your bid here:
+
    ${edit_url}
 %elif thing.kind == Email.Kind.ACCEPT_PROMO:
 This email is to confirm that your self-serve reddit.com ad has been approved by reddit!  The credit card you provided will not be charged until 24 hours prior to the date you have set your ad to run.  If you make any changes to your ad, they will have to be re-approved.  Keep in mind that after we have charged your credit card you will not be able to change your ad. 
+
+It won't be long now until your ad is being displayed to hundreds of thousands of the Internet's finest surfers.
+
 %elif thing.kind == Email.Kind.REJECT_PROMO:
 This email is to inform you that the self-serve ad you submitted to reddit.com has been rejected.  :( Please view the included explanation, and consult reddit's Terms of Service for information on conditions for approval.  If you have any questions please reply to this email.
 
@@ -52,11 +62,28 @@ To update your promotion pleaase go to:
    ${edit_url}
 and we'll reconsider it for sumbission.
 %elif thing.kind == Email.Kind.QUEUED_PROMO:
-This email is to inform you that your self-serve ad on reddit.com is about to go live.  Your credit card has been successfully charged by reddit for the amount you bid ( $${"%.2f" % thing.link.promote_bid} ).  Please refer to the included receipt, and feel free to reply to this message if you have any questions.
+This email is to inform you that your self-serve ad on reddit.com is about to go live.  Feel free to reply to this email if you have any questions.
+
+%if thing.link.promote_trans_id > 0:
+ Your credit card has been successfully charged by reddit for the amount you bid.  Please use this email as your receipt.
+
+
+================================================================================
+TRANSACTION #${thing.link.promote_trans_id}  
+DATE: ${datetime.now(g.tz).strftime("%Y-%m-%d")}
+................................................................................
+
+AMOUNT CHARGED: $${"%.2f" % thing.link.promote_bid}
+SPONSORSHIP PERMALINK: ${thing.link.make_permalink_slow(force_domain = True)}
+
+================================================================================
+%else:
+Your promotion was a freebie in the amount of $${"%.2f" % thing.link.promote_bid}.  
+%endif
 %elif thing.kind == Email.Kind.LIVE_PROMO:
 This email is to inform you that your self-serve ad on reddit.com is now live and can be found at the following link:
 
-  ${thing.link.make_permalink_slow()}
+  ${thing.link.make_permalink_slow(force_domain = True)}
 
  Thank you for your business!  You can track your promotion's traffic with the 'traffic' tab on the page mentioned above.  Note that there is a 2 hour delay on tracking so at first you may not see any data.
  
@@ -64,7 +91,7 @@ Remember to log in to reddit.com using the username and password you used when y
 %elif thing.kind == Email.Kind.FINISHED_PROMO:
 This email is to inform you that your self-serve ad on reddit.com has concluded.  Please visit the 'traffic' tab on the following link for traffic results for your ad, and note that complete results will not appear until 24 hours after receipt of this email.
 
-  ${thing.link.make_permalink_slow()}
+  ${thing.link.make_permalink_slow(force_domain = True)}
 
 Remember to log in to reddit.com using the username and password you used when you bought this self-serve ad.
 

@@ -230,7 +230,11 @@ class Link(Thing, Printable):
         # promoted links belong to a separate subreddit and shouldn't
         # include that in the path
         if self.promoted is not None:
-            res = "/%s" % p
+            if force_domain:
+                res = "http://%s/%s" % (get_domain(cname = False,
+                                                   subreddit = False), p)
+            else:
+                res = "/%s" % p
         elif not c.cname and not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
