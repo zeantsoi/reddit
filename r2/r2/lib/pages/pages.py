@@ -464,8 +464,8 @@ class PrefsPage(Reddit):
         buttons = [NavButton(menu.options, ''),
                    NamedButton('friends'),
                    NamedButton('update')]
-        if CustomerID.get_id(user):
-            buttons += [NamedButton('payment')]
+        #if CustomerID.get_id(user):
+        #    buttons += [NamedButton('payment')]
         buttons += [NamedButton('delete')]
         return [PageNameNav('nomenu', title = _("preferences")), 
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
