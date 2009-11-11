@@ -320,7 +320,7 @@
     </div>
     <div class="spacer">
       <div class="rules">
-        By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/help/selfservicepromotion">Self Serve Advertising Rules.</a>
+        By clicking "agree" you agree to the&#32;<a href="http://www.reddit.com/help/selfservicepromotion">Self Serve Advertising Rules.</a>
       </div>
     </div>
   %endif
@@ -334,7 +334,7 @@
           text = _("save options")
       else:
           name = "create"
-          text = _("next ->")
+          text = _("agree")
   %>
   ${error_field("RATELIMIT", "ratelimit")}
   %if thing.link and thing.link.promote_status < STATUS.pending:

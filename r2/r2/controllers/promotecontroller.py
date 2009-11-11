@@ -40,23 +40,21 @@ class PromoteController(ListingController):
     skip = False
     where = 'promoted'
     render_cls = PromotePage
-    
+
     @property
     def title_text(self):
         return _('promoted by you')
-    
+
     def query(self):
-        if c.user_is_sponsor:
-            # get all promotions for sponsors
-            q = Link._query(Link.c.sr_id == PromoteSR._id)
-        else:
+        q = Link._query(Link.c.sr_id == PromoteSR._id)
+        if not c.user_is_sponsor:
             # get user's own promotions
-            q = Link._query(Link.c.author_id == c.user._id)
+            q._filter(Link.c.author_id == c.user._id)
         q._filter(Link.c._spam == (True, False),
                   Link.c.promoted == (True, False))
         q._sort = desc('_date')
 
-        if c.user_is_sponsor and self.sort == "future_promos":
+        if self.sort == "future_promos":
             q._filter(Link.c.promote_status == STATUS.unseen)
         elif self.sort == "pending_promos":
             if c.user_is_admin:
@@ -73,7 +71,8 @@ class PromoteController(ListingController):
 
         return q
 
-    @validate(VPaidSponsor())
+    @validate(VPaidSponsor(),
+              VVerifiedUser())
     def GET_listing(self, sort = "", **env):
         self.sort = sort
         return ListingController.GET_listing(self, **env)
@@ -104,13 +103,14 @@ class PromoteController(ListingController):
 
         return page.render()
 
-    @validate(VPaidSponsor())
+    @validate(VPaidSponsor(),
+              VVerifiedUser())
     def GET_graph(self):
         content = Promote_Graph()
         if c.user_is_sponsor and c.render_style == 'csv':
             c.response.content = content.as_csv()
             return c.response
-        return PromotePage("graph", content = content).render()
+        return PromotePage("grpaph", content = content).render()
 
 
     ### POST controllers below

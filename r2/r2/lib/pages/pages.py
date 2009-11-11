@@ -1603,12 +1603,11 @@ class PromotePage(Reddit):
         buttons = [NamedButton('new_promo')]
         if c.user_is_admin:
             buttons.append(NamedButton('current_promos', dest = ''))
-            buttons.append(NamedButton('future_promos'))
         else:
             buttons.append(NamedButton('my_current_promos', dest = ''))
 
-
-        buttons += [NamedButton('unpaid_promos'),
+        buttons += [NamedButton('future_promos'),
+                    NamedButton('unpaid_promos'),
                     NamedButton('pending_promos'),
                     NamedButton('live_promos')]
 
