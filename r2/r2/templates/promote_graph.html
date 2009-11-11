@@ -26,21 +26,68 @@
    def money(x):
       return "$%.2f" % x
  %>
+<h1>Sponsored link calendar</h1>
+
+<div class="instructions">
+  %if not c.user_is_sponsor:
+  <p>Below is a calendar of your scheduled and completed promotions (if you have any, of course), along with some site-wide averages to use as a guide for setting up future promotions.  These values are:</p>
+  <dl>
+    <dt>Count:</dt>
+      <dd>Total number of sponsored links which either ran or are scheduled to run (site-wide).</dd>
+    <dt>CPM:</dt>
+      <dd>Cost per thousand impressions (site-wide).  Note that today's CPM is estimated.</dd>
+    <dt>CPC:</dt>
+      <dd>Cost per click, also site-wide and with the same caveat about today's value</dd>
+    <dt>your commit:</dt>
+      <dd>Total amount you have spent or have scheduled to spend on a given day</dd>
+  </dl>
+</div>
+
+%endif
+
 <div class="calendar">
   <%
      today = thing.now.date()
    %>
+    <div class="grid" 
+         style="left:0; right:${'%.2f'%(100 - 100./(thing.total_size+1))}%">
+      <div class="header">
+        DATE
+      </div>
+      <div class="header total">
+        COUNT
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+        IMPRESSIONS<br/>
+        %endif
+        CPM
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+        CLICKS<br/>
+        %endif
+        CPC
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+          TOTAL COMMIT
+        %else:
+          YOUR COMMIT
+        %endif
+      </div>      
+    </div>
   %for i in xrange(thing.total_size):
     <%
-       left = "%.2f" % (100*float(i)/thing.total_size)
-       right = "%.2f" %  (100 - 100*float(i+1)/thing.total_size)
+       left = "%.2f" % (100*float(i+1)/(thing.total_size+1))
+       right = "%.2f" %  (100 - 100*float(i+2)/(thing.total_size+1))
        day = thing.start_date + datetime.timedelta(i)
        CPC = CPM = imp_traffic = cli_traffic = "---"
        if thing.promo_traffic.has_key(day):
            imp_traffic, cli_traffic = thing.promo_traffic[day]
            if thing.market.has_key(i):
-              CPM = "$%.2f CPM" % (thing.market[i] * 1000./max(imp_traffic, 1))
-              CPC = "$%.2f CPC" % (thing.market[i] * 1./max(cli_traffic, 1))
+              CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
+              CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
            imp_traffic = num(imp_traffic)
            cli_traffic = num(cli_traffic)
            if day == today:
@@ -53,15 +100,22 @@
         ${day}
       </div>
       <div class="header total">
-        ${imp_traffic}<br/>
+        ${thing.promo_counter.get(i, unsafe("&nbsp;"))}
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+          ${imp_traffic}<br/>
+        %endif
         ${CPM}
       </div>
       <div class="header total">
-        ${cli_traffic}<br/>
+        %if c.user_is_sponsor:
+          ${cli_traffic}<br/>
+        %endif
         ${CPC}
       </div>
       <div class="header total">
-        ${"$%.2f" % thing.market[i] if thing.market.has_key(i) else "---"}
+        ${"$%.2f" % thing.my_market[i] if thing.my_market.has_key(i) else "---"}
       </div>      
     </div>
   %endfor
@@ -70,15 +124,19 @@
    prev_end = 0
  %>
 %for link, start, end in thing.promote_blocks:
+  <% 
+     start += 1
+     end += 1
+   %>
  %if start != end:
   %if prev_end > start:
     <% prev_end = 0 %>
     <div class="clearleft"></div>
   %endif
   <%
-     margin = "%.2f" % (float(100*(start-prev_end))/thing.total_size)
-     width  = "%.2f" % (float(100*(end-start))/thing.total_size)
-     prev_end = end
+     margin = "%.2f" % (float(100*(start-prev_end))/(thing.total_size+1))
+     width  = "%.2f" % (float(100*(end-start))/(thing.total_size+1))
+     prev_end = end 
    %>  
   <div class="blob promotedlink ${link.rowstyle} rounded"
          style="width: ${width}%; margin-left: ${margin}%">
@@ -96,21 +154,25 @@
 </div>
 <div class="clear"></div>
 
-<h1>${_("total promotion traffic")}</h1>
-<div>
-%if thing.imp_graph:
-  <img class="traffic-graph" src="${thing.imp_graph}"
-       alt="impressions graph"/>
+%if c.user_is_sponsor:
+  <h1>${_("total promotion traffic")}</h1>
+  <div>
+  %if thing.imp_graph:
+    <img class="traffic-graph" src="${thing.imp_graph}"
+         alt="impressions graph"/>
+  %endif
+  %if thing.cli_graph:
+     <img class="traffic-graph" src="${thing.cli_graph}" 
+          alt="click graph"/>
+  %endif
+  %if thing.money_graph:
+     <img class="traffic-graph" src="${thing.money_graph}" 
+          alt="money graph"/>
+  %endif
+  </div>
 %endif
-%if thing.cli_graph:
-   <img class="traffic-graph" src="${thing.cli_graph}" 
-        alt="click graph"/>
-%endif
-%if thing.money_graph:
-   <img class="traffic-graph" src="${thing.money_graph}" 
-        alt="money graph"/>
-%endif
-</div>
+
+<h1>${_("historical site performance")}</h1>
 <div>
 %if thing.cpm_graph:
    <img class="traffic-graph" src="${thing.cpm_graph}" 
@@ -120,12 +182,13 @@
    <img class="traffic-graph" src="${thing.cpc_graph}" 
         alt="CPC graph"/>
 %endif
-%if thing.cpc_graph:
+%if thing.cpc_graph and c.user_is_sponsor:
    <img class="traffic-graph" src="${thing.ctr_graph}" 
         alt="CTR graph"/>
 %endif
 </div>
 
+%if c.user_is_sponsor:
 <div class="clear"></div>
   %if thing.top_promoters:
   <h1>${_('top promoters this month')}</h1>
@@ -206,3 +269,4 @@
     %endfor
   </table>
   %endif
+%endif

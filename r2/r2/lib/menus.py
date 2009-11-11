@@ -156,7 +156,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      my_current_promos = _('my promoted links'),
                      current_promos = _('all promoted links'),
                      future_promos = _('unapproved'),
-                     graph          = _('promo graph'),
+                     graph          = _('analytics'),
                      live_promos    = _('live'),
                      unpaid_promos  = _('unpaid'),
                      pending_promos = _('pending')

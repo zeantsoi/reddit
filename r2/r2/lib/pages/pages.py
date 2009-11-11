@@ -1607,12 +1607,12 @@ class PromotePage(Reddit):
         else:
             buttons.append(NamedButton('my_current_promos', dest = ''))
 
-        
+
         buttons += [NamedButton('unpaid_promos'),
                     NamedButton('pending_promos'),
                     NamedButton('live_promos')]
 
-        if c.user_is_sponsor:
+        if c.user_is_sponsor or c.user_is_paid_sponsor:
             buttons.append(NamedButton('graph'))
 
         menu  = NavMenu(buttons, base_path = '/promoted',
@@ -2012,6 +2012,8 @@ class Promote_Graph(Templated):
 
         promote_blocks = []
         market = {}
+        my_market = {}
+        promo_counter = {}
         for p in promos:
             starti = max((p.start_date - start_date).days, 0)
             endi   = min((p.end_date   - start_date).days, size)
@@ -2019,7 +2021,11 @@ class Promote_Graph(Templated):
             bid_day = link.promote_bid/max((p.end_date - p.start_date).days, 1)
             for i in xrange(starti, endi):
                 market[i] = market.get(i, 0) + bid_day
-            promote_blocks.append( (link, starti, endi) )
+                if c.user_is_sponsor or link.author_id == c.user._id:
+                    my_market[i] = my_market.get(i, 0) + bid_day
+                promo_counter[i] = promo_counter.get(i, 0) + 1
+            if c.user_is_sponsor or link.author_id == c.user._id:
+                promote_blocks.append( (link, starti, endi) )
 
         # now sort the promoted_blocks into the most contiguous chuncks we can
         sorted_blocks = []
@@ -2099,7 +2105,7 @@ class Promote_Graph(Templated):
 
             chart = graph.LineGraph(CPM, colors = ["336699"])
             self.cpm_graph = chart.google_chart(ylabels = ['CPM ($)'],
-                                       title = "cost per 10k impressions")
+                                       title = "cost per 1k impressions")
 
             chart = graph.LineGraph(CPC, colors = ["336699"])
             self.cpc_graph = chart.google_chart(ylabels = ['CPC ($0.01)'],
@@ -2107,7 +2113,7 @@ class Promote_Graph(Templated):
 
             chart = graph.LineGraph(CTR, colors = ["336699"])
             self.ctr_graph = chart.google_chart(ylabels = ['CTR (%)'],
-                                                title = "Click Thru Rate")
+                                                title = "click through rate")
 
         else:
             self.imp_graph = self.cli_graph = None
@@ -2118,7 +2124,9 @@ class Promote_Graph(Templated):
 
         Templated.__init__(self,
                            total_size = size,
-                           market = market, 
+                           market = market,
+                           my_market = my_market, 
+                           promo_counter = promo_counter,
                            start_date = start_date,
                            promote_blocks = sorted_blocks)
 

@@ -104,10 +104,10 @@ class PromoteController(ListingController):
 
         return page.render()
 
-    @validate(VSponsor())
+    @validate(VPaidSponsor())
     def GET_graph(self):
         content = Promote_Graph()
-        if c.render_style == 'csv':
+        if c.user_is_sponsor and c.render_style == 'csv':
             c.response.content = content.as_csv()
             return c.response
         return PromotePage("graph", content = content).render()

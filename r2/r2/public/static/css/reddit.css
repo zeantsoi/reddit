@@ -2771,11 +2771,15 @@ table.award-table {
 .pay-form p.info { color: red; }
 .pay-link { font-size: smaller; margin-left: 10px;  }
 
+dt { margin-left: 10px; font-weight: bold;  }
+dd { margin-left: 20px;  }
 
 .calendar {
+    white-space: nowrap;
+    overflow: hidden; 
     width: 100%; 
     position: relative;
-    padding-top: 100px; 
+    padding-top: 120px; 
     padding-bottom: 100px; 
     margin: 20px 0; 
 }
