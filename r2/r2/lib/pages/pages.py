@@ -1767,9 +1767,9 @@ class PromotedTraffic(Traffic):
     """
     def __init__(self, thing):
         self.thing = thing
-        d = thing._date.astimezone(g.tz) 
+        d = thing._date.astimezone(g.tz) - promoted.timezone_offset
         d = d.replace(minute = 0, second = 0, microsecond = 0)
-        until = thing.promote_until
+        until = thing.promote_until - promoted.timezone_offset
         now = datetime.datetime.now(g.tz)
 
         # the results are preliminary until 1 day after the promotion ends

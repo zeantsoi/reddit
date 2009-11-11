@@ -28,8 +28,8 @@
  %>
 <h1>Sponsored link calendar</h1>
 
+%if not c.user_is_sponsor:
 <div class="instructions">
-  %if not c.user_is_sponsor:
   <p>Below is a calendar of your scheduled and completed promotions (if you have any, of course), along with some site-wide averages to use as a guide for setting up future promotions.  These values are:</p>
   <dl>
     <dt>Count:</dt>

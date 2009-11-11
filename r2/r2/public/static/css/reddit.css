@@ -2717,7 +2717,12 @@ table.award-table {
 }
 
 .create-promo { float: left; width: 520px; margin-right: 20px;} 
-.create-promo .infobar { margin-right: 0; }
+.create-promo .infobar { 
+    margin-right: 0; 
+    border-color: red;
+    color: black;
+    background: none; 
+}
 .create-promo h2 { margin-top: 10px; color: black; }
 .create-promo ol { margin: 0px 30px 10px 30px; }
 .create-promo ol > li {

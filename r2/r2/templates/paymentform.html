@@ -28,8 +28,10 @@
         ##onsubmit="return post_form(this, 'update_pay', null, null, true)">
         onsubmit="return post_form(this, 'update_pay')">
   <p>
-    The duration of this link is 
-    ${(thing.link.promote_until - thing.link._date).days} days
+    <% 
+       day = (thing.link.promote_until - thing.link._date).days
+     %>
+    The duration of this link is ${day} ungettext("day", "days", day)
     (${thing.link._date.strftime("%m/%d/%Y")} -
     ${thing.link.promote_until.strftime("%m/%d/%Y")}).
   </p>
@@ -37,7 +39,7 @@
     <%
        bid = unsafe("<input name='bid' maxlength='8' value='%.2f' type='text' size='4'/>" % thing.link.promote_bid)
      %>
-    ${unsafe(_("Your current bid is $%(bid)s.") % dict(bid=bid))}
+    ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=bid))}
     ${error_field("BAD_BID", "bid")}
   </p>
   %if thing.profiles:
