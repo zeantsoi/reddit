@@ -31,7 +31,7 @@
     <% 
        day = (thing.link.promote_until - thing.link._date).days
      %>
-    The duration of this link is ${day} ungettext("day", "days", day)
+    The duration of this link is ${day} ${ungettext("day", "days", day)}
     (${thing.link._date.strftime("%m/%d/%Y")} -
     ${thing.link.promote_until.strftime("%m/%d/%Y")}).
   </p>

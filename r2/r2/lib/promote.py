@@ -48,7 +48,7 @@ except SubredditExists:
     PromoteSR = Subreddit._by_name(PromoteSR)
 
 def promo_edit_url(l):
-    return "/promoted/edit_promo/%s" % l._id36
+    return "http://%s/promoted/edit_promo/%s" % (g.domain, l._id36)
 
 # These could be done with relationships, but that seeks overkill as
 # we never query based on user and only check per-thing
