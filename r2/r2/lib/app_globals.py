@@ -120,6 +120,8 @@ class Globals(object):
                     v = tuple(self.to_iter(v))
                 setattr(self, k, v)
 
+        self.paid_sponsors = set(x.lower() for x in self.paid_sponsors)
+
         # initialize caches
         mc = Memcache(self.memcaches, pickleProtocol = 1)
         self.memcache = mc

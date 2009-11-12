@@ -521,7 +521,7 @@ class RedditController(BaseController):
                 c.user.update_last_visit(c.start_time)
 
             #TODO: temporary
-            c.user_is_paid_sponsor = c.user.name in g.paid_sponsors
+            c.user_is_paid_sponsor = c.user.name.lower() in g.paid_sponsors
 
         c.over18 = over18()
 
