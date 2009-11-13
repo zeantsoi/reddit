@@ -45,12 +45,14 @@
 
 %endif
 
+<% max_percent = 97. %>
+
 <div class="calendar">
   <%
      today = thing.now.date()
    %>
     <div class="grid" 
-         style="left:0; right:${'%.2f'%(100 - 100./(thing.total_size+1))}%">
+         style="left:0; right:${'%.2f'%(100 - max_percent/(thing.total_size+1))}%">
       <div class="header">
         DATE
       </div>
@@ -79,8 +81,8 @@
     </div>
   %for i in xrange(thing.total_size):
     <%
-       left = "%.2f" % (100*float(i+1)/(thing.total_size+1))
-       right = "%.2f" %  (100 - 100*float(i+2)/(thing.total_size+1))
+       left = "%.2f" % (max_percent*float(i+1)/(thing.total_size+1))
+       right = "%.2f" %  (100 - max_percent*float(i+2)/(thing.total_size+1))
        day = thing.start_date + datetime.timedelta(i)
        CPC = CPM = imp_traffic = cli_traffic = "---"
        if thing.promo_traffic.has_key(day):
@@ -134,8 +136,8 @@
     <div class="clearleft"></div>
   %endif
   <%
-     margin = "%.2f" % (float(100*(start-prev_end))/(thing.total_size+1))
-     width  = "%.2f" % (float(100*(end-start))/(thing.total_size+1))
+     margin = "%.2f" % (float(max_percent*(start-prev_end))/(thing.total_size+1))
+     width  = "%.2f" % (float(max_percent*(end-start))/(thing.total_size+1))
      prev_end = end 
    %>  
   <div class="blob promotedlink ${link.rowstyle} rounded"
