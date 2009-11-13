@@ -163,8 +163,9 @@ class PromoteController(ListingController):
                 reason = nop("reason"))
     def POST_unpromote(self, thing, reason):
         if thing:
-            if (c.user_is_admin and
-                (thing.promote_status in (promote.STATUS.unseen,
+            if (c.user_is_sponsor and
+                (thing.promote_status in (promote.STATUS.upaid,
+                                          promote.STATUS.unseen,
                                           promote.STATUS.accepted,
                                           promote.STATUS.promoted)) ):
                 promote.reject_promo(thing, reason = reason)
