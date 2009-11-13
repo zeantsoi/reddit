@@ -164,7 +164,7 @@ class PromoteController(ListingController):
     def POST_unpromote(self, thing, reason):
         if thing:
             if (c.user_is_sponsor and
-                (thing.promote_status in (promote.STATUS.upaid,
+                (thing.promote_status in (promote.STATUS.unpaid,
                                           promote.STATUS.unseen,
                                           promote.STATUS.accepted,
                                           promote.STATUS.promoted)) ):
