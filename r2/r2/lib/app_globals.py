@@ -77,7 +77,7 @@ class Globals(object):
                    # TODO: temporary until we open it up to all users
                    'paid_sponsors',
                    'monitored_servers',
-                   'default_srs',
+                   'automatic_reddits',
                    'agents',
                    'allowed_css_linked_domains']
 

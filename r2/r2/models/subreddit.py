@@ -325,8 +325,26 @@ class Subreddit(Thing, Printable):
 
         An optional kw argument 'limit' is defaulted to g.num_default_reddits
         """
-        srs = cls.top_lang_srs(c.content_langs, limit)
-        return [s._id for s in srs] if ids else srs
+
+        # If we ever have much more than two of these, we should update
+        # _by_name to support lists of them
+        auto_srs = [ cls._by_name(n) for n in g.automatic_reddits ]
+
+        srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs))
+        rv = []
+        for i, s in enumerate(srs):
+            if len(rv) >= limit:
+                break
+            if s in auto_srs:
+                continue
+            rv.append(s)
+
+        rv = auto_srs + rv
+
+        if ids:
+            return [ sr._id for sr in rv ]
+        else:
+            return rv
 
     @classmethod
     @memoize('random_reddits', time = 1800)

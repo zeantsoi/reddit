@@ -302,6 +302,23 @@ class DataThing(object):
             return filter(None, (bases.get(i) for i in ids))
 
     @classmethod
+    def _byID36(cls, id36s, return_dict = True, **kw):
+
+        id36s, single = tup(id36s, True)
+
+        # will fail if it's not a string
+        ids = [ int(x, 36) for x in id36s ]
+
+        things = cls._byID(ids, return_dict=True, **kw)
+
+        if single:
+            return things.values()[0]
+        elif return_dict:
+            return things
+        else:
+            return things.values()
+
+    @classmethod
     def _by_fullname(cls, names,
                      return_dict = True, 
                      data=False, extra_props=None):
