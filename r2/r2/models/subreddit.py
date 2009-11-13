@@ -328,7 +328,7 @@ class Subreddit(Thing, Printable):
 
         # If we ever have much more than two of these, we should update
         # _by_name to support lists of them
-        auto_srs = [ cls._by_name(n) for n in g.automatic_reddits ]
+        auto_srs = [ Subreddit._by_name(n) for n in g.automatic_reddits ]
 
         srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs))
         rv = []
