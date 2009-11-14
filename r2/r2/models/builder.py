@@ -340,12 +340,12 @@ class QueryBuilder(Builder):
             #skip and count
             while new_items and (not self.num or num_have < self.num):
                 i = new_items.pop(0)
-                count = count - 1 if self.reverse else count + 1
                 if not (self.must_skip(i) or self.skip and not self.keep_item(i)):
                     items.append(i)
                     num_have += 1
-                if self.wrap:
-                    i.num = count
+                    if self.wrap:
+                        count = count - 1 if self.reverse else count + 1
+                        i.num = count
                 last_item = i
         
             #unprewrap the last item
