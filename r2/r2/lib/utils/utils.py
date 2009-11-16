@@ -958,17 +958,18 @@ def IteratorFilter(iterator, fn):
         if fn(x):
             yield x
 
-def UniqueIterator(iterator):
+def UniqueIterator(iterator, key = lambda x: x):
     """
     Takes an iterator and returns an iterator that returns only the
     first occurence of each entry
     """
     so_far = set()
     def no_dups(x):
-        if x in so_far:
+        k = key(x)
+        if k in so_far:
             return False
         else:
-            so_far.add(x)
+            so_far.add(k)
             return True
 
     return IteratorFilter(iterator, no_dups)
