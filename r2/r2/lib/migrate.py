@@ -111,3 +111,27 @@ def store_market():
             p._commit()
             PromoteDates.update(l, l._date, l.promote_until)
             PromoteDates.update_bid(l)
+
+def subscribe_to_blog_and_annoucements(filename):
+    import re
+    from time import sleep
+    from r2.models import Account, Subreddit
+
+    r_blog = Subreddit._by_name("blog")
+    r_announcements = Subreddit._by_name("announcements")
+
+    contents = file(filename).read()
+    numbers = [ int(s) for s in re.findall("\d+", contents) ]
+
+#    d = Account._byID(numbers, data=True)
+
+#   for i, account in enumerate(d.values()):
+    for i, account_id in enumerate(numbers):
+        account = Account._byID(account_id, data=True)
+
+        for sr in r_blog, r_announcements:
+            if sr.add_subscriber(account):
+                sr._incr("_ups", 1)
+                print ("%d: subscribed %s to %s" % (i, account.name, sr.name))
+            else:
+                print ("%d: didn't subscribe %s to %s" % (i, account.name, sr.name))

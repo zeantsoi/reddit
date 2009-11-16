@@ -927,8 +927,10 @@ class SubredditTopBar(Templated):
 
         self.my_reddits = Subreddit.user_subreddits(c.user, ids = False)
 
-        self.pop_reddits = Subreddit.default_subreddits(ids = False,
-                                                   limit = Subreddit.sr_limit)
+        p_srs = Subreddit.default_subreddits(ids = False,
+                                             limit = Subreddit.sr_limit)
+        self.pop_reddits = [ sr for sr in p_srs if sr.name not in g.automatic_reddits ]
+
 
 # This doesn't actually work.
 #        self.reddits = c.recent_reddits
@@ -948,11 +950,13 @@ class SubredditTopBar(Templated):
                              type = 'srdrop')
         
     def subscribed_reddits(self):
-        return NavMenu([SubredditButton(sr) for sr in
+        srs = [SubredditButton(sr) for sr in
                         sorted(self.my_reddits,
                                key = lambda sr: sr._downs,
                                reverse=True)
-                        ],
+                        if sr.name not in g.automatic_reddits
+                        ]
+        return NavMenu(srs,
                        type='flatlist', separator = '-',
                        _id = 'sr-bar')
 
