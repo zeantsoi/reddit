@@ -457,7 +457,14 @@ def ban(things):
 
         if links:
             add_queries([get_spam_links(sr)], insert_items = links)
-            add_queries([get_links(sr, 'new', 'all')], delete_items = links)
+            # rip it out of the listings. bam!
+            results = [get_links(sr, 'hot', 'all'),
+                       get_links(sr, 'new', 'all'),
+                       get_links(sr, 'top', 'all'),
+                       get_links(sr, 'controversial', 'all')]
+            results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+            add_queries(results, delete_items = links)
+
         #if comments:
         #    add_queries([get_spam_comments(sr)], insert_items = comments)
 
@@ -473,8 +480,14 @@ def unban(things):
 
         if links:
             add_queries([get_spam_links(sr)], delete_items = links)
-            # put it back in 'new'
-            add_queries([get_links(sr, 'new', 'all')], insert_items = links)
+            # put it back in the listings
+            results = [get_links(sr, 'hot', 'all'),
+                       get_links(sr, 'new', 'all'),
+                       get_links(sr, 'top', 'all'),
+                       get_links(sr, 'controversial', 'all')]
+            results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+            add_queries(results, insert_items = links)
+
         #if comments:
         #    add_queries([get_spam_comments(sr)], delete_items = comments)
 
