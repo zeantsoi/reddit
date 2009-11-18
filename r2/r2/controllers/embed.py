@@ -71,6 +71,8 @@ class EmbedController(RedditController):
         fp = request.path.rstrip("/")
         u = "http://code.reddit.com/wiki" + fp + '?stripped=1'
 
+        g.log.debug("Pulling %s for help" % u)
+
         try:
             content = proxyurl(u)
             return self.rendercontent(content, fp)
