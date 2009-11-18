@@ -262,7 +262,8 @@ def delete_promo(thing):
     thing._deleted = True
     reject_promo(thing, reason = "The promotion was deleted by the user")
     if thing.promote_trans_id > 0:
-        authorize.void_transaction(thing.promote_trans_id)
+        user = Account._byID(thing.author_id)
+        authorize.void_transaction(user, thing.promote_trans_id)
 
 
 
@@ -349,9 +350,9 @@ def generate_pending(date = None, test = False):
                               data = True,
                               return_dict = False)
     for l in links:
-        if l._deleted:
+        if l._deleted and l.promote_status != STATUS.rejected:
+            print "DELETING PROMO", l
             # deleted promos should never be made pending
-            print l
             delete_promo(l)
         elif l.promote_status == STATUS.accepted:
             if test:
