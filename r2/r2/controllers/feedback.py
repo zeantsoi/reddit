@@ -37,6 +37,11 @@ class FeedbackController(RedditController):
     def GET_feedback(self):
         title = _("send reddit feedback")
         return FormPage('feedback',
-                        content = Feedback(title=title,
-                                           action='feedback'),
+                        content = Feedback(title=title, action='feedback'),
+                        loginbox = False).render()
+
+    def GET_i18n(self):
+        title = _("help translate reddit into your language")
+        return FormPage('help translate',
+                        content = Feedback(title=title, action='i18n'),
                         loginbox = False).render()

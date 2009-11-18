@@ -1100,10 +1100,10 @@ class VDate(Validator):
                                           business_days = self.business_days)
                 if self.future is not None and date.date() < future.date():
                     self.set_error(errors.BAD_FUTURE_DATE,
-                               {"day": self.future.days})
+                               {"day": future.days})
                 elif self.past is not None and date.date() > past.date():
                     self.set_error(errors.BAD_PAST_DATE,
-                                   {"day": self.past.days})
+                                   {"day": past.days})
             return date.replace(tzinfo=g.tz)
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)

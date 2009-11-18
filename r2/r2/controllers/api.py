@@ -45,7 +45,7 @@ from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.db import queries
-from r2.lib import amqp
+from r2.lib import amqp, promote
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking, sup, cssfilter, emailer
@@ -79,7 +79,7 @@ class ApiController(RedditController):
     @validatedForm(VCaptcha(),
                    name=VRequired('name', errors.NO_NAME),
                    email=ValidEmails('email', num = 1),
-                   reason = VOneOf('reason', ('ad_inq', 'feedback')),
+                   reason = VOneOf('reason', ('ad_inq', 'feedback', "i18n")),
                    message=VRequired('text', errors.NO_TEXT),
                    )
     def POST_feedback(self, form, jquery, name, email, reason, message):
@@ -88,14 +88,17 @@ class ApiController(RedditController):
                 form.has_errors('text', errors.NO_TEXT) or
                 form.has_errors('captcha', errors.BAD_CAPTCHA)):
 
-            if reason != 'ad_inq':
-                emailer.feedback_email(email, message, name, reply_to = '')
-            else:
+            if reason == 'ad_inq':
                 emailer.ad_inq_email(email, message, name, reply_to = '')
-            
+            elif reason == 'i18n':
+                emailer.i18n_email(email, message, name, reply_to = '')
+            else:
+                emailer.feedback_email(email, message, name, reply_to = '')
             form.set_html(".status", _("thanks for your message! "
                             "you should hear back from us shortly."))
             form.set_inputs(text = "", captcha = "")
+            form.find(".spacer").hide()
+            form.find(".btn").hide()
 
     POST_ad_inq = POST_feedback
 
@@ -516,7 +519,7 @@ class ApiController(RedditController):
         '''for deleting all sorts of things'''
         thing._deleted = True
         if getattr(thing, "promoted", None) is not None:
-            thing.promoted = False
+            promote.delete_promo(thing)
         thing._commit()
 
         # flag search indexer that something has changed
@@ -738,7 +741,7 @@ class ApiController(RedditController):
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
-        if not thing:
+        if not thing or thing._deleted:
             return
 
         # TODO: temporary hack until we migrate the rest of the vote data
@@ -746,6 +749,8 @@ class ApiController(RedditController):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             return
 
+        # in a lock to prevent duplicate votes from people
+        # double-clicking the arrows
         with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
             dir = (True if dir > 0
                    else False if dir < 0

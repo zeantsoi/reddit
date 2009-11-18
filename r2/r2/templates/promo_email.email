@@ -34,7 +34,7 @@ This email is to confirm reddit.com's receipt of your submitted self-serve ad. T
 
 ${g.payment_domain}promoted/pay/${thing.link._id36}
 
-Please note that your ad must be approved before it goes live on your selected date.
+Please note that we can't approve your ad until you have set up payment, and that your ad must be approved before it goes live on your selected dates.
 
 Your credit card will not be charged until 24 hours prior to your ad going live on reddit.
 
@@ -88,13 +88,17 @@ This email is to inform you that your self-serve ad on reddit.com is now live an
 
   ${thing.link.make_permalink_slow(force_domain = True)}
 
- Thank you for your business!  You can track your promotion's traffic with the 'traffic' tab on the page mentioned above.  Note that there is a 2 hour delay on tracking so at first you may not see any data.
+Thank you for your business!  You can track your promotion's traffic here:
+
+  ${promote.promo_traffic_url(thing.link)}
+
+Note that there is a 2 hour delay on tracking so at first you make not see any data, and completed traffic will be 2-3 hours behind.
  
 Remember to log in to reddit.com using the username and password you used when you bought this self-serve ad.  Please let us know if you have any questions.
 %elif thing.kind == Email.Kind.FINISHED_PROMO:
-This email is to inform you that your self-serve ad on reddit.com has concluded.  Please visit the 'traffic' tab on the following link for traffic results for your ad, and note that complete results will not appear until 24 hours after receipt of this email.
+This email is to inform you that your self-serve ad on reddit.com has concluded.  Please visit the following link for traffic results for your ad, and note that complete results will not appear until 24 hours after receipt of this email.
 
-  ${thing.link.make_permalink_slow(force_domain = True)}
+  ${promote.promo_traffic_url(thing.link)}
 
 Remember to log in to reddit.com using the username and password you used when you bought this self-serve ad.
 

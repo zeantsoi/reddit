@@ -2430,6 +2430,9 @@ ul.tabmenu.formtab {
     border: none;
     margin-bottom: 10px; 
 }
+
+.promoted-traffic .usertable {  margin-left: 0px;  }
+
 .promoted-traffic h1 a { 
     font-size: small;
     margin-left: 10px; 

@@ -312,7 +312,9 @@ class RedditFooter(CachedTemplate):
                                        nocname=True),
                          OffsiteButton(_("reddiquette"), nocname=True,
                                        dest = '/help/reddiquette'),
-                         NamedButton("feedback", False),],
+                         NamedButton("feedback", False),
+                         NamedButton("i18n", False),
+                             ],
                         title = _('help'), type = 'flat_vert',
                         separator = ''),
                     NavMenu([NamedButton("bookmarklets", False),
@@ -927,8 +929,10 @@ class SubredditTopBar(Templated):
 
         self.my_reddits = Subreddit.user_subreddits(c.user, ids = False)
 
-        self.pop_reddits = Subreddit.default_subreddits(ids = False,
-                                                   limit = Subreddit.sr_limit)
+        p_srs = Subreddit.default_subreddits(ids = False,
+                                             limit = Subreddit.sr_limit)
+        self.pop_reddits = [ sr for sr in p_srs if sr.name not in g.automatic_reddits ]
+
 
 # This doesn't actually work.
 #        self.reddits = c.recent_reddits
@@ -948,11 +952,13 @@ class SubredditTopBar(Templated):
                              type = 'srdrop')
         
     def subscribed_reddits(self):
-        return NavMenu([SubredditButton(sr) for sr in
+        srs = [SubredditButton(sr) for sr in
                         sorted(self.my_reddits,
                                key = lambda sr: sr._downs,
                                reverse=True)
-                        ],
+                        if sr.name not in g.automatic_reddits
+                        ]
+        return NavMenu(srs,
                        type='flatlist', separator = '-',
                        _id = 'sr-bar')
 
@@ -1541,7 +1547,7 @@ class BannedList(UserList):
         return c.site.banned
 
 class TrafficViewerList(UserList):
-    """Friend list on /pref/friends"""
+    """Traffic share list on /traffic/*"""
     destination = "traffic_viewer"
     remove_action = "rm_traffic_viewer"
     type = 'traffic'

@@ -160,6 +160,7 @@ class Account(Thing):
         if prev_visit and current_time - prev_visit < timedelta(0, 3600):
             return
 
+        g.log.debug ("Updating last visit for %s" % self.name)
         self.last_visit = current_time
 
         self._commit()

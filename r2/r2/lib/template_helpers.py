@@ -135,25 +135,31 @@ def replace_render(listing, item, render_func):
                 com_cls = 'comments'
             replacements['numcomments'] = com_label
             replacements['commentcls'] = com_cls
-    
+
         replacements['display'] =  "" if display else "style='display:none'"
-    
+
         if hasattr(item, "render_score"):
             # replace the score stub
             (replacements['scoredislikes'],
              replacements['scoreunvoted'],
              replacements['scorelikes'])  = item.render_score
-    
+
         # compute the timesince here so we don't end up caching it
         if hasattr(item, "_date"):
-            replacements['timesince'] = timesince(item._date)
+            if hasattr(item, "promoted") and item.promoted is not None:
+                from r2.lib import promote
+                # promoted links are special in their date handling
+                replacements['timesince'] = timesince(item._date -
+                                                      promote.timezone_offset)
+            else:
+                replacements['timesince'] = timesince(item._date)
 
         renderer = render_func or item.render
         res = renderer(style = style, **replacements)
         if isinstance(res, (str, unicode)):
             return unsafe(res)
         return res
-                          
+
     return _replace_render
 
 def get_domain(cname = False, subreddit = True, no_www = False):

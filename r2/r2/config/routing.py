@@ -73,6 +73,7 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/awards', controller='front', action='awards')
     
+    mc('/i18n', controller='feedback', action='i18n')
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
     
@@ -155,7 +156,7 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="password|random|framebuster"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
-    mc('/help/:anything', controller='embed', action='help')
+    mc('/help/*anything', controller='embed', action='help')
     
     mc('/goto', controller='toolbar', action='goto')
     mc('/tb/:id', controller='toolbar', action='tb')
