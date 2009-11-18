@@ -395,7 +395,7 @@ def new_vote(vote):
     if not isinstance(item, Link):
         return
 
-    if vote.valid_thing and not item._spam:
+    if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
         results = [get_links(sr, 'hot', 'all')]
         results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))

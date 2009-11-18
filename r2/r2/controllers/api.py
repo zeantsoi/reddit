@@ -741,7 +741,7 @@ class ApiController(RedditController):
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
-        if not thing:
+        if not thing or thing._deleted:
             return
 
         # TODO: temporary hack until we migrate the rest of the vote data
@@ -749,6 +749,8 @@ class ApiController(RedditController):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             return
 
+        # in a lock to prevent duplicate votes from people
+        # double-clicking the arrows
         with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
             dir = (True if dir > 0
                    else False if dir < 0
