@@ -222,7 +222,7 @@ class Globals(object):
 
     @staticmethod
     def to_iter(v, delim = ','):
-        return (x.strip() for x in v.split(delim))
+        return (x.strip() for x in v.split(delim) if x)
 
     def load_db_params(self, gc):
         self.databases = tuple(self.to_iter(gc['databases']))

@@ -45,7 +45,7 @@ from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.db import queries
-from r2.lib import amqp
+from r2.lib import amqp, promote
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking, sup, cssfilter, emailer
@@ -516,7 +516,7 @@ class ApiController(RedditController):
         '''for deleting all sorts of things'''
         thing._deleted = True
         if getattr(thing, "promoted", None) is not None:
-            thing.promoted = False
+            promote.delete_promo(thing)
         thing._commit()
 
         # flag search indexer that something has changed

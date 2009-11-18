@@ -1545,7 +1545,7 @@ class BannedList(UserList):
         return c.site.banned
 
 class TrafficViewerList(UserList):
-    """Friend list on /pref/friends"""
+    """Traffic share list on /traffic/*"""
     destination = "traffic_viewer"
     remove_action = "rm_traffic_viewer"
     type = 'traffic'

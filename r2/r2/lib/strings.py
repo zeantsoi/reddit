@@ -79,14 +79,16 @@ string_dict = dict(
         friend = None,
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
         contributor = _("you have been added as a contributor to [%(title)s](%(url)s)."),
-        banned = _("you have been banned from posting to [%(title)s](%(url)s).")
+        banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
+        traffic = _('you have been added to the list of users able to see [traffic for the sponsoted link "%(title)s"](%(traffic_url)s).')
         ),
 
     subj_add_friend = dict(
         friend = None,
         moderator = _("you are a moderator"),
         contributor = _("you are a contributor"),
-        banned = _("you've been banned")
+        banned = _("you've been banned"),
+        traffic = _("you can view traffic on a promoted link")
         ),
     
     sr_messages = dict(

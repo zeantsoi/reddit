@@ -24,7 +24,7 @@ from r2.lib.wrapped import Wrapped
 from r2.models import LinkListing, make_wrapper, Link, IDBuilder, PromotedLink, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
-from r2.lib.promote import promo_edit_url
+from r2.lib.promote import promo_edit_url, promo_traffic_url
 from datetime import datetime
 from pylons import c, g
 
@@ -71,7 +71,7 @@ class LinkButtons(PrintableButtons):
                       promote_status = getattr(thing, "promote_status", 0),
                       user_is_sponsor = c.user_is_sponsor,
                       promotable = promotable,
-                      traffic_url = "/traffic/" + thing._id36, 
+                      traffic_url = promo_traffic_url(thing), 
                       is_author = thing.is_author)
                       
         PrintableButtons.__init__(self, 'linkbuttons', thing, 

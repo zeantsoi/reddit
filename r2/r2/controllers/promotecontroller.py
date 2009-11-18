@@ -310,7 +310,10 @@ class PromoteController(ListingController):
                    user = VExistingUname('name'),
                    thing = VByName('container'))
     def POST_traffic_viewer(self, form, jquery, user, thing):
-        print (user, thing)
+        """
+        Adds a user to the list of users allowed to view a promoted
+        link's traffic page.
+        """
         if not form.has_errors("name",
                                errors.USER_DOESNT_EXIST, errors.NO_USER):
             form.set_inputs(name = "")
@@ -319,6 +322,21 @@ class PromoteController(ListingController):
                 user_row = TrafficViewerList(thing).user_row(user)
                 jquery("#traffic-table").show(
                     ).find("table").insert_table_rows(user_row)
+
+                # send the user a message
+                msg = strings.msg_add_friend.get("traffic")
+                subj = strings.subj_add_friend.get("traffic")
+                if msg and subj:
+                    d = dict(url = thing.make_permalink_slow(),
+                             traffic_url = promote.promo_traffic_url(thing),
+                             title = thing.title)
+                    msg = msg % d
+                    subk =msg % d
+                    item, inbox_rel = Message._new(c.user, user,
+                                                   subj, msg, request.ip)
+                    if g.write_query_queue:
+                        queries.new_message(item, inbox_rel)
+
 
     @validatedForm(VSponsor('container'),
                    VModhash(),

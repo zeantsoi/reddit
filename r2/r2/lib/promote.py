@@ -25,6 +25,7 @@ from r2.models import *
 from r2.lib import authorize
 from r2.lib import emailer, filters
 from r2.lib.memoize import memoize
+from r2.lib.template_helpers import get_domain
 from r2.lib.utils import Enum
 from pylons import g, c
 from datetime import datetime, timedelta
@@ -47,8 +48,13 @@ try:
 except SubredditExists:
     PromoteSR = Subreddit._by_name(PromoteSR)
 
+def promo_traffic_url(l):
+    domain = get_domain(cname = False, subreddit = False)
+    return "http://%s/traffic/%s/" % (domain, l._id36)
+
 def promo_edit_url(l):
-    return "http://%s/promoted/edit_promo/%s" % (g.domain, l._id36)
+    domain = get_domain(cname = False, subreddit = False)
+    return "http://%s/promoted/edit_promo/%s" % (domain, l._id36)
 
 # These could be done with relationships, but that seeks overkill as
 # we never query based on user and only check per-thing
@@ -247,6 +253,19 @@ def reject_promo(thing, reason = ""):
     promotion_log(thing, "status update: rejected. Reason: '%s'" % reason)
     emailer.reject_promo(thing, reason)
 
+def delete_promo(thing):
+    """
+    deleted promotions have to be specially dealt with.  Reject the
+    promo and void any associated transactions.
+    """
+    thing.promoted = False
+    thing._deleted = True
+    reject_promo(thing, reason = "The promotion was deleted by the user")
+    if thing.promote_trans_id > 0:
+        authorize.void_transaction(thing.promote_trans_id)
+
+
+
 def pending_promo(thing):
     """
     For an accepted promotion within the proper time interval, charge
@@ -327,9 +346,14 @@ def generate_pending(date = None, test = False):
     date = date or (promo_datetime_now() + timedelta(1))
     links = Link._by_fullname([p.thing_name for p in 
                                PromoteDates.for_date(date)],
+                              data = True,
                               return_dict = False)
     for l in links:
-        if l.promote_status == STATUS.accepted:
+        if l._deleted:
+            # deleted promos should never be made pending
+            print l
+            delete_promo(l)
+        elif l.promote_status == STATUS.accepted:
             if test:
                 print "Would have made pending: (%s, %s)" % \
                       (l, l.make_permalink(None))
@@ -379,7 +403,7 @@ def promote_promoted(test = False):
 
         new_promos = Link._query(Link.c.promote_status == (STATUS.pending,
                                                            STATUS.promoted),
-                                 Link.c.promoted == (True, False))
+                                 Link.c.promoted == True)
         for l in new_promos:
             if l.promote_until > now and l._date <= now:
                 if test:
@@ -425,9 +449,9 @@ def get_promoted_slow():
     # to be used only by a human at a terminal
     with g.make_lock(promoted_lock_key):
         links = Link._query(Link.c.promote_status == STATUS.promoted,
-                            Link.c.promoted == (True, False),
+                            Link.c.promoted == True,
                             data = True)
-        link_names = [ x._fullname for x in links ]
+        link_names = dict((x._fullname, auction_weight(x)) for x in links)
 
         set_promoted(link_names)
 
