@@ -146,7 +146,7 @@ def replace_render(listing, item, render_func):
 
         # compute the timesince here so we don't end up caching it
         if hasattr(item, "_date"):
-            if hasattr(item, "promoted"):
+            if hasattr(item, "promoted") and item.promoted is not None:
                 from r2.lib import promote
                 # promoted links are special in their date handling
                 replacements['timesince'] = timesince(item._date -

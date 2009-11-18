@@ -87,6 +87,11 @@ def ad_inq_email(email, body, name='', reply_to = ''):
     return _feedback_email(email, body,  Email.Kind.ADVERTISE, name = name,
                            reply_to = reply_to)
 
+def i18n_email(email, body, name='', reply_to = ''):
+    """Queues a ad_inq email to the feedback account."""
+    return _feedback_email(email, body,  Email.Kind.HELP_TRANSLATE, name = name,
+                           reply_to = reply_to)
+
 def share(link, emails, from_name = "", reply_to = "", body = ""):
     """Queues a 'share link' email."""
     now = datetime.datetime.now(g.tz)

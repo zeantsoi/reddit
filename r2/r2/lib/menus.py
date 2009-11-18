@@ -134,7 +134,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      create       = _("create"),
                      mine         = _("my reddits"),
 
-                     i18n         = _("translate site"),
+                     i18n         = _("help translate"),
                      awards       = _("awards"),
                      promoted     = _("promoted"),
                      reporters    = _("reporters"),

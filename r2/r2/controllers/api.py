@@ -79,7 +79,7 @@ class ApiController(RedditController):
     @validatedForm(VCaptcha(),
                    name=VRequired('name', errors.NO_NAME),
                    email=ValidEmails('email', num = 1),
-                   reason = VOneOf('reason', ('ad_inq', 'feedback')),
+                   reason = VOneOf('reason', ('ad_inq', 'feedback', "i18n")),
                    message=VRequired('text', errors.NO_TEXT),
                    )
     def POST_feedback(self, form, jquery, name, email, reason, message):
@@ -88,14 +88,17 @@ class ApiController(RedditController):
                 form.has_errors('text', errors.NO_TEXT) or
                 form.has_errors('captcha', errors.BAD_CAPTCHA)):
 
-            if reason != 'ad_inq':
-                emailer.feedback_email(email, message, name, reply_to = '')
-            else:
+            if reason == 'ad_inq':
                 emailer.ad_inq_email(email, message, name, reply_to = '')
-            
+            elif reason == 'i18n':
+                emailer.i18n_email(email, message, name, reply_to = '')
+            else:
+                emailer.feedback_email(email, message, name, reply_to = '')
             form.set_html(".status", _("thanks for your message! "
                             "you should hear back from us shortly."))
             form.set_inputs(text = "", captcha = "")
+            form.find(".spacer").hide()
+            form.find(".btn").hide()
 
     POST_ad_inq = POST_feedback
 
