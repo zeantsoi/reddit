@@ -7,8 +7,9 @@ function update_bid(elem) {
     var bid = parseFloat(form.find("*[name=bid]").val());
     var ndays = ((Date.parse(form.find("*[name=enddate]").val()) -
              Date.parse(form.find("*[name=startdate]").val())) / (86400*1000));
-    $("#bid-field span.gray").html("($" + (bid/ndays).toFixed(2) +
-         " per day)");
+    $("#bid-field span.gray").html("[Current campaign totals " + 
+                                   "<b>$" + (bid/ndays).toFixed(2) +
+         "</b> per day for <b>" + ndays + " day(s)</b>]");
     $("#duration span.gray")
          .html( ndays == 1 ? "(1 day)" : "(" + ndays + " days)");
  }

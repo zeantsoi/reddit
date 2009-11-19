@@ -221,6 +221,7 @@
         $<input id="bid" name="bid" size="7" type="text"
                 style="width:auto"
                 onchange="update_bid(this)"
+                onkeyup="update_bid(this)"
                 value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
                                                g.min_promote_bid))}"
                 maxlenght="7"/>
@@ -253,13 +254,21 @@
             ${_("this amount has already been charged")}
           </span>
          %else:
-             <a href="${g.payment_domain}promoted/pay/${thing.link._id36}" class="pay-link">
+             %if thing.link.promote_status == STATUS.unpaid:
+               <span class="pay-link error">
+                 ${_("unpaid")}
+               </span>
+             %endif
+             <button onclick="$.redirect('${g.payment_domain}promoted/pay/${thing.link._id36}')">
                %if thing.link.promote_status == STATUS.unpaid:
                   ${_("set up payment")}
                %elif thing.link.promote_status < STATUS.pending:
                   ${_("change bid")}
                %endif
-             </a>
+             </button>
+             <img src="${static('cclogo.png')}" 
+                  style="vertical-align: middle; float:right"
+                  alt="we support Visa, MC, Amex, and Discover"/>
          %endif
     </%utils:line_field>
 %endif

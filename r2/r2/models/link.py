@@ -284,7 +284,7 @@ class Link(Thing, Printable):
             if not hasattr(item, "score_fmt"):
                 item.score_fmt = Score.number_only
             item.pref_compress = user.pref_compress
-            if user.pref_compress:
+            if user.pref_compress and item.promoted is None:
                 item.render_css_class = "compressed link"
                 item.score_fmt = Score.points
             elif pref_media == 'on':

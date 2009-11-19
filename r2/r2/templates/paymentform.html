@@ -19,7 +19,15 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+  from r2.lib.template_helpers import static
+%>
 <%namespace file="utils.html" import="error_field"/>
+
+<script type="text/javascript" src="${static('sponsored.js')}"></script>
+<script type="text/javascript">
+  $(function() { update_bid("#bid-field"); }); 
+</script>
 
 <div class="payment-setup">
   <h1>${_("set up payment for this link")}</h1>
@@ -27,7 +35,11 @@
         class="pretty-form"
         ##onsubmit="return post_form(this, 'update_pay', null, null, true)">
         onsubmit="return post_form(this, 'update_pay')">
-  <p>
+        <input type="hidden" name="startdate" 
+               value="${thing.link._date.strftime('%m/%d/%Y')}"/>
+        <input type="hidden" name="enddate" 
+               value="${thing.link.promote_until.strftime('%m/%d/%Y')}"/>
+   <p>
     <% 
        day = (thing.link.promote_until - thing.link._date).days
      %>
@@ -35,12 +47,15 @@
     (${thing.link._date.strftime("%m/%d/%Y")} -
     ${thing.link.promote_until.strftime("%m/%d/%Y")}).
   </p>
-  <p>
+  <p id="bid-field">
     <%
-       bid = unsafe("<input name='bid' maxlength='8' value='%.2f' type='text' size='4'/>" % thing.link.promote_bid)
+       bid = unsafe("<input name='bid' maxlength='8' value='%.2f' type='text' size='4' onchange='update_bid(this)' onkeyup='update_bid(this)'/>" % thing.link.promote_bid)
      %>
     ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=bid))}
     ${error_field("BAD_BID", "bid")}
+    <span class="gray">
+      ${_('(total for the duration provided)')}
+    </span>
   </p>
   %if thing.profiles:
   <p>
