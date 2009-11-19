@@ -2108,13 +2108,19 @@ class Promote_Graph(Templated):
             self.cli_graph = chart.google_chart(ylabels = ['total'],
                                                 title = "clicks")
 
-            chart = graph.LineGraph(CPM, colors = ["336699"])
+            mean_CPM = sum(x[1] for x in CPM) * 1. / max(len(CPM), 1)
+            chart = graph.LineGraph([(d, min(x, mean_CPM*2)) for d, x in CPM],
+                                    colors = ["336699"])
             self.cpm_graph = chart.google_chart(ylabels = ['CPM ($)'],
-                                       title = "cost per 1k impressions")
+                                       title = "cost per 1k impressions " + 
+                                               "($%.2f average)" % mean_CPM)
 
-            chart = graph.LineGraph(CPC, colors = ["336699"])
+            mean_CPC = sum(x[1] for x in CPC) * 1. / max(len(CPC), 1)
+            chart = graph.LineGraph([(d, min(x, mean_CPC*2)) for d, x in CPC],
+                                    colors = ["336699"])
             self.cpc_graph = chart.google_chart(ylabels = ['CPC ($0.01)'],
-                                                title = "cost per click")
+                                                title = "cost per click " + 
+                                                "($%.2f average)" % (mean_CPC/100.))
 
             chart = graph.LineGraph(CTR, colors = ["336699"])
             self.ctr_graph = chart.google_chart(ylabels = ['CTR (%)'],

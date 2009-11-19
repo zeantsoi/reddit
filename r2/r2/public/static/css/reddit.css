@@ -2817,6 +2817,14 @@ dd { margin-left: 20px;  }
     padding: 0px; 
     z-index: 10; 
     float: left;
+    cursor: pointer; 
+}
+
+.calendar .blob.link:hover { 
+    border: 1px solid red;
+    box-shadow: 2px 2px 2px #000;
+    -moz-box-shadow: 2px 2px 2px #000;
+    z-index: 100; 
 }
 
 .calendar .blob .bid {

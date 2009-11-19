@@ -32,13 +32,14 @@
 <%def name="tagline()">
 <%
    if thing.promote_status < STATUS.promoted and (c.user_is_sponsor or thing.is_author):
-     taglinetext = _("to be promoted by %(author)s") 
+     taglinetext = _("to be promoted on %(date)s by %(author)s") 
    else:
      taglinetext = _("promoted %(when)s ago by %(author)s") 
    taglinetext = taglinetext.replace(" ", "&#32;")
    author = WrappedUser(thing.author, thing.attribs, thing).render()
  %>
 ${unsafe(taglinetext % dict(when = thing.timesince, 
+                            date = thing._date.strftime("%Y-%m-%d"), 
                             author= author))}
 </%def>
 
@@ -67,6 +68,10 @@ ${unsafe(taglinetext % dict(when = thing.timesince,
         ${_('sponsored link')} 
       %else:
         ${_('finished sponsored link')} 
+      %endif
+      %if c.user_is_sponsor:
+         <% days = (thing.promote_until - thing._date).days %>
+         | $${thing.promote_bid} | ${days} ${ungettext("day", "days", days)}
       %endif
     %else:
       ${_('sponsored link')} 

@@ -404,7 +404,8 @@ def promote_promoted(test = False):
 
         new_promos = Link._query(Link.c.promote_status == (STATUS.pending,
                                                            STATUS.promoted),
-                                 Link.c.promoted == True)
+                                 Link.c.promoted == True,
+                                 data = True)
         for l in new_promos:
             if l.promote_until > now and l._date <= now:
                 if test:
@@ -418,6 +419,19 @@ def promote_promoted(test = False):
                           (l, l.make_permalink(None))
                 else:
                     unpromote(l, batch = True)
+
+        # remove unpaid promos that are scheduled to run on today or before
+        unpaid_promos = Link._query(Link.c.promoted == True,
+                                    Link.c.promote_status == STATUS.unpaid,
+                                    Link.c._date < now,
+                                    Link.c._deleted == False, 
+                                    data = True)
+        for l in unpaid_promos:
+            if test:
+                print "Would have rejected: %s" % promo_edit_url(l)
+            else:
+                reject_promo(l, reason = "We're sorry, but this sponsored link was not set up for payment before the appointed date.  Please add payment info and move the date into the future if you would like to resubmit.  Also please feel free to email us at selfservicesupport@reddit.com if you believe this email is in error.")
+
 
         if test:
             print promos

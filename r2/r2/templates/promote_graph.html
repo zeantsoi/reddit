@@ -141,7 +141,9 @@
      prev_end = end 
    %>  
   <div class="blob promotedlink ${link.rowstyle} rounded"
-         style="width: ${width}%; margin-left: ${margin}%">
+       title="${link.title}"  
+       onclick="$.redirect($(this).find('a').attr('href'));"
+       style="width: ${width}%; margin-left: ${margin}%">
     <div class="bid">
         $${int(link.promote_bid)}
     </div>
