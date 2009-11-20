@@ -287,14 +287,15 @@ class Link(Thing, Printable):
             if user.pref_compress and item.promoted is None:
                 item.render_css_class = "compressed link"
                 item.score_fmt = Score.points
-            elif pref_media == 'on':
+            elif pref_media == 'on' and not user.pref_compress:
                 show_media = True
             elif pref_media == 'subreddit' and item.subreddit.show_media:
                 show_media = True
-            elif (item.promoted
-                  and item.has_thumbnail
-                  and pref_media != 'off'):
-                show_media = True
+            elif item.promoted and item.has_thumbnail:
+                if item.author_id == user._id:
+                    show_media = True
+                elif pref_media != 'off' and not user.pref_compress:
+                    show_media = True
 
             if not show_media:
                 item.thumbnail = ""
