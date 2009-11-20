@@ -292,7 +292,7 @@ class Link(Thing, Printable):
             elif pref_media == 'subreddit' and item.subreddit.show_media:
                 show_media = True
             elif item.promoted and item.has_thumbnail:
-                if item.author_id == user._id:
+                if user_is_loggedin and item.author_id == user._id:
                     show_media = True
                 elif pref_media != 'off' and not user.pref_compress:
                     show_media = True
