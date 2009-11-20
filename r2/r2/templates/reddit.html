@@ -54,18 +54,17 @@
   %else:
     <link rel="stylesheet" href="${static(g.stylesheet)}" 
           type="text/css" />
-    %if c.allow_styles:
       %if c.site.stylesheet:
       <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
             type="text/css" />
       %endif
-      %if c.site.stylesheet_contents:
-      <link rel="stylesheet" 
-            href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
-            title="applied_subreddit_stylesheet"
-            type="text/css" />
-      %endif
-    %endif
+  %endif
+
+  %if c.allow_styles and c.site.stylesheet_contents:
+     <link rel="stylesheet" 
+           href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
+           title="applied_subreddit_stylesheet"
+           type="text/css" />
   %endif
   %if getattr(thing, "additional_css", None):
     <link rel="stylesheet" href="${static(thing.additional_css)}" 

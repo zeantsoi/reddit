@@ -55,6 +55,7 @@ class Subreddit(Thing, Printable):
                      reported = 0,
                      valid_votes = 0,
                      show_media = False,
+                     css_on_cname = True, 
                      domain = None,
                      mod_actions = 0,
                      sponsorship_url = None,

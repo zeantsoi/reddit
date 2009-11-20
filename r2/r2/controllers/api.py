@@ -991,6 +991,7 @@ class ApiController(RedditController):
                    ad_file = VLength('ad-location', max_length = 500),
                    sponsor_name =VLength('sponsorship-name', max_length = 500),
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
+                   css_on_cname = VBoolean("css_on_cname"),
                    )
     def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
                         sponsor_url, sponsor_name,  **kw):
@@ -1000,7 +1001,7 @@ class ApiController(RedditController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
-                           'show_media', 'type', 'lang',))
+                           'show_media', 'type', 'lang', "css_on_cname"))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -1059,6 +1060,8 @@ class ApiController(RedditController):
             #assume sr existed, or was just built
             old_domain = sr.domain
 
+            if not sr.domain:
+                del kw['css_on_cname']
             for k, v in kw.iteritems():
                 setattr(sr, k, v)
             sr._commit()
@@ -1074,6 +1077,8 @@ class ApiController(RedditController):
 
         if redir:
             form.redirect(redir)
+        else:
+            jquery.refresh()
 
     @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),

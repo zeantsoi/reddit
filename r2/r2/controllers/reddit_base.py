@@ -560,7 +560,7 @@ class RedditController(BaseController):
         elif not c.user.pref_show_stylesheets and not c.cname:
             c.allow_styles = False
         #if the site has a cname, but we're not using it
-        elif c.site.domain and not c.cname:
+        elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.allow_styles = False
 
         #check content cache
