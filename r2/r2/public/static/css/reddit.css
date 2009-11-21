@@ -1975,7 +1975,7 @@ ul#image-preview-list .description pre {
 
 .dropdown.srdrop .selected {
     background: transparent none no-repeat scroll center right;
-    background-image: url(/static/droparrowgray.gif);  /* SPRITE */
+    background-image: url(/static/droparrowgray.gif); 
     display: inline-block;
     vertical-align: bottom;
     padding-right: 21px;
