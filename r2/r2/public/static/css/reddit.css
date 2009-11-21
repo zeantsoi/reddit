@@ -195,7 +195,8 @@ ul.flat-vert {text-align: left;}
 }
 
 .dropdown.heavydrop .selected{
-    background: white url(/static/droparrow.gif) no-repeat scroll center right;
+    background: white none no-repeat scroll center right;
+    background-image: url(/static/droparrow.gif);
     border: 1px solid gray;
     padding: 2px;
     padding-right: 23px;
@@ -205,7 +206,8 @@ ul.flat-vert {text-align: left;}
 
 .dropdown.lightdrop .selected {
     position: relative;
-    background: transparent url(/static/droparrowgray.gif) no-repeat scroll center right;
+    background: transparent none no-repeat scroll center right;
+    background-image: url(/static/droparrowgray.gif);
     padding-right: 21px;
     text-decoration: underline;
     color: gray; 
@@ -218,7 +220,8 @@ ul.flat-vert {text-align: left;}
 /*tab drop*/
 .dropdown.tabdrop .selected {
     position: relative;
-    background: white url(/static/droparrowgray.gif) no-repeat scroll center right;
+    background: white none no-repeat scroll center right;
+    background-image: url(/static/droparrowgray.gif);
     padding: 2px 21px 1px 5px;
     margin-left: 3px;
     border: 1px solid #5f99cf;
@@ -333,11 +336,11 @@ ul.flat-vert {text-align: left;}
     height: 31px;
     width: 24px;
     background: white none no-repeat scroll center left;
-    background-image: url(/static/gradient-nub.png);
+    background-image: url(/static/gradient-nub.png);  /* SPRITE */
 }
 
 .morelink:hover .nub, .mlhn {
-    background-image: url(/static/gradient-nub-hover.png);
+    background-image: url(/static/gradient-nub-hover.png);  /* SPRITE */
 }
 
 /* raised box */
@@ -358,8 +361,13 @@ ul.flat-vert {text-align: left;}
     background: white none no-repeat scroll top left;
 }
 
-.sidebox.create .spacer {background-image: url(/static/create-a-reddit.png);}
-.sidebox.submit .spacer {background-image: url(/static/submit-alien.png);}
+.sidebox.create .spacer {
+    background-image: url(/static/create-a-reddit.png);  /* SPRITE */
+}
+
+.sidebox.submit .spacer {
+    background-image: url(/static/submit-alien.png);  /* SPRITE */
+}
 
 .sidebox .subtitle {
     margin-left: 10px;
@@ -422,12 +430,23 @@ ul.flat-vert {text-align: left;}
     cursor: pointer;
     background-position: center center;
     background-repeat: no-repeat; 
+    width: 15px;
+    margin-left: auto;
+    margin-right: auto; 
 }
 
-.arrow.upmod { background-image: url(/static/aupmod.gif); }
-.arrow.downmod { background-image: url(/static/adownmod.gif); }
-.arrow.up { background-image: url(/static/aupgray.gif); }
-.arrow.down { background-image: url(/static/adowngray.gif); }
+.arrow.upmod { 
+    background-image: url(/static/aupmod.gif);  /* SPRITE */
+}
+.arrow.downmod { 
+    background-image: url(/static/adownmod.gif);  /* SPRITE */
+}
+.arrow.up { 
+    background-image: url(/static/aupgray.gif);  /* SPRITE */
+}
+.arrow.down { 
+    background-image: url(/static/adowngray.gif);  /* SPRITE */
+}
 
 .midcol {
     float: left; 
@@ -458,7 +477,8 @@ ul.flat-vert {text-align: left;}
 
 .media-button .option { color: red; }
 .media-button .option.active {
-    background: transparent url(/static/reddit-button-play.gif) no-repeat scroll right center;
+    background: transparent none no-repeat scroll right center;
+    background-image: url(/static/reddit-button-play.gif);   /* SPRITE */
     padding-right: 15px;
     color: #336699;
 }
@@ -468,7 +488,7 @@ ul.flat-vert {text-align: left;}
 .thing .title { color: blue; padding: 0px; overflow: hidden; }
 .thing .title:visited { color: #551a8b }
 .thing .title.click { color: #551a8b } 
-       
+
 .thing .title.loggedin { color: blue }
 .thing .title.loggedin:visited { color: #551a8b }
 .thing .title.loggedin.click { color: #551a8b } 
@@ -804,9 +824,8 @@ textarea.gray { color: gray; }
 
 .deepthread {
     padding-right: 30px;
-    background-image: url(/static/continue-thread.png);
-    background-repeat: no-repeat;
-    background-position: center right;
+    background: transparent none no-repeat scroll center right;
+    background-image: url(/static/continue-thread.png);   /* SPRITE */
 }
 .deepthread a { font-size: larger; color: #336699 }
 .deepthread a:hover { text-decoration: underline}
@@ -895,8 +914,12 @@ textarea.gray { color: gray; }
     -webkit-border-radius: 3px;
 }
 
-.fancy-toggle-button .remove { background-image: url(/static/bg-button-remove.png)}
-.fancy-toggle-button .add { background-image: url(/static/bg-button-add.png);}
+.fancy-toggle-button .remove { 
+    background-image: url(/static/bg-button-remove.png);
+}
+.fancy-toggle-button .add { 
+    background-image: url(/static/bg-button-add.png);
+}
 
 .commentbody.border { background-color: #ffc; padding-left: 5px}
 .commentbody.grayed {
@@ -935,12 +958,6 @@ textarea.gray { color: gray; }
     border-bottom: #E0E0E0 solid 1px;
     border-right: #E0E0E0 solid 1px;
 }
-
-.sponsored .asterisk {
-    width: 15px; 
-    background: url(/static/asterisk.png); 
-    background-repeat: no-repeat }
-
 
 /* footer */
 .footer-parent {
@@ -1578,10 +1595,18 @@ textarea.gray { color: gray; }
     padding-left: 16px;
 }
 
-.toolbar .arrow.upmod   { background-image: url(/static/aminiupmod.gif); }
-.toolbar .arrow.downmod { background-image: url(/static/aminidownmod.gif); }
-.toolbar .arrow.up      { background-image: url(/static/aminiupgray.gif); }
-.toolbar .arrow.down    { background-image: url(/static/aminidowngray.gif); }
+.toolbar .arrow.upmod   { 
+    background-image: url(/static/aminiupmod.gif); 
+}
+.toolbar .arrow.downmod { 
+    background-image: url(/static/aminidownmod.gif); 
+}
+.toolbar .arrow.up      { 
+    background-image: url(/static/aminiupgray.gif); 
+}
+.toolbar .arrow.down    { 
+    background-image: url(/static/aminidowngray.gif); 
+}
 
 .toolbar-status-bar {
     border-top: solid #336699 1px;
@@ -1906,7 +1931,8 @@ ul#image-preview-list .description pre {
 }
 
 .socialite a.installbutton {
-    background: transparent url(/static/socialite/installbutton-end.png) no-repeat scroll top right;
+    background: transparent none no-repeat scroll top right;
+    background-image: url(/static/socialite/installbutton-end.png);   /* SPRITE */
     color: #FFF;
     display: block;
     float: left;
@@ -1918,7 +1944,8 @@ ul#image-preview-list .description pre {
 }
 
 .socialite a.installbutton span {
-    background: transparent url(/static/socialite/installbutton.png) no-repeat;
+    background: transparent none no-repeat;
+    background-image: url(/static/socialite/installbutton.png);   /* SPRITE */
     display: block;
     line-height: 30px;
     padding: 10px 0 10px 17px;
@@ -1947,7 +1974,8 @@ ul#image-preview-list .description pre {
 }
 
 .dropdown.srdrop .selected {
-    background: transparent url(/static/droparrowgray.gif) no-repeat scroll center right;
+    background: transparent none no-repeat scroll center right;
+    background-image: url(/static/droparrowgray.gif);  /* SPRITE */
     display: inline-block;
     vertical-align: bottom;
     padding-right: 21px;
@@ -2024,7 +2052,8 @@ ul#image-preview-list .description pre {
 
 #sr-list-cover {
     position: absolute;
-    background: gray url(/static/throbber.gif) no-repeat scroll center center;
+    background: gray none no-repeat scroll center center;
+    background-color: url(/static/throbber.gif); 
     height: 100%;
     width: 100%;
     opacity: .7;
@@ -2058,7 +2087,8 @@ ul#image-preview-list .description pre {
  }
 
 .sr-row.sr-selected {
-    background: #EFF7FF url(/static/rightarrow.png) no-repeat scroll 0px 5px;
+    background: #EFF7FF none no-repeat scroll 0px 5px;
+    background-image: url(/static/rightarrow.png);    /* SPRITE */
 }
 
 .sr-arrow {
@@ -2173,19 +2203,34 @@ ul.tabmenu.formtab {
     background: white none no-repeat scroll center center;
 }
 
-.expando-button.selftext.collapsed {background-image: url(/static/blog-collapsed.png);}
-.expando-button.selftext.collapsed:hover, .eb-sch {background-image: url(/static/blog-collapsed-hover.png);}
+.expando-button.selftext.collapsed {
+    background-image: url(/static/blog-collapsed.png); /* SPRITE */
+}
+.expando-button.selftext.collapsed:hover, .eb-sch {
+    background-image: url(/static/blog-collapsed-hover.png); /* SPRITE */
+}
 .expando-button.selftext.expanded, .eb-se {
     margin-bottom: 5px;
-    background-image: url(/static/blog-expanded.png);
+    background-image: url(/static/blog-expanded.png); /* SPRITE */
 }
-.expando-button.selftext.expanded:hover, .eb-seh {background-image: url(/static/blog-expanded-hover.png);}
+.expando-button.selftext.expanded:hover, .eb-seh {
+    background-image: url(/static/blog-expanded-hover.png); /* SPRITE */
+}
 
-.expando-button.video.collapsed {background-image: url(/static/vid-collapsed.png);}
+.expando-button.video.collapsed {
+    background-image: url(/static/vid-collapsed.png); /* SPRITE */
+}
 
-.expando-button.video.collapsed:hover, .eb-vch {background-image: url(/static/vid-collapsed-hover.png);}
-.expando-button.video.expanded, .eb-ve {background-image: url(/static/vid-expanded.png);}
-.expando-button.video.expanded:hover, .eb-veh {background-image: url(/static/vid-expanded-hover.png);}
+.expando-button.video.collapsed:hover, .eb-vch {
+    background-image: url(/static/vid-collapsed-hover.png); /* SPRITE */
+}
+
+.expando-button.video.expanded, .eb-ve {
+    background-image: url(/static/vid-expanded.png); /* SPRITE */
+}
+.expando-button.video.expanded:hover, .eb-veh {
+    background-image: url(/static/vid-expanded-hover.png); /* SPRITE */
+}
 
 
 /******** self text stuff ****/
@@ -2923,8 +2968,12 @@ dd { margin-left: 20px;  }
     background: white none no-repeat scroll center left;
 }
 
-.titlebox form.leavemoderator-button {background-image: url(/static/star.png);}
-.titlebox form.leavecontributor-button {background-image: url(/static/pencil.png);}
+.titlebox form.leavemoderator-button {
+    background-image: url(/static/star.png); /* SPRITE */
+}
+.titlebox form.leavecontributor-button {
+    background-image: url(/static/pencil.png); /* SPRITE */
+}
 
 .icon-menu a {
     padding-left: 20px;
@@ -2932,13 +2981,27 @@ dd { margin-left: 20px;  }
 } 
 .icon-menu li {margin: 5px 0;}
 
-.icon-menu .reddit-edit {background-image: url(/static/reddit_edit.png);}
-.icon-menu .reddit-traffic {background-image: url(/static/reddit_traffic.png);}
-.icon-menu .reddit-reported {background-image: url(/static/reddit_reported.png);}
-.icon-menu .reddit-spam {background-image: url(/static/reddit_spam.png);}
-.icon-menu .reddit-ban {background-image: url(/static/reddit_ban.png);}
-.icon-menu .reddit-moderators {background-image: url(/static/star.png);}
-.icon-menu .reddit-contributors {background-image: url(/static/pencil.png);}
+.icon-menu .reddit-edit {
+    background-image: url(/static/reddit_edit.png); /* SPRITE */
+}
+.icon-menu .reddit-traffic {
+    background-image: url(/static/reddit_traffic.png); /* SPRITE */
+}
+.icon-menu .reddit-reported {
+    background-image: url(/static/reddit_reported.png); /* SPRITE */
+}
+.icon-menu .reddit-spam {
+    background-image: url(/static/reddit_spam.png); /* SPRITE */
+}
+.icon-menu .reddit-ban {
+    background-image: url(/static/reddit_ban.png); /* SPRITE */
+}
+.icon-menu .reddit-moderators {
+    background-image: url(/static/star.png); /* SPRITE */
+}
+.icon-menu .reddit-contributors {
+    background-image: url(/static/pencil.png); /* SPRITE */
+}
 
 .linkinfo {
     padding: 5px;
