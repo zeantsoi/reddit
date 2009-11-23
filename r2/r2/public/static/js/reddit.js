@@ -504,6 +504,7 @@ function updateEventHandlers(thing) {
             var tracker = reddit.trackers[id]; 
             if($.defined(tracker)) {
                 $(this).find("a.title").attr("href", tracker.click).end()
+                    .find("a.thumbnail").attr("href", tracker.click).end()
                     .find("img.promote-pixel")
                     .attr("src", tracker.show);
                 delete reddit.trackers[id];
