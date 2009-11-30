@@ -61,7 +61,7 @@ Your promotion has been rejected for the following reason:
    ${thing.body}
 %endif:
 
-To update your promotion pleaase go to:
+To update your promotion please go to:
    ${edit_url}
 and we'll reconsider it for sumbission.
 %elif thing.kind == Email.Kind.QUEUED_PROMO:

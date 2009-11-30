@@ -825,7 +825,7 @@ textarea.gray { color: gray; }
 .deepthread {
     padding-right: 30px;
     background: transparent none no-repeat scroll center right;
-    background-image: url(/static/continue-thread.png);   /* SPRITE */
+    background-image: url(/static/continue-thread.png);  
 }
 .deepthread a { font-size: larger; color: #336699 }
 .deepthread a:hover { text-decoration: underline}
@@ -1385,12 +1385,12 @@ textarea.gray { color: gray; }
 }
 
 .button .blog2 { font-size: small; }
-.button .blog2 .arrow { width: 100% }
+.button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
 .button .blog2 .bottomreddit { color: black; background-color: #c7def7; font-size: small; }
 
 .button .blog3 { font-size: small; border: none; }
 .button .blog3 .left { float: left; width: 50%; }
-.button .blog3 .arrow { width: 100% }
+.button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
 .button .blog3 .right { float: right; margin-top: 5px; }
 
 
