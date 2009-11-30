@@ -26,6 +26,7 @@ from r2.lib.menus   import NamedButton, NavButton, menu, NavMenu
 
 class AdminSidebar(Templated):
     def __init__(self, user):
+        Templated.__init__(self)
         self.user = user
 
 
