@@ -37,9 +37,13 @@ def run():
             cr = pickle.loads(msg.body)
 
             print 'working: ', iden, cr.query._rules
+            start = datetime.now()
             cr.update()
-            print 'processed %s in %d seconds' % (iden,
-                                                  (datetime.now() - msg.timestamp).seconds)
+            done = datetime.now()
+            q_time_s = (done - msg.timestamp).seconds
+            proc_time_s = (done - start).seconds + ((done - start).microseconds/1000000.0)
+            print ('processed %s in %.6f seconds after %d seconds in queue'
+                   % (iden, proc_time_s, q_time_s))
 
             g.memcache.set(key, datetime.now())
             g.memcache.delete(working_key)
