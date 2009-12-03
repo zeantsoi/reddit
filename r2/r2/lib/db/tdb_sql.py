@@ -81,7 +81,7 @@ def index_commands(table, type):
         commands.append(index_str(table, 'thing_id', 'thing_id'))
         commands.append(index_str(table, 'key_value', 'key, substring(value, 1, %s)' \
                                   % max_val_len))
-                                  
+
         #lower name
         commands.append(index_str(table, 'lower_key_value', 'key, lower(value)',
                                   where = "key = 'name'"))
@@ -98,6 +98,9 @@ def index_commands(table, type):
         commands.append(index_str(table, 'thing2_id', 'thing2_id'))
         commands.append(index_str(table, 'name', 'name'))
         commands.append(index_str(table, 'date', 'date'))
+    else:
+        print "unknown index_commands() type %s" % type
+
     return commands
 
 def get_type_table(metadata):
@@ -113,7 +116,6 @@ def get_rel_type_table(metadata):
                      sa.Column('type2_id', sa.Integer, nullable = False),
                      sa.Column('name', sa.String, nullable = False))
     return table
-
 
 def get_thing_table(metadata, name):
     table = sa.Table(g.db_app_name + '_thing_' + name, metadata,

@@ -23,7 +23,7 @@ from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket
 from datetime import timedelta
-from r2.lib.cache import LocalCache, Memcache, CacheChain
+from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -142,6 +142,9 @@ class Globals(object):
         #load the database info
         self.dbm = self.load_db_params(global_conf)
 
+        # can't do this until load_db_params() has been called
+        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)))
+
         #make a query cache
         self.stats_collector = QueryStats()
 
@@ -241,6 +244,7 @@ class Globals(object):
 
         dbm.type_db = dbm.engines[gc['type_db']]
         dbm.relation_type_db = dbm.engines[gc['rel_type_db']]
+        dbm.hardcache_db = dbm.engines[gc['hardcache_db']]
 
         prefix = 'db_table_'
         for k, v in gc.iteritems():
