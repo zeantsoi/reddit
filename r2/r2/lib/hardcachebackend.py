@@ -89,26 +89,44 @@ class HardCacheBackend(object):
         rows = s.execute().fetchall()
         return [ r.ids for r in rows ]
 
-    def expired(self, expiration="now", limit=1000):
+    def clause_from_expiration(self, expiration):
         if expiration is None:
-            clause = True
+            return True
         elif expiration == "now":
-            clause = self.table.c.expiration < datetime.now(g.tz)
+            return self.table.c.expiration < datetime.now(g.tz)
         else:
-            clause = self.table.c.expiration < expiration
+            return self.table.c.expiration < expiration
 
+    def expired(self, expiration_clause, limit=1000):
         s = sa.select([self.table.c.category,
                        self.table.c.ids,
                        self.table.c.expiration],
-                      clause,
+                      expiration_clause,
                       limit = limit,
                       order_by = self.table.c.expiration
                       )
         rows = s.execute().fetchall()
         return [ (r.expiration, r.category, r.ids) for r in rows ]
 
-    def delete_expired(self, expiration="now", limit=1000):
-        rows = self.expired(expiration, limit)
-        for exp, category, ids in rows:
-            self.delete(category, ids)
-            g.memcache.delete("%s-%s" % (category, ids))
+def delete_expired(expiration="now", limit=5000):
+    hcb = HardCacheBackend(g)
+
+    expiration_clause = hcb.clause_from_expiration(expiration)
+
+    # Get all the expired keys
+    rows = hcb.expired(expiration_clause, limit)
+
+    if len(rows) == 0:
+        return
+
+    # Delete them from memcache
+    mc_keys = [ "%s-%s" % (c, i) for e, c, i in rows ]
+    g.memcache.delete_multi(mc_keys)
+
+    # Now delete them from the backend.
+    hcb.table.delete(expiration_clause).execute()
+
+    # Note: In between the previous two steps, a key with a
+    # near-instantaneous expiration could have been added and expired, and
+    # thus it'll be deleted from the backend but not memcache. But that's
+    # okay, because it should be expired from memcache anyway by now.
