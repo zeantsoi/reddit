@@ -554,8 +554,12 @@ ul.flat-vert {text-align: left;}
     vertical-align: top;
 }
 
-.organic-listing .nextprev img { margin: 5px 5px 2px 0px; border: solid 1px #B3B3B3; }
-.organic-listing .nextprev img:hover  { cursor: pointer;  border: solid 1px #336699; }
+.organic-listing .nextprev img {
+    margin: 5px 5px 2px 0px; border: solid 1px #B3B3B3;
+}
+.organic-listing .nextprev img:hover {
+    cursor: pointer;  border: solid 1px #336699;
+}
 .organic-listing .nextprev img:active { margin: 6px 4px 1px 1px;}
 
 .link.promotedlink {
