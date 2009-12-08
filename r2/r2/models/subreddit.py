@@ -57,6 +57,7 @@ class Subreddit(Thing, Printable):
                      show_media = False,
                      css_on_cname = True, 
                      domain = None,
+                     over_18 = False,
                      mod_actions = 0,
                      sponsorship_url = None,
                      sponsorship_img = None,

@@ -1760,6 +1760,12 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
+.link.over18 a.comments:before {
+    content: 'NSFW';
+    padding-right: 1em;
+    color: red
+}
+
 .reported { background-color: #f6e69f }
 .suspicious { background-color: #f6e69f }
 .spam { background-color: #FA8072 }

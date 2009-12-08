@@ -104,6 +104,7 @@ class PostController(ApiController):
               pref_num_comments = VInt('num_comments', 1, g.max_comments,
                                        default = g.num_comments),
               pref_show_stylesheets = VBoolean('show_stylesheets'),
+              pref_no_profanity = VBoolean('no_profanity'),
               pref_show_promote = VBoolean('show_promote'),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):

@@ -170,6 +170,8 @@
     <th>${_("display options")}</th>
     <td class="prefright">
       ${checkbox(_("allow reddits to show me custom styles"), "show_stylesheets")}
+      <br/>
+      ${checkbox(_("make safe(r) for work."), "no_profanity")}
     %if c.user.pref_show_promote is not None:
       <br/>
       ${checkbox(_("show promote tab on front page"), 

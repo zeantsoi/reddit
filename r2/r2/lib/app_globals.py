@@ -21,7 +21,7 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os, logging, sys, socket
+import pytz, os, logging, sys, socket, re
 from datetime import timedelta
 from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
 from r2.lib.db.stats import QueryStats
@@ -208,6 +208,16 @@ class Globals(object):
                                        self.stylesheet)
         with open(stylesheet_path) as s:
             self.default_stylesheet = s.read()
+
+        self.profanities = None
+        if self.profanity_wordlist and os.path.exists(self.profanity_wordlist):
+            with open(self.profanity_wordlist, 'r') as handle:
+                words = []
+                for line in handle:
+                    words.append(line.strip(' \n\r'))
+                if words:
+                    self.profanities = re.compile(r"\b(%s)\b" % '|'.join(words),
+                                              re.I | re.U)
 
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()

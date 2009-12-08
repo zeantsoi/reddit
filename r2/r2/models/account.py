@@ -54,6 +54,7 @@ class Account(Thing):
                      pref_over_18 = False,
                      pref_compress = False,
                      pref_organic = True,
+                     pref_no_profanity = False,
                      pref_show_stylesheets = True,
                      reported = 0,
                      report_made = 0,
@@ -291,6 +292,7 @@ class Account(Thing):
 
 class FakeAccount(Account):
     _nodb = True
+    pref_no_profanity = True
 
 
 def valid_cookie(cookie):
@@ -355,7 +357,8 @@ def register(name, password):
     except NotFound:
         a = Account(name = name,
                     password = passhash(name, password, True))
-
+        # new accounts keep the profanity filter settings until opting out
+        a.pref_no_profanity = True
         a._commit()
 
         #clear the caches

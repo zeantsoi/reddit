@@ -27,6 +27,7 @@ from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
 from r2.lib.memoize import memoize
+from r2.lib.filters import profanity_filter
 from r2.lib import utils
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
@@ -34,7 +35,7 @@ from r2.lib.strings import strings, Score
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
 
-import random
+import random, re
 
 class LinkExists(Exception): pass
 
@@ -53,6 +54,7 @@ class Link(Thing, Printable):
                      selftext = '',
                      ip = '0.0.0.0')
 
+    _nsfw = re.compile(r"\bnsfw\b", re.I)
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
@@ -201,6 +203,15 @@ class Link(Thing, Printable):
             if wrapped.hidden:
                 return False
 
+        # Uncomment to skip based on nsfw
+        #
+        # skip the item if 18+ and the user has that preference set
+        # ignore skip if we are visiting a nsfw reddit
+        #if ( (user and user.pref_no_profanity) or
+        #     (not user and g.filter_over18) ) and wrapped.subreddit != c.site:
+        #    return not bool(wrapped.subreddit.over_18 or 
+        #                    wrapped._nsfw.findall(wrapped.title))
+
         return True
 
     # none of these things will change over a link's lifetime
@@ -297,7 +308,12 @@ class Link(Thing, Printable):
                 elif pref_media != 'off' and not user.pref_compress:
                     show_media = True
 
-            if not show_media:
+            item.over_18 = bool(item.subreddit.over_18 or
+                                item._nsfw.findall(item.title))
+
+            if user.pref_no_profanity and item.over_18 and not c.site.over_18:
+                item.thumbnail = ""
+            elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:
                 item.thumbnail = thumbnail_url(item)
@@ -344,6 +360,9 @@ class Link(Thing, Printable):
                 item.nofollow = True
             else:
                 item.nofollow = False
+                
+            if c.user.pref_no_profanity:
+                item.title = profanity_filter(item.title)
 
             item.subreddit_path = item.subreddit.path
             if cname:
@@ -727,6 +746,8 @@ class Message(Thing, Printable):
                 item.new = False
             item.score_fmt = Score.none
 
+            if c.user.pref_no_profanity:
+                item.subject = profanity_filter(item.subject)
             item.message_style = ""
             if item.was_comment:
                 link = links[item.link_id]
