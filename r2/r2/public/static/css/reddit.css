@@ -1112,6 +1112,7 @@ textarea.gray { color: gray; }
 
 .status { margin-left: 5px; color: red; font-size: small;}
 .error { color: red; font-size: small; margin: 5px; }
+.red { color:red }
 .line-through { text-decoration: line-through }
 
 #noresults { margin-right: 310px;  }
@@ -1465,6 +1466,32 @@ textarea.gray { color: gray; }
     padding: 10px; 
     max-width: 50em;}
 
+.self-service.instructions { 
+    margin-bottom: 50px; 
+ }
+
+.self-service.instructions p{ 
+    margin-left: 20px; 
+}
+
+.self-service.instructions ul { 
+    list-style-type: circle; 
+    margin-left: 60px; 
+}
+
+.self-service.instructions li + li { 
+    padding-top: 10px; 
+}
+
+.self-service.instructions li.done { 
+    text-decoration: line-through;
+    list-style-image:url(/static/green-check.png);
+}
+
+.self-service.instructions li.unfinished { 
+    font-weight:bold;
+    list-style-image:url(/static/red-arrow.png);
+}
 
 .button-demo a.view-code,
 .button-demo a.hide-code { float: right; margin-bottom: 1em; }

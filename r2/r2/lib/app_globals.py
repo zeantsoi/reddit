@@ -74,8 +74,6 @@ class Globals(object):
                    'rendercaches',
                    'admins',
                    'sponsors',
-                   # TODO: temporary until we open it up to all users
-                   'paid_sponsors',
                    'monitored_servers',
                    'automatic_reddits',
                    'agents',
@@ -119,8 +117,6 @@ class Globals(object):
                 elif k in self.tuple_props:
                     v = tuple(self.to_iter(v))
                 setattr(self, k, v)
-
-        self.paid_sponsors = set(x.lower() for x in self.paid_sponsors)
 
         # initialize caches
         mc = Memcache(self.memcaches, pickleProtocol = 1)

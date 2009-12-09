@@ -66,22 +66,22 @@ class PromoteController(ListingController):
                                                     STATUS.rejected))
         elif self.sort == "unpaid_promos":
             q._filter(Link.c.promote_status == STATUS.unpaid)
+        elif self.sort == "rejected_promos":
+            q._filter(Link.c.promote_status == STATUS.rejected)
         elif self.sort == "live_promos":
             q._filter(Link.c.promote_status == STATUS.promoted)
 
         return q
 
-    @validate(VPaidSponsor(),
-              VVerifiedUser())
     def GET_listing(self, sort = "", **env):
+        if not c.user_is_loggedin or not c.user.email_verified:
+            return self.redirect("/ad_inq")
         self.sort = sort
         return ListingController.GET_listing(self, **env)
 
     GET_index = GET_listing
-    
-    # To open up: VSponsor -> VVerifiedUser
-    @validate(VPaidSponsor(),
-              VVerifiedUser())
+
+    @validate(VVerifiedUser())
     def GET_new_promo(self):
         return PromotePage('content', content = PromoteLinkForm()).render()
 
@@ -103,8 +103,7 @@ class PromoteController(ListingController):
 
         return page.render()
 
-    @validate(VPaidSponsor(),
-              VVerifiedUser())
+    @validate(VVerifiedUser())
     def GET_graph(self):
         content = Promote_Graph()
         if c.user_is_sponsor and c.render_style == 'csv':
@@ -163,17 +162,19 @@ class PromoteController(ListingController):
                 reason = nop("reason"))
     def POST_unpromote(self, thing, reason):
         if thing:
+            # reject anything that hasn't yet been promoted
             if (c.user_is_sponsor and
-                (thing.promote_status in (promote.STATUS.unpaid,
-                                          promote.STATUS.unseen,
-                                          promote.STATUS.accepted,
-                                          promote.STATUS.promoted)) ):
+                thing.promote_status < promote.STATUS.promoted):
                 promote.reject_promo(thing, reason = reason)
+            # also reject anything that is live but has a reason given
+            elif (c.user_is_sponsor and reason and
+                  thing.promte_status == promote.STATUS.promoted):
+                promote.reject_promo(thing, reason = reason)
+            # otherwise, mark it as "finished"
             else:
                 promote.unpromote(thing)
 
-    # TODO: when opening up, may have to refactor 
-    @validatedForm(VPaidSponsor('link_id'),
+    @validatedForm(VSponsor('link_id'),
                    VModhash(),
                    VRatelimit(rate_user = True,
                               rate_ip = True,
@@ -221,7 +222,9 @@ class PromoteController(ListingController):
 
         # check dates and date range
         start, end = [x.date() for x in dates] if dates else (None, None)
-        if not l or (l._date.date(), l.promote_until.date()) == (start,end):
+        if (not l or
+            (l.promote_status != promote.STATUS.promoted and
+             (l._date.date(), l.promote_until.date()) != (start,end))):
             if (form.has_errors('startdate', errors.BAD_DATE,
                                 errors.BAD_FUTURE_DATE) or
                 form.has_errors('enddate', errors.BAD_DATE,

@@ -326,6 +326,8 @@ class RedditFooter(CachedTemplate):
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
                     NavMenu([NamedButton("blog", False, nocname=True),
+                         NamedButton("promote", False, nocname=True,
+                                     css_class = "red"),
                          NamedButton("ad_inq", False, nocname=True),
                          OffsiteButton('reddit.tv', "http://www.reddit.tv"),
                          OffsiteButton('redditall', "http://www.redditall.com"),
@@ -1613,11 +1615,10 @@ class PromotePage(Reddit):
 
         buttons += [NamedButton('future_promos'),
                     NamedButton('unpaid_promos'),
+                    NamedButton('rejected_promos'),
                     NamedButton('pending_promos'),
-                    NamedButton('live_promos')]
-
-        if c.user_is_sponsor or c.user_is_paid_sponsor:
-            buttons.append(NamedButton('graph'))
+                    NamedButton('live_promos'),
+                    NamedButton('graph')]
 
         menu  = NavMenu(buttons, base_path = '/promoted',
                         type='flatlist')
