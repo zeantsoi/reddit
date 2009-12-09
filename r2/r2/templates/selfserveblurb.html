@@ -19,6 +19,9 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.pages import Feedback
+ %>
 
 <div class="self-service instructions">
   <h1>use our self-serve advertising tool</h1>
@@ -49,7 +52,12 @@
     </li>
   </ul>
 <p>
-  If you are instead interested in purchasing a banner ad or other form of advertisement on the site, inquire below. 
+  If you are instead interested in purchasing a banner ad or other form of advertisement on the site,&#32<a href="#" onclick="$('#ad-inq-form').slideDown(function(){$(this).find('input[type=text]:first').focus();}); return false;">inquire here and fill out the form.</a> 
 </p>
 
+<div id="ad-inq-form" style="display:none">
+  ${Feedback(title=_("inquire about advertising on reddit"), action = "ad_inq")}
 </div>
+
+</div>
+ 
