@@ -746,8 +746,6 @@ class Message(Thing, Printable):
                 item.new = False
             item.score_fmt = Score.none
 
-            if c.user.pref_no_profanity:
-                item.subject = profanity_filter(item.subject)
             item.message_style = ""
             if item.was_comment:
                 link = links[item.link_id]
@@ -763,6 +761,8 @@ class Message(Thing, Printable):
                 else:
                     item.subject = _('post reply')
                     item.message_style = "post-reply"
+            if c.user.pref_no_profanity:
+                item.subject = profanity_filter(item.subject)
 
         # Run this last
         Printable.add_props(user, wrapped)
