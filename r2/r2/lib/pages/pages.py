@@ -327,7 +327,7 @@ class RedditFooter(CachedTemplate):
                         separator = ''),
                     NavMenu([NamedButton("blog", False, nocname=True),
                          NamedButton("promote", False, nocname=True,
-                                     css_class = "red"),
+                                     dest = '/promoted', css_class = "red"),
                          NamedButton("ad_inq", False, nocname=True),
                          OffsiteButton('reddit.tv', "http://www.reddit.tv"),
                          OffsiteButton('redditall', "http://www.redditall.com"),
