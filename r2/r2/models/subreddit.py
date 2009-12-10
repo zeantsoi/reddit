@@ -47,8 +47,8 @@ class Subreddit(Thing, Printable):
                      stylesheet_hash     = '0',
                      firsttext = strings.firsttext,
                      header = None,
+                     allow_top = False, # overridden in "_new"
                      description = '',
-                     allow_top = True,
                      images = {},
                      ad_type = None,
                      ad_file = os.path.join(g.static_path, 'ad_default.html'),
@@ -300,7 +300,7 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit):
+    def top_lang_srs(cls, lang, limit, filter_allow_top = False):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -317,6 +317,11 @@ class Subreddit(Thing, Printable):
         if not c.over18:
             pop_reddits._filter(Subreddit.c.over_18 == False)
 
+        if filter_allow_top:
+            pop_reddits._limit = 2 * limit
+            return filter(lambda sr: sr.allow_top == True,
+                          pop_reddits)[:limit]
+
         return list(pop_reddits)
 
     @classmethod
@@ -332,7 +337,8 @@ class Subreddit(Thing, Printable):
         # _by_name to support lists of them
         auto_srs = [ Subreddit._by_name(n) for n in g.automatic_reddits ]
 
-        srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs))
+        srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
+                               filter_allow_top = True)
         rv = []
         for i, s in enumerate(srs):
             if len(rv) >= limit:
