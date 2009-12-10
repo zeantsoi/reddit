@@ -2998,8 +2998,8 @@ dd { margin-left: 20px;  }
 }
 
 .titlebox form.toggle {
-    margin: 5px 0;
-    padding-left: 20px;
+    margin: 0;
+    padding: 5px 0px 5px 20px;
     font-size: smaller;
     color: gray;
     background: white none no-repeat scroll center left;
