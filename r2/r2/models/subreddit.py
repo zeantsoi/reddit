@@ -75,6 +75,8 @@ class Subreddit(Thing, Printable):
                 sr = Subreddit._by_name(name)
                 raise SubredditExists
             except NotFound:
+                if "allow_top" not in kw:
+                    kw['allow_top'] = True
                 sr = Subreddit(name = name,
                                title = title,
                                lang = lang,
@@ -82,7 +84,6 @@ class Subreddit(Thing, Printable):
                                over_18 = over_18,
                                author_id = author_id,
                                ip = ip,
-                               allow_top = True,
                                **kw)
                 sr._commit()
 
