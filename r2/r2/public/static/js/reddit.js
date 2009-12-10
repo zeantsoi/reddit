@@ -72,7 +72,13 @@ function get_form_fields(form, fields, filter_func) {
 };
 
 function simple_post_form(form, where, fields, block) {
-    $.request(where, get_form_fields(form, fields), null, block);
+    $.request(where, get_form_fields(form, fields), null, block, 
+              "json", false,
+              function(r) {
+                  $(form).find(".status")
+                      .html("an error occurred while posting " + 
+                            "(status: " + r.status + ")").end();
+              });
     return false;
 };
 
