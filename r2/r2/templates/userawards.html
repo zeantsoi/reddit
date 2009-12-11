@@ -35,7 +35,11 @@
 </%def>
 
 <div class="award-square-container">
-  <h1>${_("Awards given out regularly:")}</h1>
+  %if thing.manuals:
+    <h1>${_("Awards given out regularly:")}</h1>
+  %else:
+    <h1>&nbsp;</h1>
+  %endif
 
   %for award, winner, trophy in thing.regular_winners:
 
