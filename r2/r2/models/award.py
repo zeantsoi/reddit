@@ -22,7 +22,6 @@
 from r2.lib.db.thing import Thing, Relation, NotFound
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import desc, lower
-from r2.lib.db import queries
 from r2.lib.memoize import memoize
 from r2.models import Account
 from pylons import c, g, request

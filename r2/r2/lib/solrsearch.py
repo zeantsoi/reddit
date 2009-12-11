@@ -710,7 +710,7 @@ def run_changed(drain=False):
         last run. Note: unlike many queue-using functions, this one is
         run from cron and totally drains the queue before terminating
     """
-
+    
     def _run_changed(msgs):
         print "changed: Processing %d items" % len(msgs)
 

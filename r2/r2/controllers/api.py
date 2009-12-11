@@ -48,7 +48,7 @@ from r2.lib.db import queries
 from r2.lib import amqp, promote
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
-from r2.lib import tracking, sup, cssfilter, emailer
+from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 
 from datetime import datetime, timedelta
@@ -203,15 +203,11 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        v = Vote.vote(c.user, l, True, ip)
+        queries.queue_vote(c.user, l, True, ip)
         if save:
             r = l._save(c.user)
             if g.write_query_queue:
                 queries.new_savehide(r)
-
-        #reset the hot page
-        if v.valid_thing:
-            expire_hot(sr)
 
         #set the ratelimiter
         if should_ratelimit:
@@ -221,19 +217,10 @@ class ApiController(RedditController):
         #update the queries
         if g.write_query_queue:
             queries.new_link(l)
-            queries.new_vote(v)
 
         # also notifies the searchchanges
         worker.do(lambda: amqp.add_item('new_link', l._fullname))
 
-        #update the modified flags
-        set_last_modified(c.user, 'overview')
-        set_last_modified(c.user, 'submitted')
-        set_last_modified(c.user, 'liked')
-
-        #update sup listings
-        sup.add_update(c.user, 'submitted')
-        
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
         elif then == 'tb':
@@ -634,22 +621,17 @@ class ApiController(RedditController):
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                                comment, ip)
-                Vote.vote(c.user, item, True, ip)
+                queries.queue_vote(c.user, item, True, ip)
 
                 # will also update searchchanges as appropriate
                 worker.do(lambda: amqp.add_item('new_comment', item._fullname))
 
                 #update last modified
-                set_last_modified(c.user, 'overview')
-                set_last_modified(c.user, 'commented')
                 set_last_modified(link, 'comments')
 
-                #update sup listings
-                sup.add_update(c.user, 'commented')
-    
                 #update the comment cache
                 add_comment(item)
-    
+
             # clean up the submission form and remove it from the DOM (if reply)
             t = commentform.find("textarea")
             t.attr('rows', 3).html("").attr("value", "")
@@ -756,25 +738,12 @@ class ApiController(RedditController):
                    else False if dir < 0
                    else None)
             organic = vote_type == 'organic'
-            v = Vote.vote(user, thing, dir, ip, organic)
+            queries.queue_vote(user, thing, dir, ip, organic)
 
             #update relevant caches
             if isinstance(thing, Link):
-                sr = thing.subreddit_slow
                 set_last_modified(c.user, 'liked')
                 set_last_modified(c.user, 'disliked')
-
-                #update sup listings
-                if dir:
-                    sup.add_update(c.user, 'liked')
-                elif dir is False:
-                    sup.add_update(c.user, 'disliked')
-
-                if v.valid_thing:
-                    expire_hot(sr)
-
-                if g.write_query_queue:
-                    queries.new_vote(v)
 
             # flag search indexer that something has changed
             tc.changed(thing)
@@ -1218,15 +1187,13 @@ class ApiController(RedditController):
             Subreddit.load_subreddits(links, return_dict = False)
             user = c.user if c.user_is_loggedin else None
             links = [l for l in links if l.subreddit_slow.can_view(user)]
-    
+
             if links:
                 if action in ['like', 'dislike']:
                     #vote up all of the links
                     for link in links:
-                        v = Vote.vote(c.user, link, action == 'like',
-                                      request.ip)
-                        if g.write_query_queue:
-                            queries.new_vote(v)
+                        queries.queue_vote(c.user, link,
+                                           action == 'like', request.ip)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     r = link._save(c.user)

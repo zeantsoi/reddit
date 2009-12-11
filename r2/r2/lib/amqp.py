@@ -113,6 +113,16 @@ def init_queue():
                     queue='prec_links',
                     exchange=exchange)
 
+    # vote queue
+    chan.queue_declare(queue='register_vote_q',
+                       durable=True,
+                       exclusive=False,
+                       auto_delete=False)
+    chan.queue_bind(routing_key='register_vote_q',
+                    queue='register_vote_q',
+                    exchange=exchange)
+
+    # scraper
     chan.queue_declare(queue='scraper_q',
                        durable=True,
                        exclusive=False,

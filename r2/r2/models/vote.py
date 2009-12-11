@@ -61,7 +61,7 @@ class Vote(MultiRelation('vote',
         is_self_link = (kind == 'link'
                         and hasattr(obj,'is_self')
                         and obj.is_self)
-        
+
         #check for old vote
         rel = cls.rel(sub, obj)
         oldvote = rel._fast_query(sub, obj, ['-1', '0', '1']).values()

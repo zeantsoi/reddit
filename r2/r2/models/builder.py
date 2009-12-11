@@ -56,6 +56,7 @@ class Builder(object):
             return item.keep_item(item)
 
     def wrap_items(self, items):
+        from r2.lib.db import queries
         from r2.lib.template_helpers import add_attr
         user = c.user if c.user_is_loggedin else None
 
@@ -79,9 +80,7 @@ class Builder(object):
                               if sr.can_ban(user))
 
         #get likes/dislikes
-        #TODO Vote.likes should accept empty lists
-        likes = Vote.likes(user, items) if user and items else {}
-
+        likes = queries.get_likes(user, items)
         uid = user._id if user else None
 
         types = {}
@@ -154,18 +153,11 @@ class Builder(object):
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]
 
-            vote = likes.get((user, item))
-            if vote:
-                w.likes = (True if vote._name == '1'
-                             else False if vote._name == '-1'
-                             else None)
-            else:
-                w.likes = None
-
+            w.likes = likes.get((user, item))
 
             # update vote tallies
             compute_votes(w, item)
-            
+
             w.score = w.upvotes - w.downvotes
             if w.likes:
                 base_score = w.score - 1
@@ -491,7 +483,7 @@ class CommentBuilder(Builder):
             l = Listing(None, None, parent_name = parent_name)
             l.things = list(things)
             return Wrapped(l)
-            
+
         comment_dict = dict((cm._id, cm) for cm in comments)
 
         #convert tree into objects

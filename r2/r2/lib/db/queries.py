@@ -3,9 +3,12 @@ from r2.models import Message, Inbox, Subreddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
+from r2.lib.normalized_hot import expire_hot
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import fetch_things2, worker, tup, UniqueIterator
+from r2.lib.utils import fetch_things2, worker, tup, UniqueIterator, set_last_modified
 from r2.lib.solrsearch import DomainSearchQuery
+from r2.lib import amqp, sup
+import cPickle as pickle
 
 from datetime import datetime
 import itertools
@@ -559,3 +562,94 @@ def add_all_users():
     q = Account._query(sort = asc('_date'))
     for user in fetch_things2(q):
         update_user(user)
+
+
+def queue_vote(user, thing, dir, ip, organic = False):
+    key = "registered_vote_%s_%s" % (user._id, thing._fullname)
+    g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
+    amqp.add_item('register_vote_q',
+                  pickle.dumps((user._id, thing._fullname, dir, ip, organic)))
+
+def get_likes(user, items):
+    if not user or not items:
+        return {}
+    keys = {}
+    res = {}
+    for i in items:
+        keys['registered_vote_%s_%s' % (user._id, i._fullname)] = (user, i)
+    r = g.cache.get_multi(keys.keys())
+
+    # populate the result set based on what we fetched from the cache first
+    for k, v in r.iteritems():
+        res[keys[k]] = v
+
+    # now hit the vote db with the remainder
+    likes = Vote.likes(user, [i for i in items if (user, i) not in res])
+
+    for k, v in likes.iteritems():
+        res[k] = v._name
+
+    # lastly, translate into boolean:
+    for k in res.keys():
+        res[k] = (True if res[k] == '1'
+                  else False if res[k] == '-1' else None)
+
+    return res
+
+def handle_vote(user, thing, dir, ip, organic):
+    v = Vote.vote(user, thing, dir, ip, organic)
+
+    if isinstance(thing, Link):
+        new_vote(v)
+        if v.valid_thing:
+            expire_hot(thing.subreddit_slow)
+
+        #update the modified flags
+        set_last_modified(user, 'liked')
+        if user._id == thing.author_id:
+            set_last_modified(user, 'overview')
+            set_last_modified(user, 'submitted')
+            #update sup listings
+            sup.add_update(user, 'submitted')
+
+            #update sup listings
+            if dir:
+                sup.add_update(user, 'liked')
+            elif dir is False:
+                sup.add_update(user, 'disliked')
+
+    elif isinstance(thing, Comment):
+        #update last modified
+        if user._id == thing.author_id:
+            set_last_modified(user, 'overview')
+            set_last_modified(user, 'commented')
+            #update sup listings
+            sup.add_update(user, 'commented')
+
+
+
+
+def process_votes(drain = False, limit = 100):
+
+    def _handle_votes(msgs):
+        print "votes: Processing %d items" % len(msgs)
+
+        to_do = []
+        uids = set()
+        tids = set()
+        for x in msgs:
+            uid, tid, dir, ip, organic = pickle.loads(x.body)
+            print (uid, tid, dir, ip, organic)
+            uids.add(uid)
+            tids.add(tid)
+            to_do.append((uid, tid, dir, ip, organic))
+
+        users = Account._byID(uids, data = True, return_dict = True)
+        things = Thing._by_fullname(tids, data = True, return_dict = True)
+
+        for uid, tid, dir, ip, organic in to_do:
+            handle_vote(users[uid], things[tid], dir, ip, organic)
+
+    amqp.handle_items('register_vote_q', _handle_votes, limit = limit,
+                      drain = drain)
+
