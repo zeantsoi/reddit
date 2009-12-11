@@ -567,8 +567,8 @@ def add_all_users():
 def queue_vote(user, thing, dir, ip, organic = False):
     key = "registered_vote_%s_%s" % (user._id, thing._fullname)
     g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
-    amqp.add_item('register_vote_q',
-                  pickle.dumps((user._id, thing._fullname, dir, ip, organic)))
+    worker.do(lambda: amqp.add_item('register_vote_q',
+                  pickle.dumps((user._id, thing._fullname, dir, ip, organic))))
 
 def get_likes(user, items):
     if not user or not items:
