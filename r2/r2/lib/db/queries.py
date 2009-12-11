@@ -597,7 +597,12 @@ def get_likes(user, items):
     return res
 
 def handle_vote(user, thing, dir, ip, organic):
-    v = Vote.vote(user, thing, dir, ip, organic)
+    from r2.lib.db import tdb_sql
+    try:
+        v = Vote.vote(user, thing, dir, ip, organic)
+    except tdb_sql.CreationError:
+        g.log.error("duplicate vote for: %s" % (user, thing, dir))
+        return
 
     if isinstance(thing, Link):
         new_vote(v)
