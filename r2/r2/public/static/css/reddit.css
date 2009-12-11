@@ -2527,9 +2527,15 @@ ul.tabmenu.formtab {
 
 .award-square {
     float: left;
-    padding: 25px 0px 15px 40px;
+    padding: 10px 0px 30px 40px;
     white-space: nowrap;
     width: 300px;
+}
+
+.award-square.mini {
+    width: 100px;
+    white-space: normal;
+    text-align: center;
 }
 
 .award-square img {
@@ -2539,12 +2545,21 @@ ul.tabmenu.formtab {
     height: 70px;
 }
 
+.award-square.mini img {
+    float: none;
+    margin-bottom: 7px;
+}
+
 .award-square .award-name {
     color: black;
     font-size: 22px;
     font-family: verdana, arial, helvetica, sans-serif;
     font-weight: bold;
     line-height: 1em;
+}
+
+.award-square.mini .award-name {
+    font-size: 18px;
 }
 
 .award-square .winner-info {

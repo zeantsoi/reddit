@@ -1306,11 +1306,18 @@ class ApiController(RedditController):
                    colliding_award=VAwardByCodename(("codename", "fullname")),
                    codename = VLength("codename", max_length = 100),
                    title = VLength("title", max_length = 100),
+                   awardtype = VOneOf("awardtype",
+                                      ("regular", "manual", "invisible")),
                    imgurl = VLength("imgurl", max_length = 1000))
     def POST_editaward(self, form, jquery, award, colliding_award, codename,
-                       title, imgurl):
-        if form.has_errors(("codename", "title", "imgurl"), errors.NO_TEXT):
+                       title, awardtype, imgurl):
+        if form.has_errors(("codename", "title", "awardtype", "imgurl"),
+                           errors.NO_TEXT):
             pass
+
+        if awardtype is None:
+            form.set_html(".status", "bad awardtype")
+            return
 
         if form.has_errors(("codename"), errors.INVALID_OPTION):
             form.set_html(".status", "some other award has that codename")
@@ -1320,12 +1327,13 @@ class ApiController(RedditController):
             return
 
         if award is None:
-            Award._new(codename, title, imgurl)
+            Award._new(codename, title, awardtype, imgurl)
             form.set_html(".status", "saved. reload to see it.")
             return
 
         award.codename = codename
         award.title = title
+        award.awardtype = awardtype
         award.imgurl = imgurl
         award._commit()
         form.set_html(".status", _('saved'))

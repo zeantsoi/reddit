@@ -27,6 +27,10 @@ from r2.models import Account
 from pylons import c, g, request
 
 class Award (Thing):
+    _defaults = dict(
+        awardtype = 'regular',
+        )
+
     @classmethod
     @memoize('award.all_awards')
     def _all_awards_cache(cls):
@@ -38,10 +42,11 @@ class Award (Thing):
         return Award._byID(all, data=True).values()
 
     @classmethod
-    def _new(cls, codename, title, imgurl):
+    def _new(cls, codename, title, awardtype, imgurl):
 #        print "Creating new award codename=%s title=%s imgurl=%s" % (
 #            codename, title, imgurl)
-        a = Award(codename=codename, title=title, imgurl=imgurl)
+        a = Award(codename=codename, title=title, awardtype=awardtype,
+                  imgurl=imgurl)
         a._commit()
         Award._all_awards_cache(_update=True)
 

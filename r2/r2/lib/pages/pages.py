@@ -860,7 +860,13 @@ class ProfilePage(Reddit):
 class TrophyCase(Templated):
     def __init__(self, user):
         self.user = user
-        self.trophies = Trophy.by_account(user)
+        self.trophies = []
+        self.invisible_trophies = []
+        for trophy in Trophy.by_account(user):
+            if trophy._thing2.awardtype == 'invisible':
+                self.invisible_trophies.append(trophy)
+            else:
+                self.trophies.append(trophy)
         self.cup_date = user.should_show_cup()
         Templated.__init__(self)
 
@@ -1345,14 +1351,25 @@ class UserAwards(Templated):
         if not g.show_awards:
             abort(404, "not found");
 
-        self.winners = []
+        self.regular_winners = []
+        self.manuals = []
+        self.invisibles = []
+
         for award in Award._all_awards():
-            trophies = Trophy.by_award(award)
-            # Don't show awards that nobody's ever won
-            # (e.g., "9-Year Club")
-            if trophies:
-                winner = trophies[0]._thing1.name
-                self.winners.append( (award, winner, trophies[0]) )
+            if award.awardtype == 'regular':
+                trophies = Trophy.by_award(award)
+                # Don't show awards that nobody's ever won
+                # (e.g., "9-Year Club")
+                if trophies:
+                    winner = trophies[0]._thing1.name
+                    self.regular_winners.append( (award, winner, trophies[0]) )
+            elif award.awardtype == 'manual':
+                self.manuals.append(award)
+            elif award.awardtype == 'invisible':
+                self.invisibles.append(award)
+            else:
+                raise NotImplementedError
+
 
 
 class AdminAwards(Templated):
@@ -1366,7 +1383,10 @@ class AdminAwardGive(Templated):
     """The interface for giving an award"""
     def __init__(self, award):
         now = datetime.datetime.now(g.display_tz)
-        self.description = "??? -- " + now.strftime("%Y-%m-%d")
+        if award.awardtype == 'regular':
+            self.description = "??? -- " + now.strftime("%Y-%m-%d")
+        else:
+            self.description = ""
         self.url = ""
 
         Templated.__init__(self, award = award)
