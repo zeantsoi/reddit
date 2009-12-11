@@ -136,7 +136,7 @@ def send_queued_mail(test = False):
             clear = True
 
             should_queue = email.should_queue()
-            # check only on sharing that the mail is invalid 
+            # check only on sharing that the mail is invalid
             if email.kind == Email.Kind.SHARE and should_queue:
                 email.body = Share(username = email.from_name(),
                                    msg_hash = email.msg_hash,
@@ -160,7 +160,7 @@ def send_queued_mail(test = False):
                                     body = email.body).render(style="email")
 
             # handle unknown types here
-            elif email.kind not in Email.Kind:
+            else:
                 email.set_sent(rejected = True)
                 continue
             sendmail(email)

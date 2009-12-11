@@ -230,6 +230,13 @@ class PromoteController(ListingController):
                 form.has_errors('enddate', errors.BAD_DATE,
                                 errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
                 return
+            # if the dates have been updated, it is possible that the
+            # bid is no longer valid
+            duration = max((end - start).days, 1)
+            if float(bid) / duration < g.min_promote_bid:
+                c.errors.add(errors.BAD_BID, field = 'bid',
+                             msg_params = {"min": g.min_promote_bid,
+                                           "max": g.max_promote_bid})
 
         # dates have been validated at this point.  Next validate title, etc.
         if (form.has_errors('title', errors.NO_TEXT,

@@ -71,14 +71,17 @@ function get_form_fields(form, fields, filter_func) {
     return fields;
 };
 
+function form_error(form) {
+    return function(r) {
+        $(form).find(".status")
+            .html("an error occurred while posting " + 
+                  "(status: " + r.status + ")").end();
+    }
+}
+
 function simple_post_form(form, where, fields, block) {
     $.request(where, get_form_fields(form, fields), null, block, 
-              "json", false,
-              function(r) {
-                  $(form).find(".status")
-                      .html("an error occurred while posting " + 
-                            "(status: " + r.status + ")").end();
-              });
+              "json", false, form_error(form));
     return false;
 };
 
@@ -89,7 +92,8 @@ function post_pseudo_form(form, where, block) {
     };
     $(form).find(".error").not(".status").hide();
     $(form).find(".status").html(reddit.status_msg.submitting).show();
-    $.request(where, get_form_fields(form, {}, filter_func), null, block);
+    $.request(where, get_form_fields(form, {}, filter_func), null, block,
+              "json", false, form_error(form));
     return false;
 }
 
