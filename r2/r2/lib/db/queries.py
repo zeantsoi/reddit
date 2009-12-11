@@ -601,7 +601,7 @@ def handle_vote(user, thing, dir, ip, organic):
     try:
         v = Vote.vote(user, thing, dir, ip, organic)
     except tdb_sql.CreationError:
-        g.log.error("duplicate vote for: %s" % (user, thing, dir))
+        g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
     if isinstance(thing, Link):
