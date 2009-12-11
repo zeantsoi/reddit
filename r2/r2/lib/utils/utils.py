@@ -899,6 +899,29 @@ def set_emptying_cache():
     from r2.lib.cache import SelfEmptyingCache
     g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
 
+def fix_if_broken(cls, attrs, ids):
+    attrs = tup(attrs)
+    for id in tup(ids):
+        t = cls._byID(id)
+
+        for a in attrs:
+            try:
+                # try to retreive the attribute
+                getattr(t,a)
+            except AttributeError:
+                # that failed; let's explicitly load it, and try again
+                t._load()
+                try:
+                    getattr(t,a)
+                    print "Loading fixed %s.%s" % (t._fullname, a)
+                except AttributeError:
+                    # it still broke. We should delete it
+                    print "%s is missing '%s', must delete" % (t._fullname,a)
+                    t._deleted = True
+                    t._commit()
+                    break
+
+
 def find_recent_broken_things(from_time = None, to_time = None, delete = False):
     """
         Occasionally (usually during app-server crashes), Things will
