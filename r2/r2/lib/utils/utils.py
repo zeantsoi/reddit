@@ -899,30 +899,38 @@ def set_emptying_cache():
     from r2.lib.cache import SelfEmptyingCache
     g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
 
-def fix_if_broken(cls, attrs, ids):
-    attrs = tup(attrs)
-    for id in tup(ids):
-        t = cls._byID(id)
 
-        for a in attrs:
+def fix_if_broken(thing, delete = True):
+    from r2.models import Link, Comment
+
+    # the minimum set of attributes that are required
+    attrs = {Link: ('author_id', 'sr_id'),
+             Comment: ('author_id', 'sr_id', 'body', 'link_id')}
+
+    if thing.__class__ not in attrs:
+        raise TypeError
+
+    for attr in attrs[thing.__class__]:
+        try:
+            # try to retrieve the attribute
+            getattr(thing, attr)
+        except AttributeError:
+            # that failed; let's explicitly load it and try again
+            thing._load()
             try:
-                # try to retreive the attribute
-                getattr(t,a)
+                getattr(thing, attr)
             except AttributeError:
-                # that failed; let's explicitly load it, and try again
-                t._load()
-                try:
-                    getattr(t,a)
-                    print "Loading fixed %s.%s" % (t._fullname, a)
-                except AttributeError:
-                    # it still broke. We should delete it
-                    print "%s is missing '%s', must delete" % (t._fullname,a)
-                    t._deleted = True
-                    t._commit()
-                    break
+                if not delete:
+                    raise
+                # it still broke. We should delete it
+                print "%s is missing %r, deleting" % (thing._fullname, a)
+                thing._deleted = True
+                thing._commit()
+                break
 
 
-def find_recent_broken_things(from_time = None, to_time = None, delete = False):
+def find_recent_broken_things(from_time = None, to_time = None,
+                              delete = False):
     """
         Occasionally (usually during app-server crashes), Things will
         be partially written out to the database. Things missing data
@@ -930,41 +938,21 @@ def find_recent_broken_things(from_time = None, to_time = None, delete = False):
         breaks various pages. This function hunts for and destroys
         them as appropriate.
     """
-    from r2.models import Link,Comment
+    from r2.models import Link, Comment
+    from r2.lib.db.operators import desc
     from pylons import g
 
     from_time = from_time or timeago('1 hour')
     to_time = to_time or datetime.now(g.tz)
 
-    for (cls,attrs) in ((Link,('author_id','sr_id')),
-                        (Comment,('author_id','sr_id','body','link_id'))):
-        find_broken_things(cls,attrs,
-                           from_time, to_time,
-                           delete=delete)
+    for cls in (Link, Comment):
+        q = cls._query(cls.c._date > from_time,
+                       cls.c._date < to_time,
+                       data=True,
+                       sort=desc('_date'))
+        for thing in fetch_things2(q):
+            fix_if_broken(thing, delete = delete)
 
-def find_broken_things(cls,attrs,from_time,to_time,delete = False):
-    """
-        Take a class and list of attributes, searching the database
-        for Things of that class that are missing those attributes,
-        deleting them if requested
-    """
-    for t in fetch_things(cls,from_time,to_time):
-        for a in attrs:
-            try:
-                # try to retreive the attribute
-                getattr(t,a)
-            except AttributeError:
-                # that failed; let's explicitly load it, and try again
-                t._load()
-                try:
-                    getattr(t,a)
-                except AttributeError:
-                    # it still broke. We should delete it
-                    print "%s is missing '%s'" % (t._fullname,a)
-                    if delete:
-                        t._deleted = True
-                        t._commit()
-                    break
 
 def timeit(func):
     "Run some function, and return (RunTimeInSeconds,Result)"
