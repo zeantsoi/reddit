@@ -598,9 +598,10 @@ def get_likes(user, items):
 
 def handle_vote(user, thing, dir, ip, organic):
     from r2.lib.db import tdb_sql
+    from sqlalchemy.exc import IntegrityError
     try:
         v = Vote.vote(user, thing, dir, ip, organic)
-    except tdb_sql.CreationError:
+    except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
