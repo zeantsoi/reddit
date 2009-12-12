@@ -120,7 +120,8 @@ class Link(Thing, Printable):
     def _submit(cls, title, url, author, sr, ip):
         from r2.models import admintools
 
-        l = cls(title = title,
+        l = cls(_ups = 1,
+                title = title,
                 url = url,
                 _spam = author._spam,
                 author_id = author._id,
@@ -479,7 +480,8 @@ class Comment(Thing, Printable):
 
     @classmethod
     def _new(cls, author, link, parent, body, ip):
-        c = Comment(body = body,
+        c = Comment(_ups = 1,
+                    body = body,
                     link_id = link._id,
                     sr_id = link.sr_id,
                     author_id = author._id,
