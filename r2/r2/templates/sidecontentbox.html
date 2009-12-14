@@ -28,24 +28,14 @@
   %endif
   <h1>${thing.title.upper()}</h1>
   <div class="content">
-    <%
-       need_more = False
-       content = list(thing.content)
-       more_text = thing.more_text
-       if thing.limit and len(content) > thing.limit:
-          content = thing.content[:thing.limit]
-          more_text = more_text % dict(num = len(thing.content) - thing.limit)
-          need_more = True
-     %>
-
-    %for c in content:
+    %for c in thing.content:
       ${c}
     %endfor
 
-    %if need_more and thing.more_href:
+    %if thing.more_href:
       <div class="more">
         <a href="${thing.more_href}">
-          ${more_text} &raquo;
+          ${thing.more_text} &raquo;
         </a>
       </div>
     %endif

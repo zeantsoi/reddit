@@ -147,13 +147,14 @@ class Reddit(Templated):
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         css_class = "icon-menu",  separator = '')]
 
-    def sr_moderators(self):
-        accounts = [Account._byID(uid, True) for uid in c.site.moderators]
+    def sr_moderators(self, limit = 10):
+        accounts = [Account._byID(uid, True)
+                    for uid in c.site.moderators[:limit]]
         return [WrappedUser(a) for a in accounts if not a._deleted]
 
     def rightbox(self):
         """generates content in <div class="rightbox">"""
-        
+
         ps = PaneStack(css_class='spacer')
 
         if self.searchbox:
@@ -167,12 +168,16 @@ class Reddit(Templated):
             ps.append(SubredditInfoBar())
             ps.append(SponsorshipBox())
 
-            moderators = self.sr_moderators()
+            moderators = self.sr_moderators(limit = 5)
             if moderators:
-                mod_href = "http://%s/about/moderators" % get_domain()
+                total = len(c.site.moderators)
+                more_text = mod_href = ""
+                if total > len(moderators):
+                    more_text = "...and %d more" % (total - len(moderators))
+                    mod_href = "http://%s/about/moderators" % get_domain()
                 ps.append(SideContentBox(_('moderators'), moderators,
-                                         limit = 10, more_href = mod_href,
-                                         more_text = "...and %(num)d more"))
+                                         more_href = mod_href,
+                                         more_text = more_text))
 
             if (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user_is_admin)):
@@ -441,10 +446,10 @@ class SponsorshipBox(Templated):
 
 class SideContentBox(Templated):
     def __init__(self, title, content, helplink=None, extra_class=None,
-                 limit = None, more_href = None, more_text = "more"):
+                 more_href = None, more_text = "more"):
         Templated.__init__(self, title=title, helplink = helplink,
                            content=content, extra_class=extra_class,
-                           limit = limit, more_href = more_href,
+                           more_href = more_href,
                            more_text = more_text)
 
 class SideBox(CachedTemplate):
