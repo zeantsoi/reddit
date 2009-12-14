@@ -45,7 +45,7 @@
     <li class="${'done' if step1 else 'unfinished'}"> 
       please&#32;<a href="/login?dest=${request.fullpath|u}">login or create an account</a>.  You will be redirected back here once you are done.</li>
     <li class="${'done' if step2 else 'unfinished' if step1 else ''}"> 
-      please&#32;<a href="/verify?dest=${}">verify your email address</a>&#32; so that we'll be able to send you information about your promotion while it is running
+      please&#32;<a href="/verify?dest=${request.fullpath|u}">verify your email address</a>&#32; so that we'll be able to send you information about your promotion while it is running
     </li>
     <li class="${'unfinished' if step2 else ''}"> 
       Go to the&#32;<a href="/promoted/new_promo">self-serve area</a>&#32;and create your sponsored link. 
