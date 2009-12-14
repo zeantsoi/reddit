@@ -139,6 +139,7 @@ class FrontController(RedditController):
             cache_evt.clear()
             c.user.email_verified = True
             c.user._commit()
+            Award.give_if_needed("verified_email", c.user)
             return self.redirect(dest)
 
     @validate(cache_evt = VCacheKey('reset', ('key',)),

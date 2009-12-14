@@ -23,7 +23,7 @@ from email.MIMEText import MIMEText
 from pylons.i18n import _
 from pylons import c, g
 from r2.lib.utils import timeago, query_string
-from r2.models import passhash, Email, Default, has_opted_out, Account
+from r2.models import passhash, Email, Default, has_opted_out, Account, Award
 import os, random, datetime
 import traceback, sys, smtplib
 
@@ -52,6 +52,7 @@ def verify_email(user, dest):
     key = passhash(user.name, user.email)
     user.email_verified = False
     user._commit()
+    Award.take_away("verified_email", c.user)
     emaillink = ('http://' + g.domain + '/verification/' + key
                  + query_string(dict(dest=dest)))
     print "Generated email verification link: " + emaillink

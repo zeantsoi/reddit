@@ -457,6 +457,7 @@ class ApiController(RedditController):
                 # unverified email for now
                 c.user.email_verified = None
                 c.user._commit()
+                Award.take_away("verified_email", c.user)
                 updated = True
             if verify:
                 # TODO: rate limit this?

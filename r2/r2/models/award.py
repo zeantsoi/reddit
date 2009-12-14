@@ -61,6 +61,57 @@ class Award (Thing):
         else:
             raise NotFound, 'Award %s' % codename
 
+    @classmethod
+    def give_if_needed(cls, codename, user, cup_expiration=None):
+        """Give an award to a user, unless they already have it.
+           Returns silently (except for g.log.debug) if the award
+           doesn't exist"""
+
+        try:
+            award = Award._by_codename(codename)
+        except NotFound:
+            g.log.debug("No award named '%s'" % codename)
+            return
+
+        trophies = Trophy.by_account(user)
+
+        for trophy in trophies:
+            if trophy._thing2.codename == codename:
+                g.log.debug("%s already has %s" % (user, codename))
+                return
+
+        Trophy._new(user, award, cup_expiration=cup_expiration)
+        g.log.debug("Gave %s to %s" % (codename, user))
+
+    @classmethod
+    def take_away(cls, codename, user):
+        """Takes an award out of a user's trophy case.  Returns silently
+           (except for g.log.debug) if there's no such award."""
+
+        found = False
+
+        try:
+            award = Award._by_codename(codename)
+        except NotFound:
+            g.log.debug("No award named '%s'" % codename)
+            return
+
+        trophies = Trophy.by_account(user)
+
+        for trophy in trophies:
+            if trophy._thing2.codename == codename:
+                if found:
+                    g.log.debug("%s had multiple %s awards!" % (user, codename))
+                trophy._delete()
+                Trophy.by_account(user, _update=True)
+                Trophy.by_award(award, _update=True)
+                found = True
+
+        if found:
+            g.log.debug("Took %s from %s" % (codename, user))
+        else:
+            g.log.debug("%s didn't have %s" % (user, codename))
+
 class Trophy(Relation(Account, Award)):
     @classmethod
     def _new(cls, recipient, award, description = None,
