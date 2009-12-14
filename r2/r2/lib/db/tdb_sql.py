@@ -371,7 +371,7 @@ def get_thing_table(type_id, action = 'read' ):
 def get_rel_table(rel_type_id, action = 'read'):
     return get_table('r' + str(rel_type_id), action,
                      rel_types_id[rel_type_id].tables,
-                     avoid_master_reads = rel_types_id[type_id].avoid_master_reads)
+                     avoid_master_reads = rel_types_id[rel_type_id].avoid_master_reads)
 
 
 #TODO does the type actually exist?
