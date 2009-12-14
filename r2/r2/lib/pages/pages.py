@@ -168,7 +168,7 @@ class Reddit(Templated):
             ps.append(SubredditInfoBar())
             ps.append(SponsorshipBox())
 
-            moderators = self.sr_moderators(limit = 5)
+            moderators = self.sr_moderators()
             if moderators:
                 total = len(c.site.moderators)
                 more_text = mod_href = ""
