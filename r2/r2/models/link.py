@@ -21,7 +21,7 @@
 ################################################################################
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
-from r2.lib.utils import base_url, tup, domain, worker, title_to_url
+from r2.lib.utils import base_url, tup, domain, title_to_url
 from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable

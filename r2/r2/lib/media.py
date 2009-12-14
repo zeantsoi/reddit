@@ -92,12 +92,11 @@ def force_thumbnail(link, image_data):
     update_link(link, thumbnail = True, media_object = None)
 
 def run():
-    def process_msgs(msgs):
+    def process_msgs(msgs, chan):
         def _process_link(fname):
-            print "media: Processing %s" % fname
-
             link = Link._by_fullname(fname, data=True, return_dict=False)
             set_media(link)
+
         for msg in msgs:
             fname = msg.body
             try:

@@ -19,20 +19,18 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from urllib import unquote_plus, quote_plus, urlopen, urlencode
+from urllib import unquote_plus, urlopen
 from urlparse import urlparse, urlunparse
-from threading import local, Thread
-import Queue
+from threading import local
 import signal
 from copy import deepcopy
 import cPickle as pickle
-import re, datetime, math, random, string, sha, os
-from operator import attrgetter
+import re, math, random
 
 from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
-from mako.filters import url_escape, url_unescape
+from mako.filters import url_escape
         
 iters = (list, tuple, set)
 
@@ -785,33 +783,6 @@ def decompose_fullname(fullname):
     id      = int(thing_id36,36)
 
     return (type_class, type_id, id)
-
-
-
-class Worker:
-    def __init__(self):
-        self.q = Queue.Queue()
-        self.t = Thread(target=self._handle)
-        self.t.setDaemon(True)
-        self.t.start()
-
-    def _handle(self):
-        while True:
-            fn = self.q.get()
-            try:
-                fn()
-                self.q.task_done()
-            except:
-                import traceback
-                print traceback.format_exc()
-
-    def do(self, fn):
-        self.q.put(fn)
-
-    def join(self):
-        self.q.join()
-
-worker = Worker()
 
 def cols(lst, ncols):
     """divides a list into columns, and returns the

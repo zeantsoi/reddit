@@ -13,7 +13,7 @@ def add_query(cached_results):
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
 def run():
-    def callback(msgs):
+    def callback(msgs, chan):
         for msg in msgs: # will be len==1
             # r2.lib.db.queries.CachedResults
             cr = pickle.loads(msg.body)

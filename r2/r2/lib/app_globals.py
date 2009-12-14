@@ -21,7 +21,7 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os, logging, sys, socket, re
+import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta
 from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
 from r2.lib.db.stats import QueryStats
@@ -224,6 +224,19 @@ class Globals(object):
         #if we're going to use the query_queue, we need amqp
         if self.write_query_queue and not self.amqp_host:
             raise Exception("amqp_host must be defined to use the query queue")
+
+        # try to set the source control revision number
+        try:
+            popen = subprocess.Popen(["git", "log", "--date=short",
+                                      "--pretty=format:%H %h", '-n1'],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
+            resp, stderrdata = popen.communicate()
+            resp = resp.strip().split(' ')
+            self.version, self.short_version = resp
+        except object, e:
+            self.log.info("Couldn't read source revision (%r)" % e)
+            self.version = self.short_version = '(unknown)'
 
     @staticmethod
     def to_bool(x):

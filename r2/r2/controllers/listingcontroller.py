@@ -295,9 +295,6 @@ class NewController(ListingController):
             elif wouldkeep and c.user_is_loggedin and c.user._id == item.author_id:
                 # also let the author of the link see them
                 return True
-            elif item._date > timeago(g.new_incubation):
-                # it's too young to show yet
-                return False
             else:
                 # otherwise, fall back to the regular logic (don't
                 # show hidden links, etc)
@@ -613,9 +610,4 @@ class CommentsController(ListingController):
     title_text = _('comments')
 
     def query(self):
-        q = Comment._query(Comment.c._spam == (True,False),
-                           sort = desc('_date'))
-        if not c.user_is_admin:
-            q._filter(Comment.c._spam == False)
-
-        return q
+        return queries.get_all_comments()
