@@ -719,8 +719,6 @@ def handle_vote(user, thing, dir, ip, organic):
 def process_votes(drain = False, limit = 100):
 
     def _handle_votes(msgs, chan):
-        print "votes: Processing %d items" % len(msgs)
-
         to_do = []
         uids = set()
         tids = set()
