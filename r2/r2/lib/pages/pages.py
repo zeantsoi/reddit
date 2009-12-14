@@ -169,7 +169,10 @@ class Reddit(Templated):
 
             moderators = self.sr_moderators()
             if moderators:
-                ps.append(SideContentBox(_('moderators'), moderators))
+                mod_href = "http://%s/about/moderators" % get_domain()
+                ps.append(SideContentBox(_('moderators'), moderators,
+                                         limit = 10, more_href = mod_href,
+                                         more_text = "...and %(num)d more"))
 
             if (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user_is_admin)):
@@ -437,9 +440,12 @@ class SponsorshipBox(Templated):
     pass
 
 class SideContentBox(Templated):
-    def __init__(self, title, content, helplink=None, extra_class=None):
-        Templated.__init__(self, title=title, helplink=helplink,
-                           content=content, extra_class=extra_class)
+    def __init__(self, title, content, helplink=None, extra_class=None,
+                 limit = None, more_href = None, more_text = "more"):
+        Templated.__init__(self, title=title, helplink = helplink,
+                           content=content, extra_class=extra_class,
+                           limit = limit, more_href = more_href,
+                           more_text = more_text)
 
 class SideBox(CachedTemplate):
     """

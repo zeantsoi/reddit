@@ -3002,6 +3002,16 @@ dd { margin-left: 20px;  }
     font-size: larger;
 }
 
+.sidecontentbox .more { 
+    margin-top: 5px; 
+    text-align: right; 
+    font-size: smaller;
+}
+
+.sidecontentbox .more a { 
+    color: gray; 
+}
+
 .sidecontentbox h1 {
     text-transform:uppercase;
     margin: 0;

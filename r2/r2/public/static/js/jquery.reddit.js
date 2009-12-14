@@ -169,7 +169,6 @@ $.request = function(op, parameters, worker_in, block, type,
         release_ajax_lock(action);
         return worker_in(r);
     };
-
     /* do the same for the error handler, and make sure to release the lock*/
     errorhandler_in = $.with_default(errorhandler, function() { });
     errorhandler = function(r) {

@@ -393,7 +393,7 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributer','banned')
+            and (type in ('moderator','contributer', 'banned')
                  and not c.site.is_moderator(c.user))):
             abort(403,'forbidden')
 
