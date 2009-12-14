@@ -252,6 +252,10 @@ class Globals(object):
         dbm.relation_type_db = dbm.engines[gc['rel_type_db']]
         dbm.hardcache_db = dbm.engines[gc['hardcache_db']]
 
+        def split_flags(p):
+            return ([n for n in p if not n.startswith("!")],
+                    dict((n.strip('!'), True) for n in p if n.startswith("!")))
+
         prefix = 'db_table_'
         for k, v in gc.iteritems():
             if k.startswith(prefix):
@@ -259,10 +263,14 @@ class Globals(object):
                 name = k[len(prefix):]
                 kind = params[0]
                 if kind == 'thing':
-                    dbm.add_thing(name, [dbm.engines[n] for n in params[1:]])
+                    engines, flags = split_flags(params[1:])
+                    dbm.add_thing(name, [dbm.engines[n] for n in engines],
+                                  **flags)
                 elif kind == 'relation':
+                    engines, flags = split_flags(params[3:])
                     dbm.add_relation(name, params[1], params[2],
-                                     [dbm.engines[n] for n in params[3:]])
+                                     [dbm.engines[n] for n in engines],
+                                     **flags)
         return dbm
 
     def __del__(self):
