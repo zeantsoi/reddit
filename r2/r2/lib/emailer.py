@@ -52,7 +52,7 @@ def verify_email(user, dest):
     key = passhash(user.name, user.email)
     user.email_verified = False
     user._commit()
-    Award.take_away("verified_email", c.user)
+    Award.take_away("verified_email", user)
     emaillink = ('http://' + g.domain + '/verification/' + key
                  + query_string(dict(dest=dest)))
     print "Generated email verification link: " + emaillink
@@ -161,7 +161,7 @@ def send_queued_mail(test = False):
                                     body = email.body).render(style="email")
 
             # handle unknown types here
-            else:
+            elif not email.body:
                 email.set_sent(rejected = True)
                 continue
             sendmail(email)
