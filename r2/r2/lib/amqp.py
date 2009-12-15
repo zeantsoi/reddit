@@ -185,7 +185,12 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
             msg = chan.basic_get(queue)
 
         try:
-            print "%s: %d items" % (queue, len(items))
+            count_str = ''
+            if 'message_count' in items[-1].delivery_info:
+                # the count from the last message, if the count is
+                # available
+                count_str = '(%d remaining)' % items[-1].delivery_info['message_count']
+            print "%s: %d items %s" % (queue, len(items), count_str)
             callback(items, chan)
 
             if ack:

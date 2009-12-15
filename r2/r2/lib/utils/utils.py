@@ -764,7 +764,10 @@ def unicode_safe(res):
     try:
         return str(res)
     except UnicodeEncodeError:
-        return unicode(res).encode('utf-8')
+        try:
+            return unicode(res).encode('utf-8')
+        except UnicodeEncodeError:
+            return res.decode('utf-8').encode('utf-8')
 
 def decompose_fullname(fullname):
     """
