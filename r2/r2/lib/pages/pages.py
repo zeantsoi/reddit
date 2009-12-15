@@ -873,11 +873,20 @@ class TrophyCase(Templated):
         self.user = user
         self.trophies = []
         self.invisible_trophies = []
+
+        self.dupe_trophies = []
+
+        award_ids_seen = []
+
         for trophy in Trophy.by_account(user):
             if trophy._thing2.awardtype == 'invisible':
                 self.invisible_trophies.append(trophy)
+            elif trophy._thing2_id in award_ids_seen:
+                self.dupe_trophies.append(trophy)
             else:
                 self.trophies.append(trophy)
+                award_ids_seen.append(trophy._thing2_id)
+
         self.cup_date = user.should_show_cup()
         Templated.__init__(self)
 
