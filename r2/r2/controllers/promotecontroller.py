@@ -394,12 +394,6 @@ class PromoteController(ListingController):
             form.set_html(".status",
                           _("that promotion is already over, so updating "
                             "your bid is kind of pointless, don't you think?"))
-        # don't create or modify a transaction if no changes have been made.
-        elif (link.promote_status > promote.STATUS.unpaid and
-              not address_modified and
-              getattr(link, "promote_bid", "") == bid):
-            form.set_html(".status",
-                          _("no changes needed to be made"))
         elif pay_id:
             # valid bid and created or existing bid id.
             # check if already a transaction
