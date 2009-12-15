@@ -64,6 +64,11 @@
 
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
+    %if thing.nsfw:
+     <li>
+       <acronym title="Not Safe for Work">NSFW</acronym>
+     </li>
+    %endif
     ${self.buttons()}
     ${self.admintagline()}
   </ul>

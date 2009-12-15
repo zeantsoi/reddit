@@ -105,6 +105,7 @@ class PostController(ApiController):
                                        default = g.num_comments),
               pref_show_stylesheets = VBoolean('show_stylesheets'),
               pref_no_profanity = VBoolean('no_profanity'),
+              pref_label_nsfw = VBoolean('label_nsfw'),
               pref_show_promote = VBoolean('show_promote'),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
@@ -115,6 +116,12 @@ class PostController(ApiController):
             kw['pref_show_promote'] = None
         elif not kw.get('pref_show_promote'):
             kw['pref_show_promote'] = False
+
+        if not kw.get("pref_over_18") or not c.user.pref_over_18: 
+            kw['pref_no_profanity'] = True
+
+        if kw.get("pref_no_profanity") or c.user.pref_no_profanity:
+            kw['pref_label_nsfw'] = True
 
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")

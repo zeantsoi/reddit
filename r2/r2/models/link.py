@@ -311,6 +311,7 @@ class Link(Thing, Printable):
 
             item.over_18 = bool(item.subreddit.over_18 or
                                 item._nsfw.findall(item.title))
+            item.nsfw = item.over_18 and user.pref_label_nsfw
 
             if user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 item.thumbnail = ""

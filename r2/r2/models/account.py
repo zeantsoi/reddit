@@ -55,6 +55,7 @@ class Account(Thing):
                      pref_compress = False,
                      pref_organic = True,
                      pref_no_profanity = False,
+                     pref_label_nsfw = True,
                      pref_show_stylesheets = True,
                      reported = 0,
                      report_made = 0,
