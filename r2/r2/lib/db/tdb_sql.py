@@ -42,6 +42,8 @@ transactions = TransSet()
 
 BigInteger = postgres.PGBigInteger
 
+MAX_THING_ID = 9223372036854775807 # http://www.postgresql.org/docs/8.3/static/datatype-numeric.html
+
 def make_metadata(engine):
     metadata = sa.MetaData(engine)
     metadata.bind.echo = g.sqlprinting
