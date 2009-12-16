@@ -468,8 +468,8 @@ class PromotedLink(Link):
 
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported',)
-    _defaults = dict(reported = 0, 
-                     moderator_banned = False,
+    _defaults = dict(reported = 0, parent_id = None,
+                     moderator_banned = False, new = False, 
                      banned_before_moderator = False)
 
     def _markdown(self):
@@ -494,20 +494,25 @@ class Comment(Thing, Printable):
         if parent:
             c.parent_id = parent._id
 
-        c._commit()
-
         link._incr('num_comments', 1)
 
         to = None
+        name = 'inbox'
         if parent:
             to = Account._byID(parent.author_id)
         elif link.is_self:
             to = Account._byID(link.author_id)
+            name = 'selfreply'
+
+        if to:
+            c.new = True
+
+        c._commit()
 
         inbox_rel = None
         # only global admins can be message spammed.
         if to and (not c._spam or to.name in g.admins):
-            inbox_rel = Inbox._add(to, c, 'inbox')
+            inbox_rel = Inbox._add(to, c, name)
 
         return (c, inbox_rel)
 
@@ -534,7 +539,7 @@ class Comment(Thing, Printable):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
-        s.extend([wrapped.body])
+        s.extend([wrapped.body, wrapped.new])
         return s
 
     def make_permalink(self, link, sr=None, context=None, anchor=False):
@@ -599,7 +604,7 @@ class Comment(Thing, Printable):
                          link = item.link.make_permalink(item.subreddit))
             if not hasattr(item, 'target'):
                 item.target = None
-            if hasattr(item, 'parent_id'):
+            if item.parent_id:
                 if cids.has_key(item.parent_id):
                     item.parent_permalink = '#' + utils.to36(item.parent_id)
                 else:
@@ -699,17 +704,26 @@ class MoreChildren(MoreComments):
     pass
     
 class Message(Thing, Printable):
-    _defaults = dict(reported = 0, was_comment = False)
+    _defaults = dict(reported = 0, was_comment = False, parent_id = None,
+                     new = False,  first_message = None)
     _data_int_props = Thing._data_int_props + ('reported', )
     cache_ignore = set(["to"]).union(Printable.cache_ignore)
     
     @classmethod
-    def _new(cls, author, to, subject, body, ip):
+    def _new(cls, author, to, subject, body, ip, parent = None):
         m = Message(subject = subject,
                     body = body,
                     author_id = author._id,
+                    new = True, 
                     ip = ip)
         m._spam = author._spam
+        if parent:
+            m.parent_id = parent._id
+            if parent.first_message:
+                m.first_message = parent.first_message
+            else:
+                m.first_message = parent._id
+                
         m.to_id = to._id
         m._commit()
 
@@ -738,15 +752,14 @@ class Message(Thing, Printable):
         subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
                                      data = True, return_dict = True)
         parents = Comment._byID(set(l.parent_id for l in wrapped
-                                  if hasattr(l, "parent_id") and l.was_comment),
+                                  if l.parent_id and l.was_comment),
                                 data = True, return_dict = True)
 
         for item in wrapped:
             item.to = tos[item.to_id]
+            # TODO: can be removed (holdover from when there was no new attr)
             if msgtime and item._date >= msgtime:
                 item.new = True
-            else:
-                item.new = False
             item.score_fmt = Score.none
 
             item.message_style = ""
@@ -755,7 +768,7 @@ class Message(Thing, Printable):
                 sr = subreddits[link.sr_id]
                 item.link_title = link.title
                 item.link_permalink = link.make_permalink(sr)
-                if hasattr(item, "parent_id"):
+                if item.parent_id:
                     item.subject = _('comment reply')
                     item.message_style = "comment-reply"
                     parent = parents[item.parent_id]
@@ -773,7 +786,7 @@ class Message(Thing, Printable):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
-        s.extend([c.msg_location])
+        s.extend([c.msg_location, wrapped.new])
         return s
     
 
@@ -793,10 +806,10 @@ class Inbox(MultiRelation('inbox',
 
         if not to._loaded:
             to._load()
-            
+
         #if there is not msgtime, or it's false, set it
         if not hasattr(to, 'msgtime') or not to.msgtime:
             to.msgtime = obj._date
             to._commit()
-            
+
         return i

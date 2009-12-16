@@ -840,7 +840,24 @@ textarea.gray { color: gray; }
 .morecomments a:hover { text-decoration: underline}
 .morecomments .gray {font-weight: normal; color: gray}
 
-.message {margin: 10px; margin-bottom: 20px;}
+.message {
+    margin: 10px 10px 20px 5px; 
+    padding-left: 5px; 
+    margin:10px 10px 20px 5px;
+    padding:7px;
+}
+
+.message.new { 
+    background-color:#F7F7F7;
+    border:1px solid #E9E9E9;
+    padding: 6px;
+}
+
+.message.new .unread { 
+    display: none; 
+}
+
+
 .message .buttons,
 .message .md { margin-left: 15px; }
 .message .entry .parent { 
@@ -858,9 +875,20 @@ textarea.gray { color: gray; }
     padding: 0 2px;
     font-weight: bold; 
 }
+
+.message.was-comment .midcol { margin-left: 0px;  }
+
+.message.was-comment .buttons,
+.message.was-comment .parent-link { 
+    margin-left: 0px; }
+
+.message.was-comment .md { 
+    margin-left: 2px; 
+ }
+
 .message .child { margin-left: 15px;  }
 
-.message .head.new {color:orangered  }
+.message.new .head {color:orangered; font-weight: bold;  }
 .message .subject { font-weight: bold; font-size: larger; }
 
 .clippy img {

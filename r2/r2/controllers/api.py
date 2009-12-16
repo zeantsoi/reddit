@@ -524,9 +524,23 @@ class ApiController(RedditController):
         '''for reporting...'''
         if not thing or thing._deleted:
             return
-        elif c.user._spam or c.user.ignorereports:
-            return
         elif getattr(thing, 'promoted', False):
+            return
+
+        # if it is a message that is being reported, ban it.
+        # every user is admin over their own personal inbox
+        if isinstance(thing, Message):
+            admintools.spam(thing, False, True, c.user.name)
+        # auto-hide links that are reported
+        elif isinstance(thing, Link):
+            r = thing._hide(c.user)
+            queries.new_savehide(r)
+        # TODO: be nice to be able to remove comments that are reported
+        # from a user's inbox so they don't have to look at them.
+        elif isinstance(thing, Comment):
+            pass
+
+        if c.user._spam or c.user.ignorereports:
             return
         Report.new(c.user, thing)
 
@@ -608,7 +622,7 @@ class ApiController(RedditController):
                 if not subject.startswith(re):
                     subject = re + subject
                 item, inbox_rel = Message._new(c.user, to, subject,
-                                               comment, ip)
+                                               comment, ip, parent = parent)
                 item.parent_id = parent._id
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
@@ -628,24 +642,22 @@ class ApiController(RedditController):
                 commentform.remove()
                 jquery.things(parent._fullname).set_html(".reply-button:first",
                                                          _("replied"))
-    
+
             # insert the new comment
             jquery.insert_things(item)
             # remove any null listings that may be present
             jquery("#noresults").hide()
-    
+
             #update the queries
             if is_message:
                 queries.new_message(item, inbox_rel)
             else:
                 queries.new_comment(item, inbox_rel)
-    
+
             #set the ratelimiter
             if should_ratelimit:
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_comment_")
-            
-
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1086,6 +1098,29 @@ class ApiController(RedditController):
         r = thing._unsave(c.user)
         if r:
             queries.new_savehide(r)
+
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_unread_message(self, thing):
+        if not thing:
+            return
+        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
+            return 
+        thing.new = True
+        thing._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_read_message(self, thing):
+        if not thing: return
+        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
+            return 
+        thing.new = False
+        thing._commit()
+
+
 
     @noresponse(VUser(),
                 VModhash(),

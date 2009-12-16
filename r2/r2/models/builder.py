@@ -510,7 +510,7 @@ class CommentBuilder(Builder):
             top = self.comment
             dont_collapse.append(top._id)
             #add parents for context
-            while self.context > 0 and hasattr(top, 'parent_id'):
+            while self.context > 0 and top.parent_id:
                 self.context -= 1
                 new_top = comment_dict[top.parent_id]
                 comment_tree[new_top._id] = [top]
@@ -569,8 +569,7 @@ class CommentBuilder(Builder):
             cm.num_children = num_children[cm._id]
             if cm.collapsed and cm._id in dont_collapse:
                 cm.collapsed = False
-            parent = cids.get(cm.parent_id) \
-                if hasattr(cm, 'parent_id') else None
+            parent = cids.get(cm.parent_id)
             if parent:
                 if not hasattr(parent, 'child'):
                     parent.child = empty_listing()
@@ -594,7 +593,7 @@ class CommentBuilder(Builder):
             to_add = candidates.pop(0)
             direct_child = True
             #ignore top-level comments for now
-            if not hasattr(to_add, 'parent_id'):
+            if not to_add.parent_id:
                 p_id = None
             else:
                 #find the parent actually being displayed
@@ -602,10 +601,7 @@ class CommentBuilder(Builder):
                 p_id = to_add.parent_id
                 while p_id and not cids.has_key(p_id):
                     p = comment_dict[p_id]
-                    if hasattr(p, 'parent_id'):
-                        p_id = p.parent_id
-                    else:
-                        p_id = None
+                    p_id = p.parent_id
                     direct_child = False
 
             mc2 = more_comments.get(p_id)

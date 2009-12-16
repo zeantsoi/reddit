@@ -121,7 +121,8 @@
         ${error_field("TOO_LONG", "title", "div")}
       </%utils:line_field>
 
-    <%utils:line_field title="${_('url')}" id="url-field">
+    <%utils:line_field title="${_('url')}" id="url-field"
+       description="${_('NOTE: interdomain redirects are not allowed.')}">
       <input name="kind" value="link" type="hidden"/>
       <input id="url" name="url" type="text" 
                ${"disabled" if thing.link and \

@@ -280,7 +280,7 @@ def user_rel_query(rel, user, name):
                    eager_load = True,
                    thing_data = not g.use_query_cache
                    )
-       
+
     return make_results(q, filter_thing2)
 
 vote_rel = Vote.rel(Account, Link)
@@ -305,9 +305,13 @@ inbox_comment_rel = Inbox.rel(Account, Comment)
 def get_inbox_comments(user):
     return user_rel_query(inbox_comment_rel, user, 'inbox')
 
+def get_inbox_selfreply(user):
+    return user_rel_query(inbox_comment_rel, user, 'selfreply')
+
 def get_inbox(user):
     return merge_results(get_inbox_comments(user),
-                         get_inbox_messages(user))
+                         get_inbox_messages(user),
+                         get_inbox_selfreply(user))
 
 def get_sent(user):
     q = Message._query(Message.c.author_id == user._id,
@@ -410,8 +414,12 @@ def new_comment(comment, inbox_rel):
 
     if inbox_rel:
         inbox_owner = inbox_rel._thing1
-        add_queries([get_inbox_comments(inbox_owner)],
-                    insert_items = inbox_rel)
+        if inbox_rel._name == "inbox":
+            add_queries([get_inbox_comments(inbox_owner)],
+                        insert_items = inbox_rel)
+        else:
+            add_queries([get_inbox_selfreply(inbox_owner)],
+                        insert_items = inbox_rel)
 
 
 def new_subreddit(sr):
@@ -594,6 +602,7 @@ def update_user(user):
 
     results = [get_inbox_messages(user),
                get_inbox_comments(user),
+               get_inbox_selfreply(user),
                get_sent(user),
                get_liked(user),
                get_disliked(user),

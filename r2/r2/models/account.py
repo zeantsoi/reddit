@@ -57,6 +57,7 @@ class Account(Thing):
                      pref_no_profanity = False,
                      pref_label_nsfw = True,
                      pref_show_stylesheets = True,
+                     pref_mark_messages_read = True,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,

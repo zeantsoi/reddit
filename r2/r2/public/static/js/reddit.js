@@ -137,7 +137,7 @@ function deleteRow(elem) {
 
 /* general things */
 
-function change_state(elem, op, callback) {
+function change_state(elem, op, callback, keep) {
     var form = $(elem).parents("form");
     /* look to see if the form has an id specified */
     var id = form.find("input[name=id]");
@@ -149,9 +149,28 @@ function change_state(elem, op, callback) {
     simple_post_form(form, op, {id: id});
     /* call the callback first before we mangle anything */
     if (callback) callback(form, op);
-    form.html(form.attr("executed").value);
+    if(!$.defined(keep)) {
+        form.html(form.attr("executed").value);
+    }
     return false;
 };
+
+function unread_thing(elem) {
+    var t = $(elem);
+    if (!t.hasClass("thing")) {
+        t = t.thing();
+    }
+    $(t).addClass("new unread");
+}
+
+function read_thing(elem) {
+    var t = $(elem);
+    if (!t.hasClass("thing")) {
+        t = t.thing();
+    }
+    $(t).removeClass("new");
+    $.request("read_message", {"id": $(t).thing_id()});
+}
 
 function save_thing(elem) {
     $(elem).thing().addClass("saved");
@@ -159,6 +178,20 @@ function save_thing(elem) {
 
 function unsave_thing(elem) {
     $(elem).thing().removeClass("saved");
+}
+
+function click_thing(elem) {
+    var t = $(elem);
+    if (!t.hasClass("thing")) {
+        t = t.thing();
+    }
+    if (t.hasClass("message")) {
+        if (t.hasClass("unread")) {
+            t.removeClass("unread");
+        } else if ( t.hasClass("new")) {
+            read_thing(elem);
+        }
+    }
 }
 
 function hide_thing(elem) {

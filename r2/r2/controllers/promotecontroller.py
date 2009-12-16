@@ -415,7 +415,8 @@ class PromoteController(ListingController):
                               customer_id = data.customerProfileId,
                               profiles = data.paymentProfiles)
         res =  LinkInfoPage(link = article,
-                            content = content)
+                            content = content,
+                            show_sidebar = False)
         return res.render()
 
     def GET_link_thumb(self, *a, **kw):

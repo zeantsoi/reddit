@@ -525,7 +525,9 @@ class MessagePage(Reddit):
 
     def build_toolbars(self):
         buttons =  [NamedButton('compose'),
-                    NamedButton('inbox'),
+                    NamedButton('inbox', aliases = ["/message/comments",
+                                                    "/message/messages",
+                                                    "/message/selfreply"]),
                     NamedButton('sent')]
         return [PageNameNav('nomenu', title = _("message")), 
                 NavMenu(buttons, base_path = "/message", type="tabmenu")]
