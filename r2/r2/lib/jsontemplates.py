@@ -271,7 +271,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
                 return make_fullname(Subreddit, thing.sr_id)
             return None
         elif attr == "parent_id":
-            if thing.parent_id:
+            if getattr(thing, "parent_id", None):
                 return make_fullname(Comment, thing.parent_id)
             else:
                 return make_fullname(Link, thing.link_id)
