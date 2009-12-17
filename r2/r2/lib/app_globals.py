@@ -55,7 +55,8 @@ class Globals(object):
                    'max_promote_bid',
                    ]
 
-    bool_props = ['debug', 'translator', 
+    bool_props = ['debug', 'translator',
+                  'log_start', 
                   'sqlprinting',
                   'template_debug',
                   'uncompressedJS',
@@ -189,7 +190,8 @@ class Globals(object):
         else:
             self.log.setLevel(logging.WARNING)
 
-        self.log.error("reddit app started on %s" % datetime.now())
+        if self.log_start:
+            self.log.error("reddit app started on %s" % datetime.now())
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
 
