@@ -264,8 +264,16 @@ class ApiController(RedditController):
     def POST_login(self, form, jquery, user, dest, rem, reason):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
-        if form.has_errors("passwd", errors.WRONG_PASSWORD):
+
+        hc_key = "login_attempts-%s" % request.ip
+
+        recent_attempts = g.hardcache.get(hc_key, 0)
+
+        if recent_attempts >= 25:
+            raise NotImplementedError("need proper fail msg")
+        elif form.has_errors("passwd", errors.WRONG_PASSWORD):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
+            g.hardcache.set(hc_key, recent_attempts + 1, 3600 * 8)
         else:
             self._login(form, user, dest, rem)
 
