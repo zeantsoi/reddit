@@ -757,9 +757,13 @@ class Message(Thing, Printable):
 
         for item in wrapped:
             item.to = tos[item.to_id]
+            item.recipient = (item.to_id == c.user._id)
             # TODO: can be removed (holdover from when there was no new attr)
             if msgtime and item._date >= msgtime:
                 item.new = True
+            # don't mark non-recipient messages as new
+            if not item.recipient:
+                item.new = False
             item.score_fmt = Score.none
 
             item.message_style = ""

@@ -185,7 +185,7 @@ function click_thing(elem) {
     if (!t.hasClass("thing")) {
         t = t.thing();
     }
-    if (t.hasClass("message")) {
+    if (t.hasClass("message") && t.hasClass("recipient")) {
         if (t.hasClass("unread")) {
             t.removeClass("unread");
         } else if ( t.hasClass("new")) {

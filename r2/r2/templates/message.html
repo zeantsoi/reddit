@@ -35,7 +35,7 @@
 </%def>
 
 <%def name="thing_css_class(what)" buffered="True">
-${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""}
+${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.recipient else ""}
 </%def>
 
 <%def name="tagline(collapse=False)">

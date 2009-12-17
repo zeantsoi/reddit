@@ -225,11 +225,13 @@
     </li>
   %endif
   ${self.banbuttons()}
+  %if thing.recipient:
   <li class="unread">
      ${self.state_button("unread", _("mark unread"), \
         "return change_state(this, 'unread_message', unread_thing, true);", \
          _("unread"))}
   </li>
+  %endif
   %if thing.can_reply:
     <li>
        ${self.simple_button(_("reply {verb}"), "reply")}
