@@ -595,10 +595,12 @@ class SearchPage(BoringPage):
     """Search results page"""
     searchbox = False
 
-    def __init__(self, pagename, prev_search, elapsed_time, num_results, *a, **kw):
+    def __init__(self, pagename, prev_search, elapsed_time,
+                 num_results, search_params = {}, *a, **kw):
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
-                                   num_results = num_results)
+                                   num_results = num_results,
+                                   search_params = search_params)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -768,13 +770,15 @@ class SubredditsPage(Reddit):
     searchbox    = False
     submit_box   = False
     def __init__(self, prev_search = '', num_results = 0, elapsed_time = 0,
-                 title = '', loginbox = True, infotext = None, *a, **kw):
+                 title = '', loginbox = True, infotext = None,
+                 search_params = {}, *a, **kw):
         Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
-                                   header = _('search reddits')
+                                   header = _('search reddits'),
+                                   search_params = {}
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
 
@@ -1118,15 +1122,17 @@ class PaneStack(Templated):
 class SearchForm(Templated):
     """The simple search form in the header of the page.  prev_search
     is the previous search."""
-    def __init__(self, prev_search = ''):
-        Templated.__init__(self, prev_search = prev_search)
+    def __init__(self, prev_search = '', search_params = {}):
+        Templated.__init__(self, prev_search = prev_search,
+                           search_params = search_params)
 
 
 class SearchBar(Templated):
     """More detailed search box for /search and /reddits pages.
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
-    def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0, **kw):
+    def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
+                 search_params = {}, **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))
@@ -1140,7 +1146,7 @@ class SearchBar(Templated):
         else:
             self.num_results = num_results
 
-        Templated.__init__(self)
+        Templated.__init__(self, search_params = search_params)
 
 
 class Frame(Templated):
