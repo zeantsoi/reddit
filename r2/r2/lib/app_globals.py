@@ -22,7 +22,7 @@
 from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
-from datetime import timedelta
+from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
@@ -189,6 +189,7 @@ class Globals(object):
         else:
             self.log.setLevel(logging.WARNING)
 
+        self.log.error("reddit app started on %s" % datetime.now())
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
 
