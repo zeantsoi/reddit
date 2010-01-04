@@ -739,13 +739,13 @@ class ApiController(RedditController):
             return
 
         if vote_type == "rejected":
-            g.log.debug("POST_vote: rejected vote (%s) from '%s' on '%s'"%
+            g.log.error("POST_vote: rejected vote (%s) from '%s' on '%s'"%
                         (request.params.get('dir'), c.user.name, request.ip))
             store = False
 
         # TODO: temporary hack until we migrate the rest of the vote data
         if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
-            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
+            g.log.error("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
         # in a lock to prevent duplicate votes from people

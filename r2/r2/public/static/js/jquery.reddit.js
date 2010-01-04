@@ -273,8 +273,8 @@ $.fn.vote = function(vh, callback, event) {
                             .removeClass('likes dislikes');
                 });
             var thing_id = things.filter(":first").thing_id();
-            /* IE6 hack
-               vh += event ? "" : ("-" + thing_id); */
+            /* IE6 hack */
+            vh += event ? "" : ("-" + thing_id); 
             $.request("vote", {id: thing_id, dir : dir, vh : vh});
         }
         /* execute any callbacks passed in.  */
