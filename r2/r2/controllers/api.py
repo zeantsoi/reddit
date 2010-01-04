@@ -739,8 +739,9 @@ class ApiController(RedditController):
             return
 
         if vote_type == "rejected":
-            g.log.error("POST_vote: rejected vote (%s) from '%s' on '%s'"%
-                        (request.params.get('dir'), c.user.name, request.ip))
+            g.log.error("POST_vote: rejected vote (%s) from '%s' on %s (%s)"%
+                        (request.params.get('dir'), c.user.name,
+                         thing._fullname, request.ip))
             store = False
 
         # TODO: temporary hack until we migrate the rest of the vote data
