@@ -231,7 +231,7 @@
       <a class="arrow up${'mod' if dir==1 else ''}" 
          id="up_${fullname}"
          %if c.user_is_loggedin and thing._fullname:
-            href="#" onclick="$(this).vote('', set_score); return false; "
+            href="#" onclick="$(this).vote('', set_score, event); return false;"
          %else:
            href="${submitlink}" target="_new"
          %endif
@@ -244,7 +244,7 @@
       </a>
       <a class="arrow down${'mod' if dir==-1 else ''}" id="down_${fullname}"
          %if c.user_is_loggedin and thing._fullname:
-           href="#" onclick="$(this).vote('', set_score); return false;"
+           href="#" onclick="$(this).vote('', set_score, event); return false;"
          %else:
            href="${submitlink}" target="_new"
          %endif

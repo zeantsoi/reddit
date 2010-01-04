@@ -653,14 +653,19 @@ def run_new_comments():
 #    amqp.handle_items('newpage_q', _run_new_links, limit=100)
 
 
-def queue_vote(user, thing, dir, ip, organic = False):
-    if g.amqp_host:
-        key = "registered_vote_%s_%s" % (user._id, thing._fullname)
-        g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
-        amqp.add_item('register_vote_q',
-                      pickle.dumps((user._id, thing._fullname, dir, ip, organic)))
-    else:
-        handle_vote(user, thing, dir, ip, organic)
+def queue_vote(user, thing, dir, ip, organic = False,
+               cheater = False, store = True):
+    # set the vote in memcached so the UI gets updated immediately
+    key = "registered_vote_%s_%s" % (user._id, thing._fullname)
+    g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
+    # queue the vote to be stored unless told not to
+    if store:
+        if g.amqp_host:
+            amqp.add_item('register_vote_q',
+                          pickle.dumps((user._id, thing._fullname,
+                                        dir, ip, organic, cheater)))
+        else:
+            handle_vote(user, thing, dir, ip, organic)
 
 def get_likes(user, items):
     if not user or not items:
@@ -688,11 +693,11 @@ def get_likes(user, items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, organic):
+def handle_vote(user, thing, dir, ip, organic, cheater = False):
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
-        v = Vote.vote(user, thing, dir, ip, organic)
+        v = Vote.vote(user, thing, dir, ip, organic, cheater = cheater)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
@@ -732,17 +737,26 @@ def process_votes(drain = False, limit = 100):
         uids = set()
         tids = set()
         for x in msgs:
-            uid, tid, dir, ip, organic = pickle.loads(x.body)
-            print (uid, tid, dir, ip, organic)
+            r = pickle.loads(x.body)
+            # backward compatibility -- can remove once old votes are processed
+            if len(r) == 5:
+                uid, tid, dir, ip, organic = r
+                cheater = False
+            else:
+                uid, tid, dir, ip, organic, cheater = r
+
+            print (uid, tid, dir, ip, organic, cheater)
+
             uids.add(uid)
             tids.add(tid)
-            to_do.append((uid, tid, dir, ip, organic))
+            to_do.append((uid, tid, dir, ip, organic, cheater))
 
         users = Account._byID(uids, data = True, return_dict = True)
         things = Thing._by_fullname(tids, data = True, return_dict = True)
 
-        for uid, tid, dir, ip, organic in to_do:
-            handle_vote(users[uid], things[tid], dir, ip, organic)
+        for uid, tid, dir, ip, organic, cheater in to_do:
+            handle_vote(users[uid], things[tid], dir, ip, organic,
+                        cheater = cheater)
 
     amqp.handle_items('register_vote_q', _handle_votes, limit = limit,
                       drain = drain)

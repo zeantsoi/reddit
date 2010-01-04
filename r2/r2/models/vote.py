@@ -50,7 +50,7 @@ class Vote(MultiRelation('vote',
 
 
     @classmethod
-    def vote(cls, sub, obj, dir, ip, organic = False):
+    def vote(cls, sub, obj, dir, ip, organic = False, cheater = False):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_counts
 
@@ -78,7 +78,7 @@ class Vote(MultiRelation('vote',
 
             #these still need to be recalculated
             old_valid_thing = v.valid_thing
-            v.valid_thing = (valid_thing(v, karma)
+            v.valid_thing = (valid_thing(v, karma, cheater = cheater)
                              and v.valid_thing)
             v.valid_user = (v.valid_user
                             and v.valid_thing
@@ -91,7 +91,8 @@ class Vote(MultiRelation('vote',
             v.author_id = obj.author_id
             v.sr_id = sr._id
             v.ip = ip
-            old_valid_thing = v.valid_thing = (valid_thing(v, karma))
+            old_valid_thing = v.valid_thing = \
+                              valid_thing(v, karma, cheater = cheater)
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
                             and not is_self_link)
             if organic:

@@ -202,7 +202,8 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        queries.queue_vote(c.user, l, True, ip)
+        queries.queue_vote(c.user, l, True, ip,
+                           cheater = (errors.CHEATER, None) in c.errors)
         if save:
             r = l._save(c.user)
             queries.new_savehide(r)
@@ -635,7 +636,8 @@ class ApiController(RedditController):
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                                comment, ip)
-                queries.queue_vote(c.user, item, True, ip)
+                queries.queue_vote(c.user, item, True, ip,
+                                   cheater = (errors.CHEATER, None) in c.errors)
 
                 #update last modified
                 set_last_modified(link, 'comments')
@@ -721,7 +723,7 @@ class ApiController(RedditController):
             if should_ratelimit:
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_share_")
-            
+
     @noresponse(VUser(),
                 VModhash(),
                 vote_type = VVotehash(('vh', 'id')),
@@ -731,13 +733,20 @@ class ApiController(RedditController):
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
+        store = True
+
         if not thing or thing._deleted:
             return
+
+        if vote_type == "rejected":
+            g.log.debug("POST_vote: rejected vote (%s) from '%s' on '%s'"%
+                        (request.params.get('dir'), c.user.name, request.ip))
+            store = False
 
         # TODO: temporary hack until we migrate the rest of the vote data
         if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
-            return
+            store = False
 
         # in a lock to prevent duplicate votes from people
         # double-clicking the arrows
@@ -746,15 +755,16 @@ class ApiController(RedditController):
                    else False if dir < 0
                    else None)
             organic = vote_type == 'organic'
-            queries.queue_vote(user, thing, dir, ip, organic)
+            queries.queue_vote(user, thing, dir, ip, organic, store = store,
+                               cheater = (errors.CHEATER, None) in c.errors)
+            if store:
+                #update relevant caches
+                if isinstance(thing, Link):
+                    set_last_modified(c.user, 'liked')
+                    set_last_modified(c.user, 'disliked')
 
-            #update relevant caches
-            if isinstance(thing, Link):
-                set_last_modified(c.user, 'liked')
-                set_last_modified(c.user, 'disliked')
-
-            # flag search indexer that something has changed
-            changed(thing)
+                # flag search indexer that something has changed
+                changed(thing)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1221,7 +1231,8 @@ class ApiController(RedditController):
                     #vote up all of the links
                     for link in links:
                         queries.queue_vote(c.user, link,
-                                           action == 'like', request.ip)
+                                           action == 'like', request.ip,
+                                           cheater = (errors.CHEATER, None) in c.errors)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     r = link._save(c.user)
