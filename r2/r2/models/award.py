@@ -145,7 +145,7 @@ class Trophy(Relation(Account, Award)):
         Trophy.by_award(award, _update=True)
 
     @classmethod
-    @memoize('trophy.by_account')
+    @memoize('trophy.by_account2')
     def by_account_cache(cls, account):
         q = Trophy._query(Trophy.c._thing1_id == account._id,
                           sort = desc('_date'))
@@ -160,7 +160,7 @@ class Trophy(Relation(Account, Award)):
         return trophies
 
     @classmethod
-    @memoize('trophy.by_award')
+    @memoize('trophy.by_award2')
     def by_award_cache(cls, award):
         q = Trophy._query(Trophy.c._thing2_id == award._id,
                           sort = desc('_date'))
