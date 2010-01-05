@@ -190,8 +190,6 @@ class Globals(object):
         else:
             self.log.setLevel(logging.WARNING)
 
-        if self.log_start:
-            self.log.error("reddit app started on %s" % datetime.now())
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
 
@@ -240,6 +238,10 @@ class Globals(object):
         except object, e:
             self.log.info("Couldn't read source revision (%r)" % e)
             self.version = self.short_version = '(unknown)'
+
+        if self.log_start:
+            self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
+
 
     @staticmethod
     def to_bool(x):

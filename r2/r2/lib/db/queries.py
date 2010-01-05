@@ -124,15 +124,13 @@ class CachedResults(object):
     def delete(self, items):
         """Deletes an item from the cached data."""
         self.fetch()
-        did_change = False
+        fnames = set(x._fullname for x in tup(items))
 
-        for item in tup(items):
-            t = self.make_item_tuple(item)
-            while t in self.data:
-                self.data.remove(t)
-                did_change = True
-            
-        if did_change:
+        data = filter(lambda x: x[0] not in fnames,
+                      self.data)
+
+        if data != self.data:
+            self.data = data
             query_cache.set(self.iden, self.data)
         
     def update(self):
