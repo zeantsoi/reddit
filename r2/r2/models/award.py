@@ -25,6 +25,7 @@ from r2.lib.db.operators import desc, lower
 from r2.lib.memoize import memoize
 from r2.models import Account
 from pylons import c, g, request
+from r2.lib.db.operators import asc
 
 class Award (Thing):
     _defaults = dict(
@@ -34,12 +35,15 @@ class Award (Thing):
     @classmethod
     @memoize('award.all_awards')
     def _all_awards_cache(cls):
-        return [ a._id for a in Award._query(limit=100) ]
+        return [ a._id for a in Award._query(sort=asc('_date'), limit=100) ]
 
     @classmethod
     def _all_awards(cls, _update=False):
         all = Award._all_awards_cache(_update=_update)
-        return Award._byID(all, data=True).values()
+        # Can't just return Award._byID() results because
+        # the ordering will be lost
+        d = Award._byID(all, data=True)
+        return [ d[id] for id in all ]
 
     @classmethod
     def _new(cls, codename, title, awardtype, imgurl):
@@ -142,20 +146,30 @@ class Trophy(Relation(Account, Award)):
 
     @classmethod
     @memoize('trophy.by_account')
-    def by_account(cls, account):
+    def by_account_cache(cls, account):
         q = Trophy._query(Trophy.c._thing1_id == account._id,
-                          eager_load = True, thing_data = True,
-                          data = True,
                           sort = desc('_date'))
-        q._limit = 50
-        return list(q)
+        q._limit = 500
+        return [ t._id for t in q ]
+
+    @classmethod
+    def by_account(cls, account, _update=False):
+        rel_ids = cls.by_account_cache(account, _update=_update)
+        trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
+                                    thing_data=True, return_dict = False)
+        return trophies
 
     @classmethod
     @memoize('trophy.by_award')
-    def by_award(cls, award):
+    def by_award_cache(cls, award):
         q = Trophy._query(Trophy.c._thing2_id == award._id,
-                          eager_load = True, thing_data = True,
-                          data = True,
                           sort = desc('_date'))
         q._limit = 500
-        return list(q)
+        return [ t._id for t in q ]
+
+    @classmethod
+    def by_award(cls, award, _update=False):
+        rel_ids = cls.by_award_cache(award, _update=_update)
+        trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
+                                    thing_data=True, return_dict = False)
+        return trophies

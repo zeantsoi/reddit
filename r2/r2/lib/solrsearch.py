@@ -542,7 +542,7 @@ class SearchQuery(object):
             return search
 
         except SolrError,e:
-            g.log.error(str(e))
+            g.log.error("SolrError: %r" % e)
             return pysolr.Results([],0)
 
     @classmethod

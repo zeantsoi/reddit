@@ -270,8 +270,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         if not all(x <= tdb.MAX_THING_ID for x in ids):
-            g.log.debug("Attempted to look up too-big thing_id?")
-            raise NotFound('thing_id greater than MAX_THING_ID')
+            raise NotFound('huge thing_id in %r' % ids)
 
         def items_db(ids):
             items = cls._get_item(cls._type_id, ids)
@@ -548,6 +547,27 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _get_item = staticmethod(tdb.get_rel)
         _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
+
+        @classmethod
+        def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
+                      eager_load=False, thing_data=False):
+
+            ids, single = tup(ids, True)
+
+            bases = cls._byID(ids, data=data, return_dict=True,
+                              extra_props=extra_props)
+
+            values = bases.values()
+
+            if values and eager_load:
+                load_things(values, thing_data)
+
+            if single:
+                return bases[ids[0]]
+            elif return_dict:
+                return bases
+            else:
+                return filter(None, (bases.get(i) for i in ids))
 
         def __init__(self, thing1, thing2, name, date = None, id = None, **attrs):
             DataThing.__init__(self)
