@@ -264,6 +264,7 @@ class _Markdown:
                 url = self.urls[link_id]
                 url = url.replace("*", self.escapetable["*"])
                 url = url.replace("_", self.escapetable["_"])
+                url = url.replace("[", self.escapetable["["])
                 res = '<a href="%s"' % htmlquote(url)
 
                 if title:
@@ -273,6 +274,7 @@ class _Markdown:
                 res += ">%s</a>" % htmlquote(link_text)
             else:
                 res = whole_match
+
             return res
 
         def handler2(m):
@@ -283,6 +285,7 @@ class _Markdown:
 
             url = url.replace("*", self.escapetable["*"])
             url = url.replace("_", self.escapetable["_"])
+            url = url.replace("[", self.escapetable["["])
             res = '''<a href="%s"''' % htmlquote(url)
             
             if title:
