@@ -738,12 +738,7 @@ def process_votes(drain = False, limit = 100):
         tids = set()
         for x in msgs:
             r = pickle.loads(x.body)
-            # backward compatibility -- can remove once old votes are processed
-            if len(r) == 5:
-                uid, tid, dir, ip, organic = r
-                cheater = False
-            else:
-                uid, tid, dir, ip, organic, cheater = r
+            uid, tid, dir, ip, organic, cheater = r
 
             print (uid, tid, dir, ip, organic, cheater)
 
