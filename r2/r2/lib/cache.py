@@ -230,11 +230,9 @@ class CacheChain(CacheUtils, local):
 
         #didn't find anything
 
-### Uncomment this after initial deployment -- need to disable it
-### at first to avoid mid-deployment problems
-#        if self.cache_negative_results:
-#            for c in self.caches:
-#                c.set(key, NoneResult)
+        if self.cache_negative_results:
+            for c in self.caches:
+                c.set(key, NoneResult)
 
         return default
 
