@@ -21,6 +21,7 @@
 ################################################################################
 
 import sqlalchemy as sa
+import cPickle as pickle
 
 class tdb_lite(object):
     def __init__(self, gc):

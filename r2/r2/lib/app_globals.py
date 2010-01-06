@@ -63,7 +63,6 @@ class Globals(object):
                   'enable_doquery',
                   'use_query_cache',
                   'write_query_queue',
-                  'show_awards',
                   'css_killswitch',
                   'db_create_tables',
                   'disallow_db_writes',
@@ -141,6 +140,7 @@ class Globals(object):
 
         # can't do this until load_db_params() has been called
         self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)))
+        self.hardcache.cache_negative_results = True
 
         #make a query cache
         self.stats_collector = QueryStats()

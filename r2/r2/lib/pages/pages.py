@@ -865,13 +865,14 @@ class ProfilePage(Reddit):
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.append(AdminSidebar(self.user))
-        if g.show_awards:
-            tc = TrophyCase(self.user)
-            helplink = ( "/help/awards", _("what's this?") )
-            scb = SideContentBox(title=_("trophy case"),
-                     helplink=helplink, content=[tc],
-                     extra_class="trophy-area")
-            rb.append(scb)
+
+        tc = TrophyCase(self.user)
+        helplink = ( "/help/awards", _("what's this?") )
+        scb = SideContentBox(title=_("trophy case"),
+                 helplink=helplink, content=[tc],
+                 extra_class="trophy-area")
+        rb.append(scb)
+
         return rb
 
 class TrophyCase(Templated):
@@ -1375,9 +1376,6 @@ class UserAwards(Templated):
     def __init__(self):
         from r2.models import Award, Trophy
         Templated.__init__(self)
-
-        if not g.show_awards:
-            abort(404, "not found");
 
         self.regular_winners = []
         self.manuals = []

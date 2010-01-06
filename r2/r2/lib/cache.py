@@ -26,6 +26,8 @@ from contrib import memcache
 
 from r2.lib.hardcachebackend import HardCacheBackend
 
+class NoneResult(object): pass
+
 class CacheUtils(object):
     def incr_multi(self, keys, amt=1, prefix=''):
         for k in keys:
@@ -92,10 +94,23 @@ class HardCache(CacheUtils):
         return category, ids
 
     def set(self, key, val, time=0):
+        if val is NoneResult:
+            # NoneResult caching is for other parts of the chain
+            return
+
         category, ids = self._split_key(key)
         if time <= 0:
             raise ValueError ("HardCache.set() *must* have an expiration time")
         self.backend.set(category, ids, val, time)
+
+    def simple_get_multi(self, keys):
+        # If we do start supporting this, we need to figure out a way to
+        # cache negative results for *_multi() calls.
+        raise NotImplementedError
+
+    def set_multi(self, keys, prefix='', time=0):
+        # The simple_get_multi() note above applies here too.
+        raise NotImplementedError
 
     def get(self, key, default=None):
         category, ids = self._split_key(key)
@@ -193,20 +208,34 @@ class CacheChain(CacheUtils, local):
     delete = make_set_fn('delete')
     delete_multi = make_set_fn('delete_multi')
     flush_all = make_set_fn('flush_all')
+    cache_negative_results = False
 
     def get(self, key, default = None, local = True):
         for c in self.caches:
             if not local and isinstance(c,LocalCache):
                 continue
             val = c.get(key, default)
+
             if val is not None:
                 #update other caches
                 for d in self.caches:
                     if c == d:
-                        break;
+                        break # so we don't set caches later in the chain
                     d.set(key, val)
-                return val
+
+                if self.cache_negative_results and val == NoneResult:
+                    return None
+                else:
+                    return val
+
         #didn't find anything
+
+### Uncomment this after initial deployment -- need to disable it
+### at first to avoid mid-deployment problems
+#        if self.cache_negative_results:
+#            for c in self.caches:
+#                c.set(key, NoneResult)
+
         return default
 
     def simple_get_multi(self, keys):
@@ -220,7 +249,7 @@ class CacheChain(CacheUtils, local):
             if r:
                 for d in self.caches:
                     if c == d:
-                        break;
+                        break # so we don't set caches later in the chain
                     d.set_multi(r)
                 r.update(out)
                 out = r

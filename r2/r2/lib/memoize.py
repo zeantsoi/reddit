@@ -21,8 +21,7 @@
 ################################################################################
 from r2.config import cache
 from r2.lib.filters import _force_utf8
-
-class NoneResult(object): pass
+from r2.lib.cache import NoneResult
 
 def memoize(iden, time = 0):
     def memoize_fn(fn):

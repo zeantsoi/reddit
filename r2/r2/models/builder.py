@@ -143,8 +143,8 @@ class Builder(object):
                 getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
-            if (g.show_awards and w.author
-                              and w.author.should_show_cup()):
+            if (c.user_is_admin and w.author
+                                and w.author.should_show_cup()):
                 add_attr(w.attribs, 'trophy', label=
                     _("%(user)s recently won a trophy! click here to see it.")
                          % {'user':w.author.name},
