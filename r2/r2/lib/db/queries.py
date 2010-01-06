@@ -124,7 +124,7 @@ class CachedResults(object):
     def delete(self, items):
         """Deletes an item from the cached data."""
         self.fetch()
-        fnames = set(x._fullname for x in tup(items))
+        fnames = set(self.filter(x)._fullname for x in tup(items))
 
         data = filter(lambda x: x[0] not in fnames,
                       self.data)
