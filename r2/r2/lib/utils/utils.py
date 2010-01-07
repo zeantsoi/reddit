@@ -897,7 +897,7 @@ def fix_if_broken(thing, delete = True):
                 if not delete:
                     raise
                 # it still broke. We should delete it
-                print "%s is missing %r, deleting" % (thing._fullname, a)
+                print "%s is missing %r, deleting" % (thing._fullname, attr)
                 thing._deleted = True
                 thing._commit()
                 break
