@@ -77,6 +77,24 @@ class HardCacheBackend(object):
         else:
             return self.tdb.db2py(rows[0].value, rows[0].kind)
 
+    def get_multi(self, category, idses):
+        s = sa.select([self.table.c.ids,
+                       self.table.c.value,
+                       self.table.c.kind,
+                       self.table.c.expiration],
+                      sa.and_(self.table.c.category==category,
+                              sa.or_(*[self.table.c.ids==ids
+                                       for ids in idses])))
+        rows = s.execute().fetchall()
+
+        results = {}
+
+        for row in rows:
+          if row.expiration >= datetime.now(g.tz):
+              results[row.ids] = self.tdb.db2py(row.value, row.kind)
+
+        return results
+
     def delete(self, category, ids):
         self.table.delete(
             sa.and_(self.table.c.category==category,

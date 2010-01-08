@@ -99,6 +99,8 @@ label.disabled { color: gray; }
 .flat-list form {display: inline; }
 .flat-list .selected a { color: orangered; }
 
+.link .flat-list { display: block; padding-bottom: 1px; }
+
 ul.flat-vert {text-align: left;}
 .flat-vert .separator { margin: 0 }
 
@@ -1816,9 +1818,17 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
-.link.over18 acronym { 
-    color: red;
+li.nsfw-stamp {
+    border: 1px solid red !important;
+    padding: 0 4px !important;
+    background-color: #ffe0e0;
+}
+
+.nsfw-stamp acronym {
+    border: none;
+    color: #dd0000;
     font-weight: bold;
+    text-decoration: none;
 }
 
 .reported { background-color: #f6e69f }
@@ -2694,6 +2704,15 @@ table.award-table {
 
 .removecup-button {
     display: inline;
+}
+
+.cup-info-box {
+    border: dashed #eeaa33 2px;
+    padding: 5px;
+}
+
+.cup-info-box tt {
+    background-color: #f5f5aa;
 }
 
 /* Datepicker

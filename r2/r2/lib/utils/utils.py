@@ -1146,3 +1146,16 @@ def to_csv(table):
         return x
     return u"\n".join(u','.join(quote_commas(y) for y in x)
                       for x in table)
+
+def in_chunks(it, size=25):
+    chunk = []
+    it = iter(it)
+    try:
+        while True:
+            chunk.append(it.next())
+            if len(chunk) >= size:
+                yield chunk
+                chunk = []
+    except StopIteration:
+        if chunk:
+            yield chunk

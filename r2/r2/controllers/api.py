@@ -1410,8 +1410,8 @@ class ApiController(RedditController):
         else:
             cup_expiration = None
 
-        t = Trophy._new(recipient, award, description=description,
-                        url=url, cup_expiration=cup_expiration)
+        t = Trophy._new(recipient, award, description=description, url=url,
+                        cup_info=dict(expiration=cup_expiration))
 
         form.set_html(".status", _('saved'))
 

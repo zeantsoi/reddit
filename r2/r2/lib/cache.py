@@ -21,7 +21,7 @@
 ################################################################################
 from threading import local
 
-from utils import lstrips
+from utils import lstrips, in_chunks
 from contrib import memcache
 
 from r2.lib.hardcachebackend import HardCacheBackend
@@ -104,13 +104,25 @@ class HardCache(CacheUtils):
         self.backend.set(category, ids, val, time)
 
     def simple_get_multi(self, keys):
-        # If we do start supporting this, we need to figure out a way to
-        # cache negative results for *_multi() calls.
-        raise NotImplementedError
+        results = {}
+        category_bundles = {}
+        for key in keys:
+            category, ids = self._split_key(key)
+            category_bundles.setdefault(category, []).append(ids)
+
+        for category in category_bundles:
+            idses = category_bundles[category]
+            chunks = in_chunks(idses, size=50)
+            for chunk in chunks:
+                new_results = self.backend.get_multi(category, chunk)
+                results.update(new_results)
+
+        return results
 
     def set_multi(self, keys, prefix='', time=0):
-        # The simple_get_multi() note above applies here too.
-        raise NotImplementedError
+        for k,v in keys.iteritems():
+            if v is not NoneResult:
+                self.set(prefix+str(k), v, time=time)
 
     def get(self, key, default=None):
         category, ids = self._split_key(key)
@@ -119,6 +131,8 @@ class HardCache(CacheUtils):
         return r
 
     def delete(self, key, time=0):
+        # Potential optimization: When on a negative-result caching chain,
+        # shove NoneResult throughout the chain when a key is deleted.
         category, ids = self._split_key(key)
         self.backend.delete(category, ids)
 
@@ -144,12 +158,13 @@ class LocalCache(dict, CacheUtils):
         return out
 
     def set(self, key, val, time = 0):
+        # time is ignored on localcache
         self._check_key(key)
         self[key] = val
 
     def set_multi(self, keys, prefix='', time=0):
         for k,v in keys.iteritems():
-            self.set(prefix+str(k), v)
+            self.set(prefix+str(k), v, time=time)
 
     def add(self, key, val, time = 0):
         self._check_key(key)
@@ -223,7 +238,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if self.cache_negative_results and val == NoneResult:
+                if self.cache_negative_results and val is NoneResult:
                     return None
                 else:
                     return val
@@ -252,6 +267,19 @@ class CacheChain(CacheUtils, local):
                 r.update(out)
                 out = r
                 need = need - set(r.keys())
+
+        if need and self.cache_negative_results:
+            d = dict( (key,NoneResult) for key in need)
+            for c in self.caches:
+                c.set_multi(d)
+
+        if self.cache_negative_results:
+            filtered_out = {}
+            for k,v in out.iteritems():
+                if v is not NoneResult:
+                    filtered_out[k] = v
+            out = filtered_out
+
         return out
 
 #smart get multi

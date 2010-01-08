@@ -342,8 +342,8 @@ def add_attr(attrs, code, label=None, link=None):
             label = _('reddit admin, speaking officially')
         if not link:
             link = '/help/faq#Whomadereddit'
-    elif code == 'trophy':
-        img = (static('award.png'), '!', 11, 8)
+    elif code.startswith ('trophy:'):
+        img = (code[7:], '!', 11, 8)
         priority = 99
         cssclass = 'recent-trophywinner'
         if not label:

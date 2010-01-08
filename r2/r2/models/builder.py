@@ -70,6 +70,13 @@ class Builder(object):
             aids = None
 
         authors = Account._byID(aids, True) if aids else {}
+
+
+        if g.hardcache.get("dipswitch-check_cup_info"):
+            cup_infos = Account.cup_info_multi(authors)
+        else:
+            cup_infos = {}
+
         # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)
 
@@ -143,12 +150,15 @@ class Builder(object):
                 getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
-            if (c.user_is_admin and w.author
-                                and w.author.should_show_cup()):
-                add_attr(w.attribs, 'trophy', label=
-                    _("%(user)s recently won a trophy! click here to see it.")
-                         % {'user':w.author.name},
-                     link = "/user/%s" % w.author.name)
+            if w.author and w.author._id in cup_infos and not c.profilepage:
+                cup_info = cup_infos[w.author._id]
+                # remove the next if to let everyone see cups
+                if c.user_is_admin:
+                    label = _(cup_info["label_template"]) % \
+                            {'user':w.author.name}
+                    add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
+                             label=label,
+                             link = "/user/%s" % w.author.name)
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]

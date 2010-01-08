@@ -66,7 +66,7 @@ class Award (Thing):
             raise NotFound, 'Award %s' % codename
 
     @classmethod
-    def give_if_needed(cls, codename, user, cup_expiration=None):
+    def give_if_needed(cls, codename, user, cup_info=None):
         """Give an award to a user, unless they already have it.
            Returns silently (except for g.log.debug) if the award
            doesn't exist"""
@@ -84,7 +84,7 @@ class Award (Thing):
                 g.log.debug("%s already has %s" % (user, codename))
                 return
 
-        Trophy._new(user, award, cup_expiration=cup_expiration)
+        Trophy._new(user, award, cup_info=cup_info)
         g.log.debug("Gave %s to %s" % (codename, user))
 
     @classmethod
@@ -119,7 +119,7 @@ class Award (Thing):
 class Trophy(Relation(Account, Award)):
     @classmethod
     def _new(cls, recipient, award, description = None,
-             url = None, cup_expiration = None):
+             url = None, cup_info = None):
 
         # The "name" column of the relation can't be a constant or else a
         # given account would not be allowed to win a given award more than
@@ -137,8 +137,8 @@ class Trophy(Relation(Account, Award)):
         if url:
             t.url = url
 
-        if cup_expiration:
-            recipient.extend_cup(cup_expiration)
+        if cup_info:
+            recipient.set_cup(cup_info)
 
         t._commit()
         Trophy.by_account(recipient, _update=True)

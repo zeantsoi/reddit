@@ -65,8 +65,10 @@
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
     %if thing.nsfw:
-     <li>
-       <acronym title="Not Safe for Work">NSFW</acronym>
+     <li class="rounded nsfw-stamp">
+       <acronym title="${_('Adult content: Not Safe For Work')}">
+         ${_("NSFW")}
+       </acronym>
      </li>
     %endif
     ${self.buttons()}
