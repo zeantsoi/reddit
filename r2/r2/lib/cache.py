@@ -203,8 +203,9 @@ class LocalCache(dict, CacheUtils):
         self.clear()
 
 class CacheChain(CacheUtils, local):
-    def __init__(self, caches):
+    def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
+        self.cache_negative_results = cache_negative_results
 
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):

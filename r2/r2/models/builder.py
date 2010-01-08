@@ -71,11 +71,17 @@ class Builder(object):
 
         authors = Account._byID(aids, True) if aids else {}
 
+        switch = g.hardcache.get("dipswitch-check_cup_info")
 
-        if aids and g.hardcache.get("dipswitch-check_cup_info"):
-            cup_infos = Account.cup_info_multi(aids)
+        # FIXME: this sucks
+        cup_infos = {}
+        if switch is None or switch is False:
+            pass
+        elif switch is True:
+            if aids:
+                cup_infos = Account.cup_info_multi(aids)
         else:
-            cup_infos = {}
+            g.log.error("weird dipswitch value %r" % switch)
 
         # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)

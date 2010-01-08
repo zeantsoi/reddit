@@ -139,8 +139,8 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)))
-        self.hardcache.cache_negative_results = True
+        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)),
+                                    cache_negative_results = True)
 
         #make a query cache
         self.stats_collector = QueryStats()
