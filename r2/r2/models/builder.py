@@ -73,11 +73,11 @@ class Builder(object):
 
         switch = g.hardcache.get("dipswitch-check_cup_info")
 
-        # FIXME: this sucks
+        # FIXME: this still sucks
         cup_infos = {}
-        if switch is None or switch is False:
+        if switch is None or switch is False or switch is 0:
             pass
-        elif switch is True:
+        elif switch is True or switch is 1:
             if aids:
                 cup_infos = Account.cup_info_multi(aids)
         else:
