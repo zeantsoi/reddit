@@ -91,7 +91,8 @@ class HardCacheBackend(object):
 
         for row in rows:
           if row.expiration >= datetime.now(g.tz):
-              results[row.ids] = self.tdb.db2py(row.value, row.kind)
+              k = "%s-%s" % (category, row.ids)
+              results[k] = self.tdb.db2py(row.value, row.kind)
 
         return results
 

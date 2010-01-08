@@ -72,8 +72,8 @@ class Builder(object):
         authors = Account._byID(aids, True) if aids else {}
 
 
-        if g.hardcache.get("dipswitch-check_cup_info"):
-            cup_infos = Account.cup_info_multi(authors)
+        if aids and g.hardcache.get("dipswitch-check_cup_info"):
+            cup_infos = Account.cup_info_multi(aids)
         else:
             cup_infos = {}
 
