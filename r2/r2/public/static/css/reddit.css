@@ -100,7 +100,7 @@ label.disabled { color: gray; }
 .flat-list .selected a { color: orangered; }
 
 .link .flat-list { display: block; padding-bottom: 1px; }
-.link.compressed .flat-list { display: inline; }
+.link.compressed .flat-list { display: inline-block; }
 
 ul.flat-vert {text-align: left;}
 .flat-vert .separator { margin: 0 }
