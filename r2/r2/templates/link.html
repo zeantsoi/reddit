@@ -158,7 +158,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
       <div class="score dislikes">&bull;</div> 
     %else:
       ${self.score(thing, thing.likes, tag='div')}
-    %endif                
+    %endif
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
  ${self.thumbnail()}

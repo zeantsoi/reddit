@@ -49,6 +49,7 @@ class Globals(object):
                  'max_sr_images',
                  'num_serendipity',
                  'sr_dropdown_threshold',
+                 'bestof_magic_userid',
                  ]
 
     float_props = ['min_promote_bid',

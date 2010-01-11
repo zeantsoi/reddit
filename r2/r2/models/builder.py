@@ -174,13 +174,21 @@ class Builder(object):
             # update vote tallies
             compute_votes(w, item)
 
+            if (hasattr(item, "bestof_magic") and item.bestof_magic() == 'comment'
+                and not (c.user_is_admin or
+                         c.user_is_loggedin and c.user._id == g.bestof_magic_userid)):
+                w.upvotes = 1
+                w.downvotes = 0
+
             w.score = w.upvotes - w.downvotes
+
             if w.likes:
                 base_score = w.score - 1
             elif w.likes is None:
                 base_score = w.score
             else:
                 base_score = w.score + 1
+
             # store the set of available scores based on the vote
             # for ease of i18n when there is a label
             w.voting_score = [(base_score + x - 1) for x in range(3)]
@@ -547,7 +555,7 @@ class CommentBuilder(Builder):
 
         def sort_candidates():
             candidates.sort(key = self.sort_key, reverse = self.rev_sort)
-        
+
         #find the comments
         num_have = 0
         sort_candidates()
@@ -574,7 +582,7 @@ class CommentBuilder(Builder):
         wrapped = self.wrap_items(items)
 
         cids = dict((cm._id, cm) for cm in wrapped)
-        
+
         final = []
         #make tree
 
@@ -639,11 +647,19 @@ class CommentBuilder(Builder):
             #add more children
             if comment_tree.has_key(to_add._id):
                 candidates.extend(comment_tree[to_add._id])
-                
+
             if direct_child:
                 mc2.children.append(to_add)
 
             mc2.count += 1
+
+        if self.link.bestof_magic():
+            if self.link._spam and not (c.user_is_loggedin and
+                                        c.user._id == g.bestof_magic_userid):
+                final = []
+            else:
+                from random import shuffle
+                shuffle (final)
 
         return final
 

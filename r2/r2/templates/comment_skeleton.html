@@ -43,6 +43,7 @@ ${self.tagline(True)}
 
 <%def name="entry()">
 <% collapse = thing.collapsed %>
+
 <div class="collapsed" ${(not collapse and "style='display:none'" or "")}>
   ${self.collapsed()}
 </div>

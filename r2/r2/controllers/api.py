@@ -604,6 +604,9 @@ class ApiController(RedditController):
             if isinstance(parent, Link):
                 link = parent
                 parent_comment = None
+                if (hasattr(link, "bestof_magic") and link.bestof_magic()
+                    and c.user._id != g.bestof_magic_userid):
+                    abort(403, 'forbidden')
             else:
                 link = Link._byID(parent.link_id, data = True)
                 parent_comment = parent
@@ -749,12 +752,17 @@ class ApiController(RedditController):
             g.log.error("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
+        if (hasattr(thing, "bestof_magic") and
+            thing.bestof_magic() == "comment" and dir < 0):
+            dir = 0
+
         # in a lock to prevent duplicate votes from people
         # double-clicking the arrows
         with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
             dir = (True if dir > 0
                    else False if dir < 0
                    else None)
+
             organic = vote_type == 'organic'
             queries.queue_vote(user, thing, dir, ip, organic, store = store,
                                cheater = (errors.CHEATER, None) in c.errors)
