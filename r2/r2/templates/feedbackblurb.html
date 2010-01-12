@@ -21,6 +21,7 @@
 ################################################################################
 <%!
    from r2.lib.pages import Feedback
+   import random
  %>
 
 <div class="feedback instructions">
@@ -46,7 +47,14 @@
     <dt>General questions?  Need help?</dt>
     <dd><a href="/r/help">There's a reddit for that, too</a>.</dd>
     <dt>Crazy, or just feel like ranting at us?</dt>
-    <dd><a href="/r/null">Here is a soothing place to get your agressions out</a>.</dd>
+    <% r = random.randint(0,2) %>
+    %if r == 0:
+      <dd><a href="/r/null">Here is a soothing place to get your aggressions out</a>.</dd>
+    %elif r == 1:
+      <dd><a href="/important" onclick="return false">Just click here until you feel better (like a stress ball)</a>.</dd>
+    %elif r == 2:
+      <dd><a href="about:blank" target="_blank">There are always other options</a>.</dd>
+    %endif
   </dl>
 <p>
   Or, if none of these solve your problem,&#32;
