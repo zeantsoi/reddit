@@ -1325,6 +1325,9 @@ class ButtonDemoPanel(Templated):
 class SelfServeBlurb(Templated):
     pass
 
+class FeedbackBlurb(Templated):
+    pass
+
 class Feedback(Templated):
     """The feedback and ad inquery form(s)"""
     def __init__(self, title, action):

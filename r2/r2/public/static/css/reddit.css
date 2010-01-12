@@ -1525,6 +1525,22 @@ textarea.gray { color: gray; }
     list-style-image:url(/static/red-arrow.png);
 }
 
+
+.feedback.instructions dl { 
+    margin-left: 20px; 
+}
+
+.feedback.instructions dt { 
+    margin-top: 10px; 
+}
+
+.feedback.instructions dd { 
+    background: transparent none no-repeat scroll bottom left;
+    background-image: url(/static/red-arrow.png);
+    padding-left: 35px; 
+}
+
+
 .button-demo a.view-code,
 .button-demo a.hide-code { float: right; margin-bottom: 1em; }
 .button-demo a.hide-code { display: none; }

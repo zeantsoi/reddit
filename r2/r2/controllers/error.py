@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import os.path
+from mako.filters import url_escape
 
 import paste.fileapp
 from pylons.middleware import error_document_template, media_path
@@ -117,7 +118,12 @@ class ErrorController(RedditController):
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         if c.site._spam and not c.user_is_admin:
-            message = (strings.banned_subreddit % dict(link = '/feedback'))
+            subject = ("the subreddit /r/%s has been incorrectly banned" %
+                       c.site.name)
+            message = (strings.banned_subreddit %
+                       dict(link = '/message/compose?to=%s&subject=%s' %
+                            (g.admin_message_acct,
+                             url_escape(subject))))
 
             res = pages.RedditError(_('this reddit has been banned'),
                                     unsafe(safemarkdown(message)))

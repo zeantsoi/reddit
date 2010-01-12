@@ -22,7 +22,7 @@
 from reddit_base import RedditController
 from pylons import c, request
 from pylons.i18n import _
-from r2.lib.pages import FormPage, Feedback, Captcha, PaneStack, SelfServeBlurb
+from r2.lib.pages import FormPage, Feedback, Captcha, PaneStack, SelfServeBlurb, FeedbackBlurb
 
 class FeedbackController(RedditController):
 
@@ -32,9 +32,8 @@ class FeedbackController(RedditController):
                         loginbox = False).render()
 
     def GET_feedback(self):
-        title = _("send reddit feedback")
         return FormPage('feedback',
-                        content = Feedback(title=title, action='feedback'),
+                        content = FeedbackBlurb(),
                         loginbox = False).render()
 
     def GET_i18n(self):
