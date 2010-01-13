@@ -132,7 +132,7 @@ class DataThing(object):
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
         l = cache.get(self._cache_key(), local = False)
-        if l._id != self._id:
+        if l and l._id != self._id:
             g.log.error("thing.py: Doppleganger on read: got %s for %s",
                         (l, self))
             cache.delete(self._cache_key())
@@ -292,7 +292,7 @@ class DataThing(object):
             if i not in bases:
                 missing = [i for i in ids if i not in bases]
                 raise NotFound, '%s %s' % (cls.__name__, missing)
-            if bases[i]._id != i:
+            if bases[i] and bases[i]._id != i:
                 g.log.error("thing.py: Doppleganger on byID: %s got %s for %s" %
                             (cls.__name__, bases[i]._id, i))
                 bases[i] = items_db([i]).values()[0]
