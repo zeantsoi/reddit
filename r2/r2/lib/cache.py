@@ -29,10 +29,10 @@ from r2.lib.hardcachebackend import HardCacheBackend
 class NoneResult(object): pass
 
 class CacheUtils(object):
-    def incr_multi(self, keys, amt=1, prefix=''):
+    def incr_multi(self, keys, delta=1, time=0, prefix=''):
         for k in keys:
             try:
-                self.incr(prefix + k, amt)
+                self.incr(prefix + k, time=time, delta=delta)
             except ValueError:
                 pass
 
@@ -99,8 +99,6 @@ class HardCache(CacheUtils):
             return
 
         category, ids = self._split_key(key)
-        if time <= 0:
-            raise ValueError ("HardCache.set() *must* have an expiration time")
         self.backend.set(category, ids, val, time)
 
     def simple_get_multi(self, keys):
@@ -136,6 +134,15 @@ class HardCache(CacheUtils):
         category, ids = self._split_key(key)
         self.backend.delete(category, ids)
 
+    def add(self, key, value, time=0):
+        category, ids = self._split_key(key)
+        return self.backend.add(category, ids, value, time=time)
+
+    def incr(self, key, delta=1, time=0):
+        category, ids = self._split_key(key)
+        return self.backend.incr(category, ids, delta=delta, time=time)
+
+
 class LocalCache(dict, CacheUtils):
     def __init__(self, *a, **kw):
         return dict.__init__(self, *a, **kw)
@@ -168,7 +175,7 @@ class LocalCache(dict, CacheUtils):
 
     def add(self, key, val, time = 0):
         self._check_key(key)
-        self.setdefault(key, val)
+        return self.setdefault(key, val)
 
     def delete(self, key):
         if self.has_key(key):
@@ -179,11 +186,11 @@ class LocalCache(dict, CacheUtils):
             if self.has_key(key):
                 del self[key]
 
-    def incr(self, key, amt=1):
+    def incr(self, key, delta=1, time=0):
         if self.has_key(key):
-            self[key] = int(self[key]) + amt
+            self[key] = int(self[key]) + delta
 
-    def decr(self, key, amt=1): 
+    def decr(self, key, amt=1):
         if self.has_key(key):
             self[key] = int(self[key]) - amt
 
@@ -210,7 +217,8 @@ class CacheChain(CacheUtils, local):
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):
             for c in self.caches:
-                getattr(c, fn_name)(*a, **kw)
+                ret = getattr(c, fn_name)(*a, **kw)
+            return ret
         return fn
 
     set = make_set_fn('set')
@@ -226,11 +234,39 @@ class CacheChain(CacheUtils, local):
     flush_all = make_set_fn('flush_all')
     cache_negative_results = False
 
+    def add(self, key, val, time=0):
+        authority = self.caches[-1]
+        added_val = authority.add(key, val, time=time)
+        for cache in self.caches[:-1]:
+            # Calling set() rather than add() to ensure that all caches are
+            # in sync and that de-syncs repair themselves
+            cache.set(key, added_val, time=time)
+        return added_val
+
+    def accrue(self, key, time=0, delta=1):
+        auth_value = self.caches[-1].get(key)
+
+        if auth_value is None:
+            self.caches[-1].set(key, 0, time)
+            auth_value = 0
+
+        try:
+            auth_value = int(auth_value)
+        except ValueError:
+            raise ValueError("Can't accrue %s; it's a %s (%r)" %
+                             (key, auth_value.__class__.__name__, auth_value))
+
+        for c in self.caches:
+            c.set(key, auth_value, time=time)
+
+        self.incr(key, time=time, delta=delta)
+
     def get(self, key, default = None, local = True):
         for c in self.caches:
             if not local and isinstance(c,LocalCache):
                 continue
-            val = c.get(key, default)
+
+            val = c.get(key)
 
             if val is not None:
                 #update other caches
@@ -282,6 +318,12 @@ class CacheChain(CacheUtils, local):
             out = filtered_out
 
         return out
+
+    def debug(self, key):
+        print "Looking up [%r]" % key
+        for i, c in enumerate(self.caches):
+            print "[%d] %10s has value [%r]" % (i, c.__class__.__name__,
+                                                c.get(key))
 
 #smart get multi
 def sgm(cache, keys, miss_fn, prefix='', time=0):

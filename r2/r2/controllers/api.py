@@ -259,22 +259,33 @@ class ApiController(RedditController):
     @validatedForm(VRatelimit(rate_ip = True, prefix = 'login_',
                               error = errors.WRONG_PASSWORD),
                    user = VLogin(['user', 'passwd']),
+                   username = VLength('user', max_length = 100),
                    dest   = VDestination(),
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
-    def POST_login(self, form, jquery, user, dest, rem, reason):
+    def POST_login(self, form, jquery, user, username, dest, rem, reason):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
         hc_key = "login_attempts-%s" % request.ip
 
-        recent_attempts = g.hardcache.get(hc_key, 0)
+        # TODO: You-know-what (not mentioning it, just in case
+        # we accidentally release code with this comment in it)
 
+        # Cache lifetime for login_attmempts
+        la_expire_time = 3600 * 8
+
+        recent_attempts = g.hardcache.add(hc_key, 0, time=la_expire_time)
+
+        fake_failure = False
         if recent_attempts >= 25:
-            raise NotImplementedError("need proper fail msg")
-        elif form.has_errors("passwd", errors.WRONG_PASSWORD):
+            g.log.error ("%s failed to login as %s (attempt #%d)"
+                         % (request.ip, username, recent_attempts))
+            fake_failure = True
+
+        if fake_failure or form.has_errors("passwd", errors.WRONG_PASSWORD):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-            g.hardcache.set(hc_key, recent_attempts + 1, 3600 * 8)
+            g.hardcache.incr(hc_key, time = la_expire_time)
         else:
             self._login(form, user, dest, rem)
 

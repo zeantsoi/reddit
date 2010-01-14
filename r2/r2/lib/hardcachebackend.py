@@ -26,6 +26,11 @@ from datetime import datetime
 import sqlalchemy as sa
 from r2.lib.db.tdb_lite import tdb_lite
 
+def expiration_from_time(time):
+    if time <= 0:
+        raise ValueError ("HardCache items *must* have an expiration time")
+    return datetime.now(g.tz) + timedelta(0, time)
+
 class HardCacheBackend(object):
     def __init__(self, gc):
         self.tdb = tdb_lite(gc)
@@ -50,9 +55,9 @@ class HardCacheBackend(object):
 
         self.delete(category, ids) # delete it if it already exists
 
-        expiration = datetime.now(g.tz) + timedelta(0, time)
-
         value, kind = self.tdb.py2db(val, True)
+
+        expiration = expiration_from_time(time)
 
         self.table.insert().execute(
             category=category,
@@ -61,6 +66,53 @@ class HardCacheBackend(object):
             kind=kind,
             expiration=expiration
             )
+
+    def add(self, category, ids, val, time=0):
+        expiration = expiration_from_time(time)
+
+        value, kind = self.tdb.py2db(val, True)
+
+        try:
+            rp = self.table.insert().execute(
+                category=category,
+                ids=ids,
+                value=value,
+                kind=kind,
+                expiration=expiration
+                )
+
+            return value
+
+        except sa.exceptions.IntegrityError, e:
+            return self.get(category, ids)
+
+    def incr(self, category, ids, time=0, delta=1):
+        expiration = expiration_from_time(time)
+
+        rp = self.table.update(sa.and_(self.table.c.category==category,
+                                       self.table.c.ids==ids,
+                                       self.table.c.kind=='num'),
+                               values = {
+                                         self.table.c.value:
+                                         sa.cast(
+                                                 sa.cast(self.table.c.value,
+                                                          sa.Integer) + delta,
+                                                 sa.String),
+                                         self.table.c.expiration: expiration
+                                         }
+                               ).execute()
+        if rp.rowcount == 1:
+            return self.get(category, ids)
+        elif rp.rowcount == 0:
+            existing_value = self.get(category, ids)
+            if existing_value is None:
+                raise ValueError("[%s][%s] can't be incr()ed -- it's not set" %
+                                 (category, ids))
+            else:
+                raise ValueError("[%s][%s] has non-integer value %r" %
+                                 (category, ids, existing_value))
+        else:
+            raise ValueError("Somehow %d rows got updated" % rp.rowcount)
 
     def get(self, category, ids):
         s = sa.select([self.table.c.value,
