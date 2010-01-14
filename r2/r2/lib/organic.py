@@ -21,7 +21,7 @@
 ################################################################################
 from r2.models import *
 from r2.lib.memoize import memoize
-from r2.lib.normalized_hot import get_hot, only_recent
+from r2.lib.normalized_hot import get_hot
 from r2.lib import count
 from r2.lib.utils import UniqueIterator, timeago
 from r2.lib.promote import random_promoted
@@ -99,13 +99,13 @@ def cached_organic_links(user_id, langs):
     #potentially add a up and coming link
     if random.choice((True, False)) and sr_ids:
         sr = Subreddit._byID(random.choice(sr_ids))
-        items = only_recent(get_hot(sr))
-        if items:
-            if len(items) == 1:
-                new_item = items[0]
+        fnames = get_hot(sr, True)
+        if fnames:
+            if len(fnames) == 1:
+                new_item = fnames[0]
             else:
-                new_item = random.choice(items[1:4])
-            link_names.insert(0, new_item._fullname)
+                new_item = random.choice(fnames[1:4])
+            link_names.insert(0, new_item)
 
     insert_promoted(link_names, sr_ids, user_id is not None)
 
