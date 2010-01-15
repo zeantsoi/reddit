@@ -31,8 +31,7 @@ from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.template_helpers import get_domain
-from r2.lib.contrib.markdown import markdown
-from r2.lib.filters import unsafe, SC_ON, SC_OFF
+from r2.lib.filters import unsafe
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
@@ -503,10 +502,7 @@ class FrontController(RedditController):
             else:
                 g.log.error(errmsg)
 
-            md = SC_OFF + markdown(strings.search_failed % dict(
-                link="javascript:tryagain\(\)")) + SC_ON
-
-            sf = SearchFail(md)
+            sf = SearchFail()
             sb = SearchBar(prev_search = query_obj.q)
 
             us = unsafe(sb.render() + sf.render())

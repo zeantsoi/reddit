@@ -35,7 +35,9 @@ from pylons.controllers.util import abort
 from r2.lib import promote
 from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8, unsafe, websafe
+from r2.lib.contrib.markdown import markdown
+from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
+from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
@@ -1151,8 +1153,11 @@ class SearchBar(Templated):
 
 class SearchFail(Templated):
     """Search failure page."""
-    def __init__(self, errmsg, **kw):
-        self.errmsg = errmsg
+    def __init__(self, **kw):
+        md = SC_OFF + markdown(strings.search_failed % dict(
+            link="javascript:tryagain\(\)")) + SC_ON
+
+        self.errmsg = md
 
         Templated.__init__(self)
 

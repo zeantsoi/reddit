@@ -264,6 +264,9 @@ class QueryBuilder(Builder):
             self.prewrap_fn = query.prewrap_fn
         #self.prewrap_fn = kw.get('prewrap_fn')
 
+    def __repr__(self):
+        return "<%s(%r)>" % (self.__class__.__name__, self.query)
+
     def item_iter(self, a):
         """Iterates over the items returned by get_items"""
         for i in a[0]:

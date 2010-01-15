@@ -39,10 +39,12 @@ from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
 from r2.lib.promote import PromoteSR
+from r2.lib.contrib.pysolr import SolrError
 
 from admin import admin_profile_query
 
 from pylons.i18n import _
+from pylons import Response
 
 import random
 
@@ -147,7 +149,29 @@ class ListingController(RedditController):
         if c.site.path == PromoteSR.path and not c.user_is_sponsor:
             abort(403, 'forbidden')
         listing = LinkListing(self.builder_obj, show_nums = self.show_nums)
-        return listing.listing()
+        try:
+            return listing.listing()
+        except SolrError, e:
+            errmsg = "SolrError: %r %r" % (e, self.builder_obj)
+
+            if (str(e) == 'None'):
+                # Production error logs only get non-None errors
+                g.log.debug(errmsg)
+            else:
+                g.log.error(errmsg)
+
+            sf = SearchFail()
+
+            us = unsafe(sf.render())
+
+            errpage = pages.RedditError(_('search failed'), us)
+
+            c.response = Response()
+            c.response.status_code = 503
+            request.environ['usable_error_content'] = errpage.render()
+            request.environ['retry_after'] = 60
+
+            abort(503)
 
     def title(self):
         """Page <title>"""
