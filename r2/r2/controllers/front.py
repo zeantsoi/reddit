@@ -31,16 +31,19 @@ from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.template_helpers import get_domain
+from r2.lib.contrib.markdown import markdown
+from r2.lib.filters import unsafe, SC_ON, SC_OFF
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery, LinkSearchQuery
+from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing
 from listingcontroller import ListingController
-from pylons import c, request
+from pylons import c, request, request, Response
 
 import random as rand
 import re
@@ -473,12 +476,13 @@ class FrontController(RedditController):
                                       SearchSortMenu(default=sort)],
                          search_params = dict(sort = sort, t = time),
                          infotext = infotext).render()
-        
+
         return res
-        
+
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
         thin wrapper for SearchBuilder."""
+
         builder = SearchBuilder(query_obj,
                                 after = after, num = num, reverse = reverse,
                                 count = count,
@@ -488,7 +492,34 @@ class FrontController(RedditController):
 
         # have to do it in two steps since total_num and timing are only
         # computed after fetch_more
-        res = listing.listing()
+        try:
+            res = listing.listing()
+        except SolrError, e:
+            errmsg = "SolrError: %r %r" % (e, query_obj)
+
+            if (str(e) == 'None'):
+                # Production error logs only get non-None errors
+                g.log.debug(errmsg)
+            else:
+                g.log.error(errmsg)
+
+            md = SC_OFF + markdown(strings.search_failed % dict(
+                link="javascript:tryagain\(\)")) + SC_ON
+
+            sf = SearchFail(md)
+            sb = SearchBar(prev_search = query_obj.q)
+
+            us = unsafe(sb.render() + sf.render())
+
+            errpage = pages.RedditError(_('search failed'), us)
+
+            c.response = Response()
+            c.response.status_code = 503
+            request.environ['usable_error_content'] = errpage.render()
+            request.environ['retry_after'] = 60
+
+            abort(503)
+
         timing = time_module.time() - builder.start_time
 
         return builder.total_num, timing, res

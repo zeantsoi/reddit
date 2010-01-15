@@ -1149,6 +1149,13 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params)
 
+class SearchFail(Templated):
+    """Search failure page."""
+    def __init__(self, errmsg, **kw):
+        self.errmsg = errmsg
+
+        Templated.__init__(self)
+
 
 class Frame(Templated):
     """Frameset for the FrameToolbar used when a user hits /tb/. The

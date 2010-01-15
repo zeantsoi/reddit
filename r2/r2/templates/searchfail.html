@@ -20,31 +20,23 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%!
-   from r2.lib.strings import strings
-   from r2.lib.pages import SearchForm
-%>
+<script type="text/javascript">
+  var searchfail_timeout = new Date();
 
-<% isize = 60 %>
-<div class="searchpane raisedbox">
-  <h4 style="color:gray">${thing.header}</h4>
-  
-  <div id="previoussearch">
-    ${SearchForm(prev_search = thing.prev_search,
-                 search_params = thing.search_params)}
-  </div>
-  
-  %if thing.prev_search and thing.elapsed_time > 0:
-    <div class="summary">
-      <%
-         label = _("about %(num)d results in %(second)s.")
-         seconds = strings.float_label % \
-              dict(num=thing.elapsed_time,
-                   thing=ungettext('second', 'seconds', 2))
-       %>
-      ${label % dict(num=thing.num_results, second=seconds)}
-    </div>
-    <div class="clearleft"></div>
-  %endif
+  function tryagain() {
+    elapsed = new Date() - searchfail_timeout;
+
+    seconds = elapsed / 1000;
+
+    if (seconds < 10) {
+      alert("Please don't pound our servers! " +
+            "Give them a few minutes to cool off.");
+    } else {
+      window.location.reload();
+    }
+  }
+</script>
+
+<div class="searchfail">
+  ${unsafe(thing.errmsg)}
 </div>
-

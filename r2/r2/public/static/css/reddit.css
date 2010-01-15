@@ -1195,6 +1195,17 @@ textarea.gray { color: gray; }
     margin-bottom: 10px; 
 }
 
+.searchfail {
+    color: #c00000;
+    font-size: larger;
+    line-height: 2em;
+}
+
+.searchfail a {
+    color: red;
+    text-decoration: underline;
+}
+
 /* login, register */
 
 

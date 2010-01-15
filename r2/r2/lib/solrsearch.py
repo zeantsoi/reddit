@@ -466,9 +466,31 @@ class SearchQuery(object):
         else:
             self.timerange = timerange
 
+    def __repr__(self):
+        attrs = [ "***q=%s***" % self.q ]
+
+        if self.subreddits is not None:
+            attrs.append("srs=" + '+'.join([ "%d" % s
+                                             for s in self.subreddits ]))
+
+        if self.authors is not None:
+            attrs.append("authors=" + '+'.join([ "%d" % s
+                                                 for s in self.authors ]))
+
+        if self.timerange is not None:
+            attrs.append("timerange=%s" % str(self.timerange))
+
+        if self.sort is not None:
+            attrs.append("sort=%r" % self.sort)
+
+        return "<%s(%s)>" % (self.__class__.__name__, ", ".join(attrs))
+
     def run(self, after = None, num = 100, reverse = False):
-        if not self.q or not g.solr_url:
+        if not self.q:
             return pysolr.Results([],0)
+
+        if not g.solr_url:
+            raise SolrError("g.solr_url is not set")
 
         # there are two parts to our query: what the user typed
         # (parsed with Solr's DisMax parser), and what we are adding
@@ -536,14 +558,9 @@ class SearchQuery(object):
 
         q,solr_params = self.solr_params(self.q,boost)
 
-        try:
-            search = self.run_search(q, self.sort, solr_params,
-                                     reverse, after, num)
-            return search
-
-        except SolrError,e:
-            g.log.error("SolrError: %r" % e)
-            return pysolr.Results([],0)
+        search = self.run_search(q, self.sort, solr_params,
+                                 reverse, after, num)
+        return search
 
     @classmethod
     def run_search(cls, q, sort, solr_params, reverse, after, num):

@@ -131,6 +131,19 @@ class ErrorController(RedditController):
         else:
             return pages.Reddit404().render()
 
+    def send503(self):
+        c.response.status_code = 503
+        if 'retry_after' in request.environ:
+            c.response.headers['Retry-After'] = request.environ['retry_after']
+        else:
+            c.response.headers['Retry-After'] = 1
+
+        if 'usable_error_content' in request.environ:
+            return request.environ['usable_error_content']
+        else:
+            c.response.content = toofast
+            return c.response
+
     def GET_document(self):
         try:
             #no cookies on errors
@@ -151,10 +164,7 @@ class ErrorController(RedditController):
             elif code == '500':
                 return redditbroke % rand_strings.sadmessages
             elif code == '503':
-                c.response.status_code = 503
-                c.response.headers['Retry-After'] = 1
-                c.response.content = toofast
-                return c.response
+                return self.send503()
             elif code == '304':
                 if request.GET.has_key('x-sup-id'):
                     c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')
