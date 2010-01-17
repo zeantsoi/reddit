@@ -59,6 +59,7 @@ class Subreddit(Thing, Printable):
                      domain = None,
                      over_18 = False,
                      mod_actions = 0,
+                     sponsorship_text = "this reddit is sponsored by",
                      sponsorship_url = None,
                      sponsorship_img = None,
                      sponsorship_name = None,

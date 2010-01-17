@@ -997,12 +997,13 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
                    ad_file = VLength('ad-location', max_length = 500),
+                   sponsor_text =VLength('sponsorship-text', max_length = 500),
                    sponsor_name =VLength('sponsorship-name', max_length = 500),
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
     def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
-                        sponsor_url, sponsor_name,  **kw):
+                        sponsor_text, sponsor_url, sponsor_name,  **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -1062,6 +1063,7 @@ class ApiController(RedditController):
                 if ad_type != "custom":
                     ad_file = Subreddit._defaults['ad_file']
                 sr.ad_file = ad_file
+                sr.sponsorship_text = sponsor_text or ""
                 sr.sponsorship_url = sponsor_url or None
                 sr.sponsorship_name = sponsor_name or None
 

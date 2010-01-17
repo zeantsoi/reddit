@@ -287,7 +287,12 @@ function update_title(elem) {
     <%utils:line_field title="${_('sponsorship')}">
       <ul class="upload">
         <li>
-          <input type="text" name="sponsorship-name" 
+          <input type="text" name="sponsorship-text"
+                 value="${thing.site.sponsorship_text}"
+                 />
+        </li>
+        <li>
+          <input type="text" name="sponsorship-name"
                  %if thing.site.sponsorship_name:
                      value="${thing.site.sponsorship_name}"
                  %else:
