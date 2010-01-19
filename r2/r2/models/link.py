@@ -925,7 +925,6 @@ class Inbox(MultiRelation('inbox',
             inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
                                      eager_load = True)
             inbox = list(inbox)
-        print inbox
         for i in inbox:
             if i:
                 i.new = unread
