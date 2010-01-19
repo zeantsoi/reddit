@@ -268,8 +268,8 @@ def get_submitted(user, sort, time):
 def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
                          get_submitted(user, sort, time))
-    
-def user_rel_query(rel, user, name):
+
+def user_rel_query(rel, user, name, filters = []):
     """General user relationship query."""
     q = rel._query(rel.c._thing1_id == user._id,
                    rel.c._t2_deleted == False,
@@ -278,6 +278,8 @@ def user_rel_query(rel, user, name):
                    eager_load = True,
                    thing_data = not g.use_query_cache
                    )
+    if filters:
+        q._filter(*filters)
 
     return make_results(q, filter_thing2)
 
@@ -299,12 +301,24 @@ inbox_message_rel = Inbox.rel(Account, Message)
 def get_inbox_messages(user):
     return user_rel_query(inbox_message_rel, user, 'inbox')
 
+def get_unread_messages(user):
+    return user_rel_query(inbox_message_rel, user, 'inbox', 
+                          filters = [inbox_message_rel.c.new == True])
+
 inbox_comment_rel = Inbox.rel(Account, Comment)
 def get_inbox_comments(user):
     return user_rel_query(inbox_comment_rel, user, 'inbox')
 
+def get_unread_comments(user):
+    return user_rel_query(inbox_comment_rel, user, 'inbox', 
+                          filters = [inbox_comment_rel.c.new == True])
+
 def get_inbox_selfreply(user):
     return user_rel_query(inbox_comment_rel, user, 'selfreply')
+
+def get_unread_selfreply(user):
+    return user_rel_query(inbox_comment_rel, user, 'inbox', 
+                          filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox(user):
     return merge_results(get_inbox_comments(user),
@@ -316,6 +330,11 @@ def get_sent(user):
                        Message.c._spam == (True, False),
                        sort = desc('_date'))
     return make_results(q)
+
+def get_unread_inbox(user):
+    return merge_results(get_unread_comments(user),
+                         get_unread_messages(user),
+                         get_unread_selfreply(user))
 
 def add_queries(queries, insert_items = None, delete_items = None):
     """Adds multiple queries to the query queue. If insert_items or
@@ -449,13 +468,33 @@ def new_vote(vote):
     else:
         add_queries([get_liked(user)], delete_items = vote)
         add_queries([get_disliked(user)], delete_items = vote)
-    
+
 def new_message(message, inbox_rel):
+    from r2.lib.comment_tree import add_message
+
     from_user = Account._byID(message.author_id)
     to_user = Account._byID(message.to_id)
 
     add_queries([get_sent(from_user)], insert_items = message)
     add_queries([get_inbox_messages(to_user)], insert_items = inbox_rel)
+
+    add_message(message)
+    set_unread(message, True)
+
+def set_unread(message, unread):
+    #TODO: for migration only
+    users = set()
+    for i in Inbox.set_unread(message, unread):
+        kw = dict(insert_items = i) if unread else dict(insert_items = i)
+        if i._name == 'selfreply':
+            add_queries([get_unread_selfreply(i._thing1)], **kw)
+        elif isinstance(message, Comment):
+            add_queries([get_unread_comments(i._thing1)], **kw)
+        else:
+            add_queries([get_unread_messages(i._thing1)], **kw)
+        #TODO: for migration only (with return value)
+        users.add(i._thing1)
+    return users
 
 def new_savehide(rel):
     user = rel._thing1

@@ -135,3 +135,24 @@ def subscribe_to_blog_and_annoucements(filename):
                 print ("%d: subscribed %s to %s" % (i, account.name, sr.name))
             else:
                 print ("%d: didn't subscribe %s to %s" % (i, account.name, sr.name))
+
+
+def upgrade_messages():
+    from r2.lib.db import queries
+    from r2.lib import comment_tree
+    accounts = set()
+
+    q = Message._query(Message.c.new == True)
+    for m in fetch_things2(q):
+        print m
+        accounts = accounts | queries.set_unread(m, m.new)
+
+    q = Comment._query(Comment.c.new == True)
+    for m in fetch_things2(q):
+        print m
+        accounts = accounts | queries.set_unread(m, m.new)
+
+    print "Precomputing comment trees for %d accounts" % len(accounts)
+
+    for a in accounts:
+        comment_tree.user_messages(a)

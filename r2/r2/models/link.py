@@ -511,9 +511,6 @@ class Comment(Thing, Printable):
             to = Account._byID(link.author_id)
             name = 'selfreply'
 
-        if to:
-            c.new = True
-
         c._commit()
 
         inbox_rel = None
@@ -546,7 +543,7 @@ class Comment(Thing, Printable):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
-        s.extend([wrapped.body, wrapped.new])
+        s.extend([wrapped.body])
         return s
 
     def bestof_magic(self):
@@ -682,6 +679,50 @@ class StarkComment(Comment):
        the reddit toolbar"""
     _nodb = True
 
+class MoreMessages(Printable):
+    cachable = False
+    display = ""
+    new = False
+    was_comment = False
+    is_collapsed = True
+
+    def __init__(self, parent, child):
+        self.parent = parent
+        self.child = child
+
+    @staticmethod
+    def wrapped_cache_key(item, style):
+        return False
+
+    @property
+    def _fullname(self):
+        return self.parent._fullname
+
+    @property
+    def _id36(self):
+        return self.parent._id36
+
+    @property
+    def subject(self):
+        return self.parent.subject
+
+    @property
+    def childlisting(self):
+        return self.child
+
+    @property
+    def to(self):
+        return self.parent.to
+
+    @property
+    def author(self):
+        return self.parent.author
+
+    @property
+    def recipient(self):
+        return self.parent.recipient
+
+
 class MoreComments(Printable):
     cachable = False
     display = ""
@@ -716,13 +757,14 @@ class MoreRecursion(MoreComments):
 
 class MoreChildren(MoreComments):
     pass
-    
+
 class Message(Thing, Printable):
     _defaults = dict(reported = 0, was_comment = False, parent_id = None,
-                     new = False,  first_message = None)
+                     new = False,  first_message = None,
+                     to_collapse = None, author_collapse = None)
     _data_int_props = Thing._data_int_props + ('reported', )
     cache_ignore = set(["to"]).union(Printable.cache_ignore)
-    
+
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent = None):
         m = Message(subject = subject,
@@ -737,7 +779,7 @@ class Message(Thing, Printable):
                 m.first_message = parent.first_message
             else:
                 m.first_message = parent._id
-                
+
         m.to_id = to._id
         m._commit()
 
@@ -751,12 +793,20 @@ class Message(Thing, Printable):
 
         return (m, inbox_rel)
 
+    @property
+    def permalink(self):
+        return "/message/messages/%s" % self._id36
+
+    def can_view(self):
+        return (c.user_is_loggedin and
+                (c.user._id in (self.author_id, self.to_id)))
+
     @classmethod
     def add_props(cls, user, wrapped):
         #TODO global-ish functions that shouldn't be here?
         #reset msgtime after this request
         msgtime = c.have_messages
-        
+
         #load the "to" field if required
         to_ids = set(w.to_id for w in wrapped)
         tos = Account._byID(to_ids, True) if to_ids else {}
@@ -769,21 +819,38 @@ class Message(Thing, Printable):
                                   if l.parent_id and l.was_comment),
                                 data = True, return_dict = True)
 
+        # load the inbox relations for the messages to determine new-ness
+        inbox = Inbox._fast_query(c.user, 
+                                  [item.lookups[0] for item in wrapped],
+                                  ['inbox', 'selfreply'])
+
+        # we don't care about the username or the rel name
+        inbox = dict((m._fullname, v) for (u, m, n), v in inbox.iteritems() if v)
+
         for item in wrapped:
             item.to = tos[item.to_id]
             item.recipient = (item.to_id == c.user._id)
-            # TODO: can be removed (holdover from when there was no new attr)
-            if msgtime and item._date >= msgtime:
-                item.new = True
+
             # don't mark non-recipient messages as new
             if not item.recipient:
                 item.new = False
+            # TODO: backward compatibility only.  Remove on final patch
+            elif hasattr(item, "new"):
+                pass
+            # new-ness is stored on the relation
+            elif item._fullname in inbox:
+                item.new = getattr(inbox[item._fullname], "new", False)
+            else:
+                item.new = False
+
             item.score_fmt = Score.none
 
             item.message_style = ""
             if item.was_comment:
                 link = links[item.link_id]
                 sr = subreddits[link.sr_id]
+                item.to_collapse = False
+                item.author_collapse = False
                 item.link_title = link.title
                 item.link_permalink = link.make_permalink(sr)
                 if item.parent_id:
@@ -798,13 +865,22 @@ class Message(Thing, Printable):
             if c.user.pref_no_profanity:
                 item.subject = profanity_filter(item.subject)
 
+            item.is_collapsed = None
+            if not item.new:
+                if item.recipient:
+                    item.is_collapsed = item.to_collapse
+                if item.author_id == c.user._id:
+                    item.is_collapsed = item.author_collapse
+                if c.user.pref_collapse_read_messages:
+                    item.is_collapsed = (item.is_collapsed is not False)
+
         # Run this last
         Printable.add_props(user, wrapped)
 
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
-        s.extend([c.msg_location, wrapped.new])
+        s.extend([c.msg_location, wrapped.new, wrapped.collapsed])
         return s
     
 
@@ -817,9 +893,13 @@ class Click(Relation(Account, Link)): pass
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
                           Relation(Account, Message))):
+
+    _defaults = dict(new = False)
+
     @classmethod
     def _add(cls, to, obj, *a, **kw):
         i = Inbox(to, obj, *a, **kw)
+        i.new = True
         i._commit()
 
         if not to._loaded:
@@ -831,3 +911,24 @@ class Inbox(MultiRelation('inbox',
             to._commit()
 
         return i
+
+    @classmethod
+    def set_unread(cls, thing, unread):
+        # TODO: backward compatibility only.  Remove on final patch
+        thing.new = unread
+        thing._commit()
+        if c.user_is_loggedin and c.user:
+            inbox = cls._fast_query(c.user, thing, ['inbox', 'selfreply'])
+            inbox = inbox.values()
+        else:
+            inbox_rel = cls.rel(Account, thing.__class__)
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+                                     eager_load = True)
+            inbox = list(inbox)
+        print inbox
+        for i in inbox:
+            if i:
+                i.new = unread
+                i._commit()
+                yield i
+

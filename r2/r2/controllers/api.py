@@ -31,7 +31,7 @@ from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, link_from_url, timefromnow
-from r2.lib.utils import timeago
+from r2.lib.utils import timeago, tup
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
@@ -669,6 +669,7 @@ class ApiController(RedditController):
 
             # insert the new comment
             jquery.insert_things(item)
+            
             # remove any null listings that may be present
             jquery("#noresults").hide()
 
@@ -1141,14 +1142,39 @@ class ApiController(RedditController):
 
     @noresponse(VUser(),
                 VModhash(),
+                thing = VByName('id', multiple = True))
+    def POST_collapse_message(self, thing):
+        if not thing:
+            return
+        for t in tup(thing):
+            if hasattr(t, "to_id") and c.user._id == t.to_id:
+                t.to_collapse = True
+            elif hasattr(t, "author_id") and c.user._id == t.author_id:
+                t.author_collapse = True
+            t._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id', multiple = True))
+    def POST_uncollapse_message(self, thing):
+        if not thing:
+            return
+        for t in tup(thing):
+            if hasattr(t, "to_id") and c.user._id == t.to_id:
+                t.to_collapse = False
+            elif hasattr(t, "author_id") and c.user._id == t.author_id:
+                t.author_collapse = False
+            t._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
                 thing = VByName('id'))
     def POST_unread_message(self, thing):
         if not thing:
             return
         if hasattr(thing, "to_id") and c.user._id != thing.to_id:
             return 
-        thing.new = True
-        thing._commit()
+        queries.set_unread(thing, True)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1157,10 +1183,7 @@ class ApiController(RedditController):
         if not thing: return
         if hasattr(thing, "to_id") and c.user._id != thing.to_id:
             return 
-        thing.new = False
-        thing._commit()
-
-
+        queries.set_unread(thing, False)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1179,6 +1202,24 @@ class ApiController(RedditController):
         if r:
             queries.new_savehide(r)
 
+
+    @validatedForm(VUser(),
+                   parent = VByName('parent_id'))
+    def POST_moremessages(self, form, jquery, parent):
+        if not parent.can_view():
+            return self.abort(403,'forbidden')
+
+        builder = MessageBuilder(c.user, parent = parent)
+        listing = Listing(builder).listing()
+        a = []
+        for item in listing.things:
+            a.append(item)
+            for x in item.child.things:
+                a.append(x)
+        for item in a:
+            if hasattr(item, "child"):
+                item.child = None
+        jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
