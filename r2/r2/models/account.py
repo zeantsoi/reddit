@@ -59,6 +59,9 @@ class Account(Thing):
                      pref_label_nsfw = True,
                      pref_show_stylesheets = True,
                      pref_mark_messages_read = True,
+                     # TODO: make this true
+                     pref_threaded_messages = False,
+                     pref_collapse_read_messages = False,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,
