@@ -437,6 +437,8 @@ def new_comment(comment, inbox_rel):
         else:
             add_queries([get_inbox_selfreply(inbox_owner)],
                         insert_items = inbox_rel)
+        set_unread(comment, True)
+
 
 
 def new_subreddit(sr):
