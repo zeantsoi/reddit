@@ -36,7 +36,7 @@
 
 <div class="award-square-container">
   %if thing.manuals:
-    <h1>${_("Awards given out regularly:")}</h1>
+    <h1>${_("Ongoing awards, and their most recent winners:")}</h1>
   %else:
     <h1>&nbsp;</h1>
   %endif
@@ -80,7 +80,7 @@
   %endfor
 
   %if thing.manuals:
-    ${other_awards(_("Special one-time awards:"), thing.manuals)}
+    ${other_awards(_("Special awards:"), thing.manuals)}
   %endif
 
   %if c.user_is_admin and thing.invisibles:

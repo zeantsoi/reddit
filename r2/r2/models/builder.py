@@ -158,13 +158,11 @@ class Builder(object):
 
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]
-                # remove the next if to let everyone see cups
-                if c.user_is_admin:
-                    label = _(cup_info["label_template"]) % \
-                            {'user':w.author.name}
-                    add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
-                             label=label,
-                             link = "/user/%s" % w.author.name)
+                label = _(cup_info["label_template"]) % \
+                        {'user':w.author.name}
+                add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
+                         label=label,
+                         link = "/user/%s" % w.author.name)
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]
@@ -173,12 +171,6 @@ class Builder(object):
 
             # update vote tallies
             compute_votes(w, item)
-
-            if (hasattr(item, "bestof_magic") and item.bestof_magic() == 'comment'
-                and not (c.user_is_admin or
-                         c.user_is_loggedin and c.user._id == g.bestof_magic_userid)):
-                w.upvotes = 1
-                w.downvotes = 0
 
             w.score = w.upvotes - w.downvotes
 
@@ -655,14 +647,6 @@ class CommentBuilder(Builder):
                 mc2.children.append(to_add)
 
             mc2.count += 1
-
-        if self.link.bestof_magic():
-            if self.link._spam and not (c.user_is_loggedin and
-                                        c.user._id == g.bestof_magic_userid):
-                final = []
-            else:
-                from random import shuffle
-                shuffle (final)
 
         return final
 

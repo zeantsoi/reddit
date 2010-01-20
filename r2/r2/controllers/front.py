@@ -241,9 +241,6 @@ class FrontController(RedditController):
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
             display = not bool(comment)
-            if (hasattr(article, "bestof_magic") and article.bestof_magic()
-                and c.user._id != g.bestof_magic_userid):
-                display = False
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
                                         display = display,

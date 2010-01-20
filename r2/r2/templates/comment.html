@@ -80,10 +80,7 @@ ${parent.collapsed()}
   %if collapse and thing.collapsed and show:
     ${_("comment score below threshold")}
   %else:
-    %if show and (not hasattr(thing, "bestof_magic") or \
-                  thing.bestof_magic() != 'comment' or \
-                  c.user_is_admin or \
-                  (c.user_is_loggedin and c.user._id == g.bestof_magic_userid)):
+    %if show:
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
     ## thing.timesince is a cache stub
