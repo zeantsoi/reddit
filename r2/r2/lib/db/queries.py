@@ -487,7 +487,7 @@ def set_unread(message, unread):
     #TODO: for migration only
     users = set()
     for i in Inbox.set_unread(message, unread):
-        kw = dict(insert_items = i) if unread else dict(insert_items = i)
+        kw = dict(insert_items = i) if unread else dict(delete_items = i)
         if i._name == 'selfreply':
             add_queries([get_unread_selfreply(i._thing1)], **kw)
         elif isinstance(message, Comment):
