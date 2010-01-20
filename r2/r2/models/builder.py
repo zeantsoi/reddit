@@ -147,7 +147,6 @@ class Builder(object):
                 getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
-            has_cup=False
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]
                 label = _(cup_info["label_template"]) % \
@@ -155,15 +154,6 @@ class Builder(object):
                 add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
                          label=label,
                          link = "/user/%s" % w.author.name)
-                has_cup=True
-
-            if (c.user_is_loggedin and c.user.name in g.admins and w.author and
-                w.author_id == 3125581):
-                print "hey %s:" % c.user.name,
-                if has_cup:
-                    print "qgyh2 has a cup"
-                else:
-                    print "qgyh2 does NOT have a cup"
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]
