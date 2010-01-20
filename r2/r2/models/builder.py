@@ -71,17 +71,8 @@ class Builder(object):
 
         authors = Account._byID(aids, True) if aids else {}
 
-        switch = g.hardcache.get("dipswitch-check_cup_info")
-
-        # FIXME: this still sucks
-        cup_infos = {}
-        if switch is None or switch is False or switch is 0:
-            pass
-        elif switch is True or switch is 1:
-            if aids:
-                cup_infos = Account.cup_info_multi(aids)
-        else:
-            g.log.error("weird dipswitch value %r" % switch)
+        if aids:
+            cup_infos = Account.cup_info_multi(aids)
 
         # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)
@@ -156,6 +147,7 @@ class Builder(object):
                 getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
+            has_cup=False
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]
                 label = _(cup_info["label_template"]) % \
@@ -163,6 +155,15 @@ class Builder(object):
                 add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
                          label=label,
                          link = "/user/%s" % w.author.name)
+                has_cup=True
+
+            if (c.user_is_loggedin and c.user.name in g.admins and w.author and
+                w.author_id == 3125581):
+                print "hey %s:" % c.user.name,
+                if has_cup:
+                    print "qgyh2 has a cup"
+                else:
+                    print "qgyh2 does NOT have a cup"
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]

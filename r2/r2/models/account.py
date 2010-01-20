@@ -311,7 +311,7 @@ class Account(Thing):
 
     @classmethod
     def cup_info_multi(cls, ids):
-        ids = [ int(id) for id in ids ]
+        ids = [ int(i) for i in ids ]
         return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
 
 class FakeAccount(Account):
