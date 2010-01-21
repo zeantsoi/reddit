@@ -34,7 +34,7 @@ from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
-from r2.lib.comment_tree import link_comments
+from r2.lib.comment_tree import link_comments, user_messages, conversation, tree_sort_fn
 from copy import deepcopy, copy
 
 import time
@@ -448,6 +448,18 @@ class SearchBuilder(QueryBuilder):
 
         return done, new_items
 
+def empty_listing(*things):
+    parent_name = None
+    for t in things:
+        try:
+            parent_name = t.parent_name
+            break
+        except AttributeError:
+            continue
+    l = Listing(None, None, parent_name = parent_name)
+    l.things = list(things)
+    return Wrapped(l)
+
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment = None, context = None,
                  load_more=True, continue_this_thread=True,
@@ -481,18 +493,6 @@ class CommentBuilder(Builder):
                                          return_dict = False))
         else:
             comments = ()
-
-        def empty_listing(*things):
-            parent_name = None
-            for t in things:
-                try:
-                    parent_name = t.parent_name
-                    break
-                except AttributeError:
-                    continue
-            l = Listing(None, None, parent_name = parent_name)
-            l.things = list(things)
-            return Wrapped(l)
 
         comment_dict = dict((cm._id, cm) for cm in comments)
 
@@ -640,6 +640,113 @@ class CommentBuilder(Builder):
             mc2.count += 1
 
         return final
+
+class MessageBuilder(Builder):
+    def __init__(self, user, parent = None, focal = None,
+                 skip = True, **kw):
+        self.user = user
+        self.num = kw.pop('num', None)
+        self.focal = focal
+        self.parent = parent
+        self.skip = skip
+
+        self.after = kw.pop('after', None)
+        self.reverse = kw.pop('reverse', None)
+
+        Builder.__init__(self, **kw)
+
+    def item_iter(self, a):
+        for i in a[0]:
+            yield i
+            if hasattr(i, 'child'):
+                for j in i.child.things:
+                    yield j
+
+    def get_items(self):
+        if self.parent:
+            tree = conversation(self.user, self.parent)
+        else:
+            tree = user_messages(self.user)
+
+        prev = next = None
+        if not self.parent:
+            if self.num is not None:
+                if self.after:
+                    if self.reverse:
+                        tree = filter(
+                            lambda x: tree_sort_fn(x) >= self.after._id, tree)
+                        next = self.after._id
+                        if len(tree) > self.num:
+                            prev = tree[-(self.num+1)][0]
+                            tree = tree[-self.num:]
+                    else:
+                        prev = self.after._id
+                        tree = filter(
+                            lambda x: tree_sort_fn(x) < self.after._id, tree)
+                if len(tree) > self.num:
+                    tree = tree[:self.num]
+                    next = tree[-1][0]
+
+        # generate the set of ids to look up and look them up
+        message_ids = []
+        for root, thread in tree:
+            message_ids.append(root)
+            message_ids.extend(thread)
+        if prev:
+            message_ids.append(prev)
+
+        messages = Message._byID(message_ids, data = True, return_dict = False)
+        wrapped = dict((m._id, m) for m in self.wrap_items(messages))
+
+        if prev:
+            prev = wrapped[prev]
+        if next:
+            next = wrapped[next]
+
+        final = []
+        for parent, children in tree:
+            parent = wrapped[parent]
+            if children:
+                # if no parent is specified, check if any of the messages are
+                # uncollapsed, and truncate the thread
+                children = [wrapped[child] for child in children]
+                parent.child = empty_listing()
+                # if the parent is new, uncollapsed, or focal we don't
+                # want it to become a moremessages wrapper.
+                if (self.skip and 
+                    not self.parent and not parent.new and parent.is_collapsed 
+                    and not (self.focal and self.focal._id == parent._id)):
+                    for i, child in enumerate(children):
+                        if (child.new or not child.is_collapsed or
+                            (self.focal and self.focal._id == child._id)):
+                            break
+                    else:
+                        i = -1
+                    parent = Wrapped(MoreMessages(parent, empty_listing()))
+                    children = children[i:]
+
+                parent.child.parent_name = parent._fullname
+                parent.child.things = []
+
+                for child in children:
+                    child.is_child = True
+                    if self.focal and child._id == self.focal._id:
+                        # focal message is never collapsed
+                        child.collapsed = False
+                        child.focal = True
+                    else:
+                        child.collapsed = child.is_collapsed
+                    parent.child.things.append(child)
+            parent.is_parent = True
+            # the parent might be the focal message on a permalink page
+            if self.focal and parent._id == self.focal._id:
+                parent.collapsed = False
+                parent.focal = True
+            else:
+                parent.collapsed = parent.is_collapsed
+            final.append(parent)
+
+        return (final, prev, next, len(final), len(final))
 
 def make_wrapper(parent_wrapper = Wrapped, **params):
     def wrapper_fn(thing):

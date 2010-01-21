@@ -1747,7 +1747,7 @@ class LinkChild(object):
         self.expand = expand
         self.load = load or expand
         self.nofollow = nofollow
-    
+
     def content(self):
         return ''
 

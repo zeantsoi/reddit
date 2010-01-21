@@ -159,7 +159,6 @@ def upgrade_messages(update_comments = True, update_messages = True,
                 accounts = accounts | queries.set_unread(m, m.new)
             else:
                 accounts.add(m.to_id)
-
     if update_comments:
         q = Comment._query(Comment.c.new == True,
                            sort = desc("_date"))

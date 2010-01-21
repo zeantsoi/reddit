@@ -293,7 +293,7 @@ class Templated(object):
             g.rendercache.set_multi(dict((k, v)
                                          for k, (v, kw) in updates.values()
                                          if k in to_cache))
-    
+
             # edge case: this may be the primary tempalte and cachable
             if isinstance(res, CacheStub):
                 res = updates[res.name][1][0]
@@ -385,7 +385,7 @@ class CachedTemplate(Templated):
         # a menu is just a set of links, so we best cache against
         # them.
         keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
-                c.render_style, c.cname, c.lang, c.site.path,
+                style, c.cname, c.lang, c.site.path,
                 template_hash]
         keys = [make_cachable(x, *a) for x in keys]
 

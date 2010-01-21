@@ -108,6 +108,8 @@ class PostController(ApiController):
               pref_label_nsfw = VBoolean('label_nsfw'),
               pref_show_promote = VBoolean('show_promote'),
               pref_mark_messages_read = VBoolean("mark_messages_read"),
+              pref_threaded_messages = VBoolean("threaded_messages"),
+              pref_collapse_read_messages = VBoolean("collapse_read_messages"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an

@@ -178,11 +178,11 @@ class ThingJsonTemplate(JsonTemplate):
             return self.rendered_data(thing)
         else:
             return self.raw_data(thing)
-        
+
     def render(self, thing = None, action = None, *a, **kw):
         return ObjectTemplate(dict(kind = self.kind(thing),
                                    data = self.data(thing)))
-        
+
 class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "score",
                                                 title        = "title",
@@ -193,7 +193,15 @@ class SubredditJsonTemplate(ThingJsonTemplate):
 class AccountJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
                                                 link_karma = "safe_karma",
-                                                comment_karma = "comment_karma")
+                                                comment_karma = "comment_karma",
+                                                has_mail = "has_mail")
+
+    def thing_attr(self, thing, attr):
+        if attr == "has_mail":
+            if c.user_is_loggedin and thing._id == c.user._id:
+                return bool(c.have_messages)
+            return None
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class LinkJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
@@ -316,12 +324,15 @@ class MessageJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(new          = "new",
                                                 subject      = "subject",
                                                 body         = "body",
+                                                replies      = "child",
                                                 body_html    = "body_html",
                                                 author       = "author",
                                                 dest         = "dest",
                                                 was_comment  = "was_comment",
                                                 context      = "context", 
-                                                created      = "created")
+                                                created      = "created",
+                                                parent_id    = "parent_id",
+                                                first_message= "first_message")
 
     def thing_attr(self, thing, attr):
         if attr == "was_comment":

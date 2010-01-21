@@ -308,6 +308,18 @@ class VCommentID(Validator):
             except (NotFound, ValueError):
                 pass
 
+class VMessageID(Validator):
+    def run(self, cid):
+        if cid:
+            try:
+                cid = int(cid, 36)
+                m = Message._byID(cid, True)
+                if not m.can_view():
+                    abort(403, 'forbidden')
+                return m
+            except (NotFound, ValueError):
+                pass
+
 class VCount(Validator):
     def run(self, count):
         if count is None:

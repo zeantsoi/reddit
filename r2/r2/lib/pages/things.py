@@ -121,8 +121,7 @@ class CommentButtons(PrintableButtons):
 class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):
         was_comment = getattr(thing, 'was_comment', False)
-        permalink = thing.permalink if was_comment else ""
-
+        permalink = thing.permalink
         PrintableButtons.__init__(self, "messagebuttons", thing,
                                   profilepage = c.profilepage,
                                   permalink = permalink,

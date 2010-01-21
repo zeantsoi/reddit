@@ -317,7 +317,7 @@ def get_inbox_selfreply(user):
     return user_rel_query(inbox_comment_rel, user, 'selfreply')
 
 def get_unread_selfreply(user):
-    return user_rel_query(inbox_comment_rel, user, 'inbox', 
+    return user_rel_query(inbox_comment_rel, user, 'selfreply', 
                           filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox(user):
@@ -484,8 +484,6 @@ def new_message(message, inbox_rel):
     set_unread(message, True)
 
 def set_unread(message, unread):
-    #TODO: for migration only
-    users = set()
     for i in Inbox.set_unread(message, unread):
         kw = dict(insert_items = i) if unread else dict(delete_items = i)
         if i._name == 'selfreply':
@@ -494,9 +492,6 @@ def set_unread(message, unread):
             add_queries([get_unread_comments(i._thing1)], **kw)
         else:
             add_queries([get_unread_messages(i._thing1)], **kw)
-        #TODO: for migration only (with return value)
-        users.add(i._thing1)
-    return users
 
 def new_savehide(rel):
     user = rel._thing1

@@ -843,6 +843,13 @@ textarea.gray { color: gray; }
 .morecomments a:hover { text-decoration: underline}
 .morecomments .gray {font-weight: normal; color: gray}
 
+.expand-btn { 
+    font-size: smaller;
+    margin: 0px 5px;  
+    margin-top: 4px; 
+    display: inline-block; 
+}
+
 .message {
     margin: 10px 10px 20px 5px; 
     padding-left: 5px; 
@@ -850,7 +857,40 @@ textarea.gray { color: gray; }
     padding:7px;
 }
 
-.message.new { 
+.message.focal > .entry .md { 
+    background-color: #FFFFCC;
+}
+
+.message .collapsed .head { 
+    color: #888888;
+    font-style: italic;
+}
+
+
+.message.message-parent .tagline,
+.message.message-reply .tagline  { 
+    color: #485;
+}
+
+.message.message-parent > .entry .noncollapsed,
+.message.message-reply  > .entry .noncollapsed  { 
+    color: #485;
+}
+
+.message.recipient > .entry .noncollapsed  { 
+    color: black;
+}
+
+.message.message-reply.recipient > .entry .head,
+.message.message-parent.recipient > .entry .head { 
+    color: black; 
+    font-weight: bold;
+}
+
+.message.new > .entry .head {
+  color:orangered; font-weight: bold;  
+}
+.message.new > .entry{ 
     background-color:#F7F7F7;
     border:1px solid #E9E9E9;
     padding: 6px;
@@ -861,6 +901,59 @@ textarea.gray { color: gray; }
 }
 
 
+.message .child .message,
+.message .child .usertext { 
+    margin-top: 10px; 
+    margin-left: 12px; 
+}
+
+.message .expand { 
+    display: none;
+}
+
+.message .entry { 
+    margin-left: 0px; 
+}
+
+.message.message-parent .expand { 
+    display: inline; 
+}
+
+/* threaded message styles: remove padding */
+.message.message-parent .child,
+.message.message-reply .child { 
+    margin: 0;
+    padding: 0; 
+}
+
+.message.message-parent .child .message,
+.message.message-reply  .child .message
+ { 
+    margin: 0;
+    padding: 0; 
+}
+
+.message.message-parent .subject { 
+    margin-bottom: 10px; 
+}
+
+.message.message-parent .message .subject { 
+    display: none; 
+}
+
+.message.message-reply .subject { 
+    display:none;
+}
+
+.message.message-reply .entry, 
+.message.message-parent .entry { 
+    margin-left: 10px;
+    padding-left: 10px;
+    padding-bottom: 10px; 
+    border-left: 2px dashed #E7E7E7;
+}
+
+
 .message .buttons,
 .message .md { margin-left: 15px; }
 .message .entry .parent { 
@@ -868,6 +961,16 @@ textarea.gray { color: gray; }
     max-width: 60em;
     margin: 3px 10px; 
 }
+
+.message .subject .correspondent {
+    background-color:#EFF7FF;
+    border:1px solid #336699;
+    color:#336699;
+    display:inline-block;
+    margin-right:10px;
+    padding:2px 5px; 
+}
+
 .message .subject .title { 
     font-weight: normal;
     font-style: italic;
@@ -889,9 +992,7 @@ textarea.gray { color: gray; }
     margin-left: 2px; 
  }
 
-.message .child { margin-left: 15px;  }
 
-.message.new .head {color:orangered; font-weight: bold;  }
 .message .subject { font-weight: bold; font-size: larger; }
 
 .clippy img {

@@ -57,8 +57,10 @@ class Listing(object):
         from r2.lib.template_helpers import replace_render
         builder_items = self.builder.get_items(*a, **kw)
         for item in self.builder.item_iter(builder_items):
-            # rewrite the render method 
-            item.render = replace_render(self, item, item.render)
+            # rewrite the render method
+            if not hasattr(item, "render_replaced"):
+                item.render = replace_render(self, item, item.render)
+                item.render_replaced = True
         return builder_items
 
     def listing(self):

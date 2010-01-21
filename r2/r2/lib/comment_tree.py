@@ -178,8 +178,7 @@ def add_message_nolock(user_id, message):
             new_tree = compute_message_trees(m)
             if new_tree:
                 trees.append(new_tree[0])
-                trees.sort(key = lambda x: x[1][-1] if x[1] else x[0], 
-                           reverse = True)
+                trees.sort(key = tree_sort_fn, reverse = True)
 
     # done!
     g.permacache.set(key, trees)
@@ -266,6 +265,10 @@ def compute_message_trees(messages):
         threads[k] = list(sorted(threads[k]))
 
     tree = [(root, threads.get(root, [])) for root in roots]
-    tree.sort(key = lambda x: x[1][-1] if x[1] else x[0], reverse = True)
+    tree.sort(key = tree_sort_fn, reverse = True)
 
     return tree
+
+def tree_sort_fn(tree):
+    root, threads = tree
+    return threads[-1] if threads else root

@@ -223,19 +223,23 @@
     <li>
       ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
     </li>
+  %else:
+    <li class="first">
+      ${self.bylink_button(_("permalink"), thing.permalink)}
+    </li>
   %endif
-  ${self.banbuttons()}
   %if thing.recipient:
-  <li class="unread">
+    ${self.banbuttons()}
+    <li class="unread">
      ${self.state_button("unread", _("mark unread"), \
         "return change_state(this, 'unread_message', unread_thing, true);", \
          _("unread"))}
-  </li>
-  %endif
-  %if thing.can_reply:
-    <li>
-       ${self.simple_button(_("reply {verb}"), "reply")}
     </li>
+    %if thing.can_reply:
+      <li>
+         ${self.simple_button(_("reply {verb}"), "reply")}
+      </li>
+    %endif
   %endif
 </%def>
 

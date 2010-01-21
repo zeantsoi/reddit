@@ -1202,7 +1202,7 @@ class ApiController(RedditController):
         if not parent.can_view():
             return self.abort(403,'forbidden')
 
-        builder = MessageBuilder(c.user, parent = parent)
+        builder = MessageBuilder(c.user, parent = parent, skip = False)
         listing = Listing(builder).listing()
         a = []
         for item in listing.things:

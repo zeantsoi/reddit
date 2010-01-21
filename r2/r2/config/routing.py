@@ -150,6 +150,8 @@ def make_map(global_conf={}, app_conf={}):
        requirements = dict(sort = 'top|controversial'))
     
     mc('/message/compose', controller='message', action='compose')
+    mc('/message/messages/:mid', controller='message', action='listing',
+       where = "messages")
     mc('/message/:where', controller='message', action='listing')
     
     mc('/:action', controller='front',

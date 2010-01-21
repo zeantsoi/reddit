@@ -789,6 +789,7 @@ class Message(Thing, Printable):
 
     @classmethod
     def add_props(cls, user, wrapped):
+        from r2.lib.db import queries
         #TODO global-ish functions that shouldn't be here?
         #reset msgtime after this request
         msgtime = c.have_messages
@@ -811,7 +812,8 @@ class Message(Thing, Printable):
                                   ['inbox', 'selfreply'])
 
         # we don't care about the username or the rel name
-        inbox = dict((m._fullname, v) for (u, m, n), v in inbox.iteritems() if v)
+        inbox = dict((m._fullname, v)
+                     for (u, m, n), v in inbox.iteritems() if v)
 
         for item in wrapped:
             item.to = tos[item.to_id]
@@ -820,14 +822,16 @@ class Message(Thing, Printable):
             # don't mark non-recipient messages as new
             if not item.recipient:
                 item.new = False
-            # TODO: backward compatibility only.  Remove on final patch
-            elif hasattr(item, "new"):
-                pass
             # new-ness is stored on the relation
             elif item._fullname in inbox:
                 item.new = getattr(inbox[item._fullname], "new", False)
+                if item.new and c.user.pref_mark_messages_read:
+                    print "here!"
+                    print inbox[item._fullname]._thing2
+                    queries.set_unread(inbox[item._fullname]._thing2, False)
             else:
                 item.new = False
+
 
             item.score_fmt = Score.none
 
@@ -900,10 +904,6 @@ class Inbox(MultiRelation('inbox',
 
     @classmethod
     def set_unread(cls, thing, unread):
-        # TODO: backward compatibility only.  Remove on final patch
-        thing.new = unread
-        thing._commit()
-
         inbox_rel = cls.rel(Account, thing.__class__)
         inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
                                  eager_load = True)

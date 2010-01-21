@@ -177,6 +177,20 @@
   <tr>
     <th>${_("messaging options")}</th>
     <td class="prefright">
+      ${checkbox(_("show message conversations in the inbox"), \
+         "threaded_messages")}
+      &#32;<span class="little gray">
+        ${_("(only applies when you go to the 'messages' panel)")}
+      </span>
+      <br/>
+      %if c.user.pref_threaded_messages:
+        ${checkbox(_("collapse messages after I've read them"), \
+           "collapse_read_messages")}
+        &#32;<span class="little gray">
+          ${_("(otherwise, you'll have to collapse them yourself)")}
+        </span>
+        <br/>
+      %endif
       ${checkbox(_("mark messages as read when I open my inbox"), \
          "mark_messages_read")}
       &#32;<span class="little gray">
