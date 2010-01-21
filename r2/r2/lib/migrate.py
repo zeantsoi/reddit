@@ -137,22 +137,73 @@ def subscribe_to_blog_and_annoucements(filename):
                 print ("%d: didn't subscribe %s to %s" % (i, account.name, sr.name))
 
 
-def upgrade_messages():
+def upgrade_messages(update_comments = True, update_messages = True,
+                     update_trees = True):
     from r2.lib.db import queries
-    from r2.lib import comment_tree
+    from r2.lib import comment_tree, cache
+    from r2.models import Account
+    from pylons import g
     accounts = set()
 
-    q = Message._query(Message.c.new == True)
-    for m in fetch_things2(q):
-        print m
-        accounts = accounts | queries.set_unread(m, m.new)
+    def batch_fn(items):
+        g.cache.caches = [cache.LocalCache()] + list(g.cache.caches[1:])
+        return items
+    
+    if update_messages or update_trees:
+        q = Message._query(Message.c.new == True,
+                           sort = desc("_date"),
+                           data = True)
+        for m in fetch_things2(q, batch_fn = batch_fn):
+            print m,m._date
+            if update_messages:
+                accounts = accounts | queries.set_unread(m, m.new)
+            else:
+                accounts.add(m.to_id)
 
-    q = Comment._query(Comment.c.new == True)
-    for m in fetch_things2(q):
-        print m
-        accounts = accounts | queries.set_unread(m, m.new)
+    if update_comments:
+        q = Comment._query(Comment.c.new == True,
+                           sort = desc("_date"))
+        q._filter(Comment.c._id < 26152162676)
+
+        for m in fetch_things2(q, batch_fn = batch_fn):
+            print m,m._date
+            queries.set_unread(m, True)
 
     print "Precomputing comment trees for %d accounts" % len(accounts)
 
-    for a in accounts:
+    for i, a in enumerate(accounts):
+        if not isinstance(a, Account):
+            a = Account._byID(a)
+        print i, a
         comment_tree.user_messages(a)
+
+def recompute_unread(min_date = None):
+    from r2.models import Inbox, Account, Comment, Message
+    from r2.lib.db import queries
+
+    def load_accounts(inbox_rel):
+        accounts = set()
+        q = inbox_rel._query(eager_load = False, data = False,
+                             sort = desc("_date"))
+        if min_date:
+            q._filter(inbox_rel.c._date > min_date)
+
+        for i in fetch_things2(q):
+            accounts.add(i._thing1_id)
+
+        return accounts
+
+    accounts_m = load_accounts(Inbox.rel(Account, Message))
+    for i, a in enumerate(accounts_m):
+        a = Account._byID(a)
+        print "%s / %s : %s" % (i, len(accounts_m), a)
+        queries.get_unread_messages(a).update()
+        queries.get_unread_comments(a).update()
+        queries.get_unread_selfreply(a).update()
+
+    accounts = load_accounts(Inbox.rel(Account, Comment)) - accounts_m
+    for i, a in enumerate(accounts):
+        a = Account._byID(a)
+        print "%s / %s : %s" % (i, len(accounts), a)
+        queries.get_unread_comments(a).update()
+        queries.get_unread_selfreply(a).update()

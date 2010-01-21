@@ -903,17 +903,15 @@ class Inbox(MultiRelation('inbox',
         # TODO: backward compatibility only.  Remove on final patch
         thing.new = unread
         thing._commit()
-        if c.user_is_loggedin and c.user:
-            inbox = cls._fast_query(c.user, thing, ['inbox', 'selfreply'])
-            inbox = inbox.values()
-        else:
-            inbox_rel = cls.rel(Account, thing.__class__)
-            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
-                                     eager_load = True)
-            inbox = list(inbox)
+
+        inbox_rel = cls.rel(Account, thing.__class__)
+        inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+                                 eager_load = True)
+        res = []
         for i in inbox:
             if i:
                 i.new = unread
                 i._commit()
-                yield i
+                res.append(i)
+        return res
 
