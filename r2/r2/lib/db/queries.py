@@ -741,6 +741,14 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
+    # keep track of upvotes in the hard cache by subreddit
+    sr_id = getattr(thing, "sr_id", None)
+    if (sr_id and dir > 0 and getattr(thing, "author_id", None) != user._id
+        and v.valid_thing):
+        now = datetime.now(g.tz).strftime("%Y/%m/%d")
+        g.hardcache.add("subreddit_vote-%s_%s_%s" % (now, sr_id, user._id),
+                        sr_id, time = 86400 * 7) # 1 week for now
+
     if isinstance(thing, Link):
         new_vote(v)
         if v.valid_thing:
