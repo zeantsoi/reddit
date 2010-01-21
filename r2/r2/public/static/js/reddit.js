@@ -394,6 +394,7 @@ function show_all_messages(elem) {
     if(ids.length) {
         $.request("uncollapse_message", {"id": ids.join(',')});
     }
+    return false; 
 }
 
 function hide_all_messages(elem) {
@@ -410,6 +411,7 @@ function hide_all_messages(elem) {
     if(ids.length) {
         $.request("collapse_message", {"id": ids.join(',')});
     }
+    return false; 
 }
 
 function hidecomment(elem) {
