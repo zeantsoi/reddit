@@ -826,8 +826,6 @@ class Message(Thing, Printable):
             elif item._fullname in inbox:
                 item.new = getattr(inbox[item._fullname], "new", False)
                 if item.new and c.user.pref_mark_messages_read:
-                    print "here!"
-                    print inbox[item._fullname]._thing2
                     queries.set_unread(inbox[item._fullname]._thing2, False)
             else:
                 item.new = False
