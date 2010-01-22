@@ -23,7 +23,7 @@ from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta, datetime
-from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
+from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain, SelfEmptyingCache
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -118,12 +118,17 @@ class Globals(object):
                     v = tuple(self.to_iter(v))
                 setattr(self, k, v)
 
-        # initialize caches
+        self.running_as_script = global_conf.get('running_as_script', False)
+
+        # initialize caches. Any cache-chains built here must be added
+        # to reset_caches so that they can properly reset their local
+        # components
         mc = Memcache(self.memcaches, pickleProtocol = 1)
         self.memcache = mc
         self.cache = CacheChain((LocalCache(), mc))
         self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
         self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
+
         self.make_lock = make_lock_factory(mc)
 
         self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
@@ -141,6 +146,8 @@ class Globals(object):
         # can't do this until load_db_params() has been called
         self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)),
                                     cache_negative_results = True)
+
+        self.reset_caches()
 
         #make a query cache
         self.stats_collector = QueryStats()
@@ -242,6 +249,11 @@ class Globals(object):
         if self.log_start:
             self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
 
+    def reset_caches(self):
+        for ca in ('cache', 'hardcache'):
+            cache = getattr(self, ca)
+            new_cache = SelfEmptyingCache() if self.running_as_script else LocalCache()
+            cache.caches = (new_cache,) + cache.caches[1:]
 
     @staticmethod
     def to_bool(x):

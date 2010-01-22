@@ -174,9 +174,9 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
             time.sleep(1)
             continue
 
+        g.reset_caches()
+
         items = []
-        #reset the local cache
-        g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
 
         while msg:
             items.append(msg)

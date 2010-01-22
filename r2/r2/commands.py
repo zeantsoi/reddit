@@ -55,6 +55,7 @@ class RunCommand(command.Command):
         here_dir = os.getcwd()
 
         conf = appconfig(config_name, relative_to=here_dir)
+        conf.global_conf['running_as_script'] = True
         conf.update(dict(app_conf=conf.local_conf,
                          global_conf=conf.global_conf))
         paste.deploy.config.CONFIG.push_thread_config(conf)
@@ -67,7 +68,7 @@ class RunCommand(command.Command):
         # Load the wsgi app first so that everything is initialized right
         wsgiapp = RegistryManager(PylonsApp())
         test_app = paste.fixture.TestApp(wsgiapp)
-                        
+
         # Query the test app to setup the environment
         tresponse = test_app.get('/_test_vars')
         request_id = int(tresponse.body)

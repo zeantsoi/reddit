@@ -463,7 +463,7 @@ class RedditController(BaseController):
     def pre(self):
         c.start_time = datetime.now(g.tz)
 
-        g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
+        g.reset_caches()
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix", 
                                               g.domain_prefix)

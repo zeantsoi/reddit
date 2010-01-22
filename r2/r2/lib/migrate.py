@@ -146,7 +146,7 @@ def upgrade_messages(update_comments = True, update_messages = True,
     accounts = set()
 
     def batch_fn(items):
-        g.cache.caches = [cache.LocalCache()] + list(g.cache.caches[1:])
+        g.reset_caches()
         return items
     
     if update_messages or update_trees:

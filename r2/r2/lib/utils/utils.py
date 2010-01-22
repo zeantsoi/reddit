@@ -862,18 +862,6 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             query._after(after)
             items = list(query)
 
-def set_emptying_cache():
-    """
-        The default thread-local cache is a regular dictionary, which
-        isn't designed for long-running processes. This sets the
-        thread-local cache to be a SelfEmptyingCache, which naively
-        empties itself out every N requests
-    """
-    from pylons import g
-    from r2.lib.cache import SelfEmptyingCache
-    g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
-
-
 def fix_if_broken(thing, delete = True):
     from r2.models import Link, Comment
 
