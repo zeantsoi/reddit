@@ -356,7 +356,7 @@ class Link(Thing, Printable):
             item.different_sr = (isinstance(site, FakeSubreddit) or
                                  site.name != item.subreddit.name)
 
-            if user_is_loggedin and item.author._id == user._id:
+            if user_is_loggedin and item.author_id == user._id:
                 item.nofollow = False
             elif item.score <= 1 or item._spam or item.author._spam:
                 item.nofollow = True

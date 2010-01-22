@@ -64,15 +64,14 @@ class Builder(object):
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
 
-        try:
-            aids = set(l.author_id for l in items)
-        except AttributeError:
-            aids = None
-
-        authors = Account._byID(aids, True) if aids else {}
+        aids = set(l.author_id for l in items if hasattr(l, 'author_id'))
 
         if aids:
+            authors = Account._byID(aids, True) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
+        else:
+            authors = {}
+            cup_infos = {}
 
         # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)
@@ -131,10 +130,10 @@ class Builder(object):
             try:
                 w.author = authors.get(item.author_id)
                 if user and item.author_id in user.friends:
-                        # deprecated old way:
-                        w.friend = True
-                        # new way:
-                        add_attr(w.attribs, 'F')
+                    # deprecated old way:
+                    w.friend = True
+                    # new way:
+                    add_attr(w.attribs, 'F')
 
             except AttributeError:
                 pass
