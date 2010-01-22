@@ -173,7 +173,7 @@ def add_message_nolock(user_id, message):
                 tree_dict[message.first_message].sort()
         # we have to regenerate the conversation :/
         else:
-            m = Message._query(Message.c.first_message == parent._id,
+            m = Message._query(Message.c.first_message == message.first_message,
                                data = True)
             new_tree = compute_message_trees(m)
             if new_tree:
