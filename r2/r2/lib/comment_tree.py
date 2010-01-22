@@ -152,7 +152,7 @@ def add_message(message):
         add_message_nolock(message.to_id, message)
 
 def add_message_nolock(user_id, message):
-    from r2.models import Account
+    from r2.models import Account, Message
     key = messages_key(user_id)
     trees = g.permacache.get(key)
     if not trees:
