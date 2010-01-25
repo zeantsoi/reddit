@@ -190,8 +190,9 @@ def conversation(user, parent):
 
     if parent._id in trees:
         convo = trees[parent._id]
-        m = Message._byID(convo[0], data = True)
-        if m.first_message == m.parent_id:
+        if convo:
+            m = Message._byID(convo[0], data = True)
+        if not convo or m.first_message == m.parent_id:
             return [(parent._id, convo)]
 
     # if we get to this point, either we didn't find the conversation,
