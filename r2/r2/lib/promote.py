@@ -190,7 +190,7 @@ def auth_paid_promo(thing, user, pay_id, bid):
     trans_id = authorize.auth_transaction(bid, user, pay_id, thing)
     thing.promote_bid = bid
     
-    if trans_id is not None:
+    if trans_id is not None and int(trans_id) != 0:
         # we won't reset to unseen if already approved and the payment went ok
         promotion_log(thing, "updated payment and/or bid: SUCCESS (id: %s)"
                       % trans_id)

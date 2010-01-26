@@ -2138,6 +2138,8 @@ class Promote_Graph(Templated):
                          (total_sale, total_refund)),
                 multiy = False)
 
+            # table is labeled as "last month"
+            history = self.now - datetime.timedelta(30)
             self.top_promoters = bidding.PromoteDates.top_promoters(history)
         else:
             self.money_graph = None
