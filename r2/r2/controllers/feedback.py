@@ -38,6 +38,6 @@ class FeedbackController(RedditController):
 
     def GET_i18n(self):
         title = _("help translate reddit into your language")
-        return FormPage('help translate',
+        return FormPage(_('help translate'),
                         content = Feedback(title=title, action='i18n'),
                         loginbox = False).render()

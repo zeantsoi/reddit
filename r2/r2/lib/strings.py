@@ -58,7 +58,7 @@ string_dict = dict(
     float_label = _("%(num)5.3f %(thing)s"),
 
     # this is for Japanese which treats people counds differently
-    person_label = _('<span class="number">%(num)s</span>&#32;<span class="word">%(persons)s</span>'),
+    person_label = _("<span class='number'>%(num)s</span>&#32;<span class='word'>%(persons)s</span>"),
 
     firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"),
 

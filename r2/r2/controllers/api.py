@@ -1352,7 +1352,7 @@ class ApiController(RedditController):
         jquery("body").captcha(get_iden())
 
     @noresponse(VAdmin(),
-                tr = VTranslation("id"), 
+                tr = VTranslation("lang"), 
                 user = nop('user'))
     def POST_deltranslator(self, tr, user):
         if tr:

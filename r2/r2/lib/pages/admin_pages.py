@@ -40,6 +40,7 @@ class AdminPage(Reddit):
     create_reddit_box  = False
     submit_box         = False
     extension_handling = False
+    show_sidebar = False
     
     def __init__(self, nav_menus = None, *a, **kw):
         #add admin options to the nav_menus

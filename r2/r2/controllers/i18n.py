@@ -21,7 +21,8 @@
 ################################################################################
 from pylons import request, g
 from reddit_base import RedditController
-from r2.lib.pages import UnfoundPage, AdminTranslations, AdminPage
+from r2.lib.pages import UnfoundPage, AdminTranslations, \
+    AdminPage, Translator_Message
 
 from r2.lib.translation import Translator, TranslatorTemplate, get_translator
 from validator import *
@@ -49,10 +50,18 @@ class I18nController(RedditController):
               lang = nop('lang'),
               a = VExistingUname('name'))
     def POST_adduser(self, lang, a):
+        from r2.lib.db import queries
         if a and Translator.exists(lang):
             tr = get_translator(locale = lang)
             tr.author.add(a.name)
             tr.save()
+
+            # send the user a message
+            body = Translator_Message(lang, a).render("html")
+            subject = "Thanks for offering to help translate!"
+            m, inbox_rel = Message._new(c.user, a, subject, body, request.ip)
+            queries.new_message(m, inbox_rel)
+
         return self.redirect("/admin/i18n")
 
 
@@ -60,7 +69,8 @@ class I18nController(RedditController):
               VAdmin())
     def GET_list(self):
         res = AdminPage(content = AdminTranslations(),
-                        title = 'translate reddit').render()
+                        title = 'translate reddit',
+                        show_sidebar = False).render()
         return res
 
 
@@ -85,7 +95,8 @@ class I18nController(RedditController):
         else:
             content = UnfoundPage()
         res = AdminPage(content = content, 
-                        title = 'translate reddit').render()
+                        title = 'translate reddit',
+                        show_sidebar = False).render()
         return res
 
     @validate(VTranslationEnabled(),
