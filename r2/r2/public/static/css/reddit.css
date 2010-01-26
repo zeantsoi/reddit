@@ -583,6 +583,11 @@ ul.flat-vert {text-align: left;}
 .link.promotedlink.finished { background-color: #DDD; }
 #promo-form + form #img-preview-container { display: none; }
 
+.rejection-form textarea { 
+    width: 40em;
+    height: 10em; 
+}
+
 .promoted-list { font-size: larger; }
 .promoted-list .unpromote-button { display: inline }
 .promoted-list .unpromote-button a { color: gray; }
