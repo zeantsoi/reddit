@@ -129,7 +129,7 @@ class _Markdown:
     [ ]{0,%d}
     <(hr)        # start tag = $2
     \b           # word break
-    ([^<>])*?    # 
+    ([^<>])*?    #
     /?>          # the matching end tag
     [ \t]*
     (?=\n{2,}|\Z)# followed by a blank line or end of document
