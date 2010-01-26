@@ -16,7 +16,7 @@
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
 # 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
@@ -785,7 +785,8 @@ class Message(Thing, Printable):
 
     def can_view(self):
         return (c.user_is_loggedin and
-                (c.user._id in (self.author_id, self.to_id)))
+                (c.user_is_admin or
+                 c.user._id in (self.author_id, self.to_id)))
 
     @classmethod
     def add_props(cls, user, wrapped):

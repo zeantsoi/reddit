@@ -16,7 +16,7 @@
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
 # 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from __future__ import with_statement
@@ -178,7 +178,7 @@ def add_message_nolock(user_id, message):
             new_tree = compute_message_trees(m)
             if new_tree:
                 trees.append(new_tree[0])
-                trees.sort(key = tree_sort_fn, reverse = True)
+        trees.sort(key = tree_sort_fn, reverse = True)
 
     # done!
     g.permacache.set(key, trees)
@@ -200,7 +200,7 @@ def conversation(user, parent):
     # To the database!
     m = Message._query(Message.c.first_message == parent._id,
                        data = True)
-    return compute_message_trees(m)
+    return compute_message_trees([parent] + list(m))
 
 def user_messages(user):
     key = messages_key(user._id)
