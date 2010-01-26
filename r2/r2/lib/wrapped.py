@@ -169,7 +169,7 @@ class Templated(object):
         # fetch template
         template = self.template(style)
         if template:
-            # store the global render style (since child templates
+            # store the global render style (since child templates)
             render_style = c.render_style
             c.render_style = style
             # are we doing a partial render?
@@ -374,7 +374,7 @@ class CachedTemplate(Templated):
                 if (k not in self.cache_ignore and not k.startswith('_')))
 
     def cache_key(self, attr, style, *a):
-        from pylons import c
+        from pylons import c, g
 
         # if template debugging is on, there will be no hash and we
         # can make the caching process-local.
@@ -386,7 +386,7 @@ class CachedTemplate(Templated):
         # them.
         keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
                 style, c.cname, c.lang, c.site.path,
-                template_hash]
+                template_hash, g.markdown_backend]
         keys = [make_cachable(x, *a) for x in keys]
 
         # add all parameters sent into __init__, using their current value

@@ -23,7 +23,8 @@ from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta, datetime
-from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain, SelfEmptyingCache
+from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
+from r2.lib.cache import SelfEmptyingCache
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory

@@ -179,7 +179,7 @@ filters_websafe(PyObject * self, PyObject *args)
       buffer[ib++] = 'u';
       buffer[ib++] = 'o';
       buffer[ib++] = 't';
-      buffer[ib]   = ';';      
+      buffer[ib]   = ';';
     }
     else {
       buffer[ib] = input_buffer[ic];
