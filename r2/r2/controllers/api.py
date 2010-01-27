@@ -1029,6 +1029,7 @@ class ApiController(RedditController):
         elif (form.has_errors(None, errors.INVALID_OPTION) or
               form.has_errors('description', errors.TOO_LONG)):
             pass
+
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
@@ -1079,7 +1080,10 @@ class ApiController(RedditController):
             changed(sr)
             form.parent().set_html('.status', _("saved"))
 
-        if redir:
+        # don't go any further until the form validates
+        if form.has_error():
+            return
+        elif redir:
             form.redirect(redir)
         else:
             jquery.refresh()
