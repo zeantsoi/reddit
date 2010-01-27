@@ -77,6 +77,7 @@ class Globals(object):
                    'sponsors',
                    'monitored_servers',
                    'automatic_reddits',
+                   'skip_precompute_queries',
                    'agents',
                    'allowed_css_linked_domains']
 
@@ -120,6 +121,8 @@ class Globals(object):
                 setattr(self, k, v)
 
         self.running_as_script = global_conf.get('running_as_script', False)
+
+        self.skip_precompute_queries = set(self.skip_precompute_queries)
 
         # initialize caches. Any cache-chains built here must be added
         # to reset_caches so that they can properly reset their local
