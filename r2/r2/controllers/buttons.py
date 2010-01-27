@@ -41,6 +41,7 @@ class ButtonsController(RedditController):
 
     def get_wrapped_link(self, url, link = None, wrapper = None):
         try:
+            links = []
             if link:
                 links = [link]
             else:
@@ -48,7 +49,7 @@ class ButtonsController(RedditController):
                 try:
                     links = tup(Link._by_url(url, sr))
                 except NotFound:
-                    links = []
+                    pass
 
             if links:
                 kw = {}
@@ -80,10 +81,9 @@ class ButtonsController(RedditController):
               vote = VBoolean('vote', default=True),
               newwindow = VBoolean('newwindow'),
               width = VInt('width', 0, 800),
-              link = VByName('id'))
-    def GET_button_content(self, url, title, css, vote, newwindow, width, link):
-            
-        
+              l = VByName('id'))
+    def GET_button_content(self, url, title, css, vote, newwindow, width, l):
+             
         # no buttons on domain listings
         if isinstance(c.site, DomainSR):
             c.site = Default
@@ -94,17 +94,20 @@ class ButtonsController(RedditController):
             css != 'http://www.wired.com/css/redditsocial.css'): 
             css = None 
 
-        if link:
-            url = link.url
-            title = link.title 
+        if l:
+            url = l.url
+            title = l.title 
+        kw = {}
+        if title:
+            kw = dict(title = title)
         wrapper = make_wrapper(Button if vote else ButtonNoBody,
                                url = url, 
                                target = "_new" if newwindow else "_parent",
-                               title = title, vote = vote, bgcolor = c.bgcolor,
+                               vote = vote, bgcolor = c.bgcolor,
                                width = width, css = css,
-                               button = self.buttontype())
+                               button = self.buttontype(), **kw)
 
-        l = self.get_wrapped_link(url, link, wrapper)
+        l = self.get_wrapped_link(url, l, wrapper)
         res = l.render()
         c.response.content = spaceCompress(res)
         return c.response
