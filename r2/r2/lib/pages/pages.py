@@ -1307,6 +1307,7 @@ class Button(Wrapped):
     def __init__(self, link, **kw):
         Wrapped.__init__(self, link, **kw)
         if link is None:
+            self.title = ""
             self.add_props(c.user, [self])
 
 
