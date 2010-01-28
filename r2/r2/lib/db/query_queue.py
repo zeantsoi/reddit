@@ -6,6 +6,7 @@ from r2.lib import amqp
 from pylons import g
 
 skip_precompute_queries = g.skip_precompute_queries
+hardcache = g.hardcache
 working_prefix = 'working_'
 prefix = 'prec_link_'
 TIMEOUT = 600
@@ -13,11 +14,11 @@ TIMEOUT = 600
 def add_query(cached_results):
     iden = cached_results.query._iden()
     if iden in skip_precompute_queries:
-        if g.hardcache.get(_skip_key(iden)):
+        if hardcache.get(_skip_key(iden)):
             return
         else:
-            g.hardcache.set(_skip_key(iden), True,
-                            60*60*6)
+            hardcache.set(_skip_key(iden), True,
+                          60*60*6)
 
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
