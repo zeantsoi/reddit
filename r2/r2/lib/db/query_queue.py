@@ -5,21 +5,11 @@ from r2.lib import amqp
 
 from pylons import g
 
-skip_precompute_queries = g.skip_precompute_queries
-hardcache = g.hardcache
 working_prefix = 'working_'
 prefix = 'prec_link_'
 TIMEOUT = 600
 
 def add_query(cached_results):
-    iden = cached_results.query._iden()
-    if iden in skip_precompute_queries:
-        if hardcache.get(_skip_key(iden)):
-            return
-        else:
-            hardcache.set(_skip_key(iden), True,
-                          60*60*6)
-
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
 def _skip_key(iden):
@@ -31,6 +21,11 @@ def run():
             # r2.lib.db.queries.CachedResults
             cr = pickle.loads(msg.body)
             iden = cr.query._iden()
+
+            if (iden in g.skip_precompute_queries
+                and g.hardcache.get(_skip_key(iden))):
+                print 'skipping known query', iden
+                continue
 
             working_key = working_prefix + iden
             key = prefix + iden
@@ -52,6 +47,11 @@ def run():
             try:
                 cr.update()
                 g.memcache.set(key, datetime.now())
+
+                if iden in g.skip_precompute_queries:
+                    print 'setting to be skipped for 6 hours', iden
+                    g.hardcache.set(_skip_key(iden), start,
+                                    60*60*6)
 
             finally:
                 g.memcache.delete(working_key)
