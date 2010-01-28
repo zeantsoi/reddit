@@ -12,11 +12,12 @@ TIMEOUT = 600
 
 def add_query(cached_results):
     iden = cached_results.query._iden()
-    if iden in skip_precompute_queries and g.hardcache.get(_skip_key(iden)):
-        return
-    else:
-        g.hardcache.set(_skip_key(iden), True,
-                        60*60*6)
+    if iden in skip_precompute_queries:
+        if g.hardcache.get(_skip_key(iden)):
+            return
+        else:
+            g.hardcache.set(_skip_key(iden), True,
+                            60*60*6)
 
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
