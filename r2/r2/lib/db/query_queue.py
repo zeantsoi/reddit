@@ -49,9 +49,9 @@ def run():
                 g.memcache.set(key, datetime.now())
 
                 if iden in g.skip_precompute_queries:
-                    print 'setting to be skipped for 24 hours', iden
+                    print 'setting to be skipped for 6 hours', iden
                     g.hardcache.set(_skip_key(iden), start,
-                                    60*60*24)
+                                    60*60*6)
 
             finally:
                 g.memcache.delete(working_key)
