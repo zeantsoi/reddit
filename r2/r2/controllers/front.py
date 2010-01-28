@@ -717,4 +717,5 @@ class FrontController(RedditController):
 
 
     def GET_ad(self, reddit = None):
+        return "<html><head></head><body><p>Sorry about that reddit.  One of our advertisers decided to exploit us.<p></p>We've shut the box ad for now.</p></body></html>"  
         return Dart_Ad(reddit).render(style="html")
