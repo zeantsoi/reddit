@@ -717,5 +717,5 @@ class FrontController(RedditController):
 
 
     def GET_ad(self, reddit = None):
-        return "<html><head></head><body><p>Sorry about that reddit.  One of our advertisers decided to exploit us.<p></p>We've shut the box ad for now.</p></body></html>"  
+        return "<html><head></head><body><p>We're disabling the box ad for a little bit while we review our procedures.</p><p>Sorry about that pop up. Don't blame the advertisers (this time).  Entirely our bad.  The lead programmer has been <a href='http://sp.reddit.com/seppuku.jpg'>dispatched</a> as <a href='http://www.reddit.com/r/reddit.com/comments/avbey/this_att_popup_ad_is_not_okay/c0jkszk'>promised</a>.</p><p>(And thanks for not using adblock.)</p></body></html>"  
         return Dart_Ad(reddit).render(style="html")
