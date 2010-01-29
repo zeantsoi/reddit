@@ -49,17 +49,17 @@ def memoize(iden, time = 0):
             if res is None:
                 # not cached, we should calculate it.
                 with make_lock('memoize_lock(%s)' % key):
-                    stored = cache.get(key)
-                    if stored is not None:
-                        # it was calculated while we were waiting on
-                        # the lock
-                        res = stored
-                    else:
+                    stored = None if update else cache.get(key)
+                    if stored is None:
                         # okay now go and actually calculate it
                         res = fn(*a, **kw)
                         if res is None:
                             res = NoneResult
                         cache.set(key, res, time = time)
+                    else:
+                        # it was calculated while we were waiting on
+                        # the lock
+                        res = stored
 
             if res == NoneResult:
                 res = None
