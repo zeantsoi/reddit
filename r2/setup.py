@@ -95,7 +95,7 @@ setup(
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",
-                      "py_interface",
+                      "pylibmc",
                       "pycountry"],
     packages=find_packages(),
     include_package_data=True,
