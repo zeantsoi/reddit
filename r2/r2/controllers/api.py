@@ -285,7 +285,7 @@ class ApiController(RedditController):
 
         if fake_failure or form.has_errors("passwd", errors.WRONG_PASSWORD):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-            g.hardcache.incr(hc_key, time = la_expire_time)
+            #g.hardcache.incr(hc_key, time = la_expire_time)
         else:
             self._login(form, user, dest, rem)
 
