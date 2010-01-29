@@ -301,7 +301,6 @@ class Account(Thing):
         else:
             g.hardcache.set("cup_info-%d" % self._id, cup_info, cache_lifetime)
 
-
     def remove_cup(self):
         g.hardcache.delete("cup_info-%d" % self._id)
 

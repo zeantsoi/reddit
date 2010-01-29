@@ -256,8 +256,8 @@ class Client(local):
         #        return server, key
         #    serverhash = serverHashFunction(str(serverhash) + str(i))
 
-        print ("Couldn't connect to any of the %d memcache servers" %
-               len(self.buckets))
+        raise ("Couldn't connect to any of the %d memcache servers: %r" %
+               (len(self.buckets), [ (x.ip, x.port) for x in self.buckets]))
         return None, key
 
     def disconnect_all(self):

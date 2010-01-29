@@ -41,7 +41,7 @@ from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib.utils import timeago
 from r2.lib.utils import unicode_safe, tup
-from r2.lib.cache import SelfEmptyingCache
+from r2.lib.cache import SelfEmptyingCache, make_key
 from r2.lib import amqp
 
 ## Changes to the list of searchable languages will require changes to
@@ -609,30 +609,31 @@ class SearchQuery(object):
         # if so. If that's not available, try the cache for the
         # partial result requested (passing the actual search along to
         # solr if both of those fail)
-        full_key = 'solrsearch_%s' % ','.join(('%r' % r)
-                                              for r in (q,sort,other_params))
-        part_key = "%s,%d,%d" % (full_key, start, rows)
+        full_key = make_key('solrsearch_full', q, sort, other_params)
+        part_key = make_key('solrsearch_part', full_key, start, rows)
 
-        full_cached = g.cache.get(full_key)
+        found = g.cache.get_multi([full_key, part_key])
+
+        full_cached = found.get(full_key, None)
+        part_cached = found.get(part_key, None)
+
         if full_cached:
             res = pysolr.Results(hits = full_cached.hits,
                                  docs = full_cached.docs[start:start+rows])
+        elif part_cached:
+            res = part_cached
         else:
-            part_cached = g.cache.get(part_key)
-            if part_cached:
-                res = part_cached
-            else:
-                with SolrConnection() as s:
-                    g.log.debug(("Searching q = %r; sort = %r,"
-                                 + " start = %r, rows = %r,"
-                                 + " params = %r, max = %r")
-                                % (q,sort,start,rows,other_params,max))
+            with SolrConnection() as s:
+                g.log.debug(("Searching q = %r; sort = %r,"
+                             + " start = %r, rows = %r,"
+                             + " params = %r, max = %r")
+                            % (q,sort,start,rows,other_params,max))
 
-                    res = s.search(q, sort, start = start, rows = rows,
-                                   other_params = other_params)
+                res = s.search(q, sort, start = start, rows = rows,
+                               other_params = other_params)
 
-                g.cache.set(full_key if max else part_key,
-                            res, time = g.solr_cache_time)
+            g.cache.set(full_key if max else part_key,
+                        res, time = g.solr_cache_time)
 
         # extract out the fullname in the 'docs' field, since that's
         # all we care about

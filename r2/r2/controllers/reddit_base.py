@@ -27,7 +27,7 @@ from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters
 from r2.lib.utils import http_utils, UniqueIterator
-from r2.lib.cache import LocalCache
+from r2.lib.cache import LocalCache, make_key
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount
 from r2.models.subreddit import Subreddit
@@ -40,9 +40,10 @@ from r2.lib.jsontemplates import api_type
 from copy import copy
 from Cookie import CookieError
 from datetime import datetime
-import sha, simplejson, locale
+from hashlib import sha1, md5
 from urllib import quote, unquote
-from simplejson import dumps
+import simplejson
+import locale
 
 from r2.lib.tracking import encrypt, decrypt
 
@@ -224,7 +225,7 @@ def over18():
     else:
         if 'over18' in c.cookies:
             cookie = c.cookies['over18'].value
-            if cookie == sha.new(request.ip).hexdigest():
+            if cookie == sha1(request.ip).hexdigest():
                 return True
 
 def set_subreddit():
@@ -434,19 +435,16 @@ class RedditController(BaseController):
     def request_key(self):
         # note that this references the cookie at request time, not
         # the current value of it
-        cookie_keys = []
-        for x in cache_affecting_cookies:
-            cookie_keys.append(request.cookies.get(x,''))
-
-        key = ''.join((str(c.lang),
-                       str(c.content_langs),
-                       request.host,
-                       str(c.cname), 
-                       str(request.fullpath),
-                       str(c.over18),
-                       str(c.firsttime),
-                       ''.join(cookie_keys)))
-        return key
+        return make_key('request_key',
+                        c.lang,
+                        c.content_langs,
+                        request.host,
+                        c.cname,
+                        request.fullpath,
+                        c.over18,
+                        c.firsttime,
+                        [request.cookies.get(x,'')
+                         for x in cache_affecting_cookies])
 
     def cached_response(self):
         return c.response
@@ -661,7 +659,7 @@ class RedditController(BaseController):
         return request.path + utils.query_string(merged)
 
     def api_wrapper(self, kw):
-        data = dumps(kw)
+        data = simplejson.dumps(kw)
         if request.method == "GET" and request.GET.get("callback"):
             return "%s(%s)" % (websafe_json(request.GET.get("callback")),
                                websafe_json(data))
