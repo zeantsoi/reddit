@@ -20,21 +20,19 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from threading import local
-from hashlib import md5
 
-import pylibmc
+from utils import lstrips, in_chunks
 from contrib import memcache
 
-from utils import lstrips, in_chunks, tup
 from r2.lib.hardcachebackend import HardCacheBackend
 
 class NoneResult(object): pass
 
 class CacheUtils(object):
-    def incr_multi(self, keys, delta=1, prefix=''):
+    def incr_multi(self, keys, delta=1, time=0, prefix=''):
         for k in keys:
             try:
-                self.incr(prefix + k, delta)
+                self.incr(prefix + k, time=time, delta=delta)
             except ValueError:
                 pass
 
@@ -55,13 +53,8 @@ class CacheUtils(object):
 
         return dict((key_map[k], r[k]) for k in r.keys())
 
-class Permacache(CacheUtils, memcache.Client):
-    """We still use our patched python-memcache to talk to the
-       permacaches for legacy reasons"""
+class Memcache(CacheUtils, memcache.Client):
     simple_get_multi = memcache.Client.get_multi
-
-    def __init__(self, servers):
-        memcache.Client.__init__(self, servers, pickleProtocol = 1)
 
     def set_multi(self, keys, prefix='', time=0):
 
@@ -85,52 +78,6 @@ class Permacache(CacheUtils, memcache.Client):
     def delete_multi(self, keys, prefix='', time=0):
         memcache.Client.delete_multi(self, keys, time = time,
                                      key_prefix = prefix)
-
-class Memcache(CacheUtils, pylibmc.Client):
-    simple_get_multi = pylibmc.Client.get_multi
-
-    def __init__(self, servers,
-                 debug = False,
-                 binary=True,
-                 noreply=False):
-        pylibmc.Client.__init__(self, servers, binary=binary)
-        behaviors = {'no_block': True, # use async I/O
-                     'cache_lookups': True, # cache DNS lookups
-                     'tcp_nodelay': True, # no nagle
-                     'ketama': True, # consistant hashing
-                     '_noreply': int(noreply),
-                     'verify_key': int(debug)} # spend the CPU to verify keys
-        self.behaviors.update(behaviors)
-        self.servers = servers
-
-    def __repr__(self):
-        return 'Memcache(%r)' % (self.servers,)
-
-    def set_multi(self, keys, prefix='', time=0):
-        new_keys = {}
-        for k,v in keys.iteritems():
-            new_keys[str(k)] = v
-        pylibmc.Client.set_multi(self, new_keys, key_prefix = prefix,
-                                 time = time)
-
-    def add(self, key, val, time=0):
-        try:
-            return pylibmc.Client.add(self, key, val, time=time)
-        except pylibmc.DataExists:
-            return None
-
-    def get(self, key, default=None):
-        r = pylibmc.Client.get(self, key)
-        if r is None:
-            return default
-        return r
-
-    def set(self, key, val, time=0):
-        pylibmc.Client.set(self, key, val, time = time)
-
-    def delete_multi(self, keys, prefix='', time=0):
-        pylibmc.Client.delete_multi(self, keys, time = time,
-                                    key_prefix = prefix)
 
 class HardCache(CacheUtils):
     backend = None
@@ -214,6 +161,7 @@ class LocalCache(dict, CacheUtils):
         for k in keys:
             if self.has_key(k):
                 out[k] = self[k]
+#        print "Local cache answers: " + str(out)
         return out
 
     def set(self, key, val, time = 0):
@@ -437,31 +385,3 @@ class SelfEmptyingCache(LocalCache):
 
     def add(self,key,val):
         return self.set(key,val)
-
-
-def make_key(iden, *a, **kw):
-    """
-    A helper function for making memcached-usable cache keys out of
-    arbitrary arguments. Hashes the arguments but leaves the `iden'
-    human-readable
-    """
-    h = md5()
-
-    def _conv(s):
-        if isinstance(s, str):
-            return s
-        elif isinstance(s, unicode):
-            return s.encode('utf-8')
-        elif isinstance(s, (tuple, list)):
-            return ','.join(_conv(x) for x in s)
-        elif isinstance(s, dict):
-            return ','.join('%s:%s' % (_conv(k), _conv(v))
-                            for (k, v) in sorted(s.iteritems()))
-        else:
-            return str(s)
-
-    h.update(_conv(iden))
-    h.update(_conv(a))
-    h.update(_conv(kw))
-
-    return '%s(%s)' % (iden, h.hexdigest())
