@@ -128,9 +128,13 @@ class Globals(object):
         # to reset_caches so that they can properly reset their local
         # components
 
-        mc = Memcache(self.memcaches, debug=self.debug)
-        rec_cache = Memcache(self.rec_cache, debug=self.debug)
+        # we're going to start out by only using the new cache-code
+        # for the render-cache
+        # mc = Memcache(self.memcaches, debug=self.debug)
+        # rec_cache = Memcache(self.rec_cache, debug=self.debug)
+        mc = Permacache(self.memcaches)
         rmc = Memcache(self.rendercaches, debug=self.debug, noreply=True)
+        rec_cache = Permacache(self.rec_cache)
         pmc = Permacache(self.permacaches)
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
