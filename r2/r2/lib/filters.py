@@ -123,6 +123,9 @@ def edit_comment_filter(text = ''):
     return url_escape(text)
 
 def markdown_souptest(text, nofollow=False, target=None, lang=None):
+    if not text:
+        return text
+
     ok_tags  = {
         'div': ('class'),
         'a': ('href', 'title', 'target', 'nofollow'),
