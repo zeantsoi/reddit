@@ -695,7 +695,7 @@ ul.flat-vert {text-align: left;}
 .md td, .md th { border: 1px solid #EEE; padding: 1px 3px; }
 .md th { font-weight: bold;  }
 .md table { margin: 5px 10px;  }
-
+.md center { text-align: left;  }
 
 /*top link*/
 a.star { text-decoration: none; color: #ff8b60 }
