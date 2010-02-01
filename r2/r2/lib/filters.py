@@ -129,10 +129,14 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
     ok_tags  = {
         'div': ('class'),
         'a': ('href', 'title', 'target', 'nofollow'),
+        'table': ("align", ),
+        'th': ("align", ),
+        'td': ("align", )
         }
 
     boring_tags = ( 'p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
                     'pre', 'code', 'blockquote', 'center',
+                    'tbody', 'thead', "tr",
                     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', )
 
     for bt in boring_tags:
