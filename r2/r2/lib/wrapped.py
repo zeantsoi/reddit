@@ -380,7 +380,7 @@ class CachedTemplate(Templated):
         # can make the caching process-local.
         template_hash = getattr(self.template(style), "hash",
                                 id(self.__class__))
-        
+
         # these values are needed to render any link on the site, and
         # a menu is just a set of links, so we best cache against
         # them.

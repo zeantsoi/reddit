@@ -109,7 +109,7 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    to = VExistingUname('to'),
                    subject = VRequired('subject', errors.NO_SUBJECT),
-                   body = VMessage(['text', 'message']))
+                   body = VMarkdown(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
         handles message composition under /message/compose.  
@@ -136,7 +136,7 @@ class ApiController(RedditController):
                    url = VUrl(['url', 'sr']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
-                   selftext = VSelfText('text'),
+                   selftext = VMarkdown('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'))
@@ -567,7 +567,7 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
-                   text = VComment('text'))
+                   text = VMarkdown('text'))
     def POST_editusertext(self, form, jquery, item, text):
         if not form.has_errors("text",
                                errors.NO_TEXT, errors.TOO_LONG,
@@ -601,7 +601,7 @@ class ApiController(RedditController):
                               prefix = "rate_comment_"),
                    ip = ValidIP(),
                    parent = VSubmitParent(['thing_id', 'parent']),
-                   comment = VComment(['text', 'comment']))
+                   comment = VMarkdown(['text', 'comment']))
     def POST_comment(self, commentform, jquery, parent, comment, ip):
         should_ratelimit = True
         #check the parent type here cause we need that for the
@@ -982,7 +982,7 @@ class ApiController(RedditController):
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
                    domain = VCnameDomain("domain"),
-                   description = VLength("description", max_length = 1000),
+                   description = VMarkdown("description", max_length = 1000),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),

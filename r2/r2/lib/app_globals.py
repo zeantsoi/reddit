@@ -169,6 +169,8 @@ class Globals(object):
         all_languages.sort()
         self.all_languages = all_languages
 
+        self.paths = paths
+
         # load the md5 hashes of files under static
         static_files = os.path.join(paths.get('static_files'), 'static')
         self.static_md5 = {}

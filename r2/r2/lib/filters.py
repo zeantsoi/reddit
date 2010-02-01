@@ -21,7 +21,7 @@
 ################################################################################
 from BeautifulSoup import BeautifulSoup
 
-from pylons import c
+from pylons import g, c
 
 import cgi
 import urllib
@@ -136,6 +136,7 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
         ok_tags[bt] = ()
 
     smd = safemarkdown (text, nofollow, target, lang)
+
     soup = BeautifulSoup(smd)
 
     for tag in soup.findAll():
@@ -167,7 +168,6 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
 def safemarkdown(text, nofollow=False, target=None, lang=None):
     from r2.lib.c_markdown import c_markdown
     from r2.lib.py_markdown import py_markdown
-    from pylons import g
 
     from contrib.markdown import markdown
 
@@ -181,18 +181,14 @@ def safemarkdown(text, nofollow=False, target=None, lang=None):
         target = "_top"
 
     if lang is None:
-        # TODO: lang should respect g.markdown_backend
-        lang = "py"
+        lang = g.markdown_backend
 
-    try:
-        if lang == "c":
-            text = c_markdown(text, nofollow, target)
-        elif lang == "py":
-            text = py_markdown(text, nofollow, target)
-        else:
-            raise ValueError("weird lang")
-    except RuntimeError:
-        text = "<p><em>Comment Broken</em></p>"
+    if lang == "c":
+        text = c_markdown(text, nofollow, target)
+    elif lang == "py":
+        text = py_markdown(text, nofollow, target)
+    else:
+        raise ValueError("weird lang [%s]" % lang)
 
     return SC_OFF + MD_START + text + MD_END + SC_ON
 
@@ -209,8 +205,6 @@ def unkeep_space(text):
 
 
 def profanity_filter(text):
-    from pylons import g
-
     def _profane(m):
         x = m.group(1)
         return ''.join(u"\u2731" for i in xrange(len(x)))

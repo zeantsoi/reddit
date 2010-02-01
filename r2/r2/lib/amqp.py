@@ -88,7 +88,7 @@ def get_connection():
                                          virtual_host = amqp_virtual_host,
                                          insist = False)
         except (socket.error, IOError):
-            print 'error connecting to amqp'
+            print 'error connecting to amqp %s @ %s' % (amqp_user, amqp_host)
             time.sleep(1)
 
     # don't run init_queue until someone actually needs it. this

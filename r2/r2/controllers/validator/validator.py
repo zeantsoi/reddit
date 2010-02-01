@@ -24,6 +24,7 @@ from pylons.i18n import _
 from pylons.controllers.util import abort
 from r2.lib import utils, captcha, promote
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
+from r2.lib.filters import markdown_souptest
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
@@ -376,18 +377,22 @@ class VTitle(VLength):
     def __init__(self, param, max_length = 300, **kw):
         VLength.__init__(self, param, max_length, **kw)
     
-class VComment(VLength):
+class VMarkdown(VLength):
     def __init__(self, param, max_length = 10000, **kw):
         VLength.__init__(self, param, max_length, **kw)
 
-class VSelfText(VLength):
-    def __init__(self, param, max_length = 10000, **kw):
-        VLength.__init__(self, param, max_length, **kw)
-        
-class VMessage(VLength):
-    def __init__(self, param, max_length = 10000, **kw):
-        VLength.__init__(self, param, max_length, **kw)
-
+    def run(self, text, text2 = ''):
+        text = text or text2
+        VLength.run(self, text)
+        try:
+            markdown_souptest(text)
+            return text
+        except ValueError:
+            user = "???"
+            if c.user_is_loggedin:
+                user = c.user.name
+            g.log.error("HAX by %s: %s" % (user, text))
+            raise
 
 class VSubredditName(VRequired):
     def __init__(self, item, *a, **kw):
