@@ -132,7 +132,7 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
         }
 
     boring_tags = ( 'p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
-                    'pre', 'code', 'blockquote',
+                    'pre', 'code', 'blockquote', 'center',
                     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', )
 
     for bt in boring_tags:
