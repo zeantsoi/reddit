@@ -126,7 +126,7 @@ def edit_comment_filter(text = ''):
 def markdown_souptest(text, nofollow=False, target=None, lang=None):
     if not text:
         return text
-    
+
     ok_tags  = {
         'div': ('class'),
         'a': ('href', 'title', 'target', 'nofollow'),
@@ -148,17 +148,17 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
     try:
         parseString(_force_utf8(smd))
     except:
-        raise ValueError("unparsable xml")
+        raise ValueError("HAX: unparsable xml")
 
     soup = BeautifulSoup(smd)
 
     for tag in soup.findAll():
         if not tag.name in ok_tags:
-            raise ValueError("<%s> tag found in markdown!" % tag.name)
+            raise ValueError("HAX: <%s> tag found in markdown!" % tag.name)
         ok_attrs = ok_tags[tag.name]
         for k,v in tag.attrs:
             if not k in ok_attrs:
-                raise ValueError("<%s %s='%s'> attr found in markdown!"
+                raise ValueError("HAX: <%s %s='%s'> attr found in markdown!"
                                  % (tag.name, k,v))
             if tag.name == 'a' and k == 'href':
                 lv = v.lower()
@@ -173,7 +173,7 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
                 elif lv.startswith("/"):
                     pass
                 else:
-                    raise ValueError("Link to '%s' found in markdown!" % v)
+                    raise ValueError("HAX: Link to '%s' found in markdown!" % v)
 
 
 #TODO markdown should be looked up in batch?
