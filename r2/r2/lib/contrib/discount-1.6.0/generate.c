@@ -905,7 +905,10 @@ maybe_tag_or_link(MMIOT *f)
 		else
 		    size++;
 	    
-	    Qstring(forbidden_tag(f) ? "&lt;" : "<", f);
+	    if ( forbidden_tag(f) )
+		return 0;
+
+	    Qchar('<', f);
 	    while ( ((c = peek(f, 1)) != EOF) && (c != '>') )
 		Qchar(pull(f), f);
 	    return 1;
@@ -1086,7 +1089,7 @@ text(MMIOT *f)
     int smartyflags = 0;
 
     while (1) {
-        if ( (f->flags & AUTOLINK) && isalpha(peek(f,1)) )
+        if ( (f->flags & AUTOLINK) && isalpha(peek(f,1)) && !tag_text(f) )
 	    maybe_autolink(f);
 
         c = pull(f);
@@ -1190,11 +1193,10 @@ text(MMIOT *f)
 				break;
 		    case '<':   Qstring("&lt;", f);
 				break;
-		    case '\\':
 		    case '>': case '#': case '.': case '-':
 		    case '+': case '{': case '}': case ']':
-		    case '(': case ')': case '"': case '\'':
 		    case '!': case '[': case '*': case '_':
+		    case '\\':case '(': case ')':
 		    case '`':	Qchar(c, f);
 				break;
 		    default:
@@ -1423,8 +1425,9 @@ printblock(Paragraph *pp, MMIOT *f)
 
     while (t) {
 	if ( S(t->text) ) {
-	    if ( S(t->text) > 2 && T(t->text)[S(t->text)-2] == ' '
-				&& T(t->text)[S(t->text)-1] == ' ') {
+	    if ( t->next && S(t->text) > 2
+			 && T(t->text)[S(t->text)-2] == ' '
+			 && T(t->text)[S(t->text)-1] == ' ' ) {
 		push(T(t->text), S(t->text)-2, f);
 		push("\003\n", 2, f);
 	    }
