@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from BeautifulSoup import BeautifulSoup
+from xml.dom.minidom import parseString
 
 from pylons import g, c
 
@@ -125,7 +126,7 @@ def edit_comment_filter(text = ''):
 def markdown_souptest(text, nofollow=False, target=None, lang=None):
     if not text:
         return text
-
+    
     ok_tags  = {
         'div': ('class'),
         'a': ('href', 'title', 'target', 'nofollow'),
@@ -143,6 +144,8 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
         ok_tags[bt] = ()
 
     smd = safemarkdown (text, nofollow, target, lang)
+
+    parseString(smd)
 
     soup = BeautifulSoup(smd)
 
