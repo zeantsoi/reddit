@@ -1291,6 +1291,10 @@ code(int escape, MMIOT *f)
 		    if ( peek(f,1) == '>' || (c = pull(f)) == EOF )
 			break;
 	
+	case 003:   /* ^C; expand back to spaces */
+		    Qstring("  ", f);
+		    break;
+
 	default:    cputc(c, f);
 		    break;
 	}
