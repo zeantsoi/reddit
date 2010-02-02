@@ -388,11 +388,14 @@ class VMarkdown(VLength):
             markdown_souptest(text)
             return text
         except ValueError:
+            import sys
             user = "???"
             if c.user_is_loggedin:
                 user = c.user.name
             g.log.error("HAX by %s: %s" % (user, text))
-            raise
+            s = sys.exc_info()
+            # reraise the original error with the original stack trace
+            raise s[1], None, s[2]
 
 class VSubredditName(VRequired):
     def __init__(self, item, *a, **kw):

@@ -145,7 +145,10 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
 
     smd = safemarkdown (text, nofollow, target, lang)
 
-    parseString(_force_utf8(smd))
+    try:
+        parseString(_force_utf8(smd))
+    except:
+        raise ValueError("unparsable xml")
 
     soup = BeautifulSoup(smd)
 
