@@ -145,7 +145,7 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
 
     smd = safemarkdown (text, nofollow, target, lang)
 
-    parseString(smd)
+    parseString(_force_utf8(smd))
 
     soup = BeautifulSoup(smd)
 
