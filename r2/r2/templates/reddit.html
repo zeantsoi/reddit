@@ -26,6 +26,7 @@
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
+   from r2.models import make_feedurl
 %>
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
@@ -74,8 +75,13 @@
   <link rel='shortcut icon' href="${static('favicon.ico')}"
         type="image/x-icon" />
   %if thing.extension_handling:
+    <%
+       rss= add_sr(join_urls(request.path,'.rss'))
+       if thing.extension_handling == "private":
+          rss = make_feedurl(c.user, rss)
+     %>
     <link rel="alternate" type="application/rss+xml" title="RSS"
-          href="${add_sr(join_urls(request.path,'.rss'))}" />
+          href="${rss}" />
   %endif
 
   <!--[if lt IE 7]>

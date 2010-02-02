@@ -29,7 +29,7 @@ from r2.lib import pages, utils, filters
 from r2.lib.utils import http_utils, UniqueIterator
 from r2.lib.cache import LocalCache
 import random as rand
-from r2.models.account import valid_cookie, FakeAccount
+from r2.models.account import valid_cookie, FakeAccount, valid_feed
 from r2.models.subreddit import Subreddit
 from r2.models import *
 from errors import ErrorSet
@@ -281,6 +281,13 @@ def set_content_type():
                 return utils.to_js(content,callback = request.params.get(
                     "callback", "document.write"))
             c.response_wrappers.append(to_js)
+        if ext in ("rss", "api", "json") and request.method.upper() == "GET":
+            user = valid_feed(request.GET.get("user"),
+                              request.GET.get("feed"),
+                              request.path)
+            if user:
+                c.user = user
+                c.user_is_loggedin = True
 
 def get_browser_langs():
     browser_langs = []

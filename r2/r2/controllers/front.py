@@ -274,8 +274,12 @@ class FrontController(RedditController):
             content.append(FriendList())
         elif location == 'update':
             content = PrefUpdate()
+        elif location == 'feeds' and c.user.pref_private_feeds:
+            content = PrefFeeds()
         elif location == 'delete':
             content = PrefDelete()
+        else:
+            return self.abort404()
 
         return PrefsPage(content = content, infotext=infotext).render()
 
@@ -310,7 +314,7 @@ class FrontController(RedditController):
 
         # moderator is either reddit's moderator or an admin
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
-
+        extension_handling = False
         if is_moderator and location == 'edit':
             pane = PaneStack()
             if created == 'true':
@@ -339,17 +343,21 @@ class FrontController(RedditController):
             builder_cls = (QueryBuilder if isinstance(query, thing.Query)
                            else IDBuilder)
             builder = builder_cls(query,
+                                  skip = True, 
                                   num = num, after = after,
                                   count = count, reverse = reverse,
                                   wrap = ListingController.builder_wrapper)
             listing = LinkListing(builder)
             pane = listing.listing()
+            if c.user.pref_private_feeds:
+                extension_handling = "private"
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
         else:
             return self.abort404()
 
-        return EditReddit(content = pane).render()
+        return EditReddit(content = pane,
+                          extension_handling = extension_handling).render()
 
     def GET_awards(self):
         """The awards page."""

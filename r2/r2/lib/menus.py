@@ -104,6 +104,7 @@ menu =   MenuHandler(hot          = _('hot'),
 
                      #preferences
                      options      = _('options'),
+                     feeds        = _("RSS feeds"),
                      friends      = _("friends"),
                      update       = _("password/email"),
                      delete       = _("delete"),

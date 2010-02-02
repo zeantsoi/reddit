@@ -2091,7 +2091,31 @@ ul#image-preview-list .description pre {
     padding: 5px; 
     margin: 5px; 
     float: left;
-}    
+}
+
+.private-feeds.instructions .prefright { 
+    line-height: 2em;
+}
+
+.private-feeds.instructions .feedlink {
+    padding: 2px 5px;
+    font-weight: bold;
+    margin-right: 5px; 
+    border: 1px solid #0000FF;
+    color: white; 
+    padding-left: 22px; 
+    background: #336699 none no-repeat scroll top left;
+}
+
+.private-feeds.instructions .feedlink.rss-link {
+    background-image: url(/static/rss.png);
+}
+
+.private-feeds.instructions .feedlink.json-link {
+    background-color: #DDDDDD;
+    background-image: url(/static/json.png);
+    color: black; 
+}
 
 /* Socialite */
 .socialite.instructions ul {

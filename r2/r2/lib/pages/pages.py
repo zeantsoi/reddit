@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
-from r2.models import Account, Default
+from r2.models import Account, Default, make_feedurl
 from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
 from r2.models import Link, Printable, Trophy, bidding, PromoteDates
@@ -478,9 +478,13 @@ class PrefsPage(Reddit):
                         *a, **kw)
 
     def build_toolbars(self):
-        buttons = [NavButton(menu.options, ''),
-                   NamedButton('friends'),
-                   NamedButton('update')]
+        buttons = [NavButton(menu.options, '')]
+
+        if c.user.pref_private_feeds:
+            buttons.append(NamedButton('feeds'))
+
+        buttons.extend([NamedButton('friends'),
+                        NamedButton('update')])
         #if CustomerID.get_id(user):
         #    buttons += [NamedButton('payment')]
         buttons += [NamedButton('delete')]
@@ -491,6 +495,9 @@ class PrefOptions(Templated):
     """Preference form for updating language and display options"""
     def __init__(self, done = False):
         Templated.__init__(self, done = done)
+
+class PrefFeeds(Templated):
+    pass
 
 class PrefUpdate(Templated):
     """Preference form for updating email address and passwords"""
