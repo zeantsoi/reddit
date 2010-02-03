@@ -322,10 +322,10 @@ class ApiController(RedditController):
                 langs = list(c.content_langs)
                 langs.sort()
                 user.pref_content_langs = tuple(langs)
-    
+
             d = c.user._dirties.copy()
             user._commit()
-                
+
             c.user = user
             if reason:
                 if reason[0] == 'redirect':
@@ -333,7 +333,7 @@ class ApiController(RedditController):
                 elif reason[0] == 'subscribe':
                     for sr, sub in reason[1].iteritems():
                         self._subscribe(sr, sub)
-    
+
             self._login(form, user, dest, rem)
 
     @noresponse(VUser(),

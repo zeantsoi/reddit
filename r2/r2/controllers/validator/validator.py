@@ -1146,8 +1146,10 @@ class VDestination(Validator):
     def __init__(self, param = 'dest', default = "", **kw):
         self.default = default
         Validator.__init__(self, param, **kw)
-    
+
     def run(self, dest):
+        if dest and dest.startswith("javascript:"):
+            return "/"
         return dest or request.referer or self.default
 
 class ValidAddress(Validator):

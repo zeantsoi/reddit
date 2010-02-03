@@ -578,7 +578,6 @@ class MessageController(ListingController):
             q = queries.get_unread_inbox(c.user)
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
-
         if self.where != 'sent':
             #reset the inbox
             if c.have_messages and self.mark != 'false':

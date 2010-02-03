@@ -529,51 +529,50 @@ class FrontController(RedditController):
 
         return builder.total_num, timing, res
 
-    def GET_login(self):
+    @validate(dest = VDestination())
+    def GET_login(self, dest):
         """The /login form.  No link to this page exists any more on
         the site (all actions invoking it now go through the login
         cover).  However, this page is still used for logging the user
         in during submission or voting from the bookmarklets."""
 
-        # dest is the location to redirect to upon completion
-        dest = request.get.get('dest','') or request.referer or '/'
         if (c.user_is_loggedin and
             not request.environ.get('extension') == 'embed'):
             return self.redirect(dest)
         return LoginPage(dest = dest).render()
 
-    def GET_logout(self):
-        dest = request.referer or '/'
+    @validate(VUser(),
+              VModhash(),
+              dest = VDestination())
+    def GET_logout(self, dest):
         return self.redirect(dest)
 
     @validate(VUser(),
-              VModhash())
-    def POST_logout(self, dest = None):
+              VModhash(),
+              dest = VDestination())
+    def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
         self.logout()
-        dest = request.post.get('dest','') or request.referer or '/'
         return self.redirect(dest)
 
-    
-    @validate(VUser())
-    def GET_adminon(self):
+
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_adminon(self, dest):
         """Enable admin interaction with site"""
         #check like this because c.user_is_admin is still false
         if not c.user.name in g.admins:
             return self.abort404()
         self.login(c.user, admin = True)
-        
-        dest = request.referer or '/'
         return self.redirect(dest)
 
-    @validate(VAdmin())
-    def GET_adminoff(self):
+    @validate(VAdmin(),
+              dest = VDestination())
+    def GET_adminoff(self, dest):
         """disable admin interaction with site."""
         if not c.user.name in g.admins:
             return self.abort404()
         self.login(c.user, admin = False)
-        
-        dest = request.referer or '/'
         return self.redirect(dest)
 
     def GET_validuser(self):
