@@ -348,6 +348,7 @@ class FrontController(RedditController):
             builder = builder_cls(query,
                                   skip = True, 
                                   num = num, after = after,
+                                  keep_fn = lambda x: not x.hidden,
                                   count = count, reverse = reverse,
                                   wrap = ListingController.builder_wrapper)
             listing = LinkListing(builder)

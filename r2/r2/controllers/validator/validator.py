@@ -325,7 +325,10 @@ class VCount(Validator):
     def run(self, count):
         if count is None:
             count = 0
-        return max(int(count), 0)
+        try:    
+            return max(int(count), 0)
+        except ValueError:
+            return 0
 
 
 class VLimit(Validator):
