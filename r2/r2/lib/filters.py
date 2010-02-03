@@ -19,14 +19,17 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from BeautifulSoup import BeautifulSoup
-from xml.dom.minidom import parseString
-
-from pylons import g, c
-
 import cgi
 import urllib
 import re
+from cStringIO import StringIO
+
+from xml.sax.handler import ContentHandler
+from lxml.sax import saxify
+import lxml.etree
+
+from pylons import g, c
+
 from wrapped import Templated, CacheStub
 
 SC_OFF = "<!-- SC_OFF -->"
@@ -123,58 +126,55 @@ def edit_comment_filter(text = ''):
         text = unicode(text)
     return url_escape(text)
 
+class SouptestSaxHandler(ContentHandler):
+    def __init__(self, ok_tags):
+        self.ok_tags = ok_tags
+
+    def startElementNS(self, tagname, qname, attrs):
+        if qname not in self.ok_tags:
+            raise ValueError('HAX: Unknown tag: %r' % qname)
+
+        for (ns, name), val in attrs.items():
+            if ns is not None:
+                raise ValueError('HAX: Unknown namespace? Seriously? %r' % ns)
+
+            if name not in self.ok_tags[qname]:
+                raise ValueError('HAX: Unknown attribute-name %r' % name)
+
+            if ((qname == 'a' and name == 'href')
+                and not (val.startswith('http://')
+                         or val.startswith('https://')
+                         or val.startswith('ftp://')
+                         or val.startswith('mailto:')
+                         or val.startswith('/'))):
+                raise ValueError('HAX: Unsupported link scheme %r' % val)
+
+markdown_ok_tags = {
+    'div': ('class'),
+    'a': set(('href', 'title', 'target', 'nofollow')),
+    'table': ("align", ),
+    'th': ("align", ),
+    'td': ("align", ),
+    }
+markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
+                         'pre', 'code', 'blockquote', 'center',
+                         'tbody', 'thead', "tr",
+                         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
+for bt in markdown_boring_tags:
+    markdown_ok_tags[bt] = ()
+
 def markdown_souptest(text, nofollow=False, target=None, lang=None):
     if not text:
         return text
 
-    ok_tags  = {
-        'div': ('class'),
-        'a': ('href', 'title', 'target', 'nofollow'),
-        'table': ("align", ),
-        'th': ("align", ),
-        'td': ("align", )
-        }
+    smd = safemarkdown(text, nofollow, target, lang)
 
-    boring_tags = ( 'p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
-                    'pre', 'code', 'blockquote', 'center',
-                    'tbody', 'thead', "tr",
-                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', )
+    s = StringIO(smd)
+    tree = lxml.etree.parse(s)
+    handler = SouptestSaxHandler(markdown_ok_tags)
+    saxify(tree, handler)
 
-    for bt in boring_tags:
-        ok_tags[bt] = ()
-
-    smd = safemarkdown (text, nofollow, target, lang)
-
-    try:
-        parseString(_force_utf8(smd))
-    except:
-        raise ValueError("HAX: unparsable xml")
-
-    soup = BeautifulSoup(smd)
-
-    for tag in soup.findAll():
-        if not tag.name in ok_tags:
-            raise ValueError("HAX: <%s> tag found in markdown!" % tag.name)
-        ok_attrs = ok_tags[tag.name]
-        for k,v in tag.attrs:
-            if not k in ok_attrs:
-                raise ValueError("HAX: <%s %s='%s'> attr found in markdown!"
-                                 % (tag.name, k,v))
-            if tag.name == 'a' and k == 'href':
-                lv = v.lower()
-                if lv.startswith("http:"):
-                    pass
-                elif lv.startswith("https:"):
-                    pass
-                elif lv.startswith("ftp:"):
-                    pass
-                elif lv.startswith("mailto:"):
-                    pass
-                elif lv.startswith("/"):
-                    pass
-                else:
-                    raise ValueError("HAX: Link to '%s' found in markdown!" % v)
-
+    return smd
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
