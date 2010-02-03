@@ -158,7 +158,7 @@ class PostController(ApiController):
                                            msg_hash = msg_hash)).render()
 
 
-    @validate(dest = VDestination())
+    @validate(dest = VDestination(default = "/"))
     def POST_login(self, dest, *a, **kw):
         ApiController.POST_login(self, *a, **kw)
         c.render_style = "html"
@@ -177,7 +177,7 @@ class PostController(ApiController):
 
         return self.redirect(dest)
 
-    @validate(dest = VDestination())
+    @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
         ApiController.POST_register(self, *a, **kw)
         c.render_style = "html"
