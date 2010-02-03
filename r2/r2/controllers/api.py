@@ -294,7 +294,7 @@ class ApiController(RedditController):
                 form.has_errors('ratelimit', errors.RATELIMIT) or
                 form.has_errors('captcha', errors.BAD_CAPTCHA)):
 
-            user = Account.register(name, password)
+            user = register(name, password)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
 
             #anything else we know (email, languages)?
