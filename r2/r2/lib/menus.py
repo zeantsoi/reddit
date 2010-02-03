@@ -161,7 +161,9 @@ menu =   MenuHandler(hot          = _('hot'),
                      live_promos    = _('live'),
                      unpaid_promos  = _('unpaid'),
                      pending_promos = _('pending'),
-                     rejected_promos = _('rejected')
+                     rejected_promos = _('rejected'),
+
+                     whitelist = _("whitelist")
                      )
 
 def menu_style(type):

@@ -139,6 +139,10 @@ class Reddit(Templated):
         if c.site.type != 'public':
             buttons.append(NamedButton('contributors',
                                        css_class = 'reddit-contributors'))
+        elif (c.user_is_loggedin and c.site.use_whitelist and
+              (c.site.is_moderator(c.user) or c.user_is_admin)):
+            buttons.append(NavButton(menu.whitelist, "contributors",
+                                     css_class = 'reddit-contributors'))
 
         buttons.extend([
                 NamedButton('traffic', css_class = 'reddit-traffic'),
@@ -1585,6 +1589,8 @@ class ContributorList(UserList):
 
     @property
     def form_title(self):
+        if c.site.type == "public":
+            return _("add to whitelist")
         return _('add contributor')
 
     @property

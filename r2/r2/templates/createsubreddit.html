@@ -163,6 +163,14 @@ function update_title(elem) {
             ${_("show thumbnail images of content")}
           </label>
         </li>
+        <li>
+          <input class="nomargin" type="checkbox" 
+                 name="use_whitelist" id="whitelist"
+                 ${thing.site and thing.site.use_whitelist and "checked='checked'" or ""}/>
+          <label for="whitelist">
+            ${_("enable whitelisting on this reddit")}
+          </label>
+        </li>
       </ul>
     </div>
   </%utils:line_field>

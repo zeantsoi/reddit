@@ -987,6 +987,7 @@ class ApiController(RedditController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
+                   use_whitelist = VBoolean('use_whitelist'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    ip = ValidIP(),
                    ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
@@ -1005,7 +1006,7 @@ class ApiController(RedditController):
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
                            'show_media', 'type', 'lang', "css_on_cname",
-                           'allow_top'))
+                           'allow_top', 'use_whitelist'))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:

@@ -55,7 +55,8 @@ class Subreddit(Thing, Printable):
                      reported = 0,
                      valid_votes = 0,
                      show_media = False,
-                     css_on_cname = True, 
+                     css_on_cname = True,
+                     use_whitelist = False,
                      domain = None,
                      over_18 = False,
                      mod_actions = 0,
@@ -199,8 +200,9 @@ class Subreddit(Thing, Printable):
         return (user
                 and (c.user_is_admin
                      or self.is_moderator(user)
-                     or (self.type in ('restricted', 'private')
-                         and self.is_contributor(user))))
+                     or ((self.type in ('restricted', 'private') or
+                          self.use_whitelist) and
+                         self.is_contributor(user))))
 
     def can_give_karma(self, user):
         return self.is_special(user)
@@ -213,8 +215,8 @@ class Subreddit(Thing, Printable):
             rl_karma = g.MIN_RATE_LIMIT_COMMENT_KARMA
         else:
             rl_karma = g.MIN_RATE_LIMIT_KARMA
-            
-        return not (self.is_special(user) or 
+
+        return not (self.is_special(user) or
                     user.karma(kind, self) >= rl_karma)
 
     def can_view(self, user):
