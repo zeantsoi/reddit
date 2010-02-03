@@ -154,7 +154,7 @@ class BaseController(WSGIController):
         Reformats the new Location (dest) using format_output_url and
         sends the user to that location with the provided HTTP code.
         """
-        dest = cls.format_output_url(dest)
+        dest = cls.format_output_url(dest or "/")
         c.response.headers['Location'] = dest
         c.response.status_code = code
         return c.response
