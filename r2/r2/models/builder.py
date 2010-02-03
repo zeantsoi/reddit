@@ -372,18 +372,30 @@ class QueryBuilder(Builder):
 
 class IDBuilder(QueryBuilder):
     def init_query(self):
-        names = self.names = list(tup(self.query))
+        names = list(tup(self.query))
 
-        if self.reverse:
+        after = self.after._fullname if self.after else None
+
+        self.names = self._get_after(names,
+                                     after,
+                                     self.reverse)
+
+    @staticmethod
+    def _get_after(l, after, reverse):
+        names = list(l)
+
+        if reverse:
             names.reverse()
 
-        if self.after:
+        if after:
             try:
-                i = names.index(self.after._fullname)
+                i = names.index(after)
             except ValueError:
-                self.names = ()
+                names = ()
             else:
-                self.names = names[i + 1:]
+                names = names[i + 1:]
+
+        return names
 
     def fetch_more(self, last_item, num_have):
         done = False
@@ -405,13 +417,21 @@ class IDBuilder(QueryBuilder):
 
         return done, new_items
 
-class SearchBuilder(QueryBuilder):
+class SearchBuilder(IDBuilder):
     def init_query(self):
         self.skip = True
-        self.total_num = 0
-        self.start_time = time.time()
 
         self.start_time = time.time()
+
+        search = self.query.run()
+        names = list(search.docs)
+        self.total_num = search.hits
+
+        after = self.after._fullname if self.after else None
+
+        self.names = self._get_after(names,
+                                     after,
+                                     self.reverse)
 
     def keep_item(self,item):
         # doesn't use the default keep_item because we want to keep
@@ -421,31 +441,6 @@ class SearchBuilder(QueryBuilder):
             return False
         else:
             return True
-
-
-    def fetch_more(self, last_item, num_have):
-        from r2.lib import solrsearch
-
-        done = False
-        limit = None
-        if self.num:
-            num_need = self.num - num_have
-            if num_need <= 0:
-                return True, None
-            else:
-                limit = max(int(num_need * EXTRA_FACTOR), 1)
-        else:
-            done = True
-
-        search = self.query.run(after = last_item or self.after,
-                                reverse = self.reverse,
-                                num = limit)
-
-        new_items = Thing._by_fullname(search.docs, data = True, return_dict=False)
-
-        self.total_num = search.hits
-
-        return done, new_items
 
 def empty_listing(*things):
     parent_name = None

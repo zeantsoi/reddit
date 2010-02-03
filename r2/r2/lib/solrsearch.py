@@ -487,7 +487,7 @@ class SearchQuery(object):
 
         return "<%s(%s)>" % (self.__class__.__name__, ", ".join(attrs))
 
-    def run(self, after = None, num = 100, reverse = False):
+    def run(self, after = None, num = 1000, reverse = False):
         if not self.q:
             return pysolr.Results([],0)
 
@@ -570,11 +570,11 @@ class SearchQuery(object):
 
         if reverse:
             sort = swap_strings(sort,'asc','desc')
+        after = after._fullname if after else None
 
-        search = cls.run_search_cached(q, sort, 0, 1000, solr_params)
+        search = cls.run_search_cached(q, sort, 0, num, solr_params)
 
-        if after:
-            search.docs = get_after(search.docs, after._fullname, num)
+        search.docs = get_after(search.docs, after, num)
 
         return search
 
@@ -664,11 +664,14 @@ class DomainSearchQuery(SearchQuery):
                        qt='standard')
 
 def get_after(fullnames, fullname, num):
+    if not fullname:
+        return fullnames[:num]
+
     for i, item in enumerate(fullnames):
         if item == fullname:
             return fullnames[i+1:i+num+1]
-    else:
-        return fullnames[:num]
+
+    return fullnames[:num]
 
 
 def run_commit(optimize=False):
