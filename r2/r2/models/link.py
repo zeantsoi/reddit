@@ -424,6 +424,11 @@ class Link(Thing, Printable):
             item.midcolmargin = CachedVariable("midcolmargin")
             item.comment_label = CachedVariable("numcomments")
 
+            item.as_deleted = False
+            if item.deleted and not c.user_is_admin:
+                item.author = DeletedUser()
+                item.as_deleted = True
+
         if user_is_loggedin:
             incr_counts(wrapped)
 

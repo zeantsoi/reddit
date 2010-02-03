@@ -345,10 +345,20 @@ class FrontController(RedditController):
                      else c.site.get_spam())
             builder_cls = (QueryBuilder if isinstance(query, thing.Query)
                            else IDBuilder)
+            def keep_fn(x):
+                # no need to bother mods with banned users, or deleted content
+                if x.hidden or x._deleted or x.author._spam:
+                    return False
+                if location == "reports":
+                    return (x.reported > 0)
+                if location == "spam":
+                    return x._spam
+                return True
+
             builder = builder_cls(query,
                                   skip = True, 
                                   num = num, after = after,
-                                  keep_fn = lambda x: not x.hidden,
+                                  keep_fn = keep_fn,
                                   count = count, reverse = reverse,
                                   wrap = ListingController.builder_wrapper)
             listing = LinkListing(builder)
