@@ -54,6 +54,20 @@ from r2.lib.subreddit_search import search_reddits
 from datetime import datetime, timedelta
 from md5 import md5
 
+def reject_vote(thing):
+    voteword = request.params.get('dir')
+
+    if voteword == '1':
+        voteword = 'upvote'
+    elif voteword == '0':
+        voteword = '0-vote'
+    elif voteword == '-1':
+        voteword = 'downvote'
+
+    g.log.error("POST_vote: rejected %s from %s (%s) on %s %s via %s" %
+                (voteword, c.user.name, request.ip, thing.__class__.__name__,
+                 thing._id36, request.referer))
+
 class ApiController(RedditController):
     """
     Controller which deals with almost all AJAX site interaction.  
@@ -737,14 +751,12 @@ class ApiController(RedditController):
             return
 
         if vote_type == "rejected":
-            g.log.error("POST_vote: rejected vote (%s) from '%s' on %s (%s)"%
-                        (request.params.get('dir'), c.user.name,
-                         thing._fullname, request.ip))
+            reject_vote(thing)
             store = False
 
         # TODO: temporary hack until we migrate the rest of the vote data
         if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
-            g.log.error("POST_vote: ignoring old vote on %s" % thing._fullname)
+            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
         # in a lock to prevent duplicate votes from people
