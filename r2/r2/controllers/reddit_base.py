@@ -651,6 +651,9 @@ class RedditController(BaseController):
     def abort404(self):
         abort(404, "not found")
 
+    def abort403(self):
+        abort(403, "forbidden")
+
     def sendpng(self, string):
         c.response_content_type = 'image/png'
         c.response.content = string

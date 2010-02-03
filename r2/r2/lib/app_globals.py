@@ -66,8 +66,7 @@ class Globals(object):
                   'write_query_queue',
                   'css_killswitch',
                   'db_create_tables',
-                  'disallow_db_writes',
-                  'allow_shutdown']
+                  'disallow_db_writes']
 
     tuple_props = ['memcaches',
                    'rec_cache',
