@@ -267,28 +267,14 @@ class ApiController(RedditController):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
-        hc_key = "login_attempts-%s" % request.ip
-
-        # TODO: You-know-what (not mentioning it, just in case
-        # we accidentally release code with this comment in it)
-
-        # Cache lifetime for login_attmempts
-        la_expire_time = 3600 * 8
-
-        recent_attempts = g.hardcache.add(hc_key, 0, time=la_expire_time)
-
-        fake_failure = False
-        if recent_attempts >= 25:
-            g.log.error ("%s failed to login as %s (attempt #%d)"
-                         % (request.ip, username, recent_attempts))
-            fake_failure = True
-
-        if fake_failure or form.has_errors("passwd", errors.WRONG_PASSWORD):
+        if login_throttle(username, wrong_password = form.has_errors("passwd",
+                                                     errors.WRONG_PASSWORD)):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-            g.hardcache.incr(hc_key, time = la_expire_time)
-        else:
-            self._login(form, user, dest, rem)
 
+            c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
+
+        if not form.has_errors("passwd", errors.WRONG_PASSWORD):
+            self._login(form, user, dest, rem)
 
     @validatedForm(VCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
@@ -308,13 +294,13 @@ class ApiController(RedditController):
                 form.has_errors('ratelimit', errors.RATELIMIT) or
                 form.has_errors('captcha', errors.BAD_CAPTCHA)):
 
-            user = register(name, password)
+            user = Account.register(name, password)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
-    
+
             #anything else we know (email, languages)?
             if email:
                 user.email = email
-    
+
             user.pref_lang = c.lang
             if c.content_langs == 'all':
                 user.pref_content_langs = 'all'

@@ -125,6 +125,10 @@ def valid_thing(v, karma):
 def valid_user(v, sr, karma):
     return True
 
+# Returns whether this person is being suspicious
+def login_throttle(username, wrong_password):
+    return False
+
 def apply_updates(user):
     pass
 
