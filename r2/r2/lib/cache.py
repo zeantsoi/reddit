@@ -459,11 +459,11 @@ class SelfEmptyingCache(LocalCache):
         if len(self) > self.max_size:
             self.clear()
 
-    def set(self,key,val,time = 0):
+    def set(self, key, val, time=0):
         self.maybe_reset()
         return LocalCache.set(self,key,val,time)
 
-    def add(self, key, val):
+    def add(self, key, val, time=0):
         self.maybe_reset()
         return LocalCache.add(self, key, val)
 
