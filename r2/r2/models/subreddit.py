@@ -314,7 +314,7 @@ class Subreddit(Thing, Printable):
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
-                                       cache_time = 3600)
+                                       cache_time = g.page_cache_time)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 

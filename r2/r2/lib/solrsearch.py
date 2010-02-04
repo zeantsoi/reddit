@@ -573,6 +573,7 @@ class SearchQuery(object):
         after = after._fullname if after else None
 
         search = cls.run_search_cached(q, sort, 0, num, solr_params)
+
         search.docs = get_after(search.docs, after, num)
 
         return search

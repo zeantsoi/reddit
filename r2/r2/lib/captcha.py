@@ -24,8 +24,6 @@ from pylons import g
 from Captcha.Base import randomIdentifier
 from Captcha.Visual import Text, Backgrounds, Distortions, ImageCaptcha
 
-from r2.lib.cache import make_key
-
 IDEN_LENGTH = 32
 SOL_LENGTH = 6
 
@@ -49,24 +47,21 @@ def make_solution():
     return randomIdentifier(alphabet=string.ascii_letters, length = SOL_LENGTH).upper()
 
 def get_image(iden):
-    key = make_key(iden)
-    solution = g.rendercache.get(key)
+    solution = g.rendercache.get(str(iden))
     if not solution:
         solution = make_solution()
-        g.rendercache.set(key, solution, time = 300)
+        g.rendercache.set(str(iden), solution, time = 300)
     return RandCaptcha(solution=solution).render()
 
 def valid_solution(iden, solution):
-    key = make_key(iden)
-
     if (not iden
         or not solution
         or len(iden) != IDEN_LENGTH
         or len(solution) != SOL_LENGTH
-        or solution.upper() != g.rendercache.get(key)): 
+        or solution.upper() != g.rendercache.get(str(iden))): 
         solution = make_solution()
-        g.rendercache.set(key, solution, time = 300)
+        g.rendercache.set(str(iden), solution, time = 300)
         return False
     else:
-        g.rendercache.delete(key)
+        g.rendercache.delete(str(iden))
         return True
