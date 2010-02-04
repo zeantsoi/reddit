@@ -1155,3 +1155,20 @@ def in_chunks(it, size=25):
     except StopIteration:
         if chunk:
             yield chunk
+
+class Hell(object):
+    def __str__(self):
+        return "boom!"
+
+class Bomb(object):
+    @classmethod
+    def __getattr__(cls, key):
+        raise Hell()
+
+    @classmethod
+    def __setattr__(cls, key, val):
+        raise Hell()
+
+    @classmethod
+    def __repr__(cls):
+        raise Hell()

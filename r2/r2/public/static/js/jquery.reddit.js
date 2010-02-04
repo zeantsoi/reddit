@@ -66,9 +66,9 @@ $.with_default = function(value, alt) {
 $.unsafe = function(text) {
     /* inverts websafe filtering of reddit app. */
     if(typeof(text) == "string") {
-        text = text.replace(/&gt;/g, ">")
-            .replace(/&lt;/g, "<").replace(/&amp;/g, "&")
-            .replace(/&quot;/g, '"');
+        text = text.replace(/&quot;/g, '"')
+            .replace(/&gt;/g, ">").replace(/&lt;/g, "<")
+            .replace(/&amp;/g, "&");
     }
     return (text || "");
 };
@@ -121,8 +121,12 @@ function handleResponse(action) {
             objs[0] = jQuery;
             $.map(r.jquery, function(q) {
                     var old_i = q[0], new_i = q[1], op = q[2], args = q[3];
-                    for(var i = 0; args.length && i < args.length; i++) 
+                    if (typeof(args) == "string") {
+                      args = $.unsafe(args);
+                    } else { // assume array
+                      for(var i = 0; args.length && i < args.length; i++)
                         args[i] = $.unsafe(args[i]);
+                    }
                     if (op == "call") 
                         objs[new_i] = objs[old_i].apply(objs[old_i]._obj, args);
                     else if (op == "attr") {
@@ -483,9 +487,9 @@ $.insert_things = function(things, append) {
             var midcol = $(".midcol:visible:first").css("width");
             var numcol = $(".rank:visible:first").css("width");
             var s = $.listing(data.parent);
-            if(append) 
+            if(append)
                 s = s.append($.unsafe(data.content)).children(".thing:last");
-            else 
+            else
                 s = s.prepend($.unsafe(data.content)).children(".thing:first");
             s.find(".midcol").css("width", midcol);
             s.find(".rank").css("width", midcol);

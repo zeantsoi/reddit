@@ -51,7 +51,7 @@ class JsonResponse(object):
         self._errors = set()
         self._new_captcha = False
         self._data = {}
-        
+
     def send_failure(self, error):
         c.errors.add(error)
         self._clear()
@@ -69,7 +69,7 @@ class JsonResponse(object):
             res['data'] = self._data
         res['errors'] = [(e[0], c.errors[e].message) for e in self._errors]
         return {"json": res}
-    
+
     def set_error(self, error_name, field_name):
         self._errors.add((error_name, field_name))
 
@@ -88,7 +88,7 @@ class JsonResponse(object):
 
     def process_rendered(self, res):
         return res
-    
+
     def _things(self, things, action, *a, **kw):
         """
         function for inserting/replacing things in listings.
@@ -117,13 +117,13 @@ class JsonResponse(object):
 
     def _send_data(self, **kw):
         self._data.update(kw)
-            
+
 
 class JQueryResponse(JsonResponse):
     """
     class which mimics the jQuery in javascript for allowing Dom
     manipulations on the client side.
-    
+
     An instantiated JQueryResponse acts just like the "$" function on
     the JS layer with the exception of the ability to run arbitrary
     code on the client.  Selectors and method functions evaluate to
@@ -194,7 +194,7 @@ class JQueryResponse(JsonResponse):
 
     # thing methods
     #--------------
-    
+
     def _things(self, things, action, *a, **kw):
         data = JsonResponse._things(self, things, action, *a, **kw)
         new = self.__getattr__(action)

@@ -666,7 +666,7 @@ class ApiController(RedditController):
 
             # insert the new comment
             jquery.insert_things(item)
-            
+
             # remove any null listings that may be present
             jquery("#noresults").hide()
 
