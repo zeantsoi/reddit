@@ -132,7 +132,7 @@ class Globals(object):
         # new one so the caches can start warmer
         mc_old = Permacache(self.memcaches)
         rec_cache = Memcache(self.rec_cache, debug=self.debug)
-        rmc = Memcache(self.rendercaches, debug=self.debug, noreply=True)
+        rmc = Memcache(self.rendercaches, debug=self.debug)
         pmc = Permacache(self.permacaches)
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries

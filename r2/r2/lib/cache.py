@@ -94,9 +94,9 @@ class Memcache(CacheUtils, pylibmc.Client):
                  binary=True,
                  noreply=False):
         pylibmc.Client.__init__(self, servers, binary=binary)
-        behaviors = {'no_block': True, # use async I/O
-                     'cache_lookups': True, # cache DNS lookups
-                     'tcp_nodelay': True, # no nagle
+        behaviors = {#'no_block': True, # use async I/O
+                     #'cache_lookups': True, # cache DNS lookups
+                     #'tcp_nodelay': True, # no nagle
                      'ketama': True, # consistant hashing
                      '_noreply': int(noreply),
                      'verify_key': int(debug)} # spend the CPU to verify keys
