@@ -20,19 +20,21 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from threading import local
+from hashlib import md5
 
-from utils import lstrips, in_chunks
+import pylibmc
 from contrib import memcache
 
+from utils import lstrips, in_chunks, tup
 from r2.lib.hardcachebackend import HardCacheBackend
 
 class NoneResult(object): pass
 
 class CacheUtils(object):
-    def incr_multi(self, keys, delta=1, time=0, prefix=''):
+    def incr_multi(self, keys, delta=1, prefix=''):
         for k in keys:
             try:
-                self.incr(prefix + k, time=time, delta=delta)
+                self.incr(prefix + k, delta)
             except ValueError:
                 pass
 
@@ -53,8 +55,13 @@ class CacheUtils(object):
 
         return dict((key_map[k], r[k]) for k in r.keys())
 
-class Memcache(CacheUtils, memcache.Client):
+class Permacache(CacheUtils, memcache.Client):
+    """We still use our patched python-memcache to talk to the
+       permacaches for legacy reasons"""
     simple_get_multi = memcache.Client.get_multi
+
+    def __init__(self, servers):
+        memcache.Client.__init__(self, servers, pickleProtocol = 1)
 
     def set_multi(self, keys, prefix='', time=0):
 
@@ -78,6 +85,56 @@ class Memcache(CacheUtils, memcache.Client):
     def delete_multi(self, keys, prefix='', time=0):
         memcache.Client.delete_multi(self, keys, time = time,
                                      key_prefix = prefix)
+
+class Memcache(CacheUtils, pylibmc.Client):
+    simple_get_multi = pylibmc.Client.get_multi
+
+    def __init__(self, servers,
+                 debug = False,
+                 binary=True,
+                 noreply=False):
+        pylibmc.Client.__init__(self, servers, binary=binary)
+        behaviors = {'no_block': True, # use async I/O
+                     'cache_lookups': True, # cache DNS lookups
+                     'tcp_nodelay': True, # no nagle
+                     'ketama': True, # consistant hashing
+                     '_noreply': int(noreply),
+                     'verify_key': int(debug)} # spend the CPU to verify keys
+        self.behaviors.update(behaviors)
+        self.servers = servers
+
+    def __repr__(self):
+        return 'Memcache(%r)' % (self.servers,)
+
+    def set_multi(self, keys, prefix='', time=0):
+        new_keys = {}
+        for k,v in keys.iteritems():
+            new_keys[str(k)] = v
+        pylibmc.Client.set_multi(self, new_keys, key_prefix = prefix,
+                                 time = time)
+
+    def incr(self, key, delta=1, time=0):
+        # ignore the time on these
+        return pylibmc.Client.incr(self, key, delta)
+
+    def add(self, key, val, time=0):
+        try:
+            return pylibmc.Client.add(self, key, val, time=time)
+        except pylibmc.DataExists:
+            return None
+
+    def get(self, key, default=None):
+        r = pylibmc.Client.get(self, key)
+        if r is None:
+            return default
+        return r
+
+    def set(self, key, val, time=0):
+        pylibmc.Client.set(self, key, val, time = time)
+
+    def delete_multi(self, keys, prefix='', time=0):
+        pylibmc.Client.delete_multi(self, keys, time = time,
+                                    key_prefix = prefix)
 
 class HardCache(CacheUtils):
     backend = None
@@ -161,7 +218,6 @@ class LocalCache(dict, CacheUtils):
         for k in keys:
             if self.has_key(k):
                 out[k] = self[k]
-#        print "Local cache answers: " + str(out)
         return out
 
     def set(self, key, val, time = 0):
@@ -238,9 +294,10 @@ class CacheChain(CacheUtils, local):
         authority = self.caches[-1]
         added_val = authority.add(key, val, time=time)
         for cache in self.caches[:-1]:
-            # Calling set() rather than add() to ensure that all caches are
-            # in sync and that de-syncs repair themselves
-            cache.set(key, added_val, time=time)
+            # TODO: does this introduce a bug where the authority's
+            # value is about to expire, but we've told the lower-level
+            # caches to cache it for the full amount of time?
+            cache.add(key, added_val, time=time)
         return added_val
 
     def accrue(self, key, time=0, delta=1):
@@ -271,7 +328,7 @@ class CacheChain(CacheUtils, local):
             if val is not None:
                 #update other caches
                 for d in self.caches:
-                    if c == d:
+                    if c is d:
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
@@ -293,12 +350,13 @@ class CacheChain(CacheUtils, local):
         need = set(keys)
         for c in self.caches:
             if len(out) == len(keys):
+                # we've found them all
                 break
             r = c.simple_get_multi(need)
             #update other caches
             if r:
                 for d in self.caches:
-                    if c == d:
+                    if c is d:
                         break # so we don't set caches later in the chain
                     d.set_multi(r)
                 r.update(out)
@@ -340,34 +398,56 @@ def sgm(cache, keys, miss_fn, prefix='', time=0):
 
     return dict((s_keys[k], v) for k,v in r.iteritems())
 
-def test_cache(cache):
+def test_cache(cache, prefix=''):
     #basic set/get
-    cache.set('1', 1)
-    assert cache.get('1') == 1
+    cache.set('%s1' % prefix, 1)
+    assert cache.get('%s1' % prefix) == 1
 
     #python data
-    cache.set('2', [1,2,3])
-    assert cache.get('2') == [1,2,3]
+    cache.set('%s2' % prefix, [1,2,3])
+    assert cache.get('%s2' % prefix) == [1,2,3]
 
     #set multi, no prefix
-    cache.set_multi({'3':3, '4': 4})
-    assert cache.get_multi(('3', '4')) == {'3':3, '4': 4}
+    cache.set_multi({'%s3' % prefix:3, '%s4' % prefix: 4})
+    assert cache.get_multi(('%s3' % prefix, '%s4' % prefix)) == {'%s3' % prefix: 3, 
+                                                                 '%s4' % prefix: 4}
 
     #set multi, prefix
-    cache.set_multi({'3':3, '4': 4}, prefix='p_')
-    assert cache.get_multi(('3', 4), prefix='p_') == {'3':3, 4: 4}
-    assert cache.get_multi(('p_3', 'p_4')) == {'p_3':3, 'p_4': 4}
+    cache.set_multi({'3':3, '4': 4}, prefix='%sp_' % prefix)
+    assert cache.get_multi(('3', 4), prefix='%sp_' % prefix) == {'3':3, 4: 4}
+    assert cache.get_multi(('%sp_3' % prefix, '%sp_4' % prefix)) == {'%sp_3'%prefix: 3,
+                                                                     '%sp_4'%prefix: 4}
 
     #incr
-    cache.set('5', 1)
-    cache.set('6', 1)
-    cache.incr('5')
-    assert cache.get('5') == 2
-    cache.incr('5',2)
-    assert cache.get('5') == 4
-    cache.incr_multi(('5', '6'), 1)
-    assert cache.get('5') == 5
-    assert cache.get('6') == 2
+    cache.set('%s5'%prefix, 1)
+    cache.set('%s6'%prefix, 1)
+    cache.incr('%s5'%prefix)
+    assert cache.get('%s5'%prefix) == 2
+    cache.incr('%s5'%prefix,2)
+    assert cache.get('%s5'%prefix) == 4
+    cache.incr_multi(('%s5'%prefix, '%s6'%prefix), 1)
+    assert cache.get('%s5'%prefix) == 5
+    assert cache.get('%s6'%prefix) == 2
+
+def test_multi(cache):
+    from threading import Thread
+
+    num_threads = 100
+    num_per_thread = 1000
+
+    threads = []
+    for x in range(num_threads):
+        def _fn(prefix):
+            def __fn():
+                for y in range(num_per_thread):
+                    test_cache(cache,prefix=prefix)
+            return __fn
+        t = Thread(target=_fn(str(x)))
+        t.start()
+        threads.append(t)
+
+    for thread in threads:
+        thread.join()
 
 # a cache that occasionally dumps itself to be used for long-running
 # processes
@@ -383,5 +463,34 @@ class SelfEmptyingCache(LocalCache):
         self.maybe_reset()
         return LocalCache.set(self,key,val,time)
 
-    def add(self,key,val):
-        return self.set(key,val)
+    def add(self, key, val):
+        self.maybe_reset()
+        return LocalCache.add(self, key, val)
+
+def make_key(iden, *a, **kw):
+    """
+    A helper function for making memcached-usable cache keys out of
+    arbitrary arguments. Hashes the arguments but leaves the `iden'
+    human-readable
+    """
+    h = md5()
+
+    def _conv(s):
+        if isinstance(s, str):
+            return s
+        elif isinstance(s, unicode):
+            return s.encode('utf-8')
+        elif isinstance(s, (tuple, list)):
+            return ','.join(_conv(x) for x in s)
+        elif isinstance(s, dict):
+            return ','.join('%s:%s' % (_conv(k), _conv(v))
+                            for (k, v) in sorted(s.iteritems()))
+        else:
+            return str(s)
+
+    iden = _conv(iden)
+    h.update(iden)
+    h.update(_conv(a))
+    h.update(_conv(kw))
+
+    return '%s(%s)' % (iden, h.hexdigest())

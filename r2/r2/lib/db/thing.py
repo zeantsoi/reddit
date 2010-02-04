@@ -713,8 +713,12 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
             res = sgm(cache, pairs, items_db, prefix)
             #convert the keys back into objects
-            #we can assume the rels will be in the cache and just call
-            #_byID lots
+
+            # populate up the local-cache in batch
+            cls._byID(filter(None, res.values()), data=data)
+
+            # now we can assume the rels will be in the cache and just
+            # call _byID lots
             res_obj = {}
             for k, rid in res.iteritems():
                 obj_key = (thing1_dict[k[0]], thing2_dict[k[1]], k[2])
