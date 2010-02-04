@@ -32,11 +32,11 @@
 %elif c.site.ad_type == "basic":
    <% name = c.site.name if not c.default_sr else '' %>
    <iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
-           src="/ads/${name}">
+           src="${g.ad_domain}/ads/${name}">
    </iframe>
 %else:
    <iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
-           src="/ads/">
+           src="${g.ad_domain}/ads/">
    </iframe>
 %endif
 <script type="text/javascript">
