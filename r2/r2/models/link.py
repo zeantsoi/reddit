@@ -831,7 +831,9 @@ class Message(Thing, Printable):
             # new-ness is stored on the relation
             elif item._fullname in inbox:
                 item.new = getattr(inbox[item._fullname], "new", False)
-                if item.new and c.user.pref_mark_messages_read:
+                # wipe new messages if preferences say so, and this isn't a feed
+                if (item.new and c.user.pref_mark_messages_read
+                    and c.extension not in ("rss", "xml")):
                     queries.set_unread(inbox[item._fullname]._thing2, False)
             else:
                 item.new = False
