@@ -22,7 +22,7 @@
 from r2.lib.utils import tup
 from r2.lib.captcha import get_iden
 from r2.lib.wrapped import Wrapped, StringTemplate
-from r2.lib.filters import websafe_json
+from r2.lib.filters import websafe_json, spaceCompress
 from r2.lib.jsontemplates import get_api_subtype
 from r2.lib.base import BaseController
 from r2.lib.pages.things import wrap_links
@@ -86,6 +86,9 @@ class JsonResponse(object):
                     have_error = True
         return have_error
 
+    def process_rendered(self, res):
+        return res
+    
     def _things(self, things, action, *a, **kw):
         """
         function for inserting/replacing things in listings.
@@ -94,7 +97,7 @@ class JsonResponse(object):
         if not all(isinstance(t, Wrapped) for t in things):
             wrap = kw.pop('wrap', Wrapped)
             things = wrap_links(things, wrapper = wrap)
-        data = [t.render() for t in things]
+        data = [self.process_rendered(t.render()) for t in things]
 
         if kw:
             for d in data:
@@ -144,7 +147,13 @@ class JQueryResponse(JsonResponse):
             self.objs = None
             self.ops  = None
         JsonResponse._clear(self)
-        
+
+    def process_rendered(self, res):
+        if 'data' in res:
+            if 'content' in res['data']:
+                res['data']['content'] = spaceCompress(res['data']['content'])
+        return res
+
     def send_failure(self, error):
         c.errors.add(error)
         self._clear()
@@ -181,7 +190,6 @@ class JQueryResponse(JsonResponse):
                 selector += ".field-" + field_name
             message = c.errors[(error_name, field_name)].message
             form.find(selector).show().html(message).end()
-
         return {"jquery": self.ops}
 
     # thing methods
