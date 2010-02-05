@@ -916,6 +916,12 @@ textarea.gray { color: gray; }
     margin-left: 12px; 
 }
 
+.message.was-comment .child .message,
+.message.was-comment .child .usertext { 
+    margin-top: 0px;
+    margin-left: 0px; 
+}
+
 .message .expand { 
     display: none;
 }
@@ -1971,6 +1977,15 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .reported { background-color: #f6e69f }
 .suspicious { background-color: #f6e69f }
 .spam { background-color: #FA8072 }
+.banned-user {
+    overflow: hidden;
+    opacity: .7;
+    filter:alpha(opacity=70); /* IE patch */
+}
+
+.banned-user .title {
+    text-decoration: line-through;
+}
 
 .little { font-size: smaller  }
 .gray { color: gray }

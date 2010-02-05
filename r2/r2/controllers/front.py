@@ -347,9 +347,9 @@ class FrontController(RedditController):
                            else IDBuilder)
             def keep_fn(x):
                 # no need to bother mods with banned users, or deleted content
-                if x.hidden or x._deleted or x.author._spam:
+                if x.hidden or x._deleted:
                     return False
-                if location == "reports":
+                if location == "reports" and not x._spam:
                     return (x.reported > 0)
                 if location == "spam":
                     return x._spam

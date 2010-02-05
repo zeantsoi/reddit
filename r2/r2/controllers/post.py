@@ -68,7 +68,9 @@ class PostController(ApiController):
         self.set_options( all_langs, pref_lang)
         return self.redirect(request.referer)
 
-    @validate(pref_frame = VBoolean('frame'),
+    @validate(VUser(),
+              VModhash(),
+              pref_frame = VBoolean('frame'),
               pref_clickgadget = VBoolean('clickgadget'),
               pref_organic = VBoolean('organic'),
               pref_newwindow = VBoolean('newwindow'),

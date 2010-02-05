@@ -204,6 +204,8 @@ class Builder(object):
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
+                    if hasattr(w, "author") and w.author._spam:
+                        w.show_spam = "author"
 
                 elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
