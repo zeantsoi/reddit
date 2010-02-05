@@ -78,7 +78,8 @@ class Globals(object):
                    'automatic_reddits',
                    'skip_precompute_queries',
                    'agents',
-                   'allowed_css_linked_domains']
+                   'allowed_css_linked_domains',
+                   'authorized_cnames']
 
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
