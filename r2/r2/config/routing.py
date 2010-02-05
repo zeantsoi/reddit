@@ -202,17 +202,17 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/store', controller='redirect', action='redirect',
        dest='http://store.reddit.com/index.html')
-    
+
     mc('/code', controller='redirect', action='redirect',
        dest='http://code.reddit.com/')
-    
+
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
 
     mc('/authorize_embed', controller = 'front', action = 'authorize_embed')
-    
-    mc("/ads/", controller = "front", action = "ad")
-    mc("/ads/:reddit", controller = "front", action = "ad")
+
+    mc("/ads/", controller = "mediaembed", action = "ad")
+    mc("/ads/:reddit", controller = "mediaembed", action = "ad")
     # This route handles displaying the error page and 
     # graphics used in the 404/500
     # error pages. It should likely stay at the top 

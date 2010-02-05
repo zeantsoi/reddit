@@ -40,11 +40,15 @@ from r2.lib.utils import UrlParser, query_string
 logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
 
 class BaseController(WSGIController):
-    def __after__(self):
-        self.post()
+    def try_pagecache(self):
+        pass
 
     def __before__(self):
         self.pre()
+        self.try_pagecache()
+
+    def __after__(self):
+        self.post()
 
     def __call__(self, environ, start_response):
         true_client_ip = environ.get('HTTP_TRUE_CLIENT_IP')

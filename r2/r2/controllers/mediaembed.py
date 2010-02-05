@@ -20,14 +20,14 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from validator import *
-from reddit_base import RedditController
+from reddit_base import MinimalController
 
 from r2.lib.scraper import scrapers
-from r2.lib.pages import MediaEmbedBody
+from r2.lib.pages import MediaEmbedBody, Dart_Ad
 
 from pylons import request
 
-class MediaembedController(RedditController):
+class MediaembedController(MinimalController):
     @validate(link = VLink('link'))
     def GET_mediaembed(self, link):
         if request.host != g.media_domain:
@@ -50,3 +50,6 @@ class MediaembedController(RedditController):
             content = media_embed.content
 
         return MediaEmbedBody(body = content).render()
+
+    def GET_ad(self, reddit = None):
+        return Dart_Ad(reddit).render(style="html")

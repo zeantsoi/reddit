@@ -436,7 +436,7 @@ def base_listing(fn):
         return fn(self, **kw)
     return new_fn
 
-class RedditController(BaseController):
+class MinimalController(BaseController):
 
     def request_key(self):
         # note that this references the cookie at request time, not
@@ -455,6 +455,97 @@ class RedditController(BaseController):
                        ''.join(cookie_keys)))
         return key
 
+    def pre(self):
+        c.start_time = datetime.now(g.tz)
+        g.reset_caches()
+
+        c.domain_prefix = request.environ.get("reddit-domain-prefix", 
+                                              g.domain_prefix)
+        #check if user-agent needs a dose of rate-limiting
+        if not c.error_page:
+            ratelimit_agents()
+            ratelimit_throttled()
+
+        # the domain has to be set before Cookies get initialized
+        set_subreddit()
+        c.errors = ErrorSet()
+        c.cookies = Cookies()
+
+    def try_pagecache(self):
+        #check content cache
+        if not c.user_is_loggedin:
+            r = g.rendercache.get(self.request_key())
+            if r and request.method == 'GET':
+                response = c.response
+                response.headers = r.headers
+                response.content = r.content
+
+                for x in r.cookies.keys():
+                    if x in cache_affecting_cookies:
+                        cookie = r.cookies[x]
+                        response.set_cookie(key     = x,
+                                            value   = cookie.value,
+                                            domain  = cookie.get('domain',None),
+                                            expires = cookie.get('expires',None),
+                                            path    = cookie.get('path',None))
+
+                response.status_code = r.status_code
+                request.environ['pylons.routes_dict']['action'] = 'cached_response'
+                # make sure to carry over the content type
+                c.response_content_type = r.headers['content-type']
+                if r.headers.has_key('access-control'):
+                    c.response_access_control = r.headers['access-control']
+                c.used_cache = True
+                # response wrappers have already been applied before cache write
+                c.response_wrappers = []
+
+
+    def post(self):
+        response = c.response
+        content = filter(None, response.content)
+        if isinstance(content, (list, tuple)):
+            content = ''.join(content)
+        for w in c.response_wrappers:
+            content = w(content)
+        response.content = content
+        if c.response_content_type:
+            response.headers['Content-Type'] = c.response_content_type
+        if c.response_access_control:
+            c.response.headers['Access-Control'] = c.response_access_control
+
+        if c.user_is_loggedin:
+            response.headers['Cache-Control'] = 'no-cache'
+            response.headers['Pragma'] = 'no-cache'
+
+        # send cookies
+        if not c.used_cache and c.cookies:
+            # if we used the cache, these cookies should be set by the
+            # cached response object instead
+            for k,v in c.cookies.iteritems():
+                if v.dirty:
+                    response.set_cookie(key     = k,
+                                        value   = quote(v.value),
+                                        domain  = v.domain,
+                                        expires = v.expires)
+
+        #return
+        #set content cache
+        if (g.page_cache_time
+            and request.method == 'GET'
+            and not c.user_is_loggedin
+            and not c.used_cache
+            and not c.dontcache
+            and response.status_code != 503
+            and response.content and response.content[0]):
+            g.rendercache.set(self.request_key(),
+                              response,
+                              g.page_cache_time)
+
+
+
+
+class RedditController(MinimalController):
+
     def cached_response(self):
         return c.response
 
@@ -468,23 +559,11 @@ class RedditController(BaseController):
         c.cookies[g.login_cookie] = Cookie(value='')
 
     def pre(self):
-        c.start_time = datetime.now(g.tz)
+        MinimalController.pre(self)
 
-        g.reset_caches()
-
-        c.domain_prefix = request.environ.get("reddit-domain-prefix", 
-                                              g.domain_prefix)
-        #check if user-agent needs a dose of rate-limiting
-        if not c.error_page:
-            ratelimit_agents()
-            ratelimit_throttled()
-
-        # the domain has to be set before Cookies get initialized
-        set_subreddit()
         set_cnameframe()
 
         # populate c.cookies unless we're on the unsafe media_domain
-        c.cookies = Cookies()
         if request.host != g.media_domain or g.media_domain == g.domain:
             try:
                 for k,v in request.cookies.iteritems():
@@ -496,7 +575,6 @@ class RedditController(BaseController):
                 request.environ['HTTP_COOKIE'] = ''
 
         c.response_wrappers = []
-        c.errors = ErrorSet()
         c.firsttime = firsttime()
         (c.user, maybe_admin) = \
             valid_cookie(c.cookies[g.login_cookie].value
@@ -566,74 +644,6 @@ class RedditController(BaseController):
         #if the site has a cname, but we're not using it
         elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.allow_styles = False
-
-        #check content cache
-        if not c.user_is_loggedin:
-            r = g.rendercache.get(self.request_key())
-            if r and request.method == 'GET':
-                response = c.response
-                response.headers = r.headers
-                response.content = r.content
-
-                for x in r.cookies.keys():
-                    if x in cache_affecting_cookies:
-                        cookie = r.cookies[x]
-                        response.set_cookie(key     = x,
-                                            value   = cookie.value,
-                                            domain  = cookie.get('domain',None),
-                                            expires = cookie.get('expires',None),
-                                            path    = cookie.get('path',None))
-
-                response.status_code = r.status_code
-                request.environ['pylons.routes_dict']['action'] = 'cached_response'
-                # make sure to carry over the content type
-                c.response_content_type = r.headers['content-type']
-                if r.headers.has_key('access-control'):
-                    c.response_access_control = r.headers['access-control']
-                c.used_cache = True
-                # response wrappers have already been applied before cache write
-                c.response_wrappers = []
-                
-    def post(self):
-        response = c.response
-        content = filter(None, response.content)
-        if isinstance(content, (list, tuple)):
-            content = ''.join(content)
-        for w in c.response_wrappers:
-            content = w(content)
-        response.content = content
-        if c.response_content_type:
-            response.headers['Content-Type'] = c.response_content_type
-        if c.response_access_control:
-            c.response.headers['Access-Control'] = c.response_access_control
-
-        if c.user_is_loggedin:
-            response.headers['Cache-Control'] = 'no-cache'
-            response.headers['Pragma'] = 'no-cache'
-
-        # send cookies
-        if not c.used_cache and c.cookies:
-            # if we used the cache, these cookies should be set by the
-            # cached response object instead
-            for k,v in c.cookies.iteritems():
-                if v.dirty:
-                    response.set_cookie(key     = k,
-                                        value   = quote(v.value),
-                                        domain  = v.domain,
-                                        expires = v.expires)
-
-        #return
-        #set content cache
-        if (g.page_cache_time
-            and request.method == 'GET'
-            and not c.user_is_loggedin
-            and not c.used_cache
-            and not c.dontcache
-            and response.status_code != 503
-            and response.content and response.content[0]):
-            g.rendercache.set(self.request_key(),
-                              response,
-                              g.page_cache_time)
 
     def check_modified(self, thing, action):
         if c.user_is_loggedin:
