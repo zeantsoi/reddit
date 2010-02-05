@@ -32,7 +32,7 @@ from r2.lib.filters import safemarkdown, unsafe
 try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
     # the stack trace won't be presented to the user in production
-    from reddit_base import RedditController
+    from reddit_base import RedditController, Cookies
     from r2.models.subreddit import Default, Subreddit
     from r2.models.link import Link
     from r2.lib import pages
@@ -146,8 +146,8 @@ class ErrorController(RedditController):
 
     def GET_document(self):
         try:
-            #no cookies on errors
-            c.cookies.clear()
+            # clear cookies the old fashioned way 
+            c.cookies = Cookies()
 
             code =  request.GET.get('code', '')
             srname = request.GET.get('srname', '')
