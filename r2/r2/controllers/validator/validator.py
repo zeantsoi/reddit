@@ -1163,7 +1163,11 @@ class VDestination(Validator):
 
         ip = getattr(request, "ip", "[unknown]")
         fp = getattr(request, "fullpath", "[unknown]")
-        g.log.warning("%s attempted to redirect from %s to %s" % (ip, fp, dest))
+        dm = c.domain or "[unknown]"
+        cn = c.cname or "[unknown]"
+
+        g.log.warning("%s attempted to redirect from %s to %s with domain %s and cname %s"
+                      % (ip, fp, dest, dm, cn))
         return "/"
 
 class ValidAddress(Validator):
