@@ -64,7 +64,7 @@ def reject_vote(thing):
     elif voteword == '-1':
         voteword = 'downvote'
 
-    g.log.error("POST_vote: rejected %s from %s (%s) on %s %s via %s" %
+    g.log.warning ("POST_vote: rejected %s from %s (%s) on %s %s via %s" %
                 (voteword, c.user.name, request.ip, thing.__class__.__name__,
                  thing._id36, request.referer))
 

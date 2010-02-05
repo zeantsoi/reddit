@@ -1148,9 +1148,22 @@ class VDestination(Validator):
         Validator.__init__(self, param, **kw)
 
     def run(self, dest):
-        if dest and dest.startswith("javascript:"):
-            return "/"
-        return dest or request.referer or self.default
+        if not dest:
+            dest = request.referer or self.default or "/"
+
+        ld = dest.lower()
+        if (ld.startswith("/") or
+            ld.startswith("http://") or
+            ld.startswith("https://")):
+
+            u = UrlParser(dest)
+
+            if u.is_reddit_url():
+                return dest
+
+        ip = getattr(request, "ip", "[unknown]")
+        g.log.warning("%s attempted to redirect to %s" % (ip, dest))
+        return "/"
 
 class ValidAddress(Validator):
     def __init__(self, param, usa_only = True):
