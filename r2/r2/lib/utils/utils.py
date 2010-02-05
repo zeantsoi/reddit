@@ -359,6 +359,9 @@ def sanitize_url(url, require_scheme = False):
                 #if this succeeds, this portion of the dns is almost
                 #valid and converted to ascii
                 label = label.encode('idna')
+            except TypeError:
+                print "label sucks: [%r]" % label
+                raise
             except UnicodeError:
                 return
             else:
