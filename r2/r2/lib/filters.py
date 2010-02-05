@@ -141,13 +141,15 @@ class SouptestSaxHandler(ContentHandler):
             if name not in self.ok_tags[qname]:
                 raise ValueError('HAX: Unknown attribute-name %r' % name)
 
-            if ((qname == 'a' and name == 'href')
-                and not (val.startswith('http://')
-                         or val.startswith('https://')
-                         or val.startswith('ftp://')
-                         or val.startswith('mailto:')
-                         or val.startswith('/'))):
-                raise ValueError('HAX: Unsupported link scheme %r' % val)
+            if qname == 'a' and name == 'href':
+                lv = val.lower()
+                if not (lv.startswith('http://')
+                        or lv.startswith('https://')
+                        or lv.startswith('ftp://')
+                        or lv.startswith('mailto:')
+                        or lv.startswith('news:')
+                        or lv.startswith('/')):
+                    raise ValueError('HAX: Unsupported link scheme %r' % val)
 
 markdown_ok_tags = {
     'div': ('class'),

@@ -57,6 +57,9 @@ def randstr(len, reallyrandom = False):
     return ''.join(random.choice(alphabet)
                    for i in range(len))
 
+def is_authorized_cname(domain, cnames):
+    return any((domain == cname or domain.endswith('.' + cname))
+               for cname in cnames)
 
 class Storage(dict):
     """
@@ -636,8 +639,9 @@ class UrlParser(object):
         g.domain, or a subdomain of the provided subreddit's cname.
         """
         from pylons import g
-        return (not self.hostname or 
+        return (not self.hostname or
                 self.hostname.endswith(g.domain) or
+                is_authorized_cname(self.hostname, g.authorized_cnames) or
                 (subreddit and subreddit.domain and
                  self.hostname.endswith(subreddit.domain)))
 
