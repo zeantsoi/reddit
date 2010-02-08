@@ -138,11 +138,15 @@ def send_queued_mail(test = False):
 
             should_queue = email.should_queue()
             # check only on sharing that the mail is invalid
-            if email.kind == Email.Kind.SHARE and should_queue:
-                email.body = Share(username = email.from_name(),
-                                   msg_hash = email.msg_hash,
-                                   link = email.thing,
-                                   body = email.body).render(style = "email")
+            if email.kind == Email.Kind.SHARE:
+                if should_queue:
+                    email.body = Share(username = email.from_name(),
+                                       msg_hash = email.msg_hash,
+                                       link = email.thing,
+                                       body =email.body).render(style = "email")
+                else:
+                    email.set_sent(rejected = True)
+                    continue
             elif email.kind == Email.Kind.OPTOUT:
                 email.body = Mail_Opt(msg_hash = email.msg_hash,
                                       leave = True).render(style = "email")
