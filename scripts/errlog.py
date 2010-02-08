@@ -36,15 +36,21 @@ def run(limit=100, verbose=False):
             exc = d['exception']
             exc_desc = str(exc)
             exc_type = exc.__class__.__name__
+            exc_str = "%s: %s" % (exc_type, exc_desc)
+
+            occ = "<%s:%s, pid=%s, %s>" % (d['host'], d['port'], d['pid'], d['time'])
 
             tb = []
 
             key_material = "exc_type"
+            pretty_lines = []
 
             for tpl in d['traceback']:
                 tb.append(tpl)
                 filename, lineno, funcname, text = tpl
                 key_material += "%s %s " % (filename, funcname)
+                pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
+                pretty_lines.append ("    %s" % text)
 
             fingerprint = md5(key_material).hexdigest()
 
@@ -54,19 +60,23 @@ def run(limit=100, verbose=False):
 
             if nickname is None:
                 nickname = '"%s" Error' % randword().capitalize()
-                g.hardcache.set(nickname_key, nickname, 86400 * 365)
                 print "A new kind of thing just happened! ",
                 print "I'm going to call it a " + nickname
+                print ""
+                print "Where and when: %s" % occ
+                print ""
+                print "Traceback:"
+                print "\n".join(pretty_lines)
+                print exc_str
+                print "\n\n\n"
+                g.hardcache.set(nickname_key, nickname, 86400 * 365)
 
             err_key = "-".join(["error", daystring, fingerprint])
 
             existing = g.hardcache.get(err_key)
 
             if not existing:
-                exc_str = "%s: %s" % (exc_type, exc_desc)
                 existing = dict(exception=exc_str, traceback=tb, occurrences=[])
-
-            occ = "<%s:%s, pid=%s, %s>" % (d['host'], d['port'], d['pid'], d['time'])
 
             existing['occurrences'].append(occ)
 
@@ -74,5 +84,6 @@ def run(limit=100, verbose=False):
 
             if verbose:
                 print "%s %s" % (nickname, occ)
+
 
     amqp.handle_items(q, myfunc, limit=limit, drain=True, verbose=verbose)
