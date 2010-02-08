@@ -160,7 +160,8 @@ def add_item(routing_key, body, message_id = None):
 
     worker.do(_add_item, routing_key, body, message_id = message_id)
 
-def handle_items(queue, callback, ack = True, limit = 1, drain = False):
+def handle_items(queue, callback, ack = True, limit = 1, drain = False,
+                 verbose=True):
     """Call callback() on every item in a particular queue. If the
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
@@ -202,7 +203,8 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
                 # the count from the last message, if the count is
                 # available
                 count_str = '(%d remaining)' % items[-1].delivery_info['message_count']
-            print "%s: %d items %s" % (queue, len(items), count_str)
+            if verbose:
+                print "%s: %d items %s" % (queue, len(items), count_str)
             callback(items, chan)
 
             if ack:

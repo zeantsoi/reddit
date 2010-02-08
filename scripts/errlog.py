@@ -23,7 +23,7 @@ def randword():
 
 rk = q = 'error_q'
 
-def run(limit=100):
+def run(limit=100, verbose=False):
     daystring = datetime.now(g.tz).strftime("%Y/%m/%d")
 
     def myfunc(msgs, chan):
@@ -55,6 +55,8 @@ def run(limit=100):
             if nickname is None:
                 nickname = '"%s" Error' % randword().capitalize()
                 g.hardcache.set(nickname_key, nickname, 86400 * 365)
+                print "A new kind of thing just happened! ",
+                print "I'm going to call it a " + nickname
 
             err_key = "-".join(["error", daystring, fingerprint])
 
@@ -70,6 +72,7 @@ def run(limit=100):
 
             g.hardcache.set(err_key, existing, 7 * 86400)
 
-            print "%s %s" % (nickname, occ)
+            if verbose:
+                print "%s %s" % (nickname, occ)
 
-    amqp.handle_items(q, myfunc, limit=limit, drain=True)
+    amqp.handle_items(q, myfunc, limit=limit, drain=True, verbose=False)
