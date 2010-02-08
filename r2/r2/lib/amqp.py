@@ -166,7 +166,14 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
        used as a long-running process."""
 
     chan = get_channel()
+    countdown = None
+
     while True:
+
+        # NB: None != 0, so we don't need an "is not None" check here
+        if countdown == 0:
+            break
+
         msg = chan.basic_get(queue)
         if not msg and drain:
             return
@@ -174,12 +181,17 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
             time.sleep(1)
             continue
 
+        if countdown is None and drain and 'message_count' in msg.delivery_info:
+            countdown = 1 + msg.delivery_info['message_count']
+
         g.reset_caches()
 
         items = []
 
-        while msg:
+        while msg and countdown != 0:
             items.append(msg)
+            if countdown is not None:
+                countdown -= 1
             if len(items) >= limit:
                 break # the innermost loop only
             msg = chan.basic_get(queue)

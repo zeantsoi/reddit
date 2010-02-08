@@ -1438,6 +1438,69 @@ textarea.gray { color: gray; }
 
 .oldbylink a {  background-color: #F0F0F0; margin: 2px; color: gray}
 
+.error-log {
+    clear: both;
+}
+
+.error-log a:hover { text-decoration: underline }
+
+.error-log, .error-log .grouping {
+    border: solid #888 1px;
+    padding: 3px 5px;
+    margin-bottom: 10px;
+}
+
+.error-log .grouping > a > span {
+    margin-left: 5px;
+}
+
+.error-log .save-button {
+    margin-right: 5px;
+    font-size: small;
+    padding: 0;
+}
+
+.error-log .date {
+    font-size: 150%;
+    font-weight: bold;
+}
+
+.error-log .hexkey {
+    color: #997700;
+}
+
+.error-log .exception-name {
+    font-size: larger;
+    color: #000077;
+}
+
+.error-log .frequency {
+    font-size: larger;
+    float: right;
+    color: #886666;
+}
+
+.error-log .occurrences {
+    border: solid #003300 1px;
+    margin: 5px 0 2px;
+}
+
+.error-log .occurrence {
+    color: #003300;
+    font-family: monospace;
+    margin-right: 3em;
+    white-space: nowrap;
+}
+
+.error-log table td {
+    font-family: monospace;
+}
+
+.error-log table td.col-1 {
+    text-align: right;
+    padding-right: 10px;
+}
+
 .details {
     font-size: x-small; 
     margin-bottom: 10px; 
@@ -2787,20 +2850,20 @@ ul.tabmenu.formtab {
     color: #336699;
 }
 
-.award-table {
+.lined-table {
     margin: 5px;
 }
 
-table.award-table {
+table.lined-table {
     margin: 5px 3px;
 }
 
-.award-table th, .award-table td {
+.lined-table th, .lined-table td {
     border: solid #cdcdcd 1px;
     padding: 3px;
 }
 
-.award-table th {
+.lined-table th {
     text-align: center;
     font-weight: bold;
 }
@@ -3345,3 +3408,6 @@ a.ip:hover {
   font-weight: bold;
 }
 
+.wide {
+    width: 100%;
+}

@@ -278,6 +278,7 @@ class ApiController(RedditController):
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_login(self, form, jquery, user, username, dest, rem, reason):
+
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
@@ -1397,6 +1398,20 @@ class ApiController(RedditController):
         if tr:
             tr._is_enabled = True
 
+
+    @validatedForm(VAdmin(),
+                   hexkey=VLength("hexkey", max_length=32),
+                   nickname=VLength("nickname", max_length = 1000))
+    def POST_rename_error(self, form, jquery, hexkey, nickname):
+        if form.has_errors(("hexkey", "nickname"), errors.NO_TEXT):
+            pass
+
+        if form.has_error():
+            return
+
+        key = "error_nickname-%s" % str(hexkey)
+        g.hardcache.set(key, nickname, 86400 * 365)
+        form.set_html(".status", _('saved'))
 
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),

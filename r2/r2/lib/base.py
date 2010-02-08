@@ -28,10 +28,12 @@ from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
+from r2.lib.log_exception import log_exception
 
 import re, md5
-from urllib import quote 
+from urllib import quote
 import urllib2
+import sys
 
 
 #TODO hack
@@ -55,7 +57,7 @@ class BaseController(WSGIController):
         ip_hash = environ.get('HTTP_TRUE_CLIENT_IP_HASH')
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
         remote_addr = environ.get('REMOTE_ADDR')
-                
+
         if (g.ip_hash
             and true_client_ip
             and ip_hash
@@ -97,9 +99,18 @@ class BaseController(WSGIController):
         c.thread_pool = environ['paste.httpserver.thread_pool']
 
         c.response = Response()
-        res = WSGIController.__call__(self, environ, start_response)
+        try:
+            res = WSGIController.__call__(self, environ, start_response)
+        except Exception as e:
+            if g.exception_logging:
+                try:
+                    log_exception(e, *sys.exc_info())
+                except Exception as f:
+                    print "log_exception() freaked out: %r" % f
+                    print "sorry for breaking the stack trace:"
+            raise
         return res
-            
+
     def pre(self): pass
     def post(self): pass
 

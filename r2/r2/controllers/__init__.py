@@ -46,6 +46,7 @@ from post import PostController
 from toolbar import ToolbarController
 from i18n import I18nController
 from awards import AwardsController
+from errorlog import ErrorlogController
 from promotecontroller import PromoteController
 from mediaembed import MediaembedController
 

@@ -276,7 +276,7 @@ class CacheChain(CacheUtils, local):
                     d.set(key, val)
 
                 if self.cache_negative_results and val is NoneResult:
-                    return None
+                    return default
                 else:
                     return val
 
@@ -318,6 +318,11 @@ class CacheChain(CacheUtils, local):
             out = filtered_out
 
         return out
+
+    def cache_by_type(self, type):
+        for c in self.caches:
+            if isinstance(c, type):
+                return c
 
     def debug(self, key):
         print "Looking up [%r]" % key

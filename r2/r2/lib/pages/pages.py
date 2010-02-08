@@ -25,6 +25,7 @@ from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
 from r2.models import Link, Printable, Trophy, bidding, PromoteDates
 from r2.config import cache
+from r2.lib.cache import HardCache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -1431,7 +1432,37 @@ class UserAwards(Templated):
             else:
                 raise NotImplementedError
 
+class AdminErrorLog(Templated):
+    """The admin page for viewing the error log"""
+    def __init__(self):
+        ids = g.hardcache.cache_by_type(HardCache).backend.ids_by_category("error")
 
+        date_groupings = {}
+        hexkeys_seen = {}
+
+        for i in ids:
+            date, hexkey = i.split("-")
+
+            hexkeys_seen[hexkey] = True
+
+            d = g.hardcache.get("error-" + i)
+
+            tpl = (len(d['occurrences']), hexkey, d)
+            date_groupings.setdefault(date, []).append(tpl)
+
+        self.date_summaries = []
+
+        for date in sorted(date_groupings.keys(), reverse=True):
+            groupings = sorted(date_groupings[date], reverse=True)
+            self.date_summaries.append( (date, groupings) )
+
+        self.nicknames = {}
+
+        for hexkey in hexkeys_seen.keys():
+            nick = g.hardcache.get("error_nickname-%s" % hexkey, "???")
+            self.nicknames[hexkey] = nick
+
+        Templated.__init__(self)
 
 class AdminAwards(Templated):
     """The admin page for editing awards"""

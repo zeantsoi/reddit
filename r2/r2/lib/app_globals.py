@@ -57,7 +57,7 @@ class Globals(object):
                    ]
 
     bool_props = ['debug', 'translator',
-                  'log_start', 
+                  'log_start',
                   'sqlprinting',
                   'template_debug',
                   'uncompressedJS',
@@ -66,7 +66,8 @@ class Globals(object):
                   'write_query_queue',
                   'css_killswitch',
                   'db_create_tables',
-                  'disallow_db_writes']
+                  'disallow_db_writes',
+                  'exception_logging']
 
     tuple_props = ['memcaches',
                    'rec_cache',
@@ -89,22 +90,22 @@ class Globals(object):
         One instance of Globals is created by Pylons during
         application initialization and is available during requests
         via the 'g' variable.
-        
+
         ``global_conf``
             The same variable used throughout ``config/middleware.py``
             namely, the variables from the ``[DEFAULT]`` section of the
             configuration file.
-            
+
         ``app_conf``
             The same ``kw`` dictionary used throughout
             ``config/middleware.py`` namely, the variables from the
             section in the config file for your application.
-            
+
         ``extra``
             The configuration returned from ``load_config`` in 
             ``config/middleware.py`` which may be of use in the setup of
             your global variables.
-            
+
         """
 
         # slop over all variables to start with
@@ -136,7 +137,7 @@ class Globals(object):
         self.make_lock = make_lock_factory(mc)
 
         self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
-        
+
         # set default time zone if one is not set
         tz = global_conf.get('timezone')
         dtz = global_conf.get('display_timezone', tz)
@@ -187,6 +188,7 @@ class Globals(object):
         #set up the logging directory
         log_path = self.log_path
         process_iden = global_conf.get('scgi_port', 'default')
+        self.reddit_port = process_iden
         if log_path:
             if not os.path.exists(log_path):
                 os.makedirs(log_path)
@@ -209,7 +211,8 @@ class Globals(object):
         if not self.media_domain:
             self.media_domain = self.domain
         if self.media_domain == self.domain:
-            print "Warning: g.media_domain == g.domain. This may give untrusted content access to user cookies"
+            print ("Warning: g.media_domain == g.domain. " +
+                   "This may give untrusted content access to user cookies")
 
         #read in our CSS so that it can become a default for subreddit
         #stylesheets
