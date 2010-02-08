@@ -75,4 +75,4 @@ def run(limit=100, verbose=False):
             if verbose:
                 print "%s %s" % (nickname, occ)
 
-    amqp.handle_items(q, myfunc, limit=limit, drain=True, verbose=False)
+    amqp.handle_items(q, myfunc, limit=limit, drain=True, verbose=verbose)

@@ -1450,12 +1450,39 @@ textarea.gray { color: gray; }
     margin-bottom: 10px;
 }
 
-.error-log .grouping > a > span {
-    margin-left: 5px;
+.error-log .grouping {
+    background-color: #f0f0f8;
+}
+
+.error-log .exception-name {
+    margin-right: 5px;
+}
+
+.error-log .nickname {
+    color: black;
+    font-weight: bold;
+    font-size: larger;
+}
+
+.error-log a:focus {
+    -moz-outline-style: none;
+}
+
+.error-log .edit-area {
+    border: solid black 1px;
+    background-color: #eee;
+}
+
+.error-log .edit-area input {
+    width: 800px;
+}
+
+.error-log .edit-area table td, .error-log .edit-area table th {
+    padding: 5px 0 0 5px;
 }
 
 .error-log .save-button {
-    margin-right: 5px;
+    margin: 0 5px 5px 0;
     font-size: small;
     padding: 0;
 }
@@ -1483,6 +1510,7 @@ textarea.gray { color: gray; }
 .error-log .occurrences {
     border: solid #003300 1px;
     margin: 5px 0 2px;
+    padding: 2px;
 }
 
 .error-log .occurrence {
@@ -1492,11 +1520,15 @@ textarea.gray { color: gray; }
     white-space: nowrap;
 }
 
-.error-log table td {
+.error-log table.stacktrace th, .error-log table.stacktrace td {
+    border: solid 1px #aaa;
+}
+
+.error-log table.stacktrace td {
     font-family: monospace;
 }
 
-.error-log table td.col-1 {
+.error-log table.stacktrace td.col-1 {
     text-align: right;
     padding-right: 10px;
 }
