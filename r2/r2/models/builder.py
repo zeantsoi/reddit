@@ -544,6 +544,8 @@ class CommentBuilder(Builder):
                     depth[k] = v - delta
         except KeyError:
             g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
+            g.log.error ("depth: %r" % depth)
+            g.log.error ("top: %r" % depth)
             raise
 
         def sort_candidates():
