@@ -912,9 +912,11 @@ class VRatelimit(Validator):
 class VCommentIDs(Validator):
     #id_str is a comma separated list of id36's
     def run(self, id_str):
-        cids = [int(i, 36) for i in id_str.split(',')]
-        comments = Comment._byID(cids, data=True, return_dict = False)
-        return comments
+        if id_str:
+            cids = [int(i, 36) for i in id_str.split(',')]
+            comments = Comment._byID(cids, data=True, return_dict = False)
+            return comments
+        return []
 
 
 class CachedUser(object):

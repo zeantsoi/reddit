@@ -1230,7 +1230,7 @@ class ApiController(RedditController):
                           link, sort, children, depth, mc_id):
         user = c.user if c.user_is_loggedin else None
         if not link or not link.subreddit_slow.can_view(user):
-            return self.abort(403,'forbidden')
+            return abort(403,'forbidden')
 
         if children:
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
