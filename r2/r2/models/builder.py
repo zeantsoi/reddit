@@ -545,7 +545,7 @@ class CommentBuilder(Builder):
         except KeyError:
             g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
             g.log.error ("depth: %r" % depth)
-            g.log.error ("top: %r" % depth)
+            g.log.error ("top: %r" % top)
             raise
 
         def sort_candidates():
