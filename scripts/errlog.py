@@ -24,7 +24,7 @@ def randword():
 rk = q = 'error_q'
 
 def run(limit=100, verbose=False):
-    daystring = datetime.now(g.tz).strftime("%Y/%m/%d")
+    daystring = datetime.now(g.display_tz).strftime("%Y/%m/%d")
 
     def myfunc(msgs, chan):
         for msg in msgs:
