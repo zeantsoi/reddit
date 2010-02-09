@@ -481,7 +481,7 @@ class CommentBuilder(Builder):
                 for j in self.item_iter(i.child.things):
                     yield j
 
-    def get_items(self, num, starting_depth = 0):
+    def get_items(self, num):
         r = link_comments(self.link._id)
         cids, comment_tree, depth, num_children = r
         if cids:
@@ -500,6 +500,7 @@ class CommentBuilder(Builder):
         extra = {}
         top = None
         dont_collapse = []
+        ignored_parent_ids = []
         #loading a portion of the tree
         if isinstance(self.comment, utils.iters):
             candidates = []
@@ -511,6 +512,8 @@ class CommentBuilder(Builder):
             #if hasattr(candidates[0], "parent_id"):
             #    parent = comment_dict[candidates[0].parent_id]
             #    items.append(parent)
+            if hasattr(candidates[0], "parent_id"):
+                ignored_parent_ids.append(candidates[0].parent_id)
         #if permalink
         elif self.comment:
             top = self.comment
@@ -586,6 +589,11 @@ class CommentBuilder(Builder):
 
         #put the extras in the tree
         for p_id, morelink in extra.iteritems():
+            if p_id not in cids:
+                if p_id in ignored_parent_ids:
+                    raise KeyError("%r not in cids because it was ignored" % p_id)
+                else:
+                    raise KeyError("%r not in cids but it wasn't ignored" % p_id)
             parent = cids[p_id]
             parent.child = empty_listing(morelink)
             parent.child.parent_name = parent._fullname
@@ -762,5 +770,5 @@ class TopCommentBuilder(CommentBuilder):
                                 max_depth = 1, wrap = wrap)
 
     def get_items(self, num = 10):
-        final = CommentBuilder.get_items(self, num = num, starting_depth = 0)
+        final = CommentBuilder.get_items(self, num = num)
         return [ cm for cm in final if not cm.deleted ]

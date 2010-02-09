@@ -1444,6 +1444,14 @@ textarea.gray { color: gray; }
 
 .error-log a:hover { text-decoration: underline }
 
+.error-log .rest {
+    display: none;
+}
+
+.error-log:first-child .rest {
+    display: block;
+}
+
 .error-log, .error-log .grouping {
     border: solid #888 1px;
     padding: 3px 5px;

@@ -1224,10 +1224,9 @@ class ApiController(RedditController):
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
                    children = VCommentIDs('children'),
-                   depth = VInt('depth', min = 0, max = 8),
                    mc_id = nop('id'))
     def POST_morechildren(self, form, jquery,
-                          link, sort, children, depth, mc_id):
+                          link, sort, children, mc_id):
         user = c.user if c.user_is_loggedin else None
         if not link or not link.subreddit_slow.can_view(user):
             return abort(403,'forbidden')
@@ -1236,7 +1235,7 @@ class ApiController(RedditController):
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
                                      children)
             listing = Listing(builder, nextprev = False)
-            items = listing.get_items(starting_depth = depth, num = 20)
+            items = listing.get_items(num = 20)
             def _children(cur_items):
                 items = []
                 for cm in cur_items:
