@@ -526,7 +526,7 @@ class CommentBuilder(Builder):
                 try:
                     num_children[new_top._id] = num_children[top._id] + 1
                 except KeyError:
-                    print "ignored parent ids: %r" % ignored_parent_ids
+                    g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
                     raise
                 dont_collapse.append(new_top._id)
                 top = new_top
@@ -543,7 +543,7 @@ class CommentBuilder(Builder):
                 for k, v in depth.iteritems():
                     depth[k] = v - delta
         except KeyError:
-            print "ignored parent ids: %r" % ignored_parent_ids
+            g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
             raise
 
         def sort_candidates():
