@@ -87,6 +87,9 @@ class ApiController(RedditController):
             return abort(404, 'not found')
 
         links = link_from_url(request.params.get('url'), filter_spam = False)
+        if not links:
+            return abort(404, 'not found')
+
         listing = wrap_links(links, num = count)
         return BoringPage(_("API"), content = listing).render()
 
@@ -570,9 +573,9 @@ class ApiController(RedditController):
                    item = VByNameIfAuthor('thing_id'),
                    text = VMarkdown('text'))
     def POST_editusertext(self, form, jquery, item, text):
-        if not form.has_errors("text",
-                               errors.NO_TEXT, errors.TOO_LONG,
-                               errors.NOT_AUTHOR):
+        if (not form.has_errors("text",
+                                errors.NO_TEXT, errors.TOO_LONG) and
+            not form.has_errors("thing_id", errors.NOT_AUTHOR)):
 
             if isinstance(item, Comment):
                 kind = 'comment'
