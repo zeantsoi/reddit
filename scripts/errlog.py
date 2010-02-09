@@ -9,36 +9,49 @@ from random import shuffle, choice
 import pickle
 
 try:
-  words = file(g.words_file).read().split("\n")
+    words = file(g.words_file).read().split("\n")
 except IOError:
-  words = []
+    words = []
 
 shuffle(words)
 
 def randword():
     try:
-      return choice(words)
+        return choice(words)
     except IndexError:
-      return '???'
+        return '???'
 
 rk = q = 'error_q'
 
-def run(limit=100, verbose=False):
-    daystring = datetime.now(g.display_tz).strftime("%Y/%m/%d")
+def run(limit=100, streamfile=None, verbose=False):
+    if streamfile:
+        stream_fp = open(streamfile, "a")
+    else:
+        stream_fp = None
+
+    def log(msg, important=False):
+        if stream_fp:
+            stream_fp.write(msg + "\n")
+            stream_fp.flush()
+        if important:
+            print msg
 
     def myfunc(msgs, chan):
+        daystring = datetime.now(g.display_tz).strftime("%Y/%m/%d")
+
         for msg in msgs:
             try:
                 d = pickle.loads(msg.body)
             except TypeError:
-                print "wtf is %r" % msg.body
+                log ("wtf is %r" % msg.body, True)
 
             exc = d['exception']
             exc_desc = str(exc)
             exc_type = exc.__class__.__name__
             exc_str = "%s: %s" % (exc_type, exc_desc)
 
-            occ = "<%s:%s, pid=%s, %s>" % (d['host'], d['port'], d['pid'], d['time'])
+            occ = "<%s:%s, pid=%-5s, %s>" % (
+                  d['host'], d['port'], d['pid'], d['time'])
 
             tb = []
 
@@ -60,15 +73,16 @@ def run(limit=100, verbose=False):
 
             if nickname is None:
                 nickname = '"%s" Error' % randword().capitalize()
-                print "A new kind of thing just happened! ",
-                print "I'm going to call it a " + nickname
-                print ""
-                print "Where and when: %s" % occ
-                print ""
-                print "Traceback:"
-                print "\n".join(pretty_lines)
-                print exc_str
-                print "\n\n\n"
+                news = ("A new kind of thing just happened! " +
+                        "I'm going to call it a %s\n\n" % nickname)
+
+                news += "Where and when: %s\n\n" % occ
+                news += "Traceback:\n"
+                news += "\n".join(pretty_lines)
+                news += exc_str
+                news += "\n\n\n"
+                log(news, True)
+
                 g.hardcache.set(nickname_key, nickname, 86400 * 365)
 
             err_key = "-".join(["error", daystring, fingerprint])
@@ -82,8 +96,7 @@ def run(limit=100, verbose=False):
 
             g.hardcache.set(err_key, existing, 7 * 86400)
 
-            if verbose:
-                print "%s %s" % (nickname, occ)
+            log ("%s %s" % (occ, nickname), verbose)
 
 
-    amqp.handle_items(q, myfunc, limit=limit, drain=True, verbose=verbose)
+    amqp.handle_items(q, myfunc, limit=limit, drain=False, verbose=verbose)
