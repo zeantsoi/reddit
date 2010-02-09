@@ -120,11 +120,22 @@ class DataThing(object):
             try:
                 return getattr(self, '_defaults')[attr]
             except KeyError:
+                try:
+                    _id = object.__getattribute__(self, "_id")
+                except AttributeError:
+                    _id = "???"
+                try:
+                    cl = object.__getattribute__(self, "__class__").__name__
+                except AttributeError:
+                    cl = "???"
+
                 if self._loaded:
-                    raise AttributeError, '%s not found' % attr
+                    nl = "it IS loaded."
                 else:
-                    raise AttributeError,\
-                              attr + ' not found. thing is not loaded'
+                    nl = "it is NOT loaded."
+
+                raise AttributeError,\
+                       '%s(%d).%s not found; %s' % (cl, _id, attr, nl)
 
     def _cache_key(self):
         return thing_prefix(self.__class__.__name__, self._id)
