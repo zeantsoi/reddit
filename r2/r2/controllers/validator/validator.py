@@ -38,6 +38,7 @@ from r2.controllers.errors import VerifiedUserRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
+from curses.ascii import isprint
 import re, inspect
 import pycountry
 
@@ -375,11 +376,23 @@ class VLength(Validator):
             self.set_error(self.length_error, {'max_length': self.max_length})
         else:
             return text
-        
+
+class VPrintable(VLength):
+    def run(self, text, text2 = ''):
+        text = VLength.run(self, text, text2)
+
+        if text is None:
+            return None
+
+        if all(isprint(x) for x in text):
+            return text
+        else:
+            self.set_error(errors.BAD_STRING)
+
 class VTitle(VLength):
     def __init__(self, param, max_length = 300, **kw):
         VLength.__init__(self, param, max_length, **kw)
-    
+
 class VMarkdown(VLength):
     def __init__(self, param, max_length = 10000, **kw):
         VLength.__init__(self, param, max_length, **kw)

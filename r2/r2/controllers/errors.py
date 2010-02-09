@@ -24,8 +24,8 @@ from pylons.i18n import _
 from copy import copy
 
 error_list = dict((
-        ('USER_REQUIRED', _("please login to do that")), 
-        ('VERIFIED_USER_REQUIRED', _("you need to set a valid email address to do that.")), 
+        ('USER_REQUIRED', _("please login to do that")),
+        ('VERIFIED_USER_REQUIRED', _("you need to set a valid email address to do that.")),
         ('NO_URL', _('a url is required')),
         ('BAD_URL', _('you should check that url')),
         ('BAD_CAPTCHA', _('care to try these again?')),
@@ -47,6 +47,7 @@ error_list = dict((
         ('NO_USER', _('please enter a username')),
         ('INVALID_PREF', "that preference isn't valid"),
         ('BAD_NUMBER', _("that number isn't in the right range (%(min)d to %(max)d)")),
+        ('BAD_STRING', _("you used a character here that we can't handle")),
         ('BAD_BID', _("your bid must be at least $%(min)d per day and no more than to $%(max)d in total.")),
         ('ALREADY_SUB', _("that link has already been submitted")),
         ('SUBREDDIT_EXISTS', _('that reddit already exists')),

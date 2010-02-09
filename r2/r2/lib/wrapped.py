@@ -54,7 +54,7 @@ class StringTemplate(object):
             self.template = unicode(template)
         except UnicodeDecodeError:
             self.template = unicode(template, "utf8")
-    
+
     def update(self, d):
         """
         Given a dictionary of replacement rules for the Template,

@@ -1582,7 +1582,7 @@ class ApiController(RedditController):
                             "%s_%s" % (s._fullname, s.sponsorship_name))
 
 
-    @json_validate(query = nop('query'))
+    @json_validate(query = VPrintable('query', max_length = 50))
     def POST_search_reddit_names(self, query):
         names = []
         if query:
