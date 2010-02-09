@@ -325,7 +325,7 @@ class VCount(Validator):
     def run(self, count):
         if count is None:
             count = 0
-        try:    
+        try:
             return max(int(count), 0)
         except ValueError:
             return 0
@@ -334,8 +334,14 @@ class VCount(Validator):
 class VLimit(Validator):
     def run(self, limit):
         if limit is None:
-            return c.user.pref_numsites 
-        return min(max(int(limit), 1), 100)
+            return c.user.pref_numsites
+
+        try:
+            i = int(limit)
+        except ValueError:
+            return c.user.pref_numsites
+
+        return min(max(i, 1), 100)
 
 class VCssMeasure(Validator):
     measure = re.compile(r"^\s*[\d\.]+\w{0,3}\s*$")
@@ -509,7 +515,7 @@ class VUser(Validator):
 
         if (password is not None) and not valid_password(c.user, password):
             self.set_error(errors.WRONG_PASSWORD)
-            
+
 class VModhash(Validator):
     default_param = 'uh'
     def run(self, uh):

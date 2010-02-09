@@ -383,7 +383,7 @@ def valid_password(a, password):
             salt = a.password[:3]
             if a.password == passhash(a.name, password, salt):
                 return a
-    except AttributeError:
+    except AttributeError, UnicodeEncodeError:
         return False
 
 def passhash(username, password, salt = ''):
