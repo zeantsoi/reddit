@@ -168,7 +168,7 @@ class PromoteController(ListingController):
                 promote.reject_promo(thing, reason = reason)
             # also reject anything that is live but has a reason given
             elif (c.user_is_sponsor and reason and
-                  thing.promte_status == promote.STATUS.promoted):
+                  thing.promote_status == promote.STATUS.promoted):
                 promote.reject_promo(thing, reason = reason)
             # otherwise, mark it as "finished"
             else:
