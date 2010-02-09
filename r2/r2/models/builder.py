@@ -523,7 +523,11 @@ class CommentBuilder(Builder):
                 self.context -= 1
                 new_top = comment_dict[top.parent_id]
                 comment_tree[new_top._id] = [top]
-                num_children[new_top._id] = num_children[top._id] + 1
+                try:
+                    num_children[new_top._id] = num_children[top._id] + 1
+                except KeyError:
+                    print "ignored parent ids: %r" % ignored_parent_ids
+                    raise
                 dont_collapse.append(new_top._id)
                 top = new_top
             candidates = [top]
@@ -533,10 +537,14 @@ class CommentBuilder(Builder):
             candidates.extend(comment_tree.get(top, ()))
 
         #update the starting depth if required
-        if top and depth[top._id] > 0:
-            delta = depth[top._id]
-            for k, v in depth.iteritems():
-                depth[k] = v - delta
+        try:
+            if top and depth[top._id] > 0:
+                delta = depth[top._id]
+                for k, v in depth.iteritems():
+                    depth[k] = v - delta
+        except KeyError:
+            print "ignored parent ids: %r" % ignored_parent_ids
+            raise
 
         def sort_candidates():
             candidates.sort(key = self.sort_key, reverse = self.rev_sort)
