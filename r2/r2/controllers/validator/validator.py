@@ -125,7 +125,6 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
     for var, validator in param_vals.iteritems():
         kw[var] = validator(env)
     return kw
-    
 
 def validate(*simple_vals, **param_vals):
     def val(fn):
@@ -647,7 +646,7 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_NOTALLOWED)
         else:
             return sr
-        
+
 pass_rx = re.compile(r"^.{3,20}$")
 
 def chkpass(x):
@@ -657,12 +656,10 @@ class VPassword(Validator):
     def run(self, password, verify):
         if not chkpass(password):
             self.set_error(errors.BAD_PASSWORD)
-            return
         elif verify != password:
             self.set_error(errors.BAD_PASSWORD_MATCH)
-            return password
         else:
-            return password
+            return password.encode('utf8')
 
 user_rx = re.compile(r"^[\w-]{3,20}$", re.UNICODE)
 
