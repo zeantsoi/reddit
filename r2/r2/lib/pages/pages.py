@@ -1457,10 +1457,13 @@ class AdminErrorLog(Templated):
             self.date_summaries.append( (date, groupings) )
 
         self.nicknames = {}
+        self.statuses = {}
 
         for hexkey in hexkeys_seen.keys():
             nick = g.hardcache.get("error_nickname-%s" % hexkey, "???")
             self.nicknames[hexkey] = nick
+            status = g.hardcache.get("error_status-%s" % hexkey, "normal")
+            self.statuses[hexkey] = status
 
         Templated.__init__(self)
 

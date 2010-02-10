@@ -1403,9 +1403,12 @@ class ApiController(RedditController):
 
     @validatedForm(VAdmin(),
                    hexkey=VLength("hexkey", max_length=32),
-                   nickname=VLength("nickname", max_length = 1000))
-    def POST_rename_error(self, form, jquery, hexkey, nickname):
-        if form.has_errors(("hexkey", "nickname"), errors.NO_TEXT):
+                   nickname=VLength("nickname", max_length = 1000),
+                   status = VOneOf("status",
+                      ("new", "severe", "interesting", "normal", "fixed")))
+    def POST_edit_error(self, form, jquery, hexkey, nickname, status):
+        if form.has_errors(("hexkey", "nickname", "status"),
+                           errors.NO_TEXT, errors.INVALID_OPTION):
             pass
 
         if form.has_error():
@@ -1413,6 +1416,10 @@ class ApiController(RedditController):
 
         key = "error_nickname-%s" % str(hexkey)
         g.hardcache.set(key, nickname, 86400 * 365)
+
+        key = "error_status-%s" % str(hexkey)
+        g.hardcache.set(key, status, 86400 * 365)
+
         form.set_html(".status", _('saved'))
 
     @validatedForm(VAdmin(),

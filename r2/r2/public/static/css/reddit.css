@@ -1453,13 +1453,59 @@ textarea.gray { color: gray; }
 }
 
 .error-log, .error-log .grouping {
-    border: solid #888 1px;
+    border: solid #aaa 1px;
     padding: 3px 5px;
     margin-bottom: 10px;
 }
 
 .error-log .grouping {
     background-color: #f0f0f8;
+}
+
+.error-log .grouping.new {
+    border: dashed #ff6600 2px;
+}
+
+.error-log .grouping.severe {
+    border: solid #ff0000 2px;
+    background-color: #ffdfdf;
+}
+
+.error-log .grouping.interesting {
+    border: dotted black 2px;
+    background-color: #e0e0e8;
+}
+
+.error-log .grouping.fixed {
+    border: solid #008800 1px;
+    background-color: #e8f6e8;
+}
+
+.error-log .grouping span {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.error-log .grouping span.normal {
+    margin-right: 0;
+    display: none;
+}
+
+.error-log .grouping span.new, .error-log .edit-area label.new {
+    color: #ff6600;
+}
+
+.error-log .grouping span.severe, .error-log .edit-area label.severe {
+    color: #ff0000;
+}
+
+.error-log .grouping span.interesting, .error-log .edit-area label.interesting {
+    font-weight: normal;
+    font-style: italic;
+}
+
+.error-log .grouping span.fixed, .error-log .edit-area label.fixed {
+    color: #008800;
 }
 
 .error-log .exception-name {
@@ -1472,6 +1518,10 @@ textarea.gray { color: gray; }
     font-size: larger;
 }
 
+.error-log .grouping.fixed .nickname {
+    text-decoration: line-through;
+}
+
 .error-log a:focus {
     -moz-outline-style: none;
 }
@@ -1481,7 +1531,15 @@ textarea.gray { color: gray; }
     background-color: #eee;
 }
 
-.error-log .edit-area input {
+.error-log .edit-area label {
+    margin-right: 25px;
+}
+
+.error-log .edit-area input[type=radio] {
+    margin-right: 4px;
+}
+
+.error-log .edit-area input[type=text] {
     width: 800px;
 }
 

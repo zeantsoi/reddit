@@ -170,7 +170,11 @@ def valid_url(prop,value,report):
      * image labels %%..%% for images uploaded on /about/stylesheet
      * urls with domains in g.allowed_css_linked_domains
     """
-    url = value.getStringValue()
+    try:
+        url = value.getStringValue()
+    except IndexError:
+        g.log.error("Problem validating [%r]" % value)
+        raise
     # local urls are allowed
     if local_urls.match(url):
         pass

@@ -134,8 +134,15 @@ class DataThing(object):
                 else:
                     nl = "it is NOT loaded."
 
+                # The %d format is nicer, since it has no "L" at the end, but
+                # if we can't do that, fall back on %r.
+                try:
+                    id_str = "%d" % _id
+                except TypeError:
+                    id_str = "%r" % _id
+
                 raise AttributeError,\
-                       '%s(%d).%s not found; %s' % (cl, _id, attr, nl)
+                       '%s(%s).%s not found; %s' % (cl, id_str, attr, nl)
 
     def _cache_key(self):
         return thing_prefix(self.__class__.__name__, self._id)

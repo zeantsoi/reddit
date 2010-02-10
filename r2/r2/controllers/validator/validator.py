@@ -694,11 +694,15 @@ class VUname(VRequired):
 class VLogin(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.WRONG_PASSWORD, *a, **kw)
-        
+
     def run(self, user_name, password):
         user_name = chkuser(user_name)
         user = None
         if user_name:
+            try:
+                str(password)
+            except UnicodeEncodeError:
+                password = password.encode('utf8')
             user = valid_login(user_name, password)
         if not user:
             return self.error()

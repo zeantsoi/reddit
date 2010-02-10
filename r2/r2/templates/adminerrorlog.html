@@ -22,6 +22,13 @@
 
 <%namespace file="utils.html" import="error_field"/>
 
+<%def name="status_radio(val, datehex, current)">
+  <input id="status-${datehex}-${val}"
+         class="nomargin" type="radio" value="${val}" name="status"
+         ${"checked='checked'" if current == val else ''} />
+  <label class="${val}" for="status-${datehex}-${val}">${val}</label>
+</%def>
+
 <div class="error-logs">
   %for date, groupings in thing.date_summaries:
   <div class="error-log">
@@ -32,13 +39,19 @@
 
     <div class="rest">
       %for frequency, hexkey, d in groupings:
-      <div class="grouping">
+      <% datehex = "-".join([date.replace("/",""), hexkey]) %>
+
+      <div class="grouping ${thing.statuses[hexkey]}">
         <a class="frequency hover" href="#"
            onclick="$(this).parent().find('.occurrences').toggle();return false">
           ${frequency} occurrences
         </a>
 
-        <a class="nickname" href="#"
+        <span class="${thing.statuses[hexkey]}">
+          ${thing.statuses[hexkey]}:
+        </span>
+
+        <a class="nickname" name="${datehex}" href="#${datehex}"
            onclick="$(this).parent().find('.edit-area').toggle();return false">
           ${thing.nicknames[hexkey]}
         </a>
@@ -46,8 +59,8 @@
         <br/>
 
         <div class="edit-area" style="display: none">
-          <form action="/post/rename_error" method="post"
-              onsubmit="return post_form(this, 'rename_error');"
+          <form action="/post/edit_error" method="post"
+              onsubmit="return post_form(this, 'edit_error');"
                 id="nickname-${hexkey}">
 
             <input type="hidden" name="hexkey" value="${hexkey}" />
@@ -59,6 +72,18 @@
                 </th>
                 <td>
                   <input type="text" value="${thing.nicknames[hexkey]}" name="nickname"/>
+                </td>
+              </tr>
+              <tr>
+                <th>
+                  status:
+                </th>
+                <td>
+                  ${status_radio("new"   , datehex, thing.statuses[hexkey])}
+                  ${status_radio("severe", datehex, thing.statuses[hexkey])}
+                  ${status_radio("interesting", datehex, thing.statuses[hexkey])}
+                  ${status_radio("normal", datehex, thing.statuses[hexkey])}
+                  ${status_radio("fixed" , datehex, thing.statuses[hexkey])}
                 </td>
               </tr>
               <tr>
