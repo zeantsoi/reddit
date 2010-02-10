@@ -85,8 +85,7 @@ def run(limit=100, streamfile=None, verbose=False):
                 emailer.nerds_email(news, "Exception Watcher")
 
                 g.hardcache.set(nickname_key, nickname, 86400 * 365)
-                g.hardcache.set("error_status-" + fingerprint, "new",
-                                86400 * 365)
+                g.hardcache.set("error_status-" + fingerprint, "new", 86400)
 
             err_key = "-".join(["error", daystring, fingerprint])
 
