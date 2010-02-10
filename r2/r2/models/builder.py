@@ -517,6 +517,8 @@ class CommentBuilder(Builder):
         #if permalink
         elif self.comment:
             top = self.comment
+            if not top._id in depth:
+                g.log.error("Switched to a top (%d) that's not in depth. (#1)" % top._id)
             dont_collapse.append(top._id)
             #add parents for context
             while self.context > 0 and top.parent_id:
@@ -530,6 +532,8 @@ class CommentBuilder(Builder):
                     raise
                 dont_collapse.append(new_top._id)
                 top = new_top
+                if not top._id in depth:
+                    g.log.error("Switched to a top (%d) that's not in depth. (#2)" % top._id)
             candidates = [top]
         #else start with the root comments
         else:
@@ -544,7 +548,6 @@ class CommentBuilder(Builder):
                     depth[k] = v - delta
         except KeyError:
             g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
-            g.log.error ("depth: %r" % depth)
             g.log.error ("top: %r" % top)
             raise
 
