@@ -95,7 +95,7 @@ def i18n_email(email, body, name='', reply_to = ''):
 
 def nerds_email(body, name='your reddit', reply_to = ''):
     """Queues a feedback email to the nerds running this site."""
-    return _feedback_email(g.admin_email, body, Email.Kind.NERDMAIL,
+    return _feedback_email(g.nerds_email, body, Email.Kind.NERDMAIL,
                            name = name, reply_to = reply_to)
 
 def share(link, emails, from_name = "", reply_to = "", body = ""):
