@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-from r2.lib import amqp
+from r2.lib import amqp, emailer
 from pylons import g
 from datetime import datetime
 from md5 import md5
@@ -80,8 +80,9 @@ def run(limit=100, streamfile=None, verbose=False):
                 news += "Traceback:\n"
                 news += "\n".join(pretty_lines)
                 news += exc_str
-                news += "\n\n\n"
-                log(news, True)
+                news += "\n"
+
+                emailer.nerds_email(news, "Exception Watcher")
 
                 g.hardcache.set(nickname_key, nickname, 86400 * 365)
 
