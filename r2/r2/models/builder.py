@@ -484,6 +484,18 @@ class CommentBuilder(Builder):
     def get_items(self, num):
         r = link_comments(self.link._id)
         cids, comment_tree, depth, num_children = r
+
+        if (not isinstance(self.comment, utils.iters)
+            and self.comment and not self.comment._id in depth):
+            g.log.error("self.comment (%d) not in depth. Forcing update..."
+                        % self.comment._id)
+
+            r = link_comments(self.link._id, _update=True)
+            cids, comment_tree, depth, num_children = r
+
+            if not self.comment._id in depth:
+                g.log.error("Update didn't help. This is gonna end in tears.")
+
         if cids:
             comments = set(Comment._byID(cids, data = True, 
                                          return_dict = False))
@@ -517,23 +529,15 @@ class CommentBuilder(Builder):
         #if permalink
         elif self.comment:
             top = self.comment
-            if not top._id in depth:
-                g.log.error("Switched to a top (%d) that's not in depth. (#1)" % top._id)
             dont_collapse.append(top._id)
             #add parents for context
             while self.context > 0 and top.parent_id:
                 self.context -= 1
                 new_top = comment_dict[top.parent_id]
                 comment_tree[new_top._id] = [top]
-                try:
-                    num_children[new_top._id] = num_children[top._id] + 1
-                except KeyError:
-                    g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
-                    raise
+                num_children[new_top._id] = num_children[top._id] + 1
                 dont_collapse.append(new_top._id)
                 top = new_top
-                if not top._id in depth:
-                    g.log.error("Switched to a top (%d) that's not in depth. (#2)" % top._id)
             candidates = [top]
         #else start with the root comments
         else:

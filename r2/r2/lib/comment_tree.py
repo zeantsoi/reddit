@@ -86,10 +86,12 @@ def delete_comment(comment):
     #nothing really to do here, atm
     pass
 
-def link_comments(link_id):
+def link_comments(link_id, _update=False):
     key = comments_key(link_id)
+
     r = g.permacache.get(key)
-    if r:
+
+    if r and not _update:
         return r
     else:
         with g.make_lock(lock_key(link_id)):

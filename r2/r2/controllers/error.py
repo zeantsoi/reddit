@@ -155,7 +155,7 @@ class ErrorController(RedditController):
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
-                return str(code)
+                return str(int(code))
             elif takedown and code == '404':
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()
