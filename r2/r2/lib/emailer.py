@@ -44,6 +44,13 @@ def _system_email(email, body, kind, reply_to = "", thing = None):
                                kind, body = body, reply_to = reply_to,
                                thing = thing)
 
+def _nerds_email(body, from_name, kind):
+    """
+    For sending email to the nerds who run this joint
+    """
+    Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
+                               kind, body = body)
+
 def verify_email(user, dest):
     """
     For verifying an email address
@@ -93,10 +100,9 @@ def i18n_email(email, body, name='', reply_to = ''):
     return _feedback_email(email, body,  Email.Kind.HELP_TRANSLATE, name = name,
                            reply_to = reply_to)
 
-def nerds_email(body, name='your reddit', reply_to = ''):
+def nerds_email(body, from_name=g.domain):
     """Queues a feedback email to the nerds running this site."""
-    return _feedback_email(g.nerds_email, body, Email.Kind.NERDMAIL,
-                           name = name, reply_to = reply_to)
+    return _nerds_email(body, from_name, Email.Kind.NERDMAIL)
 
 def share(link, emails, from_name = "", reply_to = "", body = ""):
     """Queues a 'share link' email."""
