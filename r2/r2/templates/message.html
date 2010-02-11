@@ -82,7 +82,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
     %if getattr(thing, "is_parent", False):
        %if thing.sr_id:
          <span class="correspondent reddit rounded">
-           <a href="${thing.subreddit.path}message/inbox">
+           <a href="${thing.subreddit.path}message/moderator/inbox">
              #${thing.subreddit.name}
            </a>
          </span>
