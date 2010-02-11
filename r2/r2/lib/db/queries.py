@@ -436,15 +436,16 @@ def new_comment(comment, inbox_rels):
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments
 
-    for inbox_rel in tup(inbox_rels):
-        inbox_owner = inbox_rel._thing1
-        if inbox_rel._name == "inbox":
-            add_queries([get_inbox_comments(inbox_owner)],
-                        insert_items = inbox_rel)
-        else:
-            add_queries([get_inbox_selfreply(inbox_owner)],
-                        insert_items = inbox_rel)
-        set_unread(comment, inbox_owner, True)
+    if inbox_rels:
+        for inbox_rel in tup(inbox_rels):
+            inbox_owner = inbox_rel._thing1
+            if inbox_rel._name == "inbox":
+                add_queries([get_inbox_comments(inbox_owner)],
+                            insert_items = inbox_rel)
+            else:
+                add_queries([get_inbox_selfreply(inbox_owner)],
+                            insert_items = inbox_rel)
+            set_unread(comment, inbox_owner, True)
 
 
 
