@@ -44,9 +44,9 @@
      subreddit = thing.subreddit.name
      author = updated_author % dict(author = author, subreddit = subreddit)
   %>
-  ${thing.subject} : ${taglinetext % dict(when = thing.timesince, 
+  ${thing.subject} : ${unsafe(taglinetext % dict(when = thing.timesince, 
                               author= u"%s" % author,
-                              dest = u"%s" % thing.to.name if thing.to else "")}
+                              dest = u"%s" % thing.to.name if thing.to else ""))}
   </title>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   <dc:date>${thing._date.isoformat()}-0700</dc:date>
