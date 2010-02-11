@@ -527,7 +527,8 @@ class CommentBuilder(Builder):
             #if hasattr(candidates[0], "parent_id"):
             #    parent = comment_dict[candidates[0].parent_id]
             #    items.append(parent)
-            if hasattr(candidates[0], "parent_id"):
+            if (hasattr(candidates[0], "parent_id") and
+                candidates[0].parent_id is not None):
                 ignored_parent_ids.append(candidates[0].parent_id)
                 start_depth = depth[candidates[0].parent_id]
         #if permalink
