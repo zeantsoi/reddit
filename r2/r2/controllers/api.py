@@ -1178,7 +1178,7 @@ class ApiController(RedditController):
         # if the message is for a subreddit, check that next
         if hasattr(thing, "sr_id"):
             sr = thing.subreddit_slow
-            if sr.is_moderator(c.user):
+            if sr and sr.is_moderator(c.user):
                 queries.set_unread(thing, sr, unread)
 
     @noresponse(VUser(),
