@@ -845,7 +845,7 @@ def run_commentstree():
         for comment in comments:
             add_comment_tree(comment, links[comment.link_id])
 
-    amqp.handle_items('commentstree_q', _run_new_comments, limit=1)
+    amqp.handle_items('commentstree_q', _run_commentstree, limit=1)
 
 
 #def run_new_links():
