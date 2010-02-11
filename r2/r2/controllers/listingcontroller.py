@@ -503,11 +503,12 @@ class UserController(ListingController):
 
 class MessageController(ListingController):
     show_sidebar = False
+    show_nums = False
     render_cls = MessagePage
 
     @property
     def menus(self):
-        if self.where in ('inbox', 'messages', 'comments',
+        if c.default_sr and self.where in ('inbox', 'messages', 'comments',
                           'selfreply', 'unread'):
             buttons = (NavButton(_("all"), "inbox"),
                        NavButton(_("unread"), "unread"),
@@ -517,11 +518,26 @@ class MessageController(ListingController):
 
             return [NavMenu(buttons, base_path = '/message/',
                             default = 'inbox', type = "flatlist")]
+        elif not c.default_sr or self.where == 'moderator':
+            buttons = (NavButton(_("all"), "inbox"),
+                       NavButton(_("unread"), "unread"))
+            return [NavMenu(buttons, base_path = '/message/moderator/',
+                            default = 'inbox', type = "flatlist")]
         return []
 
 
     def title(self):
         return _('messages') + ': ' + _(self.where)
+
+    def keep_fn(self):
+        def keep(item):
+            wouldkeep = item.keep_item(item)
+            # don't show user their own unread stuff
+            if ((self.where == 'unread' or self.subwhere == 'unread')
+                and item.author_id == c.user._id):
+                return False
+            return wouldkeep
+        return keep
 
     @staticmethod
     def builder_wrapper(thing):
@@ -539,24 +555,32 @@ class MessageController(ListingController):
         return w
 
     def builder(self):
-        if self.where == 'messages':
+        if (self.where == 'messages' or
+            (self.where == "moderator" and self.subwhere != "unread")):
+            root = c.user
+            message_cls = UserMessageBuilder
+            if not c.default_sr:
+                root = c.site
+                message_cls = SrMessageBuilder
+            elif self.where == 'moderator' and self.subwhere != 'unread':
+                message_cls = ModeratorMessageBuilder
+
+            parent = None
+            skip = False
             if self.message:
                 if self.message.first_message:
                     parent = Message._byID(self.message.first_message)
                 else:
                     parent = self.message
-                return MessageBuilder(c.user, parent = parent,
-                                      skip = False, 
-                                      focal = self.message, 
-                                      wrap = self.builder_wrapper,
-                                      num = self.num)
             elif c.user.pref_threaded_messages:
                 skip = (c.render_style == "html")
-                return MessageBuilder(c.user, wrap = self.builder_wrapper,
-                                      skip = skip, 
-                                      num = self.num,
-                                      after = self.after,
-                                      reverse = self.reverse)
+
+            return message_cls(root, wrap = self.builder_wrapper,
+                               parent = parent,
+                               skip = skip,
+                               num = self.num,
+                               after = self.after,
+                               reverse = self.reverse)
         return ListingController.builder(self)
 
     def listing(self):
@@ -578,6 +602,20 @@ class MessageController(ListingController):
             q = queries.get_unread_inbox(c.user)
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
+        elif self.where == 'moderator' and self.subwhere == 'unread':
+            if c.default_sr:
+                srids = Subreddit.reverse_moderator_ids(c.user)
+                srs = Subreddit._byID(srids, data = False, return_dict = False)
+                q = queries.merge_results(
+                    *[queries.get_unread_subreddit_messages(s) for s in srs])
+            else:
+                q = queries.get_unread_subreddit_messages(c.site)
+        elif self.where == 'moderator':
+            if c.have_mod_messages and self.mark != 'false':
+                c.user.modmsgtime = False
+                c.user._commit()
+            # the query is handled by the builder on the moderator page
+            return 
         if self.where != 'sent':
             #reset the inbox
             if c.have_messages and self.mark != 'false':
@@ -589,11 +627,16 @@ class MessageController(ListingController):
     @validate(VUser(),
               message = VMessageID('mid'),
               mark = VOneOf('mark',('true','false'), default = 'true'))
-    def GET_listing(self, where, mark, message, **env):
-        self.where = where
+    def GET_listing(self, where, mark, message, subwhere = None, **env):
+        if not (c.default_sr or c.site.is_moderator(c.user) or c.user_is_admin):
+            abort(403, "forbidden")
+        if not c.default_sr:
+            self.where = "moderator"
+        else:
+            self.where = where
+        self.subwhere = subwhere
         self.mark = mark
         self.message = message
-        c.msg_location = where
         return ListingController.GET_listing(self, **env)
 
     @validate(VUser(),
@@ -608,7 +651,7 @@ class MessageController(ListingController):
                                  message = message,
                                  success = success)
         return MessagePage(content = content).render()
-    
+
 class RedditsController(ListingController):
     render_cls = SubredditsPage
 
@@ -644,7 +687,8 @@ class MyredditsController(ListingController):
                     NavButton(plurals.contributor, 'contributor'),
                     NavButton(plurals.moderator,   'moderator'))
 
-        return [NavMenu(buttons, base_path = '/reddits/mine/', default = 'subscriber', type = "flatlist")]
+        return [NavMenu(buttons, base_path = '/reddits/mine/',
+                        default = 'subscriber', type = "flatlist")]
 
     def title(self):
         return _('reddits: ') + self.where

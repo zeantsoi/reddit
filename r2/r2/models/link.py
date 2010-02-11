@@ -186,7 +186,7 @@ class Link(Thing, Printable):
             if self._spam and (not user or
                                (user and self.author_id != user._id)):
                 return False
-        
+
             #author_karma = wrapped.author.link_karma
             #if author_karma <= 0 and random.randint(author_karma, 0) != 0:
                 #return False
@@ -194,7 +194,7 @@ class Link(Thing, Printable):
         if user:
             if user.pref_hide_ups and wrapped.likes == True:
                 return False
-        
+
             if user.pref_hide_downs and wrapped.likes == False:
                 return False
 
@@ -325,7 +325,7 @@ class Link(Thing, Printable):
             item.score = max(0, item.score)
 
             item.domain = (domain(item.url) if not item.is_self
-                          else 'self.' + item.subreddit.name)
+                           else 'self.' + item.subreddit.name)
             if not hasattr(item,'top_link'):
                 item.top_link = False
             item.urlprefix = ''
@@ -713,6 +713,14 @@ class MoreMessages(Printable):
     def recipient(self):
         return self.parent.recipient
 
+    @property
+    def sr_id(self):
+        return self.parent.sr_id
+
+    @property
+    def subreddit(self):
+        return self.parent.subreddit
+
 
 class MoreComments(Printable):
     cachable = False
@@ -751,47 +759,94 @@ class MoreChildren(MoreComments):
 
 class Message(Thing, Printable):
     _defaults = dict(reported = 0, was_comment = False, parent_id = None,
-                     new = False,  first_message = None,
-                     to_collapse = None, author_collapse = None)
+                     new = False,  first_message = None, to_id = None,
+                     sr_id = None, to_collapse = None, author_collapse = None)
     _data_int_props = Thing._data_int_props + ('reported', )
-    cache_ignore = set(["to"]).union(Printable.cache_ignore)
+    cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
 
     @classmethod
-    def _new(cls, author, to, subject, body, ip, parent = None):
+    def _new(cls, author, to, subject, body, ip, parent = None, sr = None):
         m = Message(subject = subject,
                     body = body,
                     author_id = author._id,
                     new = True, 
                     ip = ip)
         m._spam = author._spam
+        sr_id = None
+        # check to see if the recipient is a subreddit and swap args accordingly
+        if to and isinstance(to, Subreddit):
+            to, sr = None, to
+
+        if sr:
+            sr_id = sr._id
         if parent:
             m.parent_id = parent._id
             if parent.first_message:
                 m.first_message = parent.first_message
             else:
                 m.first_message = parent._id
+            if parent.sr_id:
+                sr_id = parent.sr_id
 
-        m.to_id = to._id
+        if not to and not sr_id:
+            raise CreationError, "Message created with neither to nor sr_id"
+
+        m.to_id = to._id if to else None
+        if sr_id is not None:
+            m.sr_id = sr_id
+
         m._commit()
 
-        #author = Author(author, m, 'author')
-        #author._commit()
-
-        # only global admins can be message spammed.
         inbox_rel = None
-        if not m._spam or to.name in g.admins:
-            inbox_rel = Inbox._add(to, m, 'inbox')
+        if sr_id and not sr:
+            sr = Subreddit._byID(sr_id)
 
+        inbox_rel = []
+        # if there is a subreddit id, we have to add it to the moderator inbox
+        if sr_id:
+            inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
+            if author.name in g.admins:
+                m.distinguished = 'admin'
+                m._commit()
+            elif sr.is_moderator(author):
+                m.distinguished = 'yes'
+                m._commit()
+        # if there is a "to" we may have to create an inbox relation as well
+        # also, only global admins can be message spammed.
+        if to and (not m._spam or to.name in g.admins):
+            # if the current "to" is not a sr moderator,
+            # they need to be notified
+            if not sr_id or not sr.is_moderator(to):
+                inbox_rel.append(Inbox._add(to, m, 'inbox'))
+            # find the message originator
+            elif sr_id and m.first_message:
+                first = Message._byID(m.first_message, True)
+                orig = Account._byID(first.author_id)
+                # if the originator is not a moderator...
+                if not sr.is_moderator(orig) and orig._id != author._id:
+                    inbox_rel.append(Inbox._add(orig, m, 'inbox'))
         return (m, inbox_rel)
 
     @property
     def permalink(self):
         return "/message/messages/%s" % self._id36
 
-    def can_view(self):
-        return (c.user_is_loggedin and
-                (c.user_is_admin or
-                 c.user._id in (self.author_id, self.to_id)))
+    def can_view_slow(self):
+        if c.user_is_loggedin:
+            # simple case from before:
+            if (c.user_is_admin or
+                c.user._id in (self.author_id, self.to_id)):
+                return True
+            elif self.sr_id:
+                sr = Subreddit._byID(self.sr_id)
+                is_moderator = sr.is_moderator(c.user)
+                # moderators can view messages on subreddits they moderate
+                if is_moderator:
+                    return True
+                elif self.first_message: 
+                    first = Message._byID(self.first_message, True)
+                    return (first.author_id == c.user._id)
+
 
     @classmethod
     def add_props(cls, user, wrapped):
@@ -800,19 +855,28 @@ class Message(Thing, Printable):
         #reset msgtime after this request
         msgtime = c.have_messages
 
-        #load the "to" field if required
-        to_ids = set(w.to_id for w in wrapped)
+        # load the to fields if one exists
+        to_ids = set(w.to_id for w in wrapped if w.to_id is not None)
         tos = Account._byID(to_ids, True) if to_ids else {}
+
+        # load the subreddit field if one exists:
+        sr_ids = set(w.sr_id for w in wrapped if w.sr_id is not None)
+        m_subreddits = Subreddit._byID(sr_ids, data = True, return_dict = True)
+
+        # load the links and their subreddits (if comment-as-message)
         links = Link._byID(set(l.link_id for l in wrapped if l.was_comment),
                            data = True,
                            return_dict = True)
-        subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
-                                     data = True, return_dict = True)
+        # subreddits of the links (for comment-as-message)
+        l_subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
+                                       data = True, return_dict = True)
+
         parents = Comment._byID(set(l.parent_id for l in wrapped
                                   if l.parent_id and l.was_comment),
                                 data = True, return_dict = True)
 
         # load the inbox relations for the messages to determine new-ness
+        # TODO: query cache?
         inbox = Inbox._fast_query(c.user, 
                                   [item.lookups[0] for item in wrapped],
                                   ['inbox', 'selfreply'])
@@ -821,20 +885,36 @@ class Message(Thing, Printable):
         inbox = dict((m._fullname, v)
                      for (u, m, n), v in inbox.iteritems() if v)
 
-        for item in wrapped:
-            item.to = tos[item.to_id]
-            item.recipient = (item.to_id == c.user._id)
+        modinbox = ModeratorInbox._query(
+            ModeratorInbox.c._thing2_id == [item._id for item in wrapped],
+            data = True)
 
-            # don't mark non-recipient messages as new
-            if not item.recipient:
-                item.new = False
+        # best to not have to eager_load the things
+        def make_message_fullname(mid):
+            return "t%s_%s" % (utils.to36(Message._type_id), utils.to36(mid))
+        modinbox = dict((make_message_fullname(v._thing2_id), v)
+                        for v in modinbox)
+
+        for item in wrapped:
+            item.to = tos.get(item.to_id)
+            if item.sr_id:
+                item.recipient = (item.author_id != c.user._id)
+            else:
+                item.recipient = (item.to_id == c.user._id)
+
             # new-ness is stored on the relation
+            if item.author_id == c.user._id:
+                item.new = False
             elif item._fullname in inbox:
                 item.new = getattr(inbox[item._fullname], "new", False)
                 # wipe new messages if preferences say so, and this isn't a feed
+                # and it is in the user's personal inbox
                 if (item.new and c.user.pref_mark_messages_read
-                    and c.extension not in ("rss", "xml")):
-                    queries.set_unread(inbox[item._fullname]._thing2, False)
+                    and c.extension not in ("rss", "xml", "api", "json")):
+                    queries.set_unread(inbox[item._fullname]._thing2,
+                                       c.user, False)
+            elif item._fullname in modinbox:
+                item.new = getattr(modinbox[item._fullname], "new", False)
             else:
                 item.new = False
 
@@ -842,9 +922,10 @@ class Message(Thing, Printable):
             item.score_fmt = Score.none
 
             item.message_style = ""
+            # comment as message:
             if item.was_comment:
                 link = links[item.link_id]
-                sr = subreddits[link.sr_id]
+                sr = l_subreddits[link.sr_id]
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
@@ -858,6 +939,9 @@ class Message(Thing, Printable):
                 else:
                     item.subject = _('post reply')
                     item.message_style = "post-reply"
+            elif item.sr_id is not None:
+                item.subreddit = m_subreddits[item.sr_id]
+
             if c.user.pref_no_profanity:
                 item.subject = profanity_filter(item.subject)
 
@@ -873,12 +957,17 @@ class Message(Thing, Printable):
         # Run this last
         Printable.add_props(user, wrapped)
 
+    @property
+    def subreddit_slow(self):
+        from subreddit import Subreddit
+        if self.sr_id:
+            return Subreddit._byID(self.sr_id)
+
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
-        s.extend([c.msg_location, wrapped.new, wrapped.collapsed])
+        s.extend([wrapped.new, wrapped.collapsed])
         return s
-    
 
     def keep_item(self, wrapped):
         return True
@@ -913,6 +1002,38 @@ class Inbox(MultiRelation('inbox',
         inbox_rel = cls.rel(Account, thing.__class__)
         inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
                                  eager_load = True)
+        res = []
+        for i in inbox:
+            if i:
+                i.new = unread
+                i._commit()
+                res.append(i)
+        return res
+
+
+class ModeratorInbox(Relation(Subreddit, Message)):
+    #TODO: shouldn't dupe this
+    @classmethod
+    def _add(cls, sr, obj, *a, **kw):
+        i = ModeratorInbox(sr, obj, *a, **kw)
+        i.new = True
+        i._commit()
+
+        if not sr._loaded:
+            sr._load()
+
+        moderators = Account._byID(sr.moderator_ids(), return_dict = False)
+        for m in moderators:
+            if obj.author_id != m._id and not getattr(m, 'modmsgtime', None):
+                m.modmsgtime = obj._date
+                m._commit()
+
+        return i
+
+    @classmethod
+    def set_unread(cls, thing, unread):
+        inbox = cls._query(cls.c._thing2_id == thing._id,
+                           eager_load = True)
         res = []
         for i in inbox:
             if i:

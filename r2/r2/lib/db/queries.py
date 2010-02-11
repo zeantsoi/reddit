@@ -1,11 +1,11 @@
 from r2.models import Account, Link, Comment, Vote, SaveHide
-from r2.models import Message, Inbox, Subreddit
+from r2.models import Message, Inbox, Subreddit, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
+from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified, tup
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
 import cPickle as pickle
@@ -297,6 +297,13 @@ def get_hidden(user):
 def get_saved(user):
     return user_rel_query(SaveHide, user, 'save')
 
+def get_subreddit_messages(sr):
+    return user_rel_query(ModeratorInbox, sr, 'inbox')
+
+def get_unread_subreddit_messages(sr):
+    return user_rel_query(ModeratorInbox, sr, 'inbox',
+                          filters = [ModeratorInbox.c.new == True])
+
 inbox_message_rel = Inbox.rel(Account, Message)
 def get_inbox_messages(user):
     return user_rel_query(inbox_message_rel, user, 'inbox')
@@ -413,7 +420,7 @@ def new_link(link):
         amqp.add_item('new_link', link._fullname)
 
 
-def new_comment(comment, inbox_rel):
+def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
     job = [get_comments(author, 'new', 'all')]
     if comment._deleted:
@@ -429,7 +436,7 @@ def new_comment(comment, inbox_rel):
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments
 
-    if inbox_rel:
+    for inbox_rel in tup(inbox_rels):
         inbox_owner = inbox_rel._thing1
         if inbox_rel._name == "inbox":
             add_queries([get_inbox_comments(inbox_owner)],
@@ -437,7 +444,7 @@ def new_comment(comment, inbox_rel):
         else:
             add_queries([get_inbox_selfreply(inbox_owner)],
                         insert_items = inbox_rel)
-        set_unread(comment, True)
+        set_unread(comment, inbox_owner, True)
 
 
 
@@ -459,7 +466,7 @@ def new_vote(vote):
         results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
         #results.append(get_links(sr, 'toplinks', 'all'))
         add_queries(results, insert_items = item)
-    
+
     #must update both because we don't know if it's a changed vote
     if vote._name == '1':
         add_queries([get_liked(user)], insert_items = vote)
@@ -471,27 +478,39 @@ def new_vote(vote):
         add_queries([get_liked(user)], delete_items = vote)
         add_queries([get_disliked(user)], delete_items = vote)
 
-def new_message(message, inbox_rel):
+def new_message(message, inbox_rels):
     from r2.lib.comment_tree import add_message
 
     from_user = Account._byID(message.author_id)
-    to_user = Account._byID(message.to_id)
-
-    add_queries([get_sent(from_user)], insert_items = message)
-    add_queries([get_inbox_messages(to_user)], insert_items = inbox_rel)
+    for inbox_rel in tup(inbox_rels):
+        # personal message
+        to = inbox_rel._thing1
+        if not message.sr_id:
+            add_queries([get_sent(from_user)], insert_items = message)
+            add_queries([get_inbox_messages(to)],
+                        insert_items = inbox_rel)
+        # moderator message
+        else:
+            add_queries([get_subreddit_messages(to)],
+                        insert_items = inbox_rel)
+        set_unread(message, to, True)
 
     add_message(message)
-    set_unread(message, True)
 
-def set_unread(message, unread):
-    for i in Inbox.set_unread(message, unread):
-        kw = dict(insert_items = i) if unread else dict(delete_items = i)
-        if i._name == 'selfreply':
-            add_queries([get_unread_selfreply(i._thing1)], **kw)
-        elif isinstance(message, Comment):
-            add_queries([get_unread_comments(i._thing1)], **kw)
-        else:
-            add_queries([get_unread_messages(i._thing1)], **kw)
+def set_unread(message, to, unread):
+    if isinstance(to, Subreddit):
+        for i in ModeratorInbox.set_unread(message, unread):
+            kw = dict(insert_items = i) if unread else dict(delete_items = i)
+            add_queries([get_unread_subreddit_messages(i._thing1)], **kw)
+    else:
+        for i in Inbox.set_unread(message, unread):
+            kw = dict(insert_items = i) if unread else dict(delete_items = i)
+            if i._name == 'selfreply':
+                add_queries([get_unread_selfreply(i._thing1)], **kw)
+            elif isinstance(message, Comment):
+                add_queries([get_unread_comments(i._thing1)], **kw)
+            else:
+                add_queries([get_unread_messages(i._thing1)], **kw)
 
 def new_savehide(rel):
     user = rel._thing1

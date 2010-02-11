@@ -315,7 +315,7 @@ class VMessageID(Validator):
             try:
                 cid = int(cid, 36)
                 m = Message._byID(cid, True)
-                if not m.can_view():
+                if not m.can_view_slow():
                     abort(403, 'forbidden')
                 return m
             except (NotFound, ValueError):
@@ -729,7 +729,7 @@ class VUrl(VRequired):
                 sr = None
         else:
             sr = None
-        
+
         if not url:
             return self.error(errors.NO_URL)
         url = utils.sanitize_url(url)
@@ -766,6 +766,16 @@ class VExistingUname(VRequired):
             except NotFound:
                 return self.error(errors.USER_DOESNT_EXIST)
         self.error()
+
+class VMessageRecipent(VExistingUname):
+    def run(self, name):
+        if name.startswith('#'):
+            try:
+                return Subreddit._by_name(name.strip('#'))
+            except NotFound:
+                self.set_error(errors.SUBREDDIT_NOEXIST)
+        else:
+            return VExistingUname.run(self, name)
 
 class VUserWithEmail(VExistingUname):
     def run(self, name):

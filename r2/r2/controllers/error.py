@@ -122,7 +122,7 @@ class ErrorController(RedditController):
                        c.site.name)
             message = (strings.banned_subreddit %
                        dict(link = '/message/compose?to=%s&subject=%s' %
-                            (g.admin_message_acct,
+                            (url_escape(g.admin_message_acct),
                              url_escape(subject))))
 
             res = pages.RedditError(_('this reddit has been banned'),

@@ -34,7 +34,7 @@ from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
-from r2.lib.comment_tree import link_comments, user_messages, conversation, tree_sort_fn
+from r2.lib.comment_tree import *
 from copy import deepcopy, copy
 
 import time
@@ -90,18 +90,12 @@ class Builder(object):
         wrapped = []
         count = 0
 
-        if isinstance(c.site, FakeSubreddit):
-            mods = []
-        else:
-            mods = c.site.moderators
-            modlink = ''
-            if c.cname:
-                modlink = '/about/moderators'
-            else:
-                modlink = '/r/%s/about/moderators' % c.site.name
-
-            modlabel = (_('moderator of /r/%(reddit)s, speaking officially') %
-                        dict(reddit = c.site.name) )
+        modlink = {}
+        modlabel = {}
+        for s in subreddits.values():
+            modlink[s._id] = '/r/%s/about/moderators' % s.name
+            modlabel[s._id] = (_('moderator of /r/%(reddit)s, speaking officially') %
+                        dict(reddit = s.name) )
 
 
         for item in items:
@@ -142,9 +136,9 @@ class Builder(object):
                 w.author and w.author.name in g.admins):
                 add_attr(w.attribs, 'A')
 
-            if (w.distinguished == 'moderator' and
-                getattr(item, "author_id", None) in mods):
-                add_attr(w.attribs, 'M', label=modlabel, link=modlink)
+            if w.distinguished == 'moderator':
+                add_attr(w.attribs, 'M', label=modlabel[item.sr_id],
+                         link=modlink[item.sr_id])
 
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]
@@ -154,7 +148,7 @@ class Builder(object):
                          label=label,
                          link = "/user/%s" % w.author.name)
 
-            if hasattr(item, "sr_id"):
+            if hasattr(item, "sr_id") and item.sr_id is not None:
                 w.subreddit = subreddits[item.sr_id]
 
             w.likes = likes.get((user, item))
@@ -242,7 +236,7 @@ class QueryBuilder(Builder):
         self.start_count = kw.get('count', 0) or 0
         self.after = kw.get('after')
         self.reverse = kw.get('reverse')
-        
+
         self.prewrap_fn = None
         if hasattr(query, 'prewrap_fn'):
             self.prewrap_fn = query.prewrap_fn
@@ -663,9 +657,9 @@ class CommentBuilder(Builder):
         return final
 
 class MessageBuilder(Builder):
-    def __init__(self, user, parent = None, focal = None,
+    def __init__(self, parent = None, focal = None,
                  skip = True, **kw):
-        self.user = user
+
         self.num = kw.pop('num', None)
         self.focal = focal
         self.parent = parent
@@ -683,11 +677,11 @@ class MessageBuilder(Builder):
                 for j in i.child.things:
                     yield j
 
+    def get_tree(self):
+        raise NotImplementedError, "get_tree"
+
     def get_items(self):
-        if self.parent:
-            tree = conversation(self.user, self.parent)
-        else:
-            tree = user_messages(self.user)
+        tree = self.get_tree()
 
         prev = next = None
         if not self.parent:
@@ -768,6 +762,37 @@ class MessageBuilder(Builder):
             final.append(parent)
 
         return (final, prev, next, len(final), len(final))
+
+class SrMessageBuilder(MessageBuilder):
+    def __init__(self, sr, **kw):
+        self.sr = sr
+        MessageBuilder.__init__(self, **kw)
+
+    def get_tree(self):
+        if self.parent:
+            return sr_conversation(self.sr, self.parent)
+        return subreddit_messages(self.sr)
+
+class UserMessageBuilder(MessageBuilder):
+    def __init__(self, user, **kw):
+        self.user = user
+        MessageBuilder.__init__(self, **kw)
+
+    def get_tree(self):
+        if self.parent:
+            return conversation(self.user, self.parent)
+        return user_messages(self.user)
+
+class ModeratorMessageBuilder(MessageBuilder):
+    def __init__(self, user, **kw):
+        self.user = user
+        MessageBuilder.__init__(self, **kw)
+
+    def get_tree(self):
+        if self.parent:
+            return conversation(self.user, self.parent)
+        return moderator_messages(self.user)
+
 
 def make_wrapper(parent_wrapper = Wrapped, **params):
     def wrapper_fn(thing):

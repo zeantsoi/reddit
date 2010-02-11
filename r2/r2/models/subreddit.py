@@ -233,7 +233,8 @@ class Subreddit(Thing, Printable):
     def load_subreddits(cls, links, return_dict = True):
         """returns the subreddits for a list of links. it also preloads the
         permissions for the current user."""
-        srids = set(l.sr_id for l in links if hasattr(l, "sr_id"))
+        srids = set(l.sr_id for l in links
+                    if getattr(l, "sr_id", None) is not None)
         subreddits = {}
         if srids:
             subreddits = cls._byID(srids, True)
@@ -654,7 +655,7 @@ class DomainSR(FakeSubreddit):
     def get_links(self, sort, time):
         from r2.lib.db import queries
         return queries.get_domain_links(self.domain, sort, time)
-        
+
 Sub = SubSR()
 Friends = FriendsSR()
 All = AllSR()

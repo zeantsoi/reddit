@@ -46,7 +46,7 @@ def make_fullname(typ, _id):
 class ObjectTemplate(StringTemplate):
     def __init__(self, d):
         self.d = d
-    
+
     def update(self, kw):
         def _update(obj):
             if isinstance(obj, (str, unicode)):
@@ -191,13 +191,23 @@ class AccountJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
                                                 link_karma = "safe_karma",
                                                 comment_karma = "comment_karma",
-                                                has_mail = "has_mail")
+                                                has_mail = "has_mail",
+                                                has_mod_mail = "has_mod_mail",
+                                                is_mod = "is_mod",
+                                                )
 
     def thing_attr(self, thing, attr):
+        from r2.models import Subreddit
         if attr == "has_mail":
             if c.user_is_loggedin and thing._id == c.user._id:
                 return bool(c.have_messages)
             return None
+        if attr == "has_mod_mail":
+            if c.user_is_loggedin and thing._id == c.user._id:
+                return bool(c.have_mod_messages)
+            return None
+        if attr == "is_mod":
+            return bool(Subreddit.reverse_moderator_ids(thing))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class LinkJsonTemplate(ThingJsonTemplate):
@@ -325,6 +335,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
                                                 body_html    = "body_html",
                                                 author       = "author",
                                                 dest         = "dest",
+                                                subreddit = "subreddit",
                                                 was_comment  = "was_comment",
                                                 context      = "context", 
                                                 created      = "created",
@@ -338,7 +349,14 @@ class MessageJsonTemplate(ThingJsonTemplate):
             return ("" if not thing.was_comment
                     else thing.permalink + "?context=3")
         elif attr == "dest":
-            return thing.to.name
+            if thing.to_id:
+                return thing.to.name
+            else:
+                return "#" + thing.subreddit.name
+        elif attr == "subreddit":
+            if thing.sr_id:
+                return thing.subreddit.name
+            return Null
         elif attr == "body_html":
             return safemarkdown(thing.body)
         return ThingJsonTemplate.thing_attr(self, thing, attr)

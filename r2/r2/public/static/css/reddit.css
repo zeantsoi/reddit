@@ -149,6 +149,11 @@ ul.flat-vert {text-align: left;}
  }
 
 #mail img {position: relative; top: 2px}
+#modmail img {position: relative; top: 4px}
+#modmail.nohavemail {
+    opacity: .7;
+    filter:alpha(opacity=70); /* IE patch */
+}
 .user {color: gray;}
 
 
@@ -2986,7 +2991,6 @@ table.lined-table {
 
 .sidecontentbox a.helplink {
     float: right;
-    font-size: x-small;
     margin-top: 4px;
 }
 
@@ -3445,6 +3449,9 @@ dd { margin-left: 20px;  }
 }
 .icon-menu .reddit-moderators {
     background-image: url(/static/star.png); /* SPRITE */
+}
+.icon-menu .moderator-mail {
+    background-image: url(/static/mailgray.png); /* SPRITE */
 }
 .icon-menu .reddit-contributors {
     background-image: url(/static/pencil.png); /* SPRITE */

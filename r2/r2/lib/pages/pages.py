@@ -40,7 +40,7 @@ from r2.lib.contrib.markdown import markdown
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
-from r2.lib.menus import SubredditButton, SubredditMenu
+from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
@@ -130,11 +130,13 @@ class Reddit(Templated):
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
-        
+
         self.toolbars = self.build_toolbars()
 
     def sr_admin_menu(self):
         buttons = [NamedButton('edit', css_class = 'reddit-edit'),
+                   NamedButton('modmail', dest = "message/inbox",
+                               css_class = 'moderator-mail'),
                    NamedButton('moderators', css_class = 'reddit-moderators')]
 
         if c.site.type != 'public':
@@ -182,7 +184,10 @@ class Reddit(Templated):
                 if total > len(moderators):
                     more_text = "...and %d more" % (total - len(moderators))
                     mod_href = "http://%s/about/moderators" % get_domain()
+                helplink = ("/message/compose?to=%%23%s" % c.site.name,
+                            "message the moderators")
                 ps.append(SideContentBox(_('moderators'), moderators,
+                                         helplink = helplink, 
                                          more_href = mod_href,
                                          more_text = more_text))
 
@@ -538,11 +543,21 @@ class MessagePage(Reddit):
                                    self._content))
 
     def build_toolbars(self):
-        buttons =  [NamedButton('compose'),
+        buttons =  [NamedButton('compose', sr_path = False),
                     NamedButton('inbox', aliases = ["/message/comments",
+                                                    "/message/uread",
                                                     "/message/messages",
-                                                    "/message/selfreply"]),
-                    NamedButton('sent')]
+                                                    "/message/selfreply"],
+                                sr_path = False),
+                    NamedButton('sent', sr_path = False)]
+        if c.show_mod_mail:
+            buttons.append(ModeratorMailButton(menu.modmail, "moderator",
+                                               sr_path = False))
+        if not c.default_sr:
+            buttons.append(ModeratorMailButton(
+                _("%(site)s mail") % {'site': c.site.name}, "moderator",
+                aliases = ["/about/message/inbox",
+                           "/about/message/unread"]))
         return [PageNameNav('nomenu', title = _("message")), 
                 NavMenu(buttons, base_path = "/message", type="tabmenu")]
 
@@ -2194,7 +2209,6 @@ class Promote_Graph(Templated):
                          (total_sale, total_refund)),
                 multiy = False)
 
-            # table is labeled as "last month"
             history = self.now - datetime.timedelta(30)
             self.top_promoters = bidding.PromoteDates.top_promoters(history)
         else:

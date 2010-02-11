@@ -47,6 +47,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
     
+    mc('/about/message/:where', controller='message', action='listing')
     mc('/about/:location', controller='front', 
        action='editreddit', location = 'about')
     
@@ -155,6 +156,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/message/messages/:mid', controller='message', action='listing',
        where = "messages")
     mc('/message/:where', controller='message', action='listing')
+    mc('/message/moderator/:subwhere', controller='message', action='listing',
+       where = 'moderator')
     
     mc('/:action', controller='front',
        requirements=dict(action="password|random|framebuster"))

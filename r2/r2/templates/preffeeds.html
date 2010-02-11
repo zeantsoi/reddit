@@ -88,6 +88,18 @@ ${unsafe(safemarkdown(_("All feeds are invalidated if you change your password, 
       <%self:feedbuttons path="/message/selfreply"></%self:feedbuttons>
       ${_("self-post replies only")}
     </td>
+   </tr>
+   %if c.show_mod_mail:
+   <tr>
+    <th>your moderator inbox</th>
+    <td class="prefright">
+      <%self:feedbuttons path="/message/moderator/inbox/"></%self:feedbuttons>
+      ${_("everything")}
+      <br/>
+      <%self:feedbuttons path="/message/moderator/unread/"></%self:feedbuttons>
+      ${_("unread messages")}
+    </td>
   </tr>
+  %endif
 </table>
 </div>

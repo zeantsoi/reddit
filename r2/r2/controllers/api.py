@@ -124,7 +124,7 @@ class ApiController(RedditController):
                    VUser(),
                    VModhash(),
                    ip = ValidIP(),
-                   to = VExistingUname('to'),
+                   to = VMessageRecipent('to'),
                    subject = VRequired('subject', errors.NO_SUBJECT),
                    body = VMarkdown(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):
@@ -132,11 +132,11 @@ class ApiController(RedditController):
         handles message composition under /message/compose.  
         """
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
-                                errors.NO_USER) or
+                                errors.NO_USER, errors.SUBREDDIT_NOEXIST) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
-            
+
             m, inbox_rel = Message._new(c.user, to, subject, body, ip)
             form.set_html(".status", _("your message has been delivered"))
             form.set_inputs(to = "", subject = "", text = "", captcha="")
@@ -1140,50 +1140,58 @@ class ApiController(RedditController):
         if r:
             queries.new_savehide(r)
 
-    @noresponse(VUser(),
-                VModhash(),
-                thing = VByName('id', multiple = True))
-    def POST_collapse_message(self, thing):
-        if not thing:
+    def collapse_handler(self, things, collapse):
+        if not things:
             return
-        for t in tup(thing):
+        things = tup(things)
+        srs = Subreddit._byID([t.sr_id for t in things if t.sr_id],
+                              return_dict = True)
+        for t in things:
             if hasattr(t, "to_id") and c.user._id == t.to_id:
-                t.to_collapse = True
+                t.to_collapse = collapse
             elif hasattr(t, "author_id") and c.user._id == t.author_id:
-                t.author_collapse = True
+                t.author_collapse = collapse
+            elif isinstance(t, Message) and t.sr_id:
+                if srs[t.sr_id].is_moderator(c.user):
+                    t.to_collapse = collapse
             t._commit()
 
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id', multiple = True))
-    def POST_uncollapse_message(self, thing):
+                things = VByName('id', multiple = True))
+    def POST_collapse_message(self, things):
+        self.collapse_handler(things, True)
+
+    @noresponse(VUser(),
+                VModhash(),
+                things = VByName('id', multiple = True))
+    def POST_uncollapse_message(self, things):
+        self.collapse_handler(things, False)
+
+    def unread_handler(self, thing, unread):
         if not thing:
             return
-        for t in tup(thing):
-            if hasattr(t, "to_id") and c.user._id == t.to_id:
-                t.to_collapse = False
-            elif hasattr(t, "author_id") and c.user._id == t.author_id:
-                t.author_collapse = False
-            t._commit()
+        # if the message has a recipient, try validating that
+        # desitination first (as it is cheaper and more common)
+        if not hasattr(thing, "to_id") or c.user._id == thing.to_id:
+            queries.set_unread(thing, c.user, unread)
+        # if the message is for a subreddit, check that next
+        if hasattr(thing, "sr_id"):
+            sr = thing.subreddit_slow
+            if sr.is_moderator(c.user):
+                queries.set_unread(thing, sr, unread)
 
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
     def POST_unread_message(self, thing):
-        if not thing:
-            return
-        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
-            return 
-        queries.set_unread(thing, True)
+        self.unread_handler(thing, True)
 
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
     def POST_read_message(self, thing):
-        if not thing: return
-        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
-            return 
-        queries.set_unread(thing, False)
+        self.unread_handler(thing, False)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1206,10 +1214,14 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    parent = VByName('parent_id'))
     def POST_moremessages(self, form, jquery, parent):
-        if not parent.can_view():
+        if not parent.can_view_slow():
             return self.abort(403,'forbidden')
 
-        builder = MessageBuilder(c.user, parent = parent, skip = False)
+        if parent.sr_id:
+            builder = SrMessageBuilder(parent.subreddit_slow,
+                                       parent = parent, skip = False)
+        else:
+            builder = UserMessageBuilder(c.user, parent = parent, skip = False)
         listing = Listing(builder).listing()
         a = []
         for item in listing.things:

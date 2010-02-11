@@ -63,8 +63,7 @@
 
   <div class="bottom">
     %if thing.sr.author:
-      created by &#32;
-      ${WrappedUser(thing.sr.author).render()}
+      ${_("created by %(user)s") % dict(user = unsafe(WrappedUser(thing.sr.author).render()))}
     %endif
     
     <span class="age">
