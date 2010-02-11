@@ -514,6 +514,9 @@ class CommentBuilder(Builder):
         dont_collapse = []
         ignored_parent_ids = []
         #loading a portion of the tree
+
+        start_depth = 0
+
         if isinstance(self.comment, utils.iters):
             candidates = []
             candidates.extend(self.comment)
@@ -526,6 +529,7 @@ class CommentBuilder(Builder):
             #    items.append(parent)
             if hasattr(candidates[0], "parent_id"):
                 ignored_parent_ids.append(candidates[0].parent_id)
+                start_depth = depth[candidates[0].parent_id]
         #if permalink
         elif self.comment:
             top = self.comment
@@ -545,15 +549,10 @@ class CommentBuilder(Builder):
             candidates.extend(comment_tree.get(top, ()))
 
         #update the starting depth if required
-        try:
-            if top and depth[top._id] > 0:
-                delta = depth[top._id]
-                for k, v in depth.iteritems():
-                    depth[k] = v - delta
-        except KeyError:
-            g.log.error ("ignored parent ids: %r" % ignored_parent_ids)
-            g.log.error ("top: %r" % top)
-            raise
+        if top and depth[top._id] > 0:
+            delta = depth[top._id]
+            for k, v in depth.iteritems():
+                depth[k] = v - delta
 
         def sort_candidates():
             candidates.sort(key = self.sort_key, reverse = self.rev_sort)
@@ -566,7 +565,7 @@ class CommentBuilder(Builder):
             comments.remove(to_add)
             if to_add._deleted and not comment_tree.has_key(to_add._id):
                 pass
-            elif depth[to_add._id] < self.max_depth:
+            elif depth[to_add._id] < self.max_depth + start_depth:
                 #add children
                 if comment_tree.has_key(to_add._id):
                     candidates.extend(comment_tree[to_add._id])

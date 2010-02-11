@@ -453,9 +453,9 @@ class Wrapped(CachedTemplate):
                 break
             except AttributeError:
                 pass
-            
+
         if not found:
-            raise AttributeError, attr
+            raise AttributeError, "%r has no %s" % (self, attr)
 
         setattr(self, attr, res)
         return res
