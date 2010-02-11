@@ -473,7 +473,7 @@ class PromotedLink(Link):
 
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported',)
-    _defaults = dict(reported = 0, parent_id = None,
+    _defaults = dict(reported = 0, parent_id = None, 
                      moderator_banned = False, new = False, 
                      banned_before_moderator = False)
 
@@ -854,6 +854,11 @@ class Message(Thing, Printable):
         #TODO global-ish functions that shouldn't be here?
         #reset msgtime after this request
         msgtime = c.have_messages
+
+        # make sure there is a sr_id set:
+        for w in wrapped:
+            if not hasattr(w, "sr_id"):
+                w.sr_id = None
 
         # load the to fields if one exists
         to_ids = set(w.to_id for w in wrapped if w.to_id is not None)

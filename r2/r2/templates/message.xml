@@ -37,16 +37,15 @@
    else:
         taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
 
-
+   author = thing.author.name
    if thing.sr_id and not (getattr(thing, "is_child", False) or
                            getattr(thing, "is_parent", False)):
      updated_author = _("%(author)s via %(subreddit)s")
      subreddit = thing.subreddit.name
-     author = updated_author % dict(author = author.name, 
-                                     subreddit = subreddit)
+     author = updated_author % dict(author = author, subreddit = subreddit)
   %>
   ${thing.subject} : ${taglinetext % dict(when = thing.timesince, 
-                              author= u"%s" % thing.author.name,
+                              author= u"%s" % author,
                               dest = u"%s" % thing.to.name if thing.to else "")}
   </title>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
