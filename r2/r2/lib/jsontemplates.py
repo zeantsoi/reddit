@@ -356,7 +356,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
         elif attr == "subreddit":
             if thing.sr_id:
                 return thing.subreddit.name
-            return Null
+            return None
         elif attr == "body_html":
             return safemarkdown(thing.body)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
