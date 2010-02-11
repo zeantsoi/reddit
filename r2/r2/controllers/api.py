@@ -654,11 +654,9 @@ class ApiController(RedditController):
                 queries.queue_vote(c.user, item, True, ip,
                                    cheater = (errors.CHEATER, None) in c.errors)
 
-                #update last modified
-                set_last_modified(link, 'comments')
-
-                #update the comment cache
-                add_comment(item)
+                # adding to comments-tree is done as part of
+                # newcomments_q, so if they refresh immediately they
+                # won't see their comment
 
             # clean up the submission form and remove it from the DOM (if reply)
             t = commentform.find("textarea")

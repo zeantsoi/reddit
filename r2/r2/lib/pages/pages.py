@@ -317,8 +317,7 @@ class RedditFooter(CachedTemplate):
                 ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
 
     def __init__(self):
-        self.nav = [NavMenu([NamedButton("toplinks", False),
-                         NamedButton("mobile", False, nocname=True),
+        self.nav = [NavMenu([NamedButton("mobile", False, nocname=True),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
                          NamedButton("awards", False, nocname=True),

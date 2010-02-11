@@ -326,8 +326,6 @@ class Link(Thing, Printable):
 
             item.domain = (domain(item.url) if not item.is_self
                            else 'self.' + item.subreddit.name)
-            if not hasattr(item,'top_link'):
-                item.top_link = False
             item.urlprefix = ''
             item.saved = bool(saved.get((user, item, 'save')))
             item.hidden = bool(hidden.get((user, item, 'hide')))

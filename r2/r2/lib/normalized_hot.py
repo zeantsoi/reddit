@@ -33,7 +33,6 @@ from datetime import datetime, timedelta
 import random
 
 expire_delta = timedelta(minutes = 2)
-TOP_CACHE = 1800
 max_items = 150
 
 def access_key(sr):

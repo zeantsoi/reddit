@@ -122,7 +122,7 @@ class ListingController(RedditController):
             builder_cls = SearchBuilder
         elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder
-        elif isinstance(self.query_obj, queries.CachedResults):
+        elif isinstance(self.query_obj, (queries.CachedResults, queries.MergedCachedResults)):
             builder_cls = IDBuilder
 
         b = builder_cls(self.query_obj,
@@ -283,16 +283,6 @@ class SavedController(ListingController):
         return queries.get_saved(c.user)
 
     @validate(VUser())
-    def GET_listing(self, **env):
-        return ListingController.GET_listing(self, **env)
-
-class ToplinksController(ListingController):
-    where = 'toplinks'
-    title_text = _('top scoring links')
-
-    def query(self):
-        return c.site.get_links('toplinks', 'all')
-
     def GET_listing(self, **env):
         return ListingController.GET_listing(self, **env)
 

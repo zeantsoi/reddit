@@ -98,7 +98,6 @@ menu =   MenuHandler(hot          = _('hot'),
                      mobile       = _("mobile"), 
                      store        = _("store"),  
                      ad_inq       = _("inquire about advertising"),
-                     toplinks     = _("top links"),
                      random       = _('random'),
                      iphone       = _("iPhone app"),
 

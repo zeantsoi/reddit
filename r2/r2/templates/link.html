@@ -33,13 +33,7 @@
 <%def name="numcol()">
   <% num = thing.num %>
   <span class="rank" style="width:${thing.numcolmargin};">
-    %if thing.top_link:
-      <a class="star" href="/toplinks">
-    %endif
     ${thing.num}
-    %if thing.top_link:
-      </a>
-    %endif
   </span>
 </%def>
 

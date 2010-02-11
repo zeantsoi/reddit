@@ -585,12 +585,10 @@ class DefaultSR(FakeSubreddit):
             results = []
             for sr in srs:
                 results.append(queries.get_links(sr, sort, time))
-            return queries.merge_cached_results(*results)
+            return queries.merge_results(*results)
         else:
             q = Link._query(Link.c.sr_id == sr_ids,
                             sort = queries.db_sort(sort))
-            if sort == 'toplinks':
-                q._filter(Link.c.top_link == True)
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q
