@@ -605,7 +605,9 @@ class MessageController(ListingController):
                 c.user.modmsgtime = False
                 c.user._commit()
             # the query is handled by the builder on the moderator page
-            return 
+            return
+        else:
+            return self.abort404()
         if self.where != 'sent':
             #reset the inbox
             if c.have_messages and self.mark != 'false':
