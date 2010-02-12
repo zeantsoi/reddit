@@ -9,7 +9,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment
+from r2.lib.comment_tree import add_comment, link_comments
 
 import cPickle as pickle
 
@@ -843,7 +843,15 @@ def run_commentstree():
 
         # add the comment to the comments-tree
         for comment in comments:
-            add_comment_tree(comment, links[comment.link_id])
+            l = links[comment.link_id]
+            try:
+                add_comment_tree(comment, l)
+            except KeyError:
+                # Hackity hack. Try to recover from a corrupted
+                # comment tree
+                print "Trying to fix broken comments-tree."
+                link_comments(l._id, _update=True)
+                add_comment_tree(comment, l)
 
     amqp.handle_items('commentstree_q', _run_commentstree, limit=1)
 
