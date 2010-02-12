@@ -624,7 +624,10 @@ class VSubmitParent(VByName):
         if fullname:
             parent = VByName.run(self, fullname)
             if parent and parent._deleted:
-                self.set_error(errors.DELETED_COMMENT)
+                if isinstance(parent, Link):
+                    self.set_error(errors.DELETED_LINK)
+                else:
+                    self.set_error(errors.DELETED_COMMENT)
             if isinstance(parent, Message):
                 return parent
             else:

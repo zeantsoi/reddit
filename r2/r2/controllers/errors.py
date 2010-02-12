@@ -33,6 +33,7 @@ error_list = dict((
         ('USERNAME_TAKEN', _('that username is already taken')),
         ('NO_THING_ID', _('id not specified')),
         ('NOT_AUTHOR', _("you can't do that")),
+        ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),
         ('BAD_PASSWORD', _('that password is unacceptable')),

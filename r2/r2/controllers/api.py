@@ -637,7 +637,8 @@ class ApiController(RedditController):
             not commentform.has_errors("ratelimit",
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
-                                       errors.DELETED_COMMENT)):
+                                       errors.DELETED_COMMENT,
+                                       errors.DELETED_LINK)):
 
             if is_message:
                 to = Account._byID(parent.author_id)
