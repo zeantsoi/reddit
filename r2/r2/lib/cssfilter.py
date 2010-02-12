@@ -28,6 +28,7 @@ from r2.lib.pages.things import wrap_links
 
 from pylons import g, c
 from pylons.i18n import _
+from mako import filters
 
 import tempfile
 from r2.lib import s3cp
@@ -177,7 +178,14 @@ def valid_url(prop,value,report):
         raise
     # local urls are allowed
     if local_urls.match(url):
-        pass
+        t_url = None
+        while url != t_url:
+            t_url, url = url, filters.url_unescape(url)
+        # disallow path trickery
+        if "../" in url:
+            report.append(ValidationError(msgs['broken_url']
+                                          % dict(brokenurl = value.cssText),
+                                          value))
     # custom urls are allowed, but need to be transformed into a real path
     elif custom_img_urls.match(url):
         name = custom_img_urls.match(url).group(1)
