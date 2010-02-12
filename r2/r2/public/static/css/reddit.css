@@ -149,7 +149,7 @@ ul.flat-vert {text-align: left;}
  }
 
 #mail img {position: relative; top: 2px}
-#modmail img {position: relative; top: 4px}
+#modmail img {position: relative; top: 4px; margin-top: -6px; }
 #modmail.nohavemail {
     opacity: .7;
     filter:alpha(opacity=70); /* IE patch */

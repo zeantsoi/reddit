@@ -771,7 +771,10 @@ class VMessageRecipent(VExistingUname):
     def run(self, name):
         if name.startswith('#'):
             try:
-                return Subreddit._by_name(name.strip('#'))
+                s = Subreddit._by_name(name.strip('#'))
+                if isinstance(s, FakeSubreddit):
+                    raise NotFound, "fake subreddit"
+                return s
             except NotFound:
                 self.set_error(errors.SUBREDDIT_NOEXIST)
         else:
