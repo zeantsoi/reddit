@@ -1000,11 +1000,9 @@ def catch_up_batch_queries():
                             data=True)
     dayago = utils.timeago('1 day')
     for sr in fetch_things2(sr_q):
-        if (not getattr(sr, 'last_valid_vote', None)
-            or sr.last_valid_vote > dayago):
-            # either we don't know when the last vote was, or we know
-            # that there was a vote today
-
+        if hasattr(sr, 'last_valid_vote') and sr.last_valid_vote > dayago:
+            # if we don't know when the last vote was, it couldn't
+            # have been today
             for sort in batched_time_sorts:
                 for time in batched_time_times:
                     q = make_batched_time_query(sr, sort, time)
