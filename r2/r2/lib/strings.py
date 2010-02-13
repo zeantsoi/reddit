@@ -80,7 +80,7 @@ string_dict = dict(
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
         contributor = _("you have been added as a contributor to [%(title)s](%(url)s)."),
         banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
-        traffic = _('you have been added to the list of users able to see [traffic for the sponsoted link "%(title)s"](%(traffic_url)s).')
+        traffic = _('you have been added to the list of users able to see [traffic for the sponsored link "%(title)s"](%(traffic_url)s).')
         ),
 
     subj_add_friend = dict(
@@ -125,7 +125,7 @@ string_dict = dict(
     verify_email = _("we're going to need to verify your email address for you to proceed."),
     email_verified =  _("your email address has been verfied"),
     email_verify_failed = _("Verification failed.  Please try that again"),
-    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience.\n\n[Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse.")
+    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. [Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse.")
 )
 
 class StringHandler(object):
