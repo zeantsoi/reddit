@@ -22,11 +22,15 @@
 
 <%!
    from r2.lib.filters import safemarkdown
+   from r2.lib.template_helpers import add_sr
 %>
 
+<%
+   permalink = add_sr(thing.permalink, force_hostname = True)
+ %>
 <item>
-  <guid isPermaLink="true">${thing.permalink}</guid>
-  <link>${thing.permalink}</link>
+  <guid isPermaLink="true">${permalink}</guid>
+  <link>${permalink}</link>
   <title>
   <%
    taglinetext = ''
@@ -59,9 +63,9 @@
   ${unsafe(safemarkdown(thing.body))}
   <div>
     %if thing.was_comment:
-      <a href="${thing.permalink + '?context=3'}">[context]</a>
+      <a href="${permalink + '?context=3'}">[context]</a>
     %else:
-      <a href="${thing.permalink}">[full conversation]</a>
+      <a href="${permalink}">[full conversation]</a>
     %endif
   </div>
 </%def>
