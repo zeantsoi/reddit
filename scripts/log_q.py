@@ -106,7 +106,6 @@ def run(limit=100, streamfile=None, verbose=False):
 
     def log_text(d, daystring):
         add_timestamps(d)
-        print d
         char = d['level'][0].upper()
         streamlog ("%s [%s] %s" % (d['hms'], char, d['text']), True)
         logclass_key = "logclass-" + d['classification']

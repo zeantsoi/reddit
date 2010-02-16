@@ -32,6 +32,7 @@ import subreddit
 
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
+from r2.lib.log import log_text
 from r2.lib.db import operators
 from r2.lib.cache import sgm
 from r2.lib.comment_tree import *
@@ -99,6 +100,16 @@ class Builder(object):
 
 
         for item in items:
+            if isinstance(item, (Link, Comment)) and not hasattr(item, "sr_id"):
+                log_text ("no-sr_id-bandaid-reload",
+                          "%r has no sr_id; forcing reload" % item,
+                          "warning")
+                item._load()
+                if not hasattr(item, "sr_id"):
+                    log_text ("no-sr_id-bandaid-failed",
+                              "Reload of %r didn't help. I recommend deletion."
+                              % item,
+                              "error")
             w = self.wrap(item)
             wrapped.append(w)
             # add for caching (plus it should be bad form to use _

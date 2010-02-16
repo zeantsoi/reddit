@@ -51,6 +51,10 @@ def log_text(classification, text=None, level="info"):
     if text is None:
         text = classification
 
+    if level not in ('debug', 'info', 'warning', 'error'):
+        print "What kind of loglevel is %s supposed to be?" % level
+        level = 'error'
+
     d = _default_dict()
     d['type'] = 'text'
     d['level'] = level
