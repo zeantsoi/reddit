@@ -1449,12 +1449,12 @@ class UserAwards(Templated):
 class AdminErrorLog(Templated):
     """The admin page for viewing the error log"""
     def __init__(self):
-        ids = g.hardcache.cache_by_type(HardCache).backend.ids_by_category("error")
+        hcb = g.hardcache.cache_by_type(HardCache).backend
 
         date_groupings = {}
         hexkeys_seen = {}
 
-        for i in ids:
+        for i in hcb.ids_by_category("error"):
             date, hexkey = i.split("-")
 
             hexkeys_seen[hexkey] = True
@@ -1464,12 +1464,6 @@ class AdminErrorLog(Templated):
             tpl = (len(d['occurrences']), hexkey, d)
             date_groupings.setdefault(date, []).append(tpl)
 
-        self.date_summaries = []
-
-        for date in sorted(date_groupings.keys(), reverse=True):
-            groupings = sorted(date_groupings[date], reverse=True)
-            self.date_summaries.append( (date, groupings) )
-
         self.nicknames = {}
         self.statuses = {}
 
@@ -1478,6 +1472,21 @@ class AdminErrorLog(Templated):
             self.nicknames[hexkey] = nick
             status = g.hardcache.get("error_status-%s" % hexkey, "normal")
             self.statuses[hexkey] = status
+
+        for i in hcb.ids_by_category("logtext"):
+            date, level, classification = i.split("-", 2)
+            textoccs = []
+            for d in g.hardcache.get("logtext-" + i):
+                textoccs.append( (d['text'], d['occ'] ) )
+
+            tpl = (-1, level, classification, textoccs)
+            date_groupings.setdefault(date, []).append(tpl)
+
+        self.date_summaries = []
+
+        for date in sorted(date_groupings.keys(), reverse=True):
+            groupings = sorted(date_groupings[date], reverse=True)
+            self.date_summaries.append( (date, groupings) )
 
         Templated.__init__(self)
 

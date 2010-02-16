@@ -28,7 +28,7 @@ from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
-from r2.lib.log_exception import log_exception
+from r2.lib.log import log_exception
 
 import re, md5
 from urllib import quote

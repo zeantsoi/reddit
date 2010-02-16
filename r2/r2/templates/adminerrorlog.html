@@ -31,6 +31,7 @@
 
 <div class="error-logs">
   %for date, groupings in thing.date_summaries:
+
   <div class="error-log">
     <a class="date" href="#"
        onclick="$(this).parent().find('.rest').toggle();return false">
@@ -38,118 +39,148 @@
     </a>
 
     <div class="rest">
-      %for frequency, hexkey, d in groupings:
-      <% datehex = "-".join([date.replace("/",""), hexkey]) %>
-
-      <div class="grouping ${thing.statuses[hexkey]}">
-        <a class="frequency hover" href="#"
-           onclick="$(this).parent().find('.occurrences').toggle();return false">
-          ${frequency} occurrences
-        </a>
-
-        <span class="${thing.statuses[hexkey]}">
-          ${thing.statuses[hexkey]}:
-        </span>
-
-        <a class="nickname" name="${datehex}" href="#${datehex}"
-           onclick="$(this).parent().find('.edit-area').toggle();return false">
-          ${thing.nicknames[hexkey]}
-        </a>
-
-        <br/>
-
-        <div class="edit-area" style="display: none">
-          <form action="/post/edit_error" method="post"
-              onsubmit="return post_form(this, 'edit_error');"
-                id="nickname-${hexkey}">
-
-            <input type="hidden" name="hexkey" value="${hexkey}" />
-
-            <table>
-              <tr>
-                <th>
-                nickname:
-                </th>
-                <td>
-                  <input type="text" value="${thing.nicknames[hexkey]}" name="nickname"/>
-                </td>
-              </tr>
-              <tr>
-                <th>
-                  status:
-                </th>
-                <td>
-                  ${status_radio("new"   , datehex, thing.statuses[hexkey])}
-                  ${status_radio("severe", datehex, thing.statuses[hexkey])}
-                  ${status_radio("interesting", datehex, thing.statuses[hexkey])}
-                  ${status_radio("normal", datehex, thing.statuses[hexkey])}
-                  ${status_radio("fixed" , datehex, thing.statuses[hexkey])}
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <button class="save-button" type="submit">
-                    save
-                  </button>
-                </td>
-                <td>
-                  ${error_field("NO_TEXT", "codename", "span")}
-                  <span class="status"></span>
-                </td>
-              </tr>
-            </table>
-          </form>
-        </div>
-
-        <a class="hover" href="#"
-           onclick="$(this).parent().find('.stacktrace').toggle();return false">
-
-          <span class="exception-name">
-            ${d['exception']}
-          </span>
-
-          <span class="hexkey">(${hexkey})</span>
-
-        </a>
-
-        <div class="occurrences" style="display: none">
-        %for o in d['occurrences']:
-          <span class="occurrence">
-            ${o}
-          </span>
-          &#32;
-        %endfor
-        </div>
-
-        <table class="stacktrace lined-table wide" style="display: none">
-          <thead>
-            <tr>
-              <th>file</th>
-              <th>line#</th>
-              <th>func</th>
-              <th>code</th>
-            </tr>
-          </thead>
-          <tbody>
-            %for row in d['traceback']:
-                <tr>
-                  %for i, col in enumerate(row):
-                    <td class="col-${i}">
-                      %if i == 2:
-                        ${col}()
-                      %else:
-                        ${col}
-                      %endif
-                    </td>
-                  %endfor
-                </tr>
-            %endfor
-          </tbody>
-        </table>
-
-      </div>
-    %endfor
+      %for g in groupings:
+        %if g[0] > 0:
+          ${exception(date, *g)}
+        %else:
+          ${text(date, *g)}
+        %endif
+      %endfor
     </div>
   </div>
   %endfor
 </div>
+
+<%def name="exception(date, frequency, hexkey, d)">
+  <% datehex = "-".join([date.replace("/",""), hexkey]) %>
+
+  <div class="exception ${thing.statuses[hexkey]} rounded">
+    <a class="frequency hover" href="#"
+       onclick="$(this).parent().find('.occurrences').toggle();return false">
+      ${frequency} occurrences
+    </a>
+
+    <span class="${thing.statuses[hexkey]}">
+      ${thing.statuses[hexkey]}:
+    </span>
+
+    <a class="nickname" name="${datehex}" href="#${datehex}"
+       onclick="$(this).parent().find('.edit-area').toggle();return false">
+      ${thing.nicknames[hexkey]}
+    </a>
+
+    <br/>
+
+    <div class="edit-area" style="display: none">
+      <form action="/post/edit_error" method="post"
+          onsubmit="return post_form(this, 'edit_error');"
+            id="nickname-${hexkey}">
+
+        <input type="hidden" name="hexkey" value="${hexkey}" />
+
+        <table>
+          <tr>
+            <th>
+            nickname:
+            </th>
+            <td>
+              <input type="text" value="${thing.nicknames[hexkey]}" name="nickname"/>
+            </td>
+          </tr>
+          <tr>
+            <th>
+              status:
+            </th>
+            <td>
+              ${status_radio("new"   , datehex, thing.statuses[hexkey])}
+              ${status_radio("severe", datehex, thing.statuses[hexkey])}
+              ${status_radio("interesting", datehex, thing.statuses[hexkey])}
+              ${status_radio("normal", datehex, thing.statuses[hexkey])}
+              ${status_radio("fixed" , datehex, thing.statuses[hexkey])}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <button class="save-button" type="submit">
+                save
+              </button>
+            </td>
+            <td>
+              ${error_field("NO_TEXT", "codename", "span")}
+              <span class="status"></span>
+            </td>
+          </tr>
+        </table>
+      </form>
+    </div>
+
+    <a class="hover" href="#"
+       onclick="$(this).parent().find('.stacktrace').toggle();return false">
+
+      <span class="exception-name">
+        ${d['exception']}
+      </span>
+
+      <span class="hexkey">(${hexkey})</span>
+
+    </a>
+
+    <div class="occurrences" style="display: none">
+    %for o in d['occurrences']:
+      <span class="occurrence">
+        ${o}
+      </span>
+      &#32;
+    %endfor
+    </div>
+
+    <table class="stacktrace lined-table wide" style="display: none">
+      <thead>
+        <tr>
+          <th>file</th>
+          <th>line#</th>
+          <th>func</th>
+          <th>code</th>
+        </tr>
+      </thead>
+      <tbody>
+        %for row in d['traceback']:
+            <tr>
+              %for i, col in enumerate(row):
+                <td class="col-${i}">
+                  %if i == 2:
+                    ${col}()
+                  %else:
+                    ${col}
+                  %endif
+                </td>
+              %endfor
+            </tr>
+        %endfor
+      </tbody>
+    </table>
+  </div>
+</%def>
+
+<%def name="text(date, minusone, level, classification, textoccs)">
+<div class="logtext ${level}">
+  <span class="loglevel rounded">
+    ${level}:
+  </span>
+  <span class="classification">
+    ${classification}
+  </span>
+  <table class="lined-table wide">
+    %for text, occ in textoccs:
+    <tr>
+      <td class="actual-text">
+        ${text}
+      </td>
+      <td class="occ">
+        ${occ}
+      </td>
+    </tr>
+    %endfor
+  </table>
+</div>
+</%def>

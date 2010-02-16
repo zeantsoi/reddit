@@ -28,14 +28,33 @@ import traceback
 
 tz = g.display_tz
 
+Q = 'log_q'
+
+def _default_dict():
+    return dict(time=datetime.now(tz),
+                host=g.reddit_host,
+                port=g.reddit_port,
+                pid=g.reddit_pid)
+
 # e_value and e should actually be the same thing.
 # e_type is the just the type of e_value
 # So e and e_traceback are the interesting ones.
 def log_exception(e, e_type, e_value, e_traceback):
-    d = dict(exception=e,
-             time=datetime.now(tz),
-             host=g.reddit_host,
-             port=g.reddit_port,
-             pid=g.reddit_pid,
-             traceback=traceback.extract_tb(e_traceback))
-    amqp.add_item("error_q", pickle.dumps(d))
+    d = _default_dict()
+    d['type'] = 'exception'
+    d['exception'] = e
+    d['traceback'] = traceback.extract_tb(e_traceback)
+
+    amqp.add_item(Q, pickle.dumps(d))
+
+def log_text(classification, text=None, level="info"):
+    if text is None:
+        text = classification
+
+    d = _default_dict()
+    d['type'] = 'text'
+    d['level'] = level
+    d['text'] = text
+    d['classification'] = classification
+
+    amqp.add_item(Q, pickle.dumps(d))

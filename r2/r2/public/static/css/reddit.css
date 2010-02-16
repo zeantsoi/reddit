@@ -1457,59 +1457,59 @@ textarea.gray { color: gray; }
     display: block;
 }
 
-.error-log, .error-log .grouping {
+.error-log, .error-log .exception {
     border: solid #aaa 1px;
     padding: 3px 5px;
     margin-bottom: 10px;
 }
 
-.error-log .grouping {
+.error-log .exception {
     background-color: #f0f0f8;
 }
 
-.error-log .grouping.new {
+.error-log .exception.new {
     border: dashed #ff6600 2px;
 }
 
-.error-log .grouping.severe {
+.error-log .exception.severe {
     border: solid #ff0000 2px;
     background-color: #ffdfdf;
 }
 
-.error-log .grouping.interesting {
+.error-log .exception.interesting {
     border: dotted black 2px;
     background-color: #e0e0e8;
 }
 
-.error-log .grouping.fixed {
+.error-log .exception.fixed {
     border: solid #008800 1px;
     background-color: #e8f6e8;
 }
 
-.error-log .grouping span {
+.error-log .exception span {
     font-weight: bold;
     margin-right: 5px;
 }
 
-.error-log .grouping span.normal {
+.error-log .exception span.normal {
     margin-right: 0;
     display: none;
 }
 
-.error-log .grouping span.new, .error-log .edit-area label.new {
+.error-log .exception span.new, .error-log .edit-area label.new {
     color: #ff6600;
 }
 
-.error-log .grouping span.severe, .error-log .edit-area label.severe {
+.error-log .exception span.severe, .error-log .edit-area label.severe {
     color: #ff0000;
 }
 
-.error-log .grouping span.interesting, .error-log .edit-area label.interesting {
+.error-log .exception span.interesting, .error-log .edit-area label.interesting {
     font-weight: normal;
     font-style: italic;
 }
 
-.error-log .grouping span.fixed, .error-log .edit-area label.fixed {
+.error-log .exception span.fixed, .error-log .edit-area label.fixed {
     color: #008800;
 }
 
@@ -1523,7 +1523,7 @@ textarea.gray { color: gray; }
     font-size: larger;
 }
 
-.error-log .grouping.fixed .nickname {
+.error-log .exception.fixed .nickname {
     text-decoration: line-through;
 }
 
@@ -1602,6 +1602,67 @@ textarea.gray { color: gray; }
 .error-log table.stacktrace td.col-1 {
     text-align: right;
     padding-right: 10px;
+}
+
+.error-log .logtext.error {
+    color: black;
+    margin: 0;
+}
+
+.error-log .logtext {
+    margin-bottom: 10px;
+    border: solid #555 2px;
+    background-color: #eeece6;
+    padding: 5px;
+    font-size: small;
+}
+
+.error-log .logtext * {
+    color: black;
+}
+
+.error-log .logtext.error .loglevel {
+    color: white;
+    background-color: red;
+}
+
+.error-log .logtext.warning .loglevel {
+    background-color: #ff6600;
+}
+
+.error-log .logtext.info .loglevel {
+    background-color: #00bbff;
+}
+
+.error-log .logtext .loglevel {
+    padding: 0 5px;
+    margin-right: 5px;
+    border: solid black 1px;
+}
+.error-log .logtext table {
+    margin: 8px 5px 2px 0;
+    font-family: monospace;
+}
+
+.error-log .logtext table,
+.error-log .logtext table th,
+.error-log .logtext table td {
+  border: solid #aaa 1px;
+}
+.error-log .logtext table th, .error-log .logtext table td {
+    border: solid #aaa 1px;
+}
+
+.error-log .logtext table .occ {
+    text-align: right;
+}
+.error-log .logtext .classification {
+    font-size: larger;
+    font-weight: bold;
+}
+.error-log .logtext .actual-text {
+}
+.error-log .logtext .occ {
 }
 
 .details {
