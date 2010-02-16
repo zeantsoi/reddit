@@ -107,7 +107,7 @@ def run(limit=100, streamfile=None, verbose=False):
     def log_text(d, daystring):
         add_timestamps(d)
         char = d['level'][0].upper()
-        streamlog ("%s [%s] %s" % (d['hms'], char, d['text']), True)
+        streamlog ("%s [%s] %s" % (d['hms'], char, d['text']), verbose)
         logclass_key = "logclass-" + d['classification']
 
         if not g.hardcache.get(logclass_key):
