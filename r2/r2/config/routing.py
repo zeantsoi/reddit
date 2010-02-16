@@ -218,6 +218,10 @@ def make_map(global_conf={}, app_conf={}):
 
     mc("/ads/", controller = "mediaembed", action = "ad")
     mc("/ads/:reddit", controller = "mediaembed", action = "ad")
+
+    mc('/comscore-iframe/', controller='mediaembed', action='comscore')
+    mc('/comscore-iframe/*url', controller='mediaembed', action='comscore')
+
     # This route handles displaying the error page and 
     # graphics used in the 404/500
     # error pages. It should likely stay at the top 

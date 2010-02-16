@@ -735,4 +735,3 @@ class FrontController(RedditController):
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
-

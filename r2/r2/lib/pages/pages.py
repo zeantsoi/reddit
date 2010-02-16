@@ -2314,3 +2314,6 @@ class Dart_Ad(Templated):
         tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
                                           ip = request.ip)
         Templated.__init__(self, tag = tag, tracker_url = tracker_url)
+
+class ComScore(CachedTemplate):
+    pass

@@ -23,7 +23,7 @@ from validator import *
 from reddit_base import MinimalController
 
 from r2.lib.scraper import scrapers
-from r2.lib.pages import MediaEmbedBody, Dart_Ad
+from r2.lib.pages import MediaEmbedBody, Dart_Ad, ComScore
 
 from pylons import request
 
@@ -51,5 +51,5 @@ class MediaembedController(MinimalController):
 
         return MediaEmbedBody(body = content).render()
 
-    def GET_ad(self, reddit = None):
-        return Dart_Ad(reddit).render(style="html")
+    def GET_comscore(self, reddit = None):
+        return ComScore().render(style="html")
