@@ -51,5 +51,8 @@ class MediaembedController(MinimalController):
 
         return MediaEmbedBody(body = content).render()
 
+    def GET_ad(self, reddit = None):
+        return Dart_Ad(reddit).render(style="html")
+
     def GET_comscore(self, reddit = None):
         return ComScore().render(style="html")
