@@ -145,7 +145,9 @@ class DataThing(object):
 
                 desc = '%s(%s).%s' % (cl, id_str, attr)
 
-                if attr in self._essentials:
+                essentials = object.__getattribute__(self, "_essentials", ())
+
+                if attr in essentials:
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s forcing reload" % (desc, nl),
                           "warning")
