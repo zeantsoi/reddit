@@ -32,6 +32,7 @@ import sorts
 from .. utils import iters, Results, tup, to36, Storage
 from r2.config import cache
 from r2.lib.cache import sgm
+from r2.lib.log import log_text
 from pylons import g
 
 
