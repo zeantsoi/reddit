@@ -100,7 +100,7 @@ class Builder(object):
 
 
         for item in items:
-            if isinstance(item, (Link, Comment)) and not hasattr(item, "sr_id"):
+            if isinstance(item, Link) and not hasattr(item, "sr_id"):
                 log_text ("no-sr_id-bandaid-reload",
                           "%r has no sr_id; forcing reload" % item,
                           "warning")
