@@ -53,7 +53,7 @@ class Link(Thing, Printable):
                      disable_comments = False,
                      selftext = '',
                      ip = '0.0.0.0')
-
+    _essentials = ('sr_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
     def __init__(self, *a, **kw):
@@ -72,7 +72,7 @@ class Link(Thing, Printable):
         from subreddit import Default
         if sr == Default:
             sr = None
-            
+
         url = cls.by_url_key(url)
         link_ids = g.permacache.get(url)
         if link_ids:
