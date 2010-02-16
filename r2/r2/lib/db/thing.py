@@ -145,7 +145,10 @@ class DataThing(object):
 
                 desc = '%s(%s).%s' % (cl, id_str, attr)
 
-                essentials = object.__getattribute__(self, "_essentials", ())
+                if hasattr(self, "_essentials"):
+                    essentials = object.__getattribute__(self, "_essentials")
+                else:
+                    essentials = ()
 
                 if attr in essentials:
                     log_text ("essentials-bandaid-reload",
