@@ -32,7 +32,6 @@ import sorts
 from .. utils import iters, Results, tup, to36, Storage
 from r2.config import cache
 from r2.lib.cache import sgm
-from r2.lib.log import log_text
 from pylons import g
 
 
@@ -76,7 +75,6 @@ class DataThing(object):
     _data_int_props = ()
     _int_prop_suffix = None
     _defaults = {}
-    _essentials = ()
     c = operators.Slots()
     __safe__ = False
 
@@ -136,34 +134,8 @@ class DataThing(object):
                 else:
                     nl = "it is NOT loaded."
 
-                # The %d format is nicer, since it has no "L" at the end, but
-                # if we can't do that, fall back on %r.
-                try:
-                    id_str = "%d" % _id
-                except TypeError:
-                    id_str = "%r" % _id
-
-                desc = '%s(%s).%s' % (cl, id_str, attr)
-
-                if hasattr(self, "_essentials"):
-                    essentials = object.__getattribute__(self, "_essentials")
-                else:
-                    essentials = ()
-
-                if attr in essentials:
-                    log_text ("essentials-bandaid-reload",
-                          "%s not found; %s forcing reload" % (desc, nl),
-                          "warning")
-                    self._load()
-
-                    try:
-                        return self._t[attr]
-                    except KeyError:
-                        log_text ("essentials-bandaid-failed",
-                              "Reload of %s didn't help. I recommend deletion."
-                              % desc, "error")
-
-                raise AttributeError, '%s not found; %s' % (desc, nl)
+                raise AttributeError,\
+                       '%s(%d).%s not found; %s' % (cl, _id, attr, nl)
 
     def _cache_key(self):
         return thing_prefix(self.__class__.__name__, self._id)
