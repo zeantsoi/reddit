@@ -162,6 +162,21 @@
   </div>
 </%def>
 
+<%def name="textocc(text, occ, hide)">
+  %if hide:
+  <tr class="extra-occs" style="display: none">
+  %else:
+  <tr>
+  %endif
+    <td class="actual-text">
+      ${text}
+    </td>
+    <td class="occ">
+      ${occ}
+    </td>
+  </tr>
+</%def>
+
 <%def name="text(date, minusone, level, classification, textoccs)">
 <div class="logtext ${level}">
   <span class="loglevel rounded">
@@ -171,15 +186,23 @@
     ${classification}
   </span>
   <table class="lined-table wide">
-    %for text, occ in textoccs:
-    <tr>
-      <td class="actual-text">
-        ${text}
-      </td>
-      <td class="occ">
-        ${occ}
-      </td>
-    </tr>
+    %for i, (text, occ) in enumerate (textoccs):
+      %if i < 3 or i >= len(textoccs) - 3:
+        ${textocc(text, occ, False)}
+      %elif i == 3:
+        <tr class="extra-occs">
+          <td colspan="2" class="dotdotdot">
+            <a href="#" 
+               onclick="$(this).closest('table').find('.extra-occs').toggle();return false">
+              ...
+            </a>
+          </td>
+        </tr>
+
+        ${textocc(text, occ, True)}
+      %else:
+        ${textocc(text, occ, True)}
+      %endif
     %endfor
   </table>
 </div>

@@ -1656,6 +1656,23 @@ textarea.gray { color: gray; }
 .error-log .logtext table .occ {
     text-align: right;
 }
+
+.error-log .logtext table .dotdotdot {
+    padding: 0;
+}
+.error-log .logtext table .dotdotdot a {
+    margin: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+    font-weight: bold;
+}
+.error-log .logtext table .dotdotdot a:hover {
+    background-color: #bbb;
+    text-decoration: none;
+}
+
 .error-log .logtext .classification {
     font-size: larger;
     font-weight: bold;
