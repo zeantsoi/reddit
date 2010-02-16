@@ -148,7 +148,7 @@ class DataThing(object):
                 try:
                     essentials = object.__getattribute__(self, "_essentials")
                 except AttributeError:
-                    print "%r has no _essentials" % self
+                    print "%s has no _essentials" % desc
                     essentials = ()
 
                 if attr in essentials:
