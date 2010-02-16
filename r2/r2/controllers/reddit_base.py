@@ -37,6 +37,7 @@ from validator import *
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsontemplates import api_type
 
+from Cookie import CookieError
 from copy import copy
 from Cookie import CookieError
 from datetime import datetime
@@ -443,7 +444,10 @@ class MinimalController(BaseController):
         # the current value of it
         cookie_keys = []
         for x in cache_affecting_cookies:
-            cookie_keys.append(request.cookies.get(x,''))
+            try:
+                cookie_keys.append(request.cookies.get(x,''))
+            except CookieError:
+                continue
 
         key = ''.join((str(c.lang),
                        str(c.content_langs),
