@@ -1470,7 +1470,13 @@ class AdminErrorLog(Templated):
             for d in g.hardcache.get("logtext-" + i):
                 textoccs.append( (d['text'], d['occ'] ) )
 
-            tpl = (-1, level, classification, textoccs)
+            sort_order = {
+                'error': -1,
+                'warning': -2,
+                'info': -3,
+                }[level]
+
+            tpl = (sort_order, level, classification, textoccs)
             date_groupings.setdefault(date, []).append(tpl)
 
         self.date_summaries = []

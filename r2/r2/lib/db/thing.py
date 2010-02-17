@@ -151,27 +151,15 @@ class DataThing(object):
                     print "%s has no _essentials" % desc
                     essentials = ()
 
-                if attr in essentials:
-                    if attr == '_id':
-                        print "_id is in essentials [%r] of %s?!" % (essentials, desc)
-                        raise AttributeError, '%s not found; %s' % (desc, nl)
+                if isinstance(essentials, str):
+                    print "Some dumbass forgot a comma."
+                    essentials = essentials,
 
+                if attr in essentials:
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s Forcing reload." % (desc, nl),
                           "warning")
-                    try:
-                        object.__getattribute__(self, "_load")
-                    except AttributeError:
-                        print "%s has no _load" % desc
-                        raise AttributeError, '%s not found; %s' % (desc, nl)
-
                     self._load()
-
-                    try:
-                        object.__getattribute__(self, "_t")
-                    except AttributeError:
-                        print "%s has no _t" % desc
-                        raise AttributeError, '%s not found; %s' % (desc, nl)
 
                     try:
                         return self._t[attr]
