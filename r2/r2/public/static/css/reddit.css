@@ -1634,6 +1634,10 @@ textarea.gray { color: gray; }
     background-color: #00bbff;
 }
 
+.error-log .logtext.debug .loglevel {
+    background-color: #00ee00;
+}
+
 .error-log .logtext .loglevel {
     padding: 0 5px;
     margin-right: 5px;

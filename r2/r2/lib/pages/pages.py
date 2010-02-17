@@ -1474,6 +1474,7 @@ class AdminErrorLog(Templated):
                 'error': -1,
                 'warning': -2,
                 'info': -3,
+                'debug': -4,
                 }[level]
 
             tpl = (sort_order, level, classification, textoccs)
