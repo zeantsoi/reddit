@@ -670,7 +670,7 @@ def _by_srid(things):
     ret = {}
 
     for thing in things:
-        if hasattr(thing, 'sr_id'):
+        if getattr(thing, 'sr_id', None) is not None:
             ret.setdefault(thing.sr_id, []).append(thing)
 
     srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
