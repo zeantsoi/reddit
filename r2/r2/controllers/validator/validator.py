@@ -29,7 +29,7 @@ from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.jsontemplates import api_type
-
+from r2.lib.log import log_text
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard
 
@@ -1206,8 +1206,11 @@ class VDestination(Validator):
         dm = c.domain or "[unknown]"
         cn = c.cname or "[unknown]"
 
-        g.log.warning("%s attempted to redirect from %s to %s with domain %s and cname %s"
-                      % (ip, fp, dest, dm, cn))
+        log_text("invalid redirect",
+                 "%s attempted to redirect from %s to %s with domain %s and cname %s"
+                      % (ip, fp, dest, dm, cn),
+                 "info")
+
         return "/"
 
 class ValidAddress(Validator):
