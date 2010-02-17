@@ -157,7 +157,7 @@ class DataThing(object):
                         raise AttributeError, '%s not found; %s' % (desc, nl)
 
                     log_text ("essentials-bandaid-reload",
-                          "%s not found; %s Forcing reload" % (desc, nl),
+                          "%s not found; %s Forcing reload." % (desc, nl),
                           "warning")
                     try:
                         object.__getattribute__(self, "_load")

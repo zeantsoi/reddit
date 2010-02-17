@@ -220,6 +220,9 @@ class PromoteController(ListingController):
                 # want the URL
                 url = url[0].url
 
+        if form.has_errors('bid', errors.BAD_BID):
+            return
+
         # check dates and date range
         start, end = [x.date() for x in dates] if dates else (None, None)
         if (not l or
@@ -242,7 +245,6 @@ class PromoteController(ListingController):
         if (form.has_errors('title', errors.NO_TEXT,
                             errors.TOO_LONG) or
             form.has_errors('url', errors.NO_URL, errors.BAD_URL) or
-            form.has_errors('bid', errors.BAD_BID) or
             (not l and jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
         elif l:
