@@ -31,7 +31,7 @@ def make_map(global_conf={}, app_conf={}):
     mc = map.connect
 
     admin_routes.add(mc)
-    
+
     mc('/login',    controller='front', action='login')
     mc('/logout',   controller='front', action='logout')
     mc('/verify',    controller='front', action='verify')
@@ -41,16 +41,16 @@ def make_map(global_conf={}, app_conf={}):
     mc('/validuser',   controller='front', action='validuser')
 
     mc('/over18',   controller='post', action='over18')
-    
+
     mc('/search', controller='front', action='search')
 
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
-    
+
     mc('/about/message/:where', controller='message', action='listing')
     mc('/about/:location', controller='front', 
        action='editreddit', location = 'about')
-    
+
     mc('/reddits/create', controller='front', action='newreddit')
     mc('/reddits/search', controller='front', action='search_reddits')
     mc('/reddits/login', controller='front', action='login')
@@ -61,23 +61,23 @@ def make_map(global_conf={}, app_conf={}):
     mc('/reddits/mine/:where', controller='myreddits', action='listing',
        where='subscriber',
        requirements=dict(where='subscriber|contributor|moderator'))
-    
+
     mc('/buttons', controller='buttons', action='button_demo_page')
     #the frame
     mc('/button_content', controller='buttons', action='button_content')
     #/button.js and buttonlite.js - the embeds
     mc('/button', controller='buttons', action='button_embed')
     mc('/buttonlite', controller='buttons', action='button_lite')
-    
+
     mc('/widget', controller='buttons', action='widget_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
-    
+
     mc('/awards', controller='front', action='awards')
-    
+
     mc('/i18n', controller='feedback', action='i18n')
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
-    
+
 
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
@@ -90,15 +90,15 @@ def make_map(global_conf={}, app_conf={}):
     mc('/admin/errors', controller='errorlog')
 
     mc('/admin/:action', controller='admin')
-    
+
     mc('/user/:username/about', controller='user', action='about',
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
-    
+
     mc('/prefs/:location', controller='front',
        action='prefs', location='options')
-    
+
     mc('/info/0:article/*rest', controller = 'front', 
        action='oldinfo', dest='comments', type='ancient')
     mc('/info/:article/:dest/:comment', controller='front',
@@ -116,7 +116,7 @@ def make_map(global_conf={}, app_conf={}):
        action = 'comments', title=None, comment = None)
     mc('/duplicates/:article/:title', controller = 'front',
        action = 'duplicates', title=None)
-    
+
     mc('/mail/optout', controller='front', action = 'optout')
     mc('/mail/optin',  controller='front', action = 'optin')
     mc('/stylesheet', controller = 'front', action = 'stylesheet')
@@ -141,7 +141,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/shutdown', controller='health', action='shutdown')
 
     mc('/', controller='hot', action='listing')
-    
+
     listing_controllers = "hot|saved|new|recommended|randomrising|comments"
 
     mc('/:controller', action='listing',
@@ -151,20 +151,20 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/:sort', controller='browse', sort='top', action = 'listing',
        requirements = dict(sort = 'top|controversial'))
-    
+
     mc('/message/compose', controller='message', action='compose')
     mc('/message/messages/:mid', controller='message', action='listing',
        where = "messages")
     mc('/message/:where', controller='message', action='listing')
     mc('/message/moderator/:subwhere', controller='message', action='listing',
        where = 'moderator')
-    
+
     mc('/:action', controller='front',
        requirements=dict(action="password|random|framebuster"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
     mc('/help/*anything', controller='embed', action='help')
-    
+
     mc('/goto', controller='toolbar', action='goto')
     mc('/tb/:id', controller='toolbar', action='tb')
     mc('/toolbar/:action', controller='toolbar',
@@ -177,7 +177,7 @@ def make_map(global_conf={}, app_conf={}):
     # additional toolbar-related rules just above the catchall
 
     mc('/d/:what', controller='api', action='bookmarklet')
-    
+
     mc('/resetpassword/:key', controller='front',
        action='resetpassword')
     mc('/verification/:key', controller='front',
@@ -189,7 +189,7 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
-    
+
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
@@ -198,7 +198,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/:action', controller='promote',
        requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer"))
     mc('/api/:action', controller='api')
-    
+
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
     mc('/mediaembed/:link', controller="mediaembed", action="mediaembed")

@@ -23,8 +23,6 @@ from itertools import chain
 from datetime import datetime
 import re, types
 
-class NoTemplateFound(Exception): pass
-
 class StringTemplate(object):
     """
     Simple-minded string templating, where variables of the for $____
@@ -134,6 +132,19 @@ class Templated(object):
         if not hasattr(self, "render_class"):
             self.render_class = self.__class__
 
+    def _notfound(self, style):
+        from pylons import g, request
+        from pylons.controllers.util import abort
+        from r2.lib.log import log_text
+        if g.debug:
+            raise NotImplementedError (repr(self), style)
+        else:
+            log_text("missing template",
+                     "Couldn't find %s template for %r %s" %
+                      (style, self, request.path),
+                     "warning")
+            abort(404)
+
     def template(self, style = 'html'):
         """
         Fetches template from the template manager
@@ -146,8 +157,7 @@ class Templated(object):
             template = tpm.get(self.render_class,
                                style, cache = not debug)
         except AttributeError:
-            raise NoTemplateFound, (repr(self), style)
-
+            self._notfound(style)
         return template
 
     def cache_key(self, *a):
@@ -183,7 +193,7 @@ class Templated(object):
             c.render_style = render_style
             return res
         else:
-            raise NoTemplateFound, repr(self)
+            self._notfound(style)
 
     def _render(self, attr, style, **kwargs):
         """

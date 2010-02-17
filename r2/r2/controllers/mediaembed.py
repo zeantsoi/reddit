@@ -26,6 +26,7 @@ from r2.lib.scraper import scrapers
 from r2.lib.pages import MediaEmbedBody, Dart_Ad, ComScore
 
 from pylons import request
+from pylons.controllers.util import abort
 
 class MediaembedController(MinimalController):
     @validate(link = VLink('link'))
@@ -33,10 +34,10 @@ class MediaembedController(MinimalController):
         if request.host != g.media_domain:
             # don't serve up untrusted content except on our
             # specifically untrusted domain
-            return self.abort404()
+            abort(404)
 
         if not link or not link.media_object:
-            return self.abort404()
+            abort(404)
 
         if isinstance(link.media_object, basestring):
             # it's an old-style string

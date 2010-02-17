@@ -32,7 +32,6 @@ import itertools
 
 from amqplib import client_0_8 as amqp
 
-from r2.lib.cache import LocalCache
 from pylons import g
 
 amqp_host = g.amqp_host

@@ -21,6 +21,7 @@
 ################################################################################
 from r2.lib.utils import tup
 from r2.lib.filters import websafe
+from r2.lib.log import log_text
 from r2.models import Report, Account
 
 from pylons import g
@@ -99,6 +100,8 @@ class AdminTools(object):
         by_srid = {}
         for thing in things:
             if hasattr(thing, 'sr_id'):
+                if thing.sr_id is None:
+                    log_text("sr_id=None", "%r has sr_id=None?" % thing, "error")
                 by_srid.setdefault(thing.sr_id, []).append(thing)
 
         if by_srid:

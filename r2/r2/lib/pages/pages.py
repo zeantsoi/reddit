@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
+from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, Default, make_feedurl
 from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
@@ -222,21 +222,12 @@ class Reddit(Templated):
         In adition, unlike Templated.render, the result is in the form of a pylons
         Response object with it's content set.
         """
-        try:
-            res = Templated.render(self, *a, **kw)
-            if is_api():
-                res = json_respond(res)
-            elif self.space_compress:
-                res = spaceCompress(res)
-            c.response.content = res
-        except NoTemplateFound, e:
-            # re-raise the error -- development environment
-            if g.debug:
-                s = sys.exc_info()
-                raise s[1], None, s[2]
-            # die gracefully -- production environment
-            else:
-                abort(404, "not found")
+        res = Templated.render(self, *a, **kw)
+        if is_api():
+            res = json_respond(res)
+        elif self.space_compress:
+            res = spaceCompress(res)
+        c.response.content = res
         return c.response
     
     def corner_buttons(self):

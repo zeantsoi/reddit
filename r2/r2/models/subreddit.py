@@ -100,7 +100,11 @@ class Subreddit(Thing, Printable):
         q = cls._query(lower(cls.c.name) == name.lower(),
                        cls.c._spam == (True, False),
                        limit = 1)
-        l = list(q)
+        try:
+            l = list(q)
+        except UnicodeEncodeError:
+            print "Error looking up SR %r" % name
+            raise
         if l:
             return l[0]._id
 
