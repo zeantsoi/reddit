@@ -152,17 +152,33 @@ class DataThing(object):
                     essentials = ()
 
                 if attr in essentials:
+                    if attr == '_id':
+                        print "_id is in essentials [%r] of %s?!" % (essentials, desc)
+                        raise AttributeError, '%s not found; %s' % (desc, nl)
+
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s Forcing reload" % (desc, nl),
                           "warning")
-                    #self._load()
+                    try:
+                        object.__getattribute__(self, "_load")
+                    except AttributeError:
+                        print "%s has no _load" % desc
+                        raise AttributeError, '%s not found; %s' % (desc, nl)
 
-                    #try:
-                    #    return self._t[attr]
-                    #except KeyError:
-                    #    log_text ("essentials-bandaid-failed",
-                    #          "Reload of %s didn't help. I recommend deletion."
-                    #          % desc, "error")
+                    self._load()
+
+                    try:
+                        object.__getattribute__(self, "_t")
+                    except AttributeError:
+                        print "%s has no _t" % desc
+                        raise AttributeError, '%s not found; %s' % (desc, nl)
+
+                    try:
+                        return self._t[attr]
+                    except KeyError:
+                        log_text ("essentials-bandaid-failed",
+                              "Reload of %s didn't help. I recommend deletion."
+                              % desc, "error")
 
                 raise AttributeError, '%s not found; %s' % (desc, nl)
 
