@@ -231,7 +231,7 @@ class VRequired(Validator):
         if not e: e = self._error
         if e:
             self.set_error(e)
-        
+
     def run(self, item):
         if not item:
             self.error()
@@ -451,7 +451,7 @@ class VSubredditDesc(Validator):
 class VAccountByName(VRequired):
     def __init__(self, param, error = errors.USER_DOESNT_EXIST, *a, **kw):
         VRequired.__init__(self, param, error, *a, **kw)
-        
+
     def run(self, name):
         if name:
             try:
@@ -772,6 +772,8 @@ class VExistingUname(VRequired):
 
 class VMessageRecipent(VExistingUname):
     def run(self, name):
+        if not name:
+            return self.error()
         if name.startswith('#'):
             try:
                 s = Subreddit._by_name(name.strip('#'))
