@@ -99,9 +99,7 @@ class AdminTools(object):
     def set_last_sr_ban(self, things):
         by_srid = {}
         for thing in things:
-            if hasattr(thing, 'sr_id'):
-                if thing.sr_id is None:
-                    log_text("sr_id=None", "%r has sr_id=None?" % thing, "error")
+            if getattr(thing, 'sr_id', None) is not None:
                 by_srid.setdefault(thing.sr_id, []).append(thing)
 
         if by_srid:

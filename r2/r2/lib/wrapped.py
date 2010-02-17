@@ -139,10 +139,14 @@ class Templated(object):
         if g.debug:
             raise NotImplementedError (repr(self), style)
         else:
+            if style == 'png':
+                level = "debug"
+            else:
+                level = "warning"
             log_text("missing template",
                      "Couldn't find %s template for %r %s" %
                       (style, self, request.path),
-                     "warning")
+                     level)
             abort(404)
 
     def template(self, style = 'html'):

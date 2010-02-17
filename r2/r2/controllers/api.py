@@ -50,6 +50,7 @@ from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
+from r2.lib.log import log_text
 
 from datetime import datetime, timedelta
 from md5 import md5
@@ -64,9 +65,9 @@ def reject_vote(thing):
     elif voteword == '-1':
         voteword = 'downvote'
 
-    g.log.warning ("POST_vote: rejected %s from %s (%s) on %s %s via %s" %
-                (voteword, c.user.name, request.ip, thing.__class__.__name__,
-                 thing._id36, request.referer))
+    log_text ("rejected vote", "Rejected %s from %s (%s) on %s %s via %s" %
+              (voteword, c.user.name, request.ip, thing.__class__.__name__,
+               thing._id36, request.referer), "info")
 
 class ApiController(RedditController):
     """
