@@ -155,14 +155,14 @@ class DataThing(object):
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s Forcing reload" % (desc, nl),
                           "warning")
-                    self._load()
+                    #self._load()
 
-                    try:
-                        return self._t[attr]
-                    except KeyError:
-                        log_text ("essentials-bandaid-failed",
-                              "Reload of %s didn't help. I recommend deletion."
-                              % desc, "error")
+                    #try:
+                    #    return self._t[attr]
+                    #except KeyError:
+                    #    log_text ("essentials-bandaid-failed",
+                    #          "Reload of %s didn't help. I recommend deletion."
+                    #          % desc, "error")
 
                 raise AttributeError, '%s not found; %s' % (desc, nl)
 
