@@ -1681,6 +1681,8 @@ textarea.gray { color: gray; }
     font-weight: bold;
 }
 .error-log .logtext .actual-text {
+    max-width: 600px;
+    overflow: hidden;
 }
 .error-log .logtext .occ {
 }
