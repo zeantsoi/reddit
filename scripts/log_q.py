@@ -107,7 +107,7 @@ def run(limit=100, streamfile=None, verbose=False):
     def log_text(d, daystring):
         add_timestamps(d)
         char = d['level'][0].upper()
-        streamlog ("%s [%s] %s" % (d['hms'], char, d['text']), verbose)
+        streamlog ("%s [%s] %r" % (d['hms'], char, d['text']), verbose)
         logclass_key = "logclass-" + d['classification']
 
         if not g.hardcache.get(logclass_key):
@@ -121,7 +121,7 @@ def run(limit=100, streamfile=None, verbose=False):
                 news += "It happened on: %s\n" % d['occ']
                 news += "The log level was: %s\n" % d['level']
                 news += "The complete text was:\n"
-                news += d['text']
+                news += repr(d['text'])
                 emailer.nerds_email (news, "reddit secretary")
 
         occ_key = "-".join(["logtext", daystring,
@@ -134,8 +134,8 @@ def run(limit=100, streamfile=None, verbose=False):
 
         d2 = {}
 
-        for key in ('text', 'occ'):
-            d2[key] = d[key]
+        d2['occ'] = d['occ']
+        d2['text'] = repr(d['text'])
 
         occurrences.append(d2)
         g.hardcache.set(occ_key, occurrences, 86400 * 7)
