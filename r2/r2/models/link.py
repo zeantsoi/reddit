@@ -191,7 +191,7 @@ class Link(Thing, Printable):
             #if author_karma <= 0 and random.randint(author_karma, 0) != 0:
                 #return False
 
-        if user:
+        if user and not c.ignore_hide_rules:
             if user.pref_hide_ups and wrapped.likes == True:
                 return False
 

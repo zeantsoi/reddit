@@ -61,8 +61,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 
    taglinetext = taglinetext.replace(' ', '&nbsp;')
    author = WrappedUser(thing.author, thing.attribs, thing).render()
-   if thing.sr_id and not (getattr(thing, "is_child", False) or
-                           getattr(thing, "is_parent", False)):
+   if thing.sr_id:
      updated_author = _("%(author)s via %(subreddit)s").replace(' ', '&nbsp;')
      subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path, 
                                           thing.subreddit.name)

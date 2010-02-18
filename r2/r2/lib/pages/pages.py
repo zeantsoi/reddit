@@ -582,6 +582,8 @@ class HelpPage(BoringPage):
         return [PageNameNav('help', title = self.pagename)]
 
 class FormPage(BoringPage):
+    create_reddit_box  = False
+    submit_box         = False
     """intended for rendering forms with no rightbox needed or wanted"""
     def __init__(self, pagename, show_sidebar = False, *a, **kw):
         BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,

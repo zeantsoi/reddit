@@ -419,13 +419,16 @@ def base_listing(fn):
               after  = VByName('after'),
               before = VByName('before'),
               count  = VCount('count'),
-              target = VTarget("target"))
+              target = VTarget("target"),
+              show = VLength('show', 3))
     def new_fn(self, before, **env):
         if c.render_style == "htmllite":
             c.link_target = env.get("target")
         elif "target" in env:
             del env["target"]
 
+        if "show" in env and env['show'] == 'all':
+            c.ignore_hide_rules = True
         kw = build_arg_list(fn, env)
 
         #turn before into after/reverse
