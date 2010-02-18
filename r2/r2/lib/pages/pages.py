@@ -1464,10 +1464,15 @@ class AdminErrorLog(Templated):
             status = g.hardcache.get("error_status-%s" % hexkey, "normal")
             self.statuses[hexkey] = status
 
-        for i in hcb.ids_by_category("logtext"):
-            date, level, classification = i.split("-", 2)
+        for _id in hcb.ids_by_category("logtext"):
+            date, level, classification = _id.split("-", 2)
             textoccs = []
-            for d in g.hardcache.get("logtext-" + i):
+            dicts = g.hardcache.get("logtext-" + _id)
+            if dicts is None:
+                log_text("logtext=None", "Why is logtext-%s None?" % _id,
+                         "warning")
+                continue
+            for d in dicts:
                 textoccs.append( (d['text'], d['occ'] ) )
 
             sort_order = {
