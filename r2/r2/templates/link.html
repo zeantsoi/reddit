@@ -182,6 +182,10 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
                               when = thing.timesince, 
                               author= WrappedUser(thing.author, thing.attribs, thing).render()))}
+
+  %if c.user_is_admin and thing._deleted:
+    &#32;[link deleted]
+  %endif
 </%def>
 
 <%def name="child()">

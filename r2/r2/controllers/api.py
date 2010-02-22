@@ -585,7 +585,10 @@ class ApiController(RedditController):
                 kind = 'link'
                 item.selftext = text
 
-            if (item._date < timeago('60 seconds')
+            if item._deleted:
+                return abort(403, "forbidden")
+
+            if (item._date < timeago('3 minutes')
                 or (item._ups + item._downs > 2)):
                 item.editted = True
 

@@ -419,14 +419,22 @@ class Friend(Relation(Account, Account)): pass
 Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn = True),)
 
 class DeletedUser(FakeAccount):
-    _deleted = True
-    
     @property
     def name(self):
         return '[deleted]'
+
+    @property
+    def _deleted(self):
+        return True
 
     def _fullname(self):
         raise NotImplementedError
 
     def _id(self):
         raise NotImplementedError
+
+    def __setattr__(self, attr, val):
+        if attr == '_deleted':
+            pass
+        else:
+            object.__setattr__(self, attr, val)

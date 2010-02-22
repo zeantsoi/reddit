@@ -387,8 +387,10 @@ class Link(Thing, Printable):
                 item.link_child = SelfTextChild(item, expand = expand,
                                                 nofollow = item.nofollow)
                 #draw the edit button if the contents are pre-expanded
-                item.editable = expand and item.author == c.user
-               
+                item.editable = (expand and
+                                 item.author == c.user and
+                                 not item._deleted)
+
             item.tblink = "http://%s/tb/%s" % (
                 get_domain(cname = cname, subreddit=False),
                 item._id36)
@@ -599,7 +601,7 @@ class Comment(Thing, Printable):
 
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
-            if item.author_id == item.link.author_id:
+            if item.author_id == item.link.author_id and not item.link._deleted:
                 add_attr(item.attribs, 'S',
                          link = item.link.make_permalink(item.subreddit))
             if not hasattr(item, 'target'):
