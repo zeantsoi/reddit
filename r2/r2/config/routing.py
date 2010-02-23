@@ -83,6 +83,11 @@ def make_map(global_conf={}, app_conf={}):
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
 
+    # Used for editing ads
+    mc('/admin/ads', controller='ads')
+    mc('/admin/ads/:adcn/:action', controller='ads',
+       requirements=dict(action="assign|srs"))
+
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
        requirements=dict(action="give|winners"))
@@ -216,8 +221,10 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/authorize_embed', controller = 'front', action = 'authorize_embed')
 
+    # Used for showing ads
     mc("/ads/", controller = "mediaembed", action = "ad")
-    mc("/ads/:reddit", controller = "mediaembed", action = "ad")
+    mc("/ads/r/:reddit", controller = "mediaembed", action = "ad")
+    mc("/ads/:codename", controller = "mediaembed", action = "ad_by_codename")
 
     mc('/comscore-iframe/', controller='mediaembed', action='comscore')
     mc('/comscore-iframe/*url', controller='mediaembed', action='comscore')

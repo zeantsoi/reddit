@@ -21,7 +21,7 @@
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, Default, make_feedurl
-from r2.models import FakeSubreddit, Subreddit
+from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR
 from r2.models import Link, Printable, Trophy, bidding, PromoteDates
 from r2.config import cache
@@ -48,6 +48,7 @@ from r2.lib.utils import link_duplicates, make_offset_date, to_csv
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
+from r2.lib.log import log_text
 
 import sys, random, datetime, locale, calendar, simplejson, re
 import graph, pycountry
@@ -1495,6 +1496,41 @@ class AdminErrorLog(Templated):
 
         Templated.__init__(self)
 
+class AdminAds(Templated):
+    """The admin page for editing ads"""
+    def __init__(self):
+        from r2.models import Ad
+        Templated.__init__(self)
+        self.ads = Ad._all_ads()
+
+class AdminAdAssign(Templated):
+    """The interface for assigning an ad to a community"""
+    def __init__(self, ad):
+        self.weight = 100
+        Templated.__init__(self, ad = ad)
+
+class AdminAdSRs(Templated):
+    """View the communities an ad is running on"""
+    def __init__(self, ad):
+        self.adsrs = AdSR.by_ad(ad)
+
+        # Create a dictionary of
+        #       SR => total weight of all its ads
+        # for all SRs that this ad is running on
+        self.sr_totals = {}
+        for adsr in self.adsrs:
+            sr = adsr._thing2
+
+            if sr.name not in self.sr_totals:
+                # We haven't added up this SR yet.
+                self.sr_totals[sr.name] = 0
+                # Get all its ads and total them up.
+                sr_adsrs = AdSR.by_sr_merged(sr)
+                for adsr2 in sr_adsrs:
+                    self.sr_totals[sr.name] += adsr2.weight
+
+        Templated.__init__(self, ad = ad)
+
 class AdminAwards(Templated):
     """The admin page for editing awards"""
     def __init__(self):
@@ -2133,6 +2169,28 @@ class RedditTraffic(Traffic):
                                         "%5.2f%%" % f))
         return res
 
+class RedditAds(Templated):
+    def __init__(self, **kw):
+        self.sr_name = c.site.name
+        self.adsrs = AdSR.by_sr_merged(c.site)
+        self.total = 0
+
+        self.adsrs.sort(key=lambda a: a._thing1.codename)
+
+        seen = {}
+        for adsr in self.adsrs:
+            seen[adsr._thing1.codename] = True
+            self.total += adsr.weight
+
+        self.other_ads = []
+        all_ads = Ad._all_ads()
+        all_ads.sort(key=lambda a: a.codename)
+        for ad in all_ads:
+            if ad.codename not in seen:
+                self.other_ads.append(ad)
+
+        Templated.__init__(self, **kw)
+
 class PaymentForm(Templated):
     def __init__(self, **kw):
         self.countries = pycountry.countries
@@ -2320,5 +2378,66 @@ class Dart_Ad(Templated):
                                           ip = request.ip)
         Templated.__init__(self, tag = tag, tracker_url = tracker_url)
 
+class HouseAd(Templated):
+    def __init__(self, ad):
+        self.submit_link = ad.submit_link()
+        Templated.__init__(self, ad = ad)
+
 class ComScore(CachedTemplate):
     pass
+
+class AdFrame(Templated):
+    def __init__(self, reddit=None, codename=None):
+        try:
+            self.reddit = Subreddit._by_name(reddit or g.default_sr)
+        except NotFound:
+            self.reddit = Subreddit._by_name(g.default_sr)
+
+        self.codename = codename
+        Templated.__init__(self)
+
+    def render(self, *a, **kw):
+        if self.codename:
+            try:
+                ad = Ad._by_codename(self.codename)
+            except NotFound:
+                abort(404)
+
+            if ad.codename == "DART":
+                return Dart_Ad(self.reddit.name).render()
+            else:
+                return HouseAd(ad).render()
+
+        ads = {}
+
+        for adsr in AdSR.by_sr_merged(self.reddit):
+            ad = adsr._thing1
+            ads[ad.codename] = (ad, adsr.weight)
+
+        total_weight = sum(t[1] for t in ads.values())
+
+        if total_weight == 0:
+            log_text("no ads",
+                     "No ads found for %s" %
+                     self.reddit.name,
+                     "error")
+            return Dart_Ad(self.reddit.name).render()
+
+        lotto = random.randint(0, total_weight - 1)
+        winner = None
+        for t in ads.values():
+            lotto -= t[1]
+            if lotto <= 0:
+                winner = t[0]
+                break
+
+        if winner is None:
+            log_text("no winner",
+                     "No winner found when rendering an ad for %s" %
+                     self.reddit.name,
+                     "error")
+            return Dart_Ad(self.reddit.name).render()
+        elif winner.codename == "DART":
+            return Dart_Ad(self.reddit.name).render()
+        else:
+            return HouseAd(winner).render()

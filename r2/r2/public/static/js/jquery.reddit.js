@@ -224,7 +224,8 @@ rate_limit = function() {
     var default_rate_limit = 333;
     /* rate limit on a per-action basis (also in ms, 0 = don't rate limit) */
     var rate_limits = {"vote": 333, "comment": 5000,
-                       "ignore": 0, "ban": 0, "unban": 0};
+                       "ignore": 0, "ban": 0, "unban": 0,
+                       "assignad": 0 };
     var last_dates = {};
 
     /* paranoia: copy global functions used to avoid tampering.  */

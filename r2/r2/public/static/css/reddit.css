@@ -3599,3 +3599,43 @@ a.ip:hover {
 .wide {
     width: 100%;
 }
+
+.centered {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.sr-ad-table .inherited {
+    background-color: #ddeeff;
+}
+.sr-ad-table .overridden {
+    background-color: #ffeedd;
+}
+.sr-ad-table .unused {
+    background-color: #eee;
+}
+.sr-ad-table .inherited .whence {
+    font-style: italic;
+}
+.sr-ad-table .overridden .whence {
+    font-weight: bold;
+}
+.sr-ad-table .details {
+    font-size: 150%;
+    padding: 10px;
+    vertical-align: top;
+}
+.sr-ad-table .details div {
+}
+.sr-ad-table .details .codename {
+    font-size: 150%;
+    margin-bottom: 20px;
+}
+.sr-ad-table .weight {
+    width: 4em;
+}
+
+.ad-assign-table .warning {
+    font-weight: bold;
+    color: red;
+}

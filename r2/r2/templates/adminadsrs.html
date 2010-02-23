@@ -19,27 +19,53 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%!
-   from r2.lib.template_helpers import get_domain, static
-   from r2.lib.tracking import AdframeInfo
-   import random
- %>
 
-<% name = "r/%s/" % c.site.name if not c.default_sr else '' %>
+<%namespace file="utils.html" import="percentage"/>
 
-<iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
-        src="${g.ad_domain}/ads/${name}">
-</iframe>
+<%def name="adsrline(adsr)">
+    <tr>
+      <td>
+        <a href="/r/${adsr._thing2.name}/about/ads#${thing.ad.codename}">
+          ${adsr._thing2.name}
+        </a>
+      </td>
+      <td style="text-align: right">
+        ${adsr.weight}
+      </td>
+      <td style="text-align: right">
+        ${percentage(adsr.weight, thing.sr_totals[adsr._thing2.name])}
+      </td>
+    </tr>
+</%def>
 
-<script type="text/javascript">
-    <% 
-      tracker_url = AdframeInfo.gen_url(fullname = "adblock", ip = request.ip)
-     %>
-    $(function() {
-      var ad = $("#ad-frame");
-      if(ad.height() == 0 || ad.width() == 0) {
-        $(".footer").append("<img alt='' src='${unsafe(tracker_url)}&random=" +
-                                    Math.random()*10000000000000000 + "'/>");
-      }
-    });
-</script>
+<div style="float: right">
+  <a href="${thing.ad.linkurl}">
+    <img src="${thing.ad.imgurl}"/>
+  </a>
+</div>
+
+<a href="/admin/ads/#${thing.ad.codename}">
+  <h1>${thing.ad.codename}</h1>
+</a>
+
+<table class="lined-table">
+  <tr>
+    <th>
+      community
+    </th>
+    <th>
+      wt
+    </th>
+    <th>
+      pct
+    </th>
+  </tr>
+  %for adsr in thing.adsrs:
+    ${adsrline(adsr)}
+  %endfor
+</table>
+
+<p>
+  <a href="/admin/ads">back to ads</a>
+</p>
+

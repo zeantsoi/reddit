@@ -19,15 +19,38 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from account import *
-from link import *
-from listing import *
-from builder import *
-from vote import *
-from report import *
-from subreddit import *
-from award import *
-from ad import *
-from bidding import *
-from mail_queue import Email, has_opted_out, opt_count
-from admintools import *
+from pylons import request, g
+from reddit_base import RedditController
+from r2.lib.pages import AdminPage, AdminAds, AdminAdAssign, AdminAdSRs
+from validator import *
+
+class AdsController(RedditController):
+
+    @validate(VSponsor())
+    def GET_index(self):
+        res = AdminPage(content = AdminAds(),
+                        show_sidebar = False,
+                        title = 'ads').render()
+        return res
+
+    @validate(VSponsor(),
+              ad = VAdByCodename('adcn'))
+    def GET_assign(self, ad):
+        if ad is None:
+            abort(404, 'page not found')
+
+        res = AdminPage(content = AdminAdAssign(ad),
+                        show_sidebar = False,
+                        title='assign an ad to a community').render()
+        return res
+
+    @validate(VSponsor(),
+              ad = VAdByCodename('adcn'))
+    def GET_srs(self, ad):
+        if ad is None:
+            abort(404, 'page not found')
+
+        res = AdminPage(content = AdminAdSRs(ad),
+                        show_sidebar = False,
+                        title='ad srs').render()
+        return res

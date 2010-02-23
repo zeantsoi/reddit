@@ -356,7 +356,7 @@ class FrontController(RedditController):
                 return True
 
             builder = builder_cls(query,
-                                  skip = True, 
+                                  skip = True,
                                   num = num, after = after,
                                   keep_fn = keep_fn,
                                   count = count, reverse = reverse,
@@ -367,6 +367,8 @@ class FrontController(RedditController):
                 extension_handling = "private"
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
+        elif c.user_is_sponsor and location == 'ads':
+            pane = RedditAds()
         else:
             return self.abort404()
 
@@ -625,10 +627,9 @@ class FrontController(RedditController):
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = (Subreddit.submit_sr_names(c.user) or
                     Subreddit.submit_sr_names(None))
-        
 
         return FormPage(_("submit"),
-                        show_sidebar = True, 
+                        show_sidebar = True,
                         content=NewLink(url=url or '',
                                         title=title or '',
                                         subreddits = sr_names,

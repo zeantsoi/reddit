@@ -995,14 +995,12 @@ class ApiController(RedditController):
                    use_whitelist = VBoolean('use_whitelist'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    ip = ValidIP(),
-                   ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
-                   ad_file = VLength('ad-location', max_length = 500),
                    sponsor_text =VLength('sponsorship-text', max_length = 500),
                    sponsor_name =VLength('sponsorship-name', max_length = 500),
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
-    def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
+    def POST_site_admin(self, form, jquery, name, ip, sr,
                         sponsor_text, sponsor_url, sponsor_name,  **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
@@ -1060,10 +1058,6 @@ class ApiController(RedditController):
         elif sr.is_moderator(c.user) or c.user_is_admin:
 
             if c.user_is_admin:
-                sr.ad_type = ad_type
-                if ad_type != "custom":
-                    ad_file = Subreddit._defaults['ad_file']
-                sr.ad_file = ad_file
                 sr.sponsorship_text = sponsor_text or ""
                 sr.sponsorship_url = sponsor_url or None
                 sr.sponsorship_name = sponsor_name or None
@@ -1437,6 +1431,85 @@ class ApiController(RedditController):
 
         form.set_html(".status", _('saved'))
 
+    @validatedForm(VSponsor(),
+                   ad = VByName("fullname"),
+                   colliding_ad=VAdByCodename(("codename", "fullname")),
+                   codename = VLength("codename", max_length = 100),
+                   imgurl = VLength("imgurl", max_length = 1000),
+                   linkurl = VLength("linkurl", max_length = 1000))
+    def POST_editad(self, form, jquery, ad, colliding_ad, codename,
+                    imgurl, linkurl):
+        if form.has_errors(("codename", "imgurl", "linkurl"),
+                           errors.NO_TEXT):
+            pass
+
+        if form.has_errors(("codename"), errors.INVALID_OPTION):
+            form.set_html(".status", "some other ad has that codename")
+            pass
+
+        if form.has_error():
+            return
+
+        if ad is None:
+            Ad._new(codename, imgurl, linkurl)
+            form.set_html(".status", "saved. reload to see it.")
+            return
+
+        ad.codename = codename
+        ad.imgurl = imgurl
+        ad.linkurl = linkurl
+        ad._commit()
+        form.set_html(".status", _('saved'))
+
+    @validatedForm(VSponsor(),
+                   ad = VByName("fullname"),
+                   sr = VSubmitSR("community"),
+                   weight = VInt("weight",
+                                 coerce=False, min=0, max=100000),
+                   )
+    def POST_assignad(self, form, jquery, ad, sr, weight):
+        if form.has_errors("ad", errors.NO_TEXT):
+            pass
+
+        if form.has_errors("community", errors.SUBREDDIT_REQUIRED,
+            errors.SUBREDDIT_NOEXIST, errors.SUBREDDIT_NOTALLOWED):
+            pass
+
+        if form.has_errors("fullname", errors.NO_TEXT):
+            pass
+
+        if form.has_errors("weight", errors.BAD_NUMBER):
+            pass
+
+        if form.has_error():
+            return
+
+        if ad.codename == "DART" and sr.name == g.default_sr:
+            log_text("Editing DART weight",
+                     "Someone just tried to edit the default DART weight.",
+                     "error")
+            abort(403, 'forbidden')
+
+        existing = AdSR.by_ad_and_sr(ad, sr)
+
+        if weight is not None:
+            if existing:
+                existing.weight = weight
+                existing._commit()
+            else:
+                AdSR._new(ad, sr, weight)
+
+            form.set_html(".status", _('saved'))
+
+        else:
+            if existing:
+                existing._delete()
+                AdSR.by_ad(ad, _update=True)
+                AdSR.by_sr(sr, _update=True)
+
+            form.set_html(".status", _('deleted'))
+
+
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),
                    colliding_award=VAwardByCodename(("codename", "fullname")),
@@ -1486,10 +1559,8 @@ class ApiController(RedditController):
         if form.has_errors("award", errors.NO_TEXT):
             pass
 
-        if form.has_errors("recipient", errors.USER_DOESNT_EXIST):
-            pass
-
-        if form.has_errors("recipient", errors.NO_USER):
+        if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
+                                        errors.NO_USER):
             pass
 
         if form.has_errors("fullname", errors.NO_TEXT):
@@ -1526,6 +1597,7 @@ class ApiController(RedditController):
             return self.abort404()
         recipient = trophy._thing1
         award = trophy._thing2
+
         trophy._delete()
         Trophy.by_account(recipient, _update=True)
         Trophy.by_award(award, _update=True)
