@@ -64,8 +64,17 @@ class Ad (Thing):
         else:
             raise NotFound, 'Ad %s' % codename
 
+    def url(self):
+        return "%s/ads/%s" % (g.ad_domain, self.codename)
+
     def submit_link(self):
-        return "/r/ads/submit?url=%s/ads/%s" % (g.ad_domain, self.codename)
+        from r2.lib.template_helpers import get_domain
+        from mako.filters import url_escape
+
+        d = get_domain(subreddit=False)
+        u = self.url()
+
+        return "http://%s/r/ads/submit?url=%s" % (d, url_escape(u))
 
 class AdSR(Relation(Ad, Subreddit)):
     @classmethod
