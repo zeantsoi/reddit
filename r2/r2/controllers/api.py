@@ -535,7 +535,7 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
             expire_hot(sr)
-            queries.new_link(thing)
+            queries.delete_links(thing)
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):

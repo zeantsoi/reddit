@@ -526,16 +526,12 @@ def new_link(link):
     results.append(get_submitted(author, 'new', 'all'))
     if link._spam:
         results.append(get_spam_links(sr))
-    
-    if link._deleted:
-        results.append(get_links(sr, 'new', 'all'))
-        add_queries(results, delete_items = link)
-    else:
-        # only 'new' qualifies for insertion, which will be done in
-        # run_new_links
-        add_queries(results, insert_items = link)
 
-        amqp.add_item('new_link', link._fullname)
+    # only 'new' qualifies for insertion, which will be done in
+    # run_new_links
+    add_queries(results, insert_items = link)
+
+    amqp.add_item('new_link', link._fullname)
 
 
 def new_comment(comment, inbox_rels):
@@ -669,7 +665,7 @@ def _by_srid(things):
        sr_id, in addition to the looked-up subreddits"""
     ret = {}
 
-    for thing in things:
+    for thing in tup(things):
         if getattr(thing, 'sr_id', None) is not None:
             ret.setdefault(thing.sr_id, []).append(thing)
 
@@ -678,6 +674,12 @@ def _by_srid(things):
     return ret, srs
 
 def ban(things):
+    del_or_ban(things, "ban")
+
+def delete_links(links):
+    del_or_ban(links, "del")
+
+def del_or_ban(things, why):
     by_srid, srs = _by_srid(things)
     if not by_srid:
         return
@@ -688,7 +690,8 @@ def ban(things):
         comments = [x for x in things if isinstance(x, Comment)]
 
         if links:
-            add_queries([get_spam_links(sr)], insert_items = links)
+            if why == "ban":
+                add_queries([get_spam_links(sr)], insert_items = links)
             # rip it out of the listings. bam!
             results = [get_links(sr, 'hot', 'all'),
                        get_links(sr, 'new', 'all')]
