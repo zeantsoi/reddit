@@ -179,6 +179,7 @@ class Templated(object):
         """
         from filters import unsafe
         from pylons import c
+
         # the style has to default to the global render style
         # fetch template
         template = self.template(style)

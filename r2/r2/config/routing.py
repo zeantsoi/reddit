@@ -223,7 +223,7 @@ def make_map(global_conf={}, app_conf={}):
 
     # Used for showing ads
     mc("/ads/", controller = "mediaembed", action = "ad")
-    mc("/ads/r/:reddit", controller = "mediaembed", action = "ad")
+    mc("/ads/r/:reddit_name", controller = "mediaembed", action = "ad")
     mc("/ads/:codename", controller = "mediaembed", action = "ad_by_codename")
 
     mc('/comscore-iframe/', controller='mediaembed', action='comscore')

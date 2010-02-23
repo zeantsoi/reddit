@@ -76,6 +76,9 @@ class Ad (Thing):
 
         return "http://%s/r/ads/submit?url=%s" % (d, url_escape(u))
 
+    def important_attrs(self):
+        return dict(imgurl=self.imgurl, linkurl=self.linkurl, submit_link=self.submit_link())
+
 class AdSR(Relation(Ad, Subreddit)):
     @classmethod
     def _new(cls, ad, sr, weight=100):

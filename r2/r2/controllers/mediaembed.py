@@ -23,7 +23,7 @@ from validator import *
 from reddit_base import MinimalController
 
 from r2.lib.scraper import scrapers
-from r2.lib.pages import MediaEmbedBody, ComScore, AdFrame
+from r2.lib.pages import MediaEmbedBody, ComScore, render_ad
 
 from pylons import request
 from pylons.controllers.util import abort
@@ -52,15 +52,15 @@ class MediaembedController(MinimalController):
 
         return MediaEmbedBody(body = content).render()
 
-    def GET_ad(self, reddit = None):
+    def GET_ad(self, reddit_name = None):
         c.render_style = "html"
-        return AdFrame(reddit).render()
+        return render_ad(reddit_name=reddit_name)
 
     def GET_ad_by_codename(self, codename = None):
         if not codename:
             abort(404)
         c.render_style = "html"
-        return AdFrame(codename=codename).render()
+        return render_ad(codename=codename)
 
     def GET_comscore(self, reddit = None):
         return ComScore().render(style="html")

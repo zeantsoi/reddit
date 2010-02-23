@@ -2371,73 +2371,71 @@ class RawString(Templated):
    def render(self, *a, **kw):
        return unsafe(self.s)
 
-class Dart_Ad(Templated):
+class Dart_Ad(CachedTemplate):
     def __init__(self, tag = None):
         tag = tag or "homepage"
         tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
                                           ip = request.ip)
         Templated.__init__(self, tag = tag, tracker_url = tracker_url)
 
-class HouseAd(Templated):
-    def __init__(self, ad):
-        self.submit_link = ad.submit_link()
-        Templated.__init__(self, ad = ad)
+class HouseAd(CachedTemplate):
+    def __init__(self, imgurl=None, linkurl=None, submit_link=None):
+        Templated.__init__(self, imgurl = imgurl, linkurl = linkurl,
+                           submit_link = submit_link)
 
 class ComScore(CachedTemplate):
     pass
 
-class AdFrame(Templated):
-    def __init__(self, reddit=None, codename=None):
-        try:
-            self.reddit = Subreddit._by_name(reddit or g.default_sr)
-        except NotFound:
-            self.reddit = Subreddit._by_name(g.default_sr)
+def render_ad(reddit_name=None, codename=None):
+    if not reddit_name:
+        reddit_name = g.default_sr
 
-        self.codename = codename
-        Templated.__init__(self)
-
-    def render(self, *a, **kw):
-        if self.codename:
+    if codename:
+        if codename == "DART":
+            return Dart_Ad(reddit_name).render()
+        else:
             try:
-                ad = Ad._by_codename(self.codename)
+                ad = Ad._by_codename(codename)
             except NotFound:
                 abort(404)
+            attrs = ad.important_attrs()
+            return HouseAd(**attrs).render()
 
-            if ad.codename == "DART":
-                return Dart_Ad(self.reddit.name).render()
+    try:
+        sr = Subreddit._by_name(reddit_name)
+    except NotFound:
+        return Dart_Ad(g.default_sr).render()
+
+    ads = {}
+
+    for adsr in AdSR.by_sr_merged(sr):
+        ad = adsr._thing1
+        ads[ad.codename] = (ad, adsr.weight)
+
+    total_weight = sum(t[1] for t in ads.values())
+
+    if total_weight == 0:
+        log_text("no ads", "No ads found for %s" % reddit_name, "error")
+        abort(404)
+
+    lotto = random.randint(0, total_weight - 1)
+    winner = None
+    for t in ads.values():
+        lotto -= t[1]
+        if lotto <= 0:
+            winner = t[0]
+
+            if winner.codename == "DART":
+                return Dart_Ad(reddit_name).render()
             else:
-                return HouseAd(ad).render()
+                attrs = winner.important_attrs()
+                return HouseAd(**attrs).render()
 
-        ads = {}
+    # No winner?
 
-        for adsr in AdSR.by_sr_merged(self.reddit):
-            ad = adsr._thing1
-            ads[ad.codename] = (ad, adsr.weight)
+    log_text("no winner",
+             "No winner found for /r/%s, total_weight=%d" %
+             (reddit_name, total_weight),
+             "error")
 
-        total_weight = sum(t[1] for t in ads.values())
-
-        if total_weight == 0:
-            log_text("no ads",
-                     "No ads found for %s" %
-                     self.reddit.name,
-                     "error")
-            return Dart_Ad(self.reddit.name).render()
-
-        lotto = random.randint(0, total_weight - 1)
-        winner = None
-        for t in ads.values():
-            lotto -= t[1]
-            if lotto <= 0:
-                winner = t[0]
-                break
-
-        if winner is None:
-            log_text("no winner",
-                     "No winner found when rendering an ad for %s" %
-                     self.reddit.name,
-                     "error")
-            return Dart_Ad(self.reddit.name).render()
-        elif winner.codename == "DART":
-            return Dart_Ad(self.reddit.name).render()
-        else:
-            return HouseAd(winner).render()
+    return Dart_Ad(reddit_name).render()
