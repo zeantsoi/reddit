@@ -139,7 +139,7 @@ class Globals(object):
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
         self.memcache = mc
-        self.cache = PermacacheChain((localcache_cls(), mc_old))
+        self.cache = PermacacheChain((localcache_cls(), mc))
         self.permacache = PermacacheChain((localcache_cls(), pmc))
         self.rendercache = PermacacheChain((localcache_cls(), rmc))
         self.rec_cache = rec_cache
