@@ -1492,9 +1492,10 @@ class ApiController(RedditController):
         if form.has_error():
             return
 
-        if ad.codename == "DART" and sr.name == g.default_sr:
-            log_text("Editing DART weight",
-                     "Someone just tried to edit the default DART weight.",
+        if ad.codename == "DART" and sr.name == g.default_sr and weight != 100:
+            log_text("Bad default DART weight",
+                     "The default DART weight can only be 100, not %s."
+                     % weight,
                      "error")
             abort(403, 'forbidden')
 
