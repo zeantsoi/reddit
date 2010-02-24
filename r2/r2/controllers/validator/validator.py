@@ -408,10 +408,15 @@ class VPrintable(VLength):
         if text is None:
             return None
 
-        if all(isprint(x) for x in text):
-            return text
-        else:
-            self.set_error(errors.BAD_STRING)
+        try:
+            if all(isprint(str(x)) for x in text):
+                return str(text)
+        except UnicodeEncodeError:
+            pass
+
+        self.set_error(errors.BAD_STRING)
+        return None
+
 
 class VTitle(VLength):
     def __init__(self, param, max_length = 300, **kw):
@@ -1119,14 +1124,9 @@ class ValidIP(Validator):
             self.set_error(errors.BANNED_IP)
         return request.ip
 
-class ValidDomain(Validator):
+class VOkayDomain(Validator):
     def run(self, url):
-        if url and is_banned_domain(url):
-            self.set_error(errors.BANNED_DOMAIN)
-
-
-
-
+        return is_banned_domain(url)
 
 class VDate(Validator):
     """

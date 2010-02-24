@@ -1448,12 +1448,17 @@ class AdminErrorLog(Templated):
         date_groupings = {}
         hexkeys_seen = {}
 
-        for i in hcb.ids_by_category("error"):
-            date, hexkey = i.split("-")
+        for ids in hcb.ids_by_category("error"):
+            date, hexkey = ids.split("-")
 
             hexkeys_seen[hexkey] = True
 
-            d = g.hardcache.get("error-" + i)
+            d = g.hardcache.get("error-" + ids)
+
+            if d is None:
+                log_text("error=None", "Why is error-%s None?" % ids,
+                         "warning")
+                continue
 
             tpl = (len(d['occurrences']), hexkey, d)
             date_groupings.setdefault(date, []).append(tpl)
@@ -1467,12 +1472,12 @@ class AdminErrorLog(Templated):
             status = g.hardcache.get("error_status-%s" % hexkey, "normal")
             self.statuses[hexkey] = status
 
-        for _id in hcb.ids_by_category("logtext"):
-            date, level, classification = _id.split("-", 2)
+        for ids in hcb.ids_by_category("logtext"):
+            date, level, classification = ids.split("-", 2)
             textoccs = []
-            dicts = g.hardcache.get("logtext-" + _id)
+            dicts = g.hardcache.get("logtext-" + ids)
             if dicts is None:
-                log_text("logtext=None", "Why is logtext-%s None?" % _id,
+                log_text("logtext=None", "Why is logtext-%s None?" % ids,
                          "warning")
                 continue
             for d in dicts:

@@ -60,7 +60,6 @@ error_list = dict((
         ('EXPIRED', _('your session has expired')),
         ('DRACONIAN', _('you must accept the terms first')),
         ('BANNED_IP', "IP banned"),
-        ('BANNED_DOMAIN', "Domain banned"),
         ('BAD_CNAME', "that domain isn't going to work"),
         ('USED_CNAME', "that domain is already in use"),
         ('INVALID_OPTION', _('that option is not valid')),

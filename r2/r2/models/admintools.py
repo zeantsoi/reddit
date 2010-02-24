@@ -31,7 +31,8 @@ from copy import copy
 
 class AdminTools(object):
 
-    def spam(self, things, auto, moderator_banned, banner, date = None, **kw):
+    def spam(self, things, auto=True, moderator_banned=False,
+             banner=None, date = None, **kw):
         from r2.lib.db import queries
 
         things = [x for x in tup(things) if not x._spam]
@@ -118,7 +119,7 @@ def is_banned_IP(ip):
     return False
 
 def is_banned_domain(dom):
-    return False
+    return None
 
 def valid_thing(v, karma):
     return not v._thing1._spam

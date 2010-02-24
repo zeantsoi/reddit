@@ -155,7 +155,8 @@ class HardCacheBackend(object):
 
     def ids_by_category(self, category, limit=1000):
         s = sa.select([self.table.c.ids],
-                      self.table.c.category==category,
+                      sa.and_(self.table.c.category==category,
+                              self.table.c.expiration > datetime.now(g.tz)),
                       limit = limit)
         rows = s.execute().fetchall()
         return [ r.ids for r in rows ]

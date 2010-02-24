@@ -146,20 +146,20 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VCaptcha(),
-                   ValidDomain('url'),
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_submit_"),
                    ip = ValidIP(),
                    sr = VSubmitSR('sr'),
                    url = VUrl(['url', 'sr']),
+                   banmsg = VOkayDomain('url'),
                    title = VTitle('title'),
                    save = VBoolean('save'),
                    selftext = VMarkdown('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'))
-    def POST_submit(self, form, jquery, url, selftext, kind, title, save,
-                    sr, ip, then):
+    def POST_submit(self, form, jquery, url, banmsg, selftext, kind, title,
+                    save, sr, ip, then):
         #backwards compatability
         if url == 'self':
             kind = 'self'
@@ -196,6 +196,11 @@ class ApiController(RedditController):
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
+# Uncomment if we want to let spammers know we're on to them
+#            if banmsg:
+#                form.set_html(".field-url.BAD_URL", banmsg)
+#                return
+
         elif kind == 'self' and form.has_errors('text', errors.TOO_LONG):
             pass
 
@@ -211,6 +216,9 @@ class ApiController(RedditController):
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
                          c.user, sr, ip)
+
+        if banmsg:
+            admintools.spam(l, banner = "domain (%s)" % banmsg)
 
         if kind == 'self':
             l.url = l.make_permalink_slow()

@@ -940,7 +940,7 @@ class _Host:
             buf += foo
             if len(foo) == 0:
                 raise _Error, ( 'Read %d bytes, expecting %d, '
-                        'read returned 0 length bytes' % ( len(buf), foo ))
+                        'read returned 0 length bytes' % ( len(buf), rlen ))
         self.buffer = buf[rlen:]
         return buf[:rlen]
 
