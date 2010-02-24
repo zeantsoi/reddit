@@ -27,7 +27,7 @@ from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters
 from r2.lib.utils import http_utils, UniqueIterator
-from r2.lib.cache import LocalCache, make_key
+from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed
 from r2.models.subreddit import Subreddit
@@ -544,12 +544,13 @@ class MinimalController(BaseController):
             and not c.dontcache
             and response.status_code != 503
             and response.content and response.content[0]):
-            g.rendercache.set(self.request_key(),
-                              response,
-                              g.page_cache_time)
-
-
-
+            try:
+                g.rendercache.set(self.request_key(),
+                                  response,
+                                  g.page_cache_time)
+            except MemcachedError:
+                # the key was too big to set in the rendercache
+                g.log.debug("Ignored too-big render cache")
 
 class RedditController(MinimalController):
 

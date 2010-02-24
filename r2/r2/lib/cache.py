@@ -23,6 +23,7 @@ from threading import local
 from hashlib import md5
 
 import pylibmc
+from _pylibmc import MemcachedError
 from contrib import memcache
 
 from utils import lstrips, in_chunks, tup
