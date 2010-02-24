@@ -3572,14 +3572,15 @@ dd { margin-left: 20px;  }
     border: 1px solid gray;
 }
 
-a.ip {
+a.adminbox {
     border: solid 1px #eeeeee;
     color: #cdcdcd;
     font-family: monospace;
-    text-size: x-small;
+    text-align: center;
+    padding-right: 1px;
 }
 
-a.ip:hover {
+a.adminbox:hover {
     text-decoration: none;
     color: orangered;
     border: solid 1px orangered;
