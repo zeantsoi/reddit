@@ -129,20 +129,19 @@ class Globals(object):
 
         localcache_cls = SelfEmptyingCache if self.running_as_script else LocalCache
 
-        mc = Memcache(self.memcaches, debug=self.debug)
         # we're going to temporarily run the old memcached behind the
         # new one so the caches can start warmer
-        mc_old = Permacache(self.memcaches)
-        rec_cache = Memcache(self.rec_cache, debug=self.debug)
-        rmc = Memcache(self.rendercaches, debug=self.debug)
+        # mc = Memcache(self.memcaches, debug=self.debug)
+        mc = Permacache(self.memcaches)
+        rec_cache = Permacache(self.rec_cache)
+        rmc = Permacache(self.rendercaches)
         pmc = Permacache(self.permacaches)
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
         self.memcache = mc_old
-        #self.cache = DoubleMemcacheChain((localcache_cls(), mc, mc_old))
         self.cache = PermacacheChain((localcache_cls(), mc_old))
         self.permacache = PermacacheChain((localcache_cls(), pmc))
-        self.rendercache = MemcacheChain((localcache_cls(), rmc))
+        self.rendercache = PermacacheChain((localcache_cls(), rmc))
         self.rec_cache = rec_cache
 
         self.make_lock = make_lock_factory(mc)
