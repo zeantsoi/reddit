@@ -87,6 +87,9 @@ class Permacache(CacheUtils, memcache.Client):
         memcache.Client.delete_multi(self, keys, time = time,
                                      key_prefix = prefix)
 
+    def get_local_client(self):
+        return self # memcache.py handles this itself
+
 class Memcache(CacheUtils, pylibmc.Client):
     simple_get_multi = pylibmc.Client.get_multi
 
