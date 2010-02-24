@@ -473,6 +473,7 @@ def add_queries(queries, insert_items = None, delete_items = None):
 
     def _add_queries():
         for q in queries:
+            query_cache.reset()
             if not isinstance(q, CachedResults):
                 continue
 

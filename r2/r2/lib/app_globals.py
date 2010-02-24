@@ -23,8 +23,9 @@ from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta, datetime
-from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
-from r2.lib.cache import SelfEmptyingCache
+from r2.lib.cache import LocalCache, SelfEmptyingCache
+from r2.lib.cache import Memcache, Permacache, HardCache
+from r2.lib.cache import MemcacheChain, DoubleMemcacheChain, PermacacheChain, HardcacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -123,17 +124,28 @@ class Globals(object):
         self.running_as_script = global_conf.get('running_as_script', False)
 
         # initialize caches. Any cache-chains built here must be added
-        # to reset_caches so that they can properly reset their local
-        # components
-        mc = Memcache(self.memcaches, pickleProtocol = 1)
+        # to cache_chains (closed around by reset_caches) so that they
+        # can properly reset their local components
+
+        localcache_cls = SelfEmptyingCache if self.running_as_script else LocalCache
+
+        mc = Memcache(self.memcaches, debug=self.debug)
+        # we're going to temporarily run the old memcached behind the
+        # new one so the caches can start warmer
+        mc_old = Permacache(self.memcaches)
+        rec_cache = Memcache(self.rec_cache, debug=self.debug)
+        rmc = Memcache(self.rendercaches, debug=self.debug)
+        pmc = Permacache(self.permacaches)
+        # hardcache is done after the db info is loaded, and then the
+        # chains are reset to use the appropriate initial entries
         self.memcache = mc
-        self.cache = CacheChain((LocalCache(), mc))
-        self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
-        self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
+        self.cache = DoubleMemcacheChain((localcache_cls(), mc, mc_old))
+        self.permacache = PermacacheChain((localcache_cls(), pmc))
+        self.rendercache = MemcacheChain((localcache_cls(), rmc))
+        self.rec_cache = rec_cache
 
         self.make_lock = make_lock_factory(mc)
-
-        self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
+        cache_chains = [self.cache, self.permacache, self.rendercache]
 
         # set default time zone if one is not set
         tz = global_conf.get('timezone')
@@ -146,9 +158,19 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)),
-                                    cache_negative_results = True)
+        self.hardcache = HardcacheChain((localcache_cls(), mc, HardCache(self)),
+                                        cache_negative_results = True)
+        cache_chains.append(self.hardcache)
 
+        # I know this sucks, but we need non-request-threads to be
+        # able to reset the caches, so we need them be able to close
+        # around 'cache_chains' without being able to call getattr on
+        # 'g'
+        def reset_caches():
+            for chain in cache_chains:
+                chain.reset()
+
+        self.reset_caches = reset_caches
         self.reset_caches()
 
         #make a query cache
@@ -254,12 +276,6 @@ class Globals(object):
 
         if self.log_start:
             self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
-
-    def reset_caches(self):
-        for ca in ('cache', 'hardcache'):
-            cache = getattr(self, ca)
-            new_cache = SelfEmptyingCache() if self.running_as_script else LocalCache()
-            cache.caches = (new_cache,) + cache.caches[1:]
 
     @staticmethod
     def to_bool(x):

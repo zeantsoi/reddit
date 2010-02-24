@@ -341,13 +341,14 @@ def find_preview_links(sr):
     from r2.lib.normalized_hot import get_hot
 
     # try to find a link to use, otherwise give up and return
-    links = get_hot(c.site, only_fullnames = True)
+    links = get_hot([c.site], only_fullnames = True)[0]
     if not links:
         sr = Subreddit._by_name(g.default_sr)
         if sr:
-            links = get_hot(sr, only_fullnames = True)
+            links = get_hot([sr], only_fullnames = True)[0]
 
     if links:
+        links = links[:25]
         links = Link._by_fullname(links, data=True, return_dict=False)
 
     return links

@@ -23,6 +23,8 @@ from itertools import chain
 from datetime import datetime
 import re, types
 
+from hashlib import md5
+
 class StringTemplate(object):
     """
     Simple-minded string templating, where variables of the for $____
@@ -155,6 +157,7 @@ class Templated(object):
         """
         from r2.config.templates import tpm
         from pylons import g
+
         debug = g.template_debug
         template = None
         try:
@@ -264,7 +267,7 @@ class Templated(object):
                 # in the tuple that is the current dict's values.
                 # This dict cast will generate a new dict of cache_key
                 # to value
-                cached = g.rendercache.get_multi(dict(current.values()))
+                cached = self._read_cache(dict(current.values()))
                 # replacements will be a map of key -> rendered content
                 # for updateing the current set of updates
                 replacements = {}
@@ -305,10 +308,10 @@ class Templated(object):
             # that we didn't find in the cache.
 
             # cache content that was newly rendered
-            g.rendercache.set_multi(dict((k, v)
-                                         for k, (v, kw) in updates.values()
-                                         if k in to_cache))
-
+            self._write_cache(dict((k, v)
+                                   for k, (v, kw) in updates.values()
+                                   if k in to_cache))
+    
             # edge case: this may be the primary tempalte and cachable
             if isinstance(res, CacheStub):
                 res = updates[res.name][1][0]
@@ -336,8 +339,25 @@ class Templated(object):
             res = res.finalize(kwargs)
         
         return res
-    
-        
+
+    def _write_cache(self, keys):
+        from pylons import g
+
+        toset = dict((md5(key).hexdigest(), val)
+                     for (key, val)
+                     in keys.iteritems())
+        g.rendercache.set_multi(toset)
+
+    def _read_cache(self, keys):
+        from pylons import g
+
+        ekeys = dict((md5(key).hexdigest(), key)
+                     for key in keys)
+        found = g.rendercache.get_multi(ekeys)
+        return dict((ekeys[fkey], val)
+                    for (fkey, val)
+                    in found.iteritems())
+
     def render(self, style = None, **kw):
         from r2.lib.filters import unsafe
         res = self._render(None, style, **kw)

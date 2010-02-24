@@ -318,7 +318,7 @@ class Subreddit(Thing, Printable):
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
-                                       cache_time = g.page_cache_time)
+                                       cache_time = 3600)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
@@ -585,9 +585,8 @@ class DefaultSR(FakeSubreddit):
             srs = Subreddit._byID(sr_ids, return_dict = False)
 
         if g.use_query_cache:
-            results = []
-            for sr in srs:
-                results.append(queries.get_links(sr, sort, time))
+            results = [queries.get_links(sr, sort, time)
+                       for sr in srs]
             return queries.merge_results(*results)
         else:
             q = Link._query(Link.c.sr_id == sr_ids,

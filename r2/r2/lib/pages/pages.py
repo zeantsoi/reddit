@@ -25,7 +25,6 @@ from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR
 from r2.models import Link, Printable, Trophy, bidding, PromoteDates
 from r2.config import cache
-from r2.lib.cache import HardCache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -1443,7 +1442,7 @@ class UserAwards(Templated):
 class AdminErrorLog(Templated):
     """The admin page for viewing the error log"""
     def __init__(self):
-        hcb = g.hardcache.cache_by_type(HardCache).backend
+        hcb = g.hardcache.backend
 
         date_groupings = {}
         hexkeys_seen = {}

@@ -89,13 +89,15 @@ class FrontController(RedditController):
         else:
             links = list(links)[:g.num_serendipity]
 
+        rand.shuffle(links)
+
         builder = IDBuilder(links, skip = True,
                             keep_fn = lambda x: x.fresh,
-                            num = g.num_serendipity)
+                            num = 1)
         links = builder.get_items()[0]
 
         if links:
-            l = rand.choice(links)
+            l = links[0]
             return self.redirect(add_sr("/tb/" + l._id36))
         else:
             return self.redirect(add_sr('/'))
