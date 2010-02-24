@@ -53,6 +53,7 @@ def log_exception(e, e_type, e_value, e_traceback):
     amqp.add_item(Q, pickle.dumps(d))
 
 def log_text(classification, text=None, level="info"):
+    from r2.lib.filters import _force_utf8
     if text is None:
         text = classification
 
@@ -63,7 +64,7 @@ def log_text(classification, text=None, level="info"):
     d = _default_dict()
     d['type'] = 'text'
     d['level'] = level
-    d['text'] = text
+    d['text'] = _force_utf8(text)
     d['classification'] = classification
 
     amqp.add_item(Q, pickle.dumps(d))
