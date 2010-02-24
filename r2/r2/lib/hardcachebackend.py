@@ -68,6 +68,8 @@ class HardCacheBackend(object):
             )
 
     def add(self, category, ids, val, time=0):
+        self.delete_if_expired(category, ids)
+
         expiration = expiration_from_time(time)
 
         value, kind = self.tdb.py2db(val, True)
@@ -87,6 +89,8 @@ class HardCacheBackend(object):
             return self.get(category, ids)
 
     def incr(self, category, ids, time=0, delta=1):
+        self.delete_if_expired(category, ids)
+
         expiration = expiration_from_time(time)
 
         rp = self.table.update(sa.and_(self.table.c.category==category,
@@ -179,6 +183,13 @@ class HardCacheBackend(object):
                       )
         rows = s.execute().fetchall()
         return [ (r.expiration, r.category, r.ids) for r in rows ]
+
+    def delete_if_expired(self, category, ids, expiration="now"):
+        expiration_clause = self.clause_from_expiration(expiration)
+        self.table.delete(sa.and_(self.table.c.category==category,
+                                  self.table.c.ids==ids,
+                                  expiration_clause)).execute()
+
 
 def delete_expired(expiration="now", limit=5000):
     hcb = HardCacheBackend(g)

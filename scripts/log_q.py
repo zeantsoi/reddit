@@ -43,9 +43,14 @@ def run(limit=100, streamfile=None, verbose=False):
                                       d['time'].strftime("%Y-%m-%d %H:%M:%S"))
 
     def log_exception(d, daystring):
-        exc = d['exception']
-        exc_desc = str(exc)
-        exc_type = exc.__class__.__name__
+        # FIXME: This is only here as part of a two-stage rollout
+        # and should be removed soon after.
+        if 'exception_desc' in d:
+            exc_desc = d['exception_desc']
+            exc_type = d['exception_type']
+        else:
+            exc_desc = "???"
+            exc_type = "???"
         exc_str = "%s: %s" % (exc_type, exc_desc)
 
         add_timestamps(d)

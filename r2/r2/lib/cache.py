@@ -414,12 +414,9 @@ class HardcacheChain(CacheChain):
                                     # itself
         added_val = authority.add(key, val, time=time)
         for cache in self.caches[:-1]:
-            # This introduces a bug where the authority's value is
-            # about to expire, but we've told the lower-level caches
-            # to cache it for the full amount of time. This is okay
-            # because the hardcache cleanup script explicitly deletes
-            # the entries on cleanup time
-            cache.add(key, added_val, time=time)
+            # Calling set() rather than add() to ensure that all caches are
+            # in sync and that de-syncs repair themselves
+            cache.set(key, added_val, time=time)
         return added_val
 
     def accrue(self, key, time=0, delta=1):

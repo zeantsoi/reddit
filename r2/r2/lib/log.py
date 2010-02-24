@@ -45,10 +45,8 @@ def log_exception(e, e_type, e_value, e_traceback):
     d['type'] = 'exception'
     d['traceback'] = traceback.extract_tb(e_traceback)
 
-    if e.__class__.__name__ == "MemcachedStringEncodingError":
-        d['exception'] = "MemcachedStringEncodingError"
-    else:
-        d['exception'] = e
+    d['exception_type'] = e.__class__.__name__
+    d['exception_desc'] = str(e)
 
     amqp.add_item(Q, pickle.dumps(d))
 
