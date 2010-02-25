@@ -62,6 +62,18 @@ def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
         return get_iden()
 
+def responsive(res, space_compress = False):
+    """
+    Use in places where the template is returned as the result of the
+    controller so that it becomes compatible with the page cache.
+    """
+    if is_api():
+        res = json_respond(res)
+    elif space_compress:
+        res = spaceCompress(res)
+    c.response.content = res
+    return c.response
+
 class Reddit(Templated):
     '''Base class for rendering a page on reddit.  Handles toolbar creation,
     content of the footers, and content of the corner buttons.
@@ -223,12 +235,7 @@ class Reddit(Templated):
         Response object with it's content set.
         """
         res = Templated.render(self, *a, **kw)
-        if is_api():
-            res = json_respond(res)
-        elif self.space_compress:
-            res = spaceCompress(res)
-        c.response.content = res
-        return c.response
+        return responsive(res, self.space_compress)
     
     def corner_buttons(self):
         """set up for buttons in upper right corner of main page."""
@@ -1312,13 +1319,17 @@ class OptIn(Templated):
     pass
 
 
-class ButtonEmbed(Templated):
+class ButtonEmbed(CachedTemplate):
     """Generates the JS wrapper around the buttons for embedding."""
     def __init__(self, button = None, width = 100,
                  height=100, referer = "", url = "", **kw):
+        arg = "cnameframe=1&" if c.cname else ""
         Templated.__init__(self, button = button,
                            width = width, height = height,
-                           referer=referer, url = url, **kw)
+                           referer=referer, url = url,
+                           domain = get_domain(),
+                           arg = arg,
+                           **kw)
 
 class Button(Wrapped):
     cachable = True
@@ -1341,9 +1352,13 @@ class Button(Wrapped):
             if not hasattr(w, '_fullname'):
                 w._fullname = None
 
+    def render(self, *a, **kw):
+        res = Wrapped.render(self, *a, **kw)
+        return responsive(res, True)
+
 class ButtonLite(Button):
-    pass
-            
+    def render(self, *a, **kw):
+        return Wrapped.render(self, *a, **kw)
 
 class ButtonNoBody(Button):
     """A button page that just returns the raw button for direct embeding"""
@@ -1894,7 +1909,9 @@ class MediaChild(LinkChild):
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
-    pass
+    def render(self, *a, **kw):
+        res = Templated.render(self, *a, **kw)
+        return responsive(res, True)
 
 class SelfTextChild(LinkChild):
     css_style = "selftext"
@@ -2382,10 +2399,18 @@ class Dart_Ad(CachedTemplate):
                                           ip = request.ip)
         Templated.__init__(self, tag = tag, tracker_url = tracker_url)
 
+    def render(self, *a, **kw):
+        res = CachedTemplate.render(self, *a, **kw)
+        return responsive(res, False)
+
 class HouseAd(CachedTemplate):
     def __init__(self, imgurl=None, linkurl=None, submit_link=None):
         Templated.__init__(self, imgurl = imgurl, linkurl = linkurl,
                            submit_link = submit_link)
+
+    def render(self, *a, **kw):
+        res = CachedTemplate.render(self, *a, **kw)
+        return responsive(res, False)
 
 class ComScore(CachedTemplate):
     pass

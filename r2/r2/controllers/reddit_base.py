@@ -462,6 +462,9 @@ class MinimalController(BaseController):
                         c.firsttime,
                         cookies_key)
 
+    def cached_response(self):
+        return c.response
+
     def pre(self):
         c.start_time = datetime.now(g.tz)
         g.reset_caches()
@@ -553,9 +556,6 @@ class MinimalController(BaseController):
                 g.log.debug("Ignored too-big render cache")
 
 class RedditController(MinimalController):
-
-    def cached_response(self):
-        return c.response
 
     @staticmethod
     def login(user, admin = False, rem = False):
