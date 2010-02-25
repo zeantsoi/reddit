@@ -1909,9 +1909,7 @@ class MediaChild(LinkChild):
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
-    def render(self, *a, **kw):
-        res = Templated.render(self, *a, **kw)
-        return responsive(res, True)
+    pass
 
 class SelfTextChild(LinkChild):
     css_style = "selftext"
@@ -1958,7 +1956,9 @@ class UserText(CachedTemplate):
 
 class MediaEmbedBody(CachedTemplate):
     """What's rendered inside the iframe that contains media objects"""
-    pass
+    def render(self, *a, **kw):
+        res = CachedTemplate.render(self, *a, **kw)
+        return responsive(res, True)
 
 class Traffic(Templated):
     @staticmethod
