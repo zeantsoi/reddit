@@ -1693,7 +1693,8 @@ class AdminUsage(Templated):
             self.labels.append( (label, factor_counts[factor] > 3) )
 
         self.action_order = sorted(self.actions.keys(), reverse=True,
-                key = lambda x: self.actions[x].get(action_sorting_column, 0))
+                key = lambda x:
+                      self.actions[x].get(action_sorting_column, {"elapsed":0})["elapsed"])
 
         Templated.__init__(self)
 
