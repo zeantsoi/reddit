@@ -68,7 +68,9 @@ class Globals(object):
                   'css_killswitch',
                   'db_create_tables',
                   'disallow_db_writes',
-                  'exception_logging']
+                  'exception_logging',
+                  'enable_usage_stats',
+                  ]
 
     tuple_props = ['memcaches',
                    'rec_cache',

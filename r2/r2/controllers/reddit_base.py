@@ -556,10 +556,11 @@ class MinimalController(BaseController):
                 # the key was too big to set in the rendercache
                 g.log.debug("Ignored too-big render cache")
 
-        amqp.add_kw("usage_q",
-                    start_time = c.start_time,
-                    end_time = datetime.now(g.tz),
-                    action = str(c.action) or "static")
+        if g.enable_usage_stats:
+            amqp.add_kw("usage_q",
+                        start_time = c.start_time,
+                        end_time = datetime.now(g.tz),
+                        action = str(c.action) or "static")
 
 class RedditController(MinimalController):
 
