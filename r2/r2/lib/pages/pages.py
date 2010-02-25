@@ -43,7 +43,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
-from r2.lib.utils import link_duplicates, make_offset_date, to_csv
+from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
@@ -1574,6 +1574,128 @@ class AdminAwardWinners(Templated):
     def __init__(self, award):
         trophies = Trophy.by_award(award)
         Templated.__init__(self, award = award, trophies = trophies)
+
+class AdminUsage(Templated):
+    """The admin page for viewing usage stats"""
+    def __init__(self):
+        hcb = g.hardcache.backend
+
+        self.actions = {}
+        triples = set() # sorting key
+        daily_stats = {}
+
+        for ids in hcb.ids_by_category("profile_count"):
+            time, action = ids.split("-")
+
+            if time.endswith("xx:xx"):
+                factor = 1.0
+                label = time[5:10] # MM/DD
+                day = True
+            elif time.endswith(":xx"):
+                factor = 24.0
+                label = time[11:] # HH:xx
+            else:
+                factor = 288.0 # number of five-minute periods in a day
+                label = time[11:] # HH:MM
+
+            triples.add( (factor, time, label) )
+
+            # Elapsed in hardcache is in hundredths of a second.
+            # Multiply it by 100 so from this point forward, we're
+            # dealing with seconds -- as floats with two decimal
+            # places of precision. Similarly, round the average
+            # to two decimal places.
+            count   = g.hardcache.get("profile_count-" + ids)
+            elapsed = g.hardcache.get("profile_elapsed-" + ids, 0) / 100.0
+            average = int(100.0 * elapsed / count) / 100.0
+
+            if factor == 1.0:
+                daily_stats.setdefault(action, []).append(
+                    (count, elapsed, average)
+                    )
+
+            self.actions.setdefault(action, {})
+            self.actions[action][label] = dict(count=count, elapsed=elapsed,
+                                               average=average,
+                                               factor=factor,
+                                               classes = {})
+
+        # Figure out what a typical day looks like. For each action,
+        # look at the daily stats and record the median.
+        for action in daily_stats.keys():
+            med = {}
+            med["count"]   = median([ x[0] for x in daily_stats[action] ])
+            med["elapsed"] = median([ x[1] for x in daily_stats[action] ])
+            med["average"] = median([ x[2] for x in daily_stats[action] ])
+
+            for d in self.actions[action].values():
+                ice_cold = False
+                for category in ("elapsed", "count", "average"):
+                    scaled = d[category] * d["factor"]
+
+                    if category == "elapsed" and scaled < 5 * 60:
+                        # If we're spending less than five mins a day
+                        # on this operation, consider it ice cold regardless
+                        # of how much of an outlier it is
+                        ice_cold = True
+
+                    # TODO: remove this once we have a good stats base
+                    # For now, also consider things ice cold if elapsed is small
+                    if category == "elapsed" and d["elapsed"] < 5 * 60:
+                        ice_cold = True
+
+                    if ice_cold:
+                        d["classes"][category] = "load0"
+                        continue
+
+                    if med[category] <= 0:
+                        # This shouldn't happen. If it does,
+                        # toggle commenting of the next three lines.
+                        raise ValueError("Huh. I guess this can happen.")
+#                        d["classes"][category] = "load9"
+#                        continue
+
+                    ratio = scaled / med[category]
+                    if ratio > 5.0:
+                        d["classes"][category] = "load9"
+                    elif ratio > 3.0:
+                        d["classes"][category] = "load8"
+                    elif ratio > 2.0:
+                        d["classes"][category] = "load7"
+                    elif ratio > 1.5:
+                        d["classes"][category] = "load6"
+                    elif ratio > 1.1:
+                        d["classes"][category] = "load5"
+                    elif ratio > 0.9:
+                        d["classes"][category] = "load4"
+                    elif ratio > 0.75:
+                        d["classes"][category] = "load3"
+                    elif ratio > 0.5:
+                        d["classes"][category] = "load2"
+                    elif ratio > 0.10:
+                        d["classes"][category] = "load1"
+                    else:
+                        d["classes"][category] = "load0"
+
+        # Build a list called labels that gives the template a sorting
+        # order for the columns.
+        self.labels = []
+        # Keep track of how many times we've seen a granularity (i.e., factor)
+        # so we can hide any that come after the third
+        factor_counts = {}
+        # sort actions by whatever will end up as the first column
+        action_sorting_column = None
+        for factor, time, label in sorted(triples, reverse=True):
+            if action_sorting_column is None:
+                action_sorting_column = label
+            factor_counts.setdefault(factor, 0)
+            factor_counts[factor] += 1
+            self.labels.append( (label, factor_counts[factor] > 3) )
+
+        self.action_order = sorted(self.actions.keys(), reverse=True,
+                key = lambda x: self.actions[x].get(action_sorting_column, 0))
+
+        Templated.__init__(self)
 
 
 class Embed(Templated):

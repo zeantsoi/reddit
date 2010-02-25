@@ -29,6 +29,7 @@ import time
 import errno
 import socket
 import itertools
+import pickle
 
 from amqplib import client_0_8 as amqp
 
@@ -159,8 +160,11 @@ def add_item(routing_key, body, message_id = None):
 
     worker.do(_add_item, routing_key, body, message_id = message_id)
 
+def add_kw(routing_key, **kw):
+    add_item(routing_key, pickle.dumps(kw))
+
 def handle_items(queue, callback, ack = True, limit = 1, drain = False,
-                 verbose=True):
+                 verbose=True, busy_sleep = 0, idle_sleep = 1):
     """Call callback() on every item in a particular queue. If the
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
@@ -178,7 +182,7 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
         if not msg and drain:
             return
         elif not msg:
-            time.sleep(1)
+            time.sleep(idle_sleep)
             continue
 
         if countdown is None and drain and 'message_count' in msg.delivery_info:
@@ -217,6 +221,10 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
                 # explicitly reject the items that we've not processed
                 chan.basic_reject(item.delivery_tag, requeue = True)
             raise
+
+        if busy_sleep:
+            time.sleep(busy_sleep)
+
 
 def empty_queue(queue):
     """debug function to completely erase the contents of a queue"""

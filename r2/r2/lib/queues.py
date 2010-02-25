@@ -73,6 +73,7 @@ class RedditQueueMap(QueueMap):
         #self._q('newpage_q')
         self._q('register_vote_q', self_refer=True)
         self._q('log_q', self_refer=True)
+        self._q('usage_q', self_refer=True)
 
     def bindings(self):
         self.newlink_bindings()

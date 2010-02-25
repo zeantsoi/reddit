@@ -83,6 +83,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
 
+    mc('/admin/usage', controller='usage')
+
     # Used for editing ads
     mc('/admin/ads', controller='ads')
     mc('/admin/ads/:adcn/:action', controller='ads',

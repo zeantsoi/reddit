@@ -1163,16 +1163,16 @@ textarea.gray { color: gray; }
 }
 .server-status td { padding-right: 2px; padding-left: 2px; }
 .server-status .bar { height: 5px; background-color: blue; }
-.server-status .load0 { background-color: #FFFFFF; }
-.server-status .load1 { background-color: #f0f5FF; }
-.server-status .load2 { background-color: #E2ECFF; }
-.server-status .load3 { background-color: #d6f5cb; }
-.server-status .load4 { background-color: #CAFF98; }
-.server-status .load5 { background-color: #e4f484; }
-.server-status .load6 { background-color: #FFEA71; }
-.server-status .load7 { background-color: #ffdb81; }
-.server-status .load8 { background-color: #FF9191; }
-.server-status .load9 { background-color: #FF0000; color: #FFFFFF }
+.load0 { background-color: #FFFFFF; } /* white */
+.load1 { background-color: #f0f5FF; } /* pale blue */
+.load2 { background-color: #E2ECFF; } /* blue */
+.load3 { background-color: #d6f5cb; } /* pale green */
+.load4 { background-color: #CAFF98; } /* green */
+.load5 { background-color: #e4f484; } /* yellowgreen */
+.load6 { background-color: #FFEA71; } /* orange */
+.load7 { background-color: #ffdb81; } /* orangerose */
+.load8 { background-color: #FF9191; } /* pink */
+.load9 { background-color: #FF0000; color: #FFFFFF } /* red */
 .server-status tr.down > * {
     background-color: #C0C0C0; 
     text-decoration: line-through; 
@@ -3639,4 +3639,37 @@ a.adminbox:hover {
 .ad-assign-table .warning {
     font-weight: bold;
     color: red;
+}
+
+.usage-table .intersection {
+    color: #888;
+    font-family: monospace;
+    text-align: right;
+    border-left: none;
+    border-right: none;
+}
+
+.usage-table .empty.intersection {
+    text-align: center;
+    color: #ccc;
+}
+
+.usage-table .elapsed.intersection {
+    color: black;
+}
+
+.usage-table .count.intersection {
+    color: black;
+}
+
+.usage-table .average.intersection {
+    color: black;
+    border-right: solid #cdcdcd 1px;
+}
+
+.usage-table .empty.intersection, .usage-table .average.intersection {
+    padding-left: 0;
+    margin-left: 0;
+    border-right: solid #cdcdcd 1px;
+    padding-right: 5px;
 }

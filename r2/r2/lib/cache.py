@@ -427,15 +427,13 @@ class HardcacheChain(CacheChain):
             auth_value = 0
 
         try:
-            auth_value = int(auth_value)
+            auth_value = int(auth_value) + delta
         except ValueError:
             raise ValueError("Can't accrue %s; it's a %s (%r)" %
                              (key, auth_value.__class__.__name__, auth_value))
 
         for c in self.caches:
             c.set(key, auth_value, time=time)
-
-        self.incr(key, time=time, delta=delta)
 
     @property
     def backend(self):

@@ -21,7 +21,7 @@ def randword():
     except IndexError:
         return '???'
 
-rk = q = 'log_q'
+q = 'log_q'
 
 def run(limit=100, streamfile=None, verbose=False):
     if streamfile:
@@ -148,6 +148,7 @@ def run(limit=100, streamfile=None, verbose=False):
                 d = pickle.loads(msg.body)
             except TypeError:
                 streamlog ("wtf is %r" % msg.body, True)
+                continue
 
             if not 'type' in d:
                 streamlog ("wtf is %r" % d, True)

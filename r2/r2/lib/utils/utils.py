@@ -470,6 +470,10 @@ def to_base(q, alphabet):
 def to36(q):
     return to_base(q, '0123456789abcdefghijklmnopqrstuvwxyz')
 
+def median(l):
+    if l:
+        return l[len(l)/2]
+
 def query_string(dict):
     pairs = []
     for k,v in dict.iteritems():

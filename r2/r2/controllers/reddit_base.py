@@ -25,7 +25,7 @@ from pylons.controllers.util import abort, redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
-from r2.lib import pages, utils, filters
+from r2.lib import pages, utils, filters, amqp
 from r2.lib.utils import http_utils, UniqueIterator
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
@@ -412,6 +412,7 @@ def ratelimit_throttled():
         if throttled(ip) or throttled(subnet):
             abort(503, 'service temporarily unavailable')
 
+
 #TODO i want to get rid of this function. once the listings in front.py are
 #moved into listingcontroller, we shouldn't have a need for this
 #anymore
@@ -554,6 +555,11 @@ class MinimalController(BaseController):
             except MemcachedError:
                 # the key was too big to set in the rendercache
                 g.log.debug("Ignored too-big render cache")
+
+        amqp.add_kw("usage_q",
+                    start_time = c.start_time,
+                    end_time = datetime.now(g.tz),
+                    action = str(c.action) or "static")
 
 class RedditController(MinimalController):
 
