@@ -1639,11 +1639,6 @@ class AdminUsage(Templated):
                         # of how much of an outlier it is
                         ice_cold = True
 
-                    # TODO: remove this once we have a good stats base
-                    # For now, also consider things ice cold if elapsed is small
-                    if category == "elapsed" and d["elapsed"] < 5 * 60:
-                        ice_cold = True
-
                     if ice_cold:
                         d["classes"][category] = "load0"
                         continue

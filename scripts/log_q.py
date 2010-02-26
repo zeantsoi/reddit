@@ -42,6 +42,11 @@ def run(limit=100, streamfile=None, verbose=False):
         d['occ'] = "<%s:%s, pid=%-5s, %s>" % (d['host'], d['port'], d['pid'],
                                       d['time'].strftime("%Y-%m-%d %H:%M:%S"))
 
+    def limited_append(l, item):
+        if len(l) >= 25:
+            l.pop(12)
+        l.append(item)
+
     def log_exception(d, daystring):
         exc_desc = d['exception_desc']
         exc_type = d['exception_type']
@@ -98,7 +103,7 @@ def run(limit=100, streamfile=None, verbose=False):
         if not existing:
             existing = dict(exception=exc_str, traceback=tb, occurrences=[])
 
-        existing['occurrences'].append(d['occ'])
+        limited_append(existing['occurrences'], d['occ'])
 
         g.hardcache.set(err_key, existing, 7 * 86400)
 
@@ -137,7 +142,7 @@ def run(limit=100, streamfile=None, verbose=False):
         d2['occ'] = d['occ']
         d2['text'] = repr(d['text'])
 
-        occurrences.append(d2)
+        limited_append(occurrences, d2)
         g.hardcache.set(occ_key, occurrences, 86400 * 7)
 
     def myfunc(msgs, chan):

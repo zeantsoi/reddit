@@ -8,6 +8,7 @@ from datetime import datetime
 import pickle
 
 q = 'usage_q'
+tz = g.display_tz
 
 def check_dict(body):
     d = pickle.loads(body)
@@ -33,7 +34,7 @@ def trunc_time(time, period):
                         microsecond = 0)
 
 def buckets(time):
-    time = time.astimezone(g.display_tz)
+    time = time.astimezone(tz)
 
     # Keep:
     #   Daily buckets for eight days
