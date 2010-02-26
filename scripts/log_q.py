@@ -158,9 +158,15 @@ def run(limit=100, streamfile=None, verbose=False):
             if not 'type' in d:
                 streamlog ("wtf is %r" % d, True)
             elif d['type'] == 'exception':
-                log_exception(d, daystring)
+                try:
+                    log_exception(d, daystring)
+                except:
+                    print "Error in log_exception()"
             elif d['type'] == 'text':
-                log_text(d, daystring)
+                try:
+                    log_text(d, daystring)
+                except:
+                    print "Error in log_text()"
             else:
                 streamlog ("wtf is %r" % d['type'], True)
 
