@@ -1598,16 +1598,19 @@ class AdminUsage(Templated):
                 factor = 288.0 # number of five-minute periods in a day
                 label = time[11:] # HH:MM
 
-            triples.add( (factor, time, label) )
-
             # Elapsed in hardcache is in hundredths of a second.
             # Multiply it by 100 so from this point forward, we're
             # dealing with seconds -- as floats with two decimal
             # places of precision. Similarly, round the average
             # to two decimal places.
-            count   = g.hardcache.get("profile_count-" + ids)
+            count = g.hardcache.get("profile_count-" + ids)
+            if count is None or count == 0:
+                log_text("usage count=None", "For %r, it's %r" % (ids, count), "error")
+                continue
             elapsed = g.hardcache.get("profile_elapsed-" + ids, 0) / 100.0
             average = int(100.0 * elapsed / count) / 100.0
+
+            triples.add( (factor, time, label) )
 
             if factor == 1.0:
                 daily_stats.setdefault(action, []).append(
