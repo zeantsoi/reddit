@@ -4,6 +4,7 @@ from r2.lib import amqp
 from r2.lib.log import log_text
 from pylons import g
 from datetime import datetime
+from time import sleep
 
 import pickle
 
@@ -86,6 +87,10 @@ def run(limit=1000, verbose=False):
                 print "%s: %s -> %s" % (c_key, c_old, c_new)
                 print "%s: %s -> %s" % (e_key, e_old, e_new)
 
+        if len(msgs) < limit / 2:
+            if verbose:
+                print "Sleeping..."
+            sleep (10)
     amqp.handle_items(q, myfunc, limit=limit, drain=False, verbose=verbose,
                       sleep_time = 30)
 
