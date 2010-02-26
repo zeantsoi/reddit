@@ -164,7 +164,7 @@ def add_kw(routing_key, **kw):
     add_item(routing_key, pickle.dumps(kw))
 
 def handle_items(queue, callback, ack = True, limit = 1, drain = False,
-                 verbose=True, busy_sleep = 0, idle_sleep = 1):
+                 verbose=True, sleep_time = 1):
     """Call callback() on every item in a particular queue. If the
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
@@ -182,7 +182,7 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
         if not msg and drain:
             return
         elif not msg:
-            time.sleep(idle_sleep)
+            time.sleep(sleep_time)
             continue
 
         if countdown is None and drain and 'message_count' in msg.delivery_info:
@@ -221,9 +221,6 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
                 # explicitly reject the items that we've not processed
                 chan.basic_reject(item.delivery_tag, requeue = True)
             raise
-
-        if busy_sleep:
-            time.sleep(busy_sleep)
 
 
 def empty_queue(queue):

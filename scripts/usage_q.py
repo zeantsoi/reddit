@@ -86,5 +86,5 @@ def run(limit=100, verbose=False):
                 print "%s: %s -> %s" % (e_key, e_old, e_new)
 
     amqp.handle_items(q, myfunc, limit=limit, drain=False, verbose=verbose,
-                      busy_sleep = 30, idle_sleep = 30)
+                      sleep_time = 30)
 
