@@ -1584,7 +1584,7 @@ class AdminUsage(Templated):
         triples = set() # sorting key
         daily_stats = {}
 
-        for ids in hcb.ids_by_category("profile_count"):
+        for ids in hcb.ids_by_category("profile_count", limit=10000):
             time, action = ids.split("-")
 
             if time.endswith("xx:xx"):
