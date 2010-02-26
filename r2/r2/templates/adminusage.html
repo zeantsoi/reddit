@@ -42,7 +42,11 @@
           =
         %else:
           <span class="${d['classes'].get(cls, 'load0')}">
-            ${d[cls]}
+            %if cls == 'count':
+              ${d[cls]}
+            %else:
+              ${"%0.2f" % d[cls]}
+            %endif
           </span>
         %endif
       </td>

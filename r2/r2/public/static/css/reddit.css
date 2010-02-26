@@ -3649,6 +3649,10 @@ a.adminbox:hover {
     border-right: none;
 }
 
+.usage-table .intersection span {
+    padding: 1px 3px 0 2px;
+}
+
 .usage-table .empty.intersection {
     text-align: center;
     color: #ccc;
