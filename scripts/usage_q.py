@@ -46,7 +46,7 @@ def buckets(time):
              ( 3600 * 2, trunc_time(time,  5).strftime("%Y/%m/%d_%H:%M")),
            ]
 
-def run(limit=100, verbose=False):
+def run(limit=1000, verbose=False):
     def myfunc(msgs, chan):
         incrs = {}
 
