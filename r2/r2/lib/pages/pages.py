@@ -1631,7 +1631,10 @@ class AdminUsage(Templated):
             for d in self.actions[action].values():
                 ice_cold = False
                 for category in ("elapsed", "count", "average"):
-                    scaled = d[category] * d["factor"]
+                    if category == "average":
+                        scaled = d[category]
+                    else:
+                        scaled = d[category] * d["factor"]
 
                     if category == "elapsed" and scaled < 5 * 60:
                         # If we're spending less than five mins a day
