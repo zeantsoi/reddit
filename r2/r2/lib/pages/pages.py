@@ -1600,14 +1600,19 @@ class AdminUsage(Templated):
         for ids in idses:
             time, action = ids.split("-")
 
+            # coltype strings are carefully chosen to sort alphabetically
+            # in the order that they do
+
             if time.endswith("xx:xx"):
+                coltype = 'Day'
                 factor = 1.0
                 label = time[5:10] # MM/DD
-                day = True
             elif time.endswith(":xx"):
+                coltype = 'Hour'
                 factor = 24.0
                 label = time[11:] # HH:xx
             else:
+                coltype = 'five-min'
                 factor = 288.0 # number of five-minute periods in a day
                 label = time[11:] # HH:MM
 
@@ -1624,9 +1629,10 @@ class AdminUsage(Templated):
             elapsed = elapseds.get(ids, 0) / 100.0
             average = int(100.0 * elapsed / count) / 100.0
 
-            triples.add( (factor, time, label) )
+            # Again, the "triple" tuples are a sorting key for the columns
+            triples.add( (coltype, time, label) )
 
-            if factor == 1.0:
+            if coltype == 'Day':
                 daily_stats.setdefault(action, []).append(
                     (count, elapsed, average)
                     )
@@ -1654,6 +1660,10 @@ class AdminUsage(Templated):
                         scaled = d[category]
                     else:
                         scaled = d[category] * d["factor"]
+
+                        # FIXME: temporary fudge factor until around March 5,
+                        # when the old, unscaled days fall out of hardcache
+                        scaled *= 0.05
 
                     if category == "elapsed" and scaled < 5 * 60:
                         # If we're spending less than five mins a day
@@ -1697,17 +1707,17 @@ class AdminUsage(Templated):
         # Build a list called labels that gives the template a sorting
         # order for the columns.
         self.labels = []
-        # Keep track of how many times we've seen a granularity (i.e., factor)
+        # Keep track of how many times we've seen a granularity (i.e., coltype)
         # so we can hide any that come after the third
-        factor_counts = {}
+        coltype_counts = {}
         # sort actions by whatever will end up as the first column
         action_sorting_column = None
-        for factor, time, label in sorted(triples, reverse=True):
+        for coltype, time, label in sorted(triples, reverse=True):
             if action_sorting_column is None:
                 action_sorting_column = label
-            factor_counts.setdefault(factor, 0)
-            factor_counts[factor] += 1
-            self.labels.append( (label, factor_counts[factor] > 3) )
+            coltype_counts.setdefault(coltype, 0)
+            coltype_counts[coltype] += 1
+            self.labels.append( (label, coltype_counts[coltype] > 3) )
 
         self.action_order = sorted(self.actions.keys(), reverse=True,
                 key = lambda x:

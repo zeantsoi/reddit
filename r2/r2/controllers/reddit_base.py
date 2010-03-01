@@ -556,10 +556,14 @@ class MinimalController(BaseController):
                 # the key was too big to set in the rendercache
                 g.log.debug("Ignored too-big render cache")
 
-        if g.usage_sampling > 0.0 and rand.random() < g.usage_sampling:
+        if g.usage_sampling <= 0.0:
+            return
+
+        if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
                         end_time = datetime.now(g.tz),
+                        sampling_rate = g.usage_sampling,
                         action = str(c.action) or "static")
 
 class RedditController(MinimalController):

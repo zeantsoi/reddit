@@ -63,11 +63,14 @@ def run(limit=1000, verbose=False):
 
             action = d["action"].replace("-", "_")
 
+            fudged_count   = int(       1 / d["sampling_rate"])
+            fudged_elapsed = int(hund_sec / d["sampling_rate"])
+
             for exp_time, bucket in buckets(d["end_time"]):
                 k = "%s-%s" % (bucket, action)
                 incrs.setdefault(k, [0, 0, exp_time])
-                incrs[k][0] += 1
-                incrs[k][1] += hund_sec
+                incrs[k][0] += fudged_count
+                incrs[k][1] += fudged_elapsed
 
         for k, (count, elapsed, exp_time) in incrs.iteritems():
             c_key = "profile_count-" + k
