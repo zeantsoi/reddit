@@ -311,6 +311,8 @@ class Account(Thing):
     @classmethod
     def cup_info_multi(cls, ids):
         ids = [ int(i) for i in ids ]
+        # Is this dumb? Why call sgm() with miss_fn=None, rather than just
+        # calling g.hardcache.get_multi()?
         return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
 
 

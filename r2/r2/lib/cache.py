@@ -447,7 +447,9 @@ class HardcacheChain(CacheChain):
                        self.mc_master.get_local_client(),
                        self.caches[2])
 
-#smart get multi
+# smart get multi:
+# For any keys not found in the cache, miss_fn() is run and the result is
+# stored in the cache. Then it returns everything, both the hits and misses.
 def sgm(cache, keys, miss_fn, prefix='', time=0):
     keys = set(keys)
     s_keys = dict((str(k), k) for k in keys)

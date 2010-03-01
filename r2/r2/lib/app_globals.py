@@ -55,6 +55,7 @@ class Globals(object):
 
     float_props = ['min_promote_bid',
                    'max_promote_bid',
+                   'usage_sampling',
                    ]
 
     bool_props = ['debug', 'translator',
@@ -69,7 +70,6 @@ class Globals(object):
                   'db_create_tables',
                   'disallow_db_writes',
                   'exception_logging',
-                  'enable_usage_stats',
                   ]
 
     tuple_props = ['memcaches',

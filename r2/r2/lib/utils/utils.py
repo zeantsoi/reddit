@@ -472,7 +472,9 @@ def to36(q):
 
 def median(l):
     if l:
-        return l[len(l)/2]
+        s = sorted(l)
+        i = len(s) / 2
+        return s[i]
 
 def query_string(dict):
     pairs = []

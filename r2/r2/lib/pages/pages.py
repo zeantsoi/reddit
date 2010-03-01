@@ -1462,12 +1462,15 @@ class AdminErrorLog(Templated):
         date_groupings = {}
         hexkeys_seen = {}
 
-        for ids in hcb.ids_by_category("error"):
+        idses = hcb.ids_by_category("error")
+        errors = g.hardcache.get_multi(prefix="error-", keys=idses)
+
+        for ids in idses:
             date, hexkey = ids.split("-")
 
             hexkeys_seen[hexkey] = True
 
-            d = g.hardcache.get("error-" + ids)
+            d = errors.get(ids, None)
 
             if d is None:
                 log_text("error=None", "Why is error-%s None?" % ids,
@@ -1480,16 +1483,22 @@ class AdminErrorLog(Templated):
         self.nicknames = {}
         self.statuses = {}
 
-        for hexkey in hexkeys_seen.keys():
-            nick = g.hardcache.get("error_nickname-%s" % hexkey, "???")
-            self.nicknames[hexkey] = nick
-            status = g.hardcache.get("error_status-%s" % hexkey, "normal")
-            self.statuses[hexkey] = status
+        nicks = g.hardcache.get_multi(prefix="error_nickname-",
+                                      keys=hexkeys_seen.keys())
+        stati = g.hardcache.get_multi(prefix="error_status-",
+                                      keys=hexkeys_seen.keys())
 
-        for ids in hcb.ids_by_category("logtext"):
+        for hexkey in hexkeys_seen.keys():
+            self.nicknames[hexkey] = nicks.get(hexkey, "???")
+            self.statuses[hexkey] = stati.get(hexkey, "normal")
+
+        idses = hcb.ids_by_category("logtext")
+        texts = g.hardcache.get_multi(prefix="logtext-", keys=idses)
+
+        for ids in idses:
             date, level, classification = ids.split("-", 2)
             textoccs = []
-            dicts = g.hardcache.get("logtext-" + ids)
+            dicts = texts.get(ids, None)
             if dicts is None:
                 log_text("logtext=None", "Why is logtext-%s None?" % ids,
                          "warning")
@@ -1584,7 +1593,11 @@ class AdminUsage(Templated):
         triples = set() # sorting key
         daily_stats = {}
 
-        for ids in hcb.ids_by_category("profile_count", limit=10000):
+        idses = hcb.ids_by_category("profile_count", limit=10000)
+        counts   = g.hardcache.get_multi(prefix="profile_count-", keys=idses)
+        elapseds = g.hardcache.get_multi(prefix="profile_elapsed-", keys=idses)
+
+        for ids in idses:
             time, action = ids.split("-")
 
             if time.endswith("xx:xx"):
@@ -1598,16 +1611,17 @@ class AdminUsage(Templated):
                 factor = 288.0 # number of five-minute periods in a day
                 label = time[11:] # HH:MM
 
+            count = counts.get(ids, None)
+            if count is None or count == 0:
+                log_text("usage count=None", "For %r, it's %r" % (ids, count), "error")
+                continue
+
             # Elapsed in hardcache is in hundredths of a second.
             # Multiply it by 100 so from this point forward, we're
             # dealing with seconds -- as floats with two decimal
             # places of precision. Similarly, round the average
             # to two decimal places.
-            count = g.hardcache.get("profile_count-" + ids)
-            if count is None or count == 0:
-                log_text("usage count=None", "For %r, it's %r" % (ids, count), "error")
-                continue
-            elapsed = g.hardcache.get("profile_elapsed-" + ids, 0) / 100.0
+            elapsed = elapseds.get(ids, 0) / 100.0
             average = int(100.0 * elapsed / count) / 100.0
 
             triples.add( (factor, time, label) )
@@ -1630,6 +1644,8 @@ class AdminUsage(Templated):
             med["count"]   = median([ x[0] for x in daily_stats[action] ])
             med["elapsed"] = median([ x[1] for x in daily_stats[action] ])
             med["average"] = median([ x[2] for x in daily_stats[action] ])
+
+#            print "Median count for %s is %r" % (action, med["count"])
 
             for d in self.actions[action].values():
                 ice_cold = False
