@@ -562,16 +562,26 @@ class MinimalController(BaseController):
         if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
             action = str(c.action) or "other"
 
+            if action == "other":
+                path_info = getattr(request, "path_info", "???")
+
+                if path_info.startswith("/ads/"):
+                    action = "ads"
+                elif path_info.startswith("/error/"):
+                    action = "error"
+                elif path_info == "/health":
+                    action = "health"
+                else:
+                    k = "just-printed-static-info"
+                    if action == "other" and g.cache.add(k, True, time=10):
+                        g.log.warning ("For static, path_info is " + path_info)
+
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
                         end_time = datetime.now(g.tz),
                         sampling_rate = g.usage_sampling,
                         action = action)
 
-            k = "just-printed-static-info"
-            if action == "other" and g.cache.add(k, True, time=10):
-                pi = getattr(request, "path_info", "???")
-                g.log.warning ("For static, path_info is " + pi)
 
 class RedditController(MinimalController):
 
