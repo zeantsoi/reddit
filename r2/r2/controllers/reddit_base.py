@@ -560,23 +560,14 @@ class MinimalController(BaseController):
             return
 
         if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
-            action = str(c.action) or "other"
-
-            if action == "other":
-                path_info = getattr(request, "path_info", "???")
-
-                if path_info.startswith("/ads/"):
-                    action = "ads"
-                elif path_info.startswith("/error/"):
-                    action = "error"
-                elif path_info in ("/", "/health", "/stylesheet"):
-                    action = path_info
-                else:
-                    k = "just-printed-static-info"
-                    if g.cache.add(k, True, time=10):
-                        log_text("action=other",
-                                 "no c.action for %r" % path_info,
-                                 "warning")
+            if ('pylons.routes_dict' in request.environ and
+                'action' in request.environ['pylons.routes_dict']):
+                action = str(request.environ['pylons.routes_dict']['action'])
+            else:
+                action = "unknown"
+                log_text("unknown action",
+                         "no action for %r" % path_info,
+                         "warning")
 
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
