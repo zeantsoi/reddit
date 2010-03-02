@@ -421,7 +421,9 @@ class UserController(ListingController):
     def keep_fn(self):
         # keep promotions off of profile pages.
         def keep(item):
-            return getattr(item, "promoted", None) is None
+            return (getattr(item, "promoted", None) is None and
+                    (self.where == "deleted" or
+                     not getattr(item, "deleted", False)))
         return keep
 
     def query(self):
