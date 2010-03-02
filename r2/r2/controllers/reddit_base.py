@@ -571,7 +571,7 @@ class MinimalController(BaseController):
             k = "just-printed-static-info"
             if action == "other" and g.cache.add(k, True, time=10):
                 pi = getattr(request, "path_info", "???")
-                g.log.debug ("For static, path_info is " + pi)
+                g.log.warning ("For static, path_info is " + pi)
 
 class RedditController(MinimalController):
 
