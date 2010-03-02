@@ -1678,6 +1678,10 @@ class AdminUsage(Templated):
         # Figure out what a typical day looks like. For each action,
         # look at the daily stats and record the median.
         for action in daily_stats.keys():
+            if len(daily_stats[action]) < 2:
+                # This is a new action. No point in guessing what normal
+                # load for it looks like.
+                continue
             med = {}
             med["count"]   = median([ x[0] for x in daily_stats[action] ])
             med["elapsed"] = median([ x[1] for x in daily_stats[action] ])

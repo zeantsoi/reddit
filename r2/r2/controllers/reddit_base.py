@@ -575,8 +575,8 @@ class MinimalController(BaseController):
                     k = "just-printed-static-info"
                     if g.cache.add(k, True, time=10):
                         log_text("action=other",
-                                 "c=%r request=%r" % (c,request),
-                                 "info")
+                                 "no c.action for %r" % path_info,
+                                 "warning")
 
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
