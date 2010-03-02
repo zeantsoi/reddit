@@ -573,8 +573,10 @@ class MinimalController(BaseController):
                     action = path_info
                 else:
                     k = "just-printed-static-info"
-                    if action == "other" and g.cache.add(k, True, time=10):
-                        g.log.warning ("For static, path_info is " + path_info)
+                    if g.cache.add(k, True, time=10):
+                        log_text("action=other",
+                                 "c=%r request=%r" % (c,request),
+                                 "info")
 
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
