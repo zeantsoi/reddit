@@ -6,6 +6,7 @@ from r2.lib.log import log_text
 from pylons import g
 from datetime import datetime
 from time import sleep
+import random as rand
 
 import pickle
 
@@ -26,7 +27,13 @@ def hund_from_start_and_end(start_time, end_time):
 
     hund_sec = int(elapsed.seconds * 100 +
                    elapsed.microseconds / 10000)
-    hund_sec = max(hund_sec, 1) # assume every request takes at least 0.01s
+
+    if hund_sec == 0:
+        fraction = elapsed.microseconds / 10000.0
+        if rand.random() < fraction:
+            return 1
+        else:
+            return 0
 
     return hund_sec
 
