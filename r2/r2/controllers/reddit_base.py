@@ -569,8 +569,8 @@ class MinimalController(BaseController):
                     action = "ads"
                 elif path_info.startswith("/error/"):
                     action = "error"
-                elif path_info == "/health":
-                    action = "health"
+                elif path_info in ("/", "/health", "/stylesheet"):
+                    action = path_info
                 else:
                     k = "just-printed-static-info"
                     if action == "other" and g.cache.add(k, True, time=10):
