@@ -457,6 +457,21 @@ def timeuntil(d, resultion = 1, bare = True):
     from pylons import g
     return timetext(d - datetime.now(g.tz))
 
+# Truncate a time to a certain number of minutes
+# e.g, trunc_time(5:52, 30) == 5:30
+def trunc_time(time, mins, hours=None):
+    if hours is not None:
+        if hours < 1 or hours > 60:
+            raise ValueError("Hours %d is weird" % mins)
+        time = time.replace(hour = hours * (time.hour / hours))
+
+    if mins < 1 or mins > 60:
+        raise ValueError("Mins %d is weird" % mins)
+
+    return time.replace(minute = mins * (time.minute / mins),
+                        second = 0,
+                        microsecond = 0)
+
 
 def to_base(q, alphabet):
     if q < 0: raise ValueError, "must supply a positive integer"

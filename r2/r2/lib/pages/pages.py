@@ -44,6 +44,7 @@ from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
+from r2.lib.utils import trunc_time
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
@@ -1597,6 +1598,31 @@ class AdminUsage(Templated):
         counts   = g.hardcache.get_multi(prefix="profile_count-", keys=idses)
         elapseds = g.hardcache.get_multi(prefix="profile_elapsed-", keys=idses)
 
+        # The next three code paragraphs are for the case where we're
+        # rendering the current period and trying to decide what load class
+        # to use. For example, if today's number of hits equals yesterday's,
+        # and we're 23:59 into the day, that's totally normal. But if we're
+        # only 12 hours into the day, that's twice what we'd expect. So
+        # we're going to scale the current period by the percent of the way
+        # into the period that we are.
+        #
+        # If we're less than 5% of the way into the period, we skip this
+        # step. This both avoids Div0 errors and keeps us from extrapolating
+        # ridiculously from a tiny sample size.
+
+        now = c.start_time.astimezone(g.display_tz)
+        t_midnight = trunc_time(now, hours=24, mins=60)
+        t_hour = trunc_time(now, mins=60)
+        t_5min = trunc_time(now, mins=5)
+
+        offset_day  = (now - t_midnight).seconds / 86400.0
+        offset_hour = (now - t_hour).seconds     / 3600.0
+        offset_5min = (now - t_5min).seconds     / 300.0
+
+        this_day  = t_midnight.strftime("%Y/%m/%d_xx:xx")
+        this_hour =     t_hour.strftime("%Y/%m/%d_%H:xx")
+        this_5min =     t_5min.strftime("%Y/%m/%d_%H:%M")
+
         for ids in idses:
             time, action = ids.split("-")
 
@@ -1607,14 +1633,20 @@ class AdminUsage(Templated):
                 coltype = 'Day'
                 factor = 1.0
                 label = time[5:10] # MM/DD
+                if time == this_day and offset_day > 0.05:
+                    factor /= offset_day
             elif time.endswith(":xx"):
                 coltype = 'Hour'
                 factor = 24.0
                 label = time[11:] # HH:xx
+                if time == this_hour and offset_hour > 0.05:
+                    factor /= offset_hour
             else:
                 coltype = 'five-min'
                 factor = 288.0 # number of five-minute periods in a day
                 label = time[11:] # HH:MM
+                if time == this_5min and offset_5min > 0.05:
+                    factor /= offset_5min
 
             count = counts.get(ids, None)
             if count is None or count == 0:
@@ -1660,10 +1692,6 @@ class AdminUsage(Templated):
                         scaled = d[category]
                     else:
                         scaled = d[category] * d["factor"]
-
-                        # FIXME: temporary fudge factor until around March 5,
-                        # when the old, unscaled days fall out of hardcache
-                        scaled *= 0.05
 
                     if category == "elapsed" and scaled < 5 * 60:
                         # If we're spending less than five mins a day
