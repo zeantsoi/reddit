@@ -1708,11 +1708,8 @@ class AdminUsage(Templated):
                         continue
 
                     if med[category] <= 0:
-                        # This shouldn't happen. If it does,
-                        # toggle commenting of the next three lines.
-                        raise ValueError("Huh. I guess this can happen.")
-#                        d["classes"][category] = "load9"
-#                        continue
+                        d["classes"][category] = "load9"
+                        continue
 
                     ratio = scaled / med[category]
                     if ratio > 5.0:
