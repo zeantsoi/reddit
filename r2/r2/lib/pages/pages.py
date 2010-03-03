@@ -1687,6 +1687,16 @@ class AdminUsage(Templated):
             med["elapsed"] = median([ x[1] for x in daily_stats[action] ])
             med["average"] = median([ x[2] for x in daily_stats[action] ])
 
+            # For the purposes of load classes, round the baseline count up
+            # to 5000 times per day, the elapsed to 30 minutes per day, and
+            # the average to 0.10 seconds per request. This not only avoids
+            # division-by-zero problems but also means that if something
+            # went from taking 0.01 seconds per day to 0.08 seconds per day,
+            # we're not going to consider it an emergency.
+            med["count"]   = max(5000,   med["count"])
+            med["elapsed"] = max(1800.0, med["elapsed"])
+            med["average"] = max(0.10,  med["average"])
+
 #            print "Median count for %s is %r" % (action, med["count"])
 
             for d in self.actions[action].values():
