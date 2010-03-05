@@ -206,7 +206,7 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer"))
     mc('/api/:action', controller='api')
 
-    mc("/button_info", controller="api", action="info")
+    mc("/button_info", controller="api", action="info", limit = 1)
 
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
