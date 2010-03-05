@@ -76,7 +76,7 @@ ${self.Child()}
       var reddit_bordercolor="FFFFFF";
     </script>
     <%
-       url = ("http://%s/button_content?t=4&id=%s" % 
+       url = ("http://%s/static/button/button4.html?t=4&id=%s" % 
                (get_domain(cname = c.cname, subreddit = True), thing._fullname))
        if c.bgcolor:
           url += "&bgcolor=%s&bordercolor=%s" % (c.bgcolor, c.bgcolor)

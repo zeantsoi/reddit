@@ -1325,10 +1325,13 @@ class ButtonEmbed(CachedTemplate):
     def __init__(self, button = None, width = 100,
                  height=100, referer = "", url = "", **kw):
         arg = "cnameframe=1&" if c.cname else ""
+        sr = c.site.name if not isinstance(c.site, FakeSubreddit) else ""
+        if sr:
+            arg += "sr=%s&" % sr
         Templated.__init__(self, button = button,
                            width = width, height = height,
                            referer=referer, url = url,
-                           domain = get_domain(),
+                           domain = get_domain(subreddit = False),
                            arg = arg,
                            **kw)
 

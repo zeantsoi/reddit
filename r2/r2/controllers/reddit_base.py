@@ -368,15 +368,6 @@ def set_cnameframe():
     if hasattr(c.site, 'domain'):
         c.authorized_cname = request.environ.get('authorized_cname', False)
 
-def set_colors():
-    theme_rx = re.compile(r'')
-    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
-    c.theme = None
-    if color_rx.match(request.get.get('bgcolor') or ''):
-        c.bgcolor = request.get.get('bgcolor')
-    if color_rx.match(request.get.get('bordercolor') or ''):
-        c.bordercolor = request.get.get('bordercolor')
-
 def set_recent_reddits():
     names = read_user_cookie('recent_reddits')
     c.recent_reddits = []
@@ -387,6 +378,15 @@ def set_recent_reddits():
                                                       return_dict = False)
         except NotFound:
             pass
+
+def set_colors():
+    theme_rx = re.compile(r'')
+    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
+    c.theme = None
+    if color_rx.match(request.get.get('bgcolor') or ''):
+        c.bgcolor = request.get.get('bgcolor')
+    if color_rx.match(request.get.get('bordercolor') or ''):
+        c.bordercolor = request.get.get('bordercolor')
 
 def ratelimit_agents():
     user_agent = request.user_agent
@@ -647,9 +647,10 @@ class RedditController(MinimalController):
         set_content_type()
         set_iface_lang()
         set_content_lang()
-        set_colors()
         set_recent_reddits()
         set_recent_clicks()
+        # used for HTML-lite templates
+        set_colors()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):

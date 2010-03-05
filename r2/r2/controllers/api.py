@@ -30,8 +30,8 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, link_from_url, timefromnow
-from r2.lib.utils import timeago, tup
+from r2.lib.utils import query_string, timefromnow
+from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
@@ -78,16 +78,19 @@ class ApiController(RedditController):
     def ajax_login_redirect(self, form, jquery, dest):
         form.redirect("/login" + query_string(dict(dest=dest)))
 
-    @validate(link = VUrl(['url']),
+    @validate(link1 = VUrl(['url']),
+              link2 = VByName('id'),
               count = VLimit('limit'))
-    def GET_info(self, link, count):
+    def GET_info(self, link1, link2, count):
         """
         Gets a listing of links which have the provided url.  
         """
-        if not link or 'url' not in request.params:
-            return abort(404, 'not found')
+        links = []
+        if link2:
+            links = filter_links(tup(link2), filter_spam = False)
+        elif link1 and ('ALREADY_SUB', 'url')  in c.errors:
+            links = filter_links(tup(link1), filter_spam = False)
 
-        links = link_from_url(request.params.get('url'), filter_spam = False)
         if not links:
             return abort(404, 'not found')
 

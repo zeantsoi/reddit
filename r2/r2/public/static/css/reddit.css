@@ -1772,16 +1772,24 @@ textarea.gray { color: gray; }
 
 .num { font-weight: bold; font-size: larger }
 
+.button.thing { 
+    margin:0px;
+    padding:0px;
+}
 .button .blog {
     border: 1px solid #c7def7;
     color: gray;
     text-align: center;
-    margin: 1px;
+    margin: 0px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    background-color:white;
 }
+
+.button .blog .r { color: gray;  }
 
 .button {color: #369;}
 .button a:hover { text-decoration: underline }
-
 
 .button .blog1 { font-size: x-small; }
 .button .blog1 .arrow { float:left; margin-left: 2px;  margin-right: 2px;  }
@@ -1800,17 +1808,32 @@ textarea.gray { color: gray; }
 .button .blog2 { font-size: small; }
 .button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
 .button .blog2 .bottomreddit { color: black; background-color: #c7def7; font-size: small; }
+.button .blog2 .score .submit { 
+    display: block;
+    font-size: x-small; 
+    line-height: 17px;
+}
 
-.button .blog3 { font-size: small; border: none; }
+.button .blog.blog3 { 
+    font-size: small; 
+    border: none; 
+    background-color: transparent;
+}
 .button .blog3 .left { float: left; width: 50%; }
 .button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
 .button .blog3 .right { float: right; margin-top: 5px; }
+.button .blog3 .score .submit { 
+    display: block;
+    font-size: x-small; 
+    line-height: 17px;
+}
 
 
 .blog5 .right { float: right; }
 .blog5 .left  { float: left; display:block; margin-top: 10px; }
 .blog5 .clearleft { clear: left; }
 .button .blog.blog5 { border: none; text-align: left; font-size: small; }
+.blog5 a.bling { float:left; }
 .blog5 .container { margin-left: 35px; margin-top: 2px; height: 50px;}
 .blog5 ul { display: inline; }
 .blog5 ul a { color: #515481; font-weight: bold; text-decoration: underline;  }
@@ -1846,11 +1869,6 @@ textarea.gray { color: gray; }
 .blog5 .arrow.downmod b { color: #9494FF; }
 
 .blog5 .right { margin-right: 5px; font-size: medium; font-style: italic;  }
-.blog5 .controversy3 { color: #BB2222;}
-.blog5 .controversy2 { color: #AB4242;}
-.blog5 .controversy1 { color: #976B6B;}
-.blog5 .controversy0 { color: #A8A8A8;}
-
 
 .optional {color: green}
 .instructions { font-size: larger;  }

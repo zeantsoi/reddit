@@ -1067,10 +1067,14 @@ def link_from_url(path, filter_spam = False, multiple = True):
     except NotFound:
         return [] if multiple else None
 
-    links = tup(links)
+    return filter_links(tup(links), filter_spam = filter_spam,
+                        multiple = multiple)
 
+def filter_links(links, filter_spam = False, multiple = True):
     # run the list through a builder to remove any that the user
     # isn't allowed to see
+    from pylons import c
+    from r2.models import IDBuilder, Link, Subreddit, NotFound
     links = IDBuilder([link._fullname for link in links],
                       skip = False).get_items()[0]
     if not links:
