@@ -126,13 +126,18 @@ $(function() {
                 submit = "/r/" + querydict.sr + submit;
             }
             if (querydict.title) {
-                submit += "&title=" + encodegURIComponent(querydict.title);
+                submit += "&title=" + encodeURIComponent(querydict.title);
             }
             $(".score:visible").fadeOut(function() {
                     $(".score").html('<a class="submit" target="_top" href="' +
                                      submit + '">submit</a>');
                     $(this).fadeIn().css("display", "");});
             $(".bling a, a.bling").attr("href", submit);
+            $(".arrow").each(function() {
+                    $(this).get(0).onclick = function() {
+                        window.parent.location = submit;
+                    }
+                });
         }
 
         var url = "/button_info.json";
