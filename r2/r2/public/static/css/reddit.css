@@ -1776,6 +1776,10 @@ textarea.gray { color: gray; }
     margin:0px;
     padding:0px;
 }
+
+.button-body { 
+    background-color: transparent;
+}
 .button .blog {
     border: 1px solid #c7def7;
     color: gray;
