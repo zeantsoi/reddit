@@ -462,7 +462,7 @@ class SearchQuery(object):
         self.deleted = deleted
 
         if timerange in ['day','month','year']:
-            self.timerange = ('NOW-1%s/HOUR' % timerange,"NOW")
+            self.timerange = ('NOW-1%s/HOUR' % timerange.upper(),"NOW")
         elif timerange == 'week':
             self.timerange = ('NOW-7DAY/HOUR',"NOW")
         elif timerange == 'hour':
