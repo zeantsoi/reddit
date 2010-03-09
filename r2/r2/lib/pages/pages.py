@@ -2596,8 +2596,9 @@ class Dart_Ad(CachedTemplate):
         return responsive(res, False)
 
 class HouseAd(CachedTemplate):
-    def __init__(self, imgurl=None, linkurl=None, submit_link=None):
-        Templated.__init__(self, imgurl = imgurl, linkurl = linkurl,
+    def __init__(self, rendering, linkurl, submit_link):
+        Templated.__init__(self, rendering=rendering,
+                           linkurl = linkurl,
                            submit_link = submit_link)
 
     def render(self, *a, **kw):

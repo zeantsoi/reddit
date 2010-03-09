@@ -1447,9 +1447,10 @@ class ApiController(RedditController):
                    colliding_ad=VAdByCodename(("codename", "fullname")),
                    codename = VLength("codename", max_length = 100),
                    imgurl = VLength("imgurl", max_length = 1000),
+                   raw_html = VLength("raw_html", max_length = 10000),
                    linkurl = VLength("linkurl", max_length = 1000))
     def POST_editad(self, form, jquery, ad, colliding_ad, codename,
-                    imgurl, linkurl):
+                    imgurl, raw_html, linkurl):
         if form.has_errors(("codename", "imgurl", "linkurl"),
                            errors.NO_TEXT):
             pass
@@ -1462,12 +1463,16 @@ class ApiController(RedditController):
             return
 
         if ad is None:
-            Ad._new(codename, imgurl, linkurl)
+            Ad._new(codename,
+                    imgurl=imgurl,
+                    raw_html=raw_html,
+                    linkurl=linkurl)
             form.set_html(".status", "saved. reload to see it.")
             return
 
         ad.codename = codename
         ad.imgurl = imgurl
+        ad.raw_html = raw_html
         ad.linkurl = linkurl
         ad._commit()
         form.set_html(".status", _('saved'))
