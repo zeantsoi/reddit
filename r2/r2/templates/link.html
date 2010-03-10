@@ -77,6 +77,15 @@
     </%call>
     &#32;
     ${self.domain()}
+
+    %if c.user_is_admin:
+        %if thing._deleted:
+            &#32;<span class="link-note">[link deleted]</span>
+        %endif
+        %if thing.on_trial():
+            &#32;<span class="link-note">[on trial]</span>
+        %endif
+    %endif
   </p>
 
   ##the expando button
@@ -187,9 +196,6 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
                               when = thing.timesince, 
                               author= WrappedUser(thing.author, thing.attribs, thing).render()))}
 
-  %if c.user_is_admin and thing._deleted:
-    &#32;[link deleted]
-  %endif
 </%def>
 
 <%def name="child()">

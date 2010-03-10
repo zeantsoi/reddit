@@ -21,7 +21,8 @@
 ################################################################################
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
-from r2.lib.utils import base_url, tup, domain, title_to_url
+from r2.lib.db.operators import desc
+from r2.lib.utils import base_url, tup, domain, title_to_url, Storage
 from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
@@ -34,6 +35,7 @@ from r2.lib.strings import strings, Score
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
+from datetime import datetime
 
 import random, re
 
@@ -49,7 +51,7 @@ class Link(Thing, Printable):
                      media_object = None,
                      has_thumbnail = False,
                      promoted = None,
-                     pending = False, 
+                     pending = False,
                      disable_comments = False,
                      selftext = '',
                      ip = '0.0.0.0')
@@ -178,6 +180,31 @@ class Link(Thing, Printable):
 
     def _unhide(self, user):
         return self._unsomething(user, self._hidden, 'hide')
+
+    def _trial_key(self):
+        return "trial-" + self._fullname
+
+    def on_trial(self):
+        return g.hardcache.get(self._trial_key())
+
+    def indict(self):
+        tk = self._trial_key()
+
+        if self._deleted:
+            print "already deleted"
+        elif hasattr(self, "promoted") and self.promoted:
+            print "it's promoted"
+        elif hasattr(self, "verdict") and self.verdict is not None:
+            print "it already has a verdict"
+        elif g.hardcache.get(tk):
+            print "it's already on trial"
+        else:
+            print "indict: %s has been indicted using %s" % (self._fullname, tk)
+            g.hardcache.set(tk, True, 3 * 86400)
+            LinkOnTrial._all_defendants(_update=True)
+            # The regular hardcache reaper should never run on one of these,
+            # since a mistrial should be declared if the trial is still open
+            # after 24 hours. So the "3 days" expiration isn't really real.
 
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
@@ -1015,6 +1042,158 @@ class Inbox(MultiRelation('inbox',
                 res.append(i)
         return res
 
+class LinkOnTrial(Storage):
+    def __init__(self, link):
+        if not link.on_trial():
+            raise ValueError ("Link %s is not on trial" % link._id)
+        self.link = link
+
+    @classmethod
+    def add_props(cls, user, wrapped):
+        Link.add_props(user, wrapped)
+        for item in wrapped:
+            item.rowstyle = "link ontrial"
+        # Run this last
+        Printable.add_props(user, wrapped)
+
+    def convict(self):
+#        train_spam_filter(self.link, "spam")
+        if self.link._spam:
+            pass #TODO: PM submitter
+        else:
+            pass #TODO: ban it
+
+    def acquit(self):
+#        train_spam_filter(self.link, "ham")
+        if self.link._spam:
+            pass
+#            self.link._date = datetime.now(g.tz)
+#            self.link._spam = False
+            #TODO: PM submitter
+
+    def mistrial(self):
+        #TODO: PM mods
+        if self.link._spam:
+            pass #TODO: PM submitter
+
+    def verdict(self):
+        from r2.models import Jury
+
+        ups = 0
+        downs = 0
+        nones = 0
+
+        defendant_age = datetime.now(g.tz) - self.link._date
+        if defendant_age.days > 0:
+            return "timeout"
+
+        for j in Jury.by_defendant(self.link):
+            if j._name == "0":
+                nones += 1
+            elif j._name == "1":
+                ups += 1
+            elif j._name == "-1":
+                downs += 1
+            else:
+                raise ValueError("weird jury vote: [%s]" % j._name)
+
+        print "%d ups, %d downs, %d haven't voted yet" % (ups, downs, nones)
+
+        if ups + downs < 5:
+            return None # not enough voters yet
+
+        up_pct = ups / float(ups + downs)
+
+        if up_pct < 0.33:
+            return "guilty"
+        elif up_pct > 0.67:
+            return "innocent"
+        else:
+            return None # no decision yet; wait for more voters
+
+    def check_verdict(self):
+        verdict = self.verdict()
+        if verdict is None:
+            return # no verdict yet
+
+        if verdict == "guilty":
+            self.convict()
+        elif verdict == "innocent":
+            self.acquit()
+        elif verdict == "timeout":
+            self.mistrial()
+        else:
+            raise ValueError("Invalid verdict [%s]" % verdict)
+
+#        self.link.verdict = verdict
+#        g.hardcache.delete(self.link._trial_key())
+#        self.link._commit()
+#        LinkOnTrial._all_defendants(_update=True)
+
+        return verdict
+
+    @classmethod
+    @memoize('linkontrial.all_defendants')
+    def _all_defendants_cache(cls):
+        fnames = g.hardcache.backend.ids_by_category("trial")
+        return fnames
+
+    @classmethod
+    def _all_defendants(cls, _update=False):
+        all = cls._all_defendants_cache(_update=_update)
+        return Link._by_fullname(all, data=True).values()
+
+    @classmethod
+    def find_a_trial(cls, account):
+        from r2.models import Jury
+
+        defendants_voted_upon = []
+        defendants_assigned_to = []
+
+        for jury in Jury.by_account(account):
+            defendants_assigned_to.append(jury._thing2_id)
+            if jury._name != '0':
+                defendants_voted_upon.append(jury._thing2_id)
+
+        all_defendants = cls._all_defendants()
+        all_defendants.sort(key=lambda x: x._date)
+        #TODO: sorting should de-prioritize quorum juries and ones
+        #      that have already been seen
+
+        sr_ids = [ d.sr_id for d in all_defendants ]
+        srs = Subreddit._byID(sr_ids)
+        cs = {}
+        for sr_id, sr in srs.iteritems():
+            cs[sr_id] = sr.can_submit(account) and not sr._spam
+
+        for defendant in all_defendants:
+            if defendant._deleted:
+                g.log.debug("%s is deleted" % defendant)
+            elif defendant._id in defendants_voted_upon:
+                g.log.debug("%s is already on the jury for %s" %
+                            (account, defendant))
+            elif not cs[defendant.sr_id]:
+                g.log.debug("%s can't submit on /r/%s, where %s is" %
+                            (account,
+                             Subreddit._byID(defendant.sr_id).name,
+                             defendant))
+            elif not Jury.voir_dire(account, defendant):
+                g.log.debug("%s failed voir dire for %s" %
+                            (account, defendant))
+            else:
+                if defendant._id not in defendants_assigned_to:
+                    j = Jury._new(account, defendant)
+                return defendant
+
+        return None
+
+    @classmethod
+    def check_all_trials(cls):
+        print "checking all trials..."
+        for defendant in cls._all_defendants():
+            print "Looking at %r" % defendant
+            v = cls(defendant).check_verdict()
+            print "Verdict: %r" % v
 
 class ModeratorInbox(Relation(Subreddit, Message)):
     #TODO: shouldn't dupe this
@@ -1046,4 +1225,3 @@ class ModeratorInbox(Relation(Subreddit, Message)):
                 i._commit()
                 res.append(i)
         return res
-

@@ -447,3 +447,14 @@ ${unsafe(txt)}
   %endif
 </%def>
 
+<%def name="pretty_button(label, func, func_vars='', extra_class='')">
+  <a class="pretty-button ${extra_class}" href="#"
+     %if func_vars:
+       onclick="return ${func}($(this), ${func_vars})"
+     %else:
+       onclick="return ${func}($(this))"
+     %endif
+     >
+       ${label}
+  </a>
+</%def>

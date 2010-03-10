@@ -580,6 +580,15 @@ class ApiController(RedditController):
             return
         Report.new(c.user, thing)
 
+    @noresponse(VAdmin(), VModhash(),
+                thing = VByName('id'))
+    def POST_indict(self, thing):
+        '''put something on trial'''
+        if not thing:
+            log_text("indict: no thing", level="warning")
+
+        thing.indict()
+
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
@@ -753,6 +762,38 @@ class ApiController(RedditController):
             if should_ratelimit:
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_share_")
+
+    @noresponse(VUser(),
+                VModhash(),
+                ip = ValidIP(),
+                dir = VInt('dir', min=-1, max=1),
+                thing = VByName('id'))
+    def POST_juryvote(self, dir, thing, ip):
+        if not thing:
+            log_text("juryvote: no thing", level="warning")
+            return
+
+        if not ip:
+            log_text("juryvote: no ip", level="warning")
+            return
+
+        if dir is None:
+            log_text("juryvote: no dir", level="warning")
+            return
+
+        j = Jury.by_account_and_defendant(c.user, thing)
+
+        if not thing.on_trial():
+            log_text("juryvote: not on trial", level="warning")
+            return
+
+        if not j:
+            log_text("juryvote: not on the jury", level="warning")
+            return
+
+        print "%s cast a %d juryvote on %r" % (c.user.name, dir, thing)
+        j._name = dir
+        j._commit()
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1622,7 +1663,7 @@ class ApiController(RedditController):
     @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
                    show = VByName('show', thing_cls = Link, multiple = False))
     def POST_fetch_links(self, form, jquery, links, show):
-        l = wrap_links(links, listing_cls = OrganicListing,
+        l = wrap_links(links, listing_cls = SpotlightListing,
                        num_margin = 0, mid_margin = 0)
         jquery(".content").replace_things(l, stubs = True)
 

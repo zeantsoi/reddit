@@ -127,6 +127,11 @@ class Account(Thing):
             return (self.link_karma >= g.WIKI_KARMA and
                     self.comment_karma >= g.WIKI_KARMA)
 
+    def jury_eligible(self):
+        k = "juror-" + self.name
+        return g.hardcache.get(k) and not g.cache.get("jury-killswitch")
+
+
     def all_karmas(self):
         """returns a list of tuples in the form (name, link_karma,
         comment_karma)"""

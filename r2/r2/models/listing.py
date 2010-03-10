@@ -110,7 +110,7 @@ class NestedListing(Listing):
         #make into a tree thing
         return Wrapped(self)
 
-class OrganicListing(Listing):
+class SpotlightListing(Listing):
     # class used in Javascript to manage these objects
     _js_cls = "OrganicListing"
 
@@ -121,13 +121,13 @@ class OrganicListing(Listing):
         self.show_nums  = True
         self._max_num   = kw.get('max_num', 0)
         self._max_score = kw.get('max_score', 0)
-        self.org_links  = kw.get('org_links', [])
+        self.spotlight_links  = kw.get('spotlight_links', [])
         self.visible_link = kw.get('visible_link', '')
 
     @property
     def max_score(self):
         return self._max_score
-    
+
     def listing(self):
         res = Listing.listing(self)
         # override score fields

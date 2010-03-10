@@ -1,0 +1,100 @@
+# The contents of this file are subject to the Common Public Attribution
+# License Version 1.0. (the "License"); you may not use this file except in
+# compliance with the License. You may obtain a copy of the License at
+# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# License Version 1.1, but Sections 14 and 15 have been added to cover use of
+# software over a computer network and provide for limited attribution for the
+# Original Developer. In addition, Exhibit A has been modified to be consistent
+# with Exhibit B.
+# 
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+# the specific language governing rights and limitations under the License.
+# 
+# The Original Code is Reddit.
+# 
+# The Original Developer is the Initial Developer.  The Initial Developer of the
+# Original Code is CondeNet, Inc.
+# 
+# All portions of the code written by CondeNet are Copyright (c) 2006-2008
+# CondeNet, Inc. All Rights Reserved.
+################################################################################
+from r2.lib.db.thing import DataThing, Thing, MultiRelation, Relation
+from r2.lib.db.thing import NotFound, load_things
+from r2.lib.db.userrel import UserRel
+from r2.lib.db.operators import desc, lower
+from r2.lib.memoize import memoize
+from r2.models import Account, Link
+from pylons import c, g, request
+
+class Jury(MultiRelation('jury',
+                         Relation(Account, Link))):
+    @classmethod
+    def _new(cls, account, defendant):
+        j = Jury(account, defendant, "0")
+
+        j._commit()
+
+        Jury.by_account(account, _update=True)
+        Jury.by_defendant(defendant, _update=True)
+
+        return j
+
+    # Check to see if a juror is eligible to serve on a jury for a given
+    # link.
+    # Note: It's outside the scope of this function to check whether the
+    # juror is *already* on the jury.
+    @classmethod
+    def voir_dire(cls, account, defendant):
+# TODO:
+# * You shouldn't be eligible for things you've already voted on.
+# * Tor IPs shouldn't be eligible
+# * The same /16 shouldn't get to vote more than once
+# * New / low-karma accounts shouldn't be eligible
+        if isinstance(defendant, Link):
+            return True
+        else:
+            g.log.debug("%s can't serve on a jury for %s: it's not a link" %
+                        account.name, defendant)
+            return False
+
+    @classmethod
+    @memoize('jury.by_account')
+    def by_account_cache(cls, account):
+        q = cls._query(cls.c._thing1_id == account._id,
+                       sort = desc('_date'))
+        q._limit = 100
+        return [ j._fullname for j in q ]
+
+    @classmethod
+    def by_account(cls, account, _update=False):
+        rel_ids = cls.by_account_cache(account, _update=_update)
+        juries = DataThing._by_fullname(rel_ids, data=True,
+                                        return_dict = False)
+        if juries:
+            load_things(juries, load_data=True)
+        return juries
+
+    @classmethod
+    @memoize('jury.by_defendant')
+    def by_defendant_cache(cls, defendant):
+        q = cls._query(cls.c._thing2_id == defendant._id,
+                       sort = desc('_date'))
+        q._limit = 1000
+        return [ j._fullname for j in q ]
+
+    @classmethod
+    def by_defendant(cls, defendant, _update=False):
+        rel_ids = cls.by_defendant_cache(defendant, _update=_update)
+        juries = DataThing._by_fullname(rel_ids, data=True,
+                                        return_dict = False)
+        if juries:
+            load_things(juries, load_data=True)
+        return juries
+
+    @classmethod
+    def by_account_and_defendant(cls, account, defendant):
+        q = cls._fast_query(account, defendant, ("-1", "0", "1"))
+        v = filter(None, q.values())
+        if v:
+            return v[0]

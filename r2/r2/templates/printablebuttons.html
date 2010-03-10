@@ -31,6 +31,12 @@
       ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
     </li>
   %endif
+  %if thing.show_indict:
+    <li>
+         ${self.state_button("indict", "indict",
+            "return change_state(this, 'indict');", _("indicted"))}
+    </li>
+  %endif
   %if thing.show_delete:
     <li>
       ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
