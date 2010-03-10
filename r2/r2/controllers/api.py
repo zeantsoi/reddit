@@ -791,7 +791,10 @@ class ApiController(RedditController):
             log_text("juryvote: not on the jury", level="warning")
             return
 
-        print "%s cast a %d juryvote on %r" % (c.user.name, dir, thing)
+        log_text("juryvote",
+                 "%s cast a %d juryvote on %r" % (c.user.name, dir, thing),
+                 level="info")
+
         j._name = dir
         j._commit()
 

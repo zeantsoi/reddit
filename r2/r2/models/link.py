@@ -191,20 +191,22 @@ class Link(Thing, Printable):
         tk = self._trial_key()
 
         if self._deleted:
-            print "already deleted"
+            result = "already deleted"
         elif hasattr(self, "promoted") and self.promoted:
-            print "it's promoted"
+            result = "it's promoted"
         elif hasattr(self, "verdict") and self.verdict is not None:
-            print "it already has a verdict"
+            result = "it already has a verdict"
         elif g.hardcache.get(tk):
-            print "it's already on trial"
+            result = "it's already on trial"
         else:
-            print "indict: %s has been indicted using %s" % (self._fullname, tk)
+            result = "indict: %s has been indicted using %s" % (self._fullname, tk)
             g.hardcache.set(tk, True, 3 * 86400)
             LinkOnTrial._all_defendants(_update=True)
             # The regular hardcache reaper should never run on one of these,
             # since a mistrial should be declared if the trial is still open
             # after 24 hours. So the "3 days" expiration isn't really real.
+
+        log_text("indict_result", "%r: %s" % (self, result), level="info")
 
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
