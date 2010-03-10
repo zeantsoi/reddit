@@ -3760,6 +3760,14 @@ a.pretty-button.positive.pressed {
     background-color: #ffecf8;
 }
 
+.organic-listing .ontrial a.title {
+    color: #555;
+}
+
+.we-need-help {
+  font-weight: bold;
+}
+
 .jury-box .thanks-for-voting {
   display: none;
   color: red;
@@ -3769,7 +3777,7 @@ a.pretty-button.positive.pressed {
   margin-bottom: 5px;
 }
 
-.sitetable .jury-box .we-need-help {
+.sitetable .we-need-help {
   display: none;
 }
 

@@ -38,14 +38,7 @@
 </%def>
 
 <%def name="entry()">
-  ${parent.entry()}
-
   <div class="jury-box">
-      <span class="we-need-help">
-        ${_("reddit needs your help!")}
-        ${_("how would you classify this link?")}
-      </span>
-
       <%
          pos_class = "positive"
          neg_class = "negative"
@@ -57,6 +50,11 @@
          elif int(thing.juryvote) == -1:
            neg_class += " pressed"
       %>
+
+      <span class="we-need-help">
+        ${_("reddit needs your help!")}
+        ${_("how would you classify this link?")}
+      </span>
 
       ${pretty_button(_("okay"),             "juryvote", 1, pos_class)}
       ${pretty_button(_("off-topic / spam"), "juryvote", -1, neg_class)}
@@ -70,5 +68,7 @@
         </a>
       </span>
   </div>
+
+  ${parent.entry()}
 
 </%def>

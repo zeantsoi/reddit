@@ -319,6 +319,7 @@ class SavedController(ListingController):
 class JurydutyController(ListingController):
     where = 'juryduty'
     title_text = _('jury duty')
+    show_nums = False
 
     def query(self):
         if not c.user_is_loggedin:

@@ -30,6 +30,7 @@ from r2.config import cache
 from r2.lib.memoize import memoize
 from r2.lib.filters import profanity_filter
 from r2.lib import utils
+from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 
