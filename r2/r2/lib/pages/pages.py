@@ -185,11 +185,30 @@ class Reddit(Templated):
         if not c.user_is_loggedin and self.loginbox:
             ps.append(LoginFormWide())
 
+        if not isinstance(c.site, FakeSubreddit):
+            ps.append(SponsorshipBox())
+
+        no_ads_yet = True
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
-            ps.append(SponsorshipBox())
+            ps.append(Ads())
+            no_ads_yet = False
 
+        if self.submit_box:
+            ps.append(SideBox(_('Submit a link'),
+                              '/submit', 'submit',
+                              sr_path = True,
+                              subtitles = [strings.submit_box_text],
+                              show_cover = True))
+
+        if self.create_reddit_box:
+           ps.append(SideBox(_('Create your own reddit'),
+                              '/reddits/create', 'create',
+                              subtitles = rand_strings.get("create_reddit", 2),
+                              show_cover = True, nocname=True))
+
+        if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
                 total = len(c.site.moderators)
@@ -209,22 +228,15 @@ class Reddit(Templated):
                 ps.append(SideContentBox(_('admin box'), self.sr_admin_menu()))
 
 
-        if self.submit_box:
-            ps.append(SideBox(_('Submit a link'),
-                              '/submit', 'submit',
-                              sr_path = True,
-                              subtitles = [strings.submit_box_text],
-                              show_cover = True))
-            
-        if self.create_reddit_box:
-           ps.append(SideBox(_('Create your own reddit'),
-                              '/reddits/create', 'create',
-                              subtitles = rand_strings.get("create_reddit", 2),
-                              show_cover = True, nocname=True))
+        if no_ads_yet:
+            ps.append(Ads())
 
-        #we should do this here, but unless we move the ads into a
-        #template of its own, it will render above the ad
-        #ps.append(ClickGadget())
+        if c.user_is_admin:
+            ps.append(Admin_Rightbox())
+
+        if c.user.pref_clickgadget and c.recent_clicks:
+            ps.append(SideContentBox(_("Recently viewed links"),
+                                     [ClickGadget(c.recent_clicks)]))
 
         return ps
 
@@ -1767,6 +1779,11 @@ class AdminUsage(Templated):
 
         Templated.__init__(self)
 
+class Ads(Templated):
+    pass
+
+class Admin_Rightbox(Templated):
+    pass
 
 class Embed(Templated):
     """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
