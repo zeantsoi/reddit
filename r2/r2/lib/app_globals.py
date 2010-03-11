@@ -24,8 +24,9 @@ from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, SelfEmptyingCache
-from r2.lib.cache import Memcache, Permacache, HardCache
-from r2.lib.cache import MemcacheChain, DoubleMemcacheChain, PermacacheChain, HardcacheChain
+from r2.lib.cache import PyMemcache as Memcache
+from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
+from r2.lib.cache import CassandraCache, CassandraCacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -74,8 +75,10 @@ class Globals(object):
 
     tuple_props = ['memcaches',
                    'rec_cache',
-                   'permacaches',
                    'rendercaches',
+                   'permacache_memcaches',
+                   'cassandra_seeds',
+                   'permacaches',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -131,19 +134,28 @@ class Globals(object):
 
         localcache_cls = SelfEmptyingCache if self.running_as_script else LocalCache
 
-        # we're going to temporarily run the old memcached behind the
-        # new one so the caches can start warmer
-        # mc = Memcache(self.memcaches, debug=self.debug)
-        mc = Permacache(self.memcaches)
-        rec_cache = Permacache(self.rec_cache)
-        rmc = Permacache(self.rendercaches)
-        pmc = Permacache(self.permacaches)
+        mc = Memcache(self.memcaches)
+        rec_cache = Memcache(self.rec_cache)
+        rmc = Memcache(self.rendercaches)
+
+        pmc_chain = (localcache_cls(),)
+        if self.permacache_memcaches:
+            pmc_chain += (Memcache(self.permacache_memcaches),)
+        if self.cassandra_seeds:
+            pmc_chain += (CassandraCache('permacache', 'permacache',
+                                         self.cassandra_seeds),)
+        if self.permacaches:
+            pmc_chain += (Memcache(self.permacaches),)
+        if len(pmc_chain) == 1:
+            print 'Warning: proceding without a permacache'
+            
+        self.permacache = CassandraCacheChain(pmc_chain)
+
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
         self.memcache = mc
-        self.cache = PermacacheChain((localcache_cls(), mc))
-        self.permacache = PermacacheChain((localcache_cls(), pmc))
-        self.rendercache = PermacacheChain((localcache_cls(), rmc))
+        self.cache = MemcacheChain((localcache_cls(), mc))
+        self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.rec_cache = rec_cache
 
         self.make_lock = make_lock_factory(mc)

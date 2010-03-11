@@ -821,24 +821,21 @@ class ApiController(RedditController):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
-        # in a lock to prevent duplicate votes from people
-        # double-clicking the arrows
-        with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
-            dir = (True if dir > 0
-                   else False if dir < 0
-                   else None)
+        dir = (True if dir > 0
+               else False if dir < 0
+               else None)
 
-            organic = vote_type == 'organic'
-            queries.queue_vote(user, thing, dir, ip, organic, store = store,
-                               cheater = (errors.CHEATER, None) in c.errors)
-            if store:
-                #update relevant caches
-                if isinstance(thing, Link):
-                    set_last_modified(c.user, 'liked')
-                    set_last_modified(c.user, 'disliked')
+        organic = vote_type == 'organic'
+        queries.queue_vote(user, thing, dir, ip, organic, store = store,
+                           cheater = (errors.CHEATER, None) in c.errors)
+        if store:
+            # update relevant caches
+            if isinstance(thing, Link):
+                set_last_modified(c.user, 'liked')
+                set_last_modified(c.user, 'disliked')
 
-                # flag search indexer that something has changed
-                changed(thing)
+            # flag search indexer that something has changed
+            changed(thing)
 
     @validatedForm(VUser(),
                    VModhash(),

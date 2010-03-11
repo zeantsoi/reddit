@@ -64,7 +64,8 @@ class Builder(object):
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
 
-        aids = set(l.author_id for l in items if hasattr(l, 'author_id'))
+        aids = set(l.author_id for l in items if hasattr(l, 'author_id')
+                   and l.author_id is not None)
 
         if aids:
             authors = Account._byID(aids, True) if aids else {}

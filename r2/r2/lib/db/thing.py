@@ -175,7 +175,7 @@ class DataThing(object):
 
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
-        l = cache.get(self._cache_key(), local = False)
+        l = cache.get(self._cache_key(), allow_local = False)
         if l and l._id != self._id:
             g.log.error("thing.py: Doppleganger on read: got %s for %s",
                         (l, self))
@@ -913,7 +913,7 @@ class Query(object):
                 with g.make_lock("lock_%s" % self._iden()):
                     # see if it was set while we were waiting for our
                     # lock
-                    names = cache.get(self._iden(), local = False)
+                    names = cache.get(self._iden(), allow_local = False)
                     if not names:
                         lst = _retrieve()
                         cache.set(self._iden(),

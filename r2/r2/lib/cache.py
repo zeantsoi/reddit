@@ -21,13 +21,18 @@
 ################################################################################
 from threading import local
 from hashlib import md5
+import pickle
 
 import pylibmc
 from _pylibmc import MemcachedError
-from contrib import memcache
 
+import pycassa
+import cassandra.ttypes
+
+from contrib import memcache
 from utils import lstrips, in_chunks, tup
 from r2.lib.hardcachebackend import HardCacheBackend
+from r2.lib.utils import trace
 
 class NoneResult(object): pass
 
@@ -43,20 +48,21 @@ class CacheUtils(object):
         for k,v in keys.iteritems():
             self.add(prefix+str(k), v)
 
-    def get_multi(self, keys, prefix='', partial=True):
-        if prefix:
-            key_map = dict((prefix+str(k), k) for k in keys)
+    def _prefix_keys(self, keys, prefix):
+        if len(prefix):
+            return dict((prefix+str(k), k) for k in keys)
         else:
-            key_map = dict((str(k), k) for k in keys)
+            return dict((str(k), k) for k in keys)
 
-        r = self.simple_get_multi(key_map.keys())
+    def _unprefix_keys(self, results, key_map):
+        return dict((key_map[k], results[k]) for k in results.keys())
 
-        if not partial and len(r.keys()) < len(key_map):
-            return None
+    def get_multi(self, keys, prefix=''):
+        key_map = self._prefix_keys(keys, prefix)
+        results = self.simple_get_multi(key_map.keys())
+        return self._unprefix_keys(results, key_map)
 
-        return dict((key_map[k], r[k]) for k in r.keys())
-
-class Permacache(CacheUtils, memcache.Client):
+class PyMemcache(CacheUtils, memcache.Client):
     """We still use our patched python-memcache to talk to the
        permacaches for legacy reasons"""
     simple_get_multi = memcache.Client.get_multi
@@ -90,7 +96,7 @@ class Permacache(CacheUtils, memcache.Client):
     def get_local_client(self):
         return self # memcache.py handles this itself
 
-class Memcache(CacheUtils, pylibmc.Client):
+class CMemcache(CacheUtils, pylibmc.Client):
     simple_get_multi = pylibmc.Client.get_multi
 
     def __init__(self, servers,
@@ -305,9 +311,9 @@ class CacheChain(CacheUtils, local):
     flush_all = make_set_fn('flush_all')
     cache_negative_results = False
 
-    def get(self, key, default = None, local = True):
+    def get(self, key, default = None, allow_local = True):
         for c in self.caches:
-            if not local and isinstance(c,LocalCache):
+            if not allow_local and isinstance(c,LocalCache):
                 continue
 
             val = c.get(key)
@@ -332,10 +338,19 @@ class CacheChain(CacheUtils, local):
 
         return default
 
-    def simple_get_multi(self, keys):
+    def get_multi(self, keys, prefix='', allow_local = True):
+        key_map = self._prefix_keys(keys, prefix)
+        results = self.simple_get_multi(key_map.keys(),
+                                        allow_local = allow_local)
+        return self._unprefix_keys(results, key_map)
+
+    def simple_get_multi(self, keys, allow_local = True):
         out = {}
         need = set(keys)
         for c in self.caches:
+            if not allow_local and isinstance(c, LocalCache):
+                continue
+
             if len(out) == len(keys):
                 # we've found them all
                 break
@@ -380,7 +395,7 @@ class CacheChain(CacheUtils, local):
 class MemcacheChain(CacheChain):
     def __init__(self, caches):
         CacheChain.__init__(self, caches)
-        self.mc_master = self.caches[-1]
+        localcache, self.mc_master = self.caches
 
     def reset(self):
         CacheChain.reset(self)
@@ -391,17 +406,24 @@ class DoubleMemcacheChain(CacheChain):
     """Temporary cache chain that places the new cache ahead of the
        old one for easier deployment"""
     def __init__(self, caches):
-        self.caches = localcache, memcache, permacache = caches
-        self.mc_master = memcache
+        self.caches = localcache, self.mc_master, self.pmc_master = caches
 
     def reset(self):
         CacheChain.reset(self)
         self.caches = (self.caches[0],
                        self.mc_master.get_local_client(),
-                       self.caches[2])
+                       self.pmc_master.get_local_client())
 
-class PermacacheChain(CacheChain):
-    pass
+class CassandraCacheChain(CacheChain):
+    def __init__(self, caches):
+        self.caches = caches
+        self.masters = caches[1:]
+
+    def reset(self):
+        CacheChain.reset(self)
+        self.caches = (self.caches[0],)
+        self.caches += tuple(master.get_local_client()
+                             for master in self.masters)
 
 class HardcacheChain(CacheChain):
     def __init__(self, caches, cache_negative_results = False):
@@ -447,13 +469,84 @@ class HardcacheChain(CacheChain):
                        self.mc_master.get_local_client(),
                        self.caches[2])
 
+CL_ZERO = cassandra.ttypes.ConsistencyLevel.ZERO
+CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
+CL_QUORUM = cassandra.ttypes.ConsistencyLevel.QUORUM
+CL_ALL = cassandra.ttypes.ConsistencyLevel.ALL
+
+class CassandraCache(CacheUtils):
+    """A cache that uses a Cassandra cluster. Uses a single keyspace
+       and column family and only the column-name 'value'"""
+    def __init__(self, keyspace, column_family, seeds,
+                 read_consistency_level = CL_ONE,
+                 write_consistency_level = CL_ONE):
+        self.keyspace = keyspace
+        self.column_family = column_family
+        self.seeds = seeds
+        self.client = pycassa.connect_thread_local(seeds)
+        self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
+                                       self.column_family,
+                                       read_consistency_level = read_consistency_level,
+                                       write_consistency_level = write_consistency_level)
+
+    def _rcl(self, alternative):
+        return (alternative if alternative is not None
+                else self.cf.read_consistency_level)
+
+    def _wcl(self, alternative):
+        return (alternative if alternative is not None
+                else self.cf.write_consistency_level)
+
+    def get(self, key, default = None, read_consistency_level = None):
+        try:
+            rcl = self._rcl(read_consistency_level)
+            row = self.cf.get(key, columns=['value'],
+                              read_consistency_level = rcl)
+            return pickle.loads(row['value'])
+        except (cassandra.ttypes.NotFoundException, KeyError):
+            return default
+
+    def simple_get_multi(self, keys, read_consistency_level = None):
+        rcl = self._rcl(read_consistency_level)
+        rows = self.cf.multiget(list(keys),
+                                columns=['value'],
+                                read_consistency_level = rcl)
+        return dict((key, pickle.loads(row['value']))
+                    for (key, row) in rows.iteritems())
+
+    def set(self, key, val, write_consistency_level = None):
+        wcl = self._wcl(write_consistency_level)
+        return self.cf.insert(key, {'value': pickle.dumps(val)},
+                              write_consistency_level = wcl)
+
+    def set_multi(self, keys, prefix='', write_consistency_level = None):
+        if not isinstance(keys, dict):
+            keys = dict(keys)
+        keys = dict(('%s%s' % (prefix, key), val)
+                     for (key, val) in keys.iteritems())
+        wcl = self._wcl(write_consistency_level)
+        ret = {}
+        for key, val in keys.iteritems():
+            ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
+                                      write_consistency_level = wcl)
+
+        return ret
+
+    def delete(self, key, write_consistency_level = None):
+        wcl = self._wcl(write_consistency_level)
+        self.cf.remove(key, ['value'], write_consistency_level = wcl)
+
+    def get_local_client(self):
+        # pycassa.connect_thread_local does our thread-handling for us
+        return self
+
 # smart get multi:
 # For any keys not found in the cache, miss_fn() is run and the result is
 # stored in the cache. Then it returns everything, both the hits and misses.
 def sgm(cache, keys, miss_fn, prefix='', time=0):
     keys = set(keys)
     s_keys = dict((str(k), k) for k in keys)
-    r = cache.get_multi(s_keys.keys(), prefix)
+    r = cache.get_multi(s_keys.keys(), prefix=prefix)
     if miss_fn and len(r.keys()) < len(keys):
         need = set(s_keys.keys()) - set(r.keys())
         #TODO i can't send a generator
