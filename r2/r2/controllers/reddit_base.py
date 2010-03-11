@@ -26,7 +26,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters, amqp
-from r2.lib.utils import http_utils, UniqueIterator
+from r2.lib.utils import http_utils, UniqueIterator, ip_and_slash16
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed
@@ -51,8 +51,6 @@ from r2.lib.tracking import encrypt, decrypt
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
 cache_affecting_cookies = ('reddit_first','over18','_options')
-
-r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
@@ -402,15 +400,10 @@ def throttled(key):
     return g.cache.get("throttle_" + key)
 
 def ratelimit_throttled():
-    ip = request.ip
+    ip, slash16 = ip_and_slash16(request)
 
-    m = r_subnet.match(ip)
-    if m is None:
-        g.log.error("ratelimit_throttled: couldn't parse IP %s" % ip)
-    else:
-        subnet = m.group(1) + '.x.x'
-        if throttled(ip) or throttled(subnet):
-            abort(503, 'service temporarily unavailable')
+    if throttled(ip) or throttled(slash16):
+        abort(503, 'service temporarily unavailable')
 
 
 #TODO i want to get rid of this function. once the listings in front.py are

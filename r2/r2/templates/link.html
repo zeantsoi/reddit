@@ -82,7 +82,7 @@
         %if thing._deleted:
             &#32;<span class="link-note">[link deleted]</span>
         %endif
-        %if thing.on_trial():
+        %if getattr(thing, "on_trial", False):
             &#32;<span class="link-note">[on trial]</span>
         %endif
     %endif

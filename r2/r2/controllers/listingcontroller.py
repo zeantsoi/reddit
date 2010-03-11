@@ -25,7 +25,8 @@ from validator import *
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ControversyTimeMenu
+from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu
+from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot, get_hot
@@ -37,6 +38,7 @@ from r2.lib import organic
 from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
+from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
 from r2.lib.promote import PromoteSR
 from r2.lib.contrib.pysolr import SolrError
@@ -219,10 +221,7 @@ class HotController(FixListing, ListingController):
     def spotlight(self):
         spotlight_links, pos = organic.organic_links(c.user)
 
-        if c.user_is_loggedin and c.user.jury_eligible():
-            trial = LinkOnTrial.find_a_trial(c.user)
-        else:
-            trial = None
+        trial = populate_spotlight()
 
         if trial:
             spotlight_links.insert(pos, trial._fullname)
@@ -250,7 +249,7 @@ class HotController(FixListing, ListingController):
         def wrap(item):
             if item is trial:
                 w = Wrapped(item)
-                w.render_class = LinkOnTrial
+                w.render_class = JuryDutySpotlight
                 return w
             return self.builder_wrapper(item)
 

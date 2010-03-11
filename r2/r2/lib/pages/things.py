@@ -21,7 +21,7 @@
 ################################################################################
 from r2.lib.menus import Styled
 from r2.lib.wrapped import Wrapped
-from r2.models import LinkListing, Link, PromotedLink, LinkOnTrial
+from r2.models import LinkListing, Link, PromotedLink
 from r2.models import make_wrapper, IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score

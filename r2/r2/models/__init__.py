@@ -28,6 +28,7 @@ from report import *
 from subreddit import *
 from award import *
 from jury import *
+from trial import *
 from ad import *
 from bidding import *
 from mail_queue import Email, has_opted_out, opt_count
