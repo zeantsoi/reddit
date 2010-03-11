@@ -346,7 +346,7 @@ class JurydutyController(ListingController):
         jury = self.jury_by_defendant_fname[thing._fullname]
 
         if isinstance(thing, Link):
-            w.render_class = LinkOnTrial
+            w.render_class = JuryDutySpotlight
             w.juryvote = jury._name
         return w
 
