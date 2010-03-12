@@ -536,7 +536,7 @@ class CassandraCache(CacheUtils):
 
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
-        self.cf.remove(key, ['value'], write_consistency_level = wcl)
+        self.cf.remove(key, write_consistency_level = wcl)
 
     def get_local_client(self):
         # pycassa.connect_thread_local does our thread-handling for us

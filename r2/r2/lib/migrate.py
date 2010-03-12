@@ -222,89 +222,79 @@ def pushup_permacache(verbosity=1000):
     from r2.lib.db import queries
     from r2.lib.cache import CassandraCacheChain
 
-    authority = CassandraCacheChain((g.permacache.caches[-1],))
+    authority = g.permacache.caches[-1]
     nonauthority = CassandraCacheChain(g.permacache.caches[1:-1])
 
     def populate(keys):
-        vals = authority.get_multi(keys)
+        vals = authority.simple_get_multi(keys)
         if vals:
             nonauthority.set_multi(vals)
 
-    def v(i, s):
-        # print our progress every so often
-        if i == 0 or i % verbosity == 0:
-            print s
+    def gen_keys():
+        yield promoted_memo_key
 
-    g.permacache.get(promoted_memo_key)
-    load_all_reddits()
-    queries.get_all_comments()
+        # just let this one do its own writing
+        load_all_reddits()
 
-    l_q = Link._query(Link.c._spam == (True, False),
-                      Link.c._deleted == (True, False),
-                      sort=desc('_date'),
-                      data=True,
-                      )
-    for links in in_chunks(fetch_things2(l_q, verbosity),
-                           verbosity):
-        populate([comments_key(link._id)
-                  for link in links])
-        populate([last_modified_key(link, 'comments')
-                  for link in links])
-        populate([Link.by_url_key(link.url)
-                  for link in links
-                  if hasattr(link, 'url')
-                  and not getattr(link, 'is_self', False)])
-        v(0, links[-1])
+        yield queries.get_all_comments().iden
 
-    a_q = Account._query(Account.c._spam == (True, False),
-                         sort=desc('_date'),
-                         )
-    for i, account in enumerate(fetch_things2(a_q, verbosity)):
-        populate([
-                messages_key(account._id),
-                last_modified_key(account, 'overview'),
-                last_modified_key(account, 'commented'),
-                last_modified_key(account, 'submitted'),
-                last_modified_key(account, 'liked'),
-                last_modified_key(account, 'disliked'),
-                queries.get_comments(account, 'new', 'all').iden,
-                queries.get_submitted(account, 'new', 'all').iden,
-                queries.get_liked(account).iden,
-                queries.get_disliked(account).iden,
-                queries.get_hidden(account).iden,
-                queries.get_saved(account).iden,
-                queries.get_inbox_messages(account).iden,
-                queries.get_unread_messages(account).iden,
-                queries.get_inbox_comments(account).iden,
-                queries.get_unread_comments(account).iden,
-                queries.get_inbox_selfreply(account).iden,
-                queries.get_unread_selfreply(account).iden,
-                queries.get_sent(account).iden,
-                ])
-        v(i, account)
+        l_q = Link._query(Link.c._spam == (True, False),
+                          Link.c._deleted == (True, False),
+                          sort=desc('_date'),
+                          data=True,
+                          )
+        for link in fetch_things2(l_q, verbosity):
+            yield comments_key(link._id)
+            yield last_modified_key(link, 'comments')
+            if not getattr(link, 'is_self', False) and hasattr(link, 'url'):
+                yield Link.by_url_key(link.url)
 
-    sr_q = Subreddit._query(Subreddit.c._spam == (True, False),
-                            sort=desc('_date'),
-                            )
-    for i, sr in enumerate(fetch_things2(sr_q, verbosity)):
-        qs = []
-        qs.append(last_modified_key(sr, 'stylesheet_contents'))
-        qs.extend([
-                queries.get_links(sr, 'hot', 'all').iden,
-                queries.get_links(sr, 'new', 'all').iden,
-                ])
-        for sort in 'top', 'controversial':
-            for time in 'hour', 'day', 'week', 'month', 'year', 'all':
-                qs.append(
-                    queries.get_links(sr, sort, time, merge_batched=False).iden
-                    )
-        qs.extend([
-                queries.get_spam_links(sr).iden,
-                queries.get_spam_comments(sr).iden,
-                queries.get_reported_links(sr).iden,
-                queries.get_reported_comments(sr).iden,
-                queries.get_subreddit_messages(sr).iden,
-                queries.get_unread_subreddit_messages(sr).iden,
-                ])
-        populate(qs)
-        v(i, sr)
+        a_q = Account._query(Account.c._spam == (True, False),
+                             sort=desc('_date'),
+                             )
+        for account in fetch_things2(a_q, verbosity):
+            yield messages_key(account._id)
+            yield last_modified_key(account, 'overview')
+            yield last_modified_key(account, 'commented')
+            yield last_modified_key(account, 'submitted')
+            yield last_modified_key(account, 'liked')
+            yield last_modified_key(account, 'disliked')
+            yield queries.get_comments(account, 'new', 'all').iden
+            yield queries.get_submitted(account, 'new', 'all').iden
+            yield queries.get_liked(account).iden
+            yield queries.get_disliked(account).iden
+            yield queries.get_hidden(account).iden
+            yield queries.get_saved(account).iden
+            yield queries.get_inbox_messages(account).iden
+            yield queries.get_unread_messages(account).iden
+            yield queries.get_inbox_comments(account).iden
+            yield queries.get_unread_comments(account).iden
+            yield queries.get_inbox_selfreply(account).iden
+            yield queries.get_unread_selfreply(account).iden
+            yield queries.get_sent(account).iden
+
+        sr_q = Subreddit._query(Subreddit.c._spam == (True, False),
+                                sort=desc('_date'),
+                                )
+        for sr in fetch_things2(sr_q, verbosity):
+            yield last_modified_key(sr, 'stylesheet_contents')
+            yield queries.get_links(sr, 'hot', 'all').iden
+            yield queries.get_links(sr, 'new', 'all').iden
+
+            for sort in 'top', 'controversial':
+                for time in 'hour', 'day', 'week', 'month', 'year', 'all':
+                    yield queries.get_links(sr, sort, time,
+                                            merge_batched=False).iden
+            yield queries.get_spam_links(sr).iden
+            yield queries.get_spam_comments(sr).iden
+            yield queries.get_reported_links(sr).iden
+            yield queries.get_reported_comments(sr).iden
+            yield queries.get_subreddit_messages(sr).iden
+            yield queries.get_unread_subreddit_messages(sr).iden
+
+    done = 0
+    for keys in in_chunks(gen_keys(), verbosity):
+        g.reset_caches()
+        done += len(keys)
+        print 'Done %d: %r' % (done, keys[-1])
+        populate(keys)
