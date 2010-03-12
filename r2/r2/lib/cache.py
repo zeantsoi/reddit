@@ -514,12 +514,14 @@ class CassandraCache(CacheUtils):
         return dict((key, pickle.loads(row['value']))
                     for (key, row) in rows.iteritems())
 
-    def set(self, key, val, write_consistency_level = None):
+    def set(self, key, val,
+            write_consistency_level = None, time = None):
         wcl = self._wcl(write_consistency_level)
         return self.cf.insert(key, {'value': pickle.dumps(val)},
                               write_consistency_level = wcl)
 
-    def set_multi(self, keys, prefix='', write_consistency_level = None):
+    def set_multi(self, keys, prefix='',
+                  write_consistency_level = None, time = None):
         if not isinstance(keys, dict):
             keys = dict(keys)
         keys = dict(('%s%s' % (prefix, key), val)
