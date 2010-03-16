@@ -410,8 +410,7 @@ class Link(Thing, Printable):
             else:
                 item.mousedown_url = None
 
-            if on_trial(item):
-                item.on_trial = True
+            item.on_trial = on_trial(item)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
@@ -1021,7 +1020,7 @@ class Inbox(MultiRelation('inbox',
                 res.append(i)
         return res
 
-class JuryDutySpotlight(Printable):
+class LinkOnTrial(Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         Link.add_props(user, wrapped)

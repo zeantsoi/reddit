@@ -954,8 +954,8 @@ class MenuArea(Templated):
 
 class InfoBar(Templated):
     """Draws the yellow box at the top of a page for info"""
-    def __init__(self, message = ''):
-        Templated.__init__(self, message = message)
+    def __init__(self, message = '', extra_class = ''):
+        Templated.__init__(self, message = message, extra_class = extra_class)
 
 
 class RedditError(BoringPage):

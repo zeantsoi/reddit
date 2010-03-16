@@ -155,7 +155,7 @@ def _add_item(routing_key, body, message_id = None):
             raise
 
 def add_item(routing_key, body, message_id = None):
-    if amqp_host:
+    if amqp_host and g.amqp_logging:
         log.debug("amqp: adding item %r to %r" % (body, routing_key))
 
     worker.do(_add_item, routing_key, body, message_id = message_id)

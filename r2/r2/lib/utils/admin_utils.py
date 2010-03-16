@@ -19,12 +19,9 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from utils import *
-from http_utils import *
-from thing_utils import *
-from cmd_utils import *
 
-try:
-    from r2admin.lib.admin_utils import *
-except ImportError:
-    pass
+def jury_cache_dict(account, ip, slash16):
+    return {"recent-juror-key": 1}
+
+def voir_dire_priv (account, ip, slash16, defendant, sr):
+    return True

@@ -686,6 +686,11 @@ ul.flat-vert {text-align: left;}
 }
 
 
+.infobar.mellow {
+    background-color: #eff8ff;
+    border: 1px solid #bfe0ff;
+}
+
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
 .md p, .md h1 { margin: 5px 0}
@@ -3764,23 +3769,41 @@ a.pretty-button.positive.pressed {
     color: #555;
 }
 
+.organic-listing .ontrial .midcol {
+    margin-top: 20px;
+}
+
 .we-need-help {
-  font-weight: bold;
+    font-size: larger;
+    font-weight: bold;
+    line-height: 18px;
+}
+
+.organic-listing .how-to-classify {
+    font-weight: bold;
+}
+
+.jury-box .arrow-msg {
+    display: none;
+    color: red;
+    margin-top:5px;
 }
 
 .jury-box .thanks-for-voting {
-  display: none;
-  color: red;
+    margin-left: 1em;
+    display: none;
+    color: red;
 }
 
-.sitetable .jury-box {
-  margin-bottom: 5px;
+.jury-box .thanks-for-voting a {
+    margin-left: 1em;
+}
+
+.sitetable .linkontrial {
+/*    border-top: solid 1px #ccc; */
+    padding-top: 5px;
 }
 
 .sitetable .we-need-help {
-  display: none;
-}
-
-.sitetable .jury-box .pretty-button.negative {
-  margin-left: 0;
+    display: none;
 }

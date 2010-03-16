@@ -21,8 +21,7 @@
 ################################################################################
 
 from pylons import c, g, request
-from r2.models import Thing, Account
-from r2.lib.utils import ip_and_slash16
+from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
 
@@ -31,9 +30,22 @@ def all_defendants_cache():
     fnames = g.hardcache.backend.ids_by_category("trial")
     return fnames
 
-def all_defendants(_update=False):
+def all_defendants(quench=False, _update=False):
+    from r2.models import Thing
     all = all_defendants_cache(_update=_update)
-    return Thing._by_fullname(all, data=True).values()
+
+    defs = Thing._by_fullname(all, data=True).values()
+
+    if quench:
+        # Used for the spotlight, to filter out trials with over 30 votes;
+        # otherwise, hung juries would hog the spotlight for an hour as
+        # their vote counts continued to skyrocket
+
+        return filter (lambda d:
+                       not g.cache.get("quench_jurors-" + d._fullname),
+                       defs)
+    else:
+        return defs
 
 def trial_key(thing):
     return "trial-" + thing._fullname
@@ -41,9 +53,14 @@ def trial_key(thing):
 def on_trial(thing):
     return g.hardcache.get(trial_key(thing))
 
+def end_trial(thing):
+    g.hardcache.delete(trial_key(thing))
+    all_defendants(_update=True)
+
 def indict(defendant):
     tk = trial_key(defendant)
 
+    rv = False
     if defendant._deleted:
         result = "already deleted"
     elif hasattr(defendant, "promoted") and defendant.promoted:
@@ -59,46 +76,79 @@ def indict(defendant):
         g.hardcache.set(tk, True, 3 * 86400)
         all_defendants(_update=True)
         result = "it's now indicted: %s" % tk
+        rv = True
 
     log_text("indict_result", "%r: %s" % (defendant, result), level="info")
 
-def assign_trial(account):
+    return rv
+
+# Check to see if a juror is eligible to serve on a jury for a given link.
+def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
+    from r2.models import Link
+
+    if defendant._deleted:
+        g.log.debug("%s is deleted" % defendant)
+        return False
+
+    if defendant._id in defendants_voted_upon:
+        g.log.debug("%s already jury-voted for %s" % (account.name, defendant))
+        return False
+
+    if not isinstance(defendant, Link):
+        g.log.debug("%s can't serve on a jury for %s: it's not a link" %
+                    account.name, defendant)
+        return False
+
+    if g.debug:
+        return True
+
+    if not voir_dire_priv(account, ip, slash16, defendant, sr):
+        return False
+
+    return True
+
+def assign_trial(account, ip, slash16):
     from r2.models import Jury, Subreddit
+    from r2.lib.db import queries
 
     defendants_voted_upon = []
     defendants_assigned_to = []
-
     for jury in Jury.by_account(account):
         defendants_assigned_to.append(jury._thing2_id)
         if jury._name != '0':
             defendants_voted_upon.append(jury._thing2_id)
 
-    all_defs = all_defendants()
-    all_defs.sort(key=lambda x: x._date)
-    #TODO: sorting should de-prioritize quorum juries and ones
-    #      that have already been seen
+    subscribed_sr_ids = Subreddit.user_subreddits(account, ids=True, limit=None)
 
-    sr_ids = [ d.sr_id for d in all_defs ]
-    srs = Subreddit._byID(sr_ids)
-    cs = {}
+    # Pull defendants, except ones which already have lots of juryvotes
+    defs = all_defendants(quench=True)
+
+    # Filter out defendants outside this user's subscribed SRs
+    defs = filter (lambda d: d.sr_id in subscribed_sr_ids, defs)
+
+    # Dictionary of sr_id => SR for all defendants' SRs
+    srs = Subreddit._byID(set([ d.sr_id for d in defs ]))
+
+    # Dictionary of sr_id => eligibility bool
+    submit_srs = {}
     for sr_id, sr in srs.iteritems():
-        cs[sr_id] = sr.can_submit(account) and not sr._spam
+        submit_srs[sr_id] = sr.can_submit(account) and not sr._spam
 
-    for defendant in all_defs:
-        if defendant._deleted:
-            g.log.debug("%s is deleted" % defendant)
-        elif defendant._id in defendants_voted_upon:
-            g.log.debug("%s is already on the jury for %s" %
-                        (account, defendant))
-        elif not cs[defendant.sr_id]:
-            g.log.debug("%s can't submit on /r/%s, where %s is" %
-                        (account,
-                         Subreddit._byID(defendant.sr_id).name,
-                         defendant))
-        elif not Jury.voir_dire(account, defendant):
-            g.log.debug("%s failed voir dire for %s" %
-                        (account, defendant))
-        else:
+    # Filter out defendants with ineligible SRs
+    defs = filter (lambda d: submit_srs.get(d.sr_id), defs)
+
+    likes = queries.get_likes(account, defs)
+
+    # Filter out things that the user has upvoted or downvoted
+    defs = filter (lambda d: likes.get((account, d)) is None, defs)
+
+    # Prefer oldest trials
+    defs.sort(key=lambda x: x._date)
+
+    for defendant in defs:
+        sr = srs[defendant.sr_id]
+
+        if voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
             if defendant._id not in defendants_assigned_to:
                 j = Jury._new(account, defendant)
 
@@ -113,29 +163,23 @@ def populate_spotlight():
 
     ip, slash16 = ip_and_slash16(request)
 
-    anyone_key = "recent-juror-anyone"
-    user_key = "recent-juror-user-" + c.user.name
-    ip_key   = "recent-juror-ip-" + ip
-    s16_key  = "recent-juror-slash16-" + slash16
+    jcd = jury_cache_dict(c.user, ip, slash16)
 
-    if (g.cache.get(anyone_key) or g.cache.get(user_key) or
-        g.cache.get(ip_key)     or g.cache.get(s16_key)):
+    if jcd is None:
+        return None
+
+    if g.cache.get_multi(jcd.keys()) and not g.debug:
         g.log.debug("recent juror")
         return None
 
-    trial = assign_trial(c.user)
+    trial = assign_trial(c.user, ip, slash16)
 
     if trial is None:
         g.log.debug("nothing available")
         return None
 
-    # Only stick a trial in the spotlight box once every 15 mins for a
-    # given user or IP, and only once every five minutes for his /16.
-    # Only show it to *anyone*, site-wide, once every five seconds.
-    g.cache.set(user_key, True, 15 * 60)
-    g.cache.set(ip_key,   True, 15 * 60)
-    g.cache.set(s16_key,  True,  5 * 60)
-    g.cache.set(anyone_key, True,     5)
+    for k, v in jcd.iteritems():
+        g.cache.set(k, True, v)
 
     return trial
 

@@ -262,6 +262,51 @@ class FrontController(RedditController):
                            infotext = infotext).render()
         return res
 
+    @validate(VUser())
+    def GET_juryduty(self):
+        displayPane = PaneStack()
+
+        active_trials = {}
+        finished_trials = {}
+
+        for j in Jury.by_account(c.user):
+            defendant = j._thing2
+
+            if on_trial(defendant):
+                active_trials[defendant._fullname] = j._name
+            else:
+                finished_trials[defendant._fullname] = j._name
+
+        if active_trials:
+            fullnames = sorted(active_trials.keys(), reverse=True)
+
+            def my_wrap(thing):
+                w = Wrapped(thing)
+                w.hide_score = True
+                w.likes = None
+                w.trial_mode = True
+                w.render_class = LinkOnTrial
+                w.juryvote = active_trials[thing._fullname]
+                return w
+
+            listing = wrap_links(fullnames, wrapper=my_wrap)
+            displayPane.append(InfoBar(strings.active_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        if finished_trials:
+            fullnames = sorted(finished_trials.keys(), reverse=True)
+            listing = wrap_links(fullnames)
+            displayPane.append(InfoBar(strings.finished_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        displayPane.append(InfoBar(strings.more_info_link %
+                                       dict(link="/help/juryduty"),
+                                   extra_class="mellow"))
+
+        return Reddit(content = displayPane).render()
+
     @validate(VUser(),
               location = nop("location"))
     def GET_prefs(self, location=''):
@@ -320,7 +365,7 @@ class FrontController(RedditController):
         if is_moderator and location == 'edit':
             pane = PaneStack()
             if created == 'true':
-                pane.append(InfoBar(message = _('your reddit has been created')))
+                pane.append(InfoBar(message = strings.sr_created))
             pane.append(CreateSubreddit(site = c.site))
         elif location == 'moderators':
             pane = ModList(editable = is_moderator)

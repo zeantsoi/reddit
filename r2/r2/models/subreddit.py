@@ -394,7 +394,7 @@ class Subreddit(Thing, Printable):
             if limit:
                 srs = srs[:limit]
             return srs
-            
+
     def is_subscriber_defaults(self, user):
         if user.has_subscribed:
             return self.is_subscriber(user)

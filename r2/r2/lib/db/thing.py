@@ -1188,6 +1188,8 @@ def MultiRelation(name, *relations):
             #TODO it should be possible to send the rules and kw to
             #the merge constructor
             queries = [r._query(*rules, **kw) for r in cls.rels.values()]
+            if "sort" in kw:
+                print "sorting MultiRelations is not supported"
             return Merge(queries)
 
         @classmethod
