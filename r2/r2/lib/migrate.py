@@ -298,3 +298,50 @@ def pushup_permacache(verbosity=1000):
         done += len(keys)
         print 'Done %d: %r' % (done, keys[-1])
         populate(keys)
+
+def fix_byurl_prefix():
+    """Run one before the byurl prefix is set, and once after (killing
+       it after it gets when it started the first time"""
+
+    from datetime import datetime
+    from r2.models import Link
+    from r2.lib.filters import _force_utf8
+    from pylons import g
+    from r2.lib.utils import fetch_things2, in_chunks
+    from r2.lib.db.operators import desc
+    from r2.lib.utils import base_url
+
+    now = datetime.now(g.tz)
+    print 'started at %s' % (now,)
+
+    l_q = Link._query(
+        Link.c._date < now,
+        data=True,
+        sort=desc('_date'))
+
+    # from link.py
+    def by_url_key(url, prefix=''):
+        s = _force_utf8(base_url(url.lower()))
+        return '%s%s' % (prefix, s)
+
+    done = 0
+    for links in fetch_things2(l_q, 1000, chunks=True):
+        done += len(links)
+        print 'Doing: %r, %s..%s' % (done, links[-1]._date, links[0]._date)
+
+        # only links with actual URLs
+        links = filter(lambda link: (not getattr(link, 'is_self', False)
+                                     and getattr(link, 'url', '')),
+                       links)
+
+        # old key -> new key
+        translate = dict((by_url_key(link.url),
+                          by_url_key(link.url, prefix='byurl_'))
+                         for link in links)
+
+        old = g.permacache.get_multi(translate.keys())
+        new = dict((translate[old_key], value)
+                   for (old_key, value)
+                   in old.iteritems())
+        g.permacache.set_multi(new)
+

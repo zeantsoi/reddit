@@ -29,7 +29,7 @@ from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
 from r2.lib.memoize import memoize
-from r2.lib.filters import profanity_filter
+from r2.lib.filters import profanity_filter, _force_utf8
 from r2.lib import utils
 from r2.lib.log import log_text
 from mako.filters import url_escape
@@ -65,11 +65,10 @@ class Link(Thing, Printable):
 
     @classmethod
     def by_url_key(cls, url):
-        b = base_url(url.lower())
-        try:
-            return b.encode('utf8')
-        except UnicodeDecodeError:
-            return str(b)
+        prefix = '' # to be change after running the migration
+                    # function
+        s = _force_utf8(base_url(url.lower()))
+        return '%s%s' % (prefix, s)
 
     @classmethod
     def _by_url(cls, url, sr):
