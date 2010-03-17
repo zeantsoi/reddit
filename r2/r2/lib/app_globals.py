@@ -21,7 +21,7 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os, logging, sys, socket, re, subprocess
+import pytz, os, logging, sys, socket, re, subprocess, random
 from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import PyMemcache as Memcache
@@ -143,6 +143,7 @@ class Globals(object):
         if self.permacache_memcaches:
             pmc_chain += (Memcache(self.permacache_memcaches),)
         if self.cassandra_seeds:
+            random.shuffle(self.cassandra_seeds)
             pmc_chain += (CassandraCache('permacache', 'permacache',
                                          self.cassandra_seeds),)
         if self.permacaches:
