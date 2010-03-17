@@ -65,8 +65,7 @@ class Link(Thing, Printable):
 
     @classmethod
     def by_url_key(cls, url):
-        prefix = '' # to be change after running the migration
-                    # function
+        prefix = 'byurl_'
         s = _force_utf8(base_url(url.lower()))
         return '%s%s' % (prefix, s)
 
