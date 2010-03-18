@@ -143,6 +143,7 @@ class Globals(object):
         if self.permacache_memcaches:
             pmc_chain += (Memcache(self.permacache_memcaches),)
         if self.cassandra_seeds:
+            self.cassandra_seeds = list(self.cassandra_seeds)
             random.shuffle(self.cassandra_seeds)
             pmc_chain += (CassandraCache('permacache', 'permacache',
                                          self.cassandra_seeds),)
