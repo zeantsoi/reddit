@@ -92,7 +92,7 @@ class Trial(Storage):
 
         total_votes = ups + downs
 
-        if total_votes < 5:
+        if total_votes < 7:
             g.log.debug("not enough votes yet")
             return None
 

@@ -24,6 +24,7 @@ from r2.lib.db.thing import NotFound, load_things
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import asc, desc, lower
 from r2.lib.memoize import memoize
+from r2.lib.utils import timeago
 from r2.models import Account, Link
 from pylons import c, g, request
 
@@ -78,3 +79,22 @@ class Jury(MultiRelation('jury',
         v = filter(None, q.values())
         if v:
             return v[0]
+
+    @classmethod
+    def delete_old(cls, age="3 days", limit=10000):
+        cutoff = timeago(age)
+        q = cls._query(cls.c._date < cutoff)
+        q._limit = limit
+
+        accounts = set()
+        defendants = set()
+        for j in q:
+            accounts.add(j._thing1)
+            defendants.add(j._thing2)
+            j._delete()
+
+        for a in accounts:
+            Jury.by_account(a, _update=True)
+
+        for d in defendants:
+            Jury.by_defendant(d, _update=True)

@@ -390,6 +390,7 @@ ul.flat-vert {text-align: left;}
 .infotable .small { font-size: smaller; }
 .infotable td { padding-right: 1em; }
 .infotable a:hover { text-decoration: underline }
+.infotable a.pretty-button:hover { text-decoration: none }
 .infotable .state-button a {  background-color: #F0F0F0; color: gray; }
 .infotable .bold { font-weight: bold; }
 .infotable .invalid-user { background-color: pink}
