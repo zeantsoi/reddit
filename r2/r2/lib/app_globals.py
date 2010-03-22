@@ -143,7 +143,6 @@ class Globals(object):
 
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
-            pmc_chain += (CMemcache(self.permacache_memcaches),)
             pmc_chain += (PyMemcache(self.permacache_memcaches),)
         if self.cassandra_seeds:
             self.cassandra_seeds = list(self.cassandra_seeds)
