@@ -50,8 +50,13 @@ def all_defendants(quench=False, _update=False):
 def trial_key(thing):
     return "trial-" + thing._fullname
 
-def on_trial(thing):
-    return g.hardcache.get(trial_key(thing))
+def on_trial(things):
+    keys = dict((trial_key(thing), thing._fullname)
+                for thing in things)
+    vals = g.hardcache.get_multi(keys)
+    return dict((keys[key], val)
+                for (key, val)
+                in vals.iteritems())
 
 def end_trial(thing):
     g.hardcache.delete(trial_key(thing))

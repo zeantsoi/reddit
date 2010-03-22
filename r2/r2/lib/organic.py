@@ -98,7 +98,9 @@ def cached_organic_links(user_id, langs):
     link_names.sort(key = lambda n: sr_count[n][0])
 
     if not link_names and g.debug:
-        link_names = [ x._fullname for x in All.get_links('new', 'all') ]
+        q = All.get_links('new', 'all')
+        q._limit = 100 # this decomposes to a _query
+        link_names = [x._fullname for x in q]
         g.log.debug('Used inorganic links')
 
     #potentially add a up and coming link

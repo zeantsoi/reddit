@@ -282,10 +282,14 @@ class FrontController(RedditController):
         active_trials = {}
         finished_trials = {}
 
-        for j in Jury.by_account(c.user):
+        juries = Jury.by_account(c.user)
+
+        trials = on_trial([j._thing2 for j in juries])
+
+        for j in juries:
             defendant = j._thing2
 
-            if on_trial(defendant):
+            if trials.get(defendant._fullname, False):
                 active_trials[defendant._fullname] = j._name
             else:
                 finished_trials[defendant._fullname] = j._name

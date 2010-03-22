@@ -289,6 +289,7 @@ class Link(Thing, Printable):
 
         saved = Link._saved(user, wrapped) if user_is_loggedin else {}
         hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
+        trials = on_trial(wrapped)
 
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
@@ -409,7 +410,7 @@ class Link(Thing, Printable):
             else:
                 item.mousedown_url = None
 
-            item.on_trial = on_trial(item)
+            item.on_trial = trials.get(item._fullname, False)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
@@ -578,14 +579,19 @@ class Comment(Thing, Printable):
 
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True,return_dict=False)
+        cids = dict((w._id, w) for w in wrapped)
+        parent_ids = set(cm.parent_id for cm in wrapped
+                         if getattr(cm, 'parent_id', None)
+                         and cm.parent_id not in cids)
+        parents = {}
+        if parent_ids:
+            parents = Comment._byID(parent_ids, data=True)
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
         can_reply_srs.add(promote.PromoteSR._id)
 
         min_score = user.pref_min_comment_score
-
-        cids = dict((w._id, w) for w in wrapped)
 
         profilepage = c.profilepage
         user_is_admin = c.user_is_admin
@@ -611,10 +617,10 @@ class Comment(Thing, Printable):
             if not hasattr(item, 'target'):
                 item.target = None
             if item.parent_id:
-                if cids.has_key(item.parent_id):
+                if item.parent_id in cids:
                     item.parent_permalink = '#' + utils.to36(item.parent_id)
                 else:
-                    parent = Comment._byID(item.parent_id)
+                    parent = parents[item.parent_id]
                     item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
             else:
                 item.parent_permalink = None

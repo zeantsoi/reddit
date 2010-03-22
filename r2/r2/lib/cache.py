@@ -93,61 +93,81 @@ class PyMemcache(CacheUtils, memcache.Client):
         memcache.Client.delete_multi(self, keys, time = time,
                                      key_prefix = prefix)
 
-    def get_local_client(self):
-        return self # memcache.py handles this itself
-
-class CMemcache(CacheUtils, pylibmc.Client):
+class CMemcache(CacheUtils):
     simple_get_multi = pylibmc.Client.get_multi
 
-    def __init__(self, servers,
+    def __init__(self,
+                 servers,
                  debug = False,
-                 binary=True,
-                 noreply=False):
-        pylibmc.Client.__init__(self, servers, binary=binary)
+                 binary = True,
+                 noreply = False,
+                 num_clients = 10):
+        self.servers = servers
+        client = pylibmc.Client(servers, binary=binary)
         behaviors = {'no_block': True, # use async I/O
                      'cache_lookups': True, # cache DNS lookups
                      'tcp_nodelay': True, # no nagle
                      'ketama': True, # consistant hashing
                      '_noreply': int(noreply),
                      'verify_key': int(debug)} # spend the CPU to verify keys
-        self.behaviors.update(behaviors)
-        self.local_clients = local()
+        client.behaviors.update(behaviors)
+        self.clients = pylibmc.ClientPool(client, num_clients)
 
-    def get_local_client(self):
-        # if this thread hasn't had one yet, make one
-        if not getattr(self.local_clients, 'client', None):
-            self.local_clients.client = self.clone()
-        return self.local_clients.client
+    def get(self, key, default = None):
+        with self.clients.reserve() as mc:
+            ret =  mc.get(key)
+            if ret is None:
+                return default
+            return ret
+
+    def get_multi(self, keys, prefix = ''):
+        with self.clients.reserve() as mc:
+            return mc.get_multi(keys, key_prefix = prefix)
+
+    # simple_get_multi exists so that a cache chain can
+    # single-instance the handling of prefixes for performance, but
+    # pylibmc does this in C which is faster anyway, so CMemcache
+    # implements get_multi itself. But the CacheChain still wants
+    # simple_get_multi to be available for when it's already prefixed
+    # them, so here it is
+    simple_get_multi = get_multi
+
+    def set(self, key, val, time = 0):
+        with self.clients.reserve() as mc:
+            return mc.set(key, val, time = time)
 
     def set_multi(self, keys, prefix='', time=0):
         new_keys = {}
         for k,v in keys.iteritems():
             new_keys[str(k)] = v
-        pylibmc.Client.set_multi(self, new_keys, key_prefix = prefix,
-                                 time = time)
+        with self.clients.reserve() as mc:
+            return mc.set_multi(new_keys, key_prefix = prefix,
+                                time = time)
 
     def incr(self, key, delta=1, time=0):
         # ignore the time on these
-        return pylibmc.Client.incr(self, key, delta)
+        with self.clients.reserve() as mc:
+            return mc.incr(key, delta)
 
     def add(self, key, val, time=0):
         try:
-            return pylibmc.Client.add(self, key, val, time=time)
+            with self.clients.reserve() as mc:
+                return mc.add(key, val, time=time)
         except pylibmc.DataExists:
             return None
 
-    def get(self, key, default=None):
-        r = pylibmc.Client.get(self, key)
-        if r is None:
-            return default
-        return r
-
-    def set(self, key, val, time=0):
-        pylibmc.Client.set(self, key, val, time = time)
+    def delete(self, key, time=0):
+        with self.clients.reserve() as mc:
+            return mc.delete(key)
 
     def delete_multi(self, keys, prefix='', time=0):
-        pylibmc.Client.delete_multi(self, keys, time = time,
-                                    key_prefix = prefix)
+        with self.clients.reserve() as mc:
+            return mc.delete_multi(keys, time = time,
+                                   key_prefix = prefix)
+
+    def __repr__(self):
+        return '<%s(%r)>' % (self.__class__.__name__,
+                             self.servers)
 
 class HardCache(CacheUtils):
     backend = None
@@ -393,44 +413,12 @@ class CacheChain(CacheUtils, local):
         self.caches = (self.caches[0].__class__(),) +  self.caches[1:]
 
 class MemcacheChain(CacheChain):
-    def __init__(self, caches):
-        CacheChain.__init__(self, caches)
-        localcache, self.mc_master = self.caches
-
-    def reset(self):
-        CacheChain.reset(self)
-        localcache, old_mc = self.caches
-        self.caches = (localcache, self.mc_master.get_local_client())
-
-class DoubleMemcacheChain(CacheChain):
-    """Temporary cache chain that places the new cache ahead of the
-       old one for easier deployment"""
-    def __init__(self, caches):
-        self.caches = localcache, self.mc_master, self.pmc_master = caches
-
-    def reset(self):
-        CacheChain.reset(self)
-        self.caches = (self.caches[0],
-                       self.mc_master.get_local_client(),
-                       self.pmc_master.get_local_client())
+    pass
 
 class CassandraCacheChain(CacheChain):
-    def __init__(self, caches):
-        self.caches = caches
-        self.masters = caches[1:]
-
-    def reset(self):
-        CacheChain.reset(self)
-        self.caches = (self.caches[0],)
-        self.caches += tuple(master.get_local_client()
-                             for master in self.masters)
+    pass
 
 class HardcacheChain(CacheChain):
-    def __init__(self, caches, cache_negative_results = False):
-        CacheChain.__init__(self, caches, cache_negative_results)
-        localcache, memcache, hardcache = self.caches
-        self.mc_master = memcache
-
     def add(self, key, val, time=0):
         authority = self.caches[-1] # the authority is the hardcache
                                     # itself
@@ -439,6 +427,7 @@ class HardcacheChain(CacheChain):
             # Calling set() rather than add() to ensure that all caches are
             # in sync and that de-syncs repair themselves
             cache.set(key, added_val, time=time)
+
         return added_val
 
     def accrue(self, key, time=0, delta=1):
@@ -461,13 +450,6 @@ class HardcacheChain(CacheChain):
     def backend(self):
         # the hardcache is always the last item in a HardCacheChain
         return self.caches[-1].backend
-
-    def reset(self):
-        CacheChain.reset(self)
-        assert len(self.caches) == 3
-        self.caches = (self.caches[0],
-                       self.mc_master.get_local_client(),
-                       self.caches[2])
 
 CL_ZERO = cassandra.ttypes.ConsistencyLevel.ZERO
 CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
@@ -537,10 +519,6 @@ class CassandraCache(CacheUtils):
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
         self.cf.remove(key, write_consistency_level = wcl)
-
-    def get_local_client(self):
-        # pycassa.connect_thread_local does our thread-handling for us
-        return self
 
 # smart get multi:
 # For any keys not found in the cache, miss_fn() is run and the result is

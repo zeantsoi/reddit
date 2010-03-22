@@ -38,7 +38,7 @@ from r2.lib import organic
 from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
-from r2.lib.utils.trial_utils import populate_spotlight, on_trial
+from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
 from r2.lib.promote import PromoteSR
 from r2.lib.contrib.pysolr import SolrError
