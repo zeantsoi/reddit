@@ -73,6 +73,13 @@ except ImportError:
     print "Installing the py-amqplib"
     easy_install(["http://addons.reddit.com/amqp/py-amqplib-0.6.1-devel.tgz"])
 
+try:
+    import pylibmc
+    assert pylibmc.__version__ == '1.0-beta'
+except (ImportError, AssertionError):
+    print "Installing pylibmc"
+    easy_install(["http://github.com/lericson/pylibmc/tarball/1.0-beta"])
+
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
 
@@ -118,7 +125,6 @@ setup(
                       "psycopg2",
                       "py_interface",
                       "pycountry",
-                      'pylibmc',
                       "thrift", # required by Cassandra
                       ],
     packages=find_packages(),
