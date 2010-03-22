@@ -139,7 +139,7 @@ class Globals(object):
         py_mc = PyMemcache(self.memcaches)
         c_mc = CMemcache(self.memcaches)
         rec_cache = PyMemcache(self.rec_cache)
-        rmc = PyMemcache(self.rendercaches)
+        rmc = CMemcache(self.rendercaches)
 
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
