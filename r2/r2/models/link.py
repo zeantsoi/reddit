@@ -66,7 +66,7 @@ class Link(Thing, Printable):
     @classmethod
     def by_url_key(cls, url):
         prefix = 'byurl_'
-        s = _force_utf8(base_url(url.lower()))
+        s = _force_utf8(base_url(url.lower()))[:240]
         return '%s%s' % (prefix, s)
 
     @classmethod
