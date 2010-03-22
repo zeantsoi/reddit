@@ -144,6 +144,10 @@ class CMemcache(CacheUtils):
             return mc.set_multi(new_keys, key_prefix = prefix,
                                 time = time)
 
+    def append(self, key, val, time=0):
+        with self.clients.reserve() as mc:
+            return mc.append(key, val, time=time)
+
     def incr(self, key, delta=1, time=0):
         # ignore the time on these
         with self.clients.reserve() as mc:
