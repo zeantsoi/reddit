@@ -189,8 +189,11 @@ class FrontController(RedditController):
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),
               sort         = VMenu('controller', CommentSortMenu),
-              num_comments = VMenu('controller', NumCommentsMenu))
-    def GET_comments(self, article, comment, context, sort, num_comments):
+              num_comments = VMenu('controller', NumCommentsMenu),
+              limit        = VInt('limit'),
+              depth        = VInt('depth'))
+    def GET_comments(self, article, comment, context, sort, num_comments,
+                     limit, depth):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
             return self.abort404()
@@ -228,8 +231,18 @@ class FrontController(RedditController):
         user_num = c.user.pref_num_comments or g.num_comments
         num = g.max_comments if num_comments == 'true' else user_num
 
+        kw = {}
+        # allow depth to be reset (I suspect I'll turn the VInt into a
+        # validator on my next pass of .compact)
+        if depth is not None and 0 < depth < MAX_RECURSION:
+            kw['max_depth'] = depth
+        # allow the user's total count preferences to be overwritten
+        # (think of .embed as the use case together with depth=1)x
+        if limit is not None and 0 < limit < g.max_comments:
+            num = limit
+
         builder = CommentBuilder(article, CommentSortMenu.operator(sort), 
-                                 comment, context)
+                                 comment, context, **kw)
         listing = NestedListing(builder, num = num,
                                 parent_name = article._fullname)
 
