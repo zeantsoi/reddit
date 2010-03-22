@@ -143,6 +143,7 @@ class Globals(object):
 
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
+            pmc_chain += (CMemcache(self.permacache_memcaches),)
             pmc_chain += (PyMemcache(self.permacache_memcaches),)
         if self.cassandra_seeds:
             self.cassandra_seeds = list(self.cassandra_seeds)
@@ -162,7 +163,7 @@ class Globals(object):
         self.memcache = py_mc # we'll keep using this one for locks
                               # intermediately
 
-        self.cache = MemcacheChain((localcache_cls(), py_mc))
+        self.cache = MemcacheChain((localcache_cls(), c_mc, py_mc))
         self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.rec_cache = rec_cache
 
@@ -180,7 +181,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), py_mc,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc, py_mc,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)
