@@ -73,12 +73,15 @@ except ImportError:
     print "Installing the py-amqplib"
     easy_install(["http://addons.reddit.com/amqp/py-amqplib-0.6.1-devel.tgz"])
 
+# we're using a custom build of pylibmc at the moment, so we need to
+# be sure that we have the right version
+pylibmc_version = '1.0-reddit-01'
 try:
     import pylibmc
-    assert pylibmc.__version__ == '1.0-beta'
+    assert pylibmc.__version__ == pylibmc_version
 except (ImportError, AssertionError):
     print "Installing pylibmc"
-    easy_install(["http://github.com/lericson/pylibmc/tarball/1.0-beta"])
+    easy_install(["http://github.com/downloads/ketralnis/pylibmc/pylibmc-1.0-reddit-01.tar.gz"])
 
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
