@@ -206,3 +206,142 @@ def recompute_unread(min_date = None):
         print "%s / %s : %s" % (i, len(accounts), a)
         queries.get_unread_comments(a).update()
         queries.get_unread_selfreply(a).update()
+
+def pushup_permacache(verbosity=1000):
+    """When putting cassandra into the permacache chain, we need to
+       push everything up into the rest of the chain, so this is
+       everything that uses the permacache, as of that check-in."""
+    from pylons import g
+    from r2.models import Link, Subreddit, Account
+    from r2.lib.db.operators import desc
+    from r2.lib.comment_tree import comments_key, messages_key
+    from r2.lib.utils import fetch_things2, in_chunks
+    from r2.lib.utils import last_modified_key
+    from r2.lib.promote import promoted_memo_key
+    from r2.lib.subreddit_search import load_all_reddits
+    from r2.lib.db import queries
+    from r2.lib.cache import CassandraCacheChain
+
+    authority = g.permacache.caches[-1]
+    nonauthority = CassandraCacheChain(g.permacache.caches[1:-1])
+
+    def populate(keys):
+        vals = authority.simple_get_multi(keys)
+        if vals:
+            nonauthority.set_multi(vals)
+
+    def gen_keys():
+        yield promoted_memo_key
+
+        # just let this one do its own writing
+        load_all_reddits()
+
+        yield queries.get_all_comments().iden
+
+        l_q = Link._query(Link.c._spam == (True, False),
+                          Link.c._deleted == (True, False),
+                          sort=desc('_date'),
+                          data=True,
+                          )
+        for link in fetch_things2(l_q, verbosity):
+            yield comments_key(link._id)
+            yield last_modified_key(link, 'comments')
+            if not getattr(link, 'is_self', False) and hasattr(link, 'url'):
+                yield Link.by_url_key(link.url)
+
+        a_q = Account._query(Account.c._spam == (True, False),
+                             sort=desc('_date'),
+                             )
+        for account in fetch_things2(a_q, verbosity):
+            yield messages_key(account._id)
+            yield last_modified_key(account, 'overview')
+            yield last_modified_key(account, 'commented')
+            yield last_modified_key(account, 'submitted')
+            yield last_modified_key(account, 'liked')
+            yield last_modified_key(account, 'disliked')
+            yield queries.get_comments(account, 'new', 'all').iden
+            yield queries.get_submitted(account, 'new', 'all').iden
+            yield queries.get_liked(account).iden
+            yield queries.get_disliked(account).iden
+            yield queries.get_hidden(account).iden
+            yield queries.get_saved(account).iden
+            yield queries.get_inbox_messages(account).iden
+            yield queries.get_unread_messages(account).iden
+            yield queries.get_inbox_comments(account).iden
+            yield queries.get_unread_comments(account).iden
+            yield queries.get_inbox_selfreply(account).iden
+            yield queries.get_unread_selfreply(account).iden
+            yield queries.get_sent(account).iden
+
+        sr_q = Subreddit._query(Subreddit.c._spam == (True, False),
+                                sort=desc('_date'),
+                                )
+        for sr in fetch_things2(sr_q, verbosity):
+            yield last_modified_key(sr, 'stylesheet_contents')
+            yield queries.get_links(sr, 'hot', 'all').iden
+            yield queries.get_links(sr, 'new', 'all').iden
+
+            for sort in 'top', 'controversial':
+                for time in 'hour', 'day', 'week', 'month', 'year', 'all':
+                    yield queries.get_links(sr, sort, time,
+                                            merge_batched=False).iden
+            yield queries.get_spam_links(sr).iden
+            yield queries.get_spam_comments(sr).iden
+            yield queries.get_reported_links(sr).iden
+            yield queries.get_reported_comments(sr).iden
+            yield queries.get_subreddit_messages(sr).iden
+            yield queries.get_unread_subreddit_messages(sr).iden
+
+    done = 0
+    for keys in in_chunks(gen_keys(), verbosity):
+        g.reset_caches()
+        done += len(keys)
+        print 'Done %d: %r' % (done, keys[-1])
+        populate(keys)
+
+def fix_byurl_prefix():
+    """Run one before the byurl prefix is set, and once after (killing
+       it after it gets when it started the first time"""
+
+    from datetime import datetime
+    from r2.models import Link
+    from r2.lib.filters import _force_utf8
+    from pylons import g
+    from r2.lib.utils import fetch_things2, in_chunks
+    from r2.lib.db.operators import desc
+    from r2.lib.utils import base_url
+
+    now = datetime.now(g.tz)
+    print 'started at %s' % (now,)
+
+    l_q = Link._query(
+        Link.c._date < now,
+        data=True,
+        sort=desc('_date'))
+
+    # from link.py
+    def by_url_key(url, prefix=''):
+        s = _force_utf8(base_url(url.lower()))
+        return '%s%s' % (prefix, s)
+
+    done = 0
+    for links in fetch_things2(l_q, 1000, chunks=True):
+        done += len(links)
+        print 'Doing: %r, %s..%s' % (done, links[-1]._date, links[0]._date)
+
+        # only links with actual URLs
+        links = filter(lambda link: (not getattr(link, 'is_self', False)
+                                     and getattr(link, 'url', '')),
+                       links)
+
+        # old key -> new key
+        translate = dict((by_url_key(link.url),
+                          by_url_key(link.url, prefix='byurl_'))
+                         for link in links)
+
+        old = g.permacache.get_multi(translate.keys())
+        new = dict((translate[old_key], value)
+                   for (old_key, value)
+                   in old.iteritems())
+        g.permacache.set_multi(new)
+

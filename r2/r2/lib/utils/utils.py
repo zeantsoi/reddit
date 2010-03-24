@@ -1022,11 +1022,11 @@ def title_to_url(title, max_length = 50):
     return title
 
 def trace(fn):
-    from pylons import g
+    import sys
     def new_fn(*a,**kw):
         ret = fn(*a,**kw)
-        g.log.debug("Fn: %s; a=%s; kw=%s\nRet: %s"
-                    % (fn,a,kw,ret))
+        sys.stderr.write("Fn: %s; a=%s; kw=%s\nRet: %s\n"
+                         % (fn,a,kw,ret))
         return ret
     return new_fn
 
@@ -1104,6 +1104,10 @@ def filter_links(links, filter_spam = False, multiple = True):
 
 def link_duplicates(article):
     from r2.models import Link, NotFound
+
+    # don't bother looking it up if the link doesn't have a URL anyway
+    if getattr(article, 'is_self', False):
+        return []
 
     try:
         links = tup(Link._by_url(article.url, None))
@@ -1187,6 +1191,21 @@ def in_chunks(it, size=25):
     except StopIteration:
         if chunk:
             yield chunk
+
+r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
+def ip_and_slash16(req):
+    ip = req.ip
+
+    if ip is None:
+        raise ValueError("request.ip is None")
+
+    m = r_subnet.match(ip)
+    if m is None:
+        raise ValueError("Couldn't parse IP %s" % ip)
+
+    slash16 = m.group(1) + '.x.x'
+
+    return (ip, slash16)
 
 class Hell(object):
     def __str__(self):

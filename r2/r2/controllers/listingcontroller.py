@@ -25,7 +25,8 @@ from validator import *
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ControversyTimeMenu
+from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu
+from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot, get_hot
@@ -37,6 +38,7 @@ from r2.lib import organic
 from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
+from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
 from r2.lib.promote import PromoteSR
 from r2.lib.contrib.pysolr import SolrError
@@ -97,11 +99,11 @@ class ListingController(RedditController):
         self.listing_obj = self.listing()
         content = self.content()
 
-        res =  self.render_cls(content = content,
-                               show_sidebar = self.show_sidebar, 
-                               nav_menus = self.menus, 
-                               title = self.title(),
-                               **self.render_params).render()
+        res = self.render_cls(content = content,
+                              show_sidebar = self.show_sidebar,
+                              nav_menus = self.menus,
+                              title = self.title(),
+                              **self.render_params).render()
         return res
 
 
@@ -219,10 +221,7 @@ class HotController(FixListing, ListingController):
     def spotlight(self):
         spotlight_links, pos = organic.organic_links(c.user)
 
-        if c.user_is_loggedin and c.user.jury_eligible():
-            trial = LinkOnTrial.find_a_trial(c.user)
-        else:
-            trial = None
+        trial = populate_spotlight()
 
         if trial:
             spotlight_links.insert(pos, trial._fullname)
@@ -248,11 +247,12 @@ class HotController(FixListing, ListingController):
                 return item.keep_item(item)
 
         def wrap(item):
-            if item is trial:
-                w = Wrapped(item)
-                w.render_class = LinkOnTrial
-                return w
-            return self.builder_wrapper(item)
+           if item is trial:
+               w = Wrapped(item)
+               w.trial_mode = True
+               w.render_class = LinkOnTrial
+               return w
+           return self.builder_wrapper(item)
 
         b = IDBuilder(disp_links, wrap = wrap,
                       skip = True, keep_fn = keep_fn)
@@ -313,44 +313,6 @@ class SavedController(ListingController):
         return queries.get_saved(c.user)
 
     @validate(VUser())
-    def GET_listing(self, **env):
-        return ListingController.GET_listing(self, **env)
-
-class JurydutyController(ListingController):
-    where = 'juryduty'
-    title_text = _('jury duty')
-    show_nums = False
-
-    def query(self):
-        if not c.user_is_loggedin:
-            return []
-
-        self.jury_by_defendant_fname = {}
-        rv = []
-
-        for j in Jury.by_account(c.user):
-            dfn = j._thing2._fullname
-            self.jury_by_defendant_fname[dfn] = j
-            rv.append(dfn)
-
-        return rv
-
-    def keep_fn(self):
-        def keep(item):
-            return True
-
-        return keep
-
-    def builder_wrapper(self, thing):
-        w = Wrapped(thing)
-
-        jury = self.jury_by_defendant_fname[thing._fullname]
-
-        if isinstance(thing, Link):
-            w.render_class = LinkOnTrial
-            w.juryvote = jury._name
-        return w
-
     def GET_listing(self, **env):
         return ListingController.GET_listing(self, **env)
 
@@ -734,7 +696,7 @@ class RedditsController(ListingController):
                 reddits._filter(Subreddit.c.lang == c.content_langs)
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
-                
+
         return reddits
     def GET_listing(self, where, **env):
         self.where = where

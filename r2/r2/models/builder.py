@@ -64,11 +64,15 @@ class Builder(object):
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
 
-        aids = set(l.author_id for l in items if hasattr(l, 'author_id'))
+        aids = set(l.author_id for l in items if hasattr(l, 'author_id')
+                   and l.author_id is not None)
 
         if aids:
             authors = Account._byID(aids, True) if aids else {}
-            cup_infos = Account.cup_info_multi(aids)
+            if c.user_is_admin:
+                cup_infos = Account.cup_info_multi(aids)
+            else:
+                cup_infos = {}
         else:
             authors = {}
             cup_infos = {}

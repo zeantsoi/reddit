@@ -170,8 +170,9 @@ class Reddit(Templated):
                         css_class = "icon-menu",  separator = '')]
 
     def sr_moderators(self, limit = 10):
-        accounts = [Account._byID(uid, True)
-                    for uid in c.site.moderators[:limit]]
+        accounts = Account._byID([uid
+                                  for uid in c.site.moderators[:limit]],
+                                 data=True, return_dict=False)
         return [WrappedUser(a) for a in accounts if not a._deleted]
 
     def rightbox(self):
@@ -954,8 +955,8 @@ class MenuArea(Templated):
 
 class InfoBar(Templated):
     """Draws the yellow box at the top of a page for info"""
-    def __init__(self, message = ''):
-        Templated.__init__(self, message = message)
+    def __init__(self, message = '', extra_class = ''):
+        Templated.__init__(self, message = message, extra_class = extra_class)
 
 
 class RedditError(BoringPage):

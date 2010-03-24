@@ -35,6 +35,7 @@ from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
+from r2.lib.utils.trial_utils import indict, on_trial
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
@@ -587,7 +588,7 @@ class ApiController(RedditController):
         if not thing:
             log_text("indict: no thing", level="warning")
 
-        thing.indict()
+        indict(thing)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -783,7 +784,7 @@ class ApiController(RedditController):
 
         j = Jury.by_account_and_defendant(c.user, thing)
 
-        if not thing.on_trial():
+        if not on_trial([thing]).get(thing._fullname,False):
             log_text("juryvote: not on trial", level="warning")
             return
 
@@ -795,7 +796,8 @@ class ApiController(RedditController):
                  "%s cast a %d juryvote on %r" % (c.user.name, dir, thing),
                  level="info")
 
-        j._name = dir
+        j._name = str(dir)
+        j._date = c.start_time
         j._commit()
 
     @noresponse(VUser(),
@@ -821,24 +823,21 @@ class ApiController(RedditController):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
-        # in a lock to prevent duplicate votes from people
-        # double-clicking the arrows
-        with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
-            dir = (True if dir > 0
-                   else False if dir < 0
-                   else None)
+        dir = (True if dir > 0
+               else False if dir < 0
+               else None)
 
-            organic = vote_type == 'organic'
-            queries.queue_vote(user, thing, dir, ip, organic, store = store,
-                               cheater = (errors.CHEATER, None) in c.errors)
-            if store:
-                #update relevant caches
-                if isinstance(thing, Link):
-                    set_last_modified(c.user, 'liked')
-                    set_last_modified(c.user, 'disliked')
+        organic = vote_type == 'organic'
+        queries.queue_vote(user, thing, dir, ip, organic, store = store,
+                           cheater = (errors.CHEATER, None) in c.errors)
+        if store:
+            # update relevant caches
+            if isinstance(thing, Link):
+                set_last_modified(c.user, 'liked')
+                set_last_modified(c.user, 'disliked')
 
-                # flag search indexer that something has changed
-                changed(thing)
+            # flag search indexer that something has changed
+            changed(thing)
 
     @validatedForm(VUser(),
                    VModhash(),

@@ -98,7 +98,7 @@ class NestedListing(Listing):
 
         self.num = kw.get('num', g.num_comments)
         self.parent_name = kw.get('parent_name')
-        
+
     def listing(self):
         ##TODO use the local builder with the render cache. this may
         ##require separating the builder's get_items and tree-building

@@ -390,6 +390,7 @@ ul.flat-vert {text-align: left;}
 .infotable .small { font-size: smaller; }
 .infotable td { padding-right: 1em; }
 .infotable a:hover { text-decoration: underline }
+.infotable a.pretty-button:hover { text-decoration: none }
 .infotable .state-button a {  background-color: #F0F0F0; color: gray; }
 .infotable .bold { font-weight: bold; }
 .infotable .invalid-user { background-color: pink}
@@ -685,6 +686,11 @@ ul.flat-vert {text-align: left;}
     margin-right: 5px;
 }
 
+
+.infobar.mellow {
+    background-color: #eff8ff;
+    border: 1px solid #bfe0ff;
+}
 
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
@@ -3764,23 +3770,41 @@ a.pretty-button.positive.pressed {
     color: #555;
 }
 
+.organic-listing .ontrial .midcol {
+    margin-top: 20px;
+}
+
 .we-need-help {
-  font-weight: bold;
+    font-size: larger;
+    font-weight: bold;
+    line-height: 18px;
+}
+
+.organic-listing .how-to-classify {
+    font-weight: bold;
+}
+
+.jury-box .arrow-msg {
+    display: none;
+    color: red;
+    margin-top:5px;
 }
 
 .jury-box .thanks-for-voting {
-  display: none;
-  color: red;
+    margin-left: 1em;
+    display: none;
+    color: red;
 }
 
-.sitetable .jury-box {
-  margin-bottom: 5px;
+.jury-box .thanks-for-voting a {
+    margin-left: 1em;
+}
+
+.sitetable .linkontrial {
+/*    border-top: solid 1px #ccc; */
+    padding-top: 5px;
 }
 
 .sitetable .we-need-help {
-  display: none;
-}
-
-.sitetable .jury-box .pretty-button.positive {
-  margin-left: 0;
+    display: none;
 }

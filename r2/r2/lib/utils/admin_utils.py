@@ -19,17 +19,9 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from account import *
-from link import *
-from listing import *
-from builder import *
-from vote import *
-from report import *
-from subreddit import *
-from award import *
-from jury import *
-from trial import *
-from ad import *
-from bidding import *
-from mail_queue import Email, has_opted_out, opt_count
-from admintools import *
+
+def jury_cache_dict(account, ip, slash16):
+    return {"recent-juror-key": 1}
+
+def voir_dire_priv (account, ip, slash16, defendant, sr):
+    return True

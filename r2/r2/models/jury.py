@@ -22,8 +22,9 @@
 from r2.lib.db.thing import DataThing, Thing, MultiRelation, Relation
 from r2.lib.db.thing import NotFound, load_things
 from r2.lib.db.userrel import UserRel
-from r2.lib.db.operators import desc, lower
+from r2.lib.db.operators import asc, desc, lower
 from r2.lib.memoize import memoize
+from r2.lib.utils import timeago
 from r2.models import Account, Link
 from pylons import c, g, request
 
@@ -40,29 +41,10 @@ class Jury(MultiRelation('jury',
 
         return j
 
-    # Check to see if a juror is eligible to serve on a jury for a given
-    # link.
-    # Note: It's outside the scope of this function to check whether the
-    # juror is *already* on the jury.
-    @classmethod
-    def voir_dire(cls, account, defendant):
-# TODO:
-# * You shouldn't be eligible for things you've already voted on.
-# * Tor IPs shouldn't be eligible
-# * The same /16 shouldn't get to vote more than once
-# * New / low-karma accounts shouldn't be eligible
-        if isinstance(defendant, Link):
-            return True
-        else:
-            g.log.debug("%s can't serve on a jury for %s: it's not a link" %
-                        account.name, defendant)
-            return False
-
     @classmethod
     @memoize('jury.by_account')
     def by_account_cache(cls, account):
-        q = cls._query(cls.c._thing1_id == account._id,
-                       sort = desc('_date'))
+        q = cls._query(cls.c._thing1_id == account._id)
         q._limit = 100
         return [ j._fullname for j in q ]
 
@@ -78,8 +60,7 @@ class Jury(MultiRelation('jury',
     @classmethod
     @memoize('jury.by_defendant')
     def by_defendant_cache(cls, defendant):
-        q = cls._query(cls.c._thing2_id == defendant._id,
-                       sort = desc('_date'))
+        q = cls._query(cls.c._thing2_id == defendant._id)
         q._limit = 1000
         return [ j._fullname for j in q ]
 
@@ -98,3 +79,22 @@ class Jury(MultiRelation('jury',
         v = filter(None, q.values())
         if v:
             return v[0]
+
+    @classmethod
+    def delete_old(cls, age="3 days", limit=10000):
+        cutoff = timeago(age)
+        q = cls._query(cls.c._date < cutoff)
+        q._limit = limit
+
+        accounts = set()
+        defendants = set()
+        for j in q:
+            accounts.add(j._thing1)
+            defendants.add(j._thing2)
+            j._delete()
+
+        for a in accounts:
+            Jury.by_account(a, _update=True)
+
+        for d in defendants:
+            Jury.by_defendant(d, _update=True)

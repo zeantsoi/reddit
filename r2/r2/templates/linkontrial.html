@@ -30,14 +30,22 @@
 <%namespace file="utils.html" import="plain_link" />
 <%namespace file="utils.html" import="pretty_button" />
 
-<%def name="midcol(display=True, cls = '')">
- ${self.thumbnail()}
-</%def>
-
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">
 </%def>
 
+<%def name="arrow(this, dir, mod)">
+  <div class="arrow ${'up' if dir > 0 else 'down'}"
+       onclick="$(this).thing().find('.arrow-msg').show()">
+  </div>
+</%def>
+
 <%def name="entry()">
+  <span class="we-need-help">
+    ${_("reddit's spam filter needs your help!")}
+  </span>
+
+  ${parent.entry()}
+
   <div class="jury-box">
       <%
          pos_class = "positive"
@@ -51,24 +59,23 @@
            neg_class += " pressed"
       %>
 
-      <span class="we-need-help">
-        ${_("reddit needs your help!")}
+      <span class="how-to-classify">
         ${_("how would you classify this link?")}
       </span>
 
-      ${pretty_button(_("okay"),             "juryvote", 1, pos_class)}
       ${pretty_button(_("off-topic / spam"), "juryvote", -1, neg_class)}
+      ${pretty_button(_("kosher"),           "juryvote",  1, pos_class)}
 
       <span class="thanks-for-voting">
-        &#32;
         ${_("thanks for voting!")}
-        &#32;
+
         <a href="/help/juryduty">
           ${_("Click here for more info.").lower()}
         </a>
       </span>
+      <div class="arrow-msg">
+        ${_("those arrows are only for show; they don't actually do anything.")}
+      </div>
   </div>
-
-  ${parent.entry()}
 
 </%def>

@@ -33,8 +33,7 @@
   %endif
   %if thing.show_indict:
     <li>
-         ${self.state_button("indict", "indict",
-            "return change_state(this, 'indict');", _("indicted"))}
+      ${ynbutton(_("indict"), _("indicted"), "indict")}
     </li>
   %endif
   %if thing.show_delete:

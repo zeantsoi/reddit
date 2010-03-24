@@ -1218,7 +1218,7 @@ function juryvote(elem, dir) {
 
    d = {
          id: thing_id,
-         dir: dir,
+         dir: dir
        };
    $.request("juryvote", d, null, true);
    elem.siblings(".thanks-for-voting").show();
