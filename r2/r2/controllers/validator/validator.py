@@ -579,7 +579,7 @@ class VSponsor(VVerifiedUser):
                     return
             except (NotFound, ValueError):
                 pass
-            abort(403, 'forbidden')
+        abort(403, 'forbidden')
 
 class VTrafficViewer(VSponsor):
     def user_test(self, thing):
