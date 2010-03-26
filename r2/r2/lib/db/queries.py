@@ -592,7 +592,7 @@ def new_vote(vote):
         # these less often; see the discussion above
         # batched_time_times
         for sort in batched_time_sorts:
-            for time in db_times.keys():
+            for time in (set(db_times.keys()) - batched_time_times):
                 q = make_batched_time_query(sr, sort, time)
                 results.append(q)
 
@@ -999,8 +999,7 @@ def process_votes(drain = False, limit = 100):
 
 def catch_up_batch_queries():
     # catch up on batched_time_times queries that haven't been run
-    # that should be, which should only happen to small
-    # subreddits. This should be cronned to run about once an
+    # that should be, This should be cronned to run about once an
     # hour. The more often, the more the work of rerunning the actual
     # queries is spread out, but every run has a fixed-cost of looking
     # at every single subreddit
