@@ -299,7 +299,7 @@ def pushup_permacache(verbosity=1000):
         print 'Done %d: %r' % (done, keys[-1])
         populate(keys)
 
-def fix_byurl_prefix():
+def add_byurl_prefix():
     """Run one before the byurl prefix is set, and once after (killing
        it after it gets when it started the first time"""
 
@@ -307,7 +307,7 @@ def fix_byurl_prefix():
     from r2.models import Link
     from r2.lib.filters import _force_utf8
     from pylons import g
-    from r2.lib.utils import fetch_things2, in_chunks
+    from r2.lib.utils import fetch_things2
     from r2.lib.db.operators import desc
     from r2.lib.utils import base_url
 
@@ -345,3 +345,116 @@ def fix_byurl_prefix():
                    in old.iteritems())
         g.permacache.set_multi(new)
 
+def _progress(it, verbosity=100, key=repr, estimate=None, persec=False):
+    """An iterator that yields everything from `it', but prints progress
+       information along the way, including time-estimates if
+       possible"""
+    from datetime import datetime
+    import sys
+
+    now = start = datetime.now()
+    elapsed = start - start
+
+    print 'Starting at %s' % (start,)
+
+    seen = 0
+    for item in it:
+        seen += 1
+        if seen % verbosity == 0:
+            now = datetime.now()
+            elapsed = now - start
+            elapsed_seconds = elapsed.days * 86400 + elapsed.seconds
+
+            if estimate:
+                remaining = ((elapsed/seen)*estimate)-elapsed
+                completion = now + remaining
+                count_str = ('%d/%d %.2f%%'
+                             % (seen, estimate, float(seen)/estimate*100))
+                estimate_str = (' (%s remaining; completion %s)'
+                                % (remaining, completion))
+            else:
+                count_str = '%d' % seen
+                estimate_str = ''
+
+            if key:
+                key_str = ': %s' % key(item)
+            else:
+                key_str = ''
+
+            if persec and elapsed_seconds > 0:
+                persec_str = ' (%.2f/s)' % (seen/elapsed_seconds,)
+            else:
+                persec_str = ''
+                
+            sys.stdout.write('%s%s, %s%s%s\n'
+                             % (count_str, persec_str,
+                                elapsed, estimate_str, key_str))
+            sys.stdout.flush()
+            this_chunk = 0
+        yield item
+
+    now = datetime.now()
+    elapsed = now - start
+    print 'Processed %d items in %s..%s (%s)' % (seen, start, now, elapsed)
+
+def shorten_byurl_keys():
+    """We changed by_url keys from a format like
+           byurl_google.com...
+       to:
+           byurl(1d5920f4b44b27a802bd77c4f0536f5a, google.com...)
+       so that they would fit in memcache's 251-char limit
+    """
+
+    from datetime import datetime
+    from hashlib import md5
+    from r2.models import Link
+    from r2.lib.filters import _force_utf8
+    from pylons import g
+    from r2.lib.utils import fetch_things2, in_chunks
+    from r2.lib.db.operators import desc
+    from r2.lib.utils import base_url
+
+    # from link.py
+    def old_by_url_key(url):
+        prefix='byurl_'
+        s = _force_utf8(base_url(url.lower()))
+        return '%s%s' % (prefix, s)
+    def new_by_url_key(url):
+        maxlen = 250
+        template = 'byurl(%s,%s)'
+        keyurl = _force_utf8(base_url(url.lower()))
+        hexdigest = md5(keyurl).hexdigest()
+        usable_len = maxlen-len(template)-len(hexdigest)
+        return template % (hexdigest, keyurl[:usable_len])
+
+    verbosity = 1000
+
+    l_q = Link._query(
+        Link.c._spam == (True, False),
+        data=True,
+        sort=desc('_date'))
+    for links in (
+        in_chunks(
+            _progress(
+                fetch_things2(l_q, verbosity),
+                key = lambda link: link._date,
+                verbosity=verbosity,
+                estimate=int(9.9e6),
+                persec=True,
+                ),
+            verbosity)):
+        # only links with actual URLs
+        links = filter(lambda link: (not getattr(link, 'is_self', False)
+                                     and getattr(link, 'url', '')),
+                       links)
+
+        # old key -> new key
+        translate = dict((old_by_url_key(link.url),
+                          new_by_url_key(link.url))
+                         for link in links)
+
+        old = g.permacache.get_multi(translate.keys())
+        new = dict((translate[old_key], value)
+                   for (old_key, value)
+                   in old.iteritems())
+        g.permacache.set_multi(new)

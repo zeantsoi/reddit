@@ -38,6 +38,7 @@ from r2.lib.strings import strings, Score
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
 from datetime import datetime
+from hashlib import md5
 
 import random, re
 
@@ -65,9 +66,12 @@ class Link(Thing, Printable):
 
     @classmethod
     def by_url_key(cls, url):
-        prefix = 'byurl_'
-        s = _force_utf8(base_url(url.lower()))
-        return '%s%s' % (prefix, s)
+        maxlen = 250
+        template = 'byurl(%s,%s)'
+        keyurl = _force_utf8(base_url(url.lower()))
+        hexdigest = md5(keyurl).hexdigest()
+        usable_len = maxlen-len(template)-len(hexdigest)
+        return template % (hexdigest, keyurl[:usable_len])
 
     @classmethod
     def _by_url(cls, url, sr):
