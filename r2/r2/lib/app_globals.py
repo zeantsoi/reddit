@@ -135,11 +135,12 @@ class Globals(object):
 
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
+        num_mc_clients = 2 if self.running_as_script else 10
 
         py_mc = PyMemcache(self.memcaches)
-        c_mc = CMemcache(self.memcaches)
-        rec_cache = PyMemcache(self.rec_cache)
-        rmc = CMemcache(self.rendercaches)
+        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
+        rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients)
+        rec_cache = None # we're not using this for now
 
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
@@ -162,7 +163,7 @@ class Globals(object):
         self.memcache = py_mc # we'll keep using this one for locks
                               # intermediately
 
-        self.cache = MemcacheChain((localcache_cls(), py_mc))
+        self.cache = MemcacheChain((localcache_cls(), c_mc, py_mc))
         self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.rec_cache = rec_cache
 
@@ -180,7 +181,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), py_mc,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc, py_mc,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)

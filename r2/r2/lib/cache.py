@@ -94,8 +94,6 @@ class PyMemcache(CacheUtils, memcache.Client):
                                      key_prefix = prefix)
 
 class CMemcache(CacheUtils):
-    simple_get_multi = pylibmc.Client.get_multi
-
     def __init__(self,
                  servers,
                  debug = False,
@@ -103,15 +101,19 @@ class CMemcache(CacheUtils):
                  noreply = False,
                  num_clients = 10):
         self.servers = servers
-        client = pylibmc.Client(servers, binary=binary)
-        behaviors = {'no_block': True, # use async I/O
-                     'cache_lookups': True, # cache DNS lookups
-                     'tcp_nodelay': True, # no nagle
-                     'ketama': True, # consistant hashing
-                     '_noreply': int(noreply),
-                     'verify_key': int(debug)} # spend the CPU to verify keys
-        client.behaviors.update(behaviors)
-        self.clients = pylibmc.ClientPool(client, num_clients)
+        self.clients = pylibmc.ClientPool(n_slots = num_clients)
+        for x in xrange(num_clients):
+            client = pylibmc.Client(servers, binary=binary)
+            behaviors = {
+                'no_block': True, # use async I/O
+                'cache_lookups': True, # cache DNS lookups
+                'tcp_nodelay': True, # no nagle
+                'ketama': True, # consistant hashing
+                '_noreply': int(noreply),
+                'verify_key': int(debug),  # spend the CPU to verify keys
+                }
+            client.behaviors.update(behaviors)
+            self.clients.put(client)
 
     def get(self, key, default = None):
         with self.clients.reserve() as mc:
