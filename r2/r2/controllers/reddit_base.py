@@ -183,7 +183,11 @@ def firsttime():
 
 def get_redditfirst(key,default=None):
     try:
-        cookie = simplejson.loads(c.cookies['reddit_first'].value)
+        val = c.cookies['reddit_first'].value
+        # on cookie presence, return as much
+        if default is None:
+            default = True
+        cookie = simplejson.loads(val)
         return cookie[key]
     except (ValueError,TypeError,KeyError),e:
         # it's not a proper json dict, or the cookie isn't present, or
