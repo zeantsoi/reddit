@@ -540,15 +540,12 @@ class MinimalController(BaseController):
                 g.log.debug("Ignored too-big render cache")
 
         # send cookies
-        if not c.used_cache and c.cookies:
-            # if we used the cache, these cookies should be set by the
-            # cached response object instead
-            for k,v in c.cookies.iteritems():
-                if v.dirty:
-                    response.set_cookie(key     = k,
-                                        value   = quote(v.value),
-                                        domain  = v.domain,
-                                        expires = v.expires)
+        for k,v in c.cookies.iteritems():
+            if v.dirty:
+                response.set_cookie(key     = k,
+                                    value   = quote(v.value),
+                                    domain  = v.domain,
+                                    expires = v.expires)
 
         if g.usage_sampling <= 0.0:
             return
