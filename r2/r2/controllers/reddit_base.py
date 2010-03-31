@@ -446,7 +446,7 @@ class MinimalController(BaseController):
         except CookieError:
             cookies_key = ''
 
-        return make_key('request_key',
+        return make_key('request_key_',
                         c.lang,
                         c.content_langs,
                         request.host,
@@ -480,6 +480,7 @@ class MinimalController(BaseController):
         if not c.user_is_loggedin:
             r = g.rendercache.get(self.request_key())
             if r and request.method == 'GET':
+                r, c.cookies = r
                 response = c.response
                 response.headers = r.headers
                 response.content = r.content
@@ -521,17 +522,6 @@ class MinimalController(BaseController):
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
-        # send cookies
-        if not c.used_cache and c.cookies:
-            # if we used the cache, these cookies should be set by the
-            # cached response object instead
-            for k,v in c.cookies.iteritems():
-                if v.dirty:
-                    response.set_cookie(key     = k,
-                                        value   = quote(v.value),
-                                        domain  = v.domain,
-                                        expires = v.expires)
-
         #return
         #set content cache
         if (g.page_cache_time
@@ -543,11 +533,22 @@ class MinimalController(BaseController):
             and response.content and response.content[0]):
             try:
                 g.rendercache.set(self.request_key(),
-                                  response,
+                                  (response, c.cookies),
                                   g.page_cache_time)
             except MemcachedError:
                 # the key was too big to set in the rendercache
                 g.log.debug("Ignored too-big render cache")
+
+        # send cookies
+        if not c.used_cache and c.cookies:
+            # if we used the cache, these cookies should be set by the
+            # cached response object instead
+            for k,v in c.cookies.iteritems():
+                if v.dirty:
+                    response.set_cookie(key     = k,
+                                        value   = quote(v.value),
+                                        domain  = v.domain,
+                                        expires = v.expires)
 
         if g.usage_sampling <= 0.0:
             return
