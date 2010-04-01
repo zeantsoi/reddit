@@ -93,10 +93,12 @@ a.adminbox:hover {
 }
 
 .arrow.upmod {
-    background-image: url(/static/aupgray.gif);  /* SPRITE */
+    background-image: url(/static/aupgray.gif);
+    background-position: 0px 0px;
 }
 .arrow.downmod { 
-    background-image: url(/static/adowngray.gif);  /* SPRITE */
+    background-image: url(/static/adowngray.gif);
+    background-position: 0px 0px;
 }
 
 .x-ban > .entry a.author {
