@@ -93,11 +93,11 @@ a.adminbox:hover {
 }
 
 .arrow.upmod {
-    background-image: url(/static/aupgray.gif);
+    background-image: url(http://static.reddit.com/aupgray.gif);
     background-position: 0px 0px;
 }
 .arrow.downmod { 
-    background-image: url(/static/adowngray.gif);
+    background-image: url(http://static.reddit.com/adowngray.gif);
     background-position: 0px 0px;
 }
 
