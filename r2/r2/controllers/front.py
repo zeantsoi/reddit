@@ -651,20 +651,6 @@ class FrontController(RedditController):
         self.login(c.user, admin = False)
         return self.redirect(dest)
 
-    @validate(VUser(),
-              dest = VDestination())
-    def GET_superman(self, dest):
-        if c.user_is_loggedin:
-            c.user.set_superman(True)
-        return self.redirect(dest)
-
-    @validate(VUser(),
-              dest = VDestination())
-    def GET_clark_kent(self, dest):
-        if c.user_is_loggedin:
-            c.user.set_superman(False)
-        return self.redirect(dest)
-
     def GET_validuser(self):
         """checks login cookie to verify that a user is logged in and
         returns their user name"""

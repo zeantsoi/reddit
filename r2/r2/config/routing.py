@@ -37,8 +37,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/verify',    controller='front', action='verify')
     mc('/adminon',  controller='front', action='adminon')
     mc('/adminoff', controller='front', action='adminoff')
-    mc('/superman',  controller='front', action='superman')
-    mc('/clark_kent', controller='front', action='clark_kent')
     mc('/submit',   controller='front', action='submit')
     mc('/validuser',   controller='front', action='validuser')
 

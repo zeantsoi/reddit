@@ -80,10 +80,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      autobanned   = _("autobanned"),
 
                      # reddit header strings
-                     adminon      = _("turn admin on (really)"),
-                     adminoff     = _("turn admin off (really)"),
-                     superman     = _("turn admin on"),
-                     clark_kent   = _("turn admin off"),
+                     adminon      = _("turn admin on"),
+                     adminoff     = _("turn admin off"), 
                      prefs        = _("preferences"), 
                      submit       = _("submit"),
                      help         = _("help"),

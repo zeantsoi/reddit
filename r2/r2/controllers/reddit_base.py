@@ -635,8 +635,6 @@ class RedditController(MinimalController):
             if not g.disallow_db_writes:
                 c.user.update_last_visit(c.start_time)
 
-            c.is_superman = g.cache.get("superman-" + c.user.name)
-
         c.over18 = over18()
 
         #set_browser_langs()

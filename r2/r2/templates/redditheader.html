@@ -32,9 +32,7 @@
   ${thing.srtopbar}
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
-        if c.is_superman:
-            header_img = "http://static.reddit.com/redeyes.png"
-        elif c.site.header and c.allow_styles:
+        if c.site.header and c.allow_styles:
             header_img = c.site.header
         else:
             header_img = DefaultSR.header

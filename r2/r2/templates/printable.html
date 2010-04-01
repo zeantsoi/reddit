@@ -75,14 +75,9 @@ thing id-${what._fullname}
      rowclass += " saved"
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
-
-   if hasattr(thing, "display_score"):
-     base_score = thing.display_score[1]
-   else:
-     base_score = 1
  %>
 <div class="${self.thing_css_class(thing)} ${rowclass} ${cls}" ${thing.display}
-     onclick="click_thing(this)" base_score="${base_score}">
+     onclick="click_thing(this)">
   <p class="parent">
     ${self.ParentDiv()}
   </p>
