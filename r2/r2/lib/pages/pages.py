@@ -267,9 +267,9 @@ class Reddit(Templated):
             if c.is_superman:
                 buttons += [NamedButton("clark_kent", False,
                                         target = "_self")]
-###            else:
-###                buttons += [NamedButton("superman", False,
-###                                        target = "_self")]
+            else:
+                buttons += [NamedButton("superman", False,
+                                        target = "_self")]
 
             buttons += [NamedButton("prefs", False,
                                   css_class = "pref-lang")]

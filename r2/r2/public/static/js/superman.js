@@ -156,11 +156,15 @@
 })(jQuery);
 
 $(function() {
-///    var first_time = $.cookie_read("superfirst").data;
-///    if (first_time == '') {
-///      $("body > .content").prepend("<div class='infobar '><div class='md'><p>reddit is a source for what's new and popular online. vote on vote o<span style='font-family:monospace; color: red;'>ERROR! initvars() app_globals.py:422<br/>couldn't load $CONFIG{{admins}} Defaulting to &lt;*&gt;</span></p></div></div>");
-///      $.cookie_write({name: "superfirst", data: 1});
-///    }
+    $.cookie_name_prefix("");
+    var first_time = $.cookie_read("superfirst").data;
+    if (first_time == '') {
+      $("body > .content").prepend("<div class='infobar '><div class='md'><p>reddit is a source for what's new and popular online. vote on vote o<span style='font-family:monospace; color: red;'>ERROR! initvars() app_globals.py:422<br/>couldn't load $CONFIG{{admins}} Defaulting to &lt;*&gt;</span></p></div></div>");
+      $.cookie_write({name: "superfirst", data: 1});
+    }
+    if (reddit.logged) {
+      $.cookie_name_prefix(reddit.logged);
+    }
 
     $.read_state();
   });
