@@ -49,9 +49,9 @@
       score_dislikes += Math.abs(score_dislikes) == 1 ? " point" : " points";
     }
 
-    thing.find(".score.likes").html(score_likes);
-    thing.find(".score.unvoted").html(score_unvoted);
-    thing.find(".score.dislikes").html(score_dislikes);
+    thing.children(".entry, .midcol").find(".score.likes").html(score_likes);
+    thing.children(".entry, .midcol").find(".score.unvoted").html(score_unvoted);
+    thing.children(".entry, .midcol").find(".score.dislikes").html(score_dislikes);
   }
   $.fn.realvote = $.fn.vote;
   $.fn.vote = function(vh, callback, event) {
