@@ -235,7 +235,7 @@ class Reddit(Templated):
         if c.user_is_admin:
             ps.append(Admin_Rightbox())
 
-        if c.user.pref_clickgadget and c.recent_clicks:
+        if c.user.pref_clickgadget and c.recent_clicks and not c.is_superman:
             ps.append(SideContentBox(_("Recently viewed links"),
                                      [ClickGadget(c.recent_clicks)]))
 
@@ -264,11 +264,18 @@ class Reddit(Templated):
                    buttons += [NamedButton("adminon",  False,
                                            nocname=not c.authorized_cname,
                                            target = "_self")]
+            if c.is_superman:
+                buttons += [NamedButton("clark_kent", False,
+                                        target = "_self")]
+###            else:
+###                buttons += [NamedButton("superman", False,
+###                                        target = "_self")]
+
             buttons += [NamedButton("prefs", False,
                                   css_class = "pref-lang")]
         else:
             lang = c.lang.split('-')[0] if c.lang else ''
-            buttons += [JsButton(g.lang_name.get(lang, lang),  
+            buttons += [JsButton(g.lang_name.get(lang, lang),
                                   onclick = "return showlang();",
                                   css_class = "pref-lang")]
         return NavMenu(buttons, base_path = "/", type = "flatlist")
@@ -1800,7 +1807,7 @@ class Page_down(Templated):
 class WrappedUser(CachedTemplate):
     def __init__(self, user, attribs = [], context_thing = None, gray = False):
         attribs.sort()
-        author_cls = 'author'
+        author_cls = 'author id-%s' % user._fullname
 
         if gray:
             author_cls += ' gray'
@@ -1815,6 +1822,16 @@ class WrappedUser(CachedTemplate):
             ip_span = getattr(context_thing, 'ip_span', None)
             context_deleted = context_thing.deleted
 
+        if user._deleted or not c.is_superman:
+            fake_ip = '0.0.0.0'
+            fake_flag = None
+        elif c.user._id == user._id:
+            fake_ip = request.ip
+            fake_flag = "(admin)"
+        else:
+            fake_ip = user.fake_ip()
+            fake_flag = user.fake_flag()
+
         karma = ''
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
@@ -1826,6 +1843,8 @@ class WrappedUser(CachedTemplate):
                                 context_thing = context_thing,
                                 karma = karma,
                                 ip_span = ip_span,
+                                fake_ip = fake_ip,
+                                fake_flag = fake_flag,
                                 context_deleted = context_deleted,
                                 user_deleted = user._deleted)
 

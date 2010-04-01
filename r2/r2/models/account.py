@@ -200,6 +200,45 @@ class Account(Thing):
     def valid_hash(self, hash):
         return valid_hash(self, hash)
 
+    def set_superman(self, mode):
+        g.cache.set("superman-" + self.name, mode)
+
+    @memoize('account.fake_ip')
+    def fake_ip(self):
+        import random
+        return "%d.%d.%d.%d" % (random.randint(11,240),
+                                random.randint(11,240),
+                                random.randint(11,240),
+                                random.randint(11,240))
+
+    @memoize('account.fake_flag', time = 60 * 10)
+    def fake_flag(self):
+        import random
+
+        flags = [
+            (100, None),
+            (3, "probable bot"),
+            (5, "likely spammer"),
+            (2, "suspected shill account"),
+            ]
+        total = sum(t[0] for t in flags)
+        lotto = random.randint(1, total)
+
+        flag = None
+
+        for t in flags:
+            flag = t[1]
+            lotto -= t[0]
+            if lotto <= 0:
+                break
+
+        if flag is None:
+            return None
+
+        pct = "%0.2f%%" % (random.random() * 100.0)
+
+        return "(%s; %s certain)" % (flag, pct)
+
     @classmethod
     @memoize('account._by_name')
     def _by_name_cache(cls, name, allow_deleted = False):

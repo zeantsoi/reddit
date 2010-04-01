@@ -64,3 +64,28 @@
 %if thing.ip_span:
   ${unsafe(thing.ip_span)}
 %endif
+
+%if c.is_superman:
+  &#32;
+  %if thing.fake_flag:
+    <span class="account-flag">
+       ${unsafe(thing.fake_flag)}
+    </span>
+    &#32;
+  %endif
+  <a href="#" class="adminbox"
+     onclick="$(this).siblings('.superman-box').toggle();return false">A</a>
+  <span class="rounded superman-box">
+    IP=${thing.fake_ip}
+    <a href="#" onclick="$(this).superban('ban');return false">ban</a>
+    <a href="#" onclick="$(this).superban('x-ban');return false">x-ban</a>
+    <a href="#" onclick="$(this).superban('ninjaban');return false">ninjaban</a>
+    <a href="#" onclick="$(this).thing().findshills(0);return false">find-shills</a>
+  </span>
+  <span class="find-shills saving">
+    adding to find-shills queue...
+  </span>
+  <span class="find-shills jobid">
+     added. (job_id=C-STZ${thing.name.upper()}47)
+  </span>
+%endif

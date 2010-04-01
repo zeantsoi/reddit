@@ -1,0 +1,121 @@
+#header {
+    border-color: #f34;
+}
+
+#header-bottom-right {
+    border-top: 1px solid #f77;
+    border-left: 1px solid #f77;
+}
+
+#header-bottom-right .user a {
+    color: red;
+}
+
+.dropdown.tabdrop .selected {
+    border-color: #f34;
+    border-bottom: none;
+}
+
+.tabmenu li.selected a {
+    border-color: #f34;
+    border-bottom: 1px solid white;
+}
+
+.linkinfo {
+   display: none;
+}
+
+.sidecontentbox .adminbox {
+    display: none;
+}
+
+a.adminbox {
+    border: solid 1px #fcc;
+    color: #faa;
+}
+
+a.adminbox:hover {
+    text-decoration: none;
+    color: white;
+    border: solid 1px black;
+    background-color: red;
+}
+
+.superman-box {
+    display: none;
+    border: 1px solid orangered;
+    margin-left: 3px;
+    background-color: #fee;
+    padding: 0 4px;
+}
+
+.comment .superman-box {
+    font-size: smaller;
+}
+
+.superman-box a {
+    margin-left: 6px;
+}
+
+.account-flag {
+    font-family: monospace;
+    color: #7b3;
+}
+
+.link a.title.editbox {
+    display: inline-block;
+    cursor: text;
+    padding: 2px;
+    margin: 2px;
+    border: 1px solid #336699;
+    vertical-align: middle;
+}
+
+.link a.title.editbox:active {
+    color: black;
+}
+
+.link p.title a.censor, .link p.title a.save {
+    cursor: pointer;
+    line-height: 1em;
+    white-space: nowrap;
+}
+
+.link p.title a.censor {
+    margin-left: 10px;
+}
+
+.content {
+    visibility: hidden;
+}
+.content.magic {
+    visibility: visible;
+}
+
+.arrow.upmod {
+    background-image: url(/static/aupgray.gif);  /* SPRITE */
+}
+.arrow.downmod { 
+    background-image: url(/static/adowngray.gif);  /* SPRITE */
+}
+
+.x-ban > .entry a.author {
+    text-decoration: line-through;
+    font-style: italic;
+    color: black;
+}
+
+.ban > .entry a.author {
+    background-color: #fcc;
+}
+
+.ninjaban > .entry a.author {
+    opacity: 0.2;
+}
+
+.find-shills {
+    display: none;
+    font-family: monospace;
+    margin-left: 1em;
+    color: #c63;
+}

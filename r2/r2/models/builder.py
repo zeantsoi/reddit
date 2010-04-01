@@ -185,6 +185,8 @@ class Builder(object):
             else:
                 w.ip_span = ""
 
+            w.is_superman = c.is_superman
+
             # if the user can ban things on a given subreddit, or an
             # admin, then allow them to see that the item is spam, and
             # add the other spam-related display attributes

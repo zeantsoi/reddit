@@ -75,14 +75,19 @@ thing id-${what._fullname}
      rowclass += " saved"
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
+
+   if hasattr(thing, "display_score"):
+     base_score = thing.display_score[1]
+   else:
+     base_score = 1
  %>
 <div class="${self.thing_css_class(thing)} ${rowclass} ${cls}" ${thing.display}
-     onclick="click_thing(this)">
+     onclick="click_thing(this)" base_score="${base_score}">
   <p class="parent">
     ${self.ParentDiv()}
   </p>
   ${self.numcol()}
-  <% 
+  <%
      like_cls = "unvoted"
      if getattr(thing, "likes", None):
          like_cls = "likes"

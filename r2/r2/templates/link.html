@@ -159,12 +159,12 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
       <div class="score-placeholder"></div>
     %elif getattr(thing, "trial_mode", None):
       <div class="score unvoted">&bull;</div> 
-    %elif thing.hide_score:
+    %elif c.is_superman or not thing.hide_score:
+      ${self.score(thing, thing.likes, tag='div')}
+    %else:
       <div class="score likes">&bull;</div> 
       <div class="score unvoted">&bull;</div> 
       <div class="score dislikes">&bull;</div> 
-    %else:
-      ${self.score(thing, thing.likes, tag='div')}
     %endif
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
