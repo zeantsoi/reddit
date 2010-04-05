@@ -69,10 +69,7 @@ class Builder(object):
 
         if aids:
             authors = Account._byID(aids, True) if aids else {}
-            if c.user_is_admin:
-                cup_infos = Account.cup_info_multi(aids)
-            else:
-                cup_infos = {}
+            cup_infos = Account.cup_info_multi(aids)
         else:
             authors = {}
             cup_infos = {}
