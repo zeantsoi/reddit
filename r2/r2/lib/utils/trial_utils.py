@@ -21,7 +21,7 @@
 ################################################################################
 
 from pylons import c, g, request
-from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv
+from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv, tup
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
 
@@ -51,6 +51,7 @@ def trial_key(thing):
     return "trial-" + thing._fullname
 
 def on_trial(things):
+    things = tup(things)
     keys = dict((trial_key(thing), thing._fullname)
                 for thing in things)
     vals = g.hardcache.get_multi(keys)
@@ -149,8 +150,9 @@ def assign_trial(account, ip, slash16):
 
     likes = queries.get_likes(account, defs)
 
-    # Filter out things that the user has upvoted or downvoted
-    defs = filter (lambda d: likes.get((account, d)) is None, defs)
+    if not g.debug:
+        # Filter out things that the user has upvoted or downvoted
+        defs = filter (lambda d: likes.get((account, d)) is None, defs)
 
     # Prefer oldest trials
     defs.sort(key=lambda x: x._date)

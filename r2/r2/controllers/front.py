@@ -276,7 +276,7 @@ class FrontController(RedditController):
         return res
 
     @validate(VUser())
-    def GET_juryduty(self):
+    def GET_depmod(self):
         displayPane = PaneStack()
 
         active_trials = {}
@@ -319,7 +319,7 @@ class FrontController(RedditController):
             displayPane.append(listing)
 
         displayPane.append(InfoBar(strings.more_info_link %
-                                       dict(link="/help/juryduty"),
+                                       dict(link="/help/deputies"),
                                    extra_class="mellow"))
 
         return Reddit(content = displayPane).render()

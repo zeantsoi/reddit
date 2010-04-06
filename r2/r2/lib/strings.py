@@ -77,8 +77,8 @@ string_dict = dict(
 
     sr_created = _('your reddit has been created'),
 
-    active_trials = _("these things are still on trial, so you can feel free to reclassify them:"),
-    finished_trials = _("these trials have concluded; it's too late to change your mind on them:"),
+    active_trials = _("we haven't yet decided whether these things are spam, so you have a chance to change your vote:"),
+    finished_trials = _("it's too late to change your vote on these things (the verdict has been issued):"),
     more_info_link = _("visit [%(link)s](%(link)s) for more information"),
 
     msg_add_friend = dict(

@@ -172,6 +172,9 @@ class Builder(object):
 
             w.deleted = item._deleted
 
+            w.on_trial = getattr(item, "on_trial", None)
+            w.verdict = getattr(item, "verdict", None)
+
             w.rowstyle = getattr(w, 'rowstyle', "")
             w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
 

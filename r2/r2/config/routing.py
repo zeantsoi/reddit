@@ -106,7 +106,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/prefs/:location', controller='front',
        action='prefs', location='options')
 
-    mc('/juryduty', controller='front', action='juryduty')
+    mc('/depmod', controller='front', action='depmod')
 
     mc('/info/0:article/*rest', controller = 'front', 
        action='oldinfo', dest='comments', type='ancient')

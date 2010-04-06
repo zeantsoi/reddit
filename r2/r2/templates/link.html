@@ -87,6 +87,9 @@
         %if thing.on_trial:
             &#32;<span class="link-note">[on trial]</span>
         %endif
+        %if getattr(thing, "verdict", None):
+            &#32;<span class="link-note">[verdict:${thing.verdict}]</span>
+        %endif
     %endif
   </p>
 

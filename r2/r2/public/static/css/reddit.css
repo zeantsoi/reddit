@@ -476,6 +476,7 @@ ul.flat-vert {text-align: left;}
 .domain a:hover { text-decoration: underline }
 
 .link-note {
+    background-color: white;
     color: #ff4444;
     font-size:x-small;
 }
