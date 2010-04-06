@@ -77,6 +77,7 @@ class Globals(object):
     tuple_props = ['memcaches',
                    'rec_cache',
                    'rendercaches',
+                   'servicecaches',
                    'permacache_memcaches',
                    'cassandra_seeds',
                    'permacaches',
@@ -140,6 +141,7 @@ class Globals(object):
         py_mc = PyMemcache(self.memcaches)
         c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
         rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients)
+        smc = CMemcache(self.servicecaches, num_clients = num_mc_clients)
         rec_cache = None # we're not using this for now
 
         pmc_chain = (localcache_cls(),)
@@ -154,7 +156,7 @@ class Globals(object):
             pmc_chain += (PyMemcache(self.permacaches),)
         if len(pmc_chain) == 1:
             print 'Warning: proceding without a permacache'
-            
+
         self.permacache = CassandraCacheChain(pmc_chain)
 
         # hardcache is done after the db info is loaded, and then the
@@ -165,6 +167,7 @@ class Globals(object):
 
         self.cache = MemcacheChain((localcache_cls(), py_mc))
         self.rendercache = MemcacheChain((localcache_cls(), rmc))
+        self.servicecache = MemcacheChain((localcache_cls(), smc))
         self.rec_cache = rec_cache
 
         self.make_lock = make_lock_factory(self.memcache)
