@@ -135,9 +135,6 @@ class Trial(Storage):
         else:
             raise ValueError("Invalid verdict [%s]" % verdict)
 
-        self.defendant.verdict = verdict
-        self.defendant._commit()
-
-        end_trial(self.defendant)
+        end_trial(self.defendant, verdict)
 
         return verdict

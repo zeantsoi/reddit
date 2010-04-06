@@ -58,9 +58,14 @@ def on_trial(things):
                 for (key, val)
                 in vals.iteritems())
 
-def end_trial(thing):
-    g.hardcache.delete(trial_key(thing))
-    all_defendants(_update=True)
+def end_trial(thing, verdict=None):
+    if on_trial(thing):
+        g.hardcache.delete(trial_key(thing))
+        all_defendants(_update=True)
+
+    if verdict is not None:
+        thing.verdict = verdict
+        thing._commit()
 
 def indict(defendant):
     tk = trial_key(defendant)

@@ -35,7 +35,7 @@ from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
-from r2.lib.utils.trial_utils import indict, on_trial
+from r2.lib.utils.trial_utils import indict, end_trial, on_trial
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
@@ -1143,22 +1143,25 @@ class ApiController(RedditController):
             jquery.refresh()
 
     @noresponse(VUser(), VModhash(),
-                VSrCanBan('id'),
+                why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_ban(self, thing):
+    def POST_ban(self, why, thing):
+        end_trial(thing, why + "-banned")
         admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
     @noresponse(VUser(), VModhash(),
-                VSrCanBan('id'),
+                why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_unban(self, thing):
+    def POST_unban(self, why, thing):
+        end_trial(thing, why + "-approved")
         admintools.unspam(thing, c.user.name)
 
     @noresponse(VUser(), VModhash(),
-                VSrCanBan('id'),
+                why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_ignore(self, thing):
+    def POST_ignore(self, why, thing):
         if not thing: return
+        end_trial(thing, why + "-approved")
         Report.accept(thing, False)
 
     @validatedForm(VUser(), VModhash(),
