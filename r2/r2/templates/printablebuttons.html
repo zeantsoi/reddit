@@ -257,7 +257,7 @@
 <%def name="state_button(name, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', hidden_data = {})">
 
   <%def name="_link()" buffered="True">
-    <a href="javascript:void()" 
+    <a href="javascript:void(0)"
        %if a_class:
          class="${a_class}" 
        %endif
