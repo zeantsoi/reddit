@@ -171,7 +171,8 @@ class Globals(object):
         self.rec_cache = rec_cache
 
         self.make_lock = make_lock_factory(self.memcache)
-        cache_chains = [self.cache, self.permacache, self.rendercache]
+        cache_chains = [self.cache, self.permacache, self.rendercache,
+                        self.servicecache]
 
         # set default time zone if one is not set
         tz = global_conf.get('timezone')
