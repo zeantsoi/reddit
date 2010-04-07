@@ -147,7 +147,8 @@ class AppServiceMonitor(Templated):
         if not self.hostlogs:
             hosts = g.servicecache.get_multi(self._hosts,
                                              prefix = self.cache_key)
-            self.hostlogs = filter(None, hosts.values())
+            self.hostlogs = [hosts[str(x)] for x in self._hosts
+                             if str(x) in hosts]
         return iter(self.hostlogs)
 
     def render(self, *a, **kw):
