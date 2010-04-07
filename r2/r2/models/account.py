@@ -128,14 +128,15 @@ class Account(Thing):
                     self.comment_karma >= g.WIKI_KARMA)
 
     def jury_betatester(self):
-        k = "juror-" + self.name
-        if not g.hardcache.get(k):
-            return False
-
         if g.cache.get("jury-killswitch"):
             return False
 
-        return True
+        karma_cutoff = g.hardcache.get("dipswitch-jurykarma", 0)
+        if karma_cutoff > 0 and self.link_karma >= karma_cutoff:
+            return True
+
+        k = "juror-" + self.name
+        return bool(g.hardcache.get(k))
 
     def all_karmas(self):
         """returns a list of tuples in the form (name, link_karma,
