@@ -89,7 +89,7 @@ def indict(defendant):
         result = "it's now indicted: %s" % tk
         rv = True
 
-    log_text("indict_result", "%r: %s" % (defendant, result), level="info")
+    log_text("indict_result", "%s: %s" % (defendant._id36, result), level="info")
 
     return rv
 
@@ -193,6 +193,10 @@ def populate_spotlight():
     for k, v in jcd.iteritems():
         g.cache.set(k, True, v)
 
+    log_text("juryassignment",
+             "%s was just assigned to the jury for %s" % (c.user.name, thing._id36),
+             level="info")
+
     return trial
 
 def look_for_verdicts():
@@ -200,6 +204,6 @@ def look_for_verdicts():
 
     print "checking all trials for verdicts..."
     for defendant in all_defendants():
-        print "Looking at %r" % defendant
+        print "Looking at reddit.com/comments/%s/x" % defendant._id36
         v = Trial(defendant).check_verdict()
         print "Verdict: %r" % v

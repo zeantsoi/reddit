@@ -793,7 +793,7 @@ class ApiController(RedditController):
             return
 
         log_text("juryvote",
-                 "%s cast a %d juryvote on %r" % (c.user.name, dir, thing),
+                 "%s cast a %d juryvote on %s" % (c.user.name, dir, thing._id36),
                  level="info")
 
         j._name = str(dir)
