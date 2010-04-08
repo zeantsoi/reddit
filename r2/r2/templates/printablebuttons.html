@@ -104,6 +104,7 @@
   %if thing.show_comments:
     <li class="first">
     ${self.comment_button("comment", thing.comment_label, thing.permalink,
+                          _sr_path = (thing.promoted is None), 
                           a_class = thing.commentcls, 
                           newwindow = thing.new_window)}
     </li>
@@ -353,8 +354,9 @@
 
 ### originally in commentbutton
 <%def name="comment_button(name, link_text, link,\
-            a_class='', title='', newwindow = False)">
+            _sr_path = True, a_class='', title='', newwindow = False)">
   ${plain_link(link_text, link, 
+               _sr_path = _sr_path,
                _class=a_class, title=title, 
                target='_blank' if newwindow else '_parent')}
 </%def>
