@@ -32,6 +32,7 @@ from time import time
 
 organic_lifetime = 5*60
 organic_length   = 30
+organic_max_length= 100
 
 def keep_fresh_links(item):
     return (c.user_is_loggedin and c.user._id == item.author_id) or item.fresh
@@ -76,7 +77,7 @@ def organic_links(user):
     # pass the cached function a sorted list so that we can guarantee
     # cachability
     sr_ids.sort()
-    return cached_organic_links(*sr_ids)
+    return cached_organic_links(*sr_ids)[:organic_max_length]
 
 def update_pos(pos):
     "Update the user's current position within the cached organic list."
