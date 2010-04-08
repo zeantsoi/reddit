@@ -274,6 +274,11 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_reported(self)
 
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        return queries.get_all_comments()
+
+
     @classmethod
     def add_props(cls, user, wrapped):
         names = ('subscriber', 'moderator', 'contributor')
@@ -569,10 +574,44 @@ class FriendsSR(FakeSubreddit):
 
         else:
             q = Link._query(Link.c.author_id == c.user.friends,
-                            sort = queries.db_sort(sort))
+                            sort = queries.db_sort(sort),
+                            data = True)
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q
+
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        from r2.models import Comment
+        from r2.controllers.errors import UserRequiredException
+
+        if not c.user_is_loggedin:
+            raise UserRequiredException
+
+        if not c.user.friends:
+            return []
+
+        if g.use_query_cache:
+            # with the precomputer enabled, this Subreddit only supports
+            # being sorted by 'new'. it would be nice to have a
+            # cleaner UI than just blatantly ignoring their sort,
+            # though
+            sort = 'new'
+            time = 'all'
+
+            friends = Account._byID(c.user.friends,
+                                    return_dict=False)
+
+            crs = [queries.get_comments(friend, sort, time)
+                   for friend in friends]
+            return queries.MergedCachedResults(crs)
+
+        else:
+            q = Comment._query(Comment.c.author_id == c.user.friends,
+                               sort = desc('_date'),
+                               data = True)
+            return q
+
             
 class AllSR(FakeSubreddit):
     name = 'all'

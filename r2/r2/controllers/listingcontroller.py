@@ -754,5 +754,5 @@ class CommentsController(ListingController):
     title_text = _('comments')
 
     def query(self):
-        return queries.get_all_comments()
+        return c.site.get_all_comments()
 
