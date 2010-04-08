@@ -32,7 +32,7 @@ from time import time
 
 organic_lifetime = 5*60
 organic_length   = 30
-organic_max_length= 100
+organic_max_length= 50
 
 def keep_fresh_links(item):
     return (c.user_is_loggedin and c.user._id == item.author_id) or item.fresh

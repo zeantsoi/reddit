@@ -400,7 +400,7 @@ $.listing = function(name) {
 var thing_init_func = function() { };
 $.fn.set_thing_init = function(func) {
     thing_init_func = func;
-    $(this).find(".thing").each(function() { func(this) });
+    $(this).find(".thing:not(.stub)").each(function() { func(this) });
 };
 
 
