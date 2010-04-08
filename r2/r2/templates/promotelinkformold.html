@@ -227,7 +227,7 @@
           <span class="info">
             ${_("this amount has already been charged")}
           </span>
-         %else:
+         %elif thing.link:
              %if not thing.paid:
                <span class="pay-link error">
                  ${_("unpaid")}
