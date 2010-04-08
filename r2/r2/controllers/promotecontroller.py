@@ -73,6 +73,7 @@ class PromoteController(ListingController):
 
         return q
 
+    @validate(VSponsor())
     def GET_listing(self, sort = "", **env):
         if not c.user_is_loggedin or not c.user.email_verified:
             return self.redirect("/ad_inq")
@@ -81,7 +82,7 @@ class PromoteController(ListingController):
 
     GET_index = GET_listing
 
-    @validate(VVerifiedUser())
+    @validate(VSponsor())
     def GET_new_promo(self):
         return PromotePage('content', content = PromoteLinkForm()).render()
 
@@ -103,7 +104,7 @@ class PromoteController(ListingController):
 
         return page.render()
 
-    @validate(VVerifiedUser())
+    @validate(VSponsor())
     def GET_graph(self):
         content = Promote_Graph()
         if c.user_is_sponsor and c.render_style == 'csv':
