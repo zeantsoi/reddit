@@ -521,12 +521,19 @@ $.insert_things = function(things, append) {
         });
 };
 
-$.fn.delete_table_row = function() {
+$.fn.delete_table_row = function(callback) {
     var tr = this.parents("tr:first").get(0);
     var table = this.parents("table").get(0);
-    $(tr).fadeOut(function() {
-            table.deleteRow(tr.rowIndex);
-        });
+    if(tr) {
+        $(tr).fadeOut(function() {
+                table.deleteRow(tr.rowIndex);
+                if(callback) {
+                    callback();
+                }
+            });
+    } else if (callback) {
+        callback();
+    }
 };
 
 $.fn.insert_table_rows = function(rows, index) {

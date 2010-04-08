@@ -229,9 +229,8 @@ class Link(Thing, Printable):
         s = Printable.wrapped_cache_key(wrapped, style)
         if wrapped.promoted is not None:
             s.extend([getattr(wrapped, "promote_status", -1),
-                      wrapped.disable_comments,
+                      getattr(wrapped, "disable_comments", False),
                       wrapped._date,
-                      wrapped.promote_until,
                       c.user_is_sponsor,
                       wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
@@ -593,7 +592,7 @@ class Comment(Thing, Printable):
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
-        can_reply_srs.add(promote.PromoteSR._id)
+        can_reply_srs.add(promote.get_promote_srid())
 
         min_score = user.pref_min_comment_score
 

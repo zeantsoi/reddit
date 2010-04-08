@@ -138,54 +138,42 @@
   %endif
   ${self.banbuttons()}
   %if thing.promoted is not None:
-    %if thing.promote_status != STATUS.finished or c.user_is_sponsor:
-      %if thing.user_is_sponsor or thing.is_author:
-        <li>
-          ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
-        </li>
-        %if thing.promote_status == STATUS.promoted:
-          <li>
-            ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
-          </li>
-        %elif c.user_is_sponsor and thing.promote_status != STATUS.rejected:
-          <li>
-            <form action="/post/reject" class="rejection-form"
-                  style="display:none"
-                  method="post" onsubmit="reject post_form(this, 'unpromote')">
-              <br/>
-              <input type="hidden" name="executed" value="rejected" />
-              <label>Reason:</label><br/>
-              <textarea name="reason" value="" ></textarea>
-              <br/>
-              <a href="#" 
-                 onclick="change_state(this, 'unpromote', complete_reject_promo)">
-                submit
-              </a>/
-            </form>
-            ${toggle_button("reject_promo", \
-                            _("reject"), _("cancel"), \
-                            "reject_promo", "cancel_reject_promo")}
-          </li>
-        %endif
-      %endif
-      %if thing.user_is_sponsor:
-        %if thing.promote_status in (STATUS.unseen, STATUS.rejected):
-          <li>
-            ${ynbutton(_("accept"), _("accepted"), "promote")}
-          </li>
-        %elif thing.promotable and thing.promote_status in (STATUS.accepted, STATUS.pending):
-          <li>
-            ${ynbutton(_("promote"), _("promote"), "promote")}
-          </li>
-        %endif
-      %endif
-     %endif
-     %if (thing.user_is_sponsor or thing.is_author) and thing.promote_status >= STATUS.promoted:
+    %if thing.user_is_sponsor or thing.is_author:
        <li>
-         ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+         ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
        </li>
-     %endif
-   %endif
+    %endif
+    %if c.user_is_sponsor:
+       <li>
+         <form action="/post/reject" class="rejection-form"
+               style="display:none"
+               method="post" onsubmit="reject post_form(this, 'unpromote')">
+           <br/>
+           <input type="hidden" name="executed" value="rejected" />
+           <label>Reason:</label><br/>
+           <textarea name="reason" value="" ></textarea>
+           <br/>
+           <a href="#" 
+              onclick="change_state(this, 'unpromote', complete_reject_promo)">
+             submit
+           </a>/
+         </form>
+         ${toggle_button("reject_promo", \
+                         _("reject"), _("cancel"), \
+                         "reject_promo", "cancel_reject_promo")}
+       </li>
+      %if thing.promote_status in (STATUS.unseen, STATUS.rejected):
+        <li>
+          ${ynbutton(_("accept"), _("accepted"), "promote")}
+        </li>
+      %endif
+    %endif
+    %if thing.user_is_sponsor or thing.is_author:
+      <li>
+        ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+      </li>
+    %endif
+  %endif
   ${self.distinguish()}
 </%def>
 
@@ -350,14 +338,14 @@
    %if title:
      ${title}
    %else:
-    &nbsp;
+     &nbsp;
    %endif
  </a>
  <a class="option ${alt_css_class}" href="#">
    %if alt_title:
      ${alt_title}
    %else:
-    &nbsp;
+     &nbsp;
    %endif
  </a>
 </span>

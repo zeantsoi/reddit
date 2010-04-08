@@ -314,7 +314,7 @@ class Email(object):
         Kind.BID_PROMO : _("[reddit] your bid has been accepted"),
         Kind.ACCEPT_PROMO : _("[reddit] your promotion has been accepted"),
         Kind.REJECT_PROMO : _("[reddit] your promotion has been rejected"),
-        Kind.QUEUED_PROMO : _("[reddit] your promotion has been queued"),
+        Kind.QUEUED_PROMO : _("[reddit] your promotion has been charged"),
         Kind.LIVE_PROMO   : _("[reddit] your promotion is now live"),
         Kind.FINISHED_PROMO : _("[reddit] your promotion has finished"),
         Kind.NEW_PROMO : _("[reddit] your promotion has been created"),

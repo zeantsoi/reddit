@@ -227,6 +227,8 @@ class Builder(object):
         """whether or not to skip any item regardless of whether the builder
         was contructed with skip=true"""
         user = c.user if c.user_is_loggedin else None
+        if hasattr(item, "promoted") and item.promoted is not None:
+            return False
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
             return True
 
@@ -414,7 +416,6 @@ class IDBuilder(QueryBuilder):
 
         self.names, new_names = names[slice_size:], names[:slice_size]
         new_items = Thing._by_fullname(new_names, data = True, return_dict=False)
-
         return done, new_items
 
 class SearchBuilder(IDBuilder):

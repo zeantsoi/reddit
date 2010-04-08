@@ -540,6 +540,16 @@ ul.flat-vert {text-align: left;}
 .help p, .help form { margin: 5px; } 
 .help form { display: inline; }
 
+.infotext { 
+    border: 1px solid #369;
+    background-color: #EFF7FF;
+}
+
+.infotext p { 
+    font-size: small;
+    margin: 5px;
+}
+
 .wikipage {
     margin: 15px;
 }
@@ -1808,6 +1818,7 @@ textarea.gray { color: gray; }
 }
 
 .button .blog .r { color: gray;  }
+.button .blog .score { white-space: nowrap; }
 
 .button {color: #369;}
 .button a:hover { text-decoration: underline }
@@ -2983,6 +2994,82 @@ ul.tabmenu.formtab {
     width: 100%; 
 }
 
+.campaign { 
+    border: 1px solid #336699; 
+    background-color: #EFF7FF;
+    padding: 5px; 
+}
+
+.campaign .status { 
+    font-size: x-small;
+}
+
+.existing-campaigns > table { 
+    font-size: x-small;
+    border: 1px solid #888;
+    background-color: #F8F8F8; 
+    width: 100%;
+    margin: 10px 0; 
+}
+
+.existing-campaigns td.bid { 
+    background: transparent none no-repeat scroll center right;
+    padding-right: 15px;
+}
+
+.existing-campaigns td.bid.paid { 
+    background-image: url(/static/green-check.png);  
+}
+
+.existing-campaigns td.bid .info{ 
+    margin-right: 3px; 
+}
+
+.existing-campaigns > table > tbody > tr > td { 
+    text-align: right;
+    border: 1px solid #888;
+    padding: 1px 5px;
+}
+.existing-campaigns > table > tbody > tr#edit-campaign-tr > td { 
+    text-align: left;
+}
+
+.existing-campaigns > table > tbody > tr > th { 
+    text-align: center;
+    font-weight: bold;
+    padding: 1px 5px;
+    border: 1px solid #888;
+}
+
+.campaign ul {  
+    font-size: x-small;
+    list-style-type: disc; 
+    margin: 0 20px; 
+}
+.existing-campaigns td > button { margin: 0px 5px 0px 0px;  }
+
+.campaign { width: 95%; }
+.campaign .bid-info { font-size: x-small; }
+.campaign .buttons { float:right; }
+.campaign td.prefright { 
+    padding: 4px;
+}
+.campaign .targetting {
+    margin-left: 25px; 
+}
+.campaign .targetting input{
+    width: 95%;
+}
+
+.campaign th { 
+    font-size: small;
+    padding: 4px; 
+    padding-top: 8px;
+}
+.linefield .campaign input[type=text] { 
+    font-size: x-small; 
+}
+
 /***traffic stuff***/
 .traffic-table {margin: 10px 20px; }
 .traffic-table a:hover { text-decoration: underline; }
@@ -3181,9 +3268,12 @@ table.lined-table {
 /* Datepicker
 ----------------------------------*/
 .datepicker {
+    z-index: 1000; 
     display: none;
     -moz-border-radius: 6px;
     -webkit-border-radius: 6px;
+    -moz-box-shadow: 3px 3px 3px #888;
+    -webkit-box-shadow: 3px 3px 3px #888; 
  }
 .datepicker.inuse { display: block; }
 
@@ -3326,6 +3416,22 @@ table.lined-table {
     font-weight: bold; 
 }
 
+.create-promotion .help { 
+    font-size: x-small;
+}
+
+.create-promotion .help p { 
+    margin: 5px;
+}
+
+.create-promotion .help a { 
+    font-weight: bold;
+    text-decoration: none;
+    float: right;
+    color: orangered;
+}
+
+
 .create-promo { float: left; width: 520px; margin-right: 20px;} 
 .create-promo .infobar { 
     margin-right: 0; 
@@ -3337,7 +3443,7 @@ table.lined-table {
 .create-promo h2 { margin-top: 10px; color: black; }
 .create-promo ol { margin: 0px 30px 10px 30px; }
 .create-promo ol > li {
-    list-style-type: disc;  margin: 
+    list-style-type: disc; 
 }
 .create-promo .rules { text-align: right; }
 
@@ -3365,8 +3471,24 @@ table.lined-table {
     font-family: courier;
 }
 
+.bidding-history table.bidding-history tr:hover { 
+    background-color: #AAA; 
+}
 
+.bidding-history table.bidding-history th,
+.bidding-history table.bidding-history td { 
+    padding: 2px 5px;
+    text-align: right;
+    font-size: x-small; 
+}
 
+.bidding-history table.bidding-history th { 
+    font-weight: bold;
+}
+.bidding-history div.graph { 
+    height: 8px;
+    background-color: #336699;
+}
 
 .pay-form tr.input-error th {
     color: red;

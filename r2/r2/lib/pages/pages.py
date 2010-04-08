@@ -23,7 +23,7 @@ from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, Default, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR
-from r2.models import Link, Printable, Trophy, bidding, PromoteDates
+from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -49,6 +49,7 @@ from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
 from r2.lib.log import log_text
+from r2.lib.memoize import memoize
 
 import sys, random, datetime, locale, calendar, simplejson, re
 import graph, pycountry
@@ -1263,7 +1264,6 @@ class FrameToolbar(Wrapped):
                                          query_string(submit_url_options))
             else:
                 w.tblink = add_sr("/tb/"+w._id36)
-    
                 w.upstyle = "mod" if w.likes else ""
                 w.downstyle = "mod" if w.likes is False else ""
             if not c.user_is_loggedin:
@@ -1280,7 +1280,6 @@ class NewLink(Templated):
         tabs = (('link', ('link-desc', 'url-field')),
                 ('text', ('text-desc', 'text-field')))
         all_fields = set(chain(*(parts for (tab, parts) in tabs)))
-    
         buttons = []
         self.default_tabs = tabs[0][1]
         self.default_tab = tabs[0][0]
@@ -1289,7 +1288,6 @@ class NewLink(Templated):
             to_hide = ','.join('#' + p for p in all_fields if p not in parts)
             onclick = "return select_form_tab(this, '%s', '%s');"
             onclick = onclick % (to_show, to_hide)
-            
             if tab_name == self.default_tab:
                 self.default_show = to_show
                 self.default_hide = to_hide
@@ -2046,11 +2044,12 @@ class PromoteLinkForm(Templated):
                  timedeltatext = '', *a, **kw):
         bids = []
         if c.user_is_admin and link:
+            self.author = Account._byID(link.author_id)
             try:
                 bids = bidding.Bid.lookup(thing_id = link._id)
                 bids.sort(key = lambda x: x.date, reverse = True)
             except NotFound:
-                bids = []
+                pass
 
         # reference "now" to what we use for promtions
         now = promote.promo_datetime_now()
@@ -2060,22 +2059,53 @@ class PromoteLinkForm(Templated):
                                     business_days = True) -
                    datetime.timedelta(1))
 
-        if link:
-            startdate = link._date
-            enddate   = link.promote_until
-        else:
-            startdate = mindate + datetime.timedelta(1)
-            enddate   = startdate + datetime.timedelta(1)
+        startdate = mindate + datetime.timedelta(1)
+        enddate   = startdate + datetime.timedelta(1)
 
         self.startdate = startdate.strftime("%m/%d/%Y")
         self.enddate   = enddate  .strftime("%m/%d/%Y")
+
         self.mindate   = mindate  .strftime("%m/%d/%Y")
 
-        Templated.__init__(self, sr = sr, link = link,
-                         datefmt = datefmt, bids = bids, 
-                         timedeltatext = timedeltatext,
-                         listing = listing,
-                         *a, **kw)
+        self.link = None
+        if link:
+            self.sr_searches = simplejson.dumps(popular_searches())
+            self.subreddits = (Subreddit.submit_sr_names(c.user) or
+                               Subreddit.submit_sr_names(None))
+            self.default_sr = self.subreddits[0] if self.subreddits \
+                              else g.default_sr
+            # have the promo code wrap the campaigns for rendering
+            self.link = promote.editable_add_props(link)
+
+        if not c.user_is_sponsor:
+            self.now = promote.promo_datetime_now().date()
+            start_date = promote.promo_datetime_now(offset = -14).date()
+            end_date = promote.promo_datetime_now(offset = 14).date()
+            self.promo_traffic = dict(load_traffic('day', 'promos'))
+            self.market, self.promo_counter = \
+                Promote_Graph.get_market(None, start_date, end_date)
+
+        Templated.__init__(self, sr = sr, 
+                           datefmt = datefmt,
+                           timedeltatext = timedeltatext,
+                           listing = listing, bids = bids, 
+                           *a, **kw)
+
+class PromoteLinkFormOld(PromoteLinkForm):
+    def __init__(self, **kw):
+        PromoteLinkForm.__init__(self, **kw)
+        self.bid = g.min_promote_bid
+        campaign = {}
+        if self.link:
+            campaign = self.link.campaigns[0]
+            self.startdate = campaign.start_date
+            self.enddate = campaign.end_date
+
+        self.bid = campaign.get("bid", g.min_promote_bid)
+        self.freebie = campaign.get("status",{}).get("free", False)
+        self.complete = campaign.get("status",{}).get("complete", False)
+        self.paid = campaign.get("status",{}).get("paid", False)
+
 
 class TabbedPane(Templated):
     def __init__(self, tabs):
@@ -2423,48 +2453,83 @@ class RedditAds(Templated):
         Templated.__init__(self, **kw)
 
 class PaymentForm(Templated):
-    def __init__(self, **kw):
+    def __init__(self, link, indx, **kw):
         self.countries = pycountry.countries
+        self.link = promote.editable_add_props(link)
+        self.campaign = self.link.campaigns[indx]
+        self.indx = indx
         Templated.__init__(self, **kw)
 
 class Promote_Graph(Templated):
+    
+    @classmethod
+    @memoize('get_market', time = 60)
+    def get_market(cls, user_id, start_date, end_date):
+        market = {}
+        promo_counter = {}
+        def callback(link, bid, bid_day, starti, endi):
+            for i in xrange(starti, endi):
+                if user_id is None or link.author_id == user_id:
+                    market[i] = market.get(i, 0) + bid_day
+                    promo_counter[i] = promo_counter.get(i, 0) + 1
+        cls.promo_iter(start_date, end_date, callback)
+        return market, promo_counter
+
+    @classmethod
+    def promo_iter(cls, start_date, end_date, callback):
+        size = (end_date - start_date).days
+        for link, indx, s, e in cls.get_current_promos(start_date, end_date):
+            if indx in link.campaigns:
+                sdate, edate, bid, sr, trans_id = link.campaigns[indx]
+                if isinstance(sdate, datetime.datetime):
+                    sdate = sdate.date()
+                if isinstance(edate, datetime.datetime):
+                    edate = edate.date()
+                starti = max((sdate - start_date).days, 0)
+                endi   = min((edate - start_date).days, size)
+                bid_day = bid / max((edate - sdate).days, 1)
+                callback(link, bid, bid_day, starti, endi)
+
+    @classmethod
+    def get_current_promos(cls, start_date, end_date):
+        # grab promoted links
+        # returns a list of (thing_id, campaign_idx, start, end)
+        promos = PromotionWeights.get_schedule(start_date, end_date)
+        # sort based on the start date
+        promos.sort(key = lambda x: x[2])
+
+        # wrap the links
+        links = wrap_links([p[0] for p in promos])
+        # remove rejected/unpaid promos
+        links = dict((l._fullname, l) for l in links.things
+                     if promote.is_accepted(l) or promote.is_unapproved(l))
+        # filter promos accordingly
+        promos = [(links[thing_name], indx, s, e) 
+                  for thing_name, indx, s, e in promos
+                  if links.has_key(thing_name)]
+
+        return promos
+
     def __init__(self):
         self.now = promote.promo_datetime_now()
-        start_date = (self.now - datetime.timedelta(7)).date()
-        end_date   = (self.now + datetime.timedelta(7)).date()
+
+        start_date = promote.promo_datetime_now(offset = -7).date()
+        end_date = promote.promo_datetime_now(offset = 7).date()
 
         size = (end_date - start_date).days
 
-        # grab promoted links
-        promos = PromoteDates.for_date_range(start_date, end_date)
-        promos.sort(key = lambda x: x.start_date)
+        # these will be cached queries
+        market, promo_counter = self.get_market(None, start_date, end_date)
+        my_market = market
+        if not c.user_is_sponsor:
+            market = self.get_market(c.user._id, start_date, end_date)[0]
 
-        # wrap the links
-        links = wrap_links([p.thing_name for p in promos])
-        # remove rejected/unpaid promos
-        links = dict((l._fullname, l) for l in links.things
-                     if (l.promoted is not None and
-                         l.promote_status not in ( promote.STATUS.rejected,
-                                                   promote.STATUS.unpaid)) )
-        # filter promos accordingly
-        promos = filter(lambda p: links.has_key(p.thing_name), promos)
-
+        # determine the range of each link
         promote_blocks = []
-        market = {}
-        my_market = {}
-        promo_counter = {}
-        for p in promos:
-            starti = max((p.start_date - start_date).days, 0)
-            endi   = min((p.end_date   - start_date).days, size)
-            link = links[p.thing_name]
-            bid_day = link.promote_bid/max((p.end_date - p.start_date).days, 1)
-            for i in xrange(starti, endi):
-                market[i] = market.get(i, 0) + bid_day
-                if c.user_is_sponsor or link.author_id == c.user._id:
-                    my_market[i] = my_market.get(i, 0) + bid_day
-                promo_counter[i] = promo_counter.get(i, 0) + 1
+        def block_maker(link, bid, bid_day, starti, endi):
             if c.user_is_sponsor or link.author_id == c.user._id:
-                promote_blocks.append( (link, starti, endi) )
+                promote_blocks.append( (link, bid, starti, endi) )
+        self.promo_iter(start_date, end_date, block_maker)
 
         # now sort the promoted_blocks into the most contiguous chuncks we can
         sorted_blocks = []
@@ -2473,17 +2538,18 @@ class Promote_Graph(Templated):
             while True:
                 sorted_blocks.append(cur)
                 # get the future items (sort will be preserved)
-                future = filter(lambda x: x[1] >= cur[2], promote_blocks)
+                future = filter(lambda x: x[2] >= cur[3], promote_blocks)
                 if future:
                     # resort by date and give precidence to longest promo:
-                    cur = min(future, key = lambda x: (x[1], x[1]-x[2]))
+                    cur = min(future, key = lambda x: (x[2], x[2]-x[3]))
                     promote_blocks.remove(cur)
                 else:
                     break
 
         # load recent traffic as well:
         self.recent = {}
-        for k, v in load_summary("thing"):
+        #TODO 
+        for k, v in []:#load_summary("thing"):
             if k.startswith('t%d_' % Link._type_id):
                 self.recent[k] = v
 
@@ -2497,7 +2563,9 @@ class Promote_Graph(Templated):
 
         # graphs of money
         history = self.now - datetime.timedelta(60)
-        pool = bidding.PromoteDates.bid_history(history)
+
+        pool =PromotionWeights.bid_history(promote.promo_datetime_now(offset=-60),
+                                           promote.promo_datetime_now(offset=2))
         if pool:
             # we want to generate a stacked line graph, so store the
             # bids and the total including refunded amounts
@@ -2512,15 +2580,16 @@ class Promote_Graph(Templated):
                 multiy = False)
 
             history = self.now - datetime.timedelta(30)
-            self.top_promoters = bidding.PromoteDates.top_promoters(history)
+            #TODO
+            self.top_promoters = []#bidding.PromoteDates.top_promoters(history)
         else:
             self.money_graph = None
             self.top_promoters = []
 
         # graphs of impressions and clicks
         self.promo_traffic = load_traffic('day', 'promos')
-        impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
 
+        impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
         pool = dict((d, b+r) for (d, b, r) in pool)
 
         if impressions:

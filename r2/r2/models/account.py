@@ -73,14 +73,14 @@ class Account(Thing):
                      share = {},
                      wiki_override = None,
                      email = "",
-                     email_verified = None,
+                     email_verified = False,
                      ignorereports = False,
                      pref_show_promote = None, 
                      )
 
     def karma(self, kind, sr = None):
         suffix = '_' + kind + '_karma'
-        
+
         #if no sr, return the sum
         if sr is None:
             total = 0

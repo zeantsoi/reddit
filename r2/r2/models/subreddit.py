@@ -335,10 +335,10 @@ class Subreddit(Thing, Printable):
 
         if filter_allow_top:
             pop_reddits._limit = 2 * limit
-            return filter(lambda sr: sr.allow_top == True,
-                          pop_reddits)[:limit]
+            pop_reddits = filter(lambda sr: sr.allow_top == True,
+                                 pop_reddits)[:limit]
 
-        return list(pop_reddits)
+        return [x for x in pop_reddits if getattr(x, "author_id", 0) > 0]
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
@@ -417,7 +417,7 @@ class Subreddit(Thing, Printable):
                 #this will call reverse_subscriber_ids after every
                 #addition. if it becomes a problem we should make an
                 #add_multiple_subscriber fn
-                if sr.add_subscriber(c.user):
+                if sr.add_subscriber(user):
                     sr._incr('_ups', 1)
             user.has_subscribed = True
             user._commit()

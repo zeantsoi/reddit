@@ -78,7 +78,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
 
-
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
@@ -136,12 +135,12 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/promoted/edit_promo/:link',
        controller='promote', action = 'edit_promo')
-    mc('/promoted/pay/:link',
+    mc('/promoted/pay/:link/:indx',
        controller='promote', action = 'pay')
     mc('/promoted/graph',
        controller='promote', action = 'graph')
     mc('/promoted/:action', controller='promote',
-       requirements = dict(action = "new_promo"))
+       requirements = dict(action = "edit_promo|new_promo"))
     mc('/promoted/:sort', controller='promote', action = "listing")
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
@@ -205,7 +204,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
     mc('/api/:action', controller='promote',
-       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer"))
+       requirements=dict(action="promote|unpromote|edit_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer|edit_campaign|delete_campaign|meta_promo"))
     mc('/api/:action', controller='api')
 
     mc("/button_info", controller="api", action="info", limit = 1)

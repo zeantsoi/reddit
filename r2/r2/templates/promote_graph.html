@@ -125,7 +125,7 @@
 <% 
    prev_end = 0
  %>
-%for link, start, end in thing.promote_blocks:
+%for link, bid, start, end in thing.promote_blocks:
   <% 
      start += 1
      end += 1
@@ -142,10 +142,9 @@
    %>  
   <div class="blob promotedlink ${link.rowstyle} rounded"
        title="${link.title}"  
-       onclick="$.redirect($(this).find('a').attr('href'));"
        style="width: ${width}%; margin-left: ${margin}%">
     <div class="bid">
-        $${int(link.promote_bid)}
+      $${int(bid)}
     </div>
     <a class="title" 
        href="/promoted/edit_promo/${link._id36}"
@@ -264,7 +263,8 @@
       <td>${num(nimp)}</td>
       <td>${num(ucli)}</td>
       <td>${num(ncli)}</td>
-      <td>${money(link.promote_bid)}</td>
+      <td>TODO</td>
+##      <td>${money(link.promote_bid)}</td>
       <td>${link._ups - link._downs}</td>
       <td style="text-align:left">
         <a class="title" href="${link.permalink}">${link.title}</a>

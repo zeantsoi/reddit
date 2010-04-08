@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController, base_listing
+from reddit_base import RedditController, base_listing, organic_pos
 from validator import *
 
 from r2.models import *
@@ -40,7 +40,7 @@ from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
-from r2.lib.promote import PromoteSR
+from r2.lib.promote import randomized_promotion_list, get_promote_srid
 from r2.lib.contrib.pysolr import SolrError
 
 from admin import admin_profile_query
@@ -149,7 +149,8 @@ class ListingController(RedditController):
 
     def listing(self):
         """Listing to generate from the builder"""
-        if c.site.path == PromoteSR.path and not c.user_is_sponsor:
+        if (getattr(c.site, "_id", -1) == get_promote_srid() and 
+            not c.user_is_sponsor):
             abort(403, 'forbidden')
         listing = LinkListing(self.builder_obj, show_nums = self.show_nums)
         try:
@@ -219,55 +220,72 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def spotlight(self):
-        spotlight_links, pos = organic.organic_links(c.user)
+        if (c.site == Default
+            and (not c.user_is_loggedin
+                 or (c.user_is_loggedin and c.user.pref_organic))):
 
-        trial = populate_spotlight()
+            spotlight_links = organic.organic_links(c.user)
+            pos = organic_pos()
 
-        if trial:
-            spotlight_links.insert(pos, trial._fullname)
+            if not spotlight_links:
+                pos = 0
+            elif pos != 0:
+                pos = pos % len(spotlight_links)
 
-        if not spotlight_links:
-            return None
+            spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
+            trial = populate_spotlight()
 
-        # get links in proximity to pos
-        num_tl = len(spotlight_links)
-        if num_tl <= 3:
-            disp_links = spotlight_links
-        else:
-            left_side = max(-1, min(num_tl - 3, 8))
-            disp_links = [spotlight_links[(i + pos) % num_tl]
-                          for i in xrange(-2, left_side)]
+            if trial:
+                spotlight_links.insert(pos, trial._fullname)
 
-        def keep_fn(item):
-            if trial and trial._fullname == item._fullname:
-                return True
-            elif item.likes is not None:
-                return False
+            if not spotlight_links:
+                return None
+
+            # get links in proximity to pos
+            num_tl = len(spotlight_links)
+            if num_tl <= 3:
+                disp_links = spotlight_links
             else:
-                return item.keep_item(item)
+                left_side = max(-1, min(num_tl - 3, 8))
+                disp_links = [spotlight_links[(i + pos) % num_tl]
+                              for i in xrange(-2, left_side)]
+            def keep_fn(item):
+                if trial and trial._fullname == item._fullname:
+                    return True
+                return organic.keep_fresh_links(item)
 
-        def wrap(item):
-           if item is trial:
-               w = Wrapped(item)
-               w.trial_mode = True
-               w.render_class = LinkOnTrial
-               return w
-           return self.builder_wrapper(item)
+            def wrap(item):
+               if item is trial:
+                   w = Wrapped(item)
+                   w.trial_mode = True
+                   w.render_class = LinkOnTrial
+                   return w
+               return self.builder_wrapper(item)
+            b = IDBuilder(disp_links, wrap = wrap,
+                          skip = True, keep_fn = keep_fn)
 
-        b = IDBuilder(disp_links, wrap = wrap,
-                      skip = True, keep_fn = keep_fn)
+            s = SpotlightListing(b,
+                              spotlight_links = spotlight_links,
+                              visible_link = spotlight_links[pos],
+                              max_num = self.listing_obj.max_num,
+                              max_score = self.listing_obj.max_score).listing()
 
-        s = SpotlightListing(b,
-                          spotlight_links = spotlight_links,
-                          visible_link = spotlight_links[pos],
-                          max_num = self.listing_obj.max_num,
-                          max_score = self.listing_obj.max_score).listing()
+            if len(s.things) > 0:
+                # only pass through a listing if the links made it
+                # through our builder
+                organic.update_pos(pos+1)
+                return s
 
-        if len(s.things) > 0:
-            # only pass through a listing if the links made it
-            # through our builder
-            organic.update_pos(pos+1)
-            return s
+        # no organic box on a hot page, then show a random promoted link
+        else:
+            link_ids = randomized_promotion_list(c.user, c.site)
+            if link_ids:
+                res = wrap_links(link_ids, wrapper = self.builder_wrapper,
+                                 num = 1, keep_fn = lambda x: x.fresh, 
+                                 skip = True)
+                if res.things:
+                    return res
+
 
 
     def query(self):
@@ -289,9 +307,7 @@ class HotController(FixListing, ListingController):
 
     def content(self):
         # only send a spotlight listing for HTML rendering
-        if (c.site == Default and c.render_style == "html"
-            and (not c.user_is_loggedin
-                 or (c.user_is_loggedin and c.user.pref_organic))):
+        if c.render_style == "html":
             spotlight = self.spotlight()
             if spotlight:
                 return PaneStack([spotlight, self.listing_obj], css_class='spacer')

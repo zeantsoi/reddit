@@ -25,7 +25,7 @@ from r2.models import LinkListing, Link, PromotedLink
 from r2.models import make_wrapper, IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
-from r2.lib.promote import promo_edit_url, promo_traffic_url
+from r2.lib.promote import *
 from datetime import datetime
 from pylons import c, g
 
@@ -59,7 +59,7 @@ class LinkButtons(PrintableButtons):
         # do we show the report button?
         show_report = not is_author and report
 
-        if c.user_is_admin:
+        if c.user_is_admin and thing.promoted is None:
             show_report = False
             show_indict = True
         else:
@@ -67,6 +67,10 @@ class LinkButtons(PrintableButtons):
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
+        # disable the delete button for live sponsored links
+        if (is_promoted(thing) and not c.user_is_sponsor):
+            show_delete = False
+
         # do we show the distinguish button? among other things,
         # we never want it to appear on link listings -- only
         # comments pages
@@ -76,15 +80,12 @@ class LinkButtons(PrintableButtons):
         kw = {}
         if thing.promoted is not None:
             now = datetime.now(g.tz)
-            promotable = (thing._date <= now and thing.promote_until > now)
             kw = dict(promo_url = promo_edit_url(thing),
-                      promote_bid = thing.promote_bid,
                       promote_status = getattr(thing, "promote_status", 0),
                       user_is_sponsor = c.user_is_sponsor,
-                      promotable = promotable,
                       traffic_url = promo_traffic_url(thing), 
                       is_author = thing.is_author)
-                      
+
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
                                   is_loggedin = c.user_is_loggedin,
@@ -163,16 +164,16 @@ def default_thing_wrapper(**params):
 def wrap_links(links, wrapper = default_thing_wrapper(),
                listing_cls = LinkListing, 
                num = None, show_nums = False, nextprev = False,
-               num_margin = None, mid_margin = None):
+               num_margin = None, mid_margin = None, **kw):
     links = tup(links)
     if not all(isinstance(x, str) for x in links):
         links = [x._fullname for x in links]
-    b = IDBuilder(links, num = num, wrap = wrapper)
+    b = IDBuilder(links, num = num, wrap = wrapper, **kw)
     l = listing_cls(b, nextprev = nextprev, show_nums = show_nums)
     if num_margin is not None:
         l.num_margin = num_margin
     if mid_margin is not None:
         l.mid_margin = mid_margin
     return l.listing()
-    
+
 

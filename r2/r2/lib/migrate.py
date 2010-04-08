@@ -45,7 +45,7 @@ def convert_promoted():
 
     q = Link._query(Link.c.promoted == (True, False),
                     sort = desc("_date"))
-    sr_id = PromoteSR._id
+    sr_id = get_promote_srid()
     bid = 100
     with g.make_lock(promoted_lock_key):
         promoted = {}
@@ -207,6 +207,8 @@ def recompute_unread(min_date = None):
         queries.get_unread_comments(a).update()
         queries.get_unread_selfreply(a).update()
 
+
+
 def pushup_permacache(verbosity=1000):
     """When putting cassandra into the permacache chain, we need to
        push everything up into the rest of the chain, so this is
@@ -344,6 +346,70 @@ def add_byurl_prefix():
                    for (old_key, value)
                    in old.iteritems())
         g.permacache.set_multi(new)
+
+# alter table bids DROP constraint bids_pkey;
+# alter table bids add column campaign integer;
+# update bids set campaign = 0;
+# alter table bids ADD primary key (transaction, campaign);
+def promote_v2():
+    # alter table bids add column campaign integer;
+    # update bids set campaign = 0; 
+    from r2.models import Link, NotFound, PromoteDates, Bid
+    from datetime import datetime
+    from pylons import g
+    for p in PromoteDates.query():
+        try:
+            l = Link._by_fullname(p.thing_name,
+                                  data = True, return_dict = False)
+            if not l:
+                raise NotFound, p.thing_name
+
+            # update the promote status
+            l.promoted = True
+            l.promote_status = getattr(l, "promote_status", STATUS.unseen)
+            l._date = datetime(*(list(p.start_date.timetuple()[:7]) + [g.tz]))
+            set_status(l, l.promote_status)
+
+            # add new campaign
+            print (l, (p.start_date, p.end_date), p.bid, None)
+            if not p.bid:
+                print "no bid? ", l
+                p.bid = 20
+            new_campaign(l, (p.start_date, p.end_date), p.bid, None)
+            print "updated: %s (%s)" % (l, l._date)
+
+        except NotFound:
+            print "NotFound: %s" % p.thing_name
+
+    print "updating campaigns"
+    for b in Bid.query():
+        l = Link._byID(int(b.thing_id))
+        print "updating: ", l
+        campaigns = getattr(l, "campaigns", {}).copy()
+        indx = b.campaign
+        if indx in campaigns:
+            sd, ed, bid, sr, trans_id = campaigns[indx]
+            campaigns[indx] = sd, ed, bid, sr, b.transaction
+            l.campaigns = campaigns
+            l._commit()
+        else:
+            print "no campaign information: ", l
+
+#def new_promo_datetable():
+#    from r2.models import PromoteDates, PromotionWeights, Link
+#    from r2.lib import promote
+#
+#    for p in PromoteDates.query():
+#        l = Link._by_fullname(p.thing_name, data = True)
+#        if not l._loaded:
+#            l._load()
+#        if l.promote_status in (promote.STATUS.rejected,):
+#            l.promoted = False
+#
+#        set_status(l, l.promote_status)
+#        #TODO: set as finished
+#        promote.new_campaign(l, 0  p.start_date, p.end_date, l.promote_bid)
+#        # todo need to run alter table on the bid to set finalized on finished
 
 def _progress(it, verbosity=100, key=repr, estimate=None, persec=False):
     """An iterator that yields everything from `it', but prints progress
