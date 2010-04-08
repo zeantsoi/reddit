@@ -574,25 +574,18 @@ class VSponsor(VVerifiedUser):
         VVerifiedUser.run(self)
         if c.user_is_sponsor:
             return
-        # TODO: disable sponsored links during migration
-        from r2.lib import pages
-        g.log.error("user prevented from hitting sponsored area for now")
-        res = pages.RedditError('self-service is currently down for maintinence',
-                                "Sorry for the invonvenience: we will be back online shortly")
-        request.environ['usable_error_content'] = res.render()
-        abort(404, 'not found')
-#        elif link_id:
-#            try:
-#                if '_' in link_id:
-#                    t = Link._by_fullname(link_id, True)
-#                else:
-#                    aid = int(link_id, 36)
-#                    t = Link._byID(aid, True)
-#                if self.user_test(t):
-#                    return
-#            except (NotFound, ValueError):
-#                pass
-#            abort(403, 'forbidden')
+        elif link_id:
+            try:
+                if '_' in link_id:
+                    t = Link._by_fullname(link_id, True)
+                else:
+                    aid = int(link_id, 36)
+                    t = Link._byID(aid, True)
+                if self.user_test(t):
+                    return
+            except (NotFound, ValueError):
+                pass
+            abort(403, 'forbidden')
 
 class VTrafficViewer(VSponsor):
     def user_test(self, thing):
