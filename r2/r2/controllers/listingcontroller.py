@@ -262,6 +262,7 @@ class HotController(FixListing, ListingController):
                    return w
                return self.builder_wrapper(item)
             b = IDBuilder(disp_links, wrap = wrap,
+                          num = organic.organic_length,
                           skip = True, keep_fn = keep_fn)
 
             s = SpotlightListing(b,

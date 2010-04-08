@@ -31,7 +31,7 @@ import random
 from time import time
 
 organic_lifetime = 5*60
-organic_length   = 100
+organic_length   = 30
 
 def keep_fresh_links(item):
     return (c.user_is_loggedin and c.user._id == item.author_id) or item.fresh
@@ -60,7 +60,7 @@ def cached_organic_links(*sr_ids):
                 new_item = random.choice(fnames[1:4])
             link_names.insert(0, new_item)
 
-    return link_names[:organic_length]
+    return link_names
 
 def organic_links(user):
     from r2.controllers.reddit_base import organic_pos
@@ -76,7 +76,7 @@ def organic_links(user):
     # pass the cached function a sorted list so that we can guarantee
     # cachability
     sr_ids.sort()
-    return cached_organic_links(*sr_ids)[:organic_length]
+    return cached_organic_links(*sr_ids)
 
 def update_pos(pos):
     "Update the user's current position within the cached organic list."
