@@ -125,7 +125,7 @@ def auth_transaction(amount, user, payid, thing, campaign, test = None):
                                         test = test)
             else:
                 Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
-                return trans_id, ""
+                return res.trans_id, ""
         elif res is None:
             # we are in test mode!
             return auth_transaction(amount, user, -1, thing, test = test)

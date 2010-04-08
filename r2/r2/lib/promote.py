@@ -355,7 +355,7 @@ def auth_campaign(link, index, user, pay_id):
 
             sd, ed, bid, sr, trans_id = campaigns[index]
             # create a new transaction and update the bid
-            test = 1 if g.debug else 0
+            test = 1 if g.debug else None
             trans_id, reason = authorize.auth_transaction(bid, user,
                                                           pay_id, link,
                                                           index,
