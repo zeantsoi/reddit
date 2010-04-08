@@ -281,6 +281,9 @@ class Bid(Sessionized, Base):
     status        = Column(Integer, nullable = False,
                            default = STATUS.AUTH)
 
+    # make this a primary key as well so that we can have more than
+    # one freebie per campaign
+    campaign      = Column(Integer, default = 0, primary_key = True)
 
     @classmethod
     def _new(cls, trans_id, user, pay_id, thing_id, bid):
