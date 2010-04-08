@@ -756,3 +756,7 @@ class CommentsController(ListingController):
     def query(self):
         return c.site.get_all_comments()
 
+    def GET_listing(self, **env):
+        c.profilepage = True
+        return ListingController.GET_listing(self, **env)
+
