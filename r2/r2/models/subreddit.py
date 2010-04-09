@@ -278,6 +278,14 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_reported(self)
 
+    def get_trials(self):
+        from r2.lib.db import queries
+        return queries.get_trials(self)
+
+    def get_modqueue(self):
+        from r2.lib.db import queries
+        return queries.get_modqueue(self)
+
     def get_all_comments(self):
         from r2.lib.db import queries
         return queries.get_all_comments()

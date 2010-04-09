@@ -25,28 +25,6 @@ from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv, tup
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
 
-@memoize('trial_utils.all_defendants')
-def all_defendants_cache():
-    fnames = g.hardcache.backend.ids_by_category("trial")
-    return fnames
-
-def all_defendants(quench=False, _update=False):
-    from r2.models import Thing
-    all = all_defendants_cache(_update=_update)
-
-    defs = Thing._by_fullname(all, data=True).values()
-
-    if quench:
-        # Used for the spotlight, to filter out trials with over 30 votes;
-        # otherwise, hung juries would hog the spotlight for an hour as
-        # their vote counts continued to skyrocket
-
-        return filter (lambda d:
-                       not g.cache.get("quench_jurors-" + d._fullname),
-                       defs)
-    else:
-        return defs
-
 def trial_key(thing):
     return "trial-" + thing._fullname
 
@@ -60,15 +38,17 @@ def on_trial(things):
                 in vals.iteritems())
 
 def end_trial(thing, verdict=None):
+    from r2.models import Trial
     if on_trial(thing):
         g.hardcache.delete(trial_key(thing))
-        all_defendants(_update=True)
+        Trial.all_defendants(_update=True)
 
     if verdict is not None:
         thing.verdict = verdict
         thing._commit()
 
 def indict(defendant):
+    from r2.models import Trial
     tk = trial_key(defendant)
 
     rv = False
@@ -85,7 +65,7 @@ def indict(defendant):
         # since a mistrial should be declared if the trial is still open
         # after 24 hours. So the "3 days" expiration isn't really real.
         g.hardcache.set(tk, True, 3 * 86400)
-        all_defendants(_update=True)
+        Trial.all_defendants(_update=True)
         result = "it's now indicted: %s" % tk
         rv = True
 
@@ -119,7 +99,7 @@ def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
     return True
 
 def assign_trial(account, ip, slash16):
-    from r2.models import Jury, Subreddit
+    from r2.models import Jury, Subreddit, Trial
     from r2.lib.db import queries
 
     defendants_voted_upon = []
@@ -132,7 +112,7 @@ def assign_trial(account, ip, slash16):
     subscribed_sr_ids = Subreddit.user_subreddits(account, ids=True, limit=None)
 
     # Pull defendants, except ones which already have lots of juryvotes
-    defs = all_defendants(quench=True)
+    defs = Trial.all_defendants(quench=True)
 
     # Filter out defendants outside this user's subscribed SRs
     defs = filter (lambda d: d.sr_id in subscribed_sr_ids, defs)
@@ -194,7 +174,7 @@ def populate_spotlight():
         g.cache.set(k, True, v)
 
     log_text("juryassignment",
-             "%s was just assigned to the jury for %s" % (c.user.name, thing._id36),
+             "%s was just assigned to the jury for %s" % (c.user.name, trial._id36),
              level="info")
 
     return trial
@@ -203,7 +183,7 @@ def look_for_verdicts():
     from r2.models import Trial
 
     print "checking all trials for verdicts..."
-    for defendant in all_defendants():
+    for defendant in Trial.all_defendants():
         print "Looking at reddit.com/comments/%s/x" % defendant._id36
         v = Trial(defendant).check_verdict()
         print "Verdict: %r" % v

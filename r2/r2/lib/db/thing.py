@@ -1056,6 +1056,7 @@ class MergeCursor(MultiCursor):
             return [p for p in pairs if not p[2]]
 
         pairs = undone(safe_next(c) for c in cursors)
+
         while pairs:
             #only one query left, just dump it
             if len(pairs) == 1:

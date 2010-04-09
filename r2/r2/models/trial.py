@@ -20,8 +20,9 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-from r2.models import Link
-from r2.lib.utils import Storage
+from r2.models import Thing, Link, Subreddit
+from r2.lib.utils import Storage, tup
+from r2.lib.memoize import memoize
 from datetime import datetime
 from pylons import g
 
@@ -138,3 +139,35 @@ class Trial(Storage):
         end_trial(self.defendant, verdict)
 
         return verdict
+
+    @classmethod
+    @memoize('trial.all_defendants')
+    def all_defendants_cache(cls):
+        fnames = g.hardcache.backend.ids_by_category("trial")
+        return fnames
+
+    @classmethod
+    def all_defendants(cls, quench=False, _update=False):
+        all = cls.all_defendants_cache(_update=_update)
+
+        defs = Thing._by_fullname(all, data=True).values()
+
+        if quench:
+            # Used for the spotlight, to filter out trials with over 30 votes;
+            # otherwise, hung juries would hog the spotlight for an hour as
+            # their vote counts continued to skyrocket
+
+            return filter (lambda d:
+                           not g.cache.get("quench_jurors-" + d._fullname),
+                           defs)
+        else:
+            return defs
+
+    # sr can be plural
+    @classmethod
+    def defendants_by_sr(cls, sr):
+        all = cls.all_defendants()
+        sr = tup(sr)
+        sr_ids = [ s._id for s in sr ]
+
+        return filter (lambda x: x.sr_id in sr_ids, all)

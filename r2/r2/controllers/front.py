@@ -372,20 +372,35 @@ class FrontController(RedditController):
             query = c.site.get_reported()
         elif location == 'spam':
             query = c.site.get_spam()
+        elif location == 'trials':
+            query = c.site.get_trials()
+        elif location == 'modqueue':
+            query = c.site.get_modqueue()
         else:
             raise ValueError
 
-        builder_cls = (QueryBuilder if isinstance(query, thing.Query)
-                       else IDBuilder)
+        if isinstance(query, thing.Query):
+            builder_cls = QueryBuilder
+        elif isinstance (query, list):
+            builder_cls = QueryBuilder
+        else:
+            builder_cls = IDBuilder
+
         def keep_fn(x):
             # no need to bother mods with banned users, or deleted content
             if x.hidden or x._deleted:
                 return False
-            if location == "reports" and not x._spam:
-                return (x.reported > 0)
-            if location == "spam":
+
+            if location == "reports":
+                return x.reported > 0 and not x._spam
+            elif location == "spam":
                 return x._spam
-            return True
+            elif location == "trials":
+                return not getattr(x, "verdict", None)
+            elif location == "modqueue":
+                return (x.reported > 0) or x._spam or not getattr(x, "verdict", None)
+            else:
+                raise ValueError
 
         builder = builder_cls(query,
                               skip = True,
@@ -399,6 +414,8 @@ class FrontController(RedditController):
         return pane
 
     def _edit_modcontrib_reddit(self, location, num, after, reverse, count, created):
+        extension_handling = False
+
         if not c.user_is_loggedin:
             return self.abort404()
         if isinstance(c.site, ModSR):
@@ -408,7 +425,7 @@ class FrontController(RedditController):
         else:
             raise ValueError
 
-        if level == 'mod' and location in ('reports', 'spam'):
+        if level == 'mod' and location in ('reports', 'spam', 'trials', 'modqueue'):
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
@@ -447,9 +464,7 @@ class FrontController(RedditController):
                 stylesheet_contents = ''
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
-        elif location in ('reports', 'spam') and is_moderator:
-            query = (c.site.get_reported() if location == 'reports'
-                     else c.site.get_spam())
+        elif location in ('reports', 'spam', 'trials', 'modqueue') and is_moderator:
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"

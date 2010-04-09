@@ -1,4 +1,4 @@
-from r2.models import Account, Link, Comment, Vote, SaveHide
+from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -298,7 +298,7 @@ def make_results(query, filter = filter_identity):
 def merge_results(*results):
     if not results:
         return []
-    if g.use_query_cache:
+    elif g.use_query_cache:
         return MergedCachedResults(results)
     else:
         m = Merge(results, sort = results[0]._sort)
@@ -331,8 +331,8 @@ def get_links(sr, sort, time, merge_batched=True):
 
     return res
 
-def get_spam_links(sr_id):
-    q_l = Link._query(Link.c.sr_id == sr_id,
+def get_spam_links(sr):
+    q_l = Link._query(Link.c.sr_id == sr._id,
                       Link.c._spam == True,
                       sort = db_sort('new'))
     return make_results(q_l)
@@ -345,16 +345,17 @@ def get_spam_comments(sr):
 
 def get_spam(sr):
     if isinstance(sr, ModContribSR):
-        results = [ get_spam_links(sr_id) for sr_id in sr.sr_ids() ]
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        results = [ get_spam_links(sr) for sr in srs ]
         return merge_results(*results)
     else:
-        return get_spam_links(sr._id)
-    #return merge_results(get_spam_links(sr._id),
+        return get_spam_links(sr)
+    #return merge_results(get_spam_links(sr),
     #                     get_spam_comments(sr))
 
-def get_reported_links(sr_id):
+def get_reported_links(sr):
     q_l = Link._query(Link.c.reported != 0,
-                      Link.c.sr_id == sr_id,
+                      Link.c.sr_id == sr._id,
                       Link.c._spam == False,
                       sort = db_sort('new'))
     return make_results(q_l)
@@ -368,12 +369,77 @@ def get_reported_comments(sr):
 
 def get_reported(sr):
     if isinstance(sr, ModContribSR):
-        results = [ get_reported_links(sr_id) for sr_id in sr.sr_ids() ]
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        results = [ get_reported_links(sr) for sr in srs ]
         return merge_results(*results)
     else:
-        return get_reported_links(sr._id)
-    #return merge_results(get_reported_links(sr._id),
+        return get_reported_links(sr)
+    #return merge_results(get_reported_links(sr),
     #                     get_reported_comments(sr))
+
+# TODO: Wow, what a hack. I'm doing this in a hurry to make
+# /r/blah/about/trials and /r/blah/about/modqueue work. At some point
+# before the heat death of the universe, we should start precomputing
+# these things instead. That would require an "on_trial" attribute to be
+# maintained on Links, a precomputer that keeps track of such links,
+# and changes to:
+#   trial_utils.py:  on_trial(), end_trial(), indict()
+#   trial.py:        all_defendants_cache()
+class QueryishList(list):
+    prewrap_fn = None
+    _rules = None
+    _sort = None
+
+    @property
+    def sort(self):
+        return self._sort
+
+    def _cursor(self):
+        return self
+
+    def _filter(self):
+        return True
+
+    @property
+    def data(self):
+        return [ (t._fullname, 2145945600) for t in self ]
+                  # Jan 1 2038 ^^^^^^^^^^
+                  # so that trials show up before spam and reports
+
+    def fetchone(self):
+        if self:
+            return self.pop(0)
+        else:
+            raise StopIteration
+
+def get_trials_links(sr):
+    l = Trial.defendants_by_sr(sr)
+    s = QueryishList(l)
+    s._sort = [db_sort('new')]
+    return s
+
+def get_trials(sr):
+    if isinstance(sr, ModContribSR):
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        return get_trials_links(srs)
+    else:
+        return get_trials_links(sr)
+
+def get_modqueue(sr):
+    results = []
+    if isinstance(sr, ModContribSR):
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        results.append(get_trials_links(srs))
+
+        for sr in srs:
+            results.append(get_reported_links(sr))
+            results.append(get_spam_links(sr))
+    else:
+        results.append(get_trials_links(sr))
+        results.append(get_reported_links(sr))
+        results.append(get_spam_links(sr))
+
+    return merge_results(*results)
 
 def get_domain_links(domain, sort, time):
     return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
@@ -540,7 +606,7 @@ def new_link(link):
 
     results.append(get_submitted(author, 'new', 'all'))
     if link._spam:
-        results.append(get_spam_links(sr._id))
+        results.append(get_spam_links(sr))
 
     # only 'new' qualifies for insertion, which will be done in
     # run_new_links
@@ -706,7 +772,7 @@ def del_or_ban(things, why):
 
         if links:
             if why == "ban":
-                add_queries([get_spam_links(sr._id)], insert_items = links)
+                add_queries([get_spam_links(sr)], insert_items = links)
             # rip it out of the listings. bam!
             results = [get_links(sr, 'hot', 'all'),
                        get_links(sr, 'new', 'all')]
@@ -737,7 +803,7 @@ def unban(things):
         comments = [x for x in things if isinstance(x, Comment)]
 
         if links:
-            add_queries([get_spam_links(sr._id)], delete_items = links)
+            add_queries([get_spam_links(sr)], delete_items = links)
             # put it back in the listings
             results = [get_links(sr, 'hot', 'all'),
                        get_links(sr, 'new', 'all')]
@@ -760,7 +826,7 @@ def unban(things):
 def new_report(thing):
     if isinstance(thing, Link):
         sr = Subreddit._byID(thing.sr_id)
-        add_queries([get_reported_links(sr._id)], insert_items = thing)
+        add_queries([get_reported_links(sr)], insert_items = thing)
     #elif isinstance(thing, Comment):
     #    sr = Subreddit._byID(thing.sr_id)
     #    add_queries([get_reported_comments(sr)], insert_items = thing)
@@ -777,7 +843,7 @@ def clear_reports(things):
         #comments = [ x for x in sr_things if isinstance(x, Comment) ]
 
         if links:
-            add_queries([get_reported_links(sr._id)], delete_items = links)
+            add_queries([get_reported_links(sr)], delete_items = links)
         #if comments:
         #    add_queries([get_reported_comments(sr)], delete_items = comments)
 
@@ -785,9 +851,9 @@ def add_all_ban_report_srs():
     """Adds the initial spam/reported pages to the report queue"""
     q = Subreddit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
-        add_queries([get_spam_links(sr._id),
+        add_queries([get_spam_links(sr),
                      #get_spam_comments(sr),
-                     get_reported_links(sr._id),
+                     get_reported_links(sr),
                      #get_reported_comments(sr),
                      ])
         
@@ -797,9 +863,9 @@ def add_all_srs():
     for sr in fetch_things2(q):
         add_queries(all_queries(get_links, sr, ('hot', 'new'), ['all']))
         add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-        add_queries([get_spam_links(sr._id),
+        add_queries([get_spam_links(sr),
                      #get_spam_comments(sr),
-                     get_reported_links(sr._id),
+                     get_reported_links(sr),
                      #get_reported_comments(sr),
                      ])
 

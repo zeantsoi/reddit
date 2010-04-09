@@ -343,6 +343,7 @@ class QueryBuilder(Builder):
             #skip and count
             while new_items and (not self.num or num_have < self.num):
                 i = new_items.pop(0)
+
                 if not (self.must_skip(i) or self.skip and not self.keep_item(i)):
                     items.append(i)
                     num_have += 1
