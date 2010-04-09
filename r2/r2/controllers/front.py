@@ -367,15 +367,58 @@ class FrontController(RedditController):
         else:
             return self.abort404()
 
-    @base_listing
-    @validate(location = nop('location'),
-              created = VOneOf('created', ('true','false'),
-                               default = 'false'))
-    def GET_editreddit(self, location, num, after, reverse, count, created):
-        """Edit reddit form."""
-        if isinstance(c.site, FakeSubreddit):
+    def _make_spamlisting(self, location, num, after, reverse, count):
+        if location == 'reports':
+            query = c.site.get_reported()
+        elif location == 'spam':
+            query = c.site.get_spam()
+        else:
+            raise ValueError
+
+        builder_cls = (QueryBuilder if isinstance(query, thing.Query)
+                       else IDBuilder)
+        def keep_fn(x):
+            # no need to bother mods with banned users, or deleted content
+            if x.hidden or x._deleted:
+                return False
+            if location == "reports" and not x._spam:
+                return (x.reported > 0)
+            if location == "spam":
+                return x._spam
+            return True
+
+        builder = builder_cls(query,
+                              skip = True,
+                              num = num, after = after,
+                              keep_fn = keep_fn,
+                              count = count, reverse = reverse,
+                              wrap = ListingController.builder_wrapper)
+        listing = LinkListing(builder)
+        pane = listing.listing()
+
+        return pane
+
+    def _edit_modcontrib_reddit(self, location, num, after, reverse, count, created):
+        if not c.user_is_loggedin:
+            return self.abort404()
+        if isinstance(c.site, ModSR):
+            level = 'mod'
+        elif isinstance(c.site, ContribSR):
+            level = 'contrib'
+        else:
+            raise ValueError
+
+        if level == 'mod' and location in ('reports', 'spam'):
+            pane = self._make_spamlisting(location, num, after, reverse, count)
+            if c.user.pref_private_feeds:
+                extension_handling = "private"
+        else:
             return self.abort404()
 
+        return EditReddit(content = pane,
+                          extension_handling = extension_handling).render()
+
+    def _edit_normal_reddit(self, location, num, after, reverse, count, created):
         # moderator is either reddit's moderator or an admin
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
         extension_handling = False
@@ -407,26 +450,7 @@ class FrontController(RedditController):
         elif location in ('reports', 'spam') and is_moderator:
             query = (c.site.get_reported() if location == 'reports'
                      else c.site.get_spam())
-            builder_cls = (QueryBuilder if isinstance(query, thing.Query)
-                           else IDBuilder)
-            def keep_fn(x):
-                # no need to bother mods with banned users, or deleted content
-                if x.hidden or x._deleted:
-                    return False
-                if location == "reports" and not x._spam:
-                    return (x.reported > 0)
-                if location == "spam":
-                    return x._spam
-                return True
-
-            builder = builder_cls(query,
-                                  skip = True,
-                                  num = num, after = after,
-                                  keep_fn = keep_fn,
-                                  count = count, reverse = reverse,
-                                  wrap = ListingController.builder_wrapper)
-            listing = LinkListing(builder)
-            pane = listing.listing()
+            pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
         elif is_moderator and location == 'traffic':
@@ -438,6 +462,22 @@ class FrontController(RedditController):
 
         return EditReddit(content = pane,
                           extension_handling = extension_handling).render()
+
+    @base_listing
+    @validate(location = nop('location'),
+              created = VOneOf('created', ('true','false'),
+                               default = 'false'))
+    def GET_editreddit(self, location, num, after, reverse, count, created):
+        """Edit reddit form."""
+        if isinstance(c.site, ModContribSR):
+            return self._edit_modcontrib_reddit(location, num, after, reverse,
+                                                count, created)
+        elif isinstance(c.site, FakeSubreddit):
+            return self.abort404()
+        else:
+            return self._edit_normal_reddit(location, num, after, reverse,
+                                            count, created)
+
 
     def GET_awards(self):
         """The awards page."""

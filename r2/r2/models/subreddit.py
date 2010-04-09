@@ -116,6 +116,10 @@ class Subreddit(Thing, Printable):
 
         if name == 'friends':
             return Friends
+        elif name == 'mod':
+            return Mod
+        elif name == 'contrib':
+            return Contrib
         elif name == 'all':
             return All
         else:
@@ -404,6 +408,26 @@ class Subreddit(Thing, Printable):
                 srs = srs[:limit]
             return srs
 
+    @classmethod
+    @memoize('subreddit.special_reddits')
+    def special_reddits_cache(cls, user_id, query_param):
+        reddits = SRMember._query(SRMember.c._name == query_param,
+                                  SRMember.c._thing2_id == user_id,
+                                  #hack to prevent the query from
+                                  #adding it's own date
+                                  sort = (desc('_t1_ups'), desc('_t1_date')),
+                                  eager_load = True,
+                                  thing_data = True,
+                                  limit = 100)
+
+        return [ sr._thing1_id for sr in reddits ]
+
+    # Used to pull all of the SRs a given user moderates or is a contributor
+    # to (which one is controlled by query_param)
+    @classmethod
+    def special_reddits(cls, user, query_param, _update=False):
+        return cls.special_reddits_cache(user._id, query_param, _update=_update)
+
     def is_subscriber_defaults(self, user):
         if user.has_subscribed:
             return self.is_subscriber(user)
@@ -613,7 +637,6 @@ class FriendsSR(FakeSubreddit):
                                data = True)
             return q
 
-            
 class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all'
@@ -684,6 +707,36 @@ class MultiReddit(DefaultSR):
     def rising_srs(self):
         return self.sr_ids
 
+class ModContribSR(DefaultSR):
+    name  = None
+    title = None
+    query_param = None
+    real_path = None
+
+    @property
+    def path(self):
+        return '/r/' + self.real_path
+
+    def sr_ids(self):
+        if c.user_is_loggedin:
+            return Subreddit.special_reddits(c.user, self.query_param)
+        else:
+            return []
+
+    def get_links(self, sort, time):
+        return self.get_links_sr_ids(self.sr_ids(), sort, time)
+
+class ModSR(ModContribSR):
+    name  = "communities you moderate"
+    title = "communities you moderate"
+    query_param = "moderator"
+    real_path = "mod"
+
+class ContribSR(ModContribSR):
+    name  = "contrib"
+    title = "communities you're a contributor on"
+    query_param = "contributor"
+    real_path = "contrib"
 
 class SubSR(FakeSubreddit):
     stylesheet = 'subreddit.css'
@@ -720,6 +773,8 @@ class DomainSR(FakeSubreddit):
 
 Sub = SubSR()
 Friends = FriendsSR()
+Mod = ModSR()
+Contrib = ContribSR()
 All = AllSR()
 Default = DefaultSR()
 

@@ -363,6 +363,7 @@ class ApiController(RedditController):
         """
         if container and container.is_moderator(c.user):
             container.remove_moderator(c.user)
+            Subreddit.special_reddits(c.user, "moderator", _update=True)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -373,8 +374,8 @@ class ApiController(RedditController):
         """
         if container and container.is_contributor(c.user):
             container.remove_contributor(c.user)
+            Subreddit.special_reddits(c.user, "contributor", _update=True)
 
-    
     @noresponse(VUser(),
                 VModhash(),
                 nuser = VExistingUname('name'),
@@ -394,7 +395,7 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributer','banned')
+            and (type in ('moderator','contributor','banned')
                  and not c.site.is_moderator(c.user))):
             abort(403, 'forbidden')
         # if we are (strictly) unfriending, the container had better
@@ -403,6 +404,9 @@ class ApiController(RedditController):
             abort(403, 'forbidden')
         fn = getattr(container, 'remove_' + type)
         fn(iuser or nuser)
+
+        if type in ("moderator", "contributor"):
+            Subreddit.special_reddits(iuser or nuser, type, _update=True)
 
 
 
@@ -424,7 +428,7 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributer', 'banned')
+            and (type in ('moderator','contributor', 'banned')
                  and not c.site.is_moderator(c.user))):
             abort(403,'forbidden')
 
@@ -433,34 +437,39 @@ class ApiController(RedditController):
         if type == "friend" and container != c.user:
             abort(403,'forbidden')
 
-        elif not form.has_errors("name",
-                                 errors.USER_DOESNT_EXIST, errors.NO_USER):
-            new = fn(friend)
-            cls = dict(friend=FriendList,
-                       moderator=ModList,
-                       contributor=ContributorList,
-                       banned=BannedList).get(type)
-            form.set_inputs(name = "")
-            form.set_html(".status:first", _("added"))
-            if new and cls:
-                user_row = cls().user_row(friend)
-                jquery("#" + type + "-table").show(
-                    ).find("table").insert_table_rows(user_row)
+        elif form.has_errors("name", errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
 
-                if type != 'friend':
-                    msg = strings.msg_add_friend.get(type)
-                    subj = strings.subj_add_friend.get(type)
-                    if msg and subj and friend.name != c.user.name:
-                        # fullpath with domain needed or the markdown link
-                        # will break
-                        d = dict(url = container.path, 
-                                 title = container.title)
-                        msg = msg % d
-                        subj = subj % d
-                        item, inbox_rel = Message._new(c.user, friend,
-                                                       subj, msg, ip)
+        new = fn(friend)
 
-                        queries.new_message(item, inbox_rel)
+        if type in ("moderator", "contributor"):
+            Subreddit.special_reddits(friend, type, _update=True)
+
+        cls = dict(friend=FriendList,
+                   moderator=ModList,
+                   contributor=ContributorList,
+                   banned=BannedList).get(type)
+        form.set_inputs(name = "")
+        form.set_html(".status:first", _("added"))
+        if new and cls:
+            user_row = cls().user_row(friend)
+            jquery("#" + type + "-table").show(
+                ).find("table").insert_table_rows(user_row)
+
+            if type != 'friend':
+                msg = strings.msg_add_friend.get(type)
+                subj = strings.subj_add_friend.get(type)
+                if msg and subj and friend.name != c.user.name:
+                    # fullpath with domain needed or the markdown link
+                    # will break
+                    d = dict(url = container.path,
+                             title = container.title)
+                    msg = msg % d
+                    subj = subj % d
+                    item, inbox_rel = Message._new(c.user, friend,
+                                                   subj, msg, ip)
+
+                    queries.new_message(item, inbox_rel)
 
 
     @validatedForm(VUser('curpass', default = ''),

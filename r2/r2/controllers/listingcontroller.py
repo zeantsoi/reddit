@@ -759,7 +759,7 @@ class MyredditsController(ListingController):
             stack.append(InfoBar(message=message))
 
         stack.append(self.listing_obj)
-        
+
         return stack
 
     @validate(VUser())
