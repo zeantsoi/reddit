@@ -545,14 +545,14 @@ def set_live_promotions(x):
 
 def make_daily_promotions(offset = 0, test = False):
     old_links = set([])
-    links, weighted = get_weighted_schedule(offset)
+    all_links, weighted = get_weighted_schedule(offset)
     x = get_live_promotions()
     if x:
         old_links, old_weights = x
         # links that need to be promoted
-        new_links = links - old_links
+        new_links = all_links - old_links
         # links that have already been promoted
-        old_links = old_links - links
+        old_links = old_links - all_links
     else:
         new_links = links
 
@@ -564,20 +564,13 @@ def make_daily_promotions(offset = 0, test = False):
                 print "unpromote", l
             else:
                 # update the query queue
-                set_status(links[l], STATUS.accepted, 
+                set_status(links[l], STATUS.finished, 
                            onchange = lambda: emailer.finished_promo(links[l]))
-        else:
-            if test:
-                print "promote", l
-            else:
-                # update the query queue
-                set_status(links[l], STATUS.promoted, 
-                           onchange = lambda: emailer.live_promo(links[l]))
 
     for l in new_links:
         if is_accepted(links[l]):
             if test:
-                print "promote", l
+                print "promote2", l
             else:
                 # update the query queue
                 set_status(links[l], STATUS.promoted,
@@ -591,9 +584,9 @@ def make_daily_promotions(offset = 0, test = False):
     weighted = dict((srs[k], v) for k, v in weighted.iteritems())
 
     if not test:
-        set_live_promotions((set(links.keys()), weighted))
+        set_live_promotions((all_links, weighted))
     else:
-        print (set(links.keys()), weighted)
+        print (all_links, weighted)
 
 
 def get_promotion_list(user, site):
