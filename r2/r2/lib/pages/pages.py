@@ -2216,9 +2216,8 @@ class PromotedTraffic(Traffic):
         # TODO: needs a fix for multiple campaigns
         self.thing = thing
         sd, ed, bid, sr, trans_id = thing.campaigns[0]
-        d = sd.astimezone(g.tz) - promote.timezone_offset
-        d = d.replace(minute = 0, second = 0, microsecond = 0)
-        until = ed.astimezone(g.tz) - promote.timezone_offset
+        d = sd.date() if not isinstance(sd, datetime.date) else sd
+        until = ed.date() if not isinstance(ed, datetime.date) else sd
         now = datetime.datetime.now(g.tz)
 
         # the results are preliminary until 1 day after the promotion ends
