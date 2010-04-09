@@ -1383,6 +1383,10 @@ class ButtonDemoPanel(Templated):
     """The page for showing the different styles of embedable voting buttons"""
     pass
 
+class UpgradeButtons(Templated):
+    """The page for showing the different styles of embedable voting buttons"""
+    pass
+
 
 class SelfServeBlurb(Templated):
     pass

@@ -63,6 +63,7 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(where='subscriber|contributor|moderator'))
 
     mc('/buttons', controller='buttons', action='button_demo_page')
+    mc('/upgradebuttons', controller='buttons', action='upgrade_buttons')
     #the frame
     mc('/button_content', controller='buttons', action='button_content')
     #/button.js and buttonlite.js - the embeds

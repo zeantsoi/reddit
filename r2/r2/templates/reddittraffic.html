@@ -105,6 +105,24 @@
 
 <h1>Traffic for ${c.site.name}</h1>
 
+<p>
+  Below are the traffic stats for your reddit.  Each graph represents one of the following over the interval specified
+</p>
+<ul style="margin:7px">
+  <li>
+    <b>pageviews</b> &#32;are all hits to ${c.site.name}, including both listing pages and comment pages.
+  </li>
+  <li>
+    <b>uniques</b> &#32;are the total number of unique visitors (IP and U/A combo) that generate the above pageviews. This is independent of whether or not they are logged in.
+  </li>
+  <li>
+    <b>subscriptions</b> &#32;is the number of new subscriptions in a given day that have been generated. This number is the lest accurate than the first two metrics, as, though we can track new subscriptions, we have no way to track unsubscriptions (which are when a subscription is actually deleted from the db).
+  </li>
+</ul>
+<p>
+  Note: there are a couple of places outside of your reddit where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.
+</p>
+
 %if not thing.has_data:
   <p class="error">
    ${_("There doesn't seem to be any traffic data at the moment.  Please check back later.")}

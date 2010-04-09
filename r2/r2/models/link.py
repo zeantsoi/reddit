@@ -344,7 +344,7 @@ class Link(Thing, Printable):
             # do we hide the score?
             if user_is_admin:
                 item.hide_score = False
-            elif item.promoted:
+            elif item.promoted and item.score <= 0:
                 item.hide_score = True
             elif user == item.author:
                 item.hide_score = False
@@ -366,7 +366,7 @@ class Link(Thing, Printable):
                 item.nofollow = True
             else:
                 item.nofollow = False
-                
+
             if c.user.pref_no_profanity:
                 item.title = profanity_filter(item.title)
 
