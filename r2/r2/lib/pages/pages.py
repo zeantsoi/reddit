@@ -2216,13 +2216,12 @@ class PromotedTraffic(Traffic):
         # TODO: needs a fix for multiple campaigns
         self.thing = thing
         sd, ed, bid, sr, trans_id = thing.campaigns[0]
-        d = sd.date() if not isinstance(sd, datetime.date) else sd
-        until = ed.date() if not isinstance(ed, datetime.date) else sd
+        d = sd.date() if isinstance(sd, datetime.datetime) else sd
+        until = ed.date() if isinstance(ed, datetime.datetime) else ed
         now = datetime.datetime.now(g.tz).date()
 
         # the results are preliminary until 1 day after the promotion ends
         self.preliminary = (until + datetime.timedelta(1) > now)
-
         self.traffic = load_traffic('hour', "thing", thing._fullname,
                                     start_time = d, stop_time = until)
 
