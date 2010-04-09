@@ -444,7 +444,7 @@ def reject_promotion(link, reason = None):
                 del weighted[k]
         set_live_promotions((links, weighted))
         promotion_log(link, "dequeued")
-    emailer.reject_promo(link)
+    emailer.reject_promo(link, reason = reason)
 
 
 def unapprove_promotion(link):

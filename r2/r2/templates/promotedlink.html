@@ -32,7 +32,7 @@
 
 <%def name="tagline()">
 <%
-   if (c.user_is_sponsor or thing.is_author) and promote.is_promoted(thing):
+   if (c.user_is_sponsor or thing.is_author) and not promote.is_promoted(thing):
      taglinetext = _("to be promoted by %(author)s") 
    else:
      taglinetext = _("promoted by %(author)s") 
