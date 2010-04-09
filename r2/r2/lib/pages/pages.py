@@ -2527,7 +2527,9 @@ class Promote_Graph(Templated):
         # determine the range of each link
         promote_blocks = []
         def block_maker(link, bid, bid_day, starti, endi):
-            if c.user_is_sponsor or link.author_id == c.user._id:
+            if ((c.user_is_sponsor or link.author_id == c.user._id)
+                and not promote.is_rejected(link)
+                and not promote.is_unpaid(link)):
                 promote_blocks.append( (link, bid, starti, endi) )
         self.promo_iter(start_date, end_date, block_maker)
 
