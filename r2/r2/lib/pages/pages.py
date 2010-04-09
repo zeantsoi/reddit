@@ -2218,7 +2218,7 @@ class PromotedTraffic(Traffic):
         sd, ed, bid, sr, trans_id = thing.campaigns[0]
         d = sd.date() if not isinstance(sd, datetime.date) else sd
         until = ed.date() if not isinstance(ed, datetime.date) else sd
-        now = datetime.datetime.now(g.tz)
+        now = datetime.datetime.now(g.tz).date()
 
         # the results are preliminary until 1 day after the promotion ends
         self.preliminary = (until + datetime.timedelta(1) > now)
