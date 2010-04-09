@@ -339,7 +339,7 @@ class Subreddit(Thing, Printable):
                                  pop_reddits)[:limit]
 
         return [x for x in pop_reddits
-                if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) > 0]
+                if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
