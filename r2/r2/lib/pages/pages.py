@@ -2043,7 +2043,7 @@ class PromoteLinkForm(Templated):
     def __init__(self, sr = None, link = None, listing = '',
                  timedeltatext = '', *a, **kw):
         bids = []
-        if c.user_is_admin and link:
+        if c.user_is_sponsor and link:
             self.author = Account._byID(link.author_id)
             try:
                 bids = bidding.Bid.lookup(thing_id = link._id)
@@ -2213,10 +2213,12 @@ class PromotedTraffic(Traffic):
     multiy format) and a table of the data.
     """
     def __init__(self, thing):
+        # TODO: needs a fix for multiple campaigns
         self.thing = thing
-        d = thing._date.astimezone(g.tz) - promote.timezone_offset
+        sd, ed, bid, sr, trans_id = thing.campaigns[0]
+        d = sd.astimezone(g.tz) - promote.timezone_offset
         d = d.replace(minute = 0, second = 0, microsecond = 0)
-        until = thing.promote_until - promote.timezone_offset
+        until = ed.astimezone(g.tz) - promote.timezone_offset
         now = datetime.datetime.now(g.tz)
 
         # the results are preliminary until 1 day after the promotion ends
