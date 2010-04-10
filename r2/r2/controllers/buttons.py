@@ -129,8 +129,8 @@ class ButtonsController(RedditController):
         <html>
         <head>
         </head>
-        <body style='border:1px solid #336699;text-align:center'>
-           <a href='http://www.reddit.com/upgradebuttons' style='color:red'>upgrade</a>
+        <body style='border:1px solid #336699;text-align:center;margin:0px'>
+           <a href='http://www.reddit.com/upgradebuttons' target='_top' style='color:red'>upgrade</a>
         </body>
         </html>
         """
