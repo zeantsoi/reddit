@@ -139,7 +139,6 @@ class Globals(object):
         num_mc_clients = 2 if self.running_as_script else 10
 
         py_mc = PyMemcache(self.memcaches)
-        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
         rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients)
         smc = CMemcache(self.servicecaches, num_clients = num_mc_clients)
         rec_cache = None # we're not using this for now
