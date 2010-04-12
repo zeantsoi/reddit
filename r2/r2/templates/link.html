@@ -67,7 +67,7 @@
        </acronym>
      </li>
     %endif
-    %if thing.show_trial_info:
+    %if getattr(thing, "show_trial_info", False):
      <li class="rounded trial-stamp stamp"
          title='${_('this link is questionable; you should click "ban" or "ignore"')}'
          >
