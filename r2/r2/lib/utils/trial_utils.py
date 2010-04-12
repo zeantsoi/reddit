@@ -25,10 +25,16 @@ from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv, tup
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
 
+# Hardcache lifetime for a trial.
+# The regular hardcache reaper should never run on one of these,
+# since a mistrial should be declared if the trial is still open
+# after 24 hours. So the "3 days" expiration isn't really real.
+TRIAL_TIME = 3 * 86400
+
 def trial_key(thing):
     return "trial-" + thing._fullname
 
-def on_trial(things):
+def trial_info(things):
     things = tup(things)
     keys = dict((trial_key(thing), thing._fullname)
                 for thing in things)
@@ -39,7 +45,7 @@ def on_trial(things):
 
 def end_trial(thing, verdict=None):
     from r2.models import Trial
-    if on_trial(thing):
+    if trial_info(thing):
         g.hardcache.delete(trial_key(thing))
         Trial.all_defendants(_update=True)
 
@@ -61,10 +67,9 @@ def indict(defendant):
     elif g.hardcache.get(tk):
         result = "it's already on trial"
     else:
-        # The regular hardcache reaper should never run on one of these,
-        # since a mistrial should be declared if the trial is still open
-        # after 24 hours. So the "3 days" expiration isn't really real.
-        g.hardcache.set(tk, True, 3 * 86400)
+        # The spams/koshers dict is just a infrequently-updated cache; the
+        # official source of the data is the Jury relation.
+        g.hardcache.set(tk, dict(spams=0, koshers=0), TRIAL_TIME)
         Trial.all_defendants(_update=True)
         result = "it's now indicted: %s" % tk
         rv = True
@@ -72,6 +77,19 @@ def indict(defendant):
     log_text("indict_result", "%s: %s" % (defendant._id36, result), level="info")
 
     return rv
+
+# These are spam/kosher votes, not up/down votes
+def update_voting(defendant, koshers, spams):
+    tk = trial_key(defendant)
+    d = g.hardcache.get(tk)
+    if d is None:
+        log_text("update_voting() fail",
+                 "%s not on trial" % defendant._id36,
+                 level="error")
+    else:
+        d["koshers"] = koshers
+        d["spams"] = spams
+        g.hardcache.set(tk, d, TRIAL_TIME)
 
 # Check to see if a juror is eligible to serve on a jury for a given link.
 def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):

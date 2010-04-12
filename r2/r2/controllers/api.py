@@ -35,7 +35,7 @@ from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
-from r2.lib.utils.trial_utils import indict, end_trial, on_trial
+from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
@@ -794,7 +794,7 @@ class ApiController(RedditController):
 
         j = Jury.by_account_and_defendant(c.user, thing)
 
-        if not on_trial([thing]).get(thing._fullname,False):
+        if not trial_info([thing]).get(thing._fullname,False):
             log_text("juryvote: not on trial", level="warning")
             return
 

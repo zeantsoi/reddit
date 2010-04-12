@@ -743,6 +743,9 @@ a.star { text-decoration: none; color: #ff8b60 }
     padding-left: 4px;
 }
 
+.entry .buttons li.stamp + li.stamp {
+    margin-left: 4px;
+}
 
 .entry .buttons li a {
     color: #888;
@@ -2273,9 +2276,23 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     text-decoration: none;
 }
 
+.entry .buttons li.trial-stamp {
+    border: 1px solid black !important;
+    padding: 0 4px;
+    background-color: #f6e69f;
+}
+
+.entry .buttons li.trial-stamp .spam {
+    color: #e00;
+}
+
+.entry .buttons li.trial-stamp .kosher {
+    color: #090;
+}
+
 .reported { background-color: #f6e69f }
 .suspicious { background-color: #f6e69f }
-.spam { background-color: #FA8072 }
+.thing.spam { background-color: #FA8072 }
 .banned-user {
     overflow: hidden;
     opacity: .7;

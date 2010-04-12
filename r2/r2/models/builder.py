@@ -172,8 +172,13 @@ class Builder(object):
 
             w.deleted = item._deleted
 
-            w.on_trial = getattr(item, "on_trial", None)
-            w.verdict = getattr(item, "verdict", None)
+            w.link_notes = []
+            if c.user_is_admin:
+                if item.deleted:
+                    w.link_notes.append("deleted link")
+                if getattr(item, "verdict", None):
+                    w.verdict = item.verdict
+                    w.link_notes.append(w.verdict)
 
             w.rowstyle = getattr(w, 'rowstyle', "")
             w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
@@ -191,11 +196,14 @@ class Builder(object):
             w.show_reports = False
             w.show_spam    = False
             w.can_ban      = False
+            w.show_trial_info = False
+
             if (c.user_is_admin
                 or (user
                     and hasattr(item,'sr_id')
                     and item.sr_id in can_ban_set)):
                 w.can_ban = True
+
                 if item._spam:
                     w.show_spam = True
                     ban_info = getattr(item, 'ban_info', {})
@@ -207,6 +215,7 @@ class Builder(object):
 
                 elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
+
 
         # recache the user object: it may be None if user is not logged in,
         # whereas now we are happy to have the UnloggedUser object

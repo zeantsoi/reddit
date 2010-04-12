@@ -53,7 +53,7 @@
             "return change_state(this, 'ban');", _("banned"))}
       </li>
      %endif
-    %if thing.show_reports:
+    %if thing.show_ignore:
       <li>
         ${self.state_button("ignore", _("ignore"), \
          "change_state(this, 'ignore');", _("ignored"))}

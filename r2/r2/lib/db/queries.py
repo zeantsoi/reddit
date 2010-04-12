@@ -297,7 +297,7 @@ def make_results(query, filter = filter_identity):
 
 def merge_results(*results):
     if not results:
-        return []
+        return QueryishList([])
     elif g.use_query_cache:
         return MergedCachedResults(results)
     else:
@@ -383,7 +383,7 @@ def get_reported(sr):
 # these things instead. That would require an "on_trial" attribute to be
 # maintained on Links, a precomputer that keeps track of such links,
 # and changes to:
-#   trial_utils.py:  on_trial(), end_trial(), indict()
+#   trial_utils.py:  trial_info(), end_trial(), indict()
 #   trial.py:        all_defendants_cache()
 class QueryishList(list):
     prewrap_fn = None

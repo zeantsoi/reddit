@@ -23,7 +23,7 @@ from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
 from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url
-from r2.lib.utils.trial_utils import on_trial
+from r2.lib.utils.trial_utils import trial_info
 from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
@@ -292,7 +292,7 @@ class Link(Thing, Printable):
 
         saved = Link._saved(user, wrapped) if user_is_loggedin else {}
         hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
-        trials = on_trial(wrapped)
+        trials = trial_info(wrapped)
 
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
@@ -413,8 +413,6 @@ class Link(Thing, Printable):
             else:
                 item.mousedown_url = None
 
-            item.on_trial = trials.get(item._fullname, False)
-
             item.fresh = not any((item.likes != None,
                                   item.saved,
                                   item.clicked,
@@ -436,6 +434,12 @@ class Link(Thing, Printable):
             if item.deleted and not c.user_is_admin:
                 item.author = DeletedUser()
                 item.as_deleted = True
+
+            item.trial_info = trials.get(item._fullname, None)
+
+            if item.can_ban:
+                if item.trial_info is not None:
+                    item.show_trial_info = True
 
         if user_is_loggedin:
             incr_counts(wrapped)

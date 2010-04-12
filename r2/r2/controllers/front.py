@@ -284,7 +284,7 @@ class FrontController(RedditController):
 
         juries = Jury.by_account(c.user)
 
-        trials = on_trial([j._thing2 for j in juries])
+        trials = trial_info([j._thing2 for j in juries])
 
         for j in juries:
             defendant = j._thing2

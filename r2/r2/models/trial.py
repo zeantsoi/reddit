@@ -28,11 +28,11 @@ from pylons import g
 
 class Trial(Storage):
     def __init__(self, defendant):
-        from r2.lib.utils.trial_utils import on_trial
+        from r2.lib.utils.trial_utils import trial_info
 
         if not defendant._loaded:
             defendant._load()
-        if not on_trial(defendant):
+        if not trial_info(defendant):
             raise ValueError ("Defendant %s is not on trial" % defendant._id)
         self.defendant = defendant
 
@@ -58,15 +58,16 @@ class Trial(Storage):
 
     def verdict(self):
         from r2.models import Jury
+        from r2.lib.utils.trial_utils import update_voting
 
-        ups = 0
-        downs = 0
+        koshers = 0
+        spams = 0
         nones = 0
 
         now = datetime.now(g.tz)
         defendant_age = now - self.defendant._date
         if defendant_age.days > 0:
-            return "timeout"
+            return "jury timeout"
 
         latest_juryvote = None
         for j in Jury.by_defendant(self.defendant):
@@ -81,17 +82,19 @@ class Trial(Storage):
                 latest_juryvote = max(latest_juryvote, j._date)
 
             if j._name == "1":
-                ups += 1
+                koshers += 1
             elif j._name == "-1":
-                downs += 1
+                spams += 1
             else:
                 raise ValueError("weird jury vote: [%s]" % j._name)
 
         # The following trace is temporary; it'll be removed once this
         # is done via cron job as opposed to manually
-        print "%d ups, %d downs, %d haven't voted yet" % (ups, downs, nones)
+        print "%d koshers, %d spams, %d haven't voted yet" % (koshers, spams, nones)
 
-        total_votes = ups + downs
+        update_voting(self.defendant, koshers, spams)
+
+        total_votes = koshers + spams
 
         if total_votes < 7:
             g.log.debug("not enough votes yet")
@@ -108,11 +111,11 @@ class Trial(Storage):
             g.log.debug("votes still trickling in")
             return None
 
-        up_pct = float(ups) / float(total_votes)
+        kosher_pct = float(koshers) / float(total_votes)
 
-        if up_pct < 0.34:
+        if kosher_pct < 0.34:
             return "guilty"
-        elif up_pct > 0.66:
+        elif kosher_pct > 0.66:
             return "innocent"
         elif total_votes >= 30:
             return "hung jury"
@@ -131,7 +134,7 @@ class Trial(Storage):
             self.convict()
         elif verdict == "innocent":
             self.acquit()
-        elif verdict in ("timeout", "hung jury"):
+        elif verdict in ("jury timeout", "hung jury"):
             self.mistrial()
         else:
             raise ValueError("Invalid verdict [%s]" % verdict)

@@ -61,10 +61,27 @@
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
     %if thing.nsfw:
-     <li class="rounded nsfw-stamp">
+     <li class="rounded nsfw-stamp stamp">
        <acronym title="${_('Adult content: Not Safe For Work')}">
          ${_("NSFW")}
        </acronym>
+     </li>
+    %endif
+    %if thing.show_trial_info:
+     <li class="rounded trial-stamp stamp"
+         title='${_('this link is questionable; you should click "ban" or "ignore"')}'
+         >
+       ${_("deputy opinion:")}
+       &#32;
+       <span class="spam">
+         ${_("%d spam") % thing.trial_info.get("spams", "?")}
+       </span>
+       &#32;
+       /
+       &#32;
+       <span class="kosher">
+         ${_("%d kosher") % thing.trial_info.get("koshers", "?")}
+       </span>
      </li>
     %endif
     ${self.buttons()}
@@ -81,15 +98,9 @@
     ${self.domain()}
 
     %if c.user_is_admin:
-        %if thing._deleted:
-            &#32;<span class="link-note">[link deleted]</span>
-        %endif
-        %if thing.on_trial:
-            &#32;<span class="link-note">[on trial]</span>
-        %endif
-        %if getattr(thing, "verdict", None):
-            &#32;<span class="link-note">[verdict:${thing.verdict}]</span>
-        %endif
+        %for link_note in thing.link_notes:
+           &#32;<span class="link-note">[${link_note}]</span>
+        %endfor
     %endif
   </p>
 

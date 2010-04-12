@@ -40,6 +40,8 @@ class PrintableButtons(Styled):
                         can_ban = thing.can_ban,
                         show_spam = thing.show_spam,
                         show_reports = thing.show_reports,
+                        show_ignore = thing.show_reports or
+                            (thing.show_trial_info and not thing.show_spam),
                         show_delete = show_delete,
                         show_report = show_report,
                         show_indict = show_indict,
