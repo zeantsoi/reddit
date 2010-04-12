@@ -171,21 +171,28 @@ def populate_spotlight():
         g.log.debug("not eligible")
         return None
 
+    if not g.cache.add("global-jury-key", True, 5):
+        g.log.debug("not yet time to add another juror")
+        return None
+
     ip, slash16 = ip_and_slash16(request)
 
     jcd = jury_cache_dict(c.user, ip, slash16)
 
     if jcd is None:
+        g.cache.delete("global-jury-key")
         return None
 
     if g.cache.get_multi(jcd.keys()) and not g.debug:
         g.log.debug("recent juror")
+        g.cache.delete("global-jury-key")
         return None
 
     trial = assign_trial(c.user, ip, slash16)
 
     if trial is None:
         g.log.debug("nothing available")
+        g.cache.delete("global-jury-key")
         return None
 
     for k, v in jcd.iteritems():

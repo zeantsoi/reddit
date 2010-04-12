@@ -122,8 +122,9 @@
      expand = thing.link_child and thing.link_child.expand
   %>
 
-  ##if we're not on a permalink page we'll render the buttons on top
-  %if not expand:
+  ## if we're not on a permalink page we'll render the buttons on top
+  ## (unless it's also a jury duty listing)
+  %if not (expand or getattr(thing, "trial_mode", None)):
     ${bottom_buttons()}
   %endif
 
