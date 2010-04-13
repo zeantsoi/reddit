@@ -294,7 +294,8 @@
 </%utils:line_field>
 
 %if thing.link:
-  <%utils:line_field title="${_('look and feel')}">
+  <%utils:line_field title="${_('look and feel')}"
+                     description="images will be resized if large than 70 x 70 pixels">
     <div class="delete-field">
       <%utils:image_upload post_target="/api/link_thumb" 
                            current_image="${thumb}"

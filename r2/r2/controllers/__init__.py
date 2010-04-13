@@ -24,7 +24,6 @@ from listingcontroller import HotController
 from listingcontroller import SavedController
 from listingcontroller import NewController
 from listingcontroller import BrowseController
-from listingcontroller import RecommendedController
 from listingcontroller import MessageController
 from listingcontroller import RedditsController
 from listingcontroller import ByIDController as ByidController

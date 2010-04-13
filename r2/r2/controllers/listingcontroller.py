@@ -30,7 +30,6 @@ from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot, get_hot
-from r2.lib.recommendation import get_recommended
 from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
@@ -278,7 +277,7 @@ class HotController(FixListing, ListingController):
                 return s
 
         # no organic box on a hot page, then show a random promoted link
-        else:
+        elif c.site != Default:
             link_ids = randomized_promotion_list(c.user, c.site)
             if link_ids:
                 res = wrap_links(link_ids, wrapper = self.builder_wrapper,
@@ -431,22 +430,22 @@ class ByIDController(ListingController):
         return ListingController.GET_listing(self, **env)
 
 
-class RecommendedController(ListingController):
-    where = 'recommended'
-    title_text = _('recommended for you')
-    
-    @property
-    def menus(self):
-        return [RecSortMenu(default = self.sort)]
-    
-    def query(self):
-        return get_recommended(c.user._id, sort = self.sort)
-        
-    @validate(VUser(),
-              sort = VMenu("controller", RecSortMenu))
-    def GET_listing(self, sort, **env):
-        self.sort = sort
-        return ListingController.GET_listing(self, **env)
+#class RecommendedController(ListingController):
+#    where = 'recommended'
+#    title_text = _('recommended for you')
+#    
+#    @property
+#    def menus(self):
+#        return [RecSortMenu(default = self.sort)]
+#    
+#    def query(self):
+#        return get_recommended(c.user._id, sort = self.sort)
+#        
+#    @validate(VUser(),
+#              sort = VMenu("controller", RecSortMenu))
+#    def GET_listing(self, sort, **env):
+#        self.sort = sort
+#        return ListingController.GET_listing(self, **env)
 
 class UserController(ListingController):
     render_cls = ProfilePage

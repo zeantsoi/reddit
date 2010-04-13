@@ -749,8 +749,9 @@ class VSanitizedUrl(Validator):
         return utils.sanitize_url(url)
 
 class VUrl(VRequired):
-    def __init__(self, item, allow_self = True, *a, **kw):
+    def __init__(self, item, allow_self = True, lookup = True, *a, **kw):
         self.allow_self = allow_self
+        self.lookup = lookup
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
     def run(self, url, sr = None):
@@ -771,6 +772,8 @@ class VUrl(VRequired):
         if url == 'self':
             if self.allow_self:
                 return url
+        elif not self.lookup:
+            return url
         elif url:
             try:
                 l = Link._by_url(url, sr)

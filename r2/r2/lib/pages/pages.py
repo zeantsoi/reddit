@@ -2219,24 +2219,30 @@ class PromotedTraffic(Traffic):
     def __init__(self, thing):
         # TODO: needs a fix for multiple campaigns
         self.thing = thing
-        sd, ed, bid, sr, trans_id = thing.campaigns[0]
-        d = sd.date() if isinstance(sd, datetime.datetime) else sd
-        until = ed.date() if isinstance(ed, datetime.datetime) else ed
-        now = datetime.datetime.now(g.tz).date()
+        d = until = None
+        self.traffic = []
+        if thing.campaigns:
+            sd = min(x[promote.CAMPAIGN.start] for x in thing.campaigns.values()
+                     if x[promote.CAMPAIGN.trans_id])
+            ed = max(x[promote.CAMPAIGN.end] for x in thing.campaigns.values()
+                     if x[promote.CAMPAIGN.trans_id])
+            d = sd.date() if isinstance(sd, datetime.datetime) else sd
+            until = ed.date() if isinstance(ed, datetime.datetime) else ed
+            now = datetime.datetime.now(g.tz).date()
 
-        # the results are preliminary until 1 day after the promotion ends
-        self.preliminary = (until + datetime.timedelta(1) > now)
-        self.traffic = load_traffic('hour', "thing", thing._fullname,
-                                    start_time = d, stop_time = until)
+            # the results are preliminary until 1 day after the promotion ends
+            self.preliminary = (until + datetime.timedelta(1) > now)
+            self.traffic = load_traffic('hour', "thing", thing._fullname,
+                                        start_time = d, stop_time = until)
 
-        # load monthly totals if we have them, otherwise use the daily totals
-        self.totals =  load_traffic('month', "thing", thing._fullname)
-        if not self.totals:
-            self.totals = load_traffic('day', "thing", thing._fullname)
-        # generate a list of
-        # (uniq impressions, # impressions, uniq clicks, # clicks)
-        if self.totals:
-            self.totals = map(sum, zip(*zip(*self.totals)[1]))
+            # load monthly totals if we have them, otherwise use the daily totals
+            self.totals =  load_traffic('month', "thing", thing._fullname)
+            if not self.totals:
+                self.totals = load_traffic('day', "thing", thing._fullname)
+            # generate a list of
+            # (uniq impressions, # impressions, uniq clicks, # clicks)
+            if self.totals:
+                self.totals = map(sum, zip(*zip(*self.totals)[1]))
 
         imp = self.slice_traffic(self.traffic, 0, 1)
 
@@ -2247,9 +2253,9 @@ class PromotedTraffic(Traffic):
                 self.totals[1] = imp_total
 
             imp_total = locale.format('%d', imp_total, True)
-            chart = graph.LineGraph(imp)
+            chart = graph.LineGraph(imp[-72:])
             self.imp_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                title = ("impressions (%s)" %
+                                                title = ("recent impressions (%s total)" %
                                                          imp_total))
 
             cli = self.slice_traffic(self.traffic, 2, 3)
@@ -2258,9 +2264,9 @@ class PromotedTraffic(Traffic):
             if self.totals:
                 self.totals[3] = cli_total
             cli_total = locale.format('%d', cli_total, True)
-            chart = graph.LineGraph(cli)
+            chart = graph.LineGraph(cli[-72:])
             self.cli_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                title = ("clicks (%s)" %
+                                                title = ("recent clicks (%s total)" %
                                                          cli_total))
         else:
             self.imp_graph = self.cli_graph = None
@@ -2526,7 +2532,7 @@ class Promote_Graph(Templated):
         market, promo_counter = self.get_market(None, start_date, end_date)
         my_market = market
         if not c.user_is_sponsor:
-            market = self.get_market(c.user._id, start_date, end_date)[0]
+            my_market = self.get_market(c.user._id, start_date, end_date)[0]
 
         # determine the range of each link
         promote_blocks = []

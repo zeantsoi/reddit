@@ -70,7 +70,7 @@ class PromoteController(ListingController):
 
     @validate(VSponsor())
     def GET_new_promo(self):
-        if c.user.name in g.beta_sponsors or c.user_is_sponsor:
+        if c.user.name.lower() in g.beta_sponsors or c.user_is_sponsor:
             content = PromoteLinkForm()
         else:
             content = PromoteLinkFormOld()
@@ -84,7 +84,7 @@ class PromoteController(ListingController):
         rendered = wrap_links(link, wrapper = promote.sponsor_wrapper,
                               skip = False)
 
-        if c.user.name in g.beta_sponsors or c.user_is_sponsor:
+        if c.user.name.lower() in g.beta_sponsors or c.user_is_sponsor:
             content = PromoteLinkForm
         else:
             content = PromoteLinkFormOld
@@ -181,7 +181,7 @@ class PromoteController(ListingController):
                               prefix = 'create_promo_'),
                    l     = VLink('link_id'),
                    title = VTitle('title'),
-                   url   = VUrl('url', allow_self = False),
+                   url   = VUrl('url', allow_self = False, lookup = False),
                    ip    = ValidIP(),
                    disable_comments = VBoolean("disable_comments"),
                    set_clicks = VBoolean("set_maximum_clicks"),
