@@ -792,7 +792,10 @@ class Message(Thing, Printable):
         sr_id = None
         # check to see if the recipient is a subreddit and swap args accordingly
         if to and isinstance(to, Subreddit):
+            to_subreddit = True
             to, sr = None, to
+        else:
+            to_subreddit = False
 
         if sr:
             sr_id = sr._id
@@ -819,9 +822,12 @@ class Message(Thing, Printable):
             sr = Subreddit._byID(sr_id)
 
         inbox_rel = []
-        # if there is a subreddit id, we have to add it to the moderator inbox
         if sr_id:
-            inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
+            # if there is a subreddit id, and it's either a reply or
+            # an initial message to an SR, add to the moderator inbox
+            # (i.e., don't do it for automated messages from the SR)
+            if parent or to_subreddit:
+                inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
             if author.name in g.admins:
                 m.distinguished = 'admin'
                 m._commit()
