@@ -326,6 +326,14 @@ class Account(Thing):
         # calling g.hardcache.get_multi()?
         return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
 
+    @classmethod
+    def system_user(cls):
+        if not hasattr(g, "system_user"):
+            return None
+        try:
+            return cls._by_name(g.system_user)
+        except NotFound:
+            return None
 
 class FakeAccount(Account):
     _nodb = True
