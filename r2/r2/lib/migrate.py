@@ -35,83 +35,6 @@ def add_allow_top_to_srs():
     for sr in fetch_things2(q):
         sr.allow_top = True; sr._commit()
 
-def convert_promoted():
-    """
-    should only need to be run once to update old style promoted links
-    to the new style.
-    """
-    from r2.lib.utils import fetch_things2
-    from r2.lib import authorize
-
-    q = Link._query(Link.c.promoted == (True, False),
-                    sort = desc("_date"))
-    sr_id = get_promote_srid()
-    bid = 100
-    with g.make_lock(promoted_lock_key):
-        promoted = {}
-        set_promoted({})
-        for l in fetch_things2(q):
-            print "updating:", l
-            try:
-                if not l._loaded: l._load()
-                # move the promotion into the promo subreddit
-                l.sr_id = sr_id
-                # set it to accepted (since some of the update functions
-                # check that it is not already promoted)
-                l.promote_status = STATUS.accepted
-                author = Account._byID(l.author_id)
-                l.promote_trans_id = authorize.auth_transaction(bid, author, -1, l)
-                l.promote_bid = bid
-                l.maximum_clicks = None
-                l.maximum_views = None
-                # set the dates
-                start = getattr(l, "promoted_on", l._date)
-                until = getattr(l, "promote_until", None) or \
-                    (l._date + timedelta(1))
-                l.promote_until = None
-                update_promo_dates(l, start, until)
-                # mark it as promoted if it was promoted when we got there
-                if l.promoted and l.promote_until > datetime.now(g.tz):
-                    l.promote_status = STATUS.pending
-                else:
-                    l.promote_status = STATUS.finished
-    
-                if not hasattr(l, "disable_comments"):
-                    l.disable_comments = False
-                # add it to the auction list
-                if l.promote_status == STATUS.pending and l._fullname not in promoted:
-                    promoted[l._fullname] = auction_weight(l)
-                l._commit()
-            except AttributeError:
-                print "BAD THING:", l
-        print promoted
-        set_promoted(promoted)
-    # run what is normally in a cron job to clear out finished promos
-    #promote_promoted()
-
-def store_market():
-
-    """
-    create index ix_promote_date_actual_end on promote_date(actual_end);
-    create index ix_promote_date_actual_start on promote_date(actual_start);
-    create index ix_promote_date_start_date on promote_date(start_date);
-    create index ix_promote_date_end_date on promote_date(end_date);
-
-    alter table promote_date add column account_id bigint;
-    create index ix_promote_date_account_id on promote_date(account_id);
-    alter table promote_date add column bid real;
-    alter table promote_date add column refund real;
-
-    """
-
-    for p in PromoteDates.query().all():
-        l = Link._by_fullname(p.thing_name, True)
-        if hasattr(l, "promote_bid") and hasattr(l, "author_id"):
-            p.account_id = l.author_id
-            p._commit()
-            PromoteDates.update(l, l._date, l.promote_until)
-            PromoteDates.update_bid(l)
-
 def subscribe_to_blog_and_annoucements(filename):
     import re
     from time import sleep
@@ -395,21 +318,6 @@ def promote_v2():
         else:
             print "no campaign information: ", l
 
-#def new_promo_datetable():
-#    from r2.models import PromoteDates, PromotionWeights, Link
-#    from r2.lib import promote
-#
-#    for p in PromoteDates.query():
-#        l = Link._by_fullname(p.thing_name, data = True)
-#        if not l._loaded:
-#            l._load()
-#        if l.promote_status in (promote.STATUS.rejected,):
-#            l.promoted = False
-#
-#        set_status(l, l.promote_status)
-#        #TODO: set as finished
-#        promote.new_campaign(l, 0  p.start_date, p.end_date, l.promote_bid)
-#        # todo need to run alter table on the bid to set finalized on finished
 
 def _progress(it, verbosity=100, key=repr, estimate=None, persec=False):
     """An iterator that yields everything from `it', but prints progress

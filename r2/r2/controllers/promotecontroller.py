@@ -229,10 +229,12 @@ class PromoteController(ListingController):
                 # want the URL
                 url = url[0].url
 
-        if (form.has_errors('title', errors.NO_TEXT,
+        # users can change the disable_comments on promoted links
+        if ((not l or not promote.is_promoted(l)) and 
+            (form.has_errors('title', errors.NO_TEXT,
                             errors.TOO_LONG) or
             form.has_errors('url', errors.NO_URL, errors.BAD_URL) or
-            jquery.has_errors('ratelimit', errors.RATELIMIT)):
+            jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
 
         if not l:
@@ -250,7 +252,7 @@ class PromoteController(ListingController):
                     changed = not c.user_is_sponsor
 
             # only trips if the title and url are changed by a non-sponsor
-            if changed:
+            if changed and not is_unpaid(l):
                 promote.unapprove_promotion(l)
 
             if c.user_is_sponsor:

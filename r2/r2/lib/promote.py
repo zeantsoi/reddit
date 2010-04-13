@@ -471,15 +471,18 @@ def accepted_iter(func, offset = 0):
 
 def charge_pending(offset = 1):
     def _charge(l, camp, indx, weight):
-        if not is_promoted(l):
-            user = Account._byID(l.author_id)
-            sd, ed, bid, sr, trans_id = camp
-            if authorize.charge_transaction(user, trans_id, indx):
-                # TODO: probably not absolutely necessary
-                promotion_log(l, "status update: pending")
-                # update the query queue
+        user = Account._byID(l.author_id)
+        sd, ed, bid, sr, trans_id = camp
+        if (not authorize.is_charged_transaction(trans_id, indx) and
+            authorize.charge_transaction(user, trans_id, indx)):
+            # TODO: probably not absolutely necessary
+            promotion_log(l, "status update: pending")
+            # update the query queue
+            if is_promoted(l):
+                emailer.queue_promo(l, bid, trans_id)
+            else:
                 set_status(l, STATUS.pending,
-                       onchange = lambda: emailer.queue_promo(l, bid, trans_id) )
+                           onchange = lambda: emailer.queue_promo(l, bid, trans_id) )
     accepted_iter(_charge, offset = offset)
 
 
