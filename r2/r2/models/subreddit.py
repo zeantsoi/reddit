@@ -71,6 +71,7 @@ class Subreddit(Thing, Printable):
 
     sr_limit = 50
 
+    # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
              over_18 = False, **kw):
@@ -116,6 +117,8 @@ class Subreddit(Thing, Printable):
 
         if name == 'friends':
             return Friends
+        elif name == 'random':
+            return Random
         elif name == 'mod':
             return Mod
         elif name == 'contrib':
@@ -338,7 +341,7 @@ class Subreddit(Thing, Printable):
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
-                                       cache_time = 3600)
+                                       cache_time = 5 * 60)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
@@ -350,8 +353,10 @@ class Subreddit(Thing, Printable):
             pop_reddits = filter(lambda sr: sr.allow_top == True,
                                  pop_reddits)[:limit]
 
+        # reddits with negative author_id are system reddits and shouldn't be displayed
         return [x for x in pop_reddits
                 if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
+
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
@@ -390,6 +395,11 @@ class Subreddit(Thing, Printable):
         reddits. Randomly choose 50 of those reddits and cache it for
         a while so their front page doesn't jump around."""
         return random.sample(sr_ids, limit)
+
+    @classmethod
+    def random_reddit(cls, limit = 1000):
+        return random.choice(cls.top_lang_srs(c.content_langs, limit,
+                                              filter_allow_top = False))
 
     @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
@@ -579,6 +589,22 @@ class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
 
+    @classmethod
+    @memoize("get_important_friends", 5*60)
+    def get_important_friends(cls, user_id, max_lookup = 500, limit = 100):
+        a = Account._byID(user_id, data = True)
+        # friends are returned chronologically by date, so pick the end of the list
+        # for the most recent additions
+        friends = Account._byID(a.friends[-max_lookup:], return_dict = False,
+                                data = True)
+
+        # if we don't have a last visit for your friends, we don't care about them
+        friends = [x for x in friends if hasattr(x, "last_visit")]
+
+        # sort friends by most recent interactions
+        friends.sort(key = lambda x: getattr(x, "last_visit"), reverse = True)
+        return [x._id for x in friends[:limit]]
+
     def get_links(self, sort, time):
         from r2.lib.db import queries
         from r2.models import Link
@@ -598,7 +624,7 @@ class FriendsSR(FakeSubreddit):
             sort = 'new'
             time = 'all'
 
-            friends = Account._byID(c.user.friends,
+            friends = Account._byID(self.get_important_friends(c.user._id),
                                     return_dict=False)
 
             crs = [queries.get_submitted(friend, sort, time)
@@ -606,7 +632,7 @@ class FriendsSR(FakeSubreddit):
             return queries.MergedCachedResults(crs)
 
         else:
-            q = Link._query(Link.c.author_id == c.user.friends,
+            q = Link._query(Link.c.author_id == self.get_important_friends(c.user._id),
                             sort = queries.db_sort(sort),
                             data = True)
             if time != 'all':
@@ -632,7 +658,7 @@ class FriendsSR(FakeSubreddit):
             sort = 'new'
             time = 'all'
 
-            friends = Account._byID(c.user.friends,
+            friends = Account._byID(self.get_important_friends(c.user._id),
                                     return_dict=False)
 
             crs = [queries.get_comments(friend, sort, time)
@@ -640,7 +666,7 @@ class FriendsSR(FakeSubreddit):
             return queries.MergedCachedResults(crs)
 
         else:
-            q = Comment._query(Comment.c.author_id == c.user.friends,
+            q = Comment._query(Comment.c.author_id == self.get_important_friends(c.user._id),
                                sort = desc('_date'),
                                data = True)
             return q
@@ -653,7 +679,10 @@ class AllSR(FakeSubreddit):
         from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(sort = queries.db_sort(sort))
+        q = Link._query(sort = queries.db_sort(sort),
+                        read_cache = True,
+                        write_cache = True,
+                        cache_time = 3600)
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
@@ -714,6 +743,9 @@ class MultiReddit(DefaultSR):
 
     def rising_srs(self):
         return self.sr_ids
+
+class RandomReddit(FakeSubreddit):
+    name = 'random'
 
 class ModContribSR(DefaultSR):
     name  = None
@@ -785,6 +817,7 @@ Mod = ModSR()
 Contrib = ContribSR()
 All = AllSR()
 Default = DefaultSR()
+Random = RandomReddit()
 
 class SRMember(Relation(Subreddit, Account)): pass
 Subreddit.__bases__ += (UserRel('moderator', SRMember),

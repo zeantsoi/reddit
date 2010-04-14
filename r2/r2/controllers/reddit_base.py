@@ -263,7 +263,6 @@ def set_subreddit():
                 redirect_to("/reddits/create?name=%s" % sr_name)
             elif not c.error_page:
                 abort(404, "not found")
-
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and c.site == Default and domain:
         c.site = DomainSR(domain)
@@ -650,6 +649,12 @@ class RedditController(MinimalController):
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):
             request.environ['REDDIT_NAME'] = c.site.name
+
+        # random reddit trickery -- have to do this after the content lang is set
+        if c.site == Random:
+            c.site = Subreddit.random_reddit()
+            redirect_to("/" + c.site.path.strip('/') + request.path)
+
 
         # check that the site is available:
         if c.site._spam and not c.user_is_admin and not c.error_page:

@@ -2567,8 +2567,8 @@ ul#image-preview-list .description pre {
     border-top: 1px dotted #369;
 }
 
-#sr-bar .separator {color: gray; }
-#sr-bar a {color: black;} 
+.sr-bar .separator {color: gray; }
+.sr-bar a {color: black;} 
 
 #sr-more-link {
     color: black;

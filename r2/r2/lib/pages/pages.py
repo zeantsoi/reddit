@@ -22,7 +22,7 @@
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, Default, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
@@ -278,12 +278,16 @@ class Reddit(Templated):
         """Sets the layout of the navigation topbar on a Reddit.  The result
         is a list of menus which will be rendered in order and
         displayed at the top of the Reddit."""
-        main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
-                        NamedButton('new'), 
-                        NamedButton('controversial'),
-                        NamedButton('top'),
-                        NamedButton('saved', False)
-                        ]
+        if c.site == Friends:
+            main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
+                            NamedButton('comments')]
+        else:
+            main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
+                            NamedButton('new'), 
+                            NamedButton('controversial'),
+                            NamedButton('top'),
+                            NamedButton('saved', False)
+                            ]
 
         more_buttons = []
 
@@ -1027,7 +1031,7 @@ class SubredditTopBar(Templated):
         return SubredditMenu(drop_down_buttons,
                              title = _('my reddits'),
                              type = 'srdrop')
-        
+
     def subscribed_reddits(self):
         srs = [SubredditButton(sr) for sr in
                         sorted(self.my_reddits,
@@ -1037,28 +1041,42 @@ class SubredditTopBar(Templated):
                         ]
         return NavMenu(srs,
                        type='flatlist', separator = '-',
-                       _id = 'sr-bar')
+                       css_class = 'sr-bar')
 
     def popular_reddits(self, exclude=[]):
         exclusions = set(exclude)
         buttons = [SubredditButton(sr)
                    for sr in self.pop_reddits if sr not in exclusions]
-    
+
         return NavMenu(buttons,
                        type='flatlist', separator = '-',
-                       _id = 'sr-bar')
+                       css_class = 'sr-bar', _id = 'sr-bar')
 
+    def special_reddits(self):
+        reddits = [All, Random]
+        if c.user_is_loggedin:
+            if c.user.friends:
+                reddits.append(Friends)
+            if c.show_mod_mail:
+                reddits.append(Mod)
+        return NavMenu([SubredditButton(sr) for sr in reddits],
+                       type = 'flatlist', separator = '-',
+                       css_class = 'sr-bar')
+    
     def sr_bar (self):
+        sep = '<span class="separator">&nbsp;|&nbsp;</span>'
         menus = []
+        menus.append(self.special_reddits())
+        menus.append(RawString(sep))
+
 
         if not c.user_is_loggedin:
             menus.append(self.popular_reddits())
         else:
             if len(self.my_reddits) > g.sr_dropdown_threshold:
-                menus.append(self.my_reddits_dropdown())
+                menus = [self.my_reddits_dropdown()] + menus
 
             menus.append(self.subscribed_reddits())
-
             sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
             menus.append(RawString(sep))
 

@@ -310,8 +310,10 @@ class OffsiteButton(NavButton):
 
 class SubredditButton(NavButton):
     def __init__(self, sr):
+        from r2.models.subreddit import Mod
         self.path = sr.path
-        NavButton.__init__(self, sr.name, sr.path, False,
+        name = 'mod' if sr == Mod else sr.name
+        NavButton.__init__(self, name, sr.path, False,
                            isselected = (c.site == sr))
 
     def build(self, base_path = ''):
