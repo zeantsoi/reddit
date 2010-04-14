@@ -547,7 +547,7 @@ class ApiController(RedditController):
         thing._deleted = True
         if (getattr(thing, "promoted", None) is not None and
             not promote.is_promoted(thing)):
-            promote.reject_promotion()
+            promote.reject_promotion(thing)
         thing._commit()
 
         # flag search indexer that something has changed
