@@ -252,7 +252,7 @@ class PromoteController(ListingController):
                     changed = not c.user_is_sponsor
 
             # only trips if the title and url are changed by a non-sponsor
-            if changed and not is_unpaid(l):
+            if changed and not promote.is_unpaid(l):
                 promote.unapprove_promotion(l)
 
             if c.user_is_sponsor:
