@@ -654,6 +654,9 @@ class RedditController(MinimalController):
         if c.site == Random:
             c.site = Subreddit.random_reddit()
             redirect_to("/" + c.site.path.strip('/') + request.path)
+        elif c.site == RandomNSFW:
+            c.site = Subreddit.random_reddit(over18 = True)
+            redirect_to("/" + c.site.path.strip('/') + request.path)
 
 
         # check that the site is available:

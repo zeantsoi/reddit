@@ -117,6 +117,8 @@ class Subreddit(Thing, Printable):
 
         if name == 'friends':
             return Friends
+        elif name == 'randnsfw':
+            return RandomNSFW
         elif name == 'random':
             return Random
         elif name == 'mod':
@@ -331,7 +333,8 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True):
+    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
+                     over18_only = False):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -347,6 +350,8 @@ class Subreddit(Thing, Printable):
 
         if not over18:
             pop_reddits._filter(Subreddit.c.over_18 == False)
+        elif over18_only:
+            pop_reddits._filter(Subreddit.c.over_18 == True)
 
         if filter_allow_top:
             pop_reddits._limit = 2 * limit
@@ -398,10 +403,11 @@ class Subreddit(Thing, Printable):
         return random.sample(sr_ids, limit)
 
     @classmethod
-    def random_reddit(cls, limit = 1000):
+    def random_reddit(cls, limit = 1000, over18 = False):
         return random.choice(cls.top_lang_srs(c.content_langs, limit,
                                               filter_allow_top = False,
-                                              over18 = False))
+                                              over18 = over18,
+                                              over18_only = over18))
 
     @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
@@ -615,7 +621,9 @@ class FriendsSR(FakeSubreddit):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        if not c.user.friends:
+        friends = self.get_important_friends(c.user._id)
+
+        if not friends:
             return []
 
         if g.use_query_cache:
@@ -626,15 +634,14 @@ class FriendsSR(FakeSubreddit):
             sort = 'new'
             time = 'all'
 
-            friends = Account._byID(self.get_important_friends(c.user._id),
-                                    return_dict=False)
+            friends = Account._byID(friends, return_dict=False)
 
             crs = [queries.get_submitted(friend, sort, time)
                    for friend in friends]
             return queries.MergedCachedResults(crs)
 
         else:
-            q = Link._query(Link.c.author_id == self.get_important_friends(c.user._id),
+            q = Link._query(Link.c.author_id == friends,
                             sort = queries.db_sort(sort),
                             data = True)
             if time != 'all':
@@ -649,7 +656,9 @@ class FriendsSR(FakeSubreddit):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        if not c.user.friends:
+        friends = self.get_important_friends(c.user._id)
+
+        if not friends:
             return []
 
         if g.use_query_cache:
@@ -660,7 +669,7 @@ class FriendsSR(FakeSubreddit):
             sort = 'new'
             time = 'all'
 
-            friends = Account._byID(self.get_important_friends(c.user._id),
+            friends = Account._byID(friends,
                                     return_dict=False)
 
             crs = [queries.get_comments(friend, sort, time)
@@ -668,7 +677,7 @@ class FriendsSR(FakeSubreddit):
             return queries.MergedCachedResults(crs)
 
         else:
-            q = Comment._query(Comment.c.author_id == self.get_important_friends(c.user._id),
+            q = Comment._query(Comment.c.author_id == friends,
                                sort = desc('_date'),
                                data = True)
             return q
@@ -749,6 +758,9 @@ class MultiReddit(DefaultSR):
 class RandomReddit(FakeSubreddit):
     name = 'random'
 
+class RandomNSFWReddit(FakeSubreddit):
+    name = 'randnsfw'
+
 class ModContribSR(DefaultSR):
     name  = None
     title = None
@@ -820,6 +832,7 @@ Contrib = ContribSR()
 All = AllSR()
 Default = DefaultSR()
 Random = RandomReddit()
+RandomNSFW = RandomNSFWReddit()
 
 class SRMember(Relation(Subreddit, Account)): pass
 Subreddit.__bases__ += (UserRel('moderator', SRMember),
