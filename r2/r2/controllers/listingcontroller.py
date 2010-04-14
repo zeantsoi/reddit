@@ -187,6 +187,7 @@ class ListingController(RedditController):
     builder_wrapper = staticmethod(default_thing_wrapper())
 
     def GET_listing(self, **env):
+        check_cheating('site')
         return self.build_listing(**env)
 
 class FixListing(object):
