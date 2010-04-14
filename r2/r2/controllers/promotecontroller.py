@@ -469,7 +469,7 @@ class PromoteController(ListingController):
         if any(errors.values()):
             return UploadedImage("", "", "upload", errors = errors).render()
         else:
-            if not c.user_is_sponsor:
+            if not c.user_is_sponsor and not promote.is_unpaid(l):
                 promote.unapprove_promotion(link)
             return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()
