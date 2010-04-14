@@ -331,7 +331,7 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit, filter_allow_top = False):
+    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -345,7 +345,7 @@ class Subreddit(Thing, Printable):
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
-        if not c.over18:
+        if not over18:
             pop_reddits._filter(Subreddit.c.over_18 == False)
 
         if filter_allow_top:
@@ -372,7 +372,8 @@ class Subreddit(Thing, Printable):
         auto_srs = [ Subreddit._by_name(n) for n in g.automatic_reddits ]
 
         srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
-                               filter_allow_top = True)
+                               filter_allow_top = True,
+                               over18 = c.over18)
         rv = []
         for i, s in enumerate(srs):
             if len(rv) >= limit:
@@ -399,7 +400,8 @@ class Subreddit(Thing, Printable):
     @classmethod
     def random_reddit(cls, limit = 1000):
         return random.choice(cls.top_lang_srs(c.content_langs, limit,
-                                              filter_allow_top = False))
+                                              filter_allow_top = False,
+                                              over18 = False))
 
     @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
