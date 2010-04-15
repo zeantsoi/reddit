@@ -149,8 +149,6 @@ class Globals(object):
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
             pmc_chain += (CMemcache(self.permacache_memcaches,
-                                    num_clients=num_mc_clients),)
-            pmc_chain += (CMemcache(self.permacache_memcaches,
                                     num_clients=num_mc_clients,
                                     legacy=True),)
         if self.cassandra_seeds:
