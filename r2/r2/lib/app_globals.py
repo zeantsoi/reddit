@@ -24,7 +24,7 @@ from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
 from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, SelfEmptyingCache
-from r2.lib.cache import PyMemcache, CMemcache
+from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
 from r2.lib.cache import CassandraCache, CassandraCacheChain
 from r2.lib.db.stats import QueryStats
@@ -138,21 +138,30 @@ class Globals(object):
                           else LocalCache)
         num_mc_clients = 2 if self.running_as_script else 10
 
-        py_mc = PyMemcache(self.memcaches)
-        rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients)
+        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
+        c_mc_legacy = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
+        rmc = CMemcache(self.rendercaches,
+                        num_clients = num_mc_clients,
+                        noreply=True, no_block=True)
         smc = CMemcache(self.servicecaches, num_clients = num_mc_clients)
         rec_cache = None # we're not using this for now
 
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
-            pmc_chain += (PyMemcache(self.permacache_memcaches),)
+            pmc_chain += (CMemcache(self.permacache_memcaches,
+                                    num_clients=num_mc_clients),)
+            pmc_chain += (CMemcache(self.permacache_memcaches,
+                                    num_clients=num_mc_clients,
+                                    legacy=True),)
         if self.cassandra_seeds:
             self.cassandra_seeds = list(self.cassandra_seeds)
             random.shuffle(self.cassandra_seeds)
             pmc_chain += (CassandraCache('permacache', 'permacache',
                                          self.cassandra_seeds),)
         if self.permacaches:
-            pmc_chain += (PyMemcache(self.permacaches),)
+            pmc_chain += (CMemcache(self.permacaches,
+                                    num_clients=num_mc_clients,
+                                    legacy=True),)
         if len(pmc_chain) == 1:
             print 'Warning: proceding without a permacache'
 
@@ -161,10 +170,10 @@ class Globals(object):
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.memcache = py_mc # we'll keep using this one for locks
-                              # intermediately
+        self.memcache = c_mc_legacy # we'll keep using this one for
+                                    # locks intermediately
 
-        self.cache = MemcacheChain((localcache_cls(), py_mc))
+        self.cache = MemcacheChain((localcache_cls(), c_mc, c_mc_legacy))
         self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.servicecache = MemcacheChain((localcache_cls(), smc))
         self.rec_cache = rec_cache
@@ -184,7 +193,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), py_mc,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc, c_mc_legacy,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)

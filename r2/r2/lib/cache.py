@@ -71,7 +71,6 @@ class PyMemcache(CacheUtils, memcache.Client):
         memcache.Client.__init__(self, servers, pickleProtocol = 1)
 
     def set_multi(self, keys, prefix='', time=0):
-
         new_keys = {}
         for k,v in keys.iteritems():
             new_keys[str(k)] = v
@@ -97,8 +96,8 @@ class CMemcache(CacheUtils):
     def __init__(self,
                  servers,
                  debug = False,
-                 binary = True,
                  noreply = False,
+                 no_block = False,
                  num_clients = 10,
                  legacy = False):
         self.servers = servers
@@ -107,7 +106,7 @@ class CMemcache(CacheUtils):
         for x in xrange(num_clients):
             client = pylibmc.Client(servers, binary=not self.legacy)
             behaviors = {
-                'no_block': True, # use async I/O
+                'no_block': no_block, # use async I/O
                 'cache_lookups': True, # cache DNS lookups
                 'tcp_nodelay': True, # no nagle
                 '_noreply': int(noreply),
@@ -138,11 +137,10 @@ class CMemcache(CacheUtils):
         # same as hashkey, but for _multi commands taking a dictionary
         def _fn(self, keys, *a, **kw):
             if self.legacy:
-                prefix = kw.get('prefix', '')
+                prefix = kw.pop('prefix', '')
                 keys = dict((md5('%s%s' % (prefix, key)).hexdigest(), value)
                             for (key, value)
                             in keys.iteritems())
-                kw['prefix'] = ''
             return fn(self, keys, *a, **kw)
         return _fn
 
@@ -150,10 +148,9 @@ class CMemcache(CacheUtils):
         # same as hashkey, but for _multi commands taking a list
         def _fn(self, keys, *a, **kw):
             if self.legacy:
-                prefix = kw.get('prefix', '')
+                prefix = kw.pop('prefix', '')
                 keys = [md5('%s%s' % (prefix, key)).hexdigest()
                         for key in keys]
-                kw['prefix'] = ''
             return fn(self, keys, *a, **kw)
         return _fn
 
@@ -171,6 +168,7 @@ class CMemcache(CacheUtils):
             # because we have to map the returns too
             keymap = dict((md5('%s%s' % (prefix, key)).hexdigest(), key)
                           for key in keys)
+            prefix = ''
         else:
             keymap = dict((str(key), key)
                           for key in keys)
@@ -602,7 +600,7 @@ def sgm(cache, keys, miss_fn, prefix='', time=0):
         nr = miss_fn([s_keys[i] for i in need])
         nr = dict((str(k), v) for k,v in nr.iteritems())
         r.update(nr)
-        cache.set_multi(nr, prefix, time = time)
+        cache.set_multi(nr, prefix=prefix, time = time)
 
     return dict((s_keys[k], v) for k,v in r.iteritems())
 

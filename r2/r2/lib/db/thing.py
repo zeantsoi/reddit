@@ -264,7 +264,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         #write the data to the cache
-        cache.set_multi(to_save, prefix)
+        cache.set_multi(to_save, prefix=prefix)
 
     def _load(self):
         self._load_multi(self)
