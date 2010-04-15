@@ -138,8 +138,7 @@ class Globals(object):
                           else LocalCache)
         num_mc_clients = 2 if self.running_as_script else 10
 
-        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
-        c_mc_legacy = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
+        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
         rmc = CMemcache(self.rendercaches,
                         num_clients = num_mc_clients,
                         noreply=True, no_block=True)
@@ -168,10 +167,10 @@ class Globals(object):
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.memcache = c_mc_legacy # we'll keep using this one for
-                                    # locks intermediately
+        self.memcache = c_mc # we'll keep using this one for locks
+                             # intermediately
 
-        self.cache = MemcacheChain((localcache_cls(), c_mc, c_mc_legacy))
+        self.cache = MemcacheChain((localcache_cls(), c_mc))
         self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.servicecache = MemcacheChain((localcache_cls(), smc))
         self.rec_cache = rec_cache
@@ -191,7 +190,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), c_mc, c_mc_legacy,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)
