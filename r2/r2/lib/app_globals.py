@@ -77,6 +77,7 @@ class Globals(object):
     tuple_props = ['memcaches',
                    'rec_cache',
                    'rendercaches',
+                   'local_rendercache',
                    'servicecaches',
                    'permacache_memcaches',
                    'cassandra_seeds',
@@ -139,9 +140,13 @@ class Globals(object):
         num_mc_clients = 2 if self.running_as_script else 10
 
         c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
-        rmc = CMemcache(self.rendercaches,
-                        num_clients = num_mc_clients,
+        rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients,
                         noreply=True, no_block=True)
+        lrmc = None
+        if self.local_rendercache:
+            lrmc = CMemcache(self.local_rendercache,
+                             num_clients = num_mc_clients,
+                             noreply=True, no_block=True)
         smc = CMemcache(self.servicecaches, num_clients = num_mc_clients)
         rec_cache = None # we're not using this for now
 
@@ -171,7 +176,10 @@ class Globals(object):
                              # intermediately
 
         self.cache = MemcacheChain((localcache_cls(), c_mc))
-        self.rendercache = MemcacheChain((localcache_cls(), rmc))
+        if lrmc:
+            self.rendercache = MemcacheChain((localcache_cls(), lrmc, rmc))
+        else:
+            self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.servicecache = MemcacheChain((localcache_cls(), smc))
         self.rec_cache = rec_cache
 
