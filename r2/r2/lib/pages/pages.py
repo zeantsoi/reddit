@@ -2040,7 +2040,8 @@ class PromotePage(Reddit):
 
     def __init__(self, title, nav_menus = None, *a, **kw):
         buttons = [NamedButton('new_promo')]
-        if c.user_is_admin:
+        if c.user_is_sponsor:
+            buttons.append(NamedButton('roadblock'))
             buttons.append(NamedButton('current_promos', dest = ''))
         else:
             buttons.append(NamedButton('my_current_promos', dest = ''))
@@ -2130,6 +2131,23 @@ class PromoteLinkFormOld(PromoteLinkForm):
         self.complete = campaign.get("status",{}).get("complete", False)
         self.paid = campaign.get("status",{}).get("paid", False)
 
+class Roadblocks(Templated):
+    def __init__(self):
+        self.roadblocks = promote.get_roadblocks()
+        Templated.__init__(self)
+        # reference "now" to what we use for promtions
+        now = promote.promo_datetime_now()
+
+        startdate = now + datetime.timedelta(1)
+        enddate   = startdate + datetime.timedelta(1)
+
+        self.startdate = startdate.strftime("%m/%d/%Y")
+        self.enddate   = enddate  .strftime("%m/%d/%Y")
+        self.sr_searches = simplejson.dumps(popular_searches())
+        self.subreddits = (Subreddit.submit_sr_names(c.user) or
+                           Subreddit.submit_sr_names(None))
+        self.default_sr = self.subreddits[0] if self.subreddits \
+                          else g.default_sr
 
 class TabbedPane(Templated):
     def __init__(self, tabs):

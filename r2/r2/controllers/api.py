@@ -164,11 +164,12 @@ class ApiController(RedditController):
                                  default='comments'))
     def POST_submit(self, form, jquery, url, banmsg, selftext, kind, title,
                     save, sr, ip, then):
-        #backwards compatability
-        if url == 'self':
-            kind = 'self'
 
         if isinstance(url, (unicode, str)):
+            #backwards compatability
+            if url.lower() == 'self':
+                url = kind = 'self'
+
             # VUrl may have replaced 'url' by adding 'http://'
             form.set_inputs(url = url)
 

@@ -107,7 +107,7 @@ class PromoteController(ListingController):
 
 
     ### POST controllers below
-    @validatedForm(VSponsor(),
+    @validatedForm(VSponsorAdmin(),
                    link = VLink("link_id"),
                    indx = VInt("indx"))
     def POST_freebie(self, form, jquery, link, indx):
@@ -115,7 +115,7 @@ class PromoteController(ListingController):
             promote.free_campaign(link, indx, c.user)
             form.redirect(promote.promo_edit_url(link))
 
-    @validatedForm(VSponsor(),
+    @validatedForm(VSponsorAdmin(),
                    link = VByName("link"),
                    note = nop("note"))
     def POST_promote_note(self, form, jquery, link, note):
@@ -124,13 +124,13 @@ class PromoteController(ListingController):
                 "<p>" + promote.promotion_log(link, note, True) + "</p>")
 
 
-    @noresponse(VSponsor(),
+    @noresponse(VSponsorAdmin(),
                 thing = VByName('id'))
     def POST_promote(self, thing):
         if promote.is_promo(thing):
             promote.accept_promotion(thing)
 
-    @noresponse(VSponsor(),
+    @noresponse(VSponsorAdmin(),
                 thing = VByName('id'),
                 reason = nop("reason"))
     def POST_unpromote(self, thing, reason):
@@ -152,7 +152,7 @@ class PromoteController(ListingController):
                    max_clicks = VInt("maximum_clicks", min = 0),
                    set_views = VBoolean("set_maximum_views"),
                    max_views = VInt("maximum_views", min = 0),
-                   bid   = VBid('bid', 'link_id'),
+                   bid   = VBid('bid', 'link_id', 'sr'),
                    dates = VDateRange(['startdate', 'enddate'],
                                       future = 1, 
                                       reference_date = promote.promo_datetime_now,
@@ -265,6 +265,47 @@ class PromoteController(ListingController):
 
         return l
 
+    @validate(VSponsorAdmin())
+    def GET_roadblock(self):
+        return PromotePage('content', content = Roadblocks()).render()
+
+    @validatedForm(VSponsorAdmin(),
+                   VModhash(),
+                   dates = VDateRange(['startdate', 'enddate'],
+                                      future = 1, 
+                                      reference_date = promote.promo_datetime_now,
+                                      business_days = False, 
+                                      admin_override = True),
+                   sr = VSubmitSR('sr'))
+    def POST_add_roadblock(self, form, jquery, dates, sr):
+        if (form.has_errors('startdate', errors.BAD_DATE,
+                            errors.BAD_FUTURE_DATE) or
+            form.has_errors('enddate', errors.BAD_DATE,
+                            errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
+            return
+        if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                           errors.SUBREDDIT_NOTALLOWED,
+                           errors.SUBREDDIT_REQUIRED):
+            return
+        if dates and sr:
+            sd, ed = dates
+            promote.roadblock_reddit(sr.name, sd.date(), ed.date())
+            jquery.refresh()
+
+    @validatedForm(VSponsorAdmin(),
+                   VModhash(),
+                   dates = VDateRange(['startdate', 'enddate'],
+                                      future = 1, 
+                                      reference_date = promote.promo_datetime_now,
+                                      business_days = False, 
+                                      admin_override = True),
+                   sr = VSubmitSR('sr'))
+    def POST_rm_roadblock(self, form, jquery, dates, sr):
+        if dates and sr:
+            sd, ed = dates
+            promote.unroadblock_reddit(sr.name, sd.date(), ed.date())
+            jquery.refresh()
+
     @validatedForm(VSponsor('link_id'),
                    VModhash(),
                    dates = VDateRange(['startdate', 'enddate'],
@@ -273,7 +314,7 @@ class PromoteController(ListingController):
                                   business_days = False, 
                                   admin_override = True),
                    l     = VLink('link_id'),
-                   bid   = VBid('bid', 'link_id'),
+                   bid   = VBid('bid', 'link_id', 'sr'),
                    sr = VSubmitSR('sr'),
                    indx = VInt("indx"), 
                    targetting = VLength("targetting", 10))
@@ -288,8 +329,8 @@ class PromoteController(ListingController):
         if not l:
             return
 
-        # TODO: make sure to change INI to 1 day in the future for this to work.
         start, end = [x.date() for x in dates] if dates else (None, None)
+
         if start and end and not promote.is_accepted(l) and not c.user_is_sponsor:
             # if the ad is not approved already, ensure the start date
             # is at least 2 days in the future
@@ -309,21 +350,31 @@ class PromoteController(ListingController):
             return
 
         duration = max((end - start).days, 1)
-        if float(bid) / duration < g.min_promote_bid:
-            c.errors.add(errors.BAD_BID, field = 'bid',
-                         msg_params = {"min": g.min_promote_bid,
-                                       "max": g.max_promote_bid})
 
         if form.has_errors('bid', errors.BAD_BID):
             return
 
-        if (targetting == 'one' and 
-            form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                            errors.SUBREDDIT_NOTALLOWED,
-                            errors.SUBREDDIT_REQUIRED)):
-            # checking to get the error set in the form, but we can't
-            # check for rate-limiting if there's no subreddit
+        if bid is None or float(bid) / duration < g.min_promote_bid:
+            c.errors.add(errors.BAD_BID, field = 'bid',
+                         msg_params = {"min": g.min_promote_bid,
+                                       "max": g.max_promote_bid})
+            form.has_errors('bid', errors.BAD_BID)
             return
+
+        if targetting == 'one':
+            if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                               errors.SUBREDDIT_NOTALLOWED,
+                               errors.SUBREDDIT_REQUIRED):
+                # checking to get the error set in the form, but we can't
+                # check for rate-limiting if there's no subreddit
+                return
+            oversold = promote.is_roadblocked(sr.name, start, end)
+            if oversold:
+                c.errors.add(errors.OVERSOLD, field = 'sr',
+                             msg_params = {"start": oversold[0].strftime('%m/%d/%Y'),
+                                           "end": oversold[1].strftime('%m/%d/%Y')})
+                form.has_errors('sr', errors.OVERSOLD)
+                return
         if targetting == 'none':
             sr = None
 

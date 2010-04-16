@@ -207,6 +207,7 @@
          <li>Your ad will also appear at the top of the hot listing for that reddit</li>
          <li>You can only target one reddit per campaign.  If you would like to submit to more than one reddit, add a new campaign.</li>
        </ul>
+       ${error_field("OVERSOLD", "sr", "div")}
        ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
      </div>
      <div class="buttons">

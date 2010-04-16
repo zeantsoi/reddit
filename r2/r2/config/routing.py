@@ -141,7 +141,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/promoted/graph',
        controller='promote', action = 'graph')
     mc('/promoted/:action', controller='promote',
-       requirements = dict(action = "edit_promo|new_promo"))
+       requirements = dict(action = "edit_promo|new_promo|roadblock"))
     mc('/promoted/:sort', controller='promote', action = "listing")
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
@@ -205,7 +205,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
     mc('/api/:action', controller='promote',
-       requirements=dict(action="promote|unpromote|edit_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer|edit_campaign|delete_campaign|meta_promo"))
+       requirements=dict(action="promote|unpromote|edit_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer|edit_campaign|delete_campaign|meta_promo|add_roadblock|rm_roadblock"))
     mc('/api/:action', controller='api')
 
     mc("/button_info", controller="api", action="info", limit = 1)

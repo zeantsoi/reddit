@@ -560,6 +560,19 @@ class VVerifiedUser(VUser):
         if not c.user.email_verified:
             raise VerifiedUserRequiredException
 
+class VSponsorAdmin(VVerifiedUser):
+    """
+    Validator which checks c.user_is_sponsor
+    """
+    def user_test(self, thing):
+        return (thing.author_id == c.user._id)
+
+    def run(self, link_id = None):
+        VVerifiedUser.run(self)
+        if c.user_is_sponsor:
+            return
+        abort(403, 'forbidden')
+
 class VSponsor(VVerifiedUser):
     """
     Not intended to be used as a check for c.user_is_sponsor, but
@@ -873,16 +886,18 @@ class VFloat(VNumber):
         return float(val)
 
 class VBid(VNumber):
-    def __init__(self, bid, link_id):
+    def __init__(self, bid, link_id, sr):
         self.duration = 1
-        VNumber.__init__(self, (bid, link_id), min = g.min_promote_bid,
+        VNumber.__init__(self, (bid, link_id, sr),
+                         # targetting is a little more expensive
+                         min = g.min_promote_bid,
                          max = g.max_promote_bid, coerce = False,
                          error = errors.BAD_BID)
 
     def cast(self, val):
         return float(val)/self.duration
 
-    def run(self, bid, link_id):
+    def run(self, bid, link_id, sr = None):
         if link_id:
             try:
                 link = Thing._by_fullname(link_id, return_dict = False,
@@ -891,7 +906,14 @@ class VBid(VNumber):
             except NotFound:
                 pass
         if VNumber.run(self, bid):
-            return float(bid)
+            if sr:
+                if self.cast(bid) >= self.min * 1.5:
+                    return float(bid)
+                else:
+                    self.set_error(self.error, msg_params = dict(min=self.min * 1.5,
+                                                                 max=self.max))
+            else:
+                return float(bid)
 
 
 
