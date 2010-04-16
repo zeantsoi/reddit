@@ -521,7 +521,7 @@ def get_traffic_weights(srnames):
         return 1
 
     default_traffic = [weigh(traffic.load_traffic("day", "reddit", sr.name))
-                             for sr in Subreddit.user_subreddits(None, False)]
+                             for sr in Subreddit.top_lang_srs('all', 10)]
     default_traffic = (float(max(sum(default_traffic),1)) /
                        max(len(default_traffic), 1))
 
@@ -696,6 +696,7 @@ def insert_promoted(link_names, pos, promoted_every_n = 5):
 
 def Run(offset = 0):
     charge_pending(offset = offset + 1)
+    charge_pending(offset = offset)
     make_daily_promotions(offset = offset)
 
 
