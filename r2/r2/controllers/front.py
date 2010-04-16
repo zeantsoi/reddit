@@ -328,6 +328,11 @@ class FrontController(RedditController):
               location = nop("location"))
     def GET_prefs(self, location=''):
         """Preference page"""
+        # custom styling on prefs pages can make for a dangerous place...
+        if c.site != Default:
+            # redirecting to request.path does not include the subreddit
+            return self.redirect(request.path)
+
         content = None
         infotext = None
         if not location or location == 'options':

@@ -710,17 +710,18 @@ class LinkInfoPage(Reddit):
         self.link = self.link_listing.things[0]
 
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
-        if comment:
-            if comment._deleted and not c.user_is_admin:
-                author = _("[deleted]")
-            else:
-                author = Account._byID(comment.author_id, data=True).name
 
-            params = {'author' : author, 'title' : _force_unicode(link_title)}
-            title = strings.permalink_title % params
-        else:
-            params = {'title':_force_unicode(link_title), 'site' : c.site.name}
-            title = strings.link_info_title % params
+        # defaults whether or not there is a comment
+        params = {'title':_force_unicode(link_title), 'site' : c.site.name}
+        title = strings.link_info_title % params
+
+        # only modify the title if the comment/author are neither deleted nor spam
+        if comment and not comment._deleted and not comment._spam:
+            author = Account._byID(comment.author_id, data=True)
+
+            if not author._deleted and not author._spam:
+                params = {'author' : author.name, 'title' : _force_unicode(link_title)}
+                title = strings.permalink_title % params
 
         self.subtitle = subtitle
 
