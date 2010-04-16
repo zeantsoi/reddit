@@ -297,6 +297,7 @@ def new_campaign(link, dates, bid, sr):
         sr = sr.name if sr else ""
         campaigns[indx] = list(dates) + [bid, sr, 0]
         PromotionWeights.add(link, indx, sr, dates[0], dates[1], bid)
+        link.campaigns = {}
         link.campaigns = campaigns
         link._commit()
         return indx
@@ -315,6 +316,7 @@ def edit_campaign(link, index, dates, bid, sr):
             campaigns[index] = list(dates) + [bid, sr, trans_id]
             PromotionWeights.reschedule(link, index,
                                         sr, dates[0], dates[1], bid)
+            link.campaigns = {}
             link.campaigns = campaigns
             link._commit()
 
@@ -329,6 +331,7 @@ def delete_campaign(link, index):
         if index in campaigns:
             PromotionWeights.delete_unfinished(link, index)
             del campaigns[index]
+            link.campaigns = {}
             link.campaigns = campaigns
             link._commit()
             #TODO cancel any existing charges
@@ -341,7 +344,8 @@ def void_campaign(link, index, user):
         transactions = get_transactions(link)
         if transactions.get(index):
             # void the existing transaction
-            authorize.void_transaction(user, trans_id, index)
+            a = Account._byID(link.author_id)
+            authorize.void_transaction(a, trans_id, index)
 
 def auth_campaign(link, index, user, pay_id):
     """
@@ -371,15 +375,18 @@ def auth_campaign(link, index, user, pay_id):
                 promotion_log(link, "updated payment and/or bid: FAILED")
                 trans_id = 0
             campaigns[index] = sd, ed, bid, sr, trans_id
+            link.campaigns = {}
             link.campaigns = campaigns
             link._commit()
 
-            # update the query queue
-            set_status(link,  max(STATUS.unseen if trans_id else STATUS.unpaid,
-                                  link.promote_status))
+            set_status(link,  
+                       max(STATUS.unseen if trans_id else STATUS.unpaid,
+                           link.promote_status))
 
             # notify of campaign creation
-            emailer.promo_bid(link, bid, sd)
+            # update the query queue
+            if user._id == link.author_id:
+                emailer.promo_bid(link, bid, sd)
             return bool(trans_id), reason
         return False, ""
 

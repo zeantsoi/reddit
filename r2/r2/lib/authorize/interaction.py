@@ -107,6 +107,7 @@ def auth_transaction(amount, user, payid, thing, campaign, test = None):
         # update previous freebie transactions if we can
         try:
             bid = Bid.one(thing_id = thing._id,
+                          transaction = trans_id,
                           campaign = campaign)
             bid.bid = amount
             bid.auth()
@@ -143,8 +144,7 @@ def auth_transaction(amount, user, payid, thing, campaign, test = None):
 def void_transaction(user, trans_id, campaign, test = None):
     bid =  Bid.one(transaction = trans_id, campaign = campaign)
     bid.void()
-    # verify that the transaction has the correct ownership
-    if bid.account_id == user._id and trans_id > 0:
+    if trans_id > 0:
         res = _make_transaction(ProfileTransVoid,
                                 None, user, None, trans_id = trans_id,
                                 test = test)
