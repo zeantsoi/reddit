@@ -2516,11 +2516,13 @@ class Promote_Graph(Templated):
     def get_market(cls, user_id, start_date, end_date):
         market = {}
         promo_counter = {}
-        def callback(link, bid, bid_day, starti, endi):
+        def callback(link, bid, bid_day, starti, endi, indx):
             for i in xrange(starti, endi):
                 if user_id is None or link.author_id == user_id:
-                    market[i] = market.get(i, 0) + bid_day
-                    promo_counter[i] = promo_counter.get(i, 0) + 1
+                    if (not promote.is_unpaid(link) and 
+                        not promote.is_rejected(link)):
+                        market[i] = market.get(i, 0) + bid_day
+                        promo_counter[i] = promo_counter.get(i, 0) + 1
         cls.promo_iter(start_date, end_date, callback)
         return market, promo_counter
 
@@ -2537,7 +2539,7 @@ class Promote_Graph(Templated):
                 starti = max((sdate - start_date).days, 0)
                 endi   = min((edate - start_date).days, size)
                 bid_day = bid / max((edate - sdate).days, 1)
-                callback(link, bid, bid_day, starti, endi)
+                callback(link, bid, bid_day, starti, endi, indx)
 
     @classmethod
     def get_current_promos(cls, start_date, end_date):
@@ -2575,11 +2577,11 @@ class Promote_Graph(Templated):
 
         # determine the range of each link
         promote_blocks = []
-        def block_maker(link, bid, bid_day, starti, endi):
+        def block_maker(link, bid, bid_day, starti, endi, indx):
             if ((c.user_is_sponsor or link.author_id == c.user._id)
                 and not promote.is_rejected(link)
                 and not promote.is_unpaid(link)):
-                promote_blocks.append( (link, bid, starti, endi) )
+                promote_blocks.append( (link, bid, starti, endi, indx) )
         self.promo_iter(start_date, end_date, block_maker)
 
         # now sort the promoted_blocks into the most contiguous chuncks we can

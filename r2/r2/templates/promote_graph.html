@@ -21,6 +21,7 @@
 ################################################################################
 <%!
    import datetime, locale
+   from r2.lib import promote
    def num(x):
       return locale.format('%d', x, True)
    def money(x):
@@ -125,10 +126,15 @@
 <% 
    prev_end = 0
  %>
-%for link, bid, start, end in thing.promote_blocks:
+%for link, bid, start, end, indx in thing.promote_blocks:
   <% 
      start += 1
      end += 1
+     sr = '' 
+     if indx in getattr(link, "campaigns", {}):
+         sr = link.campaigns[indx][promote.CAMPAIGN.sr]
+     if sr:
+        sr += ':'
    %>
  %if start != end:
   %if prev_end > start:
@@ -144,7 +150,7 @@
        title="${link.title}"  
        style="width: ${width}%; margin-left: ${margin}%">
     <div class="bid">
-      $${int(bid)}
+      ${sr}$${int(bid)}
     </div>
     <a class="title" 
        href="/promoted/edit_promo/${link._id36}"

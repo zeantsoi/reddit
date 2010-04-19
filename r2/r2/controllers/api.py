@@ -1728,12 +1728,15 @@ class ApiController(RedditController):
                    sponsorships = VByName('ids', thing_cls = Subreddit,
                                           multiple = True))
     def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
+        suffix = ""
+        if not isinstance(c.site, FakeSubreddit):
+            suffix = "-" + c.site.name
         def add_tracker(dest, where, what):
             jquery.set_tracker(
                 where,
-                tracking.PromotedLinkInfo.gen_url(fullname=what,
+                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
                                                   ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname = what,
+                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
                                                        dest = dest,
                                                        ip = request.ip)
                 )

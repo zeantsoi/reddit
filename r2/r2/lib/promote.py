@@ -728,15 +728,9 @@ def insert_promoted(link_names, pos, promoted_every_n = 5):
                         skip = True)
     promoted_items = builder.get_items()[0]
 
+    focus = None
     if promoted_items:
-        # don't insert one at the head of the list 50% of the time for
-        # logged in users, and 50% of the time for logged-off users when
-        # the pool of promoted links is less than 3 (to avoid showing the
-        # same promoted link to the same person too often)
-        if ((c.user_is_loggedin or len(promoted_items) < 3) and
-            random.choice((True,False))):
-            promoted_items.insert(0, None)
-
+        focus = promoted_items[0]._fullname
         # insert one promoted item for every N items
         for i, item in enumerate(promoted_items):
             p = i * (promoted_every_n + 1)
@@ -744,13 +738,42 @@ def insert_promoted(link_names, pos, promoted_every_n = 5):
                 break
             p += pos
             if p > len(link_names):
-                p = (p + pos) % len(link_names)
-                pos += 1
+                p = p % len(link_names)
 
-            if item is not None:
-                link_names.insert(p, item._fullname)
+            link_names.insert(p, item._fullname)
+
+    link_names = filter(None, link_names)
+    if focus:
+        try:
+            pos = link_names.index(focus)
+        except ValueError:
+            pass
+    # don't insert one at the head of the list 50% of the time for
+    # logged in users, and 50% of the time for logged-off users when
+    # the pool of promoted links is less than 3 (to avoid showing the
+    # same promoted link to the same person too often)
+    if ((c.user_is_loggedin or len(promoted_items) < 3) and
+        random.choice((True,False))):
+        pos = (pos + 1) % len(link_names)  
 
     return list(UniqueIterator(link_names)), pos
+
+def benchmark_promoted(user, site, pos = 0, link_sample = 50, attempts = 100):
+    c.user = user
+    c.site = site
+    link_names = ["blah%s" % i for i in xrange(link_sample)]
+    res = {}
+    for i in xrange(attempts):
+        names, p =  insert_promoted(link_names[::], pos)
+        name = names[p]
+        res[name] = res.get(name, 0) + 1
+    res = list(res.iteritems())
+    res.sort(key = lambda x : x[1], reverse = True)
+    expected = dict(get_promotion_list(user, site))
+    for l, v in res:
+        print "%s: %5.3f %3.5f" % (l,float(v)/attempts, expected.get(l, 0))
+
+
 
 def Run(offset = 0):
     charge_pending(offset = offset + 1)
