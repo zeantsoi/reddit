@@ -547,6 +547,7 @@ class MessageController(ListingController):
     show_sidebar = False
     show_nums = False
     render_cls = MessagePage
+    allow_stylesheets = False
 
     @property
     def menus(self):
