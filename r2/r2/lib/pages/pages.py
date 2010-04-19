@@ -2261,12 +2261,12 @@ class PromotedTraffic(Traffic):
         d = until = None
         self.traffic = []
         if thing.campaigns:
-            sd = min(x[promote.CAMPAIGN.start] for x in thing.campaigns.values()
-                     if x[promote.CAMPAIGN.trans_id])
-            ed = max(x[promote.CAMPAIGN.end] for x in thing.campaigns.values()
-                     if x[promote.CAMPAIGN.trans_id])
-            d = sd.date() if isinstance(sd, datetime.datetime) else sd
-            until = ed.date() if isinstance(ed, datetime.datetime) else ed
+            d = min(sd.date() if isinstance(sd, datetime.datetime) else sd
+                     for sd, ed, bid, sr, trans_id in thing.campaigns.values()
+                     if trans_id)
+            until = max(ed.date() if isinstance(ed, datetime.datetime) else ed
+                     for sd, ed, bid, sr, trans_id in thing.campaigns.values()
+                     if trans_id)
             now = datetime.datetime.now(g.tz).date()
 
             # the results are preliminary until 1 day after the promotion ends
