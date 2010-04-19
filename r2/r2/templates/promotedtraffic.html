@@ -71,9 +71,11 @@ ${thing.viewers}
     </tr>
     %for x in thing.to_iter():
        <tr>
-         %for y in x:
-           <td>${y}</td>
-         %endfor
+         %if x[1] != '0' or x[2] != '0':
+           %for y in x:
+             <td>${y}</td>
+           %endfor
+         %endif
        </tr>
     %endfor
     %if thing.totals:
