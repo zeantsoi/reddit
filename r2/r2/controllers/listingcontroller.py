@@ -55,6 +55,9 @@ class ListingController(RedditController):
     # toggle skipping of links based on the users' save/hide/vote preferences
     skip = True
 
+    # allow stylesheets on listings
+    allow_stylesheets = True
+
     # toggles showing numbers 
     show_nums = True
 

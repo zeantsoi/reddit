@@ -34,6 +34,7 @@ from listingcontroller import CommentsController
 from listingcontroller import MyredditsController
 
 from feedback import FeedbackController
+from front import FormsController
 from front import FrontController
 from health import HealthController
 from buttons import ButtonsController

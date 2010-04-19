@@ -440,6 +440,8 @@ def base_listing(fn):
 
 class MinimalController(BaseController):
 
+    allow_stylesheets = False
+
     def request_key(self):
         # note that this references the cookie at request time, not
         # the current value of it
@@ -674,7 +676,7 @@ class RedditController(MinimalController):
             return self.intermediate_redirect("/over18")
 
         #check whether to allow custom styles
-        c.allow_styles = True
+        c.allow_styles = self.allow_stylesheets
         if g.css_killswitch:
             c.allow_styles = False
         #if the preference is set and we're not at a cname

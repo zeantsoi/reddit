@@ -32,13 +32,13 @@ def make_map(global_conf={}, app_conf={}):
 
     admin_routes.add(mc)
 
-    mc('/login',    controller='front', action='login')
-    mc('/logout',   controller='front', action='logout')
-    mc('/verify',    controller='front', action='verify')
-    mc('/adminon',  controller='front', action='adminon')
-    mc('/adminoff', controller='front', action='adminoff')
+    mc('/login',    controller='forms', action='login')
+    mc('/logout',   controller='forms', action='logout')
+    mc('/verify',   controller='forms', action='verify')
+    mc('/adminon',  controller='forms', action='adminon')
+    mc('/adminoff', controller='forms', action='adminoff')
     mc('/submit',   controller='front', action='submit')
-    mc('/validuser',   controller='front', action='validuser')
+    mc('/validuser',   controller='forms', action='validuser')
 
     mc('/over18',   controller='post', action='over18')
 
@@ -103,10 +103,10 @@ def make_map(global_conf={}, app_conf={}):
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
 
-    mc('/prefs/:location', controller='front',
+    mc('/prefs/:location', controller='forms',
        action='prefs', location='options')
 
-    mc('/depmod', controller='front', action='depmod')
+    mc('/depmod', controller='forms', action='depmod')
 
     mc('/info/0:article/*rest', controller = 'front', 
        action='oldinfo', dest='comments', type='ancient')
@@ -126,8 +126,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/duplicates/:article/:title', controller = 'front',
        action = 'duplicates', title=None)
 
-    mc('/mail/optout', controller='front', action = 'optout')
-    mc('/mail/optin',  controller='front', action = 'optin')
+    mc('/mail/optout', controller='forms', action = 'optout')
+    mc('/mail/optin',  controller='forms', action = 'optin')
     mc('/stylesheet', controller = 'front', action = 'stylesheet')
     mc('/frame', controller='front', action = 'frame')
     mc('/framebuster/:blah', controller='front', action = 'framebuster')
@@ -187,11 +187,11 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/d/:what', controller='api', action='bookmarklet')
 
-    mc('/resetpassword/:key', controller='front',
+    mc('/resetpassword/:key', controller='forms',
        action='resetpassword')
-    mc('/verification/:key', controller='front',
+    mc('/verification/:key', controller='forms',
        action='verify_email')
-    mc('/resetpassword', controller='front',
+    mc('/resetpassword', controller='forms',
        action='resetpassword')
 
     mc('/post/:action/:url_user', controller='post',

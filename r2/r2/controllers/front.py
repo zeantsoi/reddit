@@ -51,6 +51,8 @@ from urllib import quote_plus
 
 class FrontController(RedditController):
 
+    allow_stylesheets = True
+
     @validate(article = VLink('article'),
               comment = VCommentID('comment'))
     def GET_oldinfo(self, article, type, dest, rest=None, comment=''):
@@ -101,71 +103,6 @@ class FrontController(RedditController):
             return self.redirect(add_sr("/tb/" + l._id36))
         else:
             return self.redirect(add_sr('/'))
-
-    def GET_password(self):
-        """The 'what is my password' page"""
-        return BoringPage(_("password"), content=Password()).render()
-
-    @validate(VUser(),
-              dest = VDestination())
-    def GET_verify(self, dest):
-        if c.user.email_verified:
-            content = InfoBar(message = strings.email_verified)
-            if dest:
-                return self.redirect(dest)
-        else:
-            content = PaneStack(
-                [InfoBar(message = strings.verify_email),
-                 PrefUpdate(email = True, verify = True,
-                            password = False)])
-        return BoringPage(_("verify email"), content = content).render()
-
-    @validate(VUser(),
-              cache_evt = VCacheKey('email_verify', ('key',)),
-              key = nop('key'),
-              dest = VDestination(default = "/prefs/update"))
-    def GET_verify_email(self, cache_evt, key, dest):
-        if c.user_is_loggedin and c.user.email_verified:
-            cache_evt.clear()
-            return self.redirect(dest)
-        elif not (cache_evt.user and
-                key == passhash(cache_evt.user.name, cache_evt.user.email)):
-            content = PaneStack(
-                [InfoBar(message = strings.email_verify_failed),
-                 PrefUpdate(email = True, verify = True,
-                            password = False)])
-            return BoringPage(_("verify email"), content = content).render()
-        elif c.user != cache_evt.user:
-            # wrong user.  Log them out and try again. 
-            self.logout()
-            return self.redirect(request.fullpath)
-        else:
-            cache_evt.clear()
-            c.user.email_verified = True
-            c.user._commit()
-            Award.give_if_needed("verified_email", c.user)
-            return self.redirect(dest)
-
-    @validate(cache_evt = VCacheKey('reset', ('key',)),
-              key = nop('key'))
-    def GET_resetpassword(self, cache_evt, key):
-        """page hit once a user has been sent a password reset email
-        to verify their identity before allowing them to update their
-        password."""
-
-        #if another user is logged-in, log them out
-        if c.user_is_loggedin:
-            self.logout()
-            return self.redirect(request.path)
-
-        done = False
-        if not key and request.referer:
-            referer_path =  request.referer.split(g.domain)[-1]
-            done = referer_path.startswith(request.fullpath)
-        elif not getattr(cache_evt, "user", None):
-            return self.abort404()
-        return BoringPage(_("reset password"),
-                          content=ResetPassword(key=key, done=done)).render()
 
     @validate(VAdmin(),
               article = VLink('article'))
@@ -274,83 +211,6 @@ class FrontController(RedditController):
                                                         default=num_comments)],
                            infotext = infotext).render()
         return res
-
-    @validate(VUser())
-    def GET_depmod(self):
-        displayPane = PaneStack()
-
-        active_trials = {}
-        finished_trials = {}
-
-        juries = Jury.by_account(c.user)
-
-        trials = trial_info([j._thing2 for j in juries])
-
-        for j in juries:
-            defendant = j._thing2
-
-            if trials.get(defendant._fullname, False):
-                active_trials[defendant._fullname] = j._name
-            else:
-                finished_trials[defendant._fullname] = j._name
-
-        if active_trials:
-            fullnames = sorted(active_trials.keys(), reverse=True)
-
-            def my_wrap(thing):
-                w = Wrapped(thing)
-                w.hide_score = True
-                w.likes = None
-                w.trial_mode = True
-                w.render_class = LinkOnTrial
-                w.juryvote = active_trials[thing._fullname]
-                return w
-
-            listing = wrap_links(fullnames, wrapper=my_wrap)
-            displayPane.append(InfoBar(strings.active_trials,
-                                       extra_class="mellow"))
-            displayPane.append(listing)
-
-        if finished_trials:
-            fullnames = sorted(finished_trials.keys(), reverse=True)
-            listing = wrap_links(fullnames)
-            displayPane.append(InfoBar(strings.finished_trials,
-                                       extra_class="mellow"))
-            displayPane.append(listing)
-
-        displayPane.append(InfoBar(strings.more_info_link %
-                                       dict(link="/help/deputies"),
-                                   extra_class="mellow"))
-
-        return Reddit(content = displayPane).render()
-
-    @validate(VUser(),
-              location = nop("location"))
-    def GET_prefs(self, location=''):
-        """Preference page"""
-        # custom styling on prefs pages can make for a dangerous place...
-        if c.site != Default:
-            # redirecting to request.path does not include the subreddit
-            return self.redirect(request.path)
-
-        content = None
-        infotext = None
-        if not location or location == 'options':
-            content = PrefOptions(done=request.get.get('done'))
-        elif location == 'friends':
-            content = PaneStack()
-            infotext = strings.friends % Friends.path
-            content.append(FriendList())
-        elif location == 'update':
-            content = PrefUpdate()
-        elif location == 'feeds' and c.user.pref_private_feeds:
-            content = PrefFeeds()
-        elif location == 'delete':
-            content = PrefDelete()
-        else:
-            return self.abort404()
-
-        return PrefsPage(content = content, infotext=infotext).render()
 
     @validate(VUser(),
               name = nop('name'))
@@ -665,63 +525,6 @@ class FrontController(RedditController):
 
         return builder.total_num, timing, res
 
-    @validate(dest = VDestination())
-    def GET_login(self, dest):
-        """The /login form.  No link to this page exists any more on
-        the site (all actions invoking it now go through the login
-        cover).  However, this page is still used for logging the user
-        in during submission or voting from the bookmarklets."""
-
-        if (c.user_is_loggedin and
-            not request.environ.get('extension') == 'embed'):
-            return self.redirect(dest)
-        return LoginPage(dest = dest).render()
-
-    @validate(VUser(),
-              VModhash(),
-              dest = VDestination())
-    def GET_logout(self, dest):
-        return self.redirect(dest)
-
-    @validate(VUser(),
-              VModhash(),
-              dest = VDestination())
-    def POST_logout(self, dest):
-        """wipe login cookie and redirect to referer."""
-        self.logout()
-        return self.redirect(dest)
-
-
-    @validate(VUser(),
-              dest = VDestination())
-    def GET_adminon(self, dest):
-        """Enable admin interaction with site"""
-        #check like this because c.user_is_admin is still false
-        if not c.user.name in g.admins:
-            return self.abort404()
-        self.login(c.user, admin = True)
-        return self.redirect(dest)
-
-    @validate(VAdmin(),
-              dest = VDestination())
-    def GET_adminoff(self, dest):
-        """disable admin interaction with site."""
-        if not c.user.name in g.admins:
-            return self.abort404()
-        self.login(c.user, admin = False)
-        return self.redirect(dest)
-
-    def GET_validuser(self):
-        """checks login cookie to verify that a user is logged in and
-        returns their user name"""
-        c.response_content_type = 'text/plain'
-        if c.user_is_loggedin:
-            perm = str(c.user.can_wiki())
-            c.response.content = c.user.name + "," + perm
-        else:
-            c.response.content = ''
-        return c.response
-
     @validate(VAdmin(),
               comment = VCommentByID('comment_id'))
     def GET_comment_by_id(self, comment):
@@ -771,22 +574,6 @@ class FrontController(RedditController):
                                            sent = sent, 
                                            msg_hash = msg_hash)).render()
 
-    @validate(msg_hash = nop('x'))
-    def GET_optout(self, msg_hash):
-        """handles /mail/optout to add an email to the optout mailing
-        list.  The actual email addition comes from the user posting
-        the subsequently rendered form and is handled in
-        ApiController.POST_optout."""
-        return self._render_opt_in_out(msg_hash, True)
-
-    @validate(msg_hash = nop('x'))
-    def GET_optin(self, msg_hash):
-        """handles /mail/optin to remove an email address from the
-        optout list. The actual email removal comes from the user
-        posting the subsequently rendered form and is handled in
-        ApiController.POST_optin."""
-        return self._render_opt_in_out(msg_hash, False)
-    
     def GET_frame(self):
         """used for cname support.  makes a frame and
         puts the proper url as the frame source"""
@@ -861,3 +648,217 @@ class FrontController(RedditController):
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
+
+class FormsController(RedditController):
+
+    def GET_password(self):
+        """The 'what is my password' page"""
+        return BoringPage(_("password"), content=Password()).render()
+
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_verify(self, dest):
+        if c.user.email_verified:
+            content = InfoBar(message = strings.email_verified)
+            if dest:
+                return self.redirect(dest)
+        else:
+            content = PaneStack(
+                [InfoBar(message = strings.verify_email),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+        return BoringPage(_("verify email"), content = content).render()
+
+    @validate(VUser(),
+              cache_evt = VCacheKey('email_verify', ('key',)),
+              key = nop('key'),
+              dest = VDestination(default = "/prefs/update"))
+    def GET_verify_email(self, cache_evt, key, dest):
+        if c.user_is_loggedin and c.user.email_verified:
+            cache_evt.clear()
+            return self.redirect(dest)
+        elif not (cache_evt.user and
+                key == passhash(cache_evt.user.name, cache_evt.user.email)):
+            content = PaneStack(
+                [InfoBar(message = strings.email_verify_failed),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+            return BoringPage(_("verify email"), content = content).render()
+        elif c.user != cache_evt.user:
+            # wrong user.  Log them out and try again. 
+            self.logout()
+            return self.redirect(request.fullpath)
+        else:
+            cache_evt.clear()
+            c.user.email_verified = True
+            c.user._commit()
+            Award.give_if_needed("verified_email", c.user)
+            return self.redirect(dest)
+
+    @validate(cache_evt = VCacheKey('reset', ('key',)),
+              key = nop('key'))
+    def GET_resetpassword(self, cache_evt, key):
+        """page hit once a user has been sent a password reset email
+        to verify their identity before allowing them to update their
+        password."""
+
+        #if another user is logged-in, log them out
+        if c.user_is_loggedin:
+            self.logout()
+            return self.redirect(request.path)
+
+        done = False
+        if not key and request.referer:
+            referer_path =  request.referer.split(g.domain)[-1]
+            done = referer_path.startswith(request.fullpath)
+        elif not getattr(cache_evt, "user", None):
+            return self.abort404()
+        return BoringPage(_("reset password"),
+                          content=ResetPassword(key=key, done=done)).render()
+
+    @validate(VUser())
+    def GET_depmod(self):
+        displayPane = PaneStack()
+
+        active_trials = {}
+        finished_trials = {}
+
+        juries = Jury.by_account(c.user)
+
+        trials = trial_info([j._thing2 for j in juries])
+
+        for j in juries:
+            defendant = j._thing2
+
+            if trials.get(defendant._fullname, False):
+                active_trials[defendant._fullname] = j._name
+            else:
+                finished_trials[defendant._fullname] = j._name
+
+        if active_trials:
+            fullnames = sorted(active_trials.keys(), reverse=True)
+
+            def my_wrap(thing):
+                w = Wrapped(thing)
+                w.hide_score = True
+                w.likes = None
+                w.trial_mode = True
+                w.render_class = LinkOnTrial
+                w.juryvote = active_trials[thing._fullname]
+                return w
+
+            listing = wrap_links(fullnames, wrapper=my_wrap)
+            displayPane.append(InfoBar(strings.active_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        if finished_trials:
+            fullnames = sorted(finished_trials.keys(), reverse=True)
+            listing = wrap_links(fullnames)
+            displayPane.append(InfoBar(strings.finished_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        displayPane.append(InfoBar(strings.more_info_link %
+                                       dict(link="/help/deputies"),
+                                   extra_class="mellow"))
+
+        return Reddit(content = displayPane).render()
+
+    @validate(VUser(),
+              location = nop("location"))
+    def GET_prefs(self, location=''):
+        """Preference page"""
+        content = None
+        infotext = None
+        if not location or location == 'options':
+            content = PrefOptions(done=request.get.get('done'))
+        elif location == 'friends':
+            content = PaneStack()
+            infotext = strings.friends % Friends.path
+            content.append(FriendList())
+        elif location == 'update':
+            content = PrefUpdate()
+        elif location == 'feeds' and c.user.pref_private_feeds:
+            content = PrefFeeds()
+        elif location == 'delete':
+            content = PrefDelete()
+        else:
+            return self.abort404()
+
+        return PrefsPage(content = content, infotext=infotext).render()
+
+
+    @validate(dest = VDestination())
+    def GET_login(self, dest):
+        """The /login form.  No link to this page exists any more on
+        the site (all actions invoking it now go through the login
+        cover).  However, this page is still used for logging the user
+        in during submission or voting from the bookmarklets."""
+
+        if (c.user_is_loggedin and
+            not request.environ.get('extension') == 'embed'):
+            return self.redirect(dest)
+        return LoginPage(dest = dest).render()
+
+    @validate(VUser(),
+              VModhash(),
+              dest = VDestination())
+    def GET_logout(self, dest):
+        return self.redirect(dest)
+
+    @validate(VUser(),
+              VModhash(),
+              dest = VDestination())
+    def POST_logout(self, dest):
+        """wipe login cookie and redirect to referer."""
+        self.logout()
+        return self.redirect(dest)
+
+
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_adminon(self, dest):
+        """Enable admin interaction with site"""
+        #check like this because c.user_is_admin is still false
+        if not c.user.name in g.admins:
+            return self.abort404()
+        self.login(c.user, admin = True)
+        return self.redirect(dest)
+
+    @validate(VAdmin(),
+              dest = VDestination())
+    def GET_adminoff(self, dest):
+        """disable admin interaction with site."""
+        if not c.user.name in g.admins:
+            return self.abort404()
+        self.login(c.user, admin = False)
+        return self.redirect(dest)
+
+    def GET_validuser(self):
+        """checks login cookie to verify that a user is logged in and
+        returns their user name"""
+        c.response_content_type = 'text/plain'
+        if c.user_is_loggedin:
+            perm = str(c.user.can_wiki())
+            c.response.content = c.user.name + "," + perm
+        else:
+            c.response.content = ''
+        return c.response
+
+    @validate(msg_hash = nop('x'))
+    def GET_optout(self, msg_hash):
+        """handles /mail/optout to add an email to the optout mailing
+        list.  The actual email addition comes from the user posting
+        the subsequently rendered form and is handled in
+        ApiController.POST_optout."""
+        return self._render_opt_in_out(msg_hash, True)
+
+    @validate(msg_hash = nop('x'))
+    def GET_optin(self, msg_hash):
+        """handles /mail/optin to remove an email address from the
+        optout list. The actual email removal comes from the user
+        posting the subsequently rendered form and is handled in
+        ApiController.POST_optin."""
+        return self._render_opt_in_out(msg_hash, False)
+
