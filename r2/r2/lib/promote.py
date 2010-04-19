@@ -422,29 +422,32 @@ def auth_campaign(link, index, user, pay_id):
                                                           pay_id, link,
                                                           index,
                                                           test = test)
-            if trans_id is not None and int(trans_id) != 0:
+            if not reason and trans_id is not None and int(trans_id) != 0:
                 promotion_log(link, "updated payment and/or bid: "
                               "SUCCESS (id: %s)"
                               % trans_id)
                 if trans_id < 0:
                     promotion_log(link, "FREEBIE")
+
+                set_status(link,
+                           max(STATUS.unseen if trans_id else STATUS.unpaid,
+                               link.promote_status))
+                # notify of campaign creation
+                # update the query queue
+                if user._id == link.author_id and trans_id > 0:
+                    emailer.promo_bid(link, bid, sd)
+
             else:
                 # something bad happend.
-                promotion_log(link, "updated payment and/or bid: FAILED")
+                promotion_log(link, "updated payment and/or bid: FAILED ('%s')" 
+                              % reason)
                 trans_id = 0
+
             campaigns[index] = sd, ed, bid, sr, trans_id
             link.campaigns = {}
             link.campaigns = campaigns
             link._commit()
 
-            set_status(link,  
-                       max(STATUS.unseen if trans_id else STATUS.unpaid,
-                           link.promote_status))
-
-            # notify of campaign creation
-            # update the query queue
-            if user._id == link.author_id:
-                emailer.promo_bid(link, bid, sd)
             return bool(trans_id), reason
         return False, ""
 
