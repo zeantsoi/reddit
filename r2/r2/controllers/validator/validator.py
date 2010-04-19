@@ -1001,8 +1001,7 @@ class VRatelimit(Validator):
             to_set['user' + str(c.user._id36)] = expire_time
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
-
-        g.cache.set_multi(to_set, prefix, time = seconds)
+        g.cache.set_multi(to_set, prefix = prefix, time = seconds)
 
 class VCommentIDs(Validator):
     #id_str is a comma separated list of id36's
