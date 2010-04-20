@@ -137,7 +137,7 @@ class Globals(object):
 
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
-        num_mc_clients = 2 if self.running_as_script else 10
+        num_mc_clients = 2# if self.running_as_script else 10
 
         c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
         rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients,
