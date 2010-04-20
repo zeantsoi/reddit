@@ -373,18 +373,22 @@ class Email(object):
             from pylons import g
             self.date = date or datetime.datetime.now(g.tz)
             t = self.handler.reject_table if rejected else self.handler.track_table
-            t.insert().values({t.c.account_id:
-                               self.user._id if self.user else 0,
-                               t.c.to_addr :   self.to_addr,
-                               t.c.fr_addr :   self.fr_addr,
-                               t.c.reply_to :  self.reply_to,
-                               t.c.ip :        self.ip,
-                               t.c.fullname:
-                               self.thing._fullname if self.thing else "",
-                               t.c.date:       self.date,
-                               t.c.kind :      self.kind,
-                               t.c.msg_hash :  self.msg_hash,
-                               }).execute()
+            try:
+                t.insert().values({t.c.account_id:
+                                       self.user._id if self.user else 0,
+                                   t.c.to_addr :   self.to_addr,
+                                   t.c.fr_addr :   self.fr_addr,
+                                   t.c.reply_to :  self.reply_to,
+                                   t.c.ip :        self.ip,
+                                   t.c.fullname:
+                                       self.thing._fullname if self.thing else "",
+                                   t.c.date:       self.date,
+                                   t.c.kind :      self.kind,
+                                   t.c.msg_hash :  self.msg_hash,
+                                   }).execute()
+            except:
+                print "failed to send message"
+
             self.sent = True
 
     def to_MIMEText(self):
