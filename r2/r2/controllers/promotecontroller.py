@@ -243,13 +243,15 @@ class PromoteController(ListingController):
             changed = False
             # live items can only be changed by a sponsor, and also
             # pay the cost of de-approving the link
-            if not promote.is_promoted(l) or c.user_is_sponsor:
+            trusted = c.user_is_sponsor or \
+                getattr(c.user, "trusted_sponsor", False)
+            if not promote.is_promoted(l) or trusted:
                 if title != l.title:
                     l.title = title
-                    changed = not c.user_is_sponsor
+                    changed = not trusted
                 if url != l.url:
                     l.url = url
-                    changed = not c.user_is_sponsor
+                    changed = not trusted
 
             # only trips if the title and url are changed by a non-sponsor
             if changed and not promote.is_unpaid(l):
