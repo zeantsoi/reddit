@@ -319,58 +319,6 @@ def promote_v2():
             print "no campaign information: ", l
 
 
-def _progress(it, verbosity=100, key=repr, estimate=None, persec=False):
-    """An iterator that yields everything from `it', but prints progress
-       information along the way, including time-estimates if
-       possible"""
-    from datetime import datetime
-    import sys
-
-    now = start = datetime.now()
-    elapsed = start - start
-
-    print 'Starting at %s' % (start,)
-
-    seen = 0
-    for item in it:
-        seen += 1
-        if seen % verbosity == 0:
-            now = datetime.now()
-            elapsed = now - start
-            elapsed_seconds = elapsed.days * 86400 + elapsed.seconds
-
-            if estimate:
-                remaining = ((elapsed/seen)*estimate)-elapsed
-                completion = now + remaining
-                count_str = ('%d/%d %.2f%%'
-                             % (seen, estimate, float(seen)/estimate*100))
-                estimate_str = (' (%s remaining; completion %s)'
-                                % (remaining, completion))
-            else:
-                count_str = '%d' % seen
-                estimate_str = ''
-
-            if key:
-                key_str = ': %s' % key(item)
-            else:
-                key_str = ''
-
-            if persec and elapsed_seconds > 0:
-                persec_str = ' (%.2f/s)' % (seen/elapsed_seconds,)
-            else:
-                persec_str = ''
-                
-            sys.stdout.write('%s%s, %s%s%s\n'
-                             % (count_str, persec_str,
-                                elapsed, estimate_str, key_str))
-            sys.stdout.flush()
-            this_chunk = 0
-        yield item
-
-    now = datetime.now()
-    elapsed = now - start
-    print 'Processed %d items in %s..%s (%s)' % (seen, start, now, elapsed)
-
 def shorten_byurl_keys():
     """We changed by_url keys from a format like
            byurl_google.com...
@@ -386,7 +334,7 @@ def shorten_byurl_keys():
     from pylons import g
     from r2.lib.utils import fetch_things2, in_chunks
     from r2.lib.db.operators import desc
-    from r2.lib.utils import base_url
+    from r2.lib.utils import base_url, progress
 
     # from link.py
     def old_by_url_key(url):
@@ -409,7 +357,7 @@ def shorten_byurl_keys():
         sort=desc('_date'))
     for links in (
         in_chunks(
-            _progress(
+            progress(
                 fetch_things2(l_q, verbosity),
                 key = lambda link: link._date,
                 verbosity=verbosity,
