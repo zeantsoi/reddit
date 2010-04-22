@@ -168,8 +168,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/message/moderator/:subwhere', controller='message', action='listing',
        where = 'moderator')
 
+    mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
-       requirements=dict(action="password|random|framebuster"))
+       requirements=dict(action="random|framebuster"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
     mc('/help/*anything', controller='embed', action='help')
