@@ -225,7 +225,10 @@ class FrontController(RedditController):
 
     def GET_stylesheet(self):
         if hasattr(c.site,'stylesheet_contents') and not g.css_killswitch:
-            self.check_modified(c.site,'stylesheet_contents')
+            c.allow_loggedin_cache = True
+            self.check_modified(c.site,'stylesheet_contents',
+                                private=False, max_age=7*24*60*60,
+                                must_revalidate=False)
             c.response_content_type = 'text/css'
             c.response.content =  c.site.stylesheet_contents
             return c.response

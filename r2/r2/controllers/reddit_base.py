@@ -475,6 +475,8 @@ class MinimalController(BaseController):
             ratelimit_agents()
             ratelimit_throttled()
 
+        c.allow_loggedin_cache = False
+
         # the domain has to be set before Cookies get initialized
         set_subreddit()
         c.errors = ErrorSet()
@@ -523,7 +525,7 @@ class MinimalController(BaseController):
         if c.response_access_control:
             c.response.headers['Access-Control'] = c.response_access_control
 
-        if c.user_is_loggedin:
+        if c.user_is_loggedin and not c.allow_loggedin_cache:
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
@@ -531,7 +533,7 @@ class MinimalController(BaseController):
         #set content cache
         if (g.page_cache_time
             and request.method == 'GET'
-            and not c.user_is_loggedin
+            and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
             and not c.dontcache
             and response.status_code != 503
@@ -686,14 +688,22 @@ class RedditController(MinimalController):
         elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.allow_styles = False
 
-    def check_modified(self, thing, action):
-        if c.user_is_loggedin:
+    def check_modified(self, thing, action,
+                       private=True, max_age=0, must_revalidate=True):
+        if c.user_is_loggedin and not c.allow_loggedin_cache:
             return
 
         last_modified = utils.last_modified_date(thing, action)
         date_str = http_utils.http_date_str(last_modified)
         c.response.headers['last-modified'] = date_str
-        c.response.headers['cache-control'] = "private, max-age=0, must-revalidate"
+
+        cache_control = []
+        if private:
+            cache_control.append('private')
+        cache_control.append('max-age=%d' % max_age)
+        if must_revalidate:
+            cache_control.append('must-revalidate')
+        c.response.headers['cache-control'] = ', '.join(cache_control)
 
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:
