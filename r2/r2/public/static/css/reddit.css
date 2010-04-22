@@ -3113,6 +3113,9 @@ ul.tabmenu.formtab {
     margin-left: 10px;
     margin-bottom: 10px;
 }
+.traffic-graph .title { 
+    text-align: center;
+}
 
 .promoted-traffic h1 { 
     border: none;

@@ -51,7 +51,7 @@ from r2.lib.scraper import scrapers
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 
-import sys, random, datetime, locale, calendar, simplejson, re
+import sys, random, datetime, locale, calendar, simplejson, re, time
 import graph, pycountry
 from itertools import chain
 from urllib import quote
@@ -2365,21 +2365,17 @@ class RedditTraffic(Traffic):
             setattr(self, ival + "_data", data)
             for name, indx, color in slices:
                 data2 = self.slice_traffic(data, *indx)
-                chart = graph.LineGraph(data2, colors = [color, "B0B0B0"])
-                setattr(self, name + "_" + ival + "_chart", chart)
+                setattr(self, name + "_" + ival + "_chart", data2)
                 title = "%s by %s" % (name, ival)
-                res = chart.google_chart(ylabels = [name],
-                                         multiy = False, 
-                                         title = title)
+                res = TrafficGraph(data2, color = color, title = title)
                 setattr(self, name + "_" + ival, res)
         else:
             self.has_data = True
         if self.has_data:
             imp_by_day = [[] for i in range(7)]
             uni_by_day = [[] for i in range(7)]
-            dates  = self.uniques_day_chart.xdata
-            uniques = self.uniques_day_chart.ydata[0]
-            imps    = self.impressions_day_chart.ydata[0]
+            dates, imps    = zip(*self.impressions_day_chart)
+            dates, uniques = zip(*self.uniques_day_chart)
             self.uniques_mean     = sum(map(float, uniques))/len(uniques)
             self.impressions_mean = sum(map(float, imps))/len(imps)
             for i, d in enumerate(dates):
@@ -2478,6 +2474,38 @@ class RedditTraffic(Traffic):
                         res[-1].append(("up" if f > 0 else "down", 
                                         "%5.2f%%" % f))
         return res
+
+class TrafficGraph(Templated):
+    def __init__(self, data, width = 300, height = 175,
+                 bar_fmt = True, color = "FF4500", title = 'foo',
+                 ylabels = []):
+        # fallback on google charts
+        chart = graph.LineGraph(data, colors = [color, "B0B0B0"])
+        self.gc = chart.google_chart(ylabels = ylabels, multiy = True, title = title)
+
+        xdata, ydata = zip(*data)
+        xdata = [time.mktime(t.timetuple()) * 1000 for t in xdata]
+        self.color = color
+        self.title = title
+
+        if bar_fmt:
+            xdata = graph.DataSeries(xdata).toBarX()
+
+        if ydata and not isinstance(ydata[0], (list, tuple)):
+            if bar_fmt:
+                ydata = graph.DataSeries(ydata).toBarY()
+            self.data = [zip(xdata, ydata)]
+        else:
+            self.data = []
+            for ys in ydata:
+                if bar_fmt:
+                    ys = graph.DataSeries(ys).toBarY()
+                self.data.append(zip(xdata, ys))
+
+        self.width = width
+        self.height = height
+        Templated.__init__(self)
+
 
 class RedditAds(Templated):
     def __init__(self, **kw):
