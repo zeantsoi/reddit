@@ -124,6 +124,8 @@ class CMemcache(CacheUtils):
             client.behaviors.update(behaviors)
             self.clients.put(client)
 
+        self.min_compress_len = 512*1024
+
     def hashkey(fn):
         # decorator to MD5 the key for a single-action command when
         # self.legacy is set
@@ -191,7 +193,8 @@ class CMemcache(CacheUtils):
     @hashkey
     def set(self, key, val, time = 0):
         with self.clients.reserve() as mc:
-            return mc.set(key, val, time = time)
+            return mc.set(key, val, time = time,
+                          min_compress_len = self.min_compress_len)
 
     @hashmap
     def set_multi(self, keys, prefix='', time=0):
@@ -200,7 +203,24 @@ class CMemcache(CacheUtils):
             new_keys[str(k)] = v
         with self.clients.reserve() as mc:
             return mc.set_multi(new_keys, key_prefix = prefix,
+                                time = time,
+                                min_compress_len = self.min_compress_len)
+
+    @hashmap
+    def add_multi(self, keys, prefix='', time=0):
+        new_keys = {}
+        for k,v in keys.iteritems():
+            new_keys[str(k)] = v
+        with self.clients.reserve() as mc:
+            return mc.add_multi(new_keys, key_prefix = prefix,
                                 time = time)
+
+    @hashkeys
+    def incr_multi(self, keys, prefix='', delta=1):
+        with self.clients.reserve() as mc:
+            return mc.incr_multi(map(str, keys),
+                                 key_prefix = prefix,
+                                 delta=delta)
 
     @hashkey
     def append(self, key, val, time=0):
@@ -391,7 +411,9 @@ class CacheChain(CacheUtils, local):
     replace = make_set_fn('replace')
     set_multi = make_set_fn('set_multi')
     add = make_set_fn('add')
+    add_multi = make_set_fn('add_multi')
     incr = make_set_fn('incr')
+    incr_multi = make_set_fn('incr_multi')
     decr = make_set_fn('decr')
     delete = make_set_fn('delete')
     delete_multi = make_set_fn('delete_multi')
