@@ -221,6 +221,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 <%def name="thumbnail()">
   %if thing.thumbnail and not getattr(thing, "trial_mode", None):
   <%call expr="make_link('thumbnail', 'thumbnail')">
+    &zwnj;
     <img src="${thing.thumbnail}" alt=""/>
   </%call>
   %endif

@@ -1255,7 +1255,10 @@ $(function() {
          * and call it on all things currently rendered in the
          * page. */
         $("body").set_thing_init(updateEventHandlers);
-        
+        $(".thumbnail img").lazyload({
+                threshold: 50,
+                placeholder: "/static/noimage.png",
+                }); 
         /* Set up gray inputs and textareas to clear on focus */
         $("textarea.gray, input.gray")
             .focus( function() {
