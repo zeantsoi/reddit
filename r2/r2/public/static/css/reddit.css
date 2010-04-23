@@ -867,6 +867,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .comment .child {
     margin-top: 10px; 
     margin-left: 15px; 
+    border-left: 1px dotted #DDF;
 }
 
 textarea.gray { color: gray; }
