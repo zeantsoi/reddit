@@ -1208,24 +1208,31 @@ def ip_and_slash16(req):
 
     return (ip, slash16)
 
-def spaceout(fn, items, targetseconds, verbosity = 100,
-             minsleep = 0, die = False, show_progress = False):
+def spaceout(items, targetseconds,
+             minsleep = 0, die = False,
+             estimate = None):
     """Given a list of items and a function to apply to them, space
        the execution out over the target number of seconds and
        optionally stop when we're out of time"""
     targetseconds = float(targetseconds)
     state = [1.0]
 
+    if estimate is None:
+        try:
+            estimate = len(items)
+        except TypeError:
+            # if we can't come up with an estimate, the best we can do
+            # is just enforce the minimum sleep time (and the max
+            # targetseconds if die==True)
+            pass
+
     mean = lambda lst: sum(float(x) for x in lst)/float(len(lst))
     beginning = datetime.now()
 
-    if show_progress:
-        items = progress(items, verbosity = verbosity)
-
     for item in items:
         start = datetime.now()
-        fn(item)
-        end   = datetime.now()
+        yield item
+        end = datetime.now()
 
         took_delta = end - start
         took = (took_delta.days * 60 * 24
@@ -1236,14 +1243,18 @@ def spaceout(fn, items, targetseconds, verbosity = 100,
             del state[0]
 
         if die and end > beginning + timedelta(seconds=targetseconds):
-            # we ran out of time
+            # we ran out of time, ignore the rest of the iterator
             break
 
-        sleeptime = (targetseconds / len(items)) - mean(state)
-        if sleeptime > 0:
-            sleep(sleeptime)
-        elif minsleep:
-            sleep(minsleep)
+        if estimate is None:
+            if minsleep:
+                # we have no idea how many items we're going to get
+                sleep(minsleep)
+        else:
+            sleeptime = max((targetseconds / estimate) - mean(state),
+                            minsleep)
+            if sleeptime > 0:
+                sleep(sleeptime)
 
 def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
     """An iterator that yields everything from `it', but prints progress
