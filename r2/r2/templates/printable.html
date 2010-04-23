@@ -42,11 +42,7 @@ ${self.RenderPrintable()}
           ${_("banned")}
         %endif
       ]</li></b>
-  %elif thing.show_reports:
-      <li><b>[
-        ${strings.reports % thing.reported}
-      ]</b></li>
-  %endif  
+  %endif
 </%def>
 
 <%def name="thing_css_class(what)" buffered="True">

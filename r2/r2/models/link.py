@@ -437,9 +437,23 @@ class Link(Thing, Printable):
 
             item.trial_info = trials.get(item._fullname, None)
 
+            item.approval_checkmark = None
+
             if item.can_ban:
+                verdict = getattr(item, "verdict", None)
+                if verdict in ('admin-approved', 'mod-approved'):
+                    approver = None
+                    if getattr(item, "ban_info", None):
+                        approver = item.ban_info.get("unbanner", None)
+
+                    if approver:
+                        item.approval_checkmark = _("approved by %s") % approver
+                    else:
+                        item.approval_checkmark = _("approved by a moderator")
+
                 if item.trial_info is not None:
-                    item.show_trial_info = True
+                    item.reveal_trial_info = True
+                    item.use_big_modbuttons = True
 
         if user_is_loggedin:
             incr_counts(wrapped)

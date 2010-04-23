@@ -160,7 +160,7 @@ def charge_transaction(user, trans_id, campaign, test = None):
     if not bid.is_charged():
         bid.charged()
         if trans_id < 0:
-            # freebies are automatically approved
+            # freebies are automatically authorized
             return True
         elif bid.account_id == user._id:
             res = _make_transaction(ProfileTransPriorAuthCapture,

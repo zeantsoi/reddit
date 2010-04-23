@@ -28,6 +28,7 @@ from r2.lib.strings import Score
 from r2.lib.promote import *
 from datetime import datetime
 from pylons import c, g
+from pylons.i18n import _, ungettext
 
 class PrintableButtons(Styled):
     def __init__(self, style, thing,
@@ -35,13 +36,17 @@ class PrintableButtons(Styled):
                  show_distinguish = False,
                  show_indict = False, **kw):
         show_report = show_report and c.user_is_loggedin
+
         Styled.__init__(self, style = style,
+                        thing = thing,
                         fullname = thing._fullname,
                         can_ban = thing.can_ban,
                         show_spam = thing.show_spam,
                         show_reports = thing.show_reports,
                         show_ignore = thing.show_reports or
-                            (thing.show_trial_info and not thing.show_spam),
+                            (thing.reveal_trial_info and not thing.show_spam),
+                        approval_checkmark = getattr(thing,
+                                             "approval_checkmark", None),
                         show_delete = show_delete,
                         show_report = show_report,
                         show_indict = show_indict,

@@ -41,8 +41,8 @@ __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
 # StringHandler instance strings
 string_dict = dict(
 
-    banned_by = "banned by %s",
-    banned    = "banned",
+    banned_by = "removed by %s",
+    banned    = "removed",
     reports   = "reports: %d",
     
     # this accomodates asian languages which don't use spaces

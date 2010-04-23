@@ -390,7 +390,6 @@ ul.flat-vert {text-align: left;}
 .infotable .small { font-size: smaller; }
 .infotable td { padding-right: 1em; }
 .infotable a:hover { text-decoration: underline }
-.infotable a.pretty-button:hover { text-decoration: none }
 .infotable .state-button a {  background-color: #F0F0F0; color: gray; }
 .infotable .bold { font-weight: bold; }
 .infotable .invalid-user { background-color: pink}
@@ -2276,7 +2275,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     text-decoration: none;
 }
 
-.entry .buttons li.trial-stamp {
+.entry .buttons li.trial-stamp, .entry .buttons li.reported-stamp {
     border: 1px solid black !important;
     padding: 0 4px;
     background-color: #f6e69f;
@@ -2290,7 +2289,6 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     color: #090;
 }
 
-.reported { background-color: #f6e69f }
 .suspicious { background-color: #f6e69f }
 .thing.spam { background-color: #FA8072 }
 .banned-user {
@@ -2301,6 +2299,13 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .banned-user .title {
     text-decoration: line-through;
+}
+
+.approval-checkmark {
+    cursor: pointer;
+    height: 0.8em;
+    vertical-align: baseline;
+    margin-left: 3px;
 }
 
 .little { font-size: smaller  }
@@ -3858,6 +3863,8 @@ a.adminbox:hover {
     border-right: solid #cdcdcd 1px;
     padding-right: 5px;
 }
+
+a.pretty-button:hover { text-decoration: none !important }
 
 .pretty-button {
     margin-left: 5px;

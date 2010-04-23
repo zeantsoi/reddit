@@ -173,12 +173,13 @@ class Builder(object):
             w.deleted = item._deleted
 
             w.link_notes = []
+
             if c.user_is_admin:
                 if item.deleted:
                     w.link_notes.append("deleted link")
                 if getattr(item, "verdict", None):
-                    w.verdict = item.verdict
-                    w.link_notes.append(w.verdict)
+                    if not item.verdict.endswith("-approved"):
+                        w.link_notes.append(w.verdict)
 
             w.rowstyle = getattr(w, 'rowstyle', "")
             w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
@@ -196,7 +197,8 @@ class Builder(object):
             w.show_reports = False
             w.show_spam    = False
             w.can_ban      = False
-            w.show_trial_info = False
+            w.reveal_trial_info = False
+            w.use_big_modbuttons = False
 
             if (c.user_is_admin
                 or (user
@@ -204,17 +206,21 @@ class Builder(object):
                     and item.sr_id in can_ban_set)):
                 w.can_ban = True
 
+                ban_info = getattr(item, 'ban_info', {})
+                w.unbanner = ban_info.get('unbanner')
+
                 if item._spam:
                     w.show_spam = True
-                    ban_info = getattr(item, 'ban_info', {})
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
+                    w.use_big_modbuttons = True
                     if getattr(w, "author", None) and w.author._spam:
                         w.show_spam = "author"
 
                 elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
+                    w.use_big_modbuttons = True
 
 
         # recache the user object: it may be None if user is not logged in,

@@ -47,6 +47,10 @@
   ${parent.entry()}
 
   <div class="jury-box">
+      <span class="how-to-classify">
+        ${_("how would you classify this link?")}
+      </span>
+
       <%
          pos_class = "positive"
          neg_class = "negative"
@@ -58,10 +62,6 @@
          elif int(thing.juryvote) == -1:
            neg_class += " pressed"
       %>
-
-      <span class="how-to-classify">
-        ${_("how would you classify this link?")}
-      </span>
 
       ${pretty_button(_("off-topic / spam"), "juryvote", -1, neg_class)}
       ${pretty_button(_("kosher"),           "juryvote",  1, pos_class)}

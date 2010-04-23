@@ -1156,24 +1156,18 @@ class ApiController(RedditController):
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_ban(self, why, thing):
-        end_trial(thing, why + "-banned")
+    def POST_remove(self, why, thing):
+        end_trial(thing, why + "-removed")
         admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_unban(self, why, thing):
+    def POST_approve(self, why, thing):
+        if not thing: return
+
         end_trial(thing, why + "-approved")
         admintools.unspam(thing, c.user.name)
-
-    @noresponse(VUser(), VModhash(),
-                why = VSrCanBan('id'),
-                thing = VByName('id'))
-    def POST_ignore(self, why, thing):
-        if not thing: return
-        end_trial(thing, why + "-approved")
-        Report.accept(thing, False)
 
     @validatedForm(VUser(), VModhash(),
                    VSrCanDistinguish('id'),

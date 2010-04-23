@@ -804,7 +804,7 @@ class VExistingUname(VRequired):
         if name and name.startswith('~') and c.user_is_admin:
             try:
                 user_id = int(name[1:])
-                return Account._byID(user_id)
+                return Account._byID(user_id, True)
             except (NotFound, ValueError):
                 return self.error(errors.USER_DOESNT_EXIST)
 

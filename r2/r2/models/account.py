@@ -128,6 +128,9 @@ class Account(Thing):
                     self.comment_karma >= g.WIKI_KARMA)
 
     def jury_betatester(self):
+        if g.debug:
+            return True
+
         if g.cache.get("jury-killswitch"):
             return False
 

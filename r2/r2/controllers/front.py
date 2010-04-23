@@ -266,7 +266,14 @@ class FrontController(RedditController):
             elif location == "trials":
                 return not getattr(x, "verdict", None)
             elif location == "modqueue":
-                return (x.reported > 0) or x._spam or not getattr(x, "verdict", None)
+                if x.reported > 0 and not x._spam:
+                    return True # reported but not banned
+                verdict = getattr(x, "verdict", None)
+                if verdict is None:
+                    return True # anything without a verdict (i.e., trials)
+                if x._spam and verdict != 'mod-removed':
+                    return True # spam, unless banned by a moderator
+                return False
             else:
                 raise ValueError
 

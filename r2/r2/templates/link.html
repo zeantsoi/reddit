@@ -24,6 +24,7 @@
    from r2.lib.template_helpers import get_domain
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
+   from r2.lib.template_helpers import static
 %>
  
 <%inherit  file="printable.html"/>
@@ -67,23 +68,6 @@
        </acronym>
      </li>
     %endif
-    %if getattr(thing, "show_trial_info", False):
-     <li class="rounded trial-stamp stamp"
-         title='${_('this link is questionable; you should click "ban" or "ignore"')}'
-         >
-       ${_("deputy opinion:")}
-       &#32;
-       <span class="spam">
-         ${_("%d spam") % thing.trial_info.get("spams", "?")}
-       </span>
-       &#32;
-       /
-       &#32;
-       <span class="kosher">
-         ${_("%d kosher") % thing.trial_info.get("koshers", "?")}
-       </span>
-     </li>
-    %endif
     ${self.buttons()}
     ${self.admintagline()}
   </ul>
@@ -94,7 +78,14 @@
     <%call expr="make_link('title', 'title')">
       ${thing.title}
     </%call>
+    %if getattr(thing, "approval_checkmark", None):
+        <img class="approval-checkmark" title="${thing.approval_checkmark}"
+             src="${static('green-check.png')}"
+             onclick="alert(&quot;${_("don't click that! (just hover over it)")}&quot;)"
+           />
+    %endif
     &#32;
+
     ${self.domain()}
 
     %if c.user_is_admin:
@@ -221,8 +212,9 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 </%def>
 
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">
-  ${LinkButtons(thing, comments = comments, delete = delete, 
-                report = report)}
+  ${LinkButtons(thing, comments = comments, delete = delete,
+                report = report,
+               )}
 </%def>
 
 <%def name="thumbnail()">
