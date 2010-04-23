@@ -81,7 +81,8 @@
     %if getattr(thing, "approval_checkmark", None):
         <img class="approval-checkmark" title="${thing.approval_checkmark}"
              src="${static('green-check.png')}"
-             onclick="alert(&quot;${_("don't click that! (just hover over it)")}&quot;)"
+             onclick="alert('${thing.approval_checkmark}\n\n' +
+'${_("(no need to click for this info; just hover over the checkmark next time)")}')"
            />
     %endif
     &#32;
