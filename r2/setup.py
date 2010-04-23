@@ -116,6 +116,7 @@ setup(
     #url="",
     install_requires=["Routes<=1.8",
                       "Pylons<=0.9.6.2",
+                      "boto",
                       "pytz",
                       "pycrypto",
                       "Babel>=0.9.1",
