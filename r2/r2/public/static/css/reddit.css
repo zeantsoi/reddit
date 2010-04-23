@@ -2292,6 +2292,19 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .suspicious { background-color: #f6e69f }
 .thing.spam { background-color: #FA8072 }
+
+.comment.spam > .child, .message.spam > .child {
+    background-color: white;
+}
+.comment.spam > .child {
+    margin-left: 0;
+    padding-left: 15px;
+}
+.message.spam > .child {
+    /* There's a thin pink "border" due to the parent's padding:7px,
+       which we could try to fix here some day. */
+}
+
 .banned-user {
     overflow: hidden;
     opacity: .7;
