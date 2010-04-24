@@ -193,7 +193,7 @@ def valid_url(prop,value,report):
         # the label -> image number lookup is stored on the subreddit
         if c.site.images.has_key(name):
             num = c.site.images[name]
-            value._setCssText("url(http:/%s%s_%d.png?v=%s)"
+            value._setCssText("url(http://%s/%s_%d.png?v=%s)"
                               % (g.s3_thumb_bucket, c.site._fullname, num,
                                  randstr(36)))
         else:
@@ -391,7 +391,7 @@ def save_sr_image(sr, data, resource = None):
     """
     uploades image data to s3 as a PNG and returns its new url.  Urls
     will be of the form:
-      http:/${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
+      http://${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
     [Note: g.s3_thumb_bucket begins with a "/" so the above url is valid.]
     """
     hash = md5(data).hexdigest()
