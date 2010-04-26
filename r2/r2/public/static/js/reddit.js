@@ -1213,7 +1213,7 @@ function big_mod_action(elem, dir) {
       var thing_id = elem.thing_id();
 
       d = {
-         id: thing_id,
+         id: thing_id
       };
 
       if (dir == -1) {
