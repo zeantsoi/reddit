@@ -325,6 +325,8 @@ class Link(Thing, Printable):
                 item.thumbnail = ""
             elif item.has_thumbnail:
                 item.thumbnail = thumbnail_url(item)
+            elif item.is_self:
+                item.thumbnail = g.self_thumb
             else:
                 item.thumbnail = g.default_thumb
 
