@@ -693,7 +693,7 @@ class AllSR(FakeSubreddit):
         q = Link._query(sort = queries.db_sort(sort),
                         read_cache = True,
                         write_cache = True,
-                        cache_time = 3600)
+                        cache_time = 60)
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
