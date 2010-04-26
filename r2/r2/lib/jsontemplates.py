@@ -231,6 +231,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id",
+                                                is_self      = "is_self", 
                                                 permalink = "permalink"
                                                 )
 
