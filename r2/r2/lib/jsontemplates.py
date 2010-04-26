@@ -235,16 +235,16 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 )
 
     def thing_attr(self, thing, attr):
-        from r2.lib.scraper import scrapers
+        from r2.lib.scraper import get_media_embed
         if attr == "media_embed":
            if (thing.media_object and
                not isinstance(thing.media_object, basestring)):
-               scraper = scrapers[thing.media_object['type']]
-               media_embed = scraper.media_embed(**thing.media_object)
-               return dict(scrolling = media_embed.scrolling,
-                           width = media_embed.width,
-                           height = media_embed.height,
-                           content = media_embed.content)
+               media_embed = get_media_embed(thing.media_object)
+               if media_embed:
+                   return dict(scrolling = media_embed.scrolling,
+                               width = media_embed.width,
+                               height = media_embed.height,
+                               content = media_embed.content)
            return dict()
         elif attr == 'subreddit':
             return thing.subreddit.name

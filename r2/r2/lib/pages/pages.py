@@ -47,7 +47,7 @@ from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
 from r2.lib.utils import trunc_time
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
-from r2.lib.scraper import scrapers
+from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 
@@ -2182,8 +2182,7 @@ class MediaChild(LinkChild):
         if isinstance(self.link.media_object, basestring):
             return self.link.media_object
 
-        scraper = scrapers[self.link.media_object['type']]
-        media_embed = scraper.media_embed(**self.link.media_object)
+        media_embed = get_media_embed(self.link.media_object)
         return MediaEmbed(media_domain = g.media_domain,
                           height = media_embed.height+10,
                           width = media_embed.width+10,

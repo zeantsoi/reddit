@@ -318,10 +318,11 @@ def youtube_in_google(google_url):
 def make_scraper(url):
     domain = utils.domain(url)
     scraper = Scraper
-    for suffix, cls in scrapers.iteritems():
-        if domain.endswith(suffix):
-            scraper = cls
-            break
+    for suffix, clses in scrapers.iteritems():
+        for cls in clses:
+            if domain.endswith(suffix):
+                scraper = cls
+                break
     
     #sometimes youtube scrapers masquerade as google scrapers
     if scraper == GootubeScraper:
@@ -881,32 +882,38 @@ class YoutubeEmbedDeepScraper(DeepScraper):
 
 #scrapers =:= dict(domain -> ScraperClass)
 scrapers = {}
-for scraper in [ #YoutubeScraper,
-                 #MetacafeScraper,
-                 #GootubeScraper,
-                 #VimeoScraper,
-                 #BreakScraper,
-                 #TheOnionScraper,
-                 #CollegeHumorScraper,
-                 #FunnyOrDieScraper,
-                 #ComedyCentralScraper,
-                 #ColbertNationScraper,
-                 #TheDailyShowScraper,
-                 #TedScraper,
-                 #LiveLeakScraper,
-                 #DailyMotionScraper,
-                 #RevverScraper,
-                 #EscapistScraper,
-                 #JustintvScraper,
-                 #SoundcloudScraper,
-                 EmbedlyOEmbed,
-                 #CraigslistScraper,
+for scraper in [ EmbedlyOEmbed,
+                 YoutubeScraper,
+                 MetacafeScraper,
+                 GootubeScraper,
+                 VimeoScraper,
+                 BreakScraper,
+                 TheOnionScraper,
+                 CollegeHumorScraper,
+                 FunnyOrDieScraper,
+                 ComedyCentralScraper,
+                 ColbertNationScraper,
+                 TheDailyShowScraper,
+                 TedScraper,
+                 LiveLeakScraper,
+                 DailyMotionScraper,
+                 RevverScraper,
+                 EscapistScraper,
+                 JustintvScraper,
+                 SoundcloudScraper,
+                 CraigslistScraper,
                  GenericScraper,
                  ]:
     for domain in scraper.domains:
-        scrapers[domain] = scraper
+        scrapers.setdefault(domain, []).append(scraper)
 
 deepscrapers = [YoutubeEmbedDeepScraper]
+
+def get_media_embed(media_object):
+    for scraper in scrapers.get(media_object['type']):
+        res = scraper.media_embed(**media_object)
+        if res:
+            return res
 
 def convert_old_media_objects():
     q = Link._query(Link.c.media_object is not None,
@@ -1309,8 +1316,7 @@ def test_real(nlinks):
             mo = h.media_object()
             print "scraper: %s" % mo
             if mo:
-                s = scrapers[mo['type']]
-                print s.media_embed(**mo).content
+                print get_media_embed(mo).content
         counter +=1
     print "</table></body></html>"
 
@@ -1332,10 +1338,7 @@ def test_url(url):
     mo = h.media_object()
     print "<td>"
     if mo:
-        s = scrapers[mo['type']]
-        print websafe(repr(mo))
-        print "<br />"
-        print s.media_embed(**mo).content
+        print get_media_embed(mo).content
     else:
         print "None"
     print "</td>"
