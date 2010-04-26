@@ -104,16 +104,25 @@ class Trial(Storage):
         if total_votes >= 30:
             g.cache.set("quench_jurors-" + self.defendant._fullname, True)
 
-        # If a trial is less than an hour old, and votes are still trickling in
-        # (i.e., there was one in the past five minutes), it's not yet time to
-        # declare a verdict.
+        # If a trial is less than an hour old, and votes are still trickling
+        # in (i.e., there was one in the past five minutes), we're going to
+        # require a nearly unanimous opinion to end the trial without
+        # waiting for more votes.
         if defendant_age.seconds < 3600 and (now - latest_juryvote).seconds < 300:
-            g.log.debug("votes still trickling in")
-            return None
+            trickling = True
+        else:
+            trickling = False
 
         kosher_pct = float(koshers) / float(total_votes)
 
-        if kosher_pct < 0.34:
+        if kosher_pct < 0.13:
+            return "guilty"
+        elif kosher_pct > 0.86:
+            return "innocent"
+        elif trickling:
+            g.log.debug("votes still trickling in")
+            return None
+        elif kosher_pct < 0.34:
             return "guilty"
         elif kosher_pct > 0.66:
             return "innocent"
