@@ -2183,11 +2183,14 @@ class MediaChild(LinkChild):
             return self.link.media_object
 
         media_embed = get_media_embed(self.link.media_object)
-        return MediaEmbed(media_domain = g.media_domain,
-                          height = media_embed.height+10,
-                          width = media_embed.width+10,
-                          scrolling = media_embed.scrolling,
-                          id36 = self.link._id36).render()
+        if media_embed:
+            return MediaEmbed(media_domain = g.media_domain,
+                              height = media_embed.height+10,
+                              width = media_embed.width+10,
+                              scrolling = media_embed.scrolling,
+                              id36 = self.link._id36).render()
+        g.log.error("media_object without media_embed %s" % self.link)
+        return ""
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
