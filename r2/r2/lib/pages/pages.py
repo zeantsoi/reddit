@@ -2183,7 +2183,7 @@ class MediaChild(LinkChild):
             return self.link.media_object
 
         media_embed = get_media_embed(self.link.media_object)
-        if media_embed:
+        if media_embed and media_embed.width and media_embed.height:
             return MediaEmbed(media_domain = g.media_domain,
                               height = int(media_embed.height)+10,
                               width = int(media_embed.width)+10,
