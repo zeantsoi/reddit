@@ -2190,7 +2190,7 @@ def make_link_child(item):
                                           height = media_embed.height + 10,
                                           width = media_embed.width + 10,
                                           scrolling = media_embed.scrolling,
-                                          id36 = item._id36).render()
+                                          id36 = item._id36)
             else:
                 g.log.error("media_object without media_embed %s" % item)
 
@@ -2219,7 +2219,7 @@ class MediaChild(LinkChild):
         LinkChild.__init__(self, link, **kw)
 
     def content(self):
-        return self._content
+        return self._content.render()
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
