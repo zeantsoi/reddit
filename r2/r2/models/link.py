@@ -273,6 +273,7 @@ class Link(Thing, Printable):
     
     @classmethod
     def add_props(cls, user, wrapped):
+        from r2.lib.pages import make_link_child
         from r2.lib.count import incr_counts
         from r2.lib.media import thumbnail_url
         from r2.lib.utils import timeago
@@ -383,21 +384,8 @@ class Link(Thing, Printable):
             if item.is_self:
                 item.domain_path = item.subreddit_path
 
-            #this is wrong, but won't be so wrong when we move this
-            #whole chunk of code into pages.py
-            from r2.lib.pages import MediaChild, SelfTextChild
-            item.link_child = None
-            item.editable = False
-            if item.media_object:
-                item.link_child = MediaChild(item, load = True)
-            elif item.selftext:
-                expand = getattr(item, 'expand_children', False)
-                item.link_child = SelfTextChild(item, expand = expand,
-                                                nofollow = item.nofollow)
-                #draw the edit button if the contents are pre-expanded
-                item.editable = (expand and
-                                 item.author == c.user and
-                                 not item._deleted)
+            # attach video or selftext as needed
+            item.link_child, item.editable = make_link_child(item)
 
             item.tblink = "http://%s/tb/%s" % (
                 get_domain(cname = cname, subreddit=False),

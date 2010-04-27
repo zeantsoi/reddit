@@ -159,8 +159,8 @@ class MediaEmbed(object):
     scrolling = False
 
     def __init__(self, height, width, content, scrolling = False):
-        self.height    = height
-        self.width     = width
+        self.height    = int(height)
+        self.width     = int(width)
         self.content   = content
         self.scrolling = scrolling
 
@@ -709,16 +709,14 @@ class OEmbed(Scraper):
     def media_embed(cls, video_id = None, height = None, width = None, **kw):
         content = None
         oembed = kw.get('oembed')
-        
+
         # check if oembed is there and has html
         if oembed and oembed.get('html'):
             content = oembed.get('html')
-        else:
-            return None
-        
-        return MediaEmbed(height = oembed.get('height'),
-                          width = oembed.get('width'),
-                          content = content)
+        if content and oembed.get('height') and oembed.get('width'):
+            return MediaEmbed(height = oembed['height'],
+                              width = oembed['width'],
+                              content = content)
 
 class EmbedlyOEmbed(OEmbed):
     """

@@ -2173,24 +2173,52 @@ class LinkChild(object):
     def content(self):
         return ''
 
+def make_link_child(item):
+    link_child = None
+    editable = False
+
+    # if the item has a media_object, try to make a MediaEmbed for rendering
+    if item.media_object:
+        media_embed = None
+        if isinstance(item.media_object, basestring):
+            media_embed = item.media_object
+        else:
+            media_embed = get_media_embed(item.media_object)
+            if media_embed:
+                media_embed =  MediaEmbed(media_domain = g.media_domain,
+                                          height = media_embed.height + 10,
+                                          width = media_embed.width + 10,
+                                          scrolling = media_embed.scrolling,
+                                          id36 = item._id36).render()
+            else:
+                g.log.error("media_object without media_embed %s" % item)
+
+        if media_embed:
+            link_child = MediaChild(item, media_embed, load = True)
+
+    # if the item has selftext, add a selftext child
+    elif item.selftext:
+        expand = getattr(item, 'expand_children', False)
+        link_child = SelfTextChild(item, expand = expand,
+                                   nofollow = item.nofollow)
+        #draw the edit button if the contents are pre-expanded
+        editable = (expand and
+                    item.author == c.user and
+                    not item._deleted)
+
+    return link_child, editable
+
+
 class MediaChild(LinkChild):
     """renders when the user hits the expando button to expand media
        objects, like embedded videos"""
     css_style = "video"
+    def __init__(self, link, content, **kw):
+        self._content = content
+        LinkChild.__init__(self, link, **kw)
 
     def content(self):
-        if isinstance(self.link.media_object, basestring):
-            return self.link.media_object
-
-        media_embed = get_media_embed(self.link.media_object)
-        if media_embed and media_embed.width and media_embed.height:
-            return MediaEmbed(media_domain = g.media_domain,
-                              height = int(media_embed.height)+10,
-                              width = int(media_embed.width)+10,
-                              scrolling = media_embed.scrolling,
-                              id36 = self.link._id36).render()
-        g.log.error("media_object without media_embed %s" % self.link)
-        return ""
+        return self._content
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
