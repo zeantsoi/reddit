@@ -223,7 +223,7 @@ class Subreddit(Thing, Printable):
         return self.is_special(user)
 
     def should_ratelimit(self, user, kind):
-        if c.user_is_admin:
+        if c.user_is_admin or self.is_special(user):
             return False
 
         if kind == 'comment':
@@ -231,8 +231,7 @@ class Subreddit(Thing, Printable):
         else:
             rl_karma = g.MIN_RATE_LIMIT_KARMA
 
-        return not (self.is_special(user) or
-                    user.karma(kind, self) >= rl_karma)
+        return user.karma(kind, self) < rl_karma
 
     def can_view(self, user):
         if c.user_is_admin:

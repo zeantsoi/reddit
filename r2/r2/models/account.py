@@ -322,6 +322,36 @@ class Account(Thing):
     def cup_info(self):
         return g.hardcache.get("cup_info-%d" % self._id)
 
+    def quota_key(self, kind):
+        return "user_%s_quotas-%s" % (kind, self.name)
+
+    def clog_quota(self, kind, item):
+        key = self.quota_key(kind)
+        fnames = g.hardcache.get(key, [])
+        fnames.append(item._fullname)
+        g.hardcache.set(key, fnames, 86400 * 30)
+
+    def quota_baskets(self, kind):
+        from r2.models.admintools import filter_quotas
+        key = self.quota_key(kind)
+        fnames = g.hardcache.get(key)
+
+        if not fnames:
+            return None
+
+        unfiltered = Thing._by_fullname(fnames, data=True, return_dict=False)
+
+        baskets, new_quotas = filter_quotas(unfiltered)
+
+        if new_quotas is None:
+            pass
+        elif new_quotas == []:
+            g.hardcache.delete(key)
+        else:
+            g.hardcache.set(key, new_quotas, 86400 * 30)
+
+        return baskets
+
     @classmethod
     def cup_info_multi(cls, ids):
         ids = [ int(i) for i in ids ]

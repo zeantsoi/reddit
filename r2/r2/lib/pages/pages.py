@@ -909,17 +909,18 @@ class ProfilePage(Reddit):
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
-        rb.push(ProfileBar(self.user))
-        if c.user_is_admin:
-            from admin_pages import AdminSidebar
-            rb.append(AdminSidebar(self.user))
 
         tc = TrophyCase(self.user)
         helplink = ( "/help/awards", _("what's this?") )
         scb = SideContentBox(title=_("trophy case"),
                  helplink=helplink, content=[tc],
                  extra_class="trophy-area")
-        rb.append(scb)
+
+        rb.push(scb)
+        if c.user_is_admin:
+            from admin_pages import AdminSidebar
+            rb.push(AdminSidebar(self.user))
+        rb.push(ProfileBar(self.user))
 
         return rb
 

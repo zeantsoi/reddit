@@ -241,6 +241,7 @@ class ApiController(RedditController):
 
         #set the ratelimiter
         if should_ratelimit:
+            c.user.clog_quota('link', l)
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
 

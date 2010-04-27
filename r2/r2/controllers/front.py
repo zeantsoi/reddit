@@ -297,10 +297,16 @@ class FrontController(RedditController):
             level = 'mod'
         elif isinstance(c.site, ContribSR):
             level = 'contrib'
+        elif isinstance(c.site, AllSR):
+            level = 'all'
         else:
             raise ValueError
 
-        if level == 'mod' and location in ('reports', 'spam', 'trials', 'modqueue'):
+        if ((level == 'mod' and
+             location in ('reports', 'spam', 'trials', 'modqueue'))
+            or
+            (level == 'all' and
+             location == 'trials')):
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
@@ -360,6 +366,9 @@ class FrontController(RedditController):
     def GET_editreddit(self, location, num, after, reverse, count, created):
         """Edit reddit form."""
         if isinstance(c.site, ModContribSR):
+            return self._edit_modcontrib_reddit(location, num, after, reverse,
+                                                count, created)
+        elif isinstance(c.site, AllSR) and c.user_is_admin:
             return self._edit_modcontrib_reddit(location, num, after, reverse,
                                                 count, created)
         elif isinstance(c.site, FakeSubreddit):

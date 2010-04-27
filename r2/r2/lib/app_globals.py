@@ -45,6 +45,7 @@ class Globals(object):
                  'HOT_PAGE_AGE',
                  'MODWINDOW',
                  'RATELIMIT',
+                 'QUOTA_THRESHOLD',
                  'num_comments',
                  'max_comments',
                  'num_default_reddits',

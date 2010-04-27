@@ -185,6 +185,12 @@ class Link(Thing, Printable):
     def _unhide(self, user):
         return self._unsomething(user, self._hidden, 'hide')
 
+    def link_domain(self):
+        if self.is_self:
+            return 'self'
+        else:
+            return domain(self.url)
+
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
 

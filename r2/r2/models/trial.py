@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-from r2.models import Thing, Link, Subreddit
+from r2.models import Thing, Link, Subreddit, AllSR
 from r2.lib.utils import Storage, tup
 from r2.lib.memoize import memoize
 from datetime import datetime
@@ -126,7 +126,11 @@ class Trial(Storage):
             return "guilty"
         elif kosher_pct > 0.66:
             return "innocent"
-        elif total_votes >= 30:
+        elif total_votes >= 100:
+            # This should never really happen; quenching should kick in
+            # after 30 votes, so new jurors won't be assigned to the
+            # trial. Just in case something goes wrong, close any trials
+            # with more than 100 votes.
             return "hung jury"
         else:
             g.log.debug("hung jury, so far")
@@ -179,6 +183,10 @@ class Trial(Storage):
     @classmethod
     def defendants_by_sr(cls, sr):
         all = cls.all_defendants()
+
+        if isinstance(sr, AllSR):
+            return all
+
         sr = tup(sr)
         sr_ids = [ s._id for s in sr ]
 
