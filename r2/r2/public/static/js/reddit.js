@@ -1257,7 +1257,7 @@ $(function() {
         $("body").set_thing_init(updateEventHandlers);
         $(".thumbnail img").lazyload({
                 threshold: 200,
-                placeholder: "/static/noimage.png"
+                placeholder: "/static/nothing.png"
                 }); 
         /* Set up gray inputs and textareas to clear on focus */
         $("textarea.gray, input.gray")
