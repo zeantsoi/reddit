@@ -2219,6 +2219,8 @@ class MediaChild(LinkChild):
         LinkChild.__init__(self, link, **kw)
 
     def content(self):
+        if isinstance(self._content, basestring):
+            return self._content
         return self._content.render()
 
 class MediaEmbed(Templated):
