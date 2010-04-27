@@ -2325,21 +2325,20 @@ class PromotedTraffic(Traffic):
                 self.totals[1] = imp_total
 
             imp_total = locale.format('%d', imp_total, True)
-            chart = graph.LineGraph(imp[-72:])
-            self.imp_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                title = ("recent impressions (%s total)" %
-                                                         imp_total))
-
+            
+            self.imp_graph = TrafficGraph(imp[-72:], ylabels = ['uniques', 'total'],
+                                          title = ("recent impressions (%s total)" %
+                                                   imp_total))
             cli = self.slice_traffic(self.traffic, 2, 3)
             cli_total = sum(x[2] for x in cli)
             # ensure total consistency
             if self.totals:
                 self.totals[3] = cli_total
             cli_total = locale.format('%d', cli_total, True)
-            chart = graph.LineGraph(cli[-72:])
-            self.cli_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                title = ("recent clicks (%s total)" %
-                                                         cli_total))
+            self.cli_graph = TrafficGraph(cli[-72:], ylabels = ['uniques', 'total'],
+                                          title = ("recent clicks (%s total)" %
+                                                   cli_total))
+
         else:
             self.imp_graph = self.cli_graph = None
 
@@ -2400,7 +2399,7 @@ class RedditTraffic(Traffic):
                 data2 = self.slice_traffic(data, *indx)
                 setattr(self, name + "_" + ival + "_chart", data2)
                 title = "%s by %s" % (name, ival)
-                res = TrafficGraph(data2, color = color, title = title)
+                res = TrafficGraph(data2, colors = [color], title = title)
                 setattr(self, name + "_" + ival, res)
         else:
             self.has_data = True
@@ -2510,15 +2509,19 @@ class RedditTraffic(Traffic):
 
 class TrafficGraph(Templated):
     def __init__(self, data, width = 300, height = 175,
-                 bar_fmt = True, color = "FF4500", title = 'foo',
-                 ylabels = []):
+                 bar_fmt = True, colors = ("FF4500", "336699"), title = '',
+                 ylabels = [], multiy = True):
         # fallback on google charts
-        chart = graph.LineGraph(data, colors = [color, "B0B0B0"])
-        self.gc = chart.google_chart(ylabels = ylabels, multiy = True, title = title)
+        chart = graph.LineGraph(data[:72], colors = colors)
+        self.gc = chart.google_chart(ylabels = ylabels, multiy = multiy, title = title)
 
-        xdata, ydata = zip(*data)
-        xdata = [time.mktime(t.timetuple()) * 1000 for t in xdata]
-        self.color = color
+        xdata = []
+        ydata = []
+        for d in data:
+            xdata.append(time.mktime(d[0].timetuple())*1000)
+            ydata.append(d[1:])
+        ydata = zip(*ydata)
+        self.colors = colors
         self.title = title
 
         if bar_fmt:
@@ -2683,15 +2686,15 @@ class Promote_Graph(Templated):
         if pool:
             # we want to generate a stacked line graph, so store the
             # bids and the total including refunded amounts
-            chart = graph.LineGraph([(d, b, r) for (d, b, r) in pool],
-                                    colors = ("008800", "FF0000"))
             total_sale = sum(b for (d, b, r) in pool)
             total_refund = sum(r for (d, b, r) in pool)
-            self.money_graph = chart.google_chart(
-                ylabels = ['total ($)'],
-                title = ("monthly sales ($%.2f total, $%.2f credits)" %
-                         (total_sale, total_refund)),
-                multiy = False)
+            
+            self.money_graph = TrafficGraph([(d, b, r) for (d, b, r) in pool],
+                                            colors = ("008800", "FF0000"),
+                                            ylabels = ['total ($)'],
+                                            title = ("monthly sales ($%.2f total, $%.2f credits)" %
+                                                     (total_sale, total_refund)),
+                                            multiy = False)
 
             history = self.now - datetime.timedelta(30)
             #TODO
@@ -2707,9 +2710,8 @@ class Promote_Graph(Templated):
         pool = dict((d, b+r) for (d, b, r) in pool)
 
         if impressions:
-            chart = graph.LineGraph(impressions)
-            self.imp_graph = chart.google_chart(ylabels = ['total'],
-                                                title = "impressions")
+            self.imp_graph = TrafficGraph(impressions, ylabels = ['total'],
+                                          title = "impressions")
 
             clicks = [(d, k) for (d, (i, k)) in self.promo_traffic]
 
@@ -2722,27 +2724,22 @@ class Promote_Graph(Templated):
             CTR = [(d, (100 * float(k) / i if i else 0))
                    for (d, (i, k)) in self.promo_traffic]
 
-            chart = graph.LineGraph(clicks)
-            self.cli_graph = chart.google_chart(ylabels = ['total'],
-                                                title = "clicks")
-
+            self.cli_graph = TrafficGraph(clicks, ylabels = ['total'],
+                                          title = "clicks")
             mean_CPM = sum(x[1] for x in CPM) * 1. / max(len(CPM), 1)
-            chart = graph.LineGraph([(d, min(x, mean_CPM*2)) for d, x in CPM],
-                                    colors = ["336699"])
-            self.cpm_graph = chart.google_chart(ylabels = ['CPM ($)'],
-                                       title = "cost per 1k impressions " + 
-                                               "($%.2f average)" % mean_CPM)
+            self.cpm_graph = TrafficGraph([(d, min(x, mean_CPM*2)) for d, x in CPM],
+                                          colors = ["336699"], ylabels = ['CPM ($)'],
+                                          title = "cost per 1k impressions " + 
+                                          "($%.2f average)" % mean_CPM)
 
             mean_CPC = sum(x[1] for x in CPC) * 1. / max(len(CPC), 1)
-            chart = graph.LineGraph([(d, min(x, mean_CPC*2)) for d, x in CPC],
-                                    colors = ["336699"])
-            self.cpc_graph = chart.google_chart(ylabels = ['CPC ($0.01)'],
-                                                title = "cost per click " + 
-                                                "($%.2f average)" % (mean_CPC/100.))
+            self.cpc_graph = TrafficGraph([(d, min(x, mean_CPC*2)) for d, x in CPC],
+                                          colors = ["336699"], ylabels = ['CPC ($0.01)'],
+                                          title = "cost per click " + 
+                                          "($%.2f average)" % (mean_CPC/100.))
 
-            chart = graph.LineGraph(CTR, colors = ["336699"])
-            self.ctr_graph = chart.google_chart(ylabels = ['CTR (%)'],
-                                                title = "click through rate")
+            self.ctr_graph = TrafficGraph(CTR, colors = ["336699"], ylabels = ['CTR (%)'],
+                                          title = "click through rate")
 
         else:
             self.imp_graph = self.cli_graph = None

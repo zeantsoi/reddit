@@ -3132,6 +3132,7 @@ ul.tabmenu.formtab {
     border: 1px solid #B0B0B0; 
     margin-left: 10px;
     margin-bottom: 10px;
+    display: inline-block;
 }
 .traffic-graph .title { 
     text-align: center;

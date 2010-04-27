@@ -29,7 +29,7 @@
    _id = str(random()).split('.')[-1]
  %>
 <div class="traffic-graph">
-  <div class="title">${thing.title}</div>
+  <div class="title" style="width:${thing.width}px;">${thing.title}</div>
   <div id="placeholder-${_id}"
        style="width:${thing.width}px;height:${thing.height}px">
   </div>
@@ -44,10 +44,13 @@ $(function () {
     } else {
       $.plot($("#placeholder-${_id}"), [
         %for i, s in enumerate(thing.data):
+        <%
+           color = thing.colors[i] if i < len(thing.colors) else thing.colors[-1]
+         %>
         {
             data: ${simplejson.dumps(s)},
-            color: "#${thing.color}",
-            lines: { show: true, fill: true }
+            color: "#${color}",
+            lines: { show: true, fill: ${"true" if len(thing.data) == 1 else "false"} }
         }${',' if i != len(thing.data)-1 else ''}
         %endfor
       ],
@@ -55,10 +58,12 @@ $(function () {
        xaxis: { mode: "time"},
        yaxis: {min: 0,
                tickFormatter: function(val, axis) {
-                 if (val > 1000000) { 
+                 if (val >= 2000000) { 
                     return (val / 1000000).toFixed(axis.tickDecimals) + "M";
-                 } else if (val > 1000) {
+                 } else if (val >= 2000) {
                     return (val / 1000).toFixed(axis.tickDecimals) + "k";
+                 } else if (val < 10) {
+                    return val.toFixed(2);
                  }
                  return val.toFixed(axis.tickDecimals);
               }
