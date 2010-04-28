@@ -3974,3 +3974,8 @@ a.pretty-button.positive.pressed {
 .sitetable .we-need-help {
     display: none;
 }
+
+.oatmeal img { 
+    display: block;
+    margin: 5px auto; 
+}

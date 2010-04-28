@@ -113,6 +113,13 @@ class FrontController(RedditController):
         return DetailsPage(link = article, expand_children=False).render()
 
 
+    def GET_selfserviceoatmeal(self
+):
+        return BoringPage(_("self service help"), 
+                          show_sidebar = False,
+                          content = SelfServiceOatmeal()).render()
+
+
     @validate(article = VLink('article'))
     def GET_shirt(self, article):
         if not can_view_link_comments(article):

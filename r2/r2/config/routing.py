@@ -170,7 +170,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
-       requirements=dict(action="random|framebuster"))
+       requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
     mc('/help/*anything', controller='embed', action='help')
