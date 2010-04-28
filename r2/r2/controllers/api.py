@@ -242,7 +242,7 @@ class ApiController(RedditController):
         #set the ratelimiter
         if should_ratelimit:
             filled_quota = c.user.quota_full('link')
-            if filled_quota is not None:
+            if filled_quota is not None and not c.user._spam:
                 log_text ("over-quota",
                           "%s just went over their per-%s quota" %
                           (c.user.name, filled_quota), "info")
