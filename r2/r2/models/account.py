@@ -352,6 +352,32 @@ class Account(Thing):
 
         return baskets
 
+    def quota_limits(self, kind):
+        if kind != 'link':
+            raise NotImplementedError
+
+        #  vvvvvvvvv TODO: Remove "False and" when enabling email verification
+        if False and not self.email_verified:
+            return dict(hour=1,  day=3,  week=5,   month=5)
+        else:
+            return dict(hour=3, day=10, week=50, month=150)
+
+    def quota_full(self, kind):
+        limits = self.quota_limits(kind)
+        baskets = self.quota_baskets(kind)
+
+        if baskets is None:
+            return None
+
+        total = 0
+        filled_quota = None
+        for key in ('hour', 'day', 'week', 'month'):
+            total += len(baskets[key])
+            if total >= limits[key]:
+                filled_quota = key
+
+        return filled_quota
+
     @classmethod
     def cup_info_multi(cls, ids):
         ids = [ int(i) for i in ids ]

@@ -241,6 +241,11 @@ class ApiController(RedditController):
 
         #set the ratelimiter
         if should_ratelimit:
+            filled_quota = c.user.quota_full('link')
+            if filled_quota is not None:
+                log_text ("over-quota",
+                          "%s just went over their per-%s quota" %
+                          (c.user.name, filled_quota), "info")
             c.user.clog_quota('link', l)
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
