@@ -70,11 +70,7 @@ class PromoteController(ListingController):
 
     @validate(VSponsor())
     def GET_new_promo(self):
-        if c.user.name.lower() in g.beta_sponsors or c.user_is_sponsor:
-            content = PromoteLinkForm()
-        else:
-            content = PromoteLinkFormOld()
-        return PromotePage('content', content = content).render()
+        return PromotePage('content', content = PromoteLinkForm()).render()
 
     @validate(VSponsor('link'),
               link = VLink('link'))
@@ -84,14 +80,9 @@ class PromoteController(ListingController):
         rendered = wrap_links(link, wrapper = promote.sponsor_wrapper,
                               skip = False)
 
-        if c.user.name.lower() in g.beta_sponsors or c.user_is_sponsor:
-            content = PromoteLinkForm
-        else:
-            content = PromoteLinkFormOld
-
-        form = content(link = link,
-                       listing = rendered,
-                       timedeltatext = "")
+        form = PromoteLinkForm(link = link,
+                               listing = rendered,
+                               timedeltatext = "")
 
         page = PromotePage('new_promo', content = form)
 
@@ -137,43 +128,6 @@ class PromoteController(ListingController):
         if promote.is_promo(thing):
             promote.reject_promotion(thing, reason = reason)
 
-    #TODO: this will go away in the final version
-    @validatedForm(VSponsor('link_id'),
-                   VModhash(),
-                   VRatelimit(rate_user = True,
-                              rate_ip = True,
-                              prefix = 'create_promo_'),
-                   l     = VLink('link_id'),
-                   title = VTitle('title'),
-                   url   = VUrl('url', allow_self = False),
-                   ip    = ValidIP(),
-                   disable_comments = VBoolean("disable_comments"),
-                   set_clicks = VBoolean("set_maximum_clicks"),
-                   max_clicks = VInt("maximum_clicks", min = 0),
-                   set_views = VBoolean("set_maximum_views"),
-                   max_views = VInt("maximum_views", min = 0),
-                   bid   = VBid('bid', 'link_id', 'sr'),
-                   dates = VDateRange(['startdate', 'enddate'],
-                                      future = 1, 
-                                      reference_date = promote.promo_datetime_now,
-                                      business_days = False, 
-                                      admin_override = True))
-    def POST_meta_promo(self, form, jquery, ip, l, title, url,
-                        disable_comments,
-                        set_clicks, max_clicks,
-                        set_views,  max_views, bid, dates):
-        indx = 0 if l else None
-        targetting = "none"
-        sr = None
-        l = self._POST_edit_promo(form, jquery, ip, l, title, url,
-                                  disable_comments,
-                                  set_clicks, max_clicks,
-                                  set_views,  max_views)
-        if l and self._POST_edit_campaign(form, jquery, l, indx,
-                                          dates, bid, sr, targetting):
-            form.redirect(promote.promo_edit_url(l))
-
-
     @validatedForm(VSponsor('link_id'),
                    VModhash(),
                    VRatelimit(rate_user = True,
@@ -194,18 +148,6 @@ class PromoteController(ListingController):
                         set_clicks, max_clicks,
                         set_views,  max_views):
 
-        # TODO: simplify once again once the final version is up
-        l = self._POST_edit_promo(form, jquery, ip, l, title, url,
-                        disable_comments,
-                        set_clicks, max_clicks,
-                        set_views,  max_views)
-        if l:
-            form.redirect(promote.promo_edit_url(l))
-
-    def _POST_edit_promo(self, form, jquery, ip, l, title, url,
-                        disable_comments,
-                        set_clicks, max_clicks,
-                        set_views,  max_views):
         should_ratelimit = False
         if not c.user_is_sponsor:
             set_clicks = False
@@ -265,7 +207,7 @@ class PromoteController(ListingController):
             l.disable_comments = disable_comments
             l._commit()
 
-        return l
+        form.redirect(promote.promo_edit_url(l))
 
     @validate(VSponsorAdmin())
     def GET_roadblock(self):
@@ -319,15 +261,9 @@ class PromoteController(ListingController):
                    bid   = VBid('bid', 'link_id', 'sr'),
                    sr = VSubmitSR('sr'),
                    indx = VInt("indx"), 
-                   targetting = VLength("targetting", 10))
+                   targeting = VLength("targeting", 10))
     def POST_edit_campaign(self, form, jquery, l, indx,
-                          dates, bid, sr, targetting):
-        #TODO: the next three lines will disappear when everything is working
-        self._POST_edit_campaign(form, jquery, l, indx,
-                                 dates, bid, sr, targetting)
-
-    def _POST_edit_campaign(self, form, jquery, l, indx,
-                            dates, bid, sr, targetting):
+                          dates, bid, sr, targeting):
         if not l:
             return
 
@@ -363,7 +299,7 @@ class PromoteController(ListingController):
             form.has_errors('bid', errors.BAD_BID)
             return
 
-        if targetting == 'one':
+        if targeting == 'one':
             if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
                                errors.SUBREDDIT_NOTALLOWED,
                                errors.SUBREDDIT_REQUIRED):
@@ -377,7 +313,7 @@ class PromoteController(ListingController):
                                            "end": oversold[1].strftime('%m/%d/%Y')})
                 form.has_errors('sr', errors.OVERSOLD)
                 return
-        if targetting == 'none':
+        if targeting == 'none':
             sr = None
 
         if indx is not None:
@@ -388,9 +324,6 @@ class PromoteController(ListingController):
             indx = promote.new_campaign(l, dates, bid, sr)
             l = promote.editable_add_props(l)
             jquery.new_campaign(*l.campaigns[indx])
-
-        #TODO: remove on final version
-        return True
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

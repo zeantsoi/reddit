@@ -889,7 +889,7 @@ class VBid(VNumber):
     def __init__(self, bid, link_id, sr):
         self.duration = 1
         VNumber.__init__(self, (bid, link_id, sr),
-                         # targetting is a little more expensive
+                         # targeting is a little more expensive
                          min = g.min_promote_bid,
                          max = g.max_promote_bid, coerce = False,
                          error = errors.BAD_BID)

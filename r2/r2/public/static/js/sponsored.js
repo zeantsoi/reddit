@@ -63,12 +63,14 @@ function attach_calendar(where, min_date_src, max_date_src, callback) {
      });
 }
 
-function targetting_on(elem) {
-    $(elem).parents(".campaign").find(".targetting").show();
+function targeting_on(elem) {
+    $(elem).parents(".campaign").find(".targeting")
+        .find("*[name=sr]").attr("disabled", "").end().show();
 }
 
-function targetting_off(elem) {
-    $(elem).parents(".campaign").find(".targetting").hide();
+function targeting_off(elem) {
+    $(elem).parents(".campaign").find(".targeting")
+        .find("*[name=sr]").attr("disabled", "disabled").end().hide();
 }
 
 (function($) {
@@ -93,21 +95,21 @@ function get_flag_class(flags) {
 }
 
 $.new_campaign = function(indx, start_date, end_date, duration, 
-                          bid, targetting, flags) {
+                          bid, targeting, flags) {
     cancel_edit(function() {
       var data =('<input type="hidden" name="startdate" value="' + 
                  start_date +'"/>' + 
                  '<input type="hidden" name="enddate" value="' + 
                  end_date + '"/>' + 
                  '<input type="hidden" name="bid" value="' + bid + '"/>' +
-                 '<input type="hidden" name="targetting" value="' + 
-                 (targetting || '') + '"/>' +
+                 '<input type="hidden" name="targeting" value="' + 
+                 (targeting || '') + '"/>' +
                  '<input type="hidden" name="indx" value="' + indx + '"/>');
       if (flags && flags.pay_url) {
           data += ("<input type='hidden' name='pay_url' value='" + 
                    flags.pay_url + "'/>");
       }
-      var row = [start_date, end_date, duration, "$" + bid, targetting, data];
+      var row = [start_date, end_date, duration, "$" + bid, targeting, data];
       $(".existing-campaigns .error").hide();
       var css_class = get_flag_class(flags);
       $(".existing-campaigns table").show()
@@ -119,7 +121,7 @@ $.new_campaign = function(indx, start_date, end_date, duration,
 };
 
 $.update_campaign = function(indx, start_date, end_date, 
-                             duration, bid, targetting, flags) {
+                             duration, bid, targeting, flags) {
     cancel_edit(function() {
             $(".existing-campaigns input[name=indx]")
                 .filter("*[value=" + (indx || '0') + "]")
@@ -129,11 +131,11 @@ $.update_campaign = function(indx, start_date, end_date,
                 .next().html(end_date)
                 .next().html(duration)
                 .next().html("$" + bid).removeClass()
-                .next().html(targetting)
+                .next().html(targeting)
                 .next()
                 .find("*[name=startdate]").val(start_date).end()
                 .find("*[name=enddate]").val(end_date).end()
-                .find("*[name=targetting]").val(targetting).end()
+                .find("*[name=targeting]").val(targeting).end()
                 .find("*[name=bid]").val(bid).end()
                 .find("button, span").remove();
             $.set_up_campaigns();
@@ -264,21 +266,21 @@ function edit_campaign(elem) {
                                   i = "*[name=" + i + "]";
                                   c.find(i).val(data_tr.find(i).val());
                               });
-                        /* check if targetting is turned on */
-                        var targetting = data_tr
-                            .find("*[name=targetting]").val();
-                        var radios=c.find("*[name=targetting]");
-                        if (targetting) {
+                        /* check if targeting is turned on */
+                        var targeting = data_tr
+                            .find("*[name=targeting]").val();
+                        var radios=c.find("*[name=targeting]");
+                        if (targeting) {
                             radios.filter("*[value=one]")
                                 .attr("checked", "checked");
-                            c.find("*[name=sr]").val(targetting).end()
-                                .find(".targetting").show();
+                            c.find("*[name=sr]").val(targeting).attr("disabled", "").end()
+                                .find(".targeting").show();
                         }
                         else {
                             radios.filter("*[value=none]")
                                 .attr("checked", "checked");
-                            c.find("*[name=sr]").val("").end()
-                                .find(".targetting").hide();
+                            c.find("*[name=sr]").val("").attr("disabled", "disabled").end()
+                                .find(".targeting").hide();
                         }
                         /* attach the dates to the date widgets */
                         init_startdate();
@@ -302,9 +304,10 @@ function create_campaign(elem) {
                 .find("button[name=create]").show().end()
                 .find("input[name=indx]").val('').end()
                 .find("input[name=sr]").val('').end()
-                .find("input[name=targetting][value=none]")
+                .find("input[name=targeting][value=none]")
                                 .attr("checked", "checked").end()
-                .find(".targetting").hide().end()
+                .find(".targeting").hide().end()
+                .find("*[name=sr]").val("").attr("disabled", "disabled").end()
                 .fadeIn();
             update_bid("*[name=bid]");
         });

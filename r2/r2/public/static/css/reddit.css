@@ -3091,10 +3091,10 @@ ul.tabmenu.formtab {
 .campaign td.prefright { 
     padding: 4px;
 }
-.campaign .targetting {
+.campaign .targeting {
     margin-left: 25px; 
 }
-.campaign .targetting input{
+.campaign .targeting input{
     width: 95%;
 }
 

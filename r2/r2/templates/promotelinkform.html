@@ -93,9 +93,9 @@
         </p>
         <p>To get create a new campaign, simply set the start and end
         date as well as the bid amount.</p>
-        <p>Targetting will let you specify whether the ad should run
-        site-wide or be targetted to a specific community.  If you
-        choose to enable targetting, only users who are subscribed to
+        <p>Targeting will let you specify whether the ad should run
+        site-wide or be targeted to a specific community.  If you
+        choose to enable targeting, only users who are subscribed to
         that reddit will see your ad.  Your ad will also run on the
         top of that community's front page.</p>
         <p>You can rerun a sponsored link at any time, preserving
@@ -115,7 +115,7 @@
     <%
        start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
        end_title = "Date when your sponsored link will end (at midnight UTC+5)"
-       targetting_title = "name of the community that you are targetting. A blank entry here means that the ad is untargetted and will run site-wise "
+       targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wise "
        newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
      %>
     <table class="preftable">
@@ -163,29 +163,29 @@
        </tr>
        <tr>
          <th>
-           targetting
+           targeting
          </th>
          <td class="prefright">
-           <input id="no_targetting" class="nomargin" 
-                  type="radio"  value="none" name="targetting"
-                  onclick="return targetting_off(this)"
+           <input id="no_targeting" class="nomargin" 
+                  type="radio"  value="none" name="targeting"
+                  onclick="return targeting_off(this)"
                   checked="checked" /> 
-           <label for="no_targetting">no targetting (displays site-wide)</label>
+           <label for="no_targeting">no targeting (displays site-wide)</label>
            <br/>
-           <input id="targetting" class="nomargin" 
-                  type="radio"  value="one" name="targetting"
-                  onclick="return targetting_on(this)" /> 
-           <label for="targetting">
-             enable targetting (runs on a specific reddit)
+           <input id="targeting" class="nomargin" 
+                  type="radio"  value="one" name="targeting"
+                  onclick="return targeting_on(this)" /> 
+           <label for="targeting">
+             enable targeting (runs on a specific reddit)
            </label>
            <script type="text/javascript">
              $(function() 
                 { 
-                  var c =  $(".campaign input[name=targetting]:checked");
+                  var c =  $(".campaign input[name=targeting]:checked");
                   if (c.val() == 'one') {
-                      targetting_on(c);
+                      targeting_on(c);
                   } else {
-                      targetting_off(c);
+                      targeting_off(c);
                   }
                 })
            </script>
@@ -201,9 +201,9 @@
           update_bid("*[name=bid]");
        })
      </script>
-     <div class="targetting" style="display:none">
+     <div class="targeting" style="display:none">
        <ul>
-         <li>By targetting, your ad will only appear in front of users who subscribe to the reddit that you specify.</li>
+         <li>By targeting, your ad will only appear in front of users who subscribe to the reddit that you specify.</li>
          <li>Your ad will also appear at the top of the hot listing for that reddit</li>
          <li>You can only target one reddit per campaign.  If you would like to submit to more than one reddit, add a new campaign.</li>
        </ul>
@@ -235,7 +235,7 @@
           <th title="${end_title}">end</th>
           <th>duration</th>
           <th>bid</th>
-          <th title="${targetting_title}">targetting</th>
+          <th title="${targeting_title}">targeting</th>
           <th style="align:right">
             <button class="new-campaign" 
                     title="${newcamp_title}"
@@ -386,7 +386,7 @@
     <%utils:line_field title="${_('promotion history')}">
     <% 
        import datetime 
-       pc_max = max(thing.promo_counter.values())
+       pc_max = max(thing.promo_counter.values() or [1])
        %>
       <p style="font-size:smaller; margin: 5px;">
         Here is a summary of the data presented on the&#32;<a href="/promoted/graph">graph page</a>.
