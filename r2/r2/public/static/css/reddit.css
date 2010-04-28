@@ -514,7 +514,7 @@ ul.flat-vert {text-align: left;}
 .nextprev { color: gray; font-size: larger; margin-top: 10px;}
 
 /* corner help */
-.help a {
+.help a.help {
     color: #808080;
     text-decoration: underline;
 }
@@ -3465,7 +3465,7 @@ table.lined-table {
     margin: 5px;
 }
 
-.create-promotion .help a { 
+.create-promotion .help a.help { 
     font-weight: bold;
     text-decoration: none;
     float: right;
