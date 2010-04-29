@@ -965,7 +965,7 @@ def run_commentstree():
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
-    key = "registered_vote_%s_%s" % (user._id, thing._fullname)
+    key = prequeued_vote_key(user, thing)
     g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
     # queue the vote to be stored unless told not to
     if store:
@@ -976,18 +976,43 @@ def queue_vote(user, thing, dir, ip, organic = False,
         else:
             handle_vote(user, thing, dir, ip, organic)
 
+def prequeued_vote_key(user, item):
+    return 'registered_vote_%s_%s' % (user._id, item._fullname)
+
 def get_likes(user, items):
     if not user or not items:
         return {}
     keys = {}
     res = {}
-    for i in items:
-        keys['registered_vote_%s_%s' % (user._id, i._fullname)] = (user, i)
+    keys = dict((prequeued_vote_key(user, item), (user,item))
+                for item in items)
     r = g.cache.get_multi(keys.keys())
 
     # populate the result set based on what we fetched from the cache first
     for k, v in r.iteritems():
         res[keys[k]] = v
+
+    # performance hack: if their last vote came in before this thing
+    # was created, they can't possibly have voted on it
+    cantexist = {}
+    for item in items:
+        if (user, item) in res:
+            continue
+
+        last_vote_attr_name = 'last_vote_' + item.__class__.__name__
+        last_vote = getattr(user, last_vote_attr_name, None)
+        if not last_vote:
+            continue
+
+        if last_vote < item._date:
+            res[(user, item)] = '0'
+            cantexist[prequeued_vote_key(user, item)] = '0'
+
+    # this is a bit dodgy, but should save us from having to reload
+    # all of the votes on pages they've already loaded as soon as they
+    # cast a new vote
+    if cantexist:
+        g.cache.set_multi(cantexist)
 
     # now hit the vote db with the remainder
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])
