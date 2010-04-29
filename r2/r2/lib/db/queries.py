@@ -1009,7 +1009,7 @@ def get_likes(user, items):
                 res[(user, item)] = '0'
                 cantexist[prequeued_vote_key(user, item)] = '0'
         except TypeError:
-            g.log.debug("user %s has a broken %s? (%r)"
+            g.log.error("user %s has a broken %s? (%r)"
                         % (user._id, last_vote_attr_name, last_vote))
             # accounts for broken last_vote properties
             pass
