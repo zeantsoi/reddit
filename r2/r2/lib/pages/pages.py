@@ -2259,6 +2259,9 @@ class UserText(CachedTemplate):
         if extra_css:
             css_class += " " + extra_css
 
+        if text is None:
+            text = ''
+
         CachedTemplate.__init__(self,
                                 fullname = item._fullname if item else "", 
                                 text = text,

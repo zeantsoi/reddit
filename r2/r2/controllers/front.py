@@ -682,15 +682,21 @@ class FormsController(RedditController):
         return BoringPage(_("password"), content=Password()).render()
 
     @validate(VUser(),
-              dest = VDestination())
-    def GET_verify(self, dest):
+              dest = VDestination(),
+              reason = nop('reason'))
+    def GET_verify(self, dest, reason):
         if c.user.email_verified:
             content = InfoBar(message = strings.email_verified)
             if dest:
                 return self.redirect(dest)
         else:
+            if reason == "submit":
+                infomsg = strings.verify_email_submit
+            else:
+                infomsg = strings.verify_email
+
             content = PaneStack(
-                [InfoBar(message = strings.verify_email),
+                [InfoBar(message = infomsg),
                  PrefUpdate(email = True, verify = True,
                             password = False)])
         return BoringPage(_("verify email"), content = content).render()

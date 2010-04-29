@@ -128,18 +128,10 @@ class Account(Thing):
                     self.comment_karma >= g.WIKI_KARMA)
 
     def jury_betatester(self):
-        if g.debug:
-            return True
-
         if g.cache.get("jury-killswitch"):
             return False
-
-        karma_cutoff = g.hardcache.get("dipswitch-jurykarma", 0)
-        if karma_cutoff > 0 and self.link_karma >= karma_cutoff:
+        else:
             return True
-
-        k = "juror-" + self.name
-        return bool(g.hardcache.get(k))
 
     def all_karmas(self):
         """returns a list of tuples in the form (name, link_karma,
@@ -356,11 +348,10 @@ class Account(Thing):
         if kind != 'link':
             raise NotImplementedError
 
-        #  vvvvvvvvv TODO: Remove "False and" when enabling email verification
-        if False and not self.email_verified:
-            return dict(hour=1,  day=3,  week=5,   month=5)
-        else:
+        if self.email_verified:
             return dict(hour=3, day=10, week=50, month=150)
+        else:
+            return dict(hour=1,  day=3,  week=5,   month=5)
 
     def quota_full(self, kind):
         limits = self.quota_limits(kind)

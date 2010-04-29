@@ -52,6 +52,7 @@ from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
+from r2.lib.filters import safemarkdown
 
 from datetime import datetime, timedelta
 from md5 import md5
@@ -218,6 +219,29 @@ class ApiController(RedditController):
         if form.has_error() or not title:
             return
 
+        if should_ratelimit:
+            filled_quota = c.user.quota_full('link')
+            if filled_quota is not None and not c.user._spam:
+                log_text ("over-quota",
+                          "%s just went over their per-%s quota" %
+                          (c.user.name, filled_quota), "info")
+
+                compose_link = ("/message/compose?to=%23" + sr.name +
+                                "&subject=Exemption+request")
+
+                verify_link = "/verify?reason=submit"
+
+                if c.user.email_verified:
+                    msg = strings.verified_quota_msg % dict(link=compose_link)
+                else:
+                    msg = strings.unverified_quota_msg % dict(link1=verify_link,
+                                                              link2=compose_link)
+
+                md = safemarkdown(msg)
+                form.set_html(".status", md)
+                return
+
+
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
                          c.user, sr, ip)
@@ -241,11 +265,6 @@ class ApiController(RedditController):
 
         #set the ratelimiter
         if should_ratelimit:
-            filled_quota = c.user.quota_full('link')
-            if filled_quota is not None and not c.user._spam:
-                log_text ("over-quota",
-                          "%s just went over their per-%s quota" %
-                          (c.user.name, filled_quota), "info")
             c.user.clog_quota('link', l)
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
