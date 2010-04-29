@@ -122,7 +122,8 @@ class Vote(MultiRelation('vote',
     #TODO make this generic and put on multirelation?
     @classmethod
     def likes(cls, sub, obj):
-        votes = cls._fast_query(sub, obj, ('1', '-1'), data=False)
+        votes = cls._fast_query(sub, obj, ('1', '-1'),
+                                data=False, eager_load=False)
         votes = dict((tuple(k[:2]), v) for k, v in votes.iteritems() if v)
         return votes
 
