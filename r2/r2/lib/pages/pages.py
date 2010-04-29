@@ -2195,7 +2195,7 @@ def make_link_child(item):
                                           scrolling = media_embed.scrolling,
                                           id36 = item._id36)
             else:
-                g.log.error("media_object without media_embed %s" % item)
+                g.log.debug("media_object without media_embed %s" % item)
 
         if media_embed:
             link_child = MediaChild(item, media_embed, load = True)

@@ -62,7 +62,7 @@ def verify_email(user, dest):
     Award.take_away("verified_email", user)
     emaillink = ('http://' + g.domain + '/verification/' + key
                  + query_string(dict(dest=dest)))
-    print "Generated email verification link: " + emaillink
+    g.log.debug("Generated email verification link: " + emaillink)
     g.cache.set("email_verify_%s" %key, user._id, time=1800)
 
     _system_email(user.email,

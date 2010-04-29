@@ -1004,9 +1004,15 @@ def get_likes(user, items):
         if not last_vote:
             continue
 
-        if last_vote < item._date:
-            res[(user, item)] = '0'
-            cantexist[prequeued_vote_key(user, item)] = '0'
+        try:
+            if last_vote < item._date:
+                res[(user, item)] = '0'
+                cantexist[prequeued_vote_key(user, item)] = '0'
+        except TypeError:
+            g.log.debug("user %s has a broken %s? (%r)"
+                        % (user._id, last_vote_attr_name, last_vote))
+            # accounts for broken last_vote properties
+            pass
 
     # this is a bit dodgy, but should save us from having to reload
     # all of the votes on pages they've already loaded as soon as they

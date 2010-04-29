@@ -980,7 +980,7 @@ class VRatelimit(Validator):
             expire_time = max(r.values())
             time = utils.timeuntil(expire_time)
 
-            print "rate-limiting %s from %s" % (self.prefix, r.keys())
+            g.log.debug("rate-limiting %s from %s" % (self.prefix, r.keys()))
 
             # when errors have associated field parameters, we'll need
             # to add that here
