@@ -485,7 +485,7 @@ ul.flat-vert {text-align: left;}
 .tagline a {color: #369; text-decoration: none; }
 .tagline .friend    { color: orangered }
 .tagline .submitter { color: #0055df }
-.tagline .moderator { color: #228822 }
+.tagline .moderator, .green { color: #228822 }
 .tagline .admin { color: #ff0011; }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
@@ -3786,6 +3786,11 @@ a.adminbox:hover {
     text-decoration: none;
     color: orangered;
     border: solid 1px orangered;
+}
+
+.email {
+    font-family: monospace;
+    font-size: larger;
 }
 
 .lined-table, .lined-table th, .lined-table td {
