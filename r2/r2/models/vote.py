@@ -102,7 +102,15 @@ class Vote(MultiRelation('vote',
         v._commit()
         g.cache.delete(queries.prequeued_vote_key(sub, obj))
 
-        setattr(sub, 'last_vote_' + obj.__class__.__name__, datetime.now(g.tz))
+        lastvote_attr_name = 'last_vote_' + obj.__class__.__name__
+        try:
+            setattr(sub, lastvote_attr_name, datetime.now(g.tz))
+        except TypeError:
+            # this temporarily works around an issue with timezones in
+            # a really hacky way. Remove me later
+            setattr(sub, lastvote_attr_name, None)
+            sub._commit()
+            setattr(sub, lastvote_attr_name, datetime.now(g.tz))
         sub._commit()
 
         up_change, down_change = score_changes(amount, oldamount)
