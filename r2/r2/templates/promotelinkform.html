@@ -134,7 +134,8 @@
                   style="width:auto"
                   onchange="update_bid(this)"
                   onkeyup="update_bid(this)"
-                  value="${'%.2f' % g.min_promote_bid}"
+                  title="Minimum is $${'%.2f' % g.min_promote_bid} per day, or $${'%.2f' % (g.min_promote_bid * 1.5)} per day targeted"
+                  value="${'%.2f' % (g.min_promote_bid * 5)}"
                   />
           <span class="bid-info gray"></span>
         </td>

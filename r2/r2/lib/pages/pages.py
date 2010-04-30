@@ -2090,7 +2090,7 @@ class PromoteLinkForm(Templated):
                    datetime.timedelta(1))
 
         startdate = mindate + datetime.timedelta(1)
-        enddate   = startdate + datetime.timedelta(1)
+        enddate   = startdate + datetime.timedelta(3)
 
         self.startdate = startdate.strftime("%m/%d/%Y")
         self.enddate   = enddate  .strftime("%m/%d/%Y")
