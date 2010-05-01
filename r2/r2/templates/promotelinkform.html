@@ -274,11 +274,13 @@
   %if thing.link:
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
   %endif
-
+<%
+   trusted = c.user_is_sponsor or getattr(c.user, "trusted_sponsor", False)
+ %>
 <%utils:line_field title="${_('title')}" id="title-field">
     <textarea name="title" rows="2" cols="1" 
            ${"disabled" if (promote.is_promoted(thing.link) and
-                            not c.user_is_sponsor)  else ""}
+                            not trusted)  else ""}
               wrap="hard">${thing.link.title if thing.link else ''}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
@@ -289,7 +291,7 @@
   <input name="kind" value="link" type="hidden"/>
   <input id="url" name="url" type="text" 
            ${"disabled" if (promote.is_promoted(thing.link) and
-                            not c.user_is_sponsor)  else ""}
+                            not trusted)  else ""}
             value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"/>
   ${error_field("NO_URL", "url", "div")}
   ${error_field("BAD_URL", "url", "div")}

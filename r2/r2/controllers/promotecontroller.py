@@ -188,10 +188,10 @@ class PromoteController(ListingController):
             trusted = c.user_is_sponsor or \
                 getattr(c.user, "trusted_sponsor", False)
             if not promote.is_promoted(l) or trusted:
-                if title != l.title:
+                if title and title != l.title:
                     l.title = title
                     changed = not trusted
-                if url != l.url:
+                if url and url != l.url:
                     l.url = url
                     changed = not trusted
 
