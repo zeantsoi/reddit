@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-from r2.models import Thing, Link, Subreddit, AllSR
+from r2.models import Thing, Link, Subreddit, AllSR, admintools
 from r2.lib.utils import Storage, tup
 from r2.lib.memoize import memoize
 from datetime import datetime
@@ -36,20 +36,21 @@ class Trial(Storage):
             raise ValueError ("Defendant %s is not on trial" % defendant._id)
         self.defendant = defendant
 
-    def convict(self):
-#        train_spam_filter(self.defendant, "spam")
-        if self.defendant._spam:
-            pass #TODO: PM submitter
-        else:
-            pass #TODO: ban it
+    def convict(self, details = ''):
+#        if self.defendant._spam:
+#            TODO: PM submitter, maybe?
+#        else:
+#            TODO: PM submitter, maybe?
+        admintools.spam(self.defendant, auto=False, moderator_banned=True,
+                        banner="deputy moderation" + details)
 
-    def acquit(self):
-#        train_spam_filter(self.defendant, "ham")
-        if self.defendant._spam:
-            pass
-#            self.defendant._date = datetime.now(g.tz)
-#            self.defendant._spam = False
-            #TODO: PM submitter
+    def acquit(self, details = ''):
+        admintools.unspam(self.defendant, unbanner="deputy moderation" + details)
+
+#        if self.defendant._spam:
+#           TODO: PM submitter
+#           TODO: reset submission time:
+#           self.defendant._date = datetime.now(g.tz)
 
     def mistrial(self):
         #TODO: PM mods
@@ -67,7 +68,7 @@ class Trial(Storage):
         now = datetime.now(g.tz)
         defendant_age = now - self.defendant._date
         if defendant_age.days > 0:
-            return "jury timeout"
+            return ("jury timeout", None, None)
 
         latest_juryvote = None
         for j in Jury.by_defendant(self.defendant):
@@ -98,7 +99,7 @@ class Trial(Storage):
 
         if total_votes < 7:
             g.log.debug("not enough votes yet")
-            return None
+            return (None, koshers, spams)
 
         # Stop showing this in the spotlight box once it has 30 votes
         if total_votes >= 30:
@@ -116,41 +117,44 @@ class Trial(Storage):
         kosher_pct = float(koshers) / float(total_votes)
 
         if kosher_pct < 0.13:
-            return "guilty"
+            return ("guilty", koshers, spams)
         elif kosher_pct > 0.86:
-            return "innocent"
+            return ("innocent", koshers, spams)
         elif trickling:
             g.log.debug("votes still trickling in")
-            return None
+            return (None, koshers, spams)
         elif kosher_pct < 0.34:
-            return "guilty"
+            return ("guilty", koshers, spams)
         elif kosher_pct > 0.66:
-            return "innocent"
+            return ("innocent", koshers, spams)
         elif total_votes >= 100:
             # This should never really happen; quenching should kick in
             # after 30 votes, so new jurors won't be assigned to the
             # trial. Just in case something goes wrong, close any trials
             # with more than 100 votes.
-            return "hung jury"
+            return ("hung jury", koshers, spams)
         else:
             g.log.debug("hung jury, so far")
-            return None # no decision yet; wait for more voters
+            return (None, koshers, spams) # no decision yet; wait for more voters
 
     def check_verdict(self):
         from r2.lib.utils.trial_utils import end_trial
 
-        verdict = self.verdict()
+        verdict, koshers, spams = self.verdict()
         if verdict is None:
             return # no verdict yet
 
-        if verdict == "guilty":
-            self.convict()
-        elif verdict == "innocent":
-            self.acquit()
-        elif verdict in ("jury timeout", "hung jury"):
+        if verdict in ("jury timeout", "hung jury"):
             self.mistrial()
         else:
-            raise ValueError("Invalid verdict [%s]" % verdict)
+            details=", %d-%d" % (spams, koshers)
+
+            if verdict == "guilty":
+                self.convict(details)
+            elif verdict == "innocent":
+                self.acquit(details)
+            else:
+                raise ValueError("Invalid verdict [%s]" % verdict)
 
         end_trial(self.defendant, verdict)
 
