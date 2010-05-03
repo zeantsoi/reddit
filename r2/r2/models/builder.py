@@ -175,7 +175,7 @@ class Builder(object):
             w.link_notes = []
 
             if c.user_is_admin:
-                if item.deleted:
+                if item._deleted:
                     w.link_notes.append("deleted link")
                 if getattr(item, "verdict", None):
                     if not item.verdict.endswith("-approved"):
