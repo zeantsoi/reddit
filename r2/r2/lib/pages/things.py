@@ -64,7 +64,9 @@ class LinkButtons(PrintableButtons):
         is_author = (c.user_is_loggedin and thing.author and
                      c.user.name == thing.author.name)
         # do we show the report button?
-        show_report = not is_author and report
+        show_report = (not is_author and
+                       report and
+                       getattr(thing, "promoted", None) is None)
 
         if c.user_is_admin and thing.promoted is None:
             show_report = False

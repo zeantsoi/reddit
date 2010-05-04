@@ -1182,8 +1182,9 @@ class ApiController(RedditController):
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_remove(self, why, thing):
-        end_trial(thing, why + "-removed")
-        admintools.spam(thing, False, not c.user_is_admin, c.user.name)
+        if getattr(t, "promoted", None) is None:
+            end_trial(thing, why + "-removed")
+            admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),

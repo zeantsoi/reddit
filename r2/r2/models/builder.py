@@ -204,7 +204,8 @@ class Builder(object):
                 or (user
                     and hasattr(item,'sr_id')
                     and item.sr_id in can_ban_set)):
-                w.can_ban = True
+                if getattr(item, "promoted", None) is None:
+                    w.can_ban = True
 
                 ban_info = getattr(item, 'ban_info', {})
                 w.unbanner = ban_info.get('unbanner')

@@ -43,6 +43,9 @@ class AdminTools(object):
         Report.accept(new_things, True)
 
         for t in all_things:
+            if getattr(t, "promoted", None) is not None:
+                g.log.debug("Refusing to mark promotion %r as spam" % t)
+                continue
             t._spam = True
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info.update(auto = auto,
