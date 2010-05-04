@@ -36,6 +36,7 @@ class Globals(object):
 
     int_props = ['page_cache_time',
                  'solr_cache_time',
+                 'num_mc_clients',
                  'MIN_DOWN_LINK',
                  'MIN_UP_KARMA',
                  'MIN_DOWN_KARMA',
@@ -75,12 +76,13 @@ class Globals(object):
                   'amqp_logging',
                   ]
 
-    tuple_props = ['memcaches',
+    tuple_props = ['memcaches', 'memcaches2',
                    'rec_cache',
                    'rendercaches',
                    'local_rendercache',
                    'servicecaches',
                    'permacache_memcaches',
+                   'permacache_memcaches2',
                    'cassandra_seeds',
                    'permacaches',
                    'admins',
@@ -138,9 +140,10 @@ class Globals(object):
 
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
-        num_mc_clients = 2# if self.running_as_script else 10
+        num_mc_clients = self.num_mc_clients
 
-        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
+        c_mc  = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
+        c_mc2 = CMemcache(self.memcaches2, num_clients = num_mc_clients)
         rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients,
                         noreply=True, no_block=True)
         lrmc = None
@@ -156,15 +159,13 @@ class Globals(object):
             pmc_chain += (CMemcache(self.permacache_memcaches,
                                     num_clients=num_mc_clients,
                                     legacy=True),)
+            pmc_chain += (CMemcache(self.permacache_memcaches2,
+                                    num_clients=num_mc_clients),)
         if self.cassandra_seeds:
             self.cassandra_seeds = list(self.cassandra_seeds)
             random.shuffle(self.cassandra_seeds)
             pmc_chain += (CassandraCache('permacache', 'permacache',
                                          self.cassandra_seeds),)
-        if self.permacaches:
-            pmc_chain += (CMemcache(self.permacaches,
-                                    num_clients=num_mc_clients,
-                                    legacy=True),)
         if len(pmc_chain) == 1:
             print 'Warning: proceding without a permacache'
 
@@ -176,7 +177,7 @@ class Globals(object):
         self.memcache = c_mc # we'll keep using this one for locks
                              # intermediately
 
-        self.cache = MemcacheChain((localcache_cls(), c_mc))
+        self.cache = MemcacheChain((localcache_cls(), c_mc, c_mc2))
         if lrmc:
             self.rendercache = MemcacheChain((localcache_cls(), lrmc, rmc))
         else:
@@ -199,7 +200,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), c_mc,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc, c_mc2,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)
