@@ -177,7 +177,7 @@ class Globals(object):
         self.memcache = c_mc # we'll keep using this one for locks
                              # intermediately
 
-        self.cache = MemcacheChain((localcache_cls(), c_mc, c_mc2))
+        self.cache = MemcacheChain((localcache_cls(), c_mc2, c_mc))
         if lrmc:
             self.rendercache = MemcacheChain((localcache_cls(), lrmc, rmc))
         else:
@@ -200,7 +200,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), c_mc, c_mc2,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc2, c_mc,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)
