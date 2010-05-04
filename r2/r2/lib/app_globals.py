@@ -76,15 +76,13 @@ class Globals(object):
                   'amqp_logging',
                   ]
 
-    tuple_props = ['memcaches', 'memcaches2',
+    tuple_props = ['memcaches',
                    'rec_cache',
                    'rendercaches',
                    'local_rendercache',
                    'servicecaches',
                    'permacache_memcaches',
-                   'permacache_memcaches2',
                    'cassandra_seeds',
-                   'permacaches',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -142,8 +140,7 @@ class Globals(object):
                           else LocalCache)
         num_mc_clients = self.num_mc_clients
 
-        c_mc  = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
-        c_mc2 = CMemcache(self.memcaches2, num_clients = num_mc_clients)
+        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
         rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients,
                         noreply=True, no_block=True)
         lrmc = None
@@ -157,9 +154,6 @@ class Globals(object):
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
             pmc_chain += (CMemcache(self.permacache_memcaches,
-                                    num_clients=num_mc_clients,
-                                    legacy=True),)
-            pmc_chain += (CMemcache(self.permacache_memcaches2,
                                     num_clients=num_mc_clients),)
         if self.cassandra_seeds:
             self.cassandra_seeds = list(self.cassandra_seeds)
@@ -174,10 +168,9 @@ class Globals(object):
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.memcache = c_mc # we'll keep using this one for locks
-                             # intermediately
+        self.memcache = c_mc # used by lock.py
 
-        self.cache = MemcacheChain((localcache_cls(), c_mc2, c_mc))
+        self.cache = MemcacheChain((localcache_cls(), c_mc))
         if lrmc:
             self.rendercache = MemcacheChain((localcache_cls(), lrmc, rmc))
         else:
@@ -200,7 +193,7 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), c_mc2, c_mc,
+        self.hardcache = HardcacheChain((localcache_cls(), c_mc,
                                          HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)
