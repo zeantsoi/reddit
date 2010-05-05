@@ -164,7 +164,10 @@ class Globals(object):
         if len(pmc_chain) == 1:
             print 'Warning: proceding without a permacache'
 
-        self.permacache = CassandraCacheChain(pmc_chain, cache_negative_results = True)
+        if self.cassandra_seeds:
+            self.permacache = CassandraCacheChain(pmc_chain, cache_negative_results = True)
+        else:
+            self.permacache = MemcacheChain(pmc_chain)
 
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
