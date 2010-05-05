@@ -81,7 +81,7 @@ class Globals(object):
                    'rendercaches',
                    'local_rendercache',
                    'servicecaches',
-                   'permacache_memcaches','permacache_memcaches2',
+                   'permacache_memcaches',
                    'cassandra_seeds',
                    'admins',
                    'sponsors',
@@ -153,8 +153,6 @@ class Globals(object):
 
         pmc_chain = (localcache_cls(),)
         if self.permacache_memcaches:
-            pmc_chain += (CMemcache(self.permacache_memcaches2,
-                                    num_clients=num_mc_clients),)
             pmc_chain += (CMemcache(self.permacache_memcaches,
                                     num_clients=num_mc_clients),)
         if self.cassandra_seeds:
