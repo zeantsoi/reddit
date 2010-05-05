@@ -74,6 +74,7 @@ class Globals(object):
                   'disallow_db_writes',
                   'exception_logging',
                   'amqp_logging',
+                  'read_only_mode',
                   ]
 
     tuple_props = ['memcaches',

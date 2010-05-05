@@ -288,7 +288,7 @@ def set_content_type():
             user = valid_feed(request.GET.get("user"),
                               request.GET.get("feed"),
                               request.path)
-            if user:
+            if user and not g.read_only_mode:
                 c.user = user
                 c.user_is_loggedin = True
 
@@ -603,10 +603,15 @@ class RedditController(MinimalController):
 
         c.response_wrappers = []
         c.firsttime = firsttime()
-        (c.user, maybe_admin) = \
-            valid_cookie(c.cookies[g.login_cookie].value
-                         if g.login_cookie in c.cookies
-                         else '')
+
+        if g.read_only_mode:
+            c.user = False
+            maybe_admin = False
+        else:
+            (c.user, maybe_admin) = \
+                valid_cookie(c.cookies[g.login_cookie].value
+                             if g.login_cookie in c.cookies
+                             else '')
 
         if c.user:
             c.user_is_loggedin = True
