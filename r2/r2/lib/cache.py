@@ -434,7 +434,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if self.cache_negative_results and val is NoneResult:
+                if val is NoneResult:
                     return default
                 else:
                     return val
