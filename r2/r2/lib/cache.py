@@ -576,14 +576,26 @@ class CassandraCache(CacheUtils):
             return pickle.loads(row['value'])
         except (cassandra.ttypes.NotFoundException, KeyError):
             return default
+        except Exception:
+            import sys
+            sys.stderr.write("Cassandra problem looking up [%s], rcl=%r\n" %
+                         (key, read_consistency_level))
+            raise
 
     def simple_get_multi(self, keys, read_consistency_level = None):
         rcl = self._rcl(read_consistency_level)
-        rows = self.cf.multiget(list(keys),
-                                columns=['value'],
-                                read_consistency_level = rcl)
-        return dict((key, pickle.loads(row['value']))
-                    for (key, row) in rows.iteritems())
+        try:
+            rows = self.cf.multiget(list(keys),
+                                    columns=['value'],
+                                    read_consistency_level = rcl)
+            return dict((key, pickle.loads(row['value']))
+                        for (key, row) in rows.iteritems())
+        except Exception:
+            import sys
+            sys.stderr.write("Cassandra problem looking up %r, rcl=%r\n" %
+                             (keys, read_consistency_level))
+            raise
+
 
     def set(self, key, val,
             write_consistency_level = None, time = None):

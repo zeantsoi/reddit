@@ -604,14 +604,11 @@ class RedditController(MinimalController):
         c.response_wrappers = []
         c.firsttime = firsttime()
 
-        if g.read_only_mode:
-            c.user = False
-            maybe_admin = False
-        else:
-            (c.user, maybe_admin) = \
-                valid_cookie(c.cookies[g.login_cookie].value
-                             if g.login_cookie in c.cookies
-                             else '')
+
+        (c.user, maybe_admin) = \
+            valid_cookie(c.cookies[g.login_cookie].value
+                         if g.login_cookie in c.cookies
+                         else '')
 
         if c.user:
             c.user_is_loggedin = True
