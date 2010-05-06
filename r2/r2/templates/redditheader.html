@@ -65,11 +65,9 @@
 
       ${separator("|")}
 
-      %if c.user_is_admin:
-
       <%
          mail_img ="mail"
-         if c.have_messages:
+         if c.have_messages and c.user_is_admin:
            mail_img += ".png"
            mail_img_class = 'havemail'
            mail_img_title = "new mail!"
@@ -86,7 +84,7 @@
       %if c.show_mod_mail:
          <%
             mail_img ="modmail"
-            if c.have_mod_messages:
+            if c.have_mod_messages and c.user_is_admin:
               mail_img += ".png"
               mail_img_class = 'havemail'
               mail_img_title = "new mail!"
@@ -101,7 +99,6 @@
                     _id = "modmail", _class=mail_img_class)}
          ${separator("|")}
       %endif
-     %endif
     %endif
     ${thing.corner_buttons()}
     %if c.user_is_loggedin:
