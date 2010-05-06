@@ -65,6 +65,8 @@
 
       ${separator("|")}
 
+      %if c.user_is_admin:
+
       <%
          mail_img ="mail"
          if c.have_messages:
@@ -99,6 +101,7 @@
                     _id = "modmail", _class=mail_img_class)}
          ${separator("|")}
       %endif
+     %endif
     %endif
     ${thing.corner_buttons()}
     %if c.user_is_loggedin:
