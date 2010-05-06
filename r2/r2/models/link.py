@@ -591,6 +591,8 @@ class Comment(Thing, Printable):
             if not hasattr(l, "link_id"):
                 fix_if_broken(l)
 
+        wrapped = filter(lambda x: not x._deleted, wrapped)
+
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
 
