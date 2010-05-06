@@ -590,6 +590,7 @@ class Comment(Thing, Printable):
         for l in wrapped:
             if not hasattr(l, "link_id"):
                 fix_if_broken(l.lookups[0])
+                l.link_id # TODO: remove this debugging
 
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
