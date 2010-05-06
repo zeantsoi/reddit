@@ -498,6 +498,7 @@ class Comment(Thing, Printable):
     _defaults = dict(reported = 0, parent_id = None, 
                      moderator_banned = False, new = False, 
                      banned_before_moderator = False)
+    _essentials = ('link_id', 'author_id')
 
     def _markdown(self):
         pass
