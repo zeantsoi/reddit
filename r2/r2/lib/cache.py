@@ -434,7 +434,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if self.cache_negative_results and val is NoneResult:
+                if val is NoneResult:
                     return default
                 else:
                     return val
@@ -451,6 +451,8 @@ class CacheChain(CacheUtils, local):
         key_map = self._prefix_keys(keys, prefix)
         results = self.simple_get_multi(key_map.keys(),
                                         allow_local = allow_local)
+        results = dict((k, v) for (k, v) in results.iteritems()
+                       if v is not NoneResult)
         return self._unprefix_keys(results, key_map)
 
     def simple_get_multi(self, keys, allow_local = True):
