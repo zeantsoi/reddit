@@ -242,7 +242,7 @@ def set_subreddit():
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
         if sub_domain and not sub_domain.endswith(g.media_domain):
-            c.site = Subreddit._by_domain(sub_domain) 
+            c.site = Subreddit._by_domain(sub_domain) or Default
     elif sr_name == 'r':
         #reddits
         c.site = Sub

@@ -577,7 +577,7 @@ class MessageController(ListingController):
             wouldkeep = item.keep_item(item)
             # don't show user their own unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')
-                and item.author_id == c.user._id):
+                and (item.author_id == c.user._id or not item.new)):
                 return False
             return wouldkeep
         return keep
