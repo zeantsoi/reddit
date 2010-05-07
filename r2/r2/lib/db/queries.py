@@ -713,7 +713,7 @@ def set_unread(message, to, unread):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
             add_queries([get_unread_subreddit_messages(i._thing1)], **kw)
     else:
-        for i in Inbox.set_unread(message, unread):
+        for i in Inbox.set_unread(message, unread, to = to):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
             if i._name == 'selfreply':
                 add_queries([get_unread_selfreply(i._thing1)], **kw)

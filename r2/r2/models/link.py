@@ -1043,10 +1043,15 @@ class Inbox(MultiRelation('inbox',
         return i
 
     @classmethod
-    def set_unread(cls, thing, unread):
+    def set_unread(cls, thing, unread, to = None):
         inbox_rel = cls.rel(Account, thing.__class__)
-        inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
-                                 eager_load = True)
+        if to:
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+                                     eager_load = True)
+        else:
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+                                     inbox_rel.c._thing1_id == to._id,
+                                     eager_load = True)
         res = []
         for i in inbox:
             if i:

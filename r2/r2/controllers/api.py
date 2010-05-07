@@ -1258,8 +1258,7 @@ class ApiController(RedditController):
             return
         # if the message has a recipient, try validating that
         # desitination first (as it is cheaper and more common)
-        if not hasattr(thing, "to_id") or c.user._id == thing.to_id:
-            queries.set_unread(thing, c.user, unread)
+        queries.set_unread(thing, c.user, unread)
         # if the message is for a subreddit, check that next
         if hasattr(thing, "sr_id"):
             sr = thing.subreddit_slow
