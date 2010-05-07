@@ -922,7 +922,7 @@ class Message(Thing, Printable):
 
         # load the inbox relations for the messages to determine new-ness
         # TODO: query cache?
-        inbox = Inbox._fast_query(c.user, 
+        inbox = Inbox._fast_query(c.user,
                                   [item.lookups[0] for item in wrapped],
                                   ['inbox', 'selfreply'])
 
@@ -930,15 +930,17 @@ class Message(Thing, Printable):
         inbox = dict((m._fullname, v)
                      for (u, m, n), v in inbox.iteritems() if v)
 
-        modinbox = ModeratorInbox._query(
-            ModeratorInbox.c._thing2_id == [item._id for item in wrapped],
-            data = True)
+        msgs = filter (lambda x: isinstance(x.lookups[0], Message), wrapped)
+
+        modinbox = ModeratorInbox._fast_query(m_subreddits.values(),
+                                              msgs,
+                                              ['inbox'] )
 
         # best to not have to eager_load the things
         def make_message_fullname(mid):
             return "t%s_%s" % (utils.to36(Message._type_id), utils.to36(mid))
         modinbox = dict((make_message_fullname(v._thing2_id), v)
-                        for v in modinbox)
+                     for (u, m, n), v in modinbox.iteritems() if v)
 
         for item in wrapped:
             item.to = tos.get(item.to_id)
