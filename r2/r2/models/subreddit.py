@@ -243,6 +243,13 @@ class Subreddit(Thing, Printable):
             #private requires contributorship
             return self.is_contributor(user) or self.is_moderator(user)
 
+    def can_demod(self, bully, victim):
+        # This works because the is_*() functions return the relation
+        # when True. So we can compare the dates on the relations.
+        bully_rel = self.is_moderator(bully)
+        victim_rel = self.is_moderator(victim)
+        return bully_rel._date <= victim_rel._date
+
     @classmethod
     def load_subreddits(cls, links, return_dict = True):
         """returns the subreddits for a list of links. it also preloads the

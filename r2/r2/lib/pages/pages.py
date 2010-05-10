@@ -998,9 +998,10 @@ class ErrorPage(Templated):
 class Profiling(Templated):
     """Debugging template for code profiling using built in python
     library (only used in middleware)"""
-    def __init__(self, header = '', table = [], caller = [], callee = [], path = ''):
+    def __init__(self, header = '', table = [], caller = [], callee = [],
+                 path = '', sort_order = ''):
         Templated.__init__(self, header = header, table = table, caller = caller,
-                         callee = callee, path = path)
+                           callee = callee, path = path)
 
 class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
@@ -1885,6 +1886,7 @@ class UserList(Templated):
     _class         = ""
     destination    = "friend"
     remove_action  = "unfriend"
+    editable_fn    = None
 
     def __init__(self, editable = True):
         self.editable = editable
@@ -1894,8 +1896,13 @@ class UserList(Templated):
         """Convenience method for constructing a UserTableItem
         instance of the user with type, container_name, etc. of this
         UserList instance"""
+        editable = self.editable
+
+        if self.editable_fn and not self.editable_fn(user):
+            editable = False
+
         return UserTableItem(user, self.type, self.cells, self.container_name,
-                             self.editable, self.remove_action)
+                             editable, self.remove_action)
 
     @property
     def users(self, site = None):
@@ -1964,6 +1971,14 @@ class ModList(UserList):
     @property
     def table_title(self):
         return _("moderators to %(reddit)s") % dict(reddit = c.site.name)
+
+    def editable_fn(self, user):
+        if not c.user_is_loggedin:
+            return False
+        elif c.user_is_admin:
+            return True
+        else:
+            return c.site.can_demod(c.user, user)
 
     def user_ids(self):
         return c.site.moderators

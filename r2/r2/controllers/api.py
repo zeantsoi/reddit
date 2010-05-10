@@ -412,27 +412,33 @@ class ApiController(RedditController):
     def POST_unfriend(self, nuser, iuser, container, type):
         """
         Handles removal of a friend (a user-user relation) or removal
-        of a user's priviledges from a subreddit (a user-subreddit
+        of a user's privileges from a subreddit (a user-subreddit
         relation).  The user can either be passed in by name (nuser)
-        or buy fullname (iuser).  'container' will either be the
+        or by fullname (iuser).  'container' will either be the
         current user or the subreddit.
 
         """
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
+
+        victim = iuser or nuser
+
         if (not c.user_is_admin
             and (type in ('moderator','contributor','banned')
                  and not c.site.is_moderator(c.user))):
+            abort(403, 'forbidden')
+        if (type == 'moderator' and not
+            (c.user_is_admin or container.can_demod(c.user, victim))):
             abort(403, 'forbidden')
         # if we are (strictly) unfriending, the container had better
         # be the current user.
         if type == "friend" and container != c.user:
             abort(403, 'forbidden')
         fn = getattr(container, 'remove_' + type)
-        fn(iuser or nuser)
+        fn(victim)
 
         if type in ("moderator", "contributor"):
-            Subreddit.special_reddits(iuser or nuser, type, _update=True)
+            Subreddit.special_reddits(victim, type, _update=True)
 
 
 
