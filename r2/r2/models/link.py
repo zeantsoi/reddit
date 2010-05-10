@@ -158,7 +158,6 @@ class Link(Thing, Printable):
         saved = somethinged(user, self)[(user, self, name)]
         if saved:
             saved._delete()
-            rel._fast_query_timestamp_touch(user)
             return saved
 
     @classmethod
