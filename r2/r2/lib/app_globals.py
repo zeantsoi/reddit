@@ -315,7 +315,8 @@ class Globals(object):
             self.version = self.short_version = '(unknown)'
 
         if self.log_start:
-            self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
+            self.log.error("reddit app %s:%s started %s at %s" % (self.reddit_host, self.reddit_pid,
+                                                                  self.short_version, datetime.now()))
 
     @staticmethod
     def to_bool(x):

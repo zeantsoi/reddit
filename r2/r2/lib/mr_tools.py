@@ -86,7 +86,7 @@ def format_dataspec(msg, specs):
         else:
             name, fn = spec
             ret[name] = fn(val)
-    return ret
+    return Storage(**ret)
 
 class dataspec_m(object):
     def __init__(self, *specs):
@@ -95,7 +95,7 @@ class dataspec_m(object):
     def __call__(self, fn):
         specs = self.specs
         def wrapped_fn(args):
-            return fn(**format_dataspec(args, specs))
+            return fn(format_dataspec(args, specs))
         return wrapped_fn
 
 class dataspec_r(object):

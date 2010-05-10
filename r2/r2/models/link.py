@@ -142,12 +142,14 @@ class Link(Thing, Printable):
 
     @classmethod
     def _somethinged(cls, rel, user, link, name):
-        return rel._fast_query(tup(user), tup(link), name = name)
+        return rel._fast_query(tup(user), tup(link), name = name,
+                               timestamp_optimize = True)
 
     def _something(self, rel, user, somethinged, name):
         try:
             saved = rel(user, self, name=name)
             saved._commit()
+            rel._fast_query_timestamp_touch(user)
             return saved
         except CreationError, e:
             return somethinged(user, self)[(user, self, name)]
@@ -156,6 +158,7 @@ class Link(Thing, Printable):
         saved = somethinged(user, self)[(user, self, name)]
         if saved:
             saved._delete()
+            rel._fast_query_timestamp_touch(user)
             return saved
 
     @classmethod
