@@ -248,6 +248,8 @@ class Subreddit(Thing, Printable):
         # when True. So we can compare the dates on the relations.
         bully_rel = self.is_moderator(bully)
         victim_rel = self.is_moderator(victim)
+        if bully_rel is None or victim_rel is None:
+            return False
         return bully_rel._date <= victim_rel._date
 
     @classmethod
