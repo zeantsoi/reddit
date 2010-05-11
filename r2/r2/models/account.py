@@ -397,8 +397,7 @@ def valid_cookie(cookie):
     except:
         return (False, False)
 
-    if g.read_only_mode and uid != 1102922 and uid > 5000000:
-    #if g.read_only_mode:
+    if g.read_only_mode:
         return (False, False)
 
     try:

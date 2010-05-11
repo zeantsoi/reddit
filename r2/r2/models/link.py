@@ -592,14 +592,7 @@ class Comment(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_attr
         from r2.lib import promote
-        from r2.lib.utils import fix_if_broken
-
         #fetch parent links
-
-        for l in wrapped:
-            if not hasattr(l, "link_id"):
-                fix_if_broken(l.lookups[0])
-                l.link_id # TODO: remove this debugging
 
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)

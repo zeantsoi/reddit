@@ -271,7 +271,7 @@ class HardCache(CacheUtils):
         return category, ids
 
     def set(self, key, val, time=0):
-        if val is NoneResult:
+        if val == NoneResult:
             # NoneResult caching is for other parts of the chain
             return
 
@@ -296,7 +296,7 @@ class HardCache(CacheUtils):
 
     def set_multi(self, keys, prefix='', time=0):
         for k,v in keys.iteritems():
-            if v is not NoneResult:
+            if v != NoneResult:
                 self.set(prefix+str(k), v, time=time)
 
     def get(self, key, default=None):
@@ -434,7 +434,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if val is NoneResult:
+                if self.cache_negative_results and val == NoneResult:
                     return default
                 else:
                     return val
@@ -451,8 +451,6 @@ class CacheChain(CacheUtils, local):
         key_map = self._prefix_keys(keys, prefix)
         results = self.simple_get_multi(key_map.keys(),
                                         allow_local = allow_local)
-        results = dict((k, v) for (k, v) in results.iteritems()
-                       if v is not NoneResult)
         return self._unprefix_keys(results, key_map)
 
     def simple_get_multi(self, keys, allow_local = True):
@@ -477,14 +475,14 @@ class CacheChain(CacheUtils, local):
                 need = need - set(r.keys())
 
         if need and self.cache_negative_results:
-            d = dict( (key,NoneResult) for key in need)
+            d = dict((key, NoneResult) for key in need)
             for c in self.caches:
                 c.set_multi(d)
 
         if self.cache_negative_results:
             filtered_out = {}
             for k,v in out.iteritems():
-                if v is not NoneResult:
+                if v != NoneResult:
                     filtered_out[k] = v
             out = filtered_out
 
@@ -578,26 +576,14 @@ class CassandraCache(CacheUtils):
             return pickle.loads(row['value'])
         except (cassandra.ttypes.NotFoundException, KeyError):
             return default
-        except Exception:
-            import sys
-            sys.stderr.write("Cassandra problem looking up [%s], rcl=%r\n" %
-                         (key, read_consistency_level))
-            raise
 
     def simple_get_multi(self, keys, read_consistency_level = None):
         rcl = self._rcl(read_consistency_level)
-        try:
-            rows = self.cf.multiget(list(keys),
-                                    columns=['value'],
-                                    read_consistency_level = rcl)
-            return dict((key, pickle.loads(row['value']))
-                        for (key, row) in rows.iteritems())
-        except Exception:
-            import sys
-            sys.stderr.write("Cassandra problem looking up %r, rcl=%r\n" %
-                             (keys, read_consistency_level))
-            raise
-
+        rows = self.cf.multiget(list(keys),
+                                columns=['value'],
+                                read_consistency_level = rcl)
+        return dict((key, pickle.loads(row['value']))
+                    for (key, row) in rows.iteritems())
 
     def set(self, key, val,
             write_consistency_level = None, time = None):
