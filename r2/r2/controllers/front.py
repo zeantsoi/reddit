@@ -337,8 +337,10 @@ class FrontController(RedditController):
         elif is_moderator and location == 'banned':
             pane = BannedList(editable = is_moderator)
         elif (location == 'contributors' and
-              (c.site.type != 'public' or 
-               (c.user_is_loggedin and c.site.use_whitelist and
+              # On public reddits, only moderators can see the whitelist.
+              # On private reddits, all contributors can see each other.
+              (c.site.type != 'public' or
+               (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user_is_admin)))):
                 pane = ContributorList(editable = is_moderator)
         elif (location == 'stylesheet'

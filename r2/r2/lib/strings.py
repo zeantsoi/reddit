@@ -84,7 +84,7 @@ string_dict = dict(
     msg_add_friend = dict(
         friend = None,
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
-        contributor = _("you have been added as a contributor to [%(title)s](%(url)s)."),
+        contributor = _("you have been added as an approved submitter to [%(title)s](%(url)s)."),
         banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
         traffic = _('you have been added to the list of users able to see [traffic for the sponsored link "%(title)s"](%(traffic_url)s).')
         ),
@@ -92,7 +92,7 @@ string_dict = dict(
     subj_add_friend = dict(
         friend = None,
         moderator = _("you are a moderator"),
-        contributor = _("you are a contributor"),
+        contributor = _("you are an approved submitter"),
         banned = _("you've been banned"),
         traffic = _("you can view traffic on a promoted link")
         ),
@@ -100,7 +100,7 @@ string_dict = dict(
     sr_messages = dict(
         empty =  _('you have not subscribed to any reddits.'),
         subscriber =  _('below are the reddits you have subscribed to'),
-        contributor =  _('below are the reddits that you have contributor access to.'),
+        contributor =  _('below are the reddits that you are an approved submitter on.'),
         moderator = _('below are the reddits that you have moderator access to.')
         ),
     
@@ -207,7 +207,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          # people
                          P_("reader",  "readers"),
                          P_("subscriber",  "subscribers"),
-                         P_("contributor", "contributors"),
+                         P_("approved submitter", "approved submitters"),
                          P_("moderator",   "moderators"),
                          
                          # time words

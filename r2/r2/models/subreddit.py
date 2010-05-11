@@ -57,7 +57,6 @@ class Subreddit(Thing, Printable):
                      valid_votes = 0,
                      show_media = False,
                      css_on_cname = True,
-                     use_whitelist = False,
                      domain = None,
                      over_18 = False,
                      mod_actions = 0,
@@ -215,9 +214,7 @@ class Subreddit(Thing, Printable):
         return (user
                 and (c.user_is_admin
                      or self.is_moderator(user)
-                     or ((self.type in ('restricted', 'private') or
-                          self.use_whitelist) and
-                         self.is_contributor(user))))
+                     or self.is_contributor(user)))
 
     def can_give_karma(self, user):
         return self.is_special(user)
@@ -796,7 +793,7 @@ class ModSR(ModContribSR):
 
 class ContribSR(ModContribSR):
     name  = "contrib"
-    title = "communities you're a contributor on"
+    title = "communities you're approved on"
     query_param = "contributor"
     real_path = "contrib"
 
