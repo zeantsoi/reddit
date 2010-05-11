@@ -729,7 +729,7 @@ class MyredditsController(ListingController):
     @property
     def menus(self):
         buttons = (NavButton(plurals.subscriber,  'subscriber'),
-                    NavButton(plurals.contributor, 'contributor'),
+                    NavButton(getattr(plurals, "approved submitter"), 'contributor'),
                     NavButton(plurals.moderator,   'moderator'))
 
         return [NavMenu(buttons, base_path = '/reddits/mine/',

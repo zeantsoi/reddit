@@ -458,7 +458,7 @@ class SubredditInfoBar(CachedTemplate):
     def nav(self):
         buttons = [NavButton(plurals.moderators, 'moderators')]
         if self.type != 'public':
-            buttons.append(NavButton(plurals.contributors, 'contributors'))
+            buttons.append(NavButton(getattr(plurals, "approved submitters"), 'contributors'))
 
         if self.is_moderator or self.is_admin:
             buttons.extend([
