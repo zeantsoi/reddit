@@ -160,7 +160,7 @@ class Reddit(Templated):
                                        css_class = 'reddit-contributors'))
         elif (c.user_is_loggedin and
               (c.site.is_moderator(c.user) or c.user_is_admin)):
-            buttons.append(NavButton(menu.whitelist, "contributors",
+            buttons.append(NavButton(menu.contributors, "contributors",
                                      css_class = 'reddit-contributors'))
 
         buttons.extend([
