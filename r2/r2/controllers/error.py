@@ -48,6 +48,8 @@ except Exception, e:
         import os
         os._exit(1)
 
+NUM_FAILIENS = 3
+
 redditbroke =  \
 '''<html>
   <head>
@@ -162,7 +164,7 @@ class ErrorController(RedditController):
             elif code == '403':
                 return self.send403()
             elif code == '500':
-                return redditbroke % (rand.choice([1,2]), rand_strings.sadmessages)
+                return redditbroke % (rand.randint(1,NUM_FAILIENS), rand_strings.sadmessages)
             elif code == '503':
                 return self.send503()
             elif code == '304':
@@ -193,7 +195,7 @@ def handle_awful_failure(fail_text):
         import traceback
         g.log.error("FULLPATH: %s" % fail_text)
         g.log.error(traceback.format_exc())
-        return redditbroke % (rand.choice([1,2]), fail_text)
+        return redditbroke % (rand.randint(1,NUM_FAILIENS), fail_text)
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."
