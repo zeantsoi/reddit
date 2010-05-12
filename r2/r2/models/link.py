@@ -103,10 +103,10 @@ class Link(Thing, Printable):
                 link_ids.append(self._id)
             g.permacache.set(key, link_ids)
             # new
-            #link_ids = g.urlcache.get(key) or []
-            #if self._id not in link_ids:
-            #    link_ids.append(self._id)
-            #g.urlcache.set(key, link_ids)
+            link_ids = g.urlcache.get(key) or []
+            if self._id not in link_ids:
+                link_ids.append(self._id)
+            g.urlcache.set(key, link_ids)
 
     def update_url_cache(self, old_url):
         """Remove the old url from the by_url cache then update the
