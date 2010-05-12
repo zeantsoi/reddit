@@ -148,9 +148,9 @@ class Globals(object):
                                           self.permacache_memcaches,
                                           self.cassandra_seeds)
 
-        self.urlcache = self.init_cass_cache('urls',
-                                        self.url_caches,
-                                        self.url_seeds)
+        #self.urlcache = self.init_cass_cache('urls',
+        #                                self.url_caches,
+        #                                self.url_seeds)
 
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
