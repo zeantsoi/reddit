@@ -980,7 +980,7 @@ class RedditError(BoringPage):
 class Reddit404(BoringPage):
     site_tracking = False
     def __init__(self):
-        ch=random.choice(['a','b','c','d','e'])
+        ch=random.choice(['a','b','c'])
         BoringPage.__init__(self, _("page not found"), loginbox=False,
                             show_sidebar = False, 
                             content=UnfoundPage(ch))
