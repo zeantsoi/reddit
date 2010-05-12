@@ -358,6 +358,7 @@ class ApiController(RedditController):
             if email:
                 user.email = email
 
+            user.registration_ip = request.ip
             user.pref_lang = c.lang
             if c.content_langs == 'all':
                 user.pref_content_langs = 'all'
