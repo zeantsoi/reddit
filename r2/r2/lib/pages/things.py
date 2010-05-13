@@ -124,8 +124,7 @@ class LinkButtons(PrintableButtons):
 class CommentButtons(PrintableButtons):
     def __init__(self, thing, delete = True, report = True):
         # is the current user the author?
-        is_author = (c.user_is_loggedin and thing.author and
-                     c.user.name == thing.author.name)
+        is_author = thing.is_author
         # do we show the report button?
         show_report = not is_author and report
         # do we show the delete button?

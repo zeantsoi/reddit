@@ -185,11 +185,6 @@ class FrontController(RedditController):
         if limit is not None and 0 < limit < g.max_comments:
             num = limit
 
-        builder = CommentBuilder(article, CommentSortMenu.operator(sort), 
-                                 comment, context, **kw)
-        listing = NestedListing(builder, num = num,
-                                parent_name = article._fullname)
-
         displayPane = PaneStack()
 
         # if permalink page, add that message first to the content
@@ -206,7 +201,8 @@ class FrontController(RedditController):
                                         cloneable = True))
 
         # finally add the comment listing
-        displayPane.append(listing.listing())
+        displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
+                                       comment, context, num, **kw))
 
         loc = None if c.focal_comment or context is not None else 'comments'
 

@@ -593,7 +593,6 @@ class Comment(Thing, Printable):
         from r2.lib.template_helpers import add_attr
         from r2.lib import promote
         #fetch parent links
-
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
 
@@ -650,7 +649,7 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = (item.sr_id in can_reply_srs)
+            item.can_reply = c.can_reply or (item.sr_id in can_reply_srs) 
 
 
             # not deleted on profile pages,

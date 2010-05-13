@@ -574,6 +574,13 @@ class MinimalController(BaseController):
                         sampling_rate = g.usage_sampling,
                         action = action)
 
+    def abort404(self):
+        abort(404, "not found")
+
+    def abort403(self):
+        abort(403, "forbidden")
+
+
 
 class RedditController(MinimalController):
 
@@ -711,12 +718,6 @@ class RedditController(MinimalController):
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
-
-    def abort404(self):
-        abort(404, "not found")
-
-    def abort403(self):
-        abort(403, "forbidden")
 
     def sendpng(self, string):
         c.response_content_type = 'image/png'
