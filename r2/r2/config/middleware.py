@@ -75,7 +75,11 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
                 if c.response.headers.has_key('x-sup-id'):
                     d['x-sup-id'] = c.response.headers['x-sup-id']
 
-        url = '/error/document/?%s' % (urllib.urlencode(d))
+        extension = environ.get("extension")
+        if extension:
+            url = '/error/document/.%s?%s' % (extension, urllib.urlencode(d))
+        else:
+            url = '/error/document/?%s' % (urllib.urlencode(d))
         return url
 
 class DebugMiddleware(object):

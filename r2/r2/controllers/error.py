@@ -87,7 +87,7 @@ class ErrorController(RedditController):
     This behaviour can be altered by changing the parameters to the
     ErrorDocuments middleware in your config/middleware.py file.
     """
-    allowed_render_styles = ('html', 'xml', 'js', 'embed', '')
+    allowed_render_styles = ('html', 'xml', 'js', 'embed', '', 'api')
     def __before__(self):
         try:
             c.error_page = True
@@ -157,7 +157,11 @@ class ErrorController(RedditController):
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
-                return str(int(code))
+                c.response.content = str(int(code))
+                return c.response
+            elif c.render_style == "api":
+                c.response.content = "{error: %s}" % code
+                return c.response
             elif takedown and code == '404':
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()
