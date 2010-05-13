@@ -80,7 +80,7 @@ class Link(Thing, Printable):
             sr = None
 
         url = cls.by_url_key(url)
-        link_ids = g.permacache.get(url)
+        link_ids = g.urlcache.get(url)
         if link_ids:
             links = Link._byID(link_ids, data = True, return_dict = False)
             links = [l for l in links if not l._deleted]
@@ -97,12 +97,6 @@ class Link(Thing, Printable):
     def set_url_cache(self):
         if self.url != 'self':
             key = self.by_url_key(self.url)
-            # old
-            link_ids = g.permacache.get(key) or []
-            if self._id not in link_ids:
-                link_ids.append(self._id)
-            g.permacache.set(key, link_ids)
-            # new
             link_ids = g.urlcache.get(key) or []
             if self._id not in link_ids:
                 link_ids.append(self._id)
@@ -113,10 +107,10 @@ class Link(Thing, Printable):
         cache with the new url."""
         if old_url != 'self':
             key = self.by_url_key(old_url)
-            link_ids = g.permacache.get(key) or []
+            link_ids = g.urlcache.get(key) or []
             while self._id in link_ids:
                 link_ids.remove(self._id)
-            g.permacache.set(key, link_ids)
+            g.urlcache.set(key, link_ids)
         self.set_url_cache()
 
     @property

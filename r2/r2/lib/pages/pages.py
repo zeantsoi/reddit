@@ -2529,8 +2529,12 @@ class RedditTraffic(Traffic):
         if self.has_data:
             imp_by_day = [[] for i in range(7)]
             uni_by_day = [[] for i in range(7)]
-            dates, imps    = zip(*self.impressions_day_chart)
-            dates, uniques = zip(*self.uniques_day_chart)
+            if c.site.domain:
+                dates, imps, foo    = zip(*self.impressions_day_chart)
+                dates, uniques, foo = zip(*self.uniques_day_chart)
+            else:
+                dates, imps    = zip(*self.impressions_day_chart)
+                dates, uniques = zip(*self.uniques_day_chart)
             self.uniques_mean     = sum(map(float, uniques))/len(uniques)
             self.impressions_mean = sum(map(float, imps))/len(imps)
             for i, d in enumerate(dates):
