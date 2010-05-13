@@ -152,6 +152,10 @@ class ErrorController(RedditController):
             c.cookies = Cookies()
 
             code =  request.GET.get('code', '')
+            try:
+                code = int(code)
+            except ValueError:
+                code = 404
             srname = request.GET.get('srname', '')
             takedown = request.GET.get('takedown', "")
             if srname:
