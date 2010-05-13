@@ -407,23 +407,16 @@ class RandomrisingController(ListingController):
     def query(self):
         links = get_rising(c.site)
 
-        path = 1
         if not links:
-            path = 2
             # just pull from the new page if the rising page isn't
             # populated for some reason
             links = c.site.get_links('new', 'all')
             if isinstance(links, Query):
-                path = 3
                 links._limit = 200
                 links = [x._fullname for x in links]
 
-        try:
-            random.shuffle(links)
-        except:
-            g.log.error("About to die. Path was %d, c.site was %r, links is %r"
-                        % (path, c.site, links))
-            raise
+        links = list(links)
+        random.shuffle(links)
 
         return links
 
