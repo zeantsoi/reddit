@@ -71,6 +71,42 @@ def reject_vote(thing):
               (voteword, c.user.name, request.ip, thing.__class__.__name__,
                thing._id36, request.referer), "info")
 
+class ApiminimalController(RedditController):
+    """
+    Put API calls in here which won't come from logged in users (or
+    don't rely on the user being logged int)
+    """
+
+    @validatedForm(promoted = VByName('ids', thing_cls = Link,
+                                      multiple = True),
+                   sponsorships = VByName('ids', thing_cls = Subreddit,
+                                          multiple = True))
+    def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
+        suffix = ""
+        if not isinstance(c.site, FakeSubreddit):
+            suffix = "-" + c.site.name
+        def add_tracker(dest, where, what):
+            jquery.set_tracker(
+                where,
+                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
+                                                  ip = request.ip),
+                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
+                                                       dest = dest,
+                                                       ip = request.ip)
+                )
+
+        if promoted:
+            # make sure that they are really promoted
+            promoted = [ l for l in promoted if l.promoted ]
+            for l in promoted:
+                add_tracker(l.url, l._fullname, l._fullname)
+
+        if sponsorships:
+            for s in sponsorships:
+                add_tracker(s.sponsorship_url, s._fullname,
+                            "%s_%s" % (s._fullname, s.sponsorship_name))
+
+
 class ApiController(RedditController):
     """
     Controller which deals with almost all AJAX site interaction.  
@@ -1747,36 +1783,6 @@ class ApiController(RedditController):
         # this preference is allowed for non-logged-in users
         c.user.pref_frame_commentspanel = False
         c.user._commit()
-
-    @validatedForm(promoted = VByName('ids', thing_cls = Link,
-                                      multiple = True),
-                   sponsorships = VByName('ids', thing_cls = Subreddit,
-                                          multiple = True))
-    def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
-        suffix = ""
-        if not isinstance(c.site, FakeSubreddit):
-            suffix = "-" + c.site.name
-        def add_tracker(dest, where, what):
-            jquery.set_tracker(
-                where,
-                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
-                                                  ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
-                                                       dest = dest,
-                                                       ip = request.ip)
-                )
-
-        if promoted:
-            # make sure that they are really promoted
-            promoted = [ l for l in promoted if l.promoted ]
-            for l in promoted:
-                add_tracker(l.url, l._fullname, l._fullname)
-
-        if sponsorships:
-            for s in sponsorships:
-                add_tracker(s.sponsorship_url, s._fullname,
-                            "%s_%s" % (s._fullname, s.sponsorship_name))
-
 
     @json_validate(query = VPrintable('query', max_length = 50))
     def POST_search_reddit_names(self, query):
