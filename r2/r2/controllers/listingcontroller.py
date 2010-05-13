@@ -421,7 +421,8 @@ class RandomrisingController(ListingController):
         try:
             random.shuffle(links)
         except:
-            g.log.error("About to die. Path was %d" % path)
+            g.log.error("About to die. Path was %d, c.site was %r, links is %r"
+                        % (path, c.site, links))
             raise
 
         return links
