@@ -57,17 +57,27 @@ def run(limit=100, streamfile=None, verbose=False):
 
         tb = []
 
-        key_material = "exc_type"
+        key_material = exc_type
         pretty_lines = []
+
+        make_lock_seen = False
 
         for tpl in d['traceback']:
             tb.append(tpl)
             filename, lineno, funcname, text = tpl
+            if (text.startswith("with g.make_lock(") or
+                text.startswith("with make_lock(")):
+                make_lock_seen = True
             key_material += "%s %s " % (filename, funcname)
             pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
             pretty_lines.append ("    %s" % text)
 
-        fingerprint = md5(key_material).hexdigest()
+        if exc_desc.startswith("QueuePool limit of size"):
+            fingerprint = "QueuePool_overflow"
+        elif exc_type == "TimeoutExpired" and make_lock_seen:
+            fingerprint = "make_lock_timeout"
+        else:
+            fingerprint = md5(key_material).hexdigest()
 
         nickname_key = "error_nickname-" + fingerprint
         status_key = "error_status-" + fingerprint
