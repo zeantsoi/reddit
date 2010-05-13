@@ -74,6 +74,8 @@ def run(limit=100, streamfile=None, verbose=False):
 
         if exc_desc.startswith("QueuePool limit of size"):
             fingerprint = "QueuePool_overflow"
+        elif exc_desc.startswith("error 2 from memcached_get: HOSTNAME "):
+            fingerprint = "memcache_suckitude"
         elif exc_type == "TimeoutExpired" and make_lock_seen:
             fingerprint = "make_lock_timeout"
         else:
