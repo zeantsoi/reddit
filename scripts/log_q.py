@@ -65,8 +65,10 @@ def run(limit=100, streamfile=None, verbose=False):
         for tpl in d['traceback']:
             tb.append(tpl)
             filename, lineno, funcname, text = tpl
-            if (text.startswith("with g.make_lock(") or
-                text.startswith("with make_lock(")):
+            if text is None:
+                pass
+            elif (text.startswith("with g.make_lock(") or
+                  text.startswith("with make_lock(")):
                 make_lock_seen = True
             key_material += "%s %s " % (filename, funcname)
             pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
@@ -78,6 +80,8 @@ def run(limit=100, streamfile=None, verbose=False):
             fingerprint = "memcache_suckitude"
         elif exc_type == "TimeoutExpired" and make_lock_seen:
             fingerprint = "make_lock_timeout"
+        elif exc_type == "NoServerAvailable":
+            fingerprint = "cassandra_suckitude"
         else:
             fingerprint = md5(key_material).hexdigest()
 
