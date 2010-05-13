@@ -192,15 +192,15 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    sr = VSubmitSR('sr'),
                    url = VUrl(['url', 'sr']),
-                   banmsg = VOkayDomain('url'),
                    title = VTitle('title'),
                    save = VBoolean('save'),
                    selftext = VMarkdown('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'))
-    def POST_submit(self, form, jquery, url, banmsg, selftext, kind, title,
+    def POST_submit(self, form, jquery, url, selftext, kind, title,
                     save, sr, ip, then):
+        from r2.models.admintools import is_banned_domain
 
         if isinstance(url, (unicode, str)):
             #backwards compatability
@@ -238,13 +238,16 @@ class ApiController(RedditController):
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
+            banmsg = is_banned_domain(url)
+
 # Uncomment if we want to let spammers know we're on to them
 #            if banmsg:
 #                form.set_html(".field-url.BAD_URL", banmsg)
 #                return
 
-        elif kind == 'self' and form.has_errors('text', errors.TOO_LONG):
-            pass
+        else:
+            form.has_errors('text', errors.TOO_LONG)
+            banmsg = None
 
         if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
             pass

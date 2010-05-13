@@ -259,11 +259,12 @@ def set_subreddit():
             else:
                 c.site = Subreddit._by_name(sr_name)
         except NotFound:
-            c.site = Default
-            if chksrname(sr_name):
-                redirect_to("/reddits/create?name=%s" % sr_name)
+            sr_name = chksrname(sr_name)
+            if sr_name:
+                redirect_to("/reddits/search?q=%s" % sr_name)
             elif not c.error_page:
                 abort(404, "not found")
+
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and c.site == Default and domain:
         c.site = DomainSR(domain)

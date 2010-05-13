@@ -155,10 +155,11 @@ class Link(Thing, Printable):
         try:
             saved = rel(user, self, name=name)
             saved._commit()
-            rel._fast_query_timestamp_touch(user)
-            return saved
         except CreationError, e:
             return somethinged(user, self)[(user, self, name)]
+
+        rel._fast_query_timestamp_touch(user)
+        return saved
 
     def _unsomething(self, user, somethinged, name):
         saved = somethinged(user, self)[(user, self, name)]
