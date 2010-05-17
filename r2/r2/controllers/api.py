@@ -228,17 +228,23 @@ class ApiController(RedditController):
             if not should_ratelimit:
                 c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
+        banmsg = None
+
         if kind == 'link':
+            check_domain = True
+
             # check for no url, or clear that error field on return
             if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
                 pass
             elif form.has_errors("url", errors.ALREADY_SUB):
+                check_domain = False
                 form.redirect(url[0].already_submitted_link)
             # check for title, otherwise look it up and return it
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
-            banmsg = is_banned_domain(url)
+            if check_domain:
+                banmsg = is_banned_domain(url)
 
 # Uncomment if we want to let spammers know we're on to them
 #            if banmsg:
@@ -247,7 +253,6 @@ class ApiController(RedditController):
 
         else:
             form.has_errors('text', errors.TOO_LONG)
-            banmsg = None
 
         if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
             pass
