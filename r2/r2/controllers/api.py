@@ -265,21 +265,24 @@ class ApiController(RedditController):
 
         if should_ratelimit:
             filled_quota = c.user.quota_full('link')
-            if filled_quota is not None and not c.user._spam:
-                log_text ("over-quota",
-                          "%s just went over their per-%s quota" %
-                          (c.user.name, filled_quota), "info")
-
-                compose_link = ("/message/compose?to=%23" + sr.name +
-                                "&subject=Exemption+request")
-
-                verify_link = "/verify?reason=submit"
-
-                if c.user.email_verified:
-                    msg = strings.verified_quota_msg % dict(link=compose_link)
+            if filled_quota is not None:
+                if c.user._spam:
+                    msg = strings.generic_quota_msg
                 else:
-                    msg = strings.unverified_quota_msg % dict(link1=verify_link,
-                                                              link2=compose_link)
+                    log_text ("over-quota",
+                              "%s just went over their per-%s quota" %
+                              (c.user.name, filled_quota), "info")
+
+                    compose_link = ("/message/compose?to=%23" + sr.name +
+                                    "&subject=Exemption+request")
+
+                    verify_link = "/verify?reason=submit"
+
+                    if c.user.email_verified:
+                        msg = strings.verified_quota_msg % dict(link=compose_link)
+                    else:
+                        msg = strings.unverified_quota_msg % dict(link1=verify_link,
+                                                                  link2=compose_link)
 
                 md = safemarkdown(msg)
                 form.set_html(".status", md)
