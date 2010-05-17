@@ -264,7 +264,6 @@ def set_subreddit():
                 redirect_to("/reddits/search?q=%s" % sr_name)
             elif not c.error_page:
                 abort(404, "not found")
-
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and c.site == Default and domain:
         c.site = DomainSR(domain)
