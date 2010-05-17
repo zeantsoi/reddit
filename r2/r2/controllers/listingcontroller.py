@@ -238,6 +238,13 @@ class HotController(FixListing, ListingController):
             spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
             trial = populate_spotlight()
 
+            # Need to do this again, because if there was a duplicate removed,
+            # pos might be pointing outside the list.
+            if not spotlight_links:
+                pos = 0
+            elif pos != 0:
+                pos = pos % len(spotlight_links)
+
             if trial:
                 spotlight_links.insert(pos, trial._fullname)
 
