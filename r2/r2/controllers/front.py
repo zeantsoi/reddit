@@ -853,7 +853,7 @@ class FormsController(RedditController):
         #check like this because c.user_is_admin is still false
         if not c.user.name in g.admins:
             return self.abort404()
-        self.login(c.user, admin = True)
+        self.login(c.user, admin = True, rem = True)
         return self.redirect(dest)
 
     @validate(VAdmin(),
@@ -862,7 +862,7 @@ class FormsController(RedditController):
         """disable admin interaction with site."""
         if not c.user.name in g.admins:
             return self.abort404()
-        self.login(c.user, admin = False)
+        self.login(c.user, admin = False, rem = True)
         return self.redirect(dest)
 
     def GET_validuser(self):
