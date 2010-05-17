@@ -1523,15 +1523,20 @@ class ApiController(RedditController):
         # Anyone can leave.
         if action != 'sub' or sr.can_comment(c.user):
             self._subscribe(sr, action == 'sub')
-    
+
     def _subscribe(self, sr, sub):
         Subreddit.subscribe_defaults(c.user)
 
+        sub_key = "subscription-%s-%s" % (c.user.name, sr.name)
+
         if sub:
-            if sr.add_subscriber(c.user):
+            if not g.cache.add(sub_key, True):
+                g.log.warning("Double-subscribe for %s?" % sub_key)
+            elif sr.add_subscriber(c.user):
                 sr._incr('_ups', 1)
         else:
             if sr.remove_subscriber(c.user):
+                g.cache.delete(sub_key)
                 sr._incr('_ups', -1)
         changed(sr)
 
@@ -1541,7 +1546,6 @@ class ApiController(RedditController):
     def POST_disable_lang(self, tr):
         if tr:
             tr._is_enabled = False
-        
 
     @noresponse(VAdmin(),
                 tr = VTranslation("id"))
