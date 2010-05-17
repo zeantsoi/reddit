@@ -268,9 +268,16 @@ class HotController(FixListing, ListingController):
                           num = organic.organic_length,
                           skip = True, keep_fn = keep_fn)
 
+            try:
+                vislink = spotlight_links[pos]
+            except IndexError:
+                g.log.error("spotlight_links = %r" % spotlight_links)
+                g.log.error("pos = %d" % pos)
+                raise
+
             s = SpotlightListing(b,
                               spotlight_links = spotlight_links,
-                              visible_link = spotlight_links[pos],
+                              visible_link = vislink,
                               max_num = self.listing_obj.max_num,
                               max_score = self.listing_obj.max_score).listing()
 
