@@ -860,7 +860,7 @@ class CommentPane(Templated):
                 if not hasattr(t, "likes"):
                     # this is for MoreComments and MoreRecursion
                     continue
-                if getattr(t, "friend", False):
+                if getattr(t, "friend", False) and not t.author._deleted:
                     is_friend.add(t.author._fullname)
                 if t.likes:
                     likes.append(t._fullname)
