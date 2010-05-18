@@ -900,7 +900,7 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             items = list(query)
 
 def fix_if_broken(thing, delete = True):
-    from r2.models import Link, Comment
+    from r2.models import Link, Comment, Subreddit
 
     # the minimum set of attributes that are required
     attrs = dict((cls, cls._essentials)
