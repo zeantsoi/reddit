@@ -145,6 +145,29 @@ class DataThing(object):
 
                 descr = '%s(%s).%s' % (cl, id_str, attr)
 
+                try:
+                    essentials = object.__getattribute__(self, "_essentials")
+                except AttributeError:
+                    print "%s has no _essentials" % descr
+                    essentials = ()
+
+                if isinstance(essentials, str):
+                    print "Some dumbass forgot a comma."
+                    essentials = essentials,
+
+                if attr in essentials:
+                    log_text ("essentials-bandaid-reload",
+                          "%s not found; %s Forcing reload." % (descr, nl),
+                          "warning")
+                    self._load()
+
+                    try:
+                        return self._t[attr]
+                    except KeyError:
+                        log_text ("essentials-bandaid-failed",
+                              "Reload of %s didn't help. I recommend deletion."
+                              % descr, "error")
+
                 raise AttributeError, '%s not found; %s' % (descr, nl)
 
     def _cache_key(self):
