@@ -1041,7 +1041,8 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes():
+def process_votes(limit=None):
+    # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msg):
         r = pickle.loads(msg.body)
