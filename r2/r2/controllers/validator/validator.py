@@ -782,6 +782,9 @@ class VUrl(VRequired):
         if not url:
             return self.error(errors.NO_URL)
         url = utils.sanitize_url(url)
+        if not url:
+            return self.error(errors.BAD_URL)
+
         if url == 'self':
             if self.allow_self:
                 return url
