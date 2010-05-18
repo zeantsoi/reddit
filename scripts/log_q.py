@@ -89,8 +89,11 @@ def run(limit=100, streamfile=None, verbose=False):
         elif exc_desc.startswith("(OperationalError) could not connect " +
                                  "to server"):
             fingerprint = "unconnectable_db"
+        elif exc_desc.startswith("(OperationalError) server closed the " +
+                                 "connection unexpectedly"):
+            fingerprint = "flaky_db_op"
         elif exc_type == "ProgrammingError" and flaky_db_seen:
-            fingerprint = "flaky_db"
+            fingerprint = "flaky_db_prog"
             # SQLAlchemy includes the entire query in the exception
             # description which can sometimes be gigantic, in the case of
             # SELECTs. Get rid of it.
