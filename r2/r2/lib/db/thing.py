@@ -136,39 +136,16 @@ class DataThing(object):
                 else:
                     nl = "it is NOT loaded."
 
-                # The %d format is nicer, since it has no "L" at the end, but
-                # if we can't do that, fall back on %r.
+                # The %d format is nicer since it has no "L" at the
+                # end, but if we can't do that, fall back on %r.
                 try:
                     id_str = "%d" % _id
                 except TypeError:
                     id_str = "%r" % _id
 
-                desc = '%s(%s).%s' % (cl, id_str, attr)
+                descr = '%s(%s).%s' % (cl, id_str, attr)
 
-                try:
-                    essentials = object.__getattribute__(self, "_essentials")
-                except AttributeError:
-                    print "%s has no _essentials" % desc
-                    essentials = ()
-
-                if isinstance(essentials, str):
-                    print "Some dumbass forgot a comma."
-                    essentials = essentials,
-
-                if attr in essentials:
-                    log_text ("essentials-bandaid-reload",
-                          "%s not found; %s Forcing reload." % (desc, nl),
-                          "warning")
-                    self._load()
-
-                    try:
-                        return self._t[attr]
-                    except KeyError:
-                        log_text ("essentials-bandaid-failed",
-                              "Reload of %s didn't help. I recommend deletion."
-                              % desc, "error")
-
-                raise AttributeError, '%s not found; %s' % (desc, nl)
+                raise AttributeError, '%s not found; %s' % (descr, nl)
 
     def _cache_key(self):
         return thing_prefix(self.__class__.__name__, self._id)
