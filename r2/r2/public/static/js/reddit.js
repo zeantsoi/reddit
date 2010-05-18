@@ -1290,7 +1290,7 @@ function show_friend(account_fullname) {
         .next(".userattrs").each(function() {
                 if (!$(this).html()) {
                     $(this).html(" [" + label + "]");
-                } else {
+                } else if ($(this).find(".friend").length == 0) {
                     $(this).find("a:last").debug().after(", " + label);
                 }
             });
