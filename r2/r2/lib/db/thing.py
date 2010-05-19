@@ -184,7 +184,10 @@ class DataThing(object):
         return l
 
     def _cache_myself(self):
-        cache.set(self._cache_key(), self)
+        ck = self._cache_key()
+        if self.__class__.__name__ in ("Link", "Comment", "Subreddit") and not self._t:
+            g.log.warning("About to cache {} for %r" % ck)
+        cache.set(ck, self)
 
     def _sync_latest(self):
         """Load myself from the cache to and re-apply the .dirties

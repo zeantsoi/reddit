@@ -345,11 +345,55 @@ class Account(Thing):
 
         return baskets
 
+    def canonical_email(self):
+        if self._spam or not self.email_verified:
+            return None
+
+        localpart, domain = str(self.email.lower()).split("@")
+
+        # a.s.d.f+something@gmail.com --> asdf@gmail.com
+        localpart.replace(".", "")
+        plus = localpart.find("+")
+        if plus > 0:
+            localpart = localpart[:plus]
+
+        return (localpart, domain)
+
+    def cromulent(self):
+        """Return whether the user has validated their email address
+           and passes some rudimentary 'not evil' checks"""
+        t = self.canonical_email()
+        if t:
+            localpart, domain = t
+        else:
+            # The user hasn't verified their email, or self._spam=True
+            return False
+
+        key = "email_banned-%s@%s" % (localpart, domain)
+        if g.hardcache.get(key):
+            return False
+
+        # For abc@foo.bar.com, if foo.bar.com or bar.com is on the
+        # no-email list, treat the address as unverified.
+        parts = domain.rstrip(".").split(".")
+        while len(parts) >= 2:
+            whole = ".".join(parts)
+
+            d = g.hardcache.get("domain-" + whole)
+
+            if d and d.get("no_email", False):
+                return False
+
+            parts.pop(0)
+
+        # Otherwise, congratulations; you're cromulent!
+        return True
+
     def quota_limits(self, kind):
         if kind != 'link':
             raise NotImplementedError
 
-        if self.email_verified and not self._spam:
+        if self.cromulent():
             return dict(hour=3, day=10, week=50, month=150)
         else:
             return dict(hour=1,  day=3,  week=5,   month=5)
