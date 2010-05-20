@@ -23,7 +23,8 @@ from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow, UrlParser
+from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
+from r2.lib.utils        import UrlParser, is_banned_email
 from r2.lib.cache        import sgm
 
 from pylons import g
@@ -346,9 +347,6 @@ class Account(Thing):
         return baskets
 
     def canonical_email(self):
-        if self._spam or not self.email_verified:
-            return None
-
         localpart, domain = str(self.email.lower()).split("@")
 
         # a.s.d.f+something@gmail.com --> asdf@gmail.com
@@ -360,31 +358,16 @@ class Account(Thing):
         return (localpart, domain)
 
     def cromulent(self):
-        """Return whether the user has validated their email address
-           and passes some rudimentary 'not evil' checks"""
+        """Return whether the user has validated their email address and
+           passes some rudimentary 'not evil' checks."""
+
+        if not self.email_verified:
+            return False
+
         t = self.canonical_email()
-        if t:
-            localpart, domain = t
-        else:
-            # The user hasn't verified their email, or self._spam=True
+
+        if is_banned_email(*t):
             return False
-
-        key = "email_banned-%s@%s" % (localpart, domain)
-        if g.hardcache.get(key):
-            return False
-
-        # For abc@foo.bar.com, if foo.bar.com or bar.com is on the
-        # no-email list, treat the address as unverified.
-        parts = domain.rstrip(".").split(".")
-        while len(parts) >= 2:
-            whole = ".".join(parts)
-
-            d = g.hardcache.get("domain-" + whole)
-
-            if d and d.get("no_email", False):
-                return False
-
-            parts.pop(0)
 
         # Otherwise, congratulations; you're cromulent!
         return True
