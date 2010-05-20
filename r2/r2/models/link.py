@@ -330,7 +330,12 @@ class Link(Thing, Printable):
                                 item._nsfw.findall(item.title))
             item.nsfw = item.over_18 and user.pref_label_nsfw
 
-            if user.pref_no_profanity and item.over_18 and not c.site.over_18:
+            item.is_author = (user == item.author)
+
+            # always show a promo author their own thumbnail
+            if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
+                item.thumbnail = thumbnail_url(item)
+            elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 item.thumbnail = ""
             elif not show_media:
                 item.thumbnail = ""
@@ -419,8 +424,6 @@ class Link(Thing, Printable):
                                   item.hidden,
                                   item._deleted,
                                   item._spam))
-
-            item.is_author = (user == item.author)
 
             # bits that we will render stubs (to make the cached
             # version more flexible)
