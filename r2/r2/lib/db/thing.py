@@ -186,7 +186,7 @@ class DataThing(object):
     def _cache_myself(self):
         ck = self._cache_key()
         if self.__class__.__name__ in ("Link", "Comment", "Subreddit") and not self._t:
-            g.log.warning("About to cache {} for %r" % ck)
+            log_text ("{} cache", "About to cache {} for %r" % ck, "warning")
         cache.set(ck, self)
 
     def _sync_latest(self):
