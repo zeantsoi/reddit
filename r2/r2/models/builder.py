@@ -74,6 +74,7 @@ class Builder(object):
         else:
             authors = {}
             cup_infos = {}
+            email_attrses = {}
 
         # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)
