@@ -70,6 +70,7 @@ class Builder(object):
         if aids:
             authors = Account._byID(aids, True) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
+            email_attrses = admintools.email_attrs(aids, return_dict=True)
         else:
             authors = {}
             cup_infos = {}
@@ -140,6 +141,10 @@ class Builder(object):
             if w.distinguished == 'moderator':
                 add_attr(w.attribs, 'M', label=modlabel[item.sr_id],
                          link=modlink[item.sr_id])
+
+            if c.user_is_admin:
+                for attr in email_attrses[w.author._id]:
+                    add_attr(w.attribs, attr[2], label=attr[1])
 
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]
