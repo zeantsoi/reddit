@@ -164,6 +164,7 @@ def assign_trial(account, juries_already_on, ip, slash16):
 
 def populate_spotlight():
     from r2.models import Jury
+    from r2.lib.db.thing import NotFound
 
     if not (c.user_is_loggedin and c.user.jury_betatester()):
         g.log.debug("not eligible")
