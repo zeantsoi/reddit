@@ -29,7 +29,7 @@ from copy import copy, deepcopy
 import operators
 import tdb_sql as tdb
 import sorts
-from .. utils import iters, Results, tup, to36, Storage
+from .. utils import iters, Results, tup, to36, Storage, timefromnow
 from r2.config import cache
 from r2.lib.cache import sgm
 from r2.lib.log import log_text
@@ -712,11 +712,22 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @classmethod
         def _fast_query_timestamp_touch(cls, thing1):
+            # See _fast_query.can_skip_lookup for explanation
             assert thing1._loaded
             timestamp_dict = getattr(thing1, 'fast_query_timestamp', {}).copy()
-            timestamp_dict[cls._type_name] = datetime.now(g.tz)
-            thing1.fast_query_timestamp = timestamp_dict
-            thing1._commit()
+
+            now = datetime.now(g.tz)
+
+            if (not timestamp_dict.get(cls._type_name, None)
+                or timestamp_dict[cls._type_name] < now):
+                # we set the timestamp to 10 minutes in the future so
+                # that we can avoid setting it on every single action
+                newtime = timefromnow('10 minutes')
+                timestamp_dict[cls._type_name] = newtime
+                thing1.fast_query_timestamp = timestamp_dict
+                thing1._commit()
+            # otherwise, the timestamp is in the future, so we won't
+            # mess with it
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
@@ -777,11 +788,14 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                     t2_ids.add(t2)
                     names.add(name)
 
-                q = cls._query(cls.c._thing1_id == t1_ids,
-                               cls.c._thing2_id == t2_ids,
-                               cls.c._name == names,
-                               eager_load = eager_load,
-                               data = data)
+                if t1_ids and t2_ids and names:
+                    q = cls._query(cls.c._thing1_id == t1_ids,
+                                   cls.c._thing2_id == t2_ids,
+                                   cls.c._name == names,
+                                   eager_load = eager_load,
+                                   data = data)
+                else:
+                    q = []
 
                 for rel in q:
                     #TODO an alternative for multiple
