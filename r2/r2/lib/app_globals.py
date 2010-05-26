@@ -320,8 +320,8 @@ class Globals(object):
             random.shuffle(cassandra_seeds)
             cas = (CassandraCache(cluster, cluster, cassandra_seeds,
                                   **cassandra_kw),)
-            if reverse:
-                pmc_chain = cas + pmc_chain
+            if reverse and caches:
+                pmc_chain = (localcache_cls, cas, pmc_chain[-1])
             else:
                 pmc_chain += cas
             mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True)
