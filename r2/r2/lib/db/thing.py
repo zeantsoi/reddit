@@ -30,6 +30,7 @@ import operators
 import tdb_sql as tdb
 import sorts
 from .. utils import iters, Results, tup, to36, Storage, timefromnow
+from .. utils import iters, Results, tup, to36, Storage, thing_utils, timefromnow
 from r2.config import cache
 from r2.lib.cache import sgm
 from r2.lib.log import log_text
@@ -712,22 +713,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @classmethod
         def _fast_query_timestamp_touch(cls, thing1):
-            # See _fast_query.can_skip_lookup for explanation
-            assert thing1._loaded
-            timestamp_dict = getattr(thing1, 'fast_query_timestamp', {}).copy()
-
-            now = datetime.now(g.tz)
-
-            if (not timestamp_dict.get(cls._type_name, None)
-                or timestamp_dict[cls._type_name] < now):
-                # we set the timestamp to 10 minutes in the future so
-                # that we can avoid setting it on every single action
-                newtime = timefromnow('10 minutes')
-                timestamp_dict[cls._type_name] = newtime
-                thing1.fast_query_timestamp = timestamp_dict
-                thing1._commit()
-            # otherwise, the timestamp is in the future, so we won't
-            # mess with it
+            thing_utils.set_last_modified_for_cls(thing1, cls._type_name)
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
@@ -753,13 +739,8 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 thing1 = thing1_dict[t1]
                 thing2 = thing2_dict[t2]
 
-                # check to see if we have the history information
-                if not thing1._loaded:
-                    return False
-                if not hasattr(thing1, 'fast_query_timestamp'):
-                    return False
-
-                last_done = thing1.fast_query_timestamp.get(cls._type_name,None)
+                last_done = thing_utils.get_last_modified_for_cls(
+                    thing1, cls._type_name)
 
                 if not last_done:
                     return False

@@ -303,7 +303,7 @@ class Globals(object):
         return self.init_cass_cache(None, caches, None, memcached_kw = kw)
 
     def init_cass_cache(self, cluster, caches, cassandra_seeds,
-                   memcached_kw = {}, cassandra_kw = {}):
+                   memcached_kw = {}, cassandra_kw = {}, reverse = False):
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
 
@@ -318,8 +318,12 @@ class Globals(object):
         if cassandra_seeds:
             cassandra_seeds = list(cassandra_seeds)
             random.shuffle(cassandra_seeds)
-            pmc_chain += (CassandraCache(cluster, cluster, cassandra_seeds,
-                                         **cassandra_kw),)
+            cas = (CassandraCache(cluster, cluster, cassandra_seeds,
+                                  **cassandra_kw),)
+            if reverse:
+                pmc_chain = cas + pmc_chain
+            else:
+                pmc_chain += cas
             mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True)
         else:
             mc =  MemcacheChain(pmc_chain)
