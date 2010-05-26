@@ -321,7 +321,7 @@ class Globals(object):
             cas = (CassandraCache(cluster, cluster, cassandra_seeds,
                                   **cassandra_kw),)
             if reverse and caches:
-                pmc_chain = (localcache_cls, cas, pmc_chain[-1])
+                pmc_chain = (localcache_cls(),) +  cas + (pmc_chain[-1],)
             else:
                 pmc_chain += cas
             mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True)
