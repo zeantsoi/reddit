@@ -147,7 +147,7 @@
     ${self.toggle_button("share-button", _("share"), _("cancel"),
                          "share", "cancelShare", login_required = True)}
   </li>
-  %if thing.is_loggedin:
+  %if False and thing.is_loggedin:
     <li>
     %if thing.saved:
        ${self.state_button("unsave", _("unsave"), \
