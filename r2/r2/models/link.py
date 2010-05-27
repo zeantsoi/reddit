@@ -144,7 +144,7 @@ class Link(Thing, Printable):
     @classmethod
     def _somethinged(cls, rel, user, link, name):
         return rel._fast_query(tup(user), tup(link), name = name,
-                               timestamp_optimize = True)
+                               thing_data=True, timestamp_optimize = True)
 
     def _something(self, rel, user, somethinged, name):
         try:
@@ -923,7 +923,7 @@ class Message(Thing, Printable):
         # TODO: query cache?
         inbox = Inbox._fast_query(c.user,
                                   [item.lookups[0] for item in wrapped],
-                                  ['inbox', 'selfreply'])
+                                  ['inbox', 'selfreply'], thing_data=True)
 
         # we don't care about the username or the rel name
         inbox = dict((m._fullname, v)
@@ -932,8 +932,7 @@ class Message(Thing, Printable):
         msgs = filter (lambda x: isinstance(x.lookups[0], Message), wrapped)
 
         modinbox = ModeratorInbox._fast_query(m_subreddits.values(),
-                                              msgs,
-                                              ['inbox'] )
+                                              msgs, ['inbox'], thing_data=True)
 
         # best to not have to eager_load the things
         def make_message_fullname(mid):
