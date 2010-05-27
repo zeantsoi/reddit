@@ -76,8 +76,8 @@ class Link(Thing, Printable):
 
     @classmethod
     def _by_url(cls, url, sr):
-        from subreddit import Default
-        if sr == Default:
+        from subreddit import FakeSubreddit
+        if isinstance(sr, FakeSubreddit):
             sr = None
 
         url = cls.by_url_key(url)
