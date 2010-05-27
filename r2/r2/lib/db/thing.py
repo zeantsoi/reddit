@@ -90,6 +90,8 @@ class DataThing(object):
             self._t = {}
             self._created = False
             self._loaded = True
+            self._asked_for_data = True # You just created it; of course
+                                        # you're allowed to touch its data
 
     #TODO some protection here?
     def __setattr__(self, attr, val, make_dirty=True):
