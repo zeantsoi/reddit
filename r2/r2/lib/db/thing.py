@@ -370,12 +370,11 @@ class DataThing(object):
                     need.append(v)
             if need:
                 cls._load_multi(need)
-        else:
-            for v in bases.itervalues():
 ### The following is really handy for debugging who's forgetting data=True:
+#       else:
+#           for v in bases.itervalues():
 #                if v._id in (1, 2, 123):
 #                    raise ValueError
-                v._asked_for_data = False
 
         #e.g. add the sort prop
         if extra_props:
