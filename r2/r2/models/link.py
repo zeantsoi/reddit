@@ -534,9 +534,9 @@ class Comment(Thing, Printable):
         to = None
         name = 'inbox'
         if parent:
-            to = Account._byID(parent.author_id)
+            to = Account._byID(parent.author_id, True)
         elif link.is_self:
-            to = Account._byID(link.author_id)
+            to = Account._byID(link.author_id, True)
             name = 'selfreply'
 
         c._commit()
