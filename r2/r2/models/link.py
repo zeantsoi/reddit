@@ -860,7 +860,7 @@ class Message(Thing, Printable):
             # find the message originator
             elif sr_id and m.first_message:
                 first = Message._byID(m.first_message, True)
-                orig = Account._byID(first.author_id)
+                orig = Account._byID(first.author_id, True)
                 # if the originator is not a moderator...
                 if not sr.is_moderator(orig) and orig._id != author._id:
                     inbox_rel.append(Inbox._add(orig, m, 'inbox'))

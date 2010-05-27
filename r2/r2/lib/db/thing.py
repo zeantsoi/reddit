@@ -122,7 +122,7 @@ class DataThing(object):
                 or getattr(self, "_nodb", False)):
             msg = ("getattr(%r) called on %r, " +
                    "but you didn't say data=True") % (attr, self)
-            if g.debug or g.cache.get("throw-exception-on-datatrue-error"):
+            if g.debug or not g.cache.get("data-lax"):
                 raise ValueError(msg)
             else:
                 g.log.error(msg)
