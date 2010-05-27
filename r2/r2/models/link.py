@@ -1080,7 +1080,8 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         if not sr._loaded:
             sr._load()
 
-        moderators = Account._byID(sr.moderator_ids(), return_dict = False)
+        moderators = Account._byID(sr.moderator_ids(), data=True,
+                                   return_dict = False)
         for m in moderators:
             if obj.author_id != m._id and not getattr(m, 'modmsgtime', None):
                 m.modmsgtime = obj._date
