@@ -150,7 +150,7 @@ class Globals(object):
 
         self.urlcache = self.init_cass_cache('urls',
                                         self.url_caches,
-                                        self.url_seeds, reverse = True)
+                                        self.url_seeds)
 
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
@@ -303,7 +303,7 @@ class Globals(object):
         return self.init_cass_cache(None, caches, None, memcached_kw = kw)
 
     def init_cass_cache(self, cluster, caches, cassandra_seeds,
-                   memcached_kw = {}, cassandra_kw = {}, reverse = False):
+                        memcached_kw = {}, cassandra_kw = {}):
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
 
@@ -320,10 +320,7 @@ class Globals(object):
             random.shuffle(cassandra_seeds)
             cas = (CassandraCache(cluster, cluster, cassandra_seeds,
                                   **cassandra_kw),)
-            if reverse and caches:
-                pmc_chain = (localcache_cls(),) +  cas + (pmc_chain[-1],)
-            else:
-                pmc_chain += cas
+            pmc_chain += cas
             mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True)
         else:
             mc =  MemcacheChain(pmc_chain)
