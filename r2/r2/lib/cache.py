@@ -549,8 +549,8 @@ class CassandraCache(CacheUtils):
     """A cache that uses a Cassandra cluster. Uses a single keyspace
        and column family and only the column-name 'value'"""
     def __init__(self, keyspace, column_family, seeds,
-                 read_consistency_level = CL_ONE,
-                 write_consistency_level = CL_ONE):
+                 read_consistency_level = CL_QUORUM,
+                 write_consistency_level = CL_QUORUM):
         self.keyspace = keyspace
         self.column_family = column_family
         self.seeds = seeds
