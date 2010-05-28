@@ -162,7 +162,7 @@ class ErrorController(RedditController):
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
                 if code not in (204, 304):
-                     c.response.content = str(ic)
+                     c.response.content = str(code)
                 return c.response
             elif c.render_style == "api":
                 c.response.content = "{error: %s}" % code
