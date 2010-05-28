@@ -122,10 +122,7 @@ class DataThing(object):
                 or getattr(self, "_nodb", False)):
             msg = ("getattr(%r) called on %r, " +
                    "but you didn't say data=True") % (attr, self)
-            if g.debug or not g.cache.get("data-lax"):
-                raise ValueError(msg)
-            else:
-                g.log.error(msg)
+            raise ValueError(msg)
 
         try:
             if hasattr(self, '_t'):
@@ -304,7 +301,9 @@ class DataThing(object):
                 if not self._loaded:
                     self._load()
             else:
-                raise ValueError, "cannot incr non int prop"
+                msg = ("cannot incr non int prop %r on %r -- it's not in %r or %r" %
+                       (prop, self, self._int_props, self._data_int_props))
+                raise ValueError, msg
 
         with g.make_lock('commit_' + self._fullname):
             self._sync_latest()
