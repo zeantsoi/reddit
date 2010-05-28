@@ -1530,22 +1530,21 @@ class ApiController(RedditController):
             self._subscribe(sr, action == 'sub')
 
     def _subscribe(self, sr, sub):
-        Subreddit.subscribe_defaults(c.user)
+        try:
+            Subreddit.subscribe_defaults(c.user)
 
-        if sub:
-            try:
+            if sub:
                 if sr.add_subscriber(c.user):
                     sr._incr('_ups', 1)
-            except CreationError:
-                # This only seems to happen when someone is pounding on the
-                # subscribe button or the DBs are really lagged; either way,
-                # some other proc has already handled this subscribe request.
-                return
-        else:
-            if sr.remove_subscriber(c.user):
-                sr._incr('_ups', -1)
-        changed(sr)
-
+            else:
+                if sr.remove_subscriber(c.user):
+                    sr._incr('_ups', -1)
+            changed(sr)
+        except CreationError:
+            # This only seems to happen when someone is pounding on the
+            # subscribe button or the DBs are really lagged; either way,
+            # some other proc has already handled this subscribe request.
+            return
 
     @noresponse(VAdmin(),
                 tr = VTranslation("id"))
