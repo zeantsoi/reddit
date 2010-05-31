@@ -148,7 +148,7 @@ class Globals(object):
                                                self.permacache_memcaches,
                                                self.cassandra_seeds,
                                                read_consistency_level = CL_ONE,
-                                               write_consistency_level = CL_ONE)
+                                               write_consistency_level = CL_QUORUM)
 
         self.urlcache = self.init_cass_cache('urls',
                                              self.url_caches,
