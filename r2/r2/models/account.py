@@ -168,6 +168,7 @@ class Account(Thing):
         from admintools import apply_updates
 
         apply_updates(self)
+        return
 
         prev_visit = getattr(self, 'last_visit', None)
 
