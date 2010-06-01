@@ -175,7 +175,8 @@ class Account(Thing):
         if prev_visit and current_time - prev_visit < timedelta(1):
             return
 
-        g.log.debug ("Updating last visit for %s" % self.name)
+        g.log.debug ("Updating last visit for %s from %s to %s" %
+                    (self.name, self.last_visit, current_time))
         set_last_visit(self)
 
     def make_cookie(self, timestr = None, admin = False):

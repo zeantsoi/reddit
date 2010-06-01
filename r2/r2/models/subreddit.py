@@ -66,7 +66,7 @@ class Subreddit(Thing, Printable):
                      sponsorship_name = None,
                      )
     _essentials = ('type', 'name')
-    _data_int_props = ('mod_actions',)
+    _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
 
     sr_limit = 50
 
