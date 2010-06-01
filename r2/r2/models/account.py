@@ -176,7 +176,7 @@ class Account(Thing):
             return
 
         g.log.debug ("Updating last visit for %s from %s to %s" %
-                    (self.name, self.last_visit, current_time))
+                    (self.name, prev_visit, current_time))
         set_last_visit(self)
 
     def make_cookie(self, timestr = None, admin = False):
