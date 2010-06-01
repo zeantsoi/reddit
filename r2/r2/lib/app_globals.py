@@ -149,7 +149,7 @@ class Globals(object):
                                                self.cassandra_seeds,
                                                read_consistency_level = CL_ONE,
                                                write_consistency_level = CL_QUORUM,
-                                               reverse = True)
+                                               reverse = False)
 
         self.urlcache = self.init_cass_cache('urls',
                                              self.url_caches,
@@ -223,7 +223,7 @@ class Globals(object):
         if os.path.exists(static_files):
             for f in os.listdir(static_files):
                 if f.endswith('.md5'):
-                    key = f.strip('.md5')
+                    key = f[0:-4]
                     f = os.path.join(static_files, f)
                     with open(f, 'r') as handle:
                         md5 = handle.read().strip('\n')
