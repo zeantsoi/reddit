@@ -300,8 +300,9 @@ class Globals(object):
             self.version = self.short_version = '(unknown)'
 
         if self.log_start:
-            self.log.error("reddit app %s:%s started %s at %s" % (self.reddit_host, self.reddit_pid,
-                                                                  self.short_version, datetime.now()))
+            self.log.error("reddit app %s:%s started %s at %s" %
+                           (self.reddit_host, self.reddit_pid,
+                            self.short_version, datetime.now()))
 
     def init_memcached(self, caches, **kw):
         return self.init_cass_cache(None, caches, None, memcached_kw = kw)
@@ -309,7 +310,7 @@ class Globals(object):
     def init_cass_cache(self, cluster, caches, cassandra_seeds,
                         memcached_kw = {}, cassandra_kw = {},
                         read_consistency_level = CL_ONE,
-                        write_consistency_level = CL_QUORUM):
+                        write_consistency_level = CL_QUORUM, reverse = False):
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
 
@@ -328,7 +329,10 @@ class Globals(object):
                                   read_consistency_level = read_consistency_level,
                                   write_consistency_level = write_consistency_level,
                                   **cassandra_kw),)
-            pmc_chain += cas
+            if reverse and caches:
+                pmc_chain = (localcache_cls(),) +  cas + (pmc_chain[-1],)
+            else:
+                pmc_chain += cas
             mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True,
                                       )
         else:
