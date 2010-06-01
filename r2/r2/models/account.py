@@ -24,7 +24,7 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
-from r2.lib.utils        import UrlParser
+from r2.lib.utils        import UrlParser, set_last_visit, last_visit
 from r2.lib.cache        import sgm
 
 from pylons import g
@@ -168,17 +168,15 @@ class Account(Thing):
         from admintools import apply_updates
 
         apply_updates(self)
-        return
 
-        prev_visit = getattr(self, 'last_visit', None)
+        #prev_visit = getattr(self, 'last_visit', None)
+        prev_visit = last_visit(self)
 
-        if prev_visit and current_time - prev_visit < timedelta(0, 3600):
+        if prev_visit and current_time - prev_visit < timedelta(1):
             return
 
         g.log.debug ("Updating last visit for %s" % self.name)
-        self.last_visit = current_time
-
-        self._commit()
+        set_last_visit(self)
 
     def make_cookie(self, timestr = None, admin = False):
         if not self._loaded:

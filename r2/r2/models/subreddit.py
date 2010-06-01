@@ -30,7 +30,7 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize
-from r2.lib.utils import tup, interleave_lists
+from r2.lib.utils import tup, interleave_lists, last_modified_multi
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 
@@ -612,11 +612,13 @@ class FriendsSR(FakeSubreddit):
         friends = Account._byID(a.friends[-max_lookup:], return_dict = False,
                                 data = True)
 
-        # if we don't have a last visit for your friends, we don't care about them
-        friends = [x for x in friends if hasattr(x, "last_visit")]
+        # if we don't have a last visit for your friends, we don't
+        # care about them
+        last_visits = last_modified_multi(friends, "submitted")
+        friends = [x for x in friends if x in last_visits]
 
         # sort friends by most recent interactions
-        friends.sort(key = lambda x: getattr(x, "last_visit"), reverse = True)
+        friends.sort(key = lambda x: last_visits[x], reverse = True)
         return [x._id for x in friends[:limit]]
 
     def get_links(self, sort, time):
