@@ -11,6 +11,15 @@ from r2.lib.amqp import worker
 from validator import *
 
 class HealthController(MinimalController):
+    def post(self):
+        pass
+
+    def try_pagecache(self):
+        pass
+
+    def pre(self):
+        pass
+
     def shutdown(self):
         thread_pool = c.thread_pool
         def _shutdown():

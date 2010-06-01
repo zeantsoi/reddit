@@ -539,7 +539,6 @@ class MinimalController(BaseController):
             and request.method == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and not c.dontcache
             and response.status_code != 503
             and response.content and response.content[0]):
             try:
@@ -582,6 +581,29 @@ class MinimalController(BaseController):
 
     def abort403(self):
         abort(403, "forbidden")
+
+    def sendpng(self, string):
+        c.response_content_type = 'image/png'
+        c.response.content = string
+        return c.response
+
+    def sendstring(self,string):
+        '''sends a string and automatically escapes &, < and > to make sure no code injection happens'''
+        c.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
+        c.response.content = filters.websafe_json(string)
+        return c.response
+
+    def update_qstring(self, dict):
+        merged = copy(request.get)
+        merged.update(dict)
+        return request.path + utils.query_string(merged)
+
+    def api_wrapper(self, kw):
+        data = simplejson.dumps(kw)
+        if request.method == "GET" and request.GET.get("callback"):
+            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
+                               websafe_json(data))
+        return self.sendstring(data)
 
 
 
@@ -721,27 +743,4 @@ class RedditController(MinimalController):
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
-
-    def sendpng(self, string):
-        c.response_content_type = 'image/png'
-        c.response.content = string
-        return c.response
-
-    def sendstring(self,string):
-        '''sends a string and automatically escapes &, < and > to make sure no code injection happens'''
-        c.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-        c.response.content = filters.websafe_json(string)
-        return c.response
-
-    def update_qstring(self, dict):
-        merged = copy(request.get)
-        merged.update(dict)
-        return request.path + utils.query_string(merged)
-
-    def api_wrapper(self, kw):
-        data = simplejson.dumps(kw)
-        if request.method == "GET" and request.GET.get("callback"):
-            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
-                               websafe_json(data))
-        return self.sendstring(data)
 
