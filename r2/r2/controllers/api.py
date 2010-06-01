@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController, set_user_cookie
+from reddit_base import RedditController, MinimalController, set_user_cookie
 
 from pylons.i18n import _
 from pylons import c, request
@@ -71,7 +71,7 @@ def reject_vote(thing):
               (voteword, c.user.name, request.ip, thing.__class__.__name__,
                thing._id36, request.referer), "info")
 
-class ApiminimalController(RedditController):
+class ApiminimalController(MinimalController):
     """
     Put API calls in here which won't come from logged in users (or
     don't rely on the user being logged int)
