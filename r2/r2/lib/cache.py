@@ -592,8 +592,10 @@ class CassandraCache(CacheUtils):
             return
 
         wcl = self._wcl(write_consistency_level)
-        return self.cf.insert(key, {'value': pickle.dumps(val)},
-                              write_consistency_level = wcl)
+        ret = self.cf.insert(key, {'value': pickle.dumps(val)},
+                             write_consistency_level = wcl)
+        self.cf.get(key)
+        return ret
 
     def set_multi(self, keys, prefix='',
                   write_consistency_level = None, time = None):
@@ -607,6 +609,7 @@ class CassandraCache(CacheUtils):
             if val != NoneResult:
                 ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
                                           write_consistency_level = wcl)
+        self.cf.multiget(keys.keys())
 
         return ret
 
