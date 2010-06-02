@@ -149,7 +149,7 @@ class Globals(object):
                                                self.cassandra_seeds,
                                                read_consistency_level = CL_ONE,
                                                write_consistency_level = CL_QUORUM,
-                                               reverse = False)
+                                               reverse = True)
 
         self.urlcache = self.init_cass_cache('urls',
                                              self.url_caches,
