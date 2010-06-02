@@ -1337,13 +1337,14 @@ textarea.gray { color: gray; }
 
 .searchpane #search input[type=text] { }
 
-.searchpane .summary {
-    font-weight: bold; 
+.search-summary {
     float: right;
+    text-align: right;
+    margin: 6px 8px 0 0;
 }
 
-.searchpane .clearleft {
-    margin-bottom: 10px; 
+.search-summary .result-count {
+    font-weight: bold;
 }
 
 .searchfail {

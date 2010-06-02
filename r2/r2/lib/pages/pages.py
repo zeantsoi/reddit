@@ -649,7 +649,8 @@ class SearchPage(BoringPage):
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
-                                   search_params = search_params)
+                                   search_params = search_params,
+                                   show_feedback = True)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -1304,13 +1305,14 @@ class SearchBar(Templated):
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
-                 search_params = {}, **kw):
+                 search_params = {}, show_feedback=False, **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))
 
         self.prev_search  = prev_search
         self.elapsed_time = elapsed_time
+        self.show_feedback = show_feedback
 
         # All results are approximate unless there are fewer than 10.
         if num_results > 10:

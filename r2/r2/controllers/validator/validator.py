@@ -846,7 +846,10 @@ class VUserWithEmail(VExistingUname):
 
 class VBoolean(Validator):
     def run(self, val):
-        return val != "off" and bool(val)
+        lv = str(val).lower()
+        if lv == 'off' or lv == '' or lv[0] in ("f", "n"):
+            return False
+        return bool(val)
 
 class VNumber(Validator):
     def __init__(self, param, min=None, max=None, coerce = True,

@@ -1306,3 +1306,21 @@ function show_unfriend(account_fullname) {
             }
         });
 }
+
+function search_feedback(elem, approval) {
+  f = $("form#search");
+  var q    = f.find("input[name=q]").val();
+  var sort = f.find("input[name=sort]").val();
+  var t    = f.find("input[name=t]").val();
+  var d = {
+    q: q,
+    sort: sort,
+    t: t,
+    approval: approval
+  };
+  $.request("searchfeedback", d, null, true);
+  elem.siblings(".pretty-button").removeClass("pressed");
+  elem.siblings(".thanks").show();
+  elem.addClass("pressed");
+  return false;
+}
