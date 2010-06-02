@@ -594,7 +594,7 @@ class CassandraCache(CacheUtils):
         wcl = self._wcl(write_consistency_level)
         ret = self.cf.insert(key, {'value': pickle.dumps(val)},
                              write_consistency_level = wcl)
-        self.cf.get(key)
+        self._warm([key])
         return ret
 
     def set_multi(self, keys, prefix='',
@@ -609,13 +609,19 @@ class CassandraCache(CacheUtils):
             if val != NoneResult:
                 ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
                                           write_consistency_level = wcl)
-        self.cf.multiget(keys.keys())
+        self._warm(keys.keys())
 
         return ret
 
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
         self.cf.remove(key, write_consistency_level = wcl)
+
+    def _warm(self, keys):
+        import random
+        if random.random() > 0.8:
+            self.cf.multiget(keys)
+
 
 # smart get multi:
 # For any keys not found in the cache, miss_fn() is run and the result is
