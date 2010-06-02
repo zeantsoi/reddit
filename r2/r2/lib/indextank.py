@@ -42,6 +42,11 @@ def run_changed(drain=False):
 
         num_to_process = g.cache.get("indextank-allowance")
         if not num_to_process:
+            print "discarding %d msgs" % len(msgs)
+            return
+        if num_to_process < 0:
+            print "Okay, who put %d in indextank-allowance?" % num_to_process
+            g.cache.delete("indextank-allowance")
             return
 
         fullnames = set([x.body for x in msgs])
