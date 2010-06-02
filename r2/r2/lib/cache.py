@@ -619,7 +619,7 @@ class CassandraCache(CacheUtils):
 
     def _warm(self, keys):
         import random
-        if random.random() > 0.8:
+        if random.random() > 0.9:
             self.cf.multiget(keys)
 
 
