@@ -30,7 +30,7 @@ from pylons import g, config
 from r2.models import *
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
-from solrsearch import indexed_types
+from r2.lib.solrsearch import indexed_types
 
 def run_changed(drain=False):
     """

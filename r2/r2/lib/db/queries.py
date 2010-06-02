@@ -744,7 +744,7 @@ def changed(things):
     """Indicate to solrsearch that a given item should be updated"""
     things = tup(things)
     for thing in things:
-        amqp.add_item('searchchanges_q', thing._fullname,
+        amqp.add_item('search_changes', thing._fullname,
                       message_id = thing._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
 
