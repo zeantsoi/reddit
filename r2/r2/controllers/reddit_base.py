@@ -670,8 +670,8 @@ class RedditController(MinimalController):
                 c.show_mod_mail = Subreddit.reverse_moderator_ids(c.user)
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
-            #if not g.disallow_db_writes:
-            #    c.user.update_last_visit(c.start_time)
+            if not g.disallow_db_writes:
+                c.user.update_last_visit(c.start_time)
 
         c.over18 = over18()
 

@@ -170,6 +170,7 @@ class Account(Thing):
         apply_updates(self)
 
         #prev_visit = getattr(self, 'last_visit', None)
+        return
         prev_visit = last_visit(self)
 
         if prev_visit and current_time - prev_visit < timedelta(1):
