@@ -97,7 +97,8 @@ class RedditQueueMap(QueueMap):
         self._bind('new_comment', 'commentstree_q')
 
     def newsubreddit_bindings(self):
-        self._bind('new_subreddit', 'searchchanges_q')
+        self._bind('new_subreddit', 'solrsearch_changes')
+        self._bind('new_subreddit', 'indextank_changes')
 
 try:
     from r2admin.lib.adminqueues import *
