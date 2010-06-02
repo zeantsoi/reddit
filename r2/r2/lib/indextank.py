@@ -55,10 +55,15 @@ def run_changed(drain=False):
         num_deletes = len(delete_things)
 
         update_things = update_things[:num_to_process]
+
+        num_processed = len(update_things)
+        num_to_process -= len(update_things)
+
         delete_things = delete_things[:num_to_process]
 
-        num_processed = len(update_things) + len(delete_things)
-        num_to_process -= num_processed
+        num_processed += len(delete_things)
+        num_to_process -= len(delete_things)
+
         g.cache.set("indextank-allowance", num_to_process)
 
         num_discarded_updates = num_updates - len(update_things)
