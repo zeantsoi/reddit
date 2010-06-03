@@ -108,6 +108,7 @@ discountmod = Extension('reddit-discount',
                                        "xml.c",
                                        "xmlpage.c"])))
 
+ext_modules = [filtermod, discountmod]
 
 setup(
     name='r2',
@@ -133,6 +134,7 @@ setup(
                       "py_interface",
                       "pycountry",
                       "thrift", # required by Cassandra
+                      "cython"
                       ],
     packages=find_packages(),
     include_package_data=True,
@@ -143,7 +145,7 @@ setup(
                 'init_catalog':         babel.init_catalog,
                 'update_catalog':       babel.update_catalog,
                 },
-    ext_modules = [filtermod, discountmod],
+    ext_modules = ext_modules,
     entry_points="""
     [paste.app_factory]
     main=r2:make_app

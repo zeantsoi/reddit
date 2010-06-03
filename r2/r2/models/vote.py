@@ -22,7 +22,6 @@
 from r2.lib.db.thing import MultiRelation, Relation, thing_prefix, cache
 from r2.lib.utils import tup, timeago
 from r2.lib.db.operators import ip_network
-from r2.lib.normalized_hot import expire_hot
 
 from account import Account
 from link import Link, Comment

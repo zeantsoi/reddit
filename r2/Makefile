@@ -47,6 +47,9 @@ CSSTARGETS := $(foreach css, $(css_targets), $(static_dir)/$(css))
 MAINCSS    := $(foreach css, $(main_css), $(static_dir)/$(css))
 RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 
+PYX_FILES := $(shell find . -name \*.pyx)
+PYXSO_FILES := $(PYX_FILES:.pyx=.so)
+
 
 MD5S = $(JSTARGETS:=.md5) $(CSSTARGETS:=.md5) $(MAINCSS:=.md5) $(RTLCSS:=.md5)
 
@@ -63,7 +66,7 @@ else
 endif
 
 
-all:	$(JSTARGETS) $(CSSTARGETS) $(MD5S) $(RTLCSS) $(INIS)
+all:	$(JSTARGETS) $(CSSTARGETS) $(MD5S) $(RTLCSS) $(INIS) $(PYXSO_FILES)
 
 .PHONY: 	js css md5 rtl clean all
 
@@ -85,7 +88,12 @@ $(RTLCSS):	%-rtl.css : %.css
 	   -e "s/>####</right/g" \
 	   -e "s/\(margin\|padding\):\s*\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)/\1:\2 \5 \4 \3/g" $< > $@
 
-
+$(PYXSO_FILES): %.so : %.pyx
+	rm -f $(<:.pyx=.pyc)
+	cython $<
+	mkdir -p tmp
+	PYTHONPATH=tmp python pyx_setup.py develop -d tmp -b tmp $<
+	rm -r tmp
 
 
 js: 		$(JSTARGETS)

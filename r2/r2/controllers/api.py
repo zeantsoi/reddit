@@ -40,7 +40,6 @@ from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
 from r2.lib.menus import CommentSortMenu
-from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
@@ -636,7 +635,6 @@ class ApiController(RedditController):
         #expire the item from the sr cache
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
-            expire_hot(sr)
             queries.delete_links(thing)
 
         #comments have special delete tasks

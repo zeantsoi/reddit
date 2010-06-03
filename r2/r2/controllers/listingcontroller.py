@@ -319,7 +319,7 @@ class HotController(FixListing, ListingController):
               and not isinstance(c.site, FakeSubreddit)
               and self.after is None
               and self.count == 0):
-            return get_hot([c.site], only_fullnames = True)[0]
+            return get_hot([c.site])
         else:
             return c.site.get_links('hot', 'all')
 
