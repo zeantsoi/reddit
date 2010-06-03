@@ -21,7 +21,7 @@
 ################################################################################
 from threading import local
 from hashlib import md5
-import pickle
+import cPickle as pickle
 
 import pylibmc
 from _pylibmc import MemcachedError

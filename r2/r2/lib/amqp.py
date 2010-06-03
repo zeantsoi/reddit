@@ -29,7 +29,7 @@ import time
 import errno
 import socket
 import itertools
-import pickle
+import cPickle as pickle
 
 from amqplib import client_0_8 as amqp
 
