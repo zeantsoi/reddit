@@ -123,7 +123,7 @@ setup(
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
-                      'cython',
+                      "cython",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup == 3.0.8.1", # last version to use the good parser
@@ -167,3 +167,8 @@ except ImportError:
     easy_install(['http://github.com/downloads/ieure/python-cassandra/Cassandra-0.5.0.tar.gz', # required by pycassa
                   'http://github.com/downloads/ketralnis/pycassa/pycassa-0.1.1.tar.gz',
                   ])
+
+# running setup.py always fucks up the build directory, which we don't
+# need anyway.
+import shutil
+shutil.rmtree("build")
