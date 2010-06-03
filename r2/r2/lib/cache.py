@@ -612,7 +612,7 @@ class CassandraCache(CacheUtils):
 
     def _warm(self, keys):
         import random
-        if random.random() > 0.98:
+        if False and random.random() > 0.98:
             print 'Warming', keys
             self.cf.multiget(keys)
 
