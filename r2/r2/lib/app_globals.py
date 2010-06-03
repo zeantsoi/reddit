@@ -334,7 +334,7 @@ class Globals(object):
                 pmc_chain = (localcache_cls(),) +  cas + (pmc_chain[-1],)
             else:
                 pmc_chain += cas
-            mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True,
+            mc =  CassandraCacheChain(pmc_chain, cache_negative_results = False,
                                       )
         else:
             mc =  MemcacheChain(pmc_chain)

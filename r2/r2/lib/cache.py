@@ -434,7 +434,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if self.cache_negative_results and val == NoneResult:
+                if val == NoneResult:
                     return default
                 else:
                     return val
@@ -479,12 +479,9 @@ class CacheChain(CacheUtils, local):
             for c in self.caches:
                 c.set_multi(d)
 
-        if self.cache_negative_results:
-            filtered_out = {}
-            for k,v in out.iteritems():
-                if v != NoneResult:
-                    filtered_out[k] = v
-            out = filtered_out
+        out = dict((k, v)
+                   for (k, v) in out.iteritems()
+                   if v != NoneResult)
 
         return out
 
@@ -592,8 +589,10 @@ class CassandraCache(CacheUtils):
             return
 
         wcl = self._wcl(write_consistency_level)
-        return self.cf.insert(key, {'value': pickle.dumps(val)},
+        ret = self.cf.insert(key, {'value': pickle.dumps(val)},
                               write_consistency_level = wcl)
+        self._warm([key])
+        return ret
 
     def set_multi(self, keys, prefix='',
                   write_consistency_level = None, time = None):
@@ -607,8 +606,15 @@ class CassandraCache(CacheUtils):
             if val != NoneResult:
                 ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
                                           write_consistency_level = wcl)
+        self._warm(keys.keys())
 
         return ret
+
+    def _warm(self, keys):
+        import random
+        if random.random() > 0.98:
+            print 'Warming', keys
+            self.cf.multiget(keys)
 
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
