@@ -72,8 +72,8 @@ class _CommentBuilder(Builder):
 
         start_depth = 0
 
+        candidates = []
         if isinstance(self.comment, utils.iters):
-            candidates = []
             candidates.extend(self.comment)
             for cm in self.comment:
                 dont_collapse.append(cm._id)
@@ -99,10 +99,9 @@ class _CommentBuilder(Builder):
                 num_children[new_top._id] = num_children[top._id] + 1
                 dont_collapse.append(new_top._id)
                 top = new_top
-            candidates = [top]
+            candidates.append(top)
         #else start with the root comments
         else:
-            candidates = []
             candidates.extend(comment_tree.get(top, ()))
 
         #update the starting depth if required
@@ -117,6 +116,10 @@ class _CommentBuilder(Builder):
 
         while num_have < num and candidates:
             to_add = candidates.pop(0)
+            if to_add not in comments:
+                g.log.error("candidate %r comment missing from link %r" %
+                            (to_add, self.link))
+                continue
             comments.remove(to_add)
             if to_add._deleted and not comment_tree.has_key(to_add._id):
                 pass
