@@ -42,8 +42,8 @@ def maps_from_things(things):
     for thing in things:
         d = dict(fullname = thing._fullname,
                  text = thing.title,
-                 author = thing.author_id,
-                 timestamp = int(thing._date.strftime("%s")))
+                 author = str(thing.author_id),
+                 timestamp = thing._date.strftime("%s"))
         if thing.is_self:
             d['selftext'] = thing.selftext
         else:
