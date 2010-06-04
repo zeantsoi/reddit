@@ -49,7 +49,7 @@ def maps_from_things(things):
                  timestamp = thing._date.strftime("%s"),
                  ups = thing._ups,
                  downs = thing._downs,
-                 num_comments = 1) # TODO: put actual value here
+                 num_comments = getattr(thing, "num_comments", 0))
         if thing.is_self:
             d['selftext'] = thing.selftext
         else:
