@@ -29,9 +29,8 @@ from pylons import g, config
 
 from r2.models import *
 from r2.lib.cache import SelfEmptyingCache
-from r2.lib import amqp
+from r2.lib import amqp, indextank
 from r2.lib.solrsearch import indexed_types
-import indextank
 import simplejson
 import sys,os,os.path
 import time
@@ -69,7 +68,10 @@ def inject_maps(maps):
         if ok:
             print "Added %s to IndexTank" % fullname
         else:
-            print "Failed to add %s to IndexTank: %s" % (fullname, result)
+            print "Failed to add(%r, %r, %r) to IndexTank" % (fullname, d, boosts)
+            f = open("/tmp/indextank-error.html", "w")
+            f.write(str(result))
+
 
 def run_changed(drain=False):
     """
