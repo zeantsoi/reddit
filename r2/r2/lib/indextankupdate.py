@@ -37,13 +37,19 @@ import time
 
 indextank_indexed_types = (Link,)
 
+index = indextank.IndexTank(api_key = g.INDEXTANK_API_KEY,
+                            index_code = g.INDEXTANK_IDX_CODE)
+
 def maps_from_things(things):
     maps = []
     for thing in things:
         d = dict(fullname = thing._fullname,
                  text = thing.title,
                  author = str(thing.author_id),
-                 timestamp = thing._date.strftime("%s"))
+                 timestamp = thing._date.strftime("%s"),
+                 ups = thing._ups,
+                 downs = thing._downs,
+                 num_comments = 1) # TODO: put actual value here
         if thing.is_self:
             d['selftext'] = thing.selftext
         else:
@@ -59,11 +65,12 @@ def to_boosts(ups, downs, num_comments):
     return result
 
 def inject_maps(maps):
-    index = indextank.IndexTank(api_key = g.INDEXTANK_API_KEY,
-                                index_code = g.INDEXTANK_IDX_CODE)
     for d in maps:
         fullname = d.pop("fullname")
-        boosts = boosts = to_boosts(1,1,1) # TODO: use actual values
+        ups = d.pop("ups")
+        downs = d.pop("downs")
+        num_comments = d.pop("num_comments")
+        boosts = to_boosts(ups, downs, num_comments)
         ok, result = index.add(fullname, d, boosts)
         if ok:
             print "Added %s to IndexTank" % fullname
@@ -71,7 +78,17 @@ def inject_maps(maps):
             print "Failed to add(%r, %r, %r) to IndexTank" % (fullname, d, boosts)
             f = open("/tmp/indextank-error.html", "w")
             f.write(str(result))
+            g.cache.set("stop-indextank", True)
 
+def delete_thing(thing):
+    ok, result = index.delete(thing._fullname)
+    if ok:
+        print "Deleted %s from IndexTank" % thing._fullname
+    else:
+        print "Failed to delete %s from IndexTank" % thing._fullname
+        f = open("/tmp/indextank-error.html", "w")
+        f.write(str(result))
+        g.cache.set("stop-indextank", True)
 
 def run_changed(drain=False):
     """
@@ -79,15 +96,8 @@ def run_changed(drain=False):
         IndexTank
     """
     def _run_changed(msgs, chan):
-        print "changed: Processing %d items" % len(msgs)
-
-        num_to_process = g.cache.get("indextank-allowance")
-        if not num_to_process:
+        if g.cache.get("stop-indextank"):
             print "discarding %d msgs" % len(msgs)
-            return
-        if num_to_process < 0:
-            print "Okay, who put %d in indextank-allowance?" % num_to_process
-            g.cache.delete("indextank-allowance")
             return
 
         fullnames = set([x.body for x in msgs])
@@ -97,36 +107,12 @@ def run_changed(drain=False):
         update_things = [x for x in things if not x._spam and not x._deleted]
         delete_things = [x for x in things if x._spam or x._deleted]
 
-        num_updates = len(update_things)
-        num_deletes = len(delete_things)
-
-        update_things = update_things[:num_to_process]
-
-        num_processed = len(update_things)
-        num_to_process -= len(update_things)
-
-        delete_things = delete_things[:num_to_process]
-
-        num_processed += len(delete_things)
-        num_to_process -= len(delete_things)
-
-        g.cache.set("indextank-allowance", num_to_process)
-
-        num_discarded_updates = num_updates - len(update_things)
-        num_discarded_deletes = num_deletes - len(delete_things)
-
         if update_things:
             maps = maps_from_things(update_things)
             inject_maps(maps)
         if delete_things:
-            for i in delete_things:
-                print "Here is where we would delete %r" % i._fullname
-
-        if num_discarded_updates:
-            print "discarding %d updates" % num_discarded_updates
-
-        if num_discarded_deletes:
-            print "discarding %d deletes" % num_discarded_deletes
+            for thing in delete_things:
+                delete_thing(thing)
 
     amqp.handle_items('indextank_changes', _run_changed, limit=1000,
                       drain=drain)
