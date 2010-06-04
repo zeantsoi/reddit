@@ -124,7 +124,7 @@ setup(
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
-                      "cython",
+                      "cython==0.12.1",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup == 3.0.8.1", # last version to use the good parser
@@ -133,8 +133,7 @@ setup(
                       "psycopg2",
                       "py_interface",
                       "pycountry",
-                      "thrift", # required by Cassandra
-                      "cython"
+                      "thrift" # required by Cassandra
                       ],
     packages=find_packages(),
     include_package_data=True,
