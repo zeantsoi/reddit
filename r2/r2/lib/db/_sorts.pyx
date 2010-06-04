@@ -51,8 +51,8 @@ cpdef double _confidence(int ups, int downs):
     phat = float(ups) / n
     return sqrt(phat+z*z/(2*n)-z*((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
 
-cdef int up_range = 1000
-cdef int down_range = 1000
+cdef int up_range = 400
+cdef int down_range = 100
 cdef list _confidences = []
 for ups in xrange(up_range):
     for downs in xrange(down_range):
