@@ -42,15 +42,20 @@ index = indextank.IndexTank(api_key = g.INDEXTANK_API_KEY,
 
 def maps_from_things(things):
     maps = []
+    author_ids = [ thing.author_id for thing in things ]
+    accounts = Account._byID(author_ids, data = True, return_dict = True)
     for thing in things:
+        a = accounts[thing.author_id]
+        if a._deleted:
+            continue
         d = dict(fullname = thing._fullname,
                  text = thing.title,
-                 author = str(thing.author_id),
+                 author = a.name,
                  timestamp = thing._date.strftime("%s"),
                  ups = thing._ups,
                  downs = thing._downs,
                  num_comments = getattr(thing, "num_comments", 0))
-        if thing.is_self:
+        if thing.is_self and thing.selftext:
             d['selftext'] = thing.selftext
         else:
             d['url'] = thing.url
