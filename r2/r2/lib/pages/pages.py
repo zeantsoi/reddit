@@ -1115,23 +1115,29 @@ class SubredditTopBar(Templated):
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
     def __init__(self):
+        self._my_reddits = None
+        self._pop_reddits = None
         Templated.__init__(self)
 
-        self.my_reddits = Subreddit.user_subreddits(c.user, ids = False)
 
-        p_srs = Subreddit.default_subreddits(ids = False,
-                                             limit = Subreddit.sr_limit)
-        self.pop_reddits = [ sr for sr in p_srs if sr.name not in g.automatic_reddits ]
+    @property
+    def my_reddits(self):
+        if self._my_reddits is None:
+            self._my_reddits = Subreddit.user_subreddits(c.user, ids = False)
+        return self._my_reddits
 
+    @property
+    def pop_reddits(self):
+        if self._pop_reddits is None:
+            p_srs = Subreddit.default_subreddits(ids = False,
+                                                 limit = Subreddit.sr_limit)
+            self._pop_reddits = [ sr for sr in p_srs
+                                  if sr.name not in g.automatic_reddits ]
+        return self._pop_reddits
 
-# This doesn't actually work.
-#        self.reddits = c.recent_reddits
-#        for sr in pop_reddits:
-#            if sr not in c.recent_reddits:
-#                self.reddits.append(sr)
 
     def my_reddits_dropdown(self):
-        drop_down_buttons = []    
+        drop_down_buttons = []
         for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
             drop_down_buttons.append(SubredditButton(sr))
         drop_down_buttons.append(NamedButton('edit', sr_path = False,
@@ -1198,11 +1204,11 @@ class SubredditTopBar(Templated):
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
-    def __init__(self):
+    @property
+    def reddits(self):
         srs = Subreddit.user_subreddits(c.user, ids = False)
         srs.sort(key = lambda sr: sr.name.lower())
-        self.reddits = wrap_links(srs)
-        Templated.__init__(self)
+        return wrap_links(srs)
 
 class CreateSubreddit(Templated):
     """reddit creation form."""
