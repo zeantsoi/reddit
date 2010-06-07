@@ -147,7 +147,7 @@ class Globals(object):
         self.permacache = self.init_cass_cache('permacache',
                                                self.permacache_memcaches,
                                                self.cassandra_seeds,
-                                               read_consistency_level = CL_ONE,
+                                               read_consistency_level = CL_QUORUM,
                                                write_consistency_level = CL_QUORUM,
                                                reverse = False)
 
