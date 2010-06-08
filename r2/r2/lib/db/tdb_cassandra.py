@@ -233,7 +233,7 @@ class ThingBase(object):
                                                for x in items)
 
     @classmethod
-    def cache_prefix(cls):
+    def _cache_prefix(cls):
         return 'tdbcassandra_' + cls._type_prefix + '_'
 
     def _cache_key(self):
