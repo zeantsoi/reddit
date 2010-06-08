@@ -84,7 +84,7 @@ class Globals(object):
                    'local_rendercache',
                    'servicecaches',
                    'cassandra_seeds',
-                   'url_caches',
+                   'url_seeds',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -160,9 +160,9 @@ class Globals(object):
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
-        self.url_caches = list(self.url_caches)
-        random.shuffle(self.url_caches)
-        self.url_cassandra = pycassa.connect_thread_local(self.url_caches)
+        self.url_seeds = list(self.url_seeds)
+        random.shuffle(self.url_seeds)
+        self.url_cassandra = pycassa.connect_thread_local(self.url_seeds)
         self.urlcache = self.init_cass_cache('urls', 'urls',
                                              self.url_cassandra,
                                              self.make_lock,

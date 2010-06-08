@@ -195,7 +195,7 @@ class ThingBase(object):
 
             return l_ret
 
-        ret = cache.sgm(thing_cache, ids, lookup, prefix=cls._type_prefix+'_')
+        ret = cache.sgm(thing_cache, ids, lookup, prefix=cls._cache_prefix())
 
         if is_single and not ret:
             raise NotFound("<%s %r>" % (cls.__name__,
@@ -231,6 +231,16 @@ class ThingBase(object):
 
         return items[0] if is_single else dict((x._fullname, x)
                                                for x in items)
+
+    @classmethod
+    def cache_prefix(cls):
+        return 'tdbcassandra_' + cls._type_prefix + '_'
+
+    def _cache_key(self):
+        if not self._id:
+            raise TdbException('no cache key for uncommitted %r' % (self,))
+
+        return self._cache_prefix() + self._id
 
     @classmethod
     def _deserialize_column(cls, attr, val):
@@ -362,7 +372,7 @@ class ThingBase(object):
 
         self._committed = True
 
-        thing_cache.set('%s_%s' % (self._type_prefix, self._id), self)
+        thing_cache.set(self._cache_key(), self)
 
     def _revert(self):
         if not self._committed:
