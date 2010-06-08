@@ -265,8 +265,10 @@ class LocalCache(dict, CacheUtils):
         return dict.__init__(self, *a, **kw)
 
     def _check_key(self, key):
+        if isinstance(key, unicode):
+            key = str(key) # try to convert it first
         if not isinstance(key, str):
-            raise TypeError('Key must be a string.')
+            raise TypeError('Key is not a string: %r' % (key,))
 
     def get(self, key, default=None):
         r = dict.get(self, key)
@@ -327,6 +329,9 @@ class LocalCache(dict, CacheUtils):
     def flush_all(self):
         self.clear()
 
+    def __repr__(self):
+        return "<LocalCache(%d)>" % (len(self),)
+
 class CacheChain(CacheUtils, local):
     def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
@@ -334,6 +339,7 @@ class CacheChain(CacheUtils, local):
 
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):
+            ret = None
             for c in self.caches:
                 ret = getattr(c, fn_name)(*a, **kw)
             return ret
@@ -382,7 +388,7 @@ class CacheChain(CacheUtils, local):
         #didn't find anything
 
         if self.cache_negative_results:
-            for c in self.caches:
+            for c in self.caches[:-1]:
                 c.set(key, NoneResult)
 
         return default
@@ -416,7 +422,7 @@ class CacheChain(CacheUtils, local):
 
         if need and self.cache_negative_results:
             d = dict((key, NoneResult) for key in need)
-            for c in self.caches:
+            for c in self.caches[:-1]:
                 c.set_multi(d)
 
         out = dict((k, v)
@@ -426,7 +432,8 @@ class CacheChain(CacheUtils, local):
         return out
 
     def __repr__(self):
-        return '<%s>' % (self.__class__.__name__,)
+        return '<%s %r>' % (self.__class__.__name__,
+                            self.caches)
 
     def debug(self, key):
         print "Looking up [%r]" % key
@@ -439,9 +446,6 @@ class CacheChain(CacheUtils, local):
         self.caches = (self.caches[0].__class__(),) +  self.caches[1:]
 
 class MemcacheChain(CacheChain):
-    pass
-
-class CassandraCacheChain(CacheChain):
     pass
 
 class HardcacheChain(CacheChain):
@@ -482,16 +486,61 @@ CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
 CL_QUORUM = cassandra.ttypes.ConsistencyLevel.QUORUM
 CL_ALL = cassandra.ttypes.ConsistencyLevel.ALL
 
+class CassandraCacheChain(CacheChain):
+    def __init__(self, localcache, cassa, lock_factory, memcache=None, **kw):
+        if memcache:
+            caches = (localcache, memcache, cassa)
+        else:
+            caches = (localcache, cassa)
+
+        self.cassa = cassa
+        self.memcache = memcache
+        self.make_lock = lock_factory
+        CacheChain.__init__(self, caches, **kw)
+
+    def mutate(self, key, mutation_fn, default = None):
+        """Mutate a Cassandra key as atomically as possible"""
+        with self.make_lock('mutate_%s' % key):
+            # we have to do some of the the work of the cache chain
+            # here so that we can be sure that if the value isn't in
+            # memcached (an atomic store), we fetch it from Cassandra
+            # with CL_QUORUM (because otherwise it's not an atomic
+            # store). This requires us to know the structure of the
+            # chain, which means that changing the chain will probably
+            # require changing this function. (This has an edge-case
+            # where memcached was populated by a ONE read rather than
+            # a QUROUM one just before running this. We could avoid
+            # this by not using memcached at all for these mutations,
+            # which would require some more row-cache performace
+            # testing)
+            try:
+                value = None
+                if self.memcache:
+                    value = self.memcache.get(key)
+                if value is None:
+                    value = self.cassa.get(key,
+                                           read_consistency_level = CL_QUORUM)
+            except cassandra.ttypes.NotFoundException:
+                value = default
+            new_value = mutation_fn(value)
+            if value != new_value:
+                self.cassa.set(key, new_value,
+                               write_consistency_level = CL_QUORUM)
+            for ca in self.caches[:-1]:
+                # and update the rest of the chain; assumes that
+                # Cassandra is always the last entry
+                ca.set(key, new_value)
+        return new_value
+
 class CassandraCache(CacheUtils):
     """A cache that uses a Cassandra cluster. Uses a single keyspace
        and column family and only the column-name 'value'"""
-    def __init__(self, keyspace, column_family, seeds,
-                 read_consistency_level = CL_QUORUM,
+    def __init__(self, keyspace, column_family, client,
+                 read_consistency_level = CL_ONE,
                  write_consistency_level = CL_QUORUM):
         self.keyspace = keyspace
         self.column_family = column_family
-        self.seeds = seeds
-        self.client = pycassa.connect_thread_local(seeds)
+        self.client = client
         self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
                                        self.column_family,
                                        read_consistency_level = read_consistency_level,

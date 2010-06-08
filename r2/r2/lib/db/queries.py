@@ -203,33 +203,40 @@ class CachedResults(object):
         self._insert_tuples([self.make_item_tuple(item) for item in tup(items)])
 
     def _insert_tuples(self, t):
-        self.fetch()
+        def _l(li):
+            if isinstance(li, list):
+                return li
+            else:
+                return list(li)
 
-        # insert the new items, remove the duplicates (keeping the one
-        # being inserted over the stored value if applicable), and
-        # sort the result
-        data = itertools.chain(t, self.data)
-        data = UniqueIterator(data, key = lambda x: x[0])
-        data = sorted(data, key=lambda x: x[1:], reverse=True)
-        data = list(data)
-        data = data[:precompute_limit]
+        def _mutate(data):
+            data = data or []
 
-        self.data = data
+            # insert the new items, remove the duplicates (keeping the
+            # one being inserted over the stored value if applicable),
+            # and sort the result
+            data = itertools.chain(t, data)
+            data = UniqueIterator(data, key = lambda x: x[0])
+            data = sorted(data, key=lambda x: x[1:], reverse=True)
+            data = _l(data)
+            data = data[:precompute_limit]
+            return data
 
-        query_cache.set(self.iden, self.data)
+        self.data = query_cache.mutate(self.iden, _mutate, default = [])
+        self._fetched = True
 
     def delete(self, items):
         """Deletes an item from the cached data."""
-        self.fetch()
         fnames = set(self.filter(x)._fullname for x in tup(items))
 
-        data = filter(lambda x: x[0] not in fnames,
-                      self.data)
+        def _mutate(data):
+            data = data or []
+            return filter(lambda x: x[0] not in fnames,
+                          data)
 
-        if data != self.data:
-            self.data = data
-            query_cache.set(self.iden, self.data)
-        
+        self.data = query_cache.mutate(self.iden, _mutate, default=[])
+        self._fetched = True
+
     def update(self):
         """Runs the query and stores the result in the cache. It also stores
         the columns relevant to the sort to make merging with other
@@ -558,18 +565,15 @@ def add_queries(queries, insert_items = None, delete_items = None):
             if not isinstance(q, CachedResults):
                 continue
 
-            with make_lock("add_query(%s)" % q.iden):
-                if insert_items and q.can_insert():
-                    q.fetch(force=True)
-                    log.debug("Inserting %s into query %s" % (insert_items, q))
-                    q.insert(insert_items)
-                elif delete_items and q.can_delete():
-                    q.fetch(force=True)
-                    log.debug("Deleting %s from query %s" % (delete_items, q))
-                    q.delete(delete_items)
-                else:
-                    log.debug('Adding precomputed query %s' % q)
-                    query_queue.add_query(q)
+            if insert_items and q.can_insert():
+                log.debug("Inserting %s into query %s" % (insert_items, q))
+                q.insert(insert_items)
+            elif delete_items and q.can_delete():
+                log.debug("Deleting %s from query %s" % (delete_items, q))
+                q.delete(delete_items)
+            else:
+                log.debug('Adding precomputed query %s' % q)
+                query_queue.add_query(q)
     # let the amqp worker handle this
     worker.do(_add_queries)
 

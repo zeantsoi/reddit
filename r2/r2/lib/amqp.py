@@ -202,9 +202,9 @@ def consume_items(queue, callback, verbose=True):
             try:
                 chan.wait()
             except KeyboardInterrupt:
-                chan.close()
                 break
     finally:
+        worker.join()
         if chan.is_open:
             chan.close()
 
