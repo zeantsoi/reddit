@@ -522,6 +522,12 @@ class CassandraCacheChain(CacheChain):
                                            read_consistency_level = CL_QUORUM)
             except cassandra.ttypes.NotFoundException:
                 value = default
+
+            # due to an old bug in NoneResult caching, we still have
+            # some of these around
+            if value == NoneResult:
+                value = default
+
             new_value = mutation_fn(value)
             if value != new_value:
                 self.cassa.set(key, new_value,
