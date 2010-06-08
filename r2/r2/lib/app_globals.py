@@ -359,6 +359,10 @@ class Globals(object):
         for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
             params = dict(zip(db_param_names, conf_params))
+            if params['db_user'] == "*":
+                params['db_user'] = self.db_user
+            if params['db_pass'] == "*":
+                params['db_pass'] = self.db_pass
             dbm.engines[db_name] = db_manager.get_engine(**params)
             self.db_params[db_name] = params
 
