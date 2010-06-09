@@ -311,6 +311,8 @@ class DomainMiddleware(object):
             # subdomains which change the extension
             elif sd == 'm':
                 environ['reddit-domain-extension'] = 'mobile'
+            elif sd == 'I':
+                environ['reddit-domain-extension'] = 'compact'
             elif sd == 'i':
                 environ['reddit-domain-extension'] = 'compact'
             elif sd in ('api', 'rss', 'xml', 'json'):
