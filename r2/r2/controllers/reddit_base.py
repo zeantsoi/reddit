@@ -295,6 +295,16 @@ def set_content_type():
             if user and not g.read_only_mode:
                 c.user = user
                 c.user_is_loggedin = True
+        if ext in ("mobile", "m") and not request.GET.get("keep_extension"):
+            try:
+                if request.cookies['reddit_mobility'] == "compact":
+                    c.extension = "compact"
+                    c.render_style = "compact"
+            except (ValueError, KeyError):
+                c.suggest_compact = True
+        if ext in ("mobile", "m", "compact"):
+            if request.GET.get("keep_extension"):
+                c.cookies['reddit_mobility'] = Cookie(ext, expires = NEVER)
 
 def get_browser_langs():
     browser_langs = []
@@ -348,7 +358,7 @@ def set_iface_lang():
         except h.LanguageError:
             #we don't have a translation for that language
             h.set_lang(g.lang, graceful_fail = True)
-            
+
     #TODO: add exceptions here for rtl languages
     if c.lang in ('ar', 'he', 'fa'):
         c.lang_rtl = True
@@ -463,6 +473,8 @@ class MinimalController(BaseController):
                         request.fullpath,
                         c.over18,
                         c.firsttime,
+                        c.extension,
+                        c.render_style, 
                         cookies_key)
 
     def cached_response(self):
@@ -485,6 +497,7 @@ class MinimalController(BaseController):
         set_subreddit()
         c.errors = ErrorSet()
         c.cookies = Cookies()
+        set_content_type()
 
     def try_pagecache(self):
         #check content cache
@@ -619,6 +632,7 @@ class RedditController(MinimalController):
         c.cookies[g.login_cookie] = Cookie(value='')
 
     def pre(self):
+        c.response_wrappers = []
         MinimalController.pre(self)
 
         set_cnameframe()
@@ -627,14 +641,15 @@ class RedditController(MinimalController):
         if request.host != g.media_domain or g.media_domain == g.domain:
             try:
                 for k,v in request.cookies.iteritems():
-                    # we can unquote even if it's not quoted
-                    c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+                    # minimalcontroller can still set cookies
+                    if k not in c.cookies:
+                        # we can unquote even if it's not quoted
+                        c.cookies[k] = Cookie(value=unquote(v), dirty=False)
             except CookieError:
                 #pylons or one of the associated retarded libraries
                 #can't handle broken cookies
                 request.environ['HTTP_COOKIE'] = ''
 
-        c.response_wrappers = []
         c.firsttime = firsttime()
 
 
@@ -677,7 +692,6 @@ class RedditController(MinimalController):
 
         #set_browser_langs()
         set_host_lang()
-        set_content_type()
         set_iface_lang()
         set_content_lang()
         set_recent_reddits()

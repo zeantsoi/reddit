@@ -336,7 +336,8 @@ class RedditFooter(CachedTemplate):
                 ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
 
     def __init__(self):
-        self.nav = [NavMenu([NamedButton("mobile", False, nocname=True),
+        self.nav = [NavMenu([OffsiteButton("mobile", 
+                                           "/static/reddit_mobile/index.htm"),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
                          NamedButton("awards", False, nocname=True),
@@ -359,8 +360,7 @@ class RedditFooter(CachedTemplate):
                          NamedButton("buttons", True),
                          NamedButton("code", False, nocname=True),
                          NamedButton("socialite", False),
-                         NamedButton("widget", True),
-                         NamedButton("iphone", False),],
+                         NamedButton("widget", True)],
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
                     NavMenu([NamedButton("blog", False, nocname=True),
@@ -599,8 +599,9 @@ class BoringPage(Reddit):
     def __init__(self, pagename, **context):
         self.pagename = pagename
         name = c.site.name or g.default_sr
-        Reddit.__init__(self, title = "%s: %s" % (name, pagename),
-                        **context)
+        if "title" not in context:
+            context['title'] = "%s: %s" % (name, pagename)
+        Reddit.__init__(self, **context)
 
     def build_toolbars(self):
         return [PageNameNav('nomenu', title = self.pagename)]
@@ -620,25 +621,43 @@ class FormPage(BoringPage):
 
 class LoginPage(BoringPage):
     enable_login_cover = False
+    short_title = "login"
 
     """a boring page which provides the Login/register form"""
     def __init__(self, **context):
-        context['loginbox'] = False
         self.dest = context.get('dest', '')
+        context['loginbox'] = False
         context['show_sidebar'] = False
-        BoringPage.__init__(self,  _("login or register"), **context)
+        if c.render_style == "compact":
+            title = self.short_title
+        else:
+            title = _("login or register")
+        BoringPage.__init__(self,  title, **context)
 
     def content(self):
         kw = {}
         for x in ('user_login', 'user_reg'):
             kw[x] = getattr(self, x) if hasattr(self, x) else ''
-        return Login(dest = self.dest, **kw)
+        return self.login_template(dest = self.dest, **kw)
+
+    @classmethod
+    def login_template(cls, **kw):
+        return Login(**kw)
+
+class RegisterPage(LoginPage):
+    short_title = "register"
+    @classmethod
+    def login_template(cls, **kw):
+        return Register(**kw)
 
 class Login(Templated):
     """The two-unit login and register form."""
     def __init__(self, user_reg = '', user_login = '', dest=''):
         Templated.__init__(self, user_reg = user_reg, user_login = user_login,
                            dest = dest, captcha = Captcha())
+
+class Register(Login):
+    pass
     
 class SearchPage(BoringPage):
     """Search results page"""
@@ -702,6 +721,7 @@ class LinkInfoPage(Reddit):
                  link_title = '', subtitle = None, duplicates = None,
                  *a, **kw):
 
+        c.permalink_page = True
         expand_children = kw.get("expand_children", not bool(comment))
 
         wrapper = default_thing_wrapper(expand_children=expand_children)
@@ -754,7 +774,8 @@ class LinkInfoPage(Reddit):
             if not self.link.is_self and self.duplicates:
                 buttons.append(info_button('duplicates',
                                            num = len(self.duplicates)))
-            if len(self.link.title) < 200 and g.spreadshirt_url:
+            if (len(self.link.title) < 200 and g.spreadshirt_url
+                and c.render_style == "html"):
                 buttons += [info_button('shirt')]
 
         if c.user_is_admin:
@@ -1339,7 +1360,7 @@ class SearchFail(Templated):
         Templated.__init__(self)
 
 
-class Frame(Templated):
+class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The
     top 30px of the page are dedicated to the toolbar, while the rest
     of the page will show the results of following the link."""
@@ -1428,7 +1449,7 @@ class NewLink(Templated):
                 self.default_show = to_show
                 self.default_hide = to_hide
 
-            buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name))
+            buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name + "-button"))
 
         self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
         self.default_tabs = tabs[0][1]
@@ -2990,3 +3011,17 @@ def render_ad(reddit_name=None, codename=None):
              "error")
 
     return Dart_Ad(reddit_name).render()
+
+class TryCompact(Reddit):
+    def __init__(self, dest, **kw):
+        dest = dest or "/"
+        u = UrlParser(dest)
+        u.set_extension("compact")
+        self.compact = u.unparse()
+
+        u.update_query(keep_extension = True)
+        self.like = u.unparse()
+
+        u.set_extension("mobile")
+        self.mobile = u.unparse()
+        Reddit.__init__(self, **kw)

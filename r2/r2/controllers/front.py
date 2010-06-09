@@ -180,6 +180,8 @@ class FrontController(RedditController):
         # validator on my next pass of .compact)
         if depth is not None and 0 < depth < MAX_RECURSION:
             kw['max_depth'] = depth
+        elif c.render_style == "compact":
+            kw['max_depth'] = 5
         # allow the user's total count preferences to be overwritten
         # (think of .embed as the use case together with depth=1)x
         if limit is not None and 0 < limit < g.max_comments:
@@ -837,6 +839,14 @@ class FormsController(RedditController):
             return self.redirect(dest)
         return LoginPage(dest = dest).render()
 
+
+    @validate(dest = VDestination())
+    def GET_register(self, dest):
+        if (c.user_is_loggedin and
+            not request.environ.get('extension') == 'embed'):
+            return self.redirect(dest)
+        return RegisterPage(dest = dest).render()
+
     @validate(VUser(),
               VModhash(),
               dest = VDestination())
@@ -898,3 +908,7 @@ class FormsController(RedditController):
         ApiController.POST_optin."""
         return self._render_opt_in_out(msg_hash, False)
 
+    @validate(dest = VDestination("dest"))
+    def GET_try_compact(self, dest):
+        c.render_style = "compact"
+        return TryCompact(dest = dest).render()

@@ -63,6 +63,8 @@ class Account(Thing):
                      pref_threaded_messages = True,
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
+                     mobile_compress = False,
+                     mobile_thumbnail = True,
                      trusted_sponsor = False,
                      reported = 0,
                      report_made = 0,

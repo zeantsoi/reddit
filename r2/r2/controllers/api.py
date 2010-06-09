@@ -34,7 +34,7 @@ from r2.lib.utils import query_string, timefromnow
 from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
-    ClickGadget
+    ClickGadget, UrlParser
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
@@ -196,9 +196,10 @@ class ApiController(RedditController):
                    selftext = VMarkdown('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
-                                 default='comments'))
+                                 default='comments'),
+                   extension = VLength("extension", 20))
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    save, sr, ip, then):
+                    save, sr, ip, then, extension):
         from r2.models.admintools import is_banned_domain
 
         if isinstance(url, (unicode, str)):
@@ -237,7 +238,12 @@ class ApiController(RedditController):
                 pass
             elif form.has_errors("url", errors.ALREADY_SUB):
                 check_domain = False
-                form.redirect(url[0].already_submitted_link)
+                u = url[0].already_submitted_link
+                if extension:
+                    u = UrlParser(u)
+                    u.set_extension(extension)
+                    u = u.unparse()
+                form.redirect(u)
             # check for title, otherwise look it up and return it
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
@@ -323,7 +329,8 @@ class ApiController(RedditController):
         elif then == 'tb':
             form.attr('target', '_top')
             path = add_sr('/tb/%s' % l._id36)
-
+        if extension:
+            path += ".%s" % extension
         form.redirect(path)
 
     @validatedForm(VRatelimit(rate_ip = True,

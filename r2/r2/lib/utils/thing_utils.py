@@ -33,7 +33,6 @@ def set_last_modified_for_cls(user, cls_type_name):
     if cls_type_name != "vote_account_link":
         set_last_modified(user, "cls_" + cls_type_name)
 
-
 def get_last_modified_for_cls(user, cls_type_name):
     # vote times are already stored in the permacache and updated by the
     # query queue
