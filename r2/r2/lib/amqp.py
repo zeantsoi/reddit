@@ -48,6 +48,8 @@ amqp_logging = g.amqp_logging
 #adding items to amqp that are added using add_item) might block for
 #an arbitrary amount of time while trying to get a connection to amqp.
 
+reset_caches = g.reset_caches
+
 class Worker:
     def __init__(self):
         self.q = Queue()
@@ -57,6 +59,8 @@ class Worker:
 
     def _handle(self):
         while True:
+            reset_caches()
+
             fn = self.q.get()
             try:
                 fn()

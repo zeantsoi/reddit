@@ -22,6 +22,7 @@
 from threading import local
 from hashlib import md5
 import cPickle as pickle
+from copy import copy
 
 import pylibmc
 from _pylibmc import MemcachedError
@@ -528,7 +529,10 @@ class CassandraCacheChain(CacheChain):
             if value == NoneResult:
                 value = default
 
-            new_value = mutation_fn(value)
+            new_value = mutation_fn(copy(value)) # send in a copy in
+                                                 # case they mutate it
+                                                 # in-place
+
             if value != new_value:
                 self.cassa.set(key, new_value,
                                write_consistency_level = CL_QUORUM)

@@ -64,7 +64,6 @@ class QueueMap(object):
 
 class RedditQueueMap(QueueMap):
     def queues(self):
-        self._q('prec_links', self_refer=True, durable=False)
         self._q('scraper_q')
         self._q('newcomments_q')
         self._q('commentstree_q')
