@@ -40,6 +40,7 @@ class Account(Thing):
                                                'report_ignored', 'spammer',
                                                'reported')
     _int_prop_suffix = '_karma'
+    _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
                      pref_frame = False,
                      pref_frame_commentspanel = False,
