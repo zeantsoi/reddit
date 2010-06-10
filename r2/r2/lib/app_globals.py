@@ -147,6 +147,8 @@ class Globals(object):
         self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
         self.make_lock = make_lock_factory(self.memcache)
 
+        if not self.cassandra_seeds:
+            raise ValueError("cassandra_seeds not set in the .ini")
         self.cassandra_seeds = list(self.cassandra_seeds)
         random.shuffle(self.cassandra_seeds)
         self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)

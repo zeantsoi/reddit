@@ -148,6 +148,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
 
+    mc('/health/threads', controller='health', action='threads')
     mc('/health', controller='health', action='health')
     mc('/shutdown', controller='health', action='shutdown')
 
