@@ -652,23 +652,25 @@ class RedditController(MinimalController):
 
         c.firsttime = firsttime()
 
-
-        (c.user, maybe_admin) = \
-            valid_cookie(c.cookies[g.login_cookie].value
-                         if g.login_cookie in c.cookies
-                         else '')
-
-        if c.user:
-            c.user_is_loggedin = True
-        else:
-            c.user = UnloggedUser(get_browser_langs())
-            # patch for fixing mangled language preferences
-            if (not isinstance(c.user.pref_lang, basestring) or
-                not all(isinstance(x, basestring)
-                        for x in c.user.pref_content_langs)):
-                c.user.pref_lang = g.lang
-                c.user.pref_content_langs = [g.lang]
-                c.user._commit()
+        # the user could have been logged in via one of the feeds 
+        maybe_admin = False
+        if not c.user_is_loggedin:
+            (c.user, maybe_admin) = \
+                valid_cookie(c.cookies[g.login_cookie].value
+                             if g.login_cookie in c.cookies
+                             else '')
+    
+            if c.user:
+                c.user_is_loggedin = True
+            else:
+                c.user = UnloggedUser(get_browser_langs())
+                # patch for fixing mangled language preferences
+                if (not isinstance(c.user.pref_lang, basestring) or
+                    not all(isinstance(x, basestring)
+                            for x in c.user.pref_content_langs)):
+                    c.user.pref_lang = g.lang
+                    c.user.pref_content_langs = [g.lang]
+                    c.user._commit()
         if c.user_is_loggedin:
             if not c.user._loaded:
                 c.user._load()
