@@ -30,7 +30,10 @@ textarea {
    white-space: nowrap;
    width: auto;
    text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
+   border-radius: 6px;
+   -moz-border-radius: 6px;
    -webkit-border-radius: 6px;
+    background-color: #80A2C4;
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#BFD0E0), to(#80A2C4));
    border: 1px solid #517191;
    -webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1);
@@ -38,16 +41,19 @@ textarea {
 .button:active, .button[selected], .button.active,
 /*Vote toolbar styles*/.button.upmod, .button.downmod
  {
-   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#7E8994), to(#80A2C4));
+    background-color: #80A2C4;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#7E8994), to(#80A2C4));
 }
 button.button {
     padding: 0 5px;
 }
 .secondary_button {
-	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ABBBC9), to(#8393A3));
-	border: 1px solid #626D78;
+    background-color: #8393A3;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ABBBC9), to(#8393A3));
+    border: 1px solid #626D78;
 }
 .secondary_button:active, .second_button[selected], .second_button.active {
+    background-color: #ABBBC9;
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#8393A3), to(#ABBBC9));
 
 }
@@ -63,22 +69,34 @@ button.button {
    white-space: nowrap;
    width: auto;
    text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
+   border-radius: 6px;
+   -moz-border-radius: 6px;
    -webkit-border-radius: 6px;
+    background-color: #80A2C4;
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#BFD0E0), to(#80A2C4));
    border: 1px solid #517191;
    -webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1);
 }
 .small_button:active, .small_button[selected], .small_button.active {
+    background-color: #80A2C4;
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#7E8994), to(#80A2C4));
 }
 
 
 .group_button {
+    border-radius: 0;
+    -moz-border-radius: 0;
     -webkit-border-radius: 0;
     border-left: 1px solid hsl(211, 40%, 75%);
     border-right: 1px solid hsl(211, 28%, 37%);
 }
 .group_button:first-child {
+    -moz-border-radius-topleft: 6px;
+    -moz-border-radius-bottomleft: 6px;
+
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+
     -webkit-border-top-left-radius: 6px;
     -webkit-border-bottom-left-radius: 6px;
     border-left: 1px solid hsl(210, 28%, 44%);
@@ -237,8 +255,11 @@ button.button {
 #topbar {
     height: 45px;
     position: absolute; top: 0; left: 0; right: 0;
+    background-color: #A8C4E0;
     background: #CEE3F8 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#CEE3F8), to(#A8C4E0));
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     padding: 0px 10px 10px;
 }
@@ -295,10 +316,12 @@ body[orient="landscape"] > #topbar > h1 {
 	display: inline-block;
 }
 #topbar > .right > .button.havemail {
-	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#E0D0BF), to(#C4A280));
-	border: 1px solid #917151;
+    background-color: #C4A280;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#E0D0BF), to(#C4A280));
+    border: 1px solid #917151;
 }
 #topbar > .right > .button.havemail:active, #topbar > .right > .button.havemail[selected], #topbar > .right > .button.havemail.active {
+    backgrount-color: #C4A280;
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#E0D0BF), to(#C4A280));
    border: 1px solid #917151;
 }
