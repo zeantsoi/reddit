@@ -2,7 +2,6 @@ from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
-from r2.lib.db import query_queue
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
