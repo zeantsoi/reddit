@@ -55,7 +55,7 @@ try:
 except ImportError:
     print "Installing the PyCaptcha Module"
     easy_install(["http://svn.navi.cx/misc/trunk/pycaptcha"])
-    
+
 # ditto for pylons
 try:
     import pylons
@@ -66,7 +66,17 @@ except ImportError:
     print "Installing Pylons 0.9.6.2 from the cheese shop"
     easy_install(["http://pypi.python.org/packages/source/P/Pylons/Pylons-0.9.6.2.tar.gz"])
 
-#install the devel version of py-amqplib until the cheesehop version is updated
+# Install our special version of paste that dies on first zombie sighting
+try:
+    import paste
+    vers = getattr(paste, "__version__", "(undefined)")
+    assert vers == '1.7.2-reddit-0.1', \
+           ("reddit is only compatible with its own magical version of paste, not '%s'" % vers)
+except (ImportError, AssertionError):
+    print "Installing reddit's magical version of paste"
+    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.1.tar.gz"])
+
+#install the devel version of py-amqplib until the cheeseshop version is updated
 try:
     import amqplib
 except ImportError:
