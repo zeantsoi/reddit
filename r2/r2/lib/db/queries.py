@@ -967,7 +967,10 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 def process_votes(limit=None):
     # limit is taken but ignored for backwards compatibility
 
-    def _handle_vote(msg):
+    def _handle_vote(msgs, chan):
+        assert(len(msgs) == 1)
+        msg = msgs[0]
+
         r = pickle.loads(msg.body)
 
         uid, tid, dir, ip, organic, cheater = r
@@ -978,7 +981,7 @@ def process_votes(limit=None):
         handle_vote(voter, votee, dir, ip, organic,
                     cheater = cheater)
 
-    amqp.consume_items('register_vote_q', _handle_vote)
+    amqp.handle_items('register_vote_q', _handle_vote)
 
 try:
     from r2admin.lib.admin_queries import *
