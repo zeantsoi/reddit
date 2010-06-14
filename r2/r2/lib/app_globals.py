@@ -365,12 +365,12 @@ class Globals(object):
                 params['db_user'] = self.db_user
             if params['db_pass'] == "*":
                 params['db_pass'] = self.db_pass
-            dbm.engines[db_name] = db_manager.get_engine(**params)
+            dbm.setup_db(db_name, **params)
             self.db_params[db_name] = params
 
-        dbm.type_db = dbm.engines[gc['type_db']]
-        dbm.relation_type_db = dbm.engines[gc['rel_type_db']]
-        dbm.hardcache_db = dbm.engines[gc['hardcache_db']]
+        dbm.type_db = dbm.get_engine(gc['type_db'])
+        dbm.relation_type_db = dbm.get_engine(gc['rel_type_db'])
+        dbm.hardcache_db = dbm.get_engine(gc['hardcache_db'])
 
         def split_flags(p):
             return ([n for n in p if not n.startswith("!")],
@@ -384,12 +384,12 @@ class Globals(object):
                 kind = params[0]
                 if kind == 'thing':
                     engines, flags = split_flags(params[1:])
-                    dbm.add_thing(name, [dbm.engines[n] for n in engines],
+                    dbm.add_thing(name, [dbm.get_engine(n) for n in engines],
                                   **flags)
                 elif kind == 'relation':
                     engines, flags = split_flags(params[3:])
                     dbm.add_relation(name, params[1], params[2],
-                                     [dbm.engines[n] for n in engines],
+                                     [dbm.get_engine(n) for n in engines],
                                      **flags)
         return dbm
 

@@ -28,14 +28,7 @@ from setuptools import find_packages#, setup
 from distutils.core import setup, Extension
 from Cython.Distutils import build_ext
 import os, sys
-
-ext_modules = [
-                Extension('r2.lib.wrapped', ['r2/lib/wrapped.pyx']),
-                Extension('r2.lib.sgm', ['r2/lib/sgm.pyx']),
-                Extension('r2.lib.db._sorts', ['r2/lib/db/_sorts.pyx']),
-                Extension('r2.lib._normalized_hot', ['r2/lib/_normalized_hot.pyx']),
-                Extension('r2.models._builder', ['r2/models/_builder.pyx']),
-              ]
+import shutil
 
 def build_so(pyx_file):
     if not pyx_file.endswith(".pyx"):
@@ -54,6 +47,8 @@ def build_so(pyx_file):
         cmdclass = {'build_ext': build_ext},
         ext_modules = ext_modules,
         )
+    shutil.rmtree(name + '.egg-info')
+
 
 if __name__ == "__main__":
     build_so(sys.argv.pop())
