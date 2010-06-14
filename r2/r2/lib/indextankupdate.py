@@ -76,6 +76,18 @@ def inject_maps(maps):
         downs = d.pop("downs")
         num_comments = d.pop("num_comments")
         boosts = to_boosts(ups, downs, num_comments)
+
+        if ups not in (0, 1) or downs != 0 or num_comments > 0:
+            ok, result = index.boost(fullname, boosts=boosts)
+            if ok:
+                print "Boost-updated %s in IndexTank" % fullname
+                continue
+            else:
+                print "Failed to update(%r, %r) with IndexTank" % (fullname, boosts)
+                f = open("/tmp/indextank-error.html", "w")
+                f.write(str(result))
+#                g.cache.set("stop-indextank", True)
+
         ok, result = index.add(fullname, d, boosts)
         if ok:
             print "Added %s to IndexTank" % fullname
