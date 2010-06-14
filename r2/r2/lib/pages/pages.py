@@ -809,9 +809,16 @@ class LinkInfoPage(Reddit):
 
 class CommentPane(Templated):
     def cache_key(self):
+        num = self.article.num_comments
+        # bit of triage: we don't care about 10% changes in comment
+        # trees once they get to a certain length.  The cache is only a few
+        # min long anyway. 
+        if num > 1000:
+            num = (num / 100) * 100
+        elif num > 100:
+            num = (num / 10) * 10
         return "_".join(map(str, ["commentpane", self.article._fullname,
-                                  self.article.num_comments,
-                                  self.sort, self.num, c.lang,
+                                  num, self.sort, self.num, c.lang,
                                   self.can_reply, c.render_style]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
@@ -869,7 +876,7 @@ class CommentPane(Templated):
 
                     # render as if not logged in (but possibly with reply buttons)
                     self.rendered = renderer().render()
-                    g.cache.set(key, self.rendered, time = 30)
+                    g.cache.set(key, self.rendered, time = 120)
 
                 finally:
                     # undo the spoofing
