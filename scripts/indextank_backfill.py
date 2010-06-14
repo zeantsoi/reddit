@@ -26,7 +26,7 @@ from time import sleep
 from r2.lib.db.operators import asc, desc
 from pylons import g
 
-def run(verbose=False, sleep_time = 60, num_items = 1):
+def run(verbose=True, sleep_time = 60, num_items = 1):
     key = "indextank_cursor"
     cursor = g.cache.get(key)
     if cursor is None:
@@ -39,15 +39,19 @@ def run(verbose=False, sleep_time = 60, num_items = 1):
         q = Link._query(sort = desc('_id'),
                         limit = num_items)
         q._after(Link._byID(cursor))
+        last_date = None
         for item in q:
             cursor = item._id
-        amqp.add_item('indextank_changes', thing._fullname,
-                      message_id = thing._fullname,
+            last_date = item._date
+            amqp.add_item('indextank_changes', item._fullname,
+                      message_id = item._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
         g.cache.set(key, cursor)
 
         if verbose:
-            print ("Just enqueued %d items. New cursor=%s. Sleeping %d seconds."
-                   % (num_items, cursor, sleep_time))
+            if last_date:
+                last_date = last_date.strftime("%Y-%m-%d")
+            print ("Just enqueued %d items. New cursor=%s (%s). Sleeping %d seconds."
+                   % (num_items, cursor, last_date, sleep_time))
 
         sleep(sleep_time)
