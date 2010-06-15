@@ -979,6 +979,7 @@ class Query(object):
                 # it's not in the cache, and we have the power to
                 # update it, which we should do in a lock to prevent
                 # concurrent requests for the same data
+                g.log.error("thing.py: cache miss on %r" % self._iden())
                 with g.make_lock("lock_%s" % self._iden()):
                     # see if it was set while we were waiting for our
                     # lock
