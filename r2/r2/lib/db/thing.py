@@ -979,17 +979,11 @@ class Query(object):
                 # it's not in the cache, and we have the power to
                 # update it, which we should do in a lock to prevent
                 # concurrent requests for the same data
-                g.log.error("thing.py: cache miss on (%r, %r, %r), iden %r" %
-                            (self._kind, self._sort, self._rules, 
-                             self._iden()))
                 with g.make_lock("lock_%s" % self._iden()):
                     # see if it was set while we were waiting for our
                     # lock
                     names = cache.get(self._iden(), allow_local = False)
                     if not names:
-                        g.log.error("thing.py: cache miss inside lock on (%r, %r, %r), iden %r" %
-                                    (self._kind, self._sort, self._rules, 
-                                     self._iden()))
                         lst = _retrieve()
                         cache.set(self._iden(),
                                   [ x._fullname for x in lst ],
