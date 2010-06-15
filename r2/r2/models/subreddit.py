@@ -341,7 +341,7 @@ class Subreddit(Thing, Printable):
     @classmethod
     def top_lang_srs_single(cls, lang, limit,
                             filter_allow_top = False, over18 = True,
-                            over18_only = False):
+                            over18_only = False, _update = False):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -349,9 +349,9 @@ class Subreddit(Thing, Printable):
                                        sort=desc('_downs'),
                                        limit = limit,
                                        data = True,
-                                       read_cache = True,
+                                       read_cache = not _update,
                                        write_cache = True,
-                                       cache_time = int((15 + 10*random.random()) * 60))
+                                       cache_time = 60 * 60)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 

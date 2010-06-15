@@ -98,11 +98,14 @@ there's also a discussion going on here:
        link = _force_unicode(thing.url),
        title = _force_unicode(thing.title),
        permalink = add_sr(thing.permalink, sr_path = False, force_hostname = True))
+       url = "http://reddit.com/%s" % thing._id36
+       title = _force_unicode(thing.title)
+       tweet = "%s %s" % (title[0:(139-len(url))], url)
        %>
       <div class="options_triangle hidden">
-                 <a href="mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}" class="group_button button">Email</a>
-                 <a href="http://twitter.com/home?status=Look at this cool thing I found on reddit http://reddit.com/${thing._id36}" class="group_button button">Tweet</a>
-                 <a href="javascript:void(0)"  onclick="return change_state(this, 'report', hide_thing)"  class="group_button button">Report</a>
+        <a href="mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}" class="group_button button">Email</a>
+        <a href="http://twitter.com/home?status=${tweet}" class="group_button button">Tweet</a>
+        <a href="javascript:void(0)"  onclick="return change_state(this, 'report', hide_thing)"  class="group_button button">Report</a>
         %if not thing.is_self:
          <span class="button group_button">
            ${plain_link(thing.domain, thing.domain_path, _sr_path = False)}

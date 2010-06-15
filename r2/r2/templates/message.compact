@@ -77,15 +77,15 @@
                          c.user.name == thing.author.name)
            %>
          %if c.user_is_loggedin:
-          <a href="javascript:void(0)" class="button"
+          <a href="javascript:void(0)" class="group_button button"
              onclick="return reply(this)">Reply</a>
          %endif
-           ${plain_link(_("permalink"), thing.permalink, _class = "button")}
+           ${plain_link(_("permalink"), thing.permalink, _class = "group_button button")}
            %if thing.was_comment:
               ${plain_link(_("context"), thing.permalink + "?context=3",
                 _class = "button")}
            %endif
-           <a href="javascript:void(0)"  class="button"
+           <a href="javascript:void(0)"  class="group_button button"
               onclick="change_state(this, 'unread_message', unread_thing, true)">
              mark unread
            </a>

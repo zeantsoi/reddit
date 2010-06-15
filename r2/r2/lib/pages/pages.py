@@ -128,10 +128,20 @@ class Reddit(Templated):
 
         #add the infobar
         self.infobar = None
+        # generate a canonical link for google
+        self.canonical_link = request.fullpath
+        if c.render_style != "html":
+            u = UrlParser(request.fullpath)
+            u.set_extension("")
+            u.hostname = g.domain
+            if g.domain_prefix:
+                u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
+            self.canonical_link = u.unparse()
         if self.show_firsttext and not infotext:
             if g.read_only_mode:
                 infotext = strings.read_only_msg
-            elif c.firsttime == 'iphone':
+            elif (c.firsttime == 'mobile_suggest' and
+                  c.render_style != 'compact'):
                 infotext = strings.iphone_first
             elif c.firsttime and c.site.firsttext:
                 infotext = c.site.firsttext

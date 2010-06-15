@@ -967,27 +967,25 @@ class Query(object):
 
         names = lst = []
 
-        if not self._read_cache:
+        names = cache.get(self._iden()) if self._read_cache else None
+        if names is None and not self._write_cache:
+            # it wasn't in the cache, and we're not going to
+            # replace it, so just hit the db
             lst = _retrieve()
-        else:
-            names = cache.get(self._iden())
-            if names is None and not self._write_cache:
-                # it wasn't in the cache, and we're not going to
-                # replace it, so just hit the db
-                lst = _retrieve()
-            elif names is None and self._write_cache:
-                # it's not in the cache, and we have the power to
-                # update it, which we should do in a lock to prevent
-                # concurrent requests for the same data
-                with g.make_lock("lock_%s" % self._iden()):
-                    # see if it was set while we were waiting for our
-                    # lock
-                    names = cache.get(self._iden(), allow_local = False)
-                    if not names:
-                        lst = _retrieve()
-                        cache.set(self._iden(),
-                                  [ x._fullname for x in lst ],
-                                  self._cache_time)
+        elif names is None and self._write_cache:
+            # it's not in the cache, and we have the power to
+            # update it, which we should do in a lock to prevent
+            # concurrent requests for the same data
+            with g.make_lock("lock_%s" % self._iden()):
+                # see if it was set while we were waiting for our
+                # lock
+                names = cache.get(self._iden(), allow_local = False) \
+                                  if self._read_cache else None
+                if names is None:
+                    lst = _retrieve()
+                    cache.set(self._iden(),
+                              [ x._fullname for x in lst ],
+                              self._cache_time)
 
         if names and not lst:
             # we got our list of names from the cache, so we need to
