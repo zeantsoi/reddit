@@ -339,8 +339,9 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
-                     over18_only = False):
+    def top_lang_srs_single(cls, lang, limit,
+                            filter_allow_top = False, over18 = True,
+                            over18_only = False):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -367,6 +368,23 @@ class Subreddit(Thing, Printable):
         # reddits with negative author_id are system reddits and shouldn't be displayed
         return [x for x in pop_reddits
                 if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
+
+    @classmethod
+    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
+                     over18_only = False):
+        if lang != 'all':
+            lang = tup(lang)
+            res = []
+            for l in lang:
+                res.extend(cls.top_lang_srs_single(
+                    l, limit, filter_allow_top = filter_allow_top,
+                    over18 = over18, over18_only = over18_only))
+            res.sort(key = lambda sr: sr._downs, reverse = True)
+            return res[:limit]
+        return cls.top_lang_srs_single(
+            lang, limit, filter_allow_top = filter_allow_top,
+            over18 = over18, over18_only = over18_only)
+
 
 
     @classmethod
