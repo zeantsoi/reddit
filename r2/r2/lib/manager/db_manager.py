@@ -75,12 +75,14 @@ class db_manager:
             yield name, (type1_name, type2_name, engines) 
 
     def mark_dead(self, engine):
+        logger.error("db_manager: marking connection dead: %r" % engine)
         self.dead[engine] = time.time()
 
     def test_engine(self, engine):
         try:
             list(engine.execute("select 1"))
             if engine in self.dead:
+                logger.error("db_manager: marking connection alive: %r" % engine)
                 del self.dead[engine]
             return True
         except Exception, e:
