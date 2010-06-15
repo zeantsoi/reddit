@@ -351,7 +351,7 @@ class Subreddit(Thing, Printable):
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
-                                       cache_time = 20 * 60)
+                                       cache_time = (15 + random.random(10)) * 60)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
