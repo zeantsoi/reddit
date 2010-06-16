@@ -726,15 +726,25 @@ class RedditsController(ListingController):
     def query(self):
         if self.where == 'banned' and c.user_is_admin:
             reddits = Subreddit._query(Subreddit.c._spam == True,
-                                       sort = desc('_date'))
+                                       sort = desc('_date'),
+                                       write_cache = True,
+                                       read_cache = True,
+                                       cache_time = 5 * 60)
         else:
-            reddits = Subreddit._query()
+            reddits = None
             if self.where == 'new':
+                reddits = Subreddit._query( write_cache = True,
+                                            read_cache = True,
+                                            cache_time = 5 * 60)
                 reddits._sort = desc('_date')
             else:
+                reddits = Subreddit._query( write_cache = True,
+                                            read_cache = True,
+                                            cache_time = 60 * 60)
                 reddits._sort = desc('_downs')
-            if c.content_langs != 'all':
-                reddits._filter(Subreddit.c.lang == c.content_langs)
+            # Consider resurrecting when it is not the World Cup
+            #if c.content_langs != 'all':
+            #    reddits._filter(Subreddit.c.lang == c.content_langs)
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
 
