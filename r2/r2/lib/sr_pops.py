@@ -91,8 +91,7 @@ def run():
     set_downs()
     cache_lists()
 
-@memoize('pop_reddits_cached')
-def pop_reddits_cached(langs, over18, over18_only):
+def pop_reddits(langs, over18, over18_only):
     if not over18:
         over18_state = 'no_over18'
     elif over18_only:
@@ -100,19 +99,11 @@ def pop_reddits_cached(langs, over18, over18_only):
     else:
         over18_state = 'allow_over18'
 
-    keys = []
-    for lang in langs:
-        keys.append(cached_srs_key(lang, over18_state))
+    keys = dict((cached_srs_key(lang, over18_state), lang)
+                for lang in langs)
+    sr_ids = g.permacache.get_multi(keys.keys())
 
-    sr_ids_lists = g.permacache.get_multi(keys)
+    return dict((keys[key], ids)
+                for (key, ids)
+                in sr_ids.iteritems())
 
-    sr_ids = flatten(sr_ids_lists.values())
-
-    srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
-    srs.sort(key = lambda sr: sr._downs, reverse=True)
-
-    return map(lambda sr: sr._id, srs)
-
-def pop_reddits(langs, over18, over18_only):
-    langs = sorted(langs)
-    return pop_reddits_cached(langs, over18, over18_only)

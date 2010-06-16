@@ -30,7 +30,7 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize
-from r2.lib.utils import tup, interleave_lists, last_modified_multi
+from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 
@@ -343,14 +343,22 @@ class Subreddit(Thing, Printable):
                      over18_only = False):
         from r2.lib import sr_pops
         lang = tup(lang)
-        srs_ids = sr_pops.pop_reddits(tup(lang), over18, over18_only)
         fetchlim = limit*2 if filter_allow_top else limit
 
-        srs = Subreddit._byID(srs_ids[:fetchlim],data=True,return_dict=False)
+        # sr_ids =:= dict(lang -> sr_ids)
+        sr_ids = sr_pops.pop_reddits(lang, over18, over18_only)
 
+        # now look up the first fetchlim from each language
+        srs = Subreddit._byID(flatten(ids[:fetchlim]
+                                      for ids in sr_ids.values()),
+                              data=True, return_dict=False)
+
+        # remove the folks that have opted out of being on the front
+        # page as appropriate
         if filter_allow_top:
             srs = filter(lambda sr: sr.allow_top, srs)
 
+        srs.sort(key=lambda sr: sr._downs, reverse=True)
         return srs[:limit]
 
     @classmethod
