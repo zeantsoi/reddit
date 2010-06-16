@@ -284,6 +284,22 @@ def get_write_table(tables):
     else:
         return tables[0]
 
+import re
+_spaces = re.compile('[\s]+')
+def add_request_info(select):
+    from pylons import request
+    def sanitize(txt):
+        return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
+    if (hasattr(request, 'path') and
+        hasattr(request, 'ip') and
+        hasattr(request, 'user_agent')):
+        comment = '/*\n%s\n%s\n*/' % (sanitize(request.fullpath),
+                                          sanitize(request.ip))
+        return select.prefix_with(comment)
+    else:
+        return select
+
+
 def get_table(kind, action, tables, avoid_master_reads = False):
     if action == 'write':
         #if this is a write, store the kind in the c.use_write_db dict
@@ -486,7 +502,7 @@ def fetch_query(table, id_col, thing_id):
     s = sa.select([table], sa.or_(*[id_col == tid
                                     for tid in thing_id]))
     try:
-        r = s.execute().fetchall()
+        r = add_request_info(s).execute().fetchall()
     except Exception, e:
         dbm.mark_dead(table.bind)
         # this thread must die so that others may live
@@ -709,7 +725,7 @@ def find_things(type_id, get_cols, sort, limit, constraints):
         s = s.limit(limit)
 
     try:
-        r = s.execute()
+        r = add_request_info(s).execute()
     except Exception, e:
         dbm.mark_dead(table.bind)
         # this thread must die so that others may live
@@ -791,7 +807,7 @@ def find_data(type_id, get_cols, sort, limit, constraints):
         s = s.limit(limit)
 
     try:
-        r = s.execute()
+        r = add_request_info(s).execute()
     except Exception, e:
         dbm.mark_dead(t_table.bind)
         # this thread must die so that others may live
@@ -868,7 +884,7 @@ def find_rels(rel_type_id, get_cols, sort, limit, constraints):
         s = s.limit(limit)
 
     try:
-        r = s.execute()
+        r = add_request_info(s).execute()
     except Exception, e:
         dbm.mark_dead(r_table.bind)
         # this thread must die so that others may live
