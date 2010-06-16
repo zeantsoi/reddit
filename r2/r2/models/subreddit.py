@@ -343,17 +343,13 @@ class Subreddit(Thing, Printable):
                      over18_only = False):
         from r2.lib import sr_pops
         lang = tup(lang)
-        srs = sr_pops.pop_reddits(tup(lang), over18, over18_only)
-        srs = [sr for sr in srs if
+        srs_ids = sr_pops.pop_reddits(tup(lang), over18, over18_only)
+        fetchlim = limit*2 if filter_allow_top else limit
 
-               # some reddits have opted to not be showable in the
-               # default list
-               (not filter_allow_top or sr.allow_top)
+        srs = Subreddit._byID(srs_ids[:fetchlim],data=True,return_dict=False)
 
-               # reddits with negative author_id are system reddits
-               # and shouldn't be displayed
-               and (getattr(sr, "author_id", 0) is None
-                    or getattr(sr, "author_id", 0) >= 0)]
+        if filter_allow_top:
+            srs = filter(lambda sr: sr.allow_top, srs)
 
         return srs[:limit]
 

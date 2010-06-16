@@ -115,5 +115,4 @@ def pop_reddits_cached(langs, over18, over18_only):
 
 def pop_reddits(langs, over18, over18_only):
     langs = sorted(langs)
-    sr_ids = pop_reddits_cached(langs, over18, over18_only)
-    return Subreddit._byID(sr_ids, return_dict=False, data=True)
+    return pop_reddits_cached(langs, over18, over18_only)
