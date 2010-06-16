@@ -167,5 +167,5 @@ class db_manager:
 
         #should never happen
         print 'yer stupid'
-        return  random.choice(tables)
+        return  random.choice(list(tables))
 
