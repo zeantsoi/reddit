@@ -65,7 +65,7 @@ class Subreddit(Thing, Printable):
                      sponsorship_img = None,
                      sponsorship_name = None,
                      )
-    _essentials = ('type', 'name')
+    _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
 
     sr_limit = 50
@@ -339,53 +339,23 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs_single(cls, lang, limit,
-                            filter_allow_top = False, over18 = True,
-                            over18_only = False, _update = False):
-        """Returns the default list of subreddits for a given language, sorted
-        by popularity"""
-        pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
-                                                            'restricted'),
-                                       sort=desc('_downs'),
-                                       limit = limit,
-                                       data = True,
-                                       read_cache = not _update,
-                                       write_cache = True,
-                                       cache_time = 60 * 60)
-        if lang != 'all':
-            pop_reddits._filter(Subreddit.c.lang == lang)
-
-        if not over18:
-            pop_reddits._filter(Subreddit.c.over_18 == False)
-        elif over18_only:
-            pop_reddits._filter(Subreddit.c.over_18 == True)
-
-        if filter_allow_top:
-            pop_reddits._limit = 2 * limit
-            pop_reddits = filter(lambda sr: sr.allow_top == True,
-                                 pop_reddits)[:limit]
-
-        # reddits with negative author_id are system reddits and shouldn't be displayed
-        return [x for x in pop_reddits
-                if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
-
-    @classmethod
     def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
                      over18_only = False):
-        if lang != 'all':
-            lang = tup(lang)
-            res = []
-            for l in lang:
-                res.extend(cls.top_lang_srs_single(
-                    l, limit, filter_allow_top = filter_allow_top,
-                    over18 = over18, over18_only = over18_only))
-            res.sort(key = lambda sr: sr._downs, reverse = True)
-            return res[:limit]
-        return cls.top_lang_srs_single(
-            lang, limit, filter_allow_top = filter_allow_top,
-            over18 = over18, over18_only = over18_only)
+        from r2.lib import sr_pops
+        lang = tup(lang)
+        srs = sr_pops.pop_reddits(tup(lang), over18, over18_only)
+        srs = [sr for sr in srs if
 
+               # some reddits have opted to not be showable in the
+               # default list
+               (not filter_allow_top or sr.allow_top)
 
+               # reddits with negative author_id are system reddits
+               # and shouldn't be displayed
+               and (getattr(sr, "author_id", 0) is None
+                    or getattr(sr, "author_id", 0) >= 0)]
+
+        return srs[:limit]
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
@@ -404,12 +374,12 @@ class Subreddit(Thing, Printable):
                                filter_allow_top = True,
                                over18 = c.over18)
         rv = []
-        for i, s in enumerate(srs):
+        for sr in srs:
             if len(rv) >= limit:
                 break
-            if s in auto_srs:
+            if sr in auto_srs:
                 continue
-            rv.append(s)
+            rv.append(sr)
 
         rv = auto_srs + rv
 

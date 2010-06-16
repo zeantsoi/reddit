@@ -1315,6 +1315,13 @@ def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
     elapsed = now - start
     sys.stderr.write('Processed %d items in %s..%s (%s)\n' % (seen, start, now, elapsed))
 
+def flatten(lists):
+    """[[1,2], [3], [4,5,6]] -> [1,2,3,4,5,6]"""
+    ret = []
+    for l in lists:
+        ret.extend(l)
+    return ret
+
 class Hell(object):
     def __str__(self):
         return "boom!"
