@@ -284,22 +284,33 @@ def get_write_table(tables):
     else:
         return tables[0]
 
-import re
+import re, traceback, cStringIO as StringIO
 _spaces = re.compile('[\s]+')
 def add_request_info(select):
     from pylons import request
     from r2.lib import filters
     def sanitize(txt):
         return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
-    if (hasattr(request, 'path') and
-        hasattr(request, 'ip') and
-        hasattr(request, 'user_agent')):
-        comment = '/*\n%s\n%s\n*/' % (
-            filters._force_utf8(sanitize(request.fullpath)),
-            sanitize(request.ip))
-        return select.prefix_with(comment)
-    else:
-        return select
+    s = StringIO.StringIO()
+    traceback.print_stack( file = s)
+    tb = s.getvalue()
+    if tb:
+        tb = tb.split('\n')[0::2]
+        tb = [x.split('/')[-1] for x in tb if "/r2/" in x]
+        tb = '\n'.join(tb[-15:-2])
+    try:
+        if (hasattr(request, 'path') and
+            hasattr(request, 'ip') and
+            hasattr(request, 'user_agent')):
+            comment = '/*\n%s\n%s\n%s\n*/' % (
+                tb or "", 
+                filters._force_utf8(sanitize(request.fullpath)),
+                sanitize(request.ip))
+            return select.prefix_with(comment)
+    except UnicodeDecodeError:
+        pass
+
+    return select
 
 
 def get_table(kind, action, tables, avoid_master_reads = False):
