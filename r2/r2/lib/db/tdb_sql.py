@@ -288,13 +288,15 @@ import re
 _spaces = re.compile('[\s]+')
 def add_request_info(select):
     from pylons import request
+    from r2.lib import filters
     def sanitize(txt):
         return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
     if (hasattr(request, 'path') and
         hasattr(request, 'ip') and
         hasattr(request, 'user_agent')):
-        comment = '/*\n%s\n%s\n*/' % (sanitize(request.fullpath),
-                                          sanitize(request.ip))
+        comment = '/*\n%s\n%s\n*/' % (
+            filters._force_utf8(sanitize(request.fullpath)),
+            sanitize(request.ip))
         return select.prefix_with(comment)
     else:
         return select
