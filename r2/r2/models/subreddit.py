@@ -343,7 +343,10 @@ class Subreddit(Thing, Printable):
                      over18_only = False):
         from r2.lib import sr_pops
         lang = tup(lang)
-        fetchlim = limit*2 if filter_allow_top else limit
+
+        # assume that fewer than 50% of reddits are setting
+        # allow_top==False
+        fetchlim = limit*2 if filter_allow_top and len(lang) < 2 else limit
 
         # sr_ids =:= dict(lang -> sr_ids)
         sr_ids = sr_pops.pop_reddits(lang, over18, over18_only)
