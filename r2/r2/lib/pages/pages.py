@@ -52,7 +52,7 @@ from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 
 import sys, random, datetime, locale, calendar, simplejson, re, time
-import graph, pycountry, time
+import graph, pycountry
 from itertools import chain
 from urllib import quote
 
@@ -1150,18 +1150,13 @@ class Over18(Templated):
     pass
 
 class SubredditTopBar(Templated):
-
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
     def __init__(self):
         self._my_reddits = None
         self._pop_reddits = None
-        name = '' if not c.user_is_loggedin else c.user.name
-        langs = "" if name else c.content_langs
-        # poor man's expiration
-        t = int(time.time()) / 3600
-        Templated.__init__(self, name = name, langs = langs, t = t,
-                                over18 = c.over18)
+        Templated.__init__(self)
+
 
     @property
     def my_reddits(self):
