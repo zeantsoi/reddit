@@ -195,7 +195,7 @@ ul.flat-vert {text-align: left;}
 
 .drop-choices a.choice {
     cursor: pointer;
-    padding: 0px 3px 0px 3px;
+    padding: 2px 3px 1px 3px;
     display: block;
  }
 
@@ -2574,7 +2574,7 @@ ul#image-preview-list .description pre {
     margin-right: 10px;/* ...so we move it to the right side plus 5 more */
  }
 
-.srdrop .choice {margin-top: 3px;}
+.srdrop .choice {padding-top: 3p]x;}
 
 .srdrop .choice.top-option {
     font-style: italic;
