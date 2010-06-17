@@ -595,17 +595,6 @@ class FrontController(RedditController):
                                         captcha=captcha,
                                         then = then)).render()
 
-    def _render_opt_in_out(self, msg_hash, leave):
-        """Generates the form for an optin/optout page"""
-        email = Email.handler.get_recipient(msg_hash)
-        if not email:
-            return self.abort404()
-        sent = (has_opted_out(email) == leave)
-        return BoringPage(_("opt out") if leave else _("welcome back"),
-                          content = OptOut(email = email, leave = leave, 
-                                           sent = sent, 
-                                           msg_hash = msg_hash)).render()
-
     def GET_frame(self):
         """used for cname support.  makes a frame and
         puts the proper url as the frame source"""
@@ -891,6 +880,17 @@ class FormsController(RedditController):
         else:
             c.response.content = ''
         return c.response
+
+    def _render_opt_in_out(self, msg_hash, leave):
+        """Generates the form for an optin/optout page"""
+        email = Email.handler.get_recipient(msg_hash)
+        if not email:
+            return self.abort404()
+        sent = (has_opted_out(email) == leave)
+        return BoringPage(_("opt out") if leave else _("welcome back"),
+                          content = OptOut(email = email, leave = leave, 
+                                           sent = sent, 
+                                           msg_hash = msg_hash)).render()
 
     @validate(msg_hash = nop('x'))
     def GET_optout(self, msg_hash):
