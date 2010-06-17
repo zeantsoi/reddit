@@ -499,6 +499,8 @@ class MinimalController(BaseController):
         set_subreddit()
         c.errors = ErrorSet()
         c.cookies = Cookies()
+        # if an rss feed, this will also log the user in if a feed=
+        # GET param is included
         set_content_type()
 
     def try_pagecache(self):
@@ -656,15 +658,18 @@ class RedditController(MinimalController):
 
         # the user could have been logged in via one of the feeds 
         maybe_admin = False
+
+        # no logins for RSS feed unless valid_feed has already been called
         if not c.user_is_loggedin:
-            (c.user, maybe_admin) = \
-                valid_cookie(c.cookies[g.login_cookie].value
-                             if g.login_cookie in c.cookies
-                             else '')
-    
-            if c.user:
-                c.user_is_loggedin = True
-            else:
+            if c.extension != "rss":
+                (c.user, maybe_admin) = \
+                         valid_cookie(c.cookies[g.login_cookie].value
+                                      if g.login_cookie in c.cookies
+                                      else '')
+                if c.user:
+                    c.user_is_loggedin = True
+
+            if not c.user_is_loggedin:
                 c.user = UnloggedUser(get_browser_langs())
                 # patch for fixing mangled language preferences
                 if (not isinstance(c.user.pref_lang, basestring) or
