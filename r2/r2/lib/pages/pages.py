@@ -52,7 +52,7 @@ from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 
 import sys, random, datetime, locale, calendar, simplejson, re, time
-import graph, pycountry
+import graph, pycountry, time
 from itertools import chain
 from urllib import quote
 
@@ -149,7 +149,7 @@ class Reddit(Templated):
             self.infobar = InfoBar(message = infotext)
 
         self.srtopbar = None
-        if not c.cname:
+        if not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
         if c.user_is_loggedin and self.show_sidebar and not is_api():
@@ -1149,14 +1149,19 @@ class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
     pass
 
-class SubredditTopBar(Templated):
+class SubredditTopBar(CacheTemplate):
+
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
     def __init__(self):
         self._my_reddits = None
         self._pop_reddits = None
-        Templated.__init__(self)
-
+        name = '' if not c.user_is_loggedin else c.user.name
+        langs = "" if name else c.content_langs
+        # poor man's expiration
+        t = int(time.time()) / 3600
+        CacheTemplate.__init__(self, name = name, langs = langs, t = t,
+                               over18 = c.over18)
 
     @property
     def my_reddits(self):
