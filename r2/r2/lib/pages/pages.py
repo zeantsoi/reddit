@@ -1158,8 +1158,10 @@ class SubredditTopBar(CachedTemplate):
         self._pop_reddits = None
         name = '' if not c.user_is_loggedin else c.user.name
         langs = "" if name else c.content_langs
-        # poor man's expiration
+        # poor man's expiration, with random initial time
         t = int(time.time()) / 3600
+        if c.user_is_loggedin:
+            t += c.user._id
         CachedTemplate.__init__(self, name = name, langs = langs, t = t,
                                over18 = c.over18)
 
