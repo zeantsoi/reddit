@@ -1149,7 +1149,7 @@ class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
     pass
 
-class SubredditTopBar(CacheTemplate):
+class SubredditTopBar(CachedTemplate):
 
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
@@ -1160,7 +1160,7 @@ class SubredditTopBar(CacheTemplate):
         langs = "" if name else c.content_langs
         # poor man's expiration
         t = int(time.time()) / 3600
-        CacheTemplate.__init__(self, name = name, langs = langs, t = t,
+        CachedTemplate.__init__(self, name = name, langs = langs, t = t,
                                over18 = c.over18)
 
     @property
