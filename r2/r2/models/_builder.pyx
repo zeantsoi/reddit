@@ -1,6 +1,6 @@
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments
+from r2.lib.comment_tree import link_comments, tree_sort_fn
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
@@ -238,8 +238,11 @@ class _MessageBuilder(Builder):
     def get_tree(self):
         raise NotImplementedError, "get_tree"
 
-    def _tree_filter(self, x):
+    def _tree_filter_reverse(self, x):
         return tree_sort_fn(x) >= self.after._id
+
+    def _tree_filter(self, x):
+        return tree_sort_fn(x) < self.after._id
 
     def get_items(self):
         tree = self.get_tree()
@@ -250,7 +253,7 @@ class _MessageBuilder(Builder):
                 if self.after:
                     if self.reverse:
                         tree = filter(
-                            self._tree_filter,
+                            self._tree_filter_reverse,
                             tree)
                         next = self.after._id
                         if len(tree) > self.num:

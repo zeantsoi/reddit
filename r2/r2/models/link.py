@@ -924,26 +924,15 @@ class Message(Thing, Printable):
                                   if l.parent_id and l.was_comment),
                                 data = True, return_dict = True)
 
-        # load the inbox relations for the messages to determine new-ness
-        # TODO: query cache?
-        inbox = Inbox._fast_query(c.user,
-                                  [item.lookups[0] for item in wrapped],
-                                  ['inbox', 'selfreply'], thing_data=True)
+        # load the unread list to determine message newness
+        unread = set(queries.get_unread_inbox(user))
 
-        # we don't care about the username or the rel name
-        inbox = dict((m._fullname, v)
-                     for (u, m, n), v in inbox.iteritems() if v)
-
-        msgs = filter (lambda x: isinstance(x.lookups[0], Message), wrapped)
-
-        modinbox = ModeratorInbox._fast_query(m_subreddits.values(),
-                                              msgs, ['inbox'], thing_data=True)
-
-        # best to not have to eager_load the things
-        def make_message_fullname(mid):
-            return "t%s_%s" % (utils.to36(Message._type_id), utils.to36(mid))
-        modinbox = dict((make_message_fullname(v._thing2_id), v)
-                     for (u, m, n), v in modinbox.iteritems() if v)
+        msg_srs = set(m_subreddits[x.sr_id]
+                      for x in wrapped if x.sr_id is not None
+                      and isinstance(x.lookups[0], Message))
+        # load the unread mod list for the same reason
+        mod_unread = set(queries.merge_results(
+            *[queries.get_unread_subreddit_messages(sr) for sr in msg_srs]))
 
         for item in wrapped:
             item.to = tos.get(item.to_id)
@@ -955,19 +944,16 @@ class Message(Thing, Printable):
             # new-ness is stored on the relation
             if item.author_id == c.user._id:
                 item.new = False
-            elif item._fullname in inbox:
-                item.new = getattr(inbox[item._fullname], "new", False)
+            elif item._fullname in unread:
+                item.new = True
                 # wipe new messages if preferences say so, and this isn't a feed
                 # and it is in the user's personal inbox
                 if (item.new and c.user.pref_mark_messages_read
                     and c.extension not in ("rss", "xml", "api", "json")):
                     queries.set_unread(inbox[item._fullname]._thing2,
                                        c.user, False)
-            elif item._fullname in modinbox:
-                item.new = getattr(modinbox[item._fullname], "new", False)
             else:
-                item.new = False
-
+                item.new = (item._fullname in mod_unread)
 
             item.score_fmt = Score.none
 
