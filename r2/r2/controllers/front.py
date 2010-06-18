@@ -83,7 +83,7 @@ class FrontController(RedditController):
 
     def GET_random(self):
         """The Serendipity button"""
-        sort = 'new' if rand.choice((True,False)) else 'hot'
+        sort = rand.choice(('new','hot'))
         links = c.site.get_links(sort, 'all')
         if isinstance(links, thing.Query):
             links._limit = g.num_serendipity

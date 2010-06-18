@@ -1,7 +1,7 @@
 # smart get multi:
 # For any keys not found in the cache, miss_fn() is run and the result is
 # stored in the cache. Then it returns everything, both the hits and misses.
-def sgm(cache, keys, miss_fn, str prefix='', int time=0):
+def sgm(cache, keys, miss_fn, str prefix='', int time=0, _update=False):
     cdef dict ret
     cdef dict s_keys
     cdef dict cached
@@ -18,9 +18,12 @@ def sgm(cache, keys, miss_fn, str prefix='', int time=0):
     for key in keys:
         s_keys[str(key)] = key
 
-    cached = cache.get_multi(s_keys.keys(), prefix=prefix)
-    for k, v in cached.iteritems():
-        ret[s_keys[k]] = v
+    if _update:
+        cached = {}
+    else:
+        cached = cache.get_multi(s_keys.keys(), prefix=prefix)
+        for k, v in cached.iteritems():
+            ret[s_keys[k]] = v
 
     if miss_fn and len(cached) < len(s_keys):
         # if we didn't get all of the keys from the cache, go to the

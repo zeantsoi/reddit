@@ -2040,6 +2040,8 @@ textarea.gray { color: gray; }
 .toolbar .right-side {
     float: right;
     background-color: #EFF7FF;
+    margin-top: -1px;
+    height: 19px;
 }
 
 .toolbar a, .toolbar b {
@@ -2071,6 +2073,7 @@ textarea.gray { color: gray; }
 .toolbar a img, toolbar b img {
     vertical-align: middle;
     padding-top: 3px;
+    vertical-align: -3px;
 }
 
 .toolbar .content {

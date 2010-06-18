@@ -1458,27 +1458,39 @@ class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha = None, url = '', title= '', subreddits = (),
                  then = 'comments'):
-        tabs = (('link', ('link-desc', 'url-field')),
-                ('text', ('text-desc', 'text-field')))
-        all_fields = set(chain(*(parts for (tab, parts) in tabs)))
-        buttons = []
-        self.default_tabs = tabs[0][1]
-        self.default_tab = tabs[0][0]
-        for tab_name, parts in tabs:
-            to_show = ','.join('#' + p for p in parts)
-            to_hide = ','.join('#' + p for p in all_fields if p not in parts)
-            onclick = "return select_form_tab(this, '%s', '%s');"
-            onclick = onclick % (to_show, to_hide)
-            if tab_name == self.default_tab:
-                self.default_show = to_show
-                self.default_hide = to_hide
 
-            buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name + "-button"))
+        self.show_link = self.show_self = False
 
-        self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
-        self.default_tabs = tabs[0][1]
+        tabs = []
+        if c.default_sr or c.site.link_type != 'self':
+            tabs.append(('link', ('link-desc', 'url-field')))
+            self.show_link = True
+        if c.default_sr or c.site.link_type != 'link':
+            tabs.append(('text', ('text-desc', 'text-field')))
+            self.show_self = True
+
+        if self.show_self and self.show_link:
+            all_fields = set(chain(*(parts for (tab, parts) in tabs)))
+            buttons = []
+            self.default_tabs = tabs[0][1]
+            self.default_tab = tabs[0][0]
+            for tab_name, parts in tabs:
+                to_show = ','.join('#' + p for p in parts)
+                to_hide = ','.join('#' + p for p in all_fields if p not in parts)
+                onclick = "return select_form_tab(this, '%s', '%s');"
+                onclick = onclick % (to_show, to_hide)
+                if tab_name == self.default_tab:
+                    self.default_show = to_show
+                    self.default_hide = to_hide
+
+                buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name + "-button"))
+
+            self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
+            self.default_tabs = tabs[0][1]
 
         self.sr_searches = simplejson.dumps(popular_searches())
+
+        self.on_default_sr = c.default_sr
 
         if isinstance(c.site, FakeSubreddit):
             self.default_sr = subreddits[0] if subreddits else g.default_sr

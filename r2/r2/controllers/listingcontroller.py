@@ -394,6 +394,14 @@ class NewController(ListingController):
 class BrowseController(ListingController):
     where = 'browse'
 
+    def keep_fn(self):
+        """For merged time-listings, don't show items that are too
+           old"""
+        if self.time != 'all' and c.default_sr:
+            oldest = timeago('1 %s' % (self.time,))
+            return lambda item: item._date > oldest
+        return ListingController.keep_fn(self)
+
     @property
     def menus(self):
         return [ControversyTimeMenu(default = self.time)]
