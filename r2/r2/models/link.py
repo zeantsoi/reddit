@@ -950,7 +950,7 @@ class Message(Thing, Printable):
                 # and it is in the user's personal inbox
                 if (item.new and c.user.pref_mark_messages_read
                     and c.extension not in ("rss", "xml", "api", "json")):
-                    queries.set_unread(inbox[item._fullname]._thing2,
+                    queries.set_unread(item.lookups[0],
                                        c.user, False)
             else:
                 item.new = (item._fullname in mod_unread)
