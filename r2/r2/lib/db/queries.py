@@ -643,7 +643,10 @@ def set_unread(message, to, unread):
     else:
         for i in Inbox.set_unread(message, unread, to = to):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
-            if i._name == 'selfreply':
+            if isinstance(message, Comment) and not unread:
+                add_queries([get_unread_comments(i._thing1)], **kw)
+                add_queries([get_unread_selfreply(i._thing1)], **kw)
+            elif i._name == 'selfreply':
                 add_queries([get_unread_selfreply(i._thing1)], **kw)
             elif isinstance(message, Comment):
                 add_queries([get_unread_comments(i._thing1)], **kw)
