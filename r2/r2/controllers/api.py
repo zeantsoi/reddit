@@ -1153,7 +1153,7 @@ class ApiController(RedditController):
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
                    domain = VCnameDomain("domain"),
-                   description = VMarkdown("description", max_length = 1000),
+                   description = VMarkdown("description", max_length = 5120),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),

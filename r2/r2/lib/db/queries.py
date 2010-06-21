@@ -263,7 +263,7 @@ def merge_results(*results):
         m.prewrap_fn = results[0].prewrap_fn
         return m
 
-def get_links(sr, sort, time, merge_batched=True):
+def get_links(sr, sort, time):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
                     sort = db_sort(sort),

@@ -24,14 +24,14 @@ from r2.models import Subreddit
 from r2.lib.db.operators import desc
 from r2.lib import count
 from r2.lib.memoize import memoize
-from r2.lib.utils import fetch_things2, flatten
+from r2.lib.utils import fetch_things2, flatten, keymap
 
 # the length of the stored per-language list
-limit = 200
+limit = 1000
 
 def cached_srs_key(lang, over18_state):
     assert over18_state in ('no_over18', 'allow_over18', 'only_over18')
-    return 'sr_pops_%s_%s' % (lang, over18_state)
+    return 'sr_pop_%s_%s' % (lang, over18_state)
 
 def set_downs():
     sr_counts = count.get_sr_counts()
@@ -61,6 +61,11 @@ def cache_lists():
             # skip special system reddits like promos
             continue
 
+        if sr.type not in ('public', 'restricted'):
+            # skips reddits that can't appear in the default list
+            # because of permissions
+            continue
+
         g.log.debug(sr.name)
         for lang in 'all', sr.lang:
             over18s = ['allow_over18']
@@ -80,18 +85,18 @@ def cache_lists():
 
     for (lang, over18), srs in bylang.iteritems():
         srs = _chop(srs)
-        sr_ids = map(lambda sr: sr._id, srs)
+        sr_tuples = map(lambda sr: (sr._downs, sr.allow_top, sr._id), srs)
 
         g.log.debug("For %s/%s setting %s" % (lang, over18,
-                                              [sr.name for sr in srs]))
+                                              map(lambda sr: sr.name, srs)))
 
-        g.permacache.set(cached_srs_key(lang, over18), sr_ids)
+        g.permacache.set(cached_srs_key(lang, over18), sr_tuples)
 
 def run():
     set_downs()
     cache_lists()
 
-def pop_reddits(langs, over18, over18_only):
+def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
     if not over18:
         over18_state = 'no_over18'
     elif over18_only:
@@ -99,11 +104,20 @@ def pop_reddits(langs, over18, over18_only):
     else:
         over18_state = 'allow_over18'
 
-    keys = dict((cached_srs_key(lang, over18_state), lang)
-                for lang in langs)
-    sr_ids = g.permacache.get_multi(keys.keys())
+    keys = map(lambda lang: cached_srs_key(lang, over18_state), langs)
 
-    return dict((keys[key], ids)
-                for (key, ids)
-                in sr_ids.iteritems())
+    # dict(lang_key -> [(_downs, allow_top, sr_id)])
+    srs = g.permacache.get_multi(keys)
 
+    tups = flatten(srs.values())
+
+    if filter_allow_top:
+        # remove the folks that have opted out of being on the front
+        # page as appropriate
+        tups = filter(lambda tpl: tpl[1], tups)
+
+    if len(srs) > 1:
+        # if there was only one returned, it's already sorted
+        tups.sort(key = lambda tpl: tpl[0], reverse=True)
+
+    return map(lambda tpl: tpl[2], tups)

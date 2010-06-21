@@ -254,11 +254,13 @@ def set_subreddit():
                 srs = set()
                 sr_names = sr_name.split('+')
                 real_path = sr_name
-                for sr_name in sr_names:
-                    sr = Subreddit._by_name(sr_name)
-                    if isinstance(sr, FakeSubreddit):
-                        abort(400)
-                    srs.add(sr)
+                srs = Subreddit._by_name(sr_names).values()
+                if len(srs) != len(sr_names):
+                    abort(404)
+                elif any(isinstance(sr, FakeSubreddit)
+                         for sr in srs):
+                    abort(400)
+
                 sr_ids = [sr._id for sr in srs]
                 c.site = MultiReddit(sr_ids, real_path)
             else:

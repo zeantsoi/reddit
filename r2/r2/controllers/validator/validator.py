@@ -705,7 +705,7 @@ class VSubmitSR(Validator):
             return None
 
         try:
-            sr = Subreddit._by_name(str(sr_name))
+            sr = Subreddit._by_name(str(sr_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.SUBREDDIT_NOEXIST)
             return
