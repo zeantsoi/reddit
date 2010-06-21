@@ -384,13 +384,15 @@ class Subreddit(Thing, Printable):
             auto_srs = map(lambda sr: sr._id,
                            Subreddit._by_name(g.automatic_reddits).values())
 
-        srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
+        limit = None if limit is None else limit + len(auto_srs)
+
+        srs = cls.top_lang_srs(c.content_langs, limit,
                                filter_allow_top = True,
                                over18 = c.over18, ids = True)
 
         rv = []
         for sr in srs:
-            if len(rv) >= limit:
+            if limit is not None and len(rv) >= limit:
                 break
             if sr in auto_srs:
                 continue
