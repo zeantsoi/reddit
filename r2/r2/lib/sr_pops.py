@@ -31,7 +31,7 @@ limit = 1000
 
 def cached_srs_key(lang, over18_state):
     assert over18_state in ('no_over18', 'allow_over18', 'only_over18')
-    return 'sr_pop_%s_%s' % (lang, over18_state)
+    return str('sr_pop_%s_%s' % (lang, over18_state))
 
 def set_downs():
     sr_counts = count.get_sr_counts()
