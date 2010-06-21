@@ -399,7 +399,7 @@ class BrowseController(ListingController):
         """For merged time-listings, don't show items that are too old
            (this can happen when mr_top hasn't run in a while)"""
         if self.time != 'all' and c.default_sr:
-            oldest = timeago('1 %s' % (self.time,))
+            oldest = timeago('1 %s' % (str(self.time),))
             def keep(item):
                 return item._date > oldest and item.keep_item(item)
             return keep
