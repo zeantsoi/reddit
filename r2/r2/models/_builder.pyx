@@ -394,7 +394,7 @@ class _CommentBuilder(Builder):
 
             mc2 = more_comments.get(p_id)
             if not mc2:
-                mc2 = MoreChildren(self.link, depth[to_add] - offset_depth,
+                mc2 = MoreChildren(self.link, depth.get(to_add,0) - offset_depth,
                                    parent_id = p_id)
                 more_comments[p_id] = mc2
                 w_mc2 = Wrapped(mc2)
