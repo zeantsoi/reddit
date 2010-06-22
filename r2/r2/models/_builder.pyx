@@ -245,16 +245,19 @@ class _CommentBuilder(Builder):
         # TODO: remove later:
         for x in cids:
             if x not in parents:
-                g.log.error("_builder.pyx: parent_dict error.  Reloading...") 
+                g.log.error("_builder.pyx: parent_dict error (%s). Reloading..."
+                            % x) 
                 parents = comment_parent_dict(self.link._id, _update = True)
                 break
 
         # TODO: remove later:
         for x in cids:
-            if x not in sorter:
-                g.log.error("_builder.pyx: sorter error. Reloading...")
+            # sorts should never be None
+            if sorter.get(x) is None:
+                g.log.error("_builder.pyx: sorter error (%s). Reloading..." % x)
                 sorter = comment_sort_dict(self.link._id, self.sort.col,
                                            _update = True)
+                break
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
