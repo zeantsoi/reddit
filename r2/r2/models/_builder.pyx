@@ -283,8 +283,10 @@ class _CommentBuilder(Builder):
         # more comments links:
         if isinstance(self.comment, utils.iters):
             for cm in self.comment:
-                dont_collapse.append(cm._id)
-                candidates.append(cm._id)
+                # deleted comments will be removed from the cids list
+                if cm._id in cids:
+                    dont_collapse.append(cm._id)
+                    candidates.append(cm._id)
             pid = parents[candidates[0]]
             if pid is not None:
                 ignored_parent_ids.append(pid)
