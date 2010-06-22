@@ -321,7 +321,7 @@ class _CommentBuilder(Builder):
         for x in candidates:
             if x not in cids:
                 g.log.error("_builder.pyx: candidate (%r) not in cids (%r), sorter -> %r"
-                            % (x, self.link, sorter.get(r)))
+                            % (x, self.link, sorter.get(x)))
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
         while num_have < num and candidates:
