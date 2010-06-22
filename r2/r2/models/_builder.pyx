@@ -296,7 +296,7 @@ class _CommentBuilder(Builder):
             dont_collapse.append(top)
             #add parents for context
             pid = parents[top]
-            while self.context > 0 and pid:
+            while self.context > 0 and pid is not None:
                 self.context -= 1
                 pid = parents[top]
                 cid_tree[pid] = [top]
@@ -305,7 +305,8 @@ class _CommentBuilder(Builder):
                 top = pid
             candidates.append(top)
             # the reference depth is that of the focal element
-            offset_depth = depth[top]
+            if top is not None:
+                offset_depth = depth[top]
         #else start with the root comments
         else:
             candidates.extend(cid_tree.get(None, ()))
