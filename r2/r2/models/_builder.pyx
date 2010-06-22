@@ -318,10 +318,11 @@ class _CommentBuilder(Builder):
 
         #find the comments
         cdef int num_have = 0
-        for x in candidates:
-            if x not in cids:
-                g.log.error("_builder.pyx: candidate (%r) not in cids (%r), sorter -> %r"
-                            % (x, self.link, sorter.get(x)))
+        candidates = [x for x in candidates if sorter.get(x) is not None]
+        if not candidates:
+            g.log.error("_builder.pyx: empty candidate list: %r" %
+                        request.fullpath)
+            return []
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
         while num_have < num and candidates:
