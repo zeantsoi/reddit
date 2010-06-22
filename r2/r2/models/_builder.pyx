@@ -307,7 +307,10 @@ class _CommentBuilder(Builder):
                 cid_tree[pid] = [top]
                 num_children[pid] = num_children[top] + 1
                 dont_collapse.append(pid)
-                top = pid
+                # top will be appended to candidates, so stop updating
+                # it if hit the top of the thread
+                if pid is not None:
+                    top = pid
             candidates.append(top)
             # the reference depth is that of the focal element
             if top is not None:
@@ -337,7 +340,8 @@ class _CommentBuilder(Builder):
             if (depth[to_add] - offset_depth) < self.max_depth + start_depth:
                 #add children
                 if cid_tree.has_key(to_add):
-                    candidates.extend(cid_tree[to_add])
+                    candidates.extend([x for x in cid_tree[to_add]
+                                       if sorter.get(x) is not None])
                     candidates.sort(key = sorter.get, reverse = self.rev_sort)
                 items.append(to_add)
                 num_have += 1
