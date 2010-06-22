@@ -316,7 +316,16 @@ class _CommentBuilder(Builder):
 
         #find the comments
         cdef int num_have = 0
-        candidates.sort(key = sorter.get, reverse = self.rev_sort)
+        try:
+            candidates.sort(key = sorter.get, reverse = self.rev_sort)
+        except TypeError:
+            g.log.error("_builder.pyx: candidate sort failure %r, %r"
+                        % (candidates, self.link))
+            for x in candidates:
+                g.log.error("_builder.pyx:   %r -> %r" %
+                            (x, sorter.get(x)))
+            #reraise the exception until we understand it
+            raise
 
         while num_have < num and candidates:
             to_add = candidates.pop(0)
