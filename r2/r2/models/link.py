@@ -763,17 +763,17 @@ class MoreMessages(Printable):
 class MoreComments(Printable):
     cachable = False
     display = ""
-    
+
     @staticmethod
     def wrapped_cache_key(item, style):
         return False
-    
-    def __init__(self, link, depth, parent=None):
-        if parent:
-            self.parent_id = parent._id
-            self.parent_name = parent._fullname
-            self.parent_permalink = parent.make_permalink(link, 
-                                                          link.subreddit_slow)
+
+    def __init__(self, link, depth, parent_id = None):
+        if parent_id is not None:
+            id36 = utils.to36(parent_id)
+            self.parent_id = parent_id
+            self.parent_name = "t%s_%s" % (utils.to36(Comment._type_id), id36)
+            self.parent_permalink = link.make_permalink_slow() + id36
         self.link_name = link._fullname
         self.link_id = link._id
         self.depth = depth
@@ -782,11 +782,11 @@ class MoreComments(Printable):
 
     @property
     def _fullname(self):
-        return self.children[0]._fullname if self.children else 't0_blah'
+        return "t%s_%s" % (utils.to36(Comment._type_id), self._id36)
 
     @property
     def _id36(self):
-        return self.children[0]._id36 if self.children else 't0_blah'
+        return utils.to36(self.children[0]) if self.children else '_'
 
 
 class MoreRecursion(MoreComments):

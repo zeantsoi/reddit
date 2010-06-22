@@ -7,7 +7,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment, link_comments
+from r2.lib.comment_tree import add_comment, link_comments, update_comment_vote
 
 import cPickle as pickle
 
@@ -960,6 +960,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 
     elif isinstance(thing, Comment):
         #update last modified
+        update_comment_vote(thing)
         if user._id == thing.author_id:
             set_last_modified(user, 'overview')
             set_last_modified(user, 'commented')
