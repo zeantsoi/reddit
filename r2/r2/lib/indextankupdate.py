@@ -64,9 +64,9 @@ def maps_from_things(things):
 
 def to_boosts(ups, downs, num_comments):
     result = {}
-    result[1] = ups
-    result[2] = downs
-    result[3] = num_comments
+    result[0] = ups
+    result[1] = downs
+    result[2] = num_comments
     return result
 
 def inject_maps(maps):
