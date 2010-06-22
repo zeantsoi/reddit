@@ -50,5 +50,5 @@ def send_file(bucketname, filename, content, content_type = 'text/plain', never_
         headers['Expires'] = NEVER
 
     k.set_contents_from_string(content, policy='public-read',
-                               headers=headers,
-                               reduced_redundancy=reduced_redundancy)
+                               headers=headers)
+                               # reduced_redundancy=reduced_redundancy)
