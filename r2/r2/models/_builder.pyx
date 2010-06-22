@@ -302,7 +302,7 @@ class _CommentBuilder(Builder):
                 cid_tree[pid] = [top]
                 num_children[pid] = num_children[top] + 1
                 dont_collapse.append(pid)
-                top = cid_tree[pid]
+                top = pid
             candidates.append(top)
             # the reference depth is that of the focal element
             offset_depth = depth[top]
