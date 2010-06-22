@@ -316,7 +316,7 @@ class _CommentBuilder(Builder):
 
         #find the comments
         cdef int num_have = 0
-        for x in candidantes:
+        for x in candidates:
             if x not in cids:
                 g.log.error("_builder.pyx: candidate (%r) not in cids (%r)"
                             % (x, self.link))
