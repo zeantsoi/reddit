@@ -318,11 +318,14 @@ class _CommentBuilder(Builder):
 
         #find the comments
         cdef int num_have = 0
-        candidates = [x for x in candidates if sorter.get(x) is not None]
-        if not candidates:
-            g.log.error("_builder.pyx: empty candidate list: %r" %
-                        request.fullpath)
-            return []
+        if candidates:
+            candidates = [x for x in candidates if sorter.get(x) is not None]
+            # complain if we removed a candidate and now have nothing
+            # to return to the user
+            if not candidates:
+                g.log.error("_builder.pyx: empty candidate list: %r" %
+                            request.fullpath)
+                return []
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
         while num_have < num and candidates:
