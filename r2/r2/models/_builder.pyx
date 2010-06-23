@@ -47,7 +47,7 @@ class _CommentBuilder(Builder):
                     parents = comment_parent_dict(self.link._id, _update = True)
                     break
                 except TimeoutExpired:
-                    g.log.error("Error in _builder.pyx: timeout from parents")
+                    g.log.error("Error in _builder.pyx: timeout from parents (%r)" % self.link)
                     raise
 
         # TODO: remove later:
@@ -60,7 +60,7 @@ class _CommentBuilder(Builder):
                                                _update = True)
                     break
                 except TimeoutExpired:
-                    g.log.error("Error in _builder.pyx: timeout from sorter")
+                    g.log.error("Error in _builder.pyx: timeout from sorter (%r, %r)" % (self.link, self.sort.col))
                     raise
 
         if (not isinstance(self.comment, utils.iters)
@@ -72,7 +72,7 @@ class _CommentBuilder(Builder):
                 r = link_comments(self.link._id, _update=True)
                 cids, cid_tree, depth, num_children = r
             except TimeoutExpired:
-                g.log.error("Error in _builder.pyx: timeout from tree reload")
+                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
                 raise
 
             if not self.comment._id in depth:
