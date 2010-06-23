@@ -97,9 +97,6 @@ def add_comment_nolock(comment):
         for p_id in find_parents():
             num_children[p_id] += 1
 
-    g.permacache.set(comments_key(link_id),
-                     (cids, comment_tree, depth, num_children))
-
     # update our cache of children -> parents as well:
     key = parent_comments_key(link_id)
     r = g.permacache.get(key)
@@ -118,6 +115,13 @@ def add_comment_nolock(comment):
             if r:
                 r[cm_id] = _get_sort_value(comment, sort)
                 g.permacache.set(key, r)
+
+    # do this last b/c we don't want the cids updated before the sorts
+    # and parents
+    g.permacache.set(comments_key(link_id),
+                     (cids, comment_tree, depth, num_children))
+
+
 
 def update_comment_vote(comment):
     link_id = comment.link_id
