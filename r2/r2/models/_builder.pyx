@@ -22,6 +22,7 @@ class _CommentBuilder(Builder):
         self.rev_sort = True if isinstance(sort, operators.desc) else False
 
     def get_items(self, num):
+        from r2.lib.lock import TimeoutExpired
         cdef list cid
         cdef dict cid_tree
         cdef dict depth
@@ -40,27 +41,39 @@ class _CommentBuilder(Builder):
         # TODO: remove later:
         for x in cids:
             if x not in parents:
-                g.log.error("_builder.pyx: parent_dict error (%s). Reloading..."
-                            % x) 
-                parents = comment_parent_dict(self.link._id, _update = True)
-                break
+                try: 
+                    g.log.error("_builder.pyx: parent_dict error (%s). Reloading..."
+                                % x) 
+                    parents = comment_parent_dict(self.link._id, _update = True)
+                    break
+                except TimeoutExpired:
+                    g.log.error("Error in _builder.pyx: timeout from parents")
+                    raise
 
         # TODO: remove later:
         for x in cids:
             # sorts should never be None
             if sorter.get(x) is None:
-                g.log.error("_builder.pyx: sorter error (%s). Reloading..." % x)
-                sorter = comment_sort_dict(self.link._id, self.sort.col,
-                                           _update = True)
-                break
+                try:
+                    g.log.error("_builder.pyx: sorter error (%s). Reloading..." % x)
+                    sorter = comment_sort_dict(self.link._id, self.sort.col,
+                                               _update = True)
+                    break
+                except TimeoutExpired:
+                    g.log.error("Error in _builder.pyx: timeout from sorter")
+                    raise
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
             g.log.error("self.comment (%d) not in depth. Forcing update..."
                         % self.comment._id)
 
-            r = link_comments(self.link._id, _update=True)
-            cids, cid_tree, depth, num_children = r
+            try:
+                r = link_comments(self.link._id, _update=True)
+                cids, cid_tree, depth, num_children = r
+            except TimeoutExpired:
+                g.log.error("Error in _builder.pyx: timeout from tree reload")
+                raise
 
             if not self.comment._id in depth:
                 g.log.error("Update didn't help. This is gonna end in tears.")

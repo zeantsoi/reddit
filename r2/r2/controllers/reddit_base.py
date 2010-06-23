@@ -259,10 +259,15 @@ def set_subreddit():
                     abort(404)
                 elif any(isinstance(sr, FakeSubreddit)
                          for sr in srs):
-                    abort(400)
-
-                sr_ids = [sr._id for sr in srs]
-                c.site = MultiReddit(sr_ids, real_path)
+                    if All in srs:
+                        c.site = All
+                    elif Friend in srs:
+                        c.site = Friend
+                    else:
+                        abort(400)
+                else:
+                    sr_ids = [sr._id for sr in srs]
+                    c.site = MultiReddit(sr_ids, real_path)
             else:
                 c.site = Subreddit._by_name(sr_name)
         except NotFound:
@@ -485,6 +490,7 @@ class MinimalController(BaseController):
         return c.response
 
     def pre(self):
+
         c.start_time = datetime.now(g.tz)
         g.reset_caches()
 

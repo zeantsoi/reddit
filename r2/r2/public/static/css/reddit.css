@@ -250,7 +250,8 @@ ul.flat-vert {text-align: left;}
 .tabmenu {
     list-style-type: none;
     white-space: nowrap;
-    display: inline;
+    display: inline-block;
+    margin-top: 5px;
 }
 
 .tabmenu li {
