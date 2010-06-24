@@ -179,7 +179,7 @@ def link_comments_and_sort(link_id, sort):
     parents = g.permacache.get(key)
 
     if cids and parents is None:
-        g.log.error("comment_tree.py: parents (%s) cache miss for Link %s"
+        g.log.error("comment_tree.py: parents cache miss for Link %s"
                     % link_id)
         sorter = {}
     # TODO: remove for speedup if the errors stop getting thrown
