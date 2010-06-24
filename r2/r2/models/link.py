@@ -344,7 +344,6 @@ class Link(Thing, Printable):
                     item.thumbnail = "/static/nsfw.png"
                 else:
                     item.thumbnail = ""
-                    print "hrm"
             elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:
