@@ -164,12 +164,11 @@ def link_comments_and_sort(link_id, sort):
     # load the sorter
     key = sort_comments_key(link_id, sort)
     sorter = g.permacache.get(key)
-    if cids and sorter is None:
+    if sorter is None:
         g.log.error("comment_tree.py: sorter (%s) cache miss for Link %s"
                     % (sort, link_id))
         sorter = {}
-    # TODO: remove for speedup if the errors stop getting thrown
-    elif cids and (sorter is None or not all(x in sorter for x in cids)):
+    elif cids and not all(x in sorter for x in cids):
         g.log.error("Error in comment_tree: sorter (%s) inconsistent for Link %s"
                     % (sort, link_id))
         sorter = {}
@@ -177,19 +176,16 @@ def link_comments_and_sort(link_id, sort):
     # load the parents
     key = parent_comments_key(link_id)
     parents = g.permacache.get(key)
-
-    if cids and parents is None:
+    if parents is None:
         g.log.error("comment_tree.py: parents cache miss for Link %s"
                     % link_id)
-        sorter = {}
-    # TODO: remove for speedup if the errors stop getting thrown
-    elif cids and (parents is None or not all(x in parents for x in cids)):
+        parents = {}
+    elif cids and not all(x in parents for x in cids):
         g.log.error("Error in comment_tree: parents inconsistent for Link %s"
                     % link_id)
         parents = {}
 
-    # TODO: if we need to keep this, this work should be offloaded to a queue
-    if cids and (not sorter or not parents):
+    if not sorter or not parents:
         with g.make_lock(lock_key(link_id)):
             # reload from the cache so the sorter and parents are
             # maximally consistent
