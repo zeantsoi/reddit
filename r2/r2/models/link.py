@@ -340,7 +340,11 @@ class Link(Thing, Printable):
             if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
                 item.thumbnail = thumbnail_url(item)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
-                item.thumbnail = ""
+                if show_media:
+                    item.thumbnail = "/static/nsfw.png"
+                else:
+                    item.thumbnail = ""
+                    print "hrm"
             elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:

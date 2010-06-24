@@ -35,7 +35,7 @@ from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
 from mako.filters import url_escape
-
+ 
 from r2.lib.utils._utils import *
         
 iters = (list, tuple, set)
@@ -854,7 +854,7 @@ def title_to_url(title, max_length = 50):
         last_word = title.rfind('_')
         if (last_word > 0):
             title = title[:last_word]
-    return title
+    return title or "_"
 
 def trace(fn):
     import sys

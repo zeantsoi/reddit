@@ -784,9 +784,6 @@ class LinkInfoPage(Reddit):
             if not self.link.is_self and self.duplicates:
                 buttons.append(info_button('duplicates',
                                            num = len(self.duplicates)))
-            if (len(self.link.title) < 200 and g.spreadshirt_url
-                and c.render_style == "html"):
-                buttons += [info_button('shirt')]
 
         if c.user_is_admin:
             buttons += [info_button('details')]

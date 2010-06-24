@@ -1,7 +1,6 @@
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments, tree_sort_fn, \
-     comment_parent_dict, comment_sort_dict
+from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
@@ -27,45 +26,15 @@ class _CommentBuilder(Builder):
         cdef dict cid_tree
         cdef dict depth
         cdef dict num_children
+        cdef dict parents
+        cdef dict sorter
 
-        r = link_comments(self.link._id)
-        cids, cid_tree, depth, num_children = r
-
-        # load the list of parents from the cache
-        cdef dict parents = comment_parent_dict(self.link._id)
-
-        # load th sort from the cache:
-        cdef dict sorter = comment_sort_dict(self.link._id, self.sort.col)
-
-
-        # TODO: remove later:
-        for x in cids:
-            if x not in parents:
-                try: 
-                    g.log.error("_builder.pyx: parent_dict error (%s). Reloading..."
-                                % x) 
-                    parents = comment_parent_dict(self.link._id, _update = True)
-                    break
-                except TimeoutExpired:
-                    g.log.error("Error in _builder.pyx: timeout from parents (%r)" % self.link)
-                    raise
-
-        # TODO: remove later:
-        for x in cids:
-            # sorts should never be None
-            if sorter.get(x) is None:
-                try:
-                    g.log.error("_builder.pyx: sorter error (%s). Reloading..." % x)
-                    sorter = comment_sort_dict(self.link._id, self.sort.col,
-                                               _update = True)
-                    break
-                except TimeoutExpired:
-                    g.log.error("Error in _builder.pyx: timeout from sorter (%r, %r)" % (self.link, self.sort.col))
-                    raise
+        r = link_comments_and_sort(self.link._id, self.sort.col)
+        cids, cid_tree, depth, num_children, parents, sorter = r
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
-            g.log.error("self.comment (%d) not in depth. Forcing update..."
+            g.log.error("Error - self.comment (%d) not in depth. Forcing update..."
                         % self.comment._id)
 
             try:

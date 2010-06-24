@@ -373,10 +373,12 @@ ul.flat-vert {text-align: left;}
 
 .sidebox.create .spacer {
     background-image: url(/static/create-a-reddit.png);  /* SPRITE */
+    background-repeat:no-repeat;
 }
 
 .sidebox.submit .spacer {
     background-image: url(/static/submit-alien.png);  /* SPRITE */
+    background-repeat:no-repeat;
 }
 
 .sidebox .subtitle {
