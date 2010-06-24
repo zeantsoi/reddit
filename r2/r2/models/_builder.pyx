@@ -64,10 +64,12 @@ class _CommentBuilder(Builder):
                 if cm._id in cids:
                     dont_collapse.append(cm._id)
                     candidates.append(cm._id)
-            pid = parents[candidates[0]]
-            if pid is not None:
-                ignored_parent_ids.append(pid)
-                start_depth = depth[pid]
+            # if nothing but deleted comments, the candidate list might be empty
+            if candidates:
+                pid = parents[candidates[0]]
+                if pid is not None:
+                    ignored_parent_ids.append(pid)
+                    start_depth = depth[pid]
 
         # permalinks:
         elif self.comment:
