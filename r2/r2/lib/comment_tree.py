@@ -189,10 +189,12 @@ def link_comments_and_sort(link_id, sort):
             r = g.permacache.get(comments_key(link_id))
             cids, cid_tree, depth, num_children = r
 
+            key = sort_comments_key(link_id, sort)
             if not sorter:
                 sorter = _comment_sorter_from_cids(cids, sort)
                 g.permacache.set(key, sorter)
 
+            key = parent_comments_key(link_id)
             if not parents:
                 parents = _parent_dict_from_tree(cid_tree)
                 g.permacache.set(key, parents)
