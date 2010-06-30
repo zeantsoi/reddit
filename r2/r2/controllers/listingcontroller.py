@@ -313,10 +313,16 @@ class HotController(FixListing, ListingController):
             self.fix_listing = False
 
         if c.site == Default:
+            if c.user_is_loggedin:
+                srlimit = Subreddit.sr_limit
+                over18 = c.user.has_subscribed and c.over18
+            else:
+                srlimit = g.num_default_reddits
+                over18 = False
+
             sr_ids = Subreddit.user_subreddits(c.user,
-                                               limit=(Subreddit.sr_limit
-                                                      if c.user_is_loggedin
-                                                      else g.num_default_reddits))
+                                               limit=srlimit,
+                                               over18=over18)
             return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
