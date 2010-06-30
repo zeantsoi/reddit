@@ -149,6 +149,8 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
+        if not self.url_seeds:
+            raise ValueError("url_seeds not set in the .ini")
         self.cassandra_seeds = list(self.cassandra_seeds)
         random.shuffle(self.cassandra_seeds)
         self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
@@ -308,6 +310,11 @@ class Globals(object):
         #if we're going to use the query_queue, we need amqp
         if self.write_query_queue and not self.amqp_host:
             raise Exception("amqp_host must be defined to use the query queue")
+
+        # This requirement doesn't *have* to be a requirement, but there are
+        # bugs at the moment that will pop up if you violate it
+        if self.write_query_queue and not self.use_query_cache:
+            raise Exception("write_query_queue requires use_query_cache")
 
         # try to set the source control revision number
         try:

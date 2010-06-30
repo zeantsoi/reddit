@@ -257,7 +257,7 @@ def merge_results(*results):
         return MergedCachedResults(results)
     else:
         assert all((results[0]._sort == r._sort
-                    and results[0] == r.prewrap_fn)
+                    and results[0].prewrap_fn == r.prewrap_fn)
                    for r in results)
         m = Merge(results, sort = results[0]._sort)
         m.prewrap_fn = results[0].prewrap_fn

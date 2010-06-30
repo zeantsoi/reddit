@@ -285,6 +285,8 @@ def sanitize_url(url, require_scheme = False):
         # if there is a scheme and no hostname, it is a bad url.
         if not u.hostname:
             return
+#        if u.username is not None or u.password is not None:
+#            return
         labels = u.hostname.split('.')
         for label in labels:
             try:
