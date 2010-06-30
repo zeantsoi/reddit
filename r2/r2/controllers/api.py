@@ -1566,7 +1566,8 @@ class ApiController(RedditController):
         if action != 'sub' or sr.can_comment(c.user):
             self._subscribe(sr, action == 'sub')
 
-    def _subscribe(self, sr, sub):
+    @classmethod
+    def _subscribe(cls, sr, sub):
         try:
             Subreddit.subscribe_defaults(c.user)
 
