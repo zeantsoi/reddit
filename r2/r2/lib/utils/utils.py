@@ -1166,3 +1166,26 @@ class Bomb(object):
     @classmethod
     def __repr__(cls):
         raise Hell()
+
+def domain_permutations(s, fragments=False, subdomains=True):
+    """
+      Takes a domain like `www.reddit.com`, and returns a list of ways
+      that a user might search for it, like:
+      * www
+      * reddit
+      * com
+      * www.reddit.com
+      * reddit.com
+    """
+    ret = set()
+    r = s.split('.')
+
+    if subdomains:
+        for x in xrange(len(r)-1):
+            ret.add('.'.join(r[x:len(r)]))
+
+    if fragments:
+        for x in r:
+            ret.add(x)
+
+    return ret

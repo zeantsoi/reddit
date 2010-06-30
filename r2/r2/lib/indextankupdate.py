@@ -28,6 +28,7 @@ from pylons import g, config
 from r2.models import *
 from r2.lib import amqp, indextank
 from r2.lib.utils import in_chunks, progress
+from r2.lib.utils import domain, domain_permutations
 
 indextank_indexed_types = (Link,)
 
@@ -40,11 +41,19 @@ def maps_from_things(things):
     maps = []
     author_ids = [ thing.author_id for thing in things ]
     accounts = Account._byID(author_ids, data = True, return_dict = True)
+
+    sr_ids = [ thing.sr_id for thing in things ]
+    srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
+
     for thing in things:
         a = accounts[thing.author_id]
+        sr = srs[thing.sr_id]
+
         if a._deleted:
             continue
         d = dict(fullname = thing._fullname,
+                 subreddit = sr.name,
+                 reddit = sr.name,
                  text = thing.title,
                  author = a.name,
                  timestamp = thing._date.strftime("%s"),
@@ -52,10 +61,13 @@ def maps_from_things(things):
                  downs = thing._downs,
                  num_comments = getattr(thing, "num_comments", 0),
                  sr_id = str(thing.sr_id))
-        if thing.is_self and thing.selftext:
-            d['selftext'] = thing.selftext
+        if thing.is_self:
+            d['site'] = g.domain
+            if thing.selftext:
+                d['selftext'] = thing.selftext
         elif not thing.is_self:
             d['url'] = thing.url
+            d['site'] = ' '.join(domain_permutations(domain(thing.url)))
         maps.append(d)
     return maps
 
@@ -118,7 +130,7 @@ def rebuild_index(after_id = None):
     for chunk in in_chunks(q):
         inject(chunk)
 
-def run_changed(drain=False):
+def run_changed(drain=False, limit=1000):
     """
         Run by `cron` (through `paster run`) on a schedule to send Things to
         IndexTank
@@ -128,5 +140,5 @@ def run_changed(drain=False):
         things = Thing._by_fullname(fullnames, data=True, return_dict=False)
         inject(things)
 
-    amqp.handle_items('indextank_changes', _run_changed, limit=1000,
+    amqp.handle_items('indextank_changes', _run_changed, limit=limit,
                       drain=drain)

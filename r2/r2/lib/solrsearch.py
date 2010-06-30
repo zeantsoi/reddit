@@ -39,7 +39,7 @@ from pylons import g, config
 from r2.models import *
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
-from r2.lib.utils import timeago
+from r2.lib.utils import timeago, domain_permutations
 from r2.lib.utils import unicode_safe, tup
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
@@ -96,27 +96,6 @@ class ThingField(Field):
     def __str__(self):
         return ("<ThingField: (%s,%s,%s,%s)>"
                 % (self.name,self.cls,self.id_attr,self.lu_attr_name))
-
-def domain_permutations(s):
-    """
-      Takes a domain like `www.reddit.com`, and returns a list of ways
-      that a user might search for it, like:
-      * www
-      * reddit
-      * com
-      * www.reddit.com
-      * reddit.com
-      * com
-    """
-    ret = []
-    r = s.split('.')
-
-    for x in xrange(len(r)):
-        ret.append('.'.join(r[x:len(r)]))
-    for x in r:
-        ret.append(x)
-
-    return set(ret)
 
 # Describes the fields of Thing objects and subclasses that are passed
 # to Solr for indexing. All must have a 'contents' field, since that
