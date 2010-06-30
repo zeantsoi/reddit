@@ -86,7 +86,7 @@ def cache_lists():
         sr_tuples = map(lambda sr: (sr._downs, sr.allow_top, sr._id), srs)
 
         print "For %s/%s setting %s" % (lang, over18,
-                                        map(lambda sr: sr.name, srs))
+                                        map(lambda sr: sr.name, srs[:50]))
 
         g.permacache.set(cached_srs_key(lang, over18), sr_tuples)
 
