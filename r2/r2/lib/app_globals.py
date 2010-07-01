@@ -161,6 +161,7 @@ class Globals(object):
                                                self.cassandra,
                                                self.make_lock,
                                                memcache = perma_memcache,
+                                               write_consistency_level = CL_ONE,
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
