@@ -485,7 +485,7 @@ class CassandraCacheChain(CacheChain):
         self.make_lock = lock_factory
         CacheChain.__init__(self, caches, **kw)
 
-    def mutate (self, key, mutation_fn, default = None):
+    def mutate(self, key, mutation_fn, default = None):
         """Mutate a Cassandra key as atomically as possible"""
         with self.make_lock('mutate_%s' % key):
             # we have to do some of the the work of the cache chain
@@ -506,7 +506,7 @@ class CassandraCacheChain(CacheChain):
                     value = self.memcache.get(key)
                 if value is None:
                     value = self.cassa.get(key,
-                                           read_consistency_level = CL_ONE)
+                                           read_consistency_level = CL_QUORUM)
             except cassandra.ttypes.NotFoundException:
                 value = default
 
@@ -521,7 +521,7 @@ class CassandraCacheChain(CacheChain):
 
             if value != new_value:
                 self.cassa.set(key, new_value,
-                               write_consistency_level = CL_ONE)
+                               write_consistency_level = CL_QUORUM)
             for ca in self.caches[:-1]:
                 # and update the rest of the chain; assumes that
                 # Cassandra is always the last entry
