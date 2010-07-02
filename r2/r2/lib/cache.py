@@ -496,7 +496,7 @@ class CassandraCacheChain(CacheChain):
             # chain, which means that changing the chain will probably
             # require changing this function. (This has an edge-case
             # where memcached was populated by a ONE read rather than
-            # a QUROUM one just before running this. We could avoid
+            # a QUORUM one just before running this. We could avoid
             # this by not using memcached at all for these mutations,
             # which would require some more row-cache performace
             # testing)
@@ -506,7 +506,7 @@ class CassandraCacheChain(CacheChain):
                     value = self.memcache.get(key)
                 if value is None:
                     value = self.cassa.get(key,
-                                           read_consistency_level = CL_QUORUM)
+                                           read_consistency_level = CL_ONE)
             except cassandra.ttypes.NotFoundException:
                 value = default
 

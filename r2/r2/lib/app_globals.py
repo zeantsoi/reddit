@@ -338,7 +338,7 @@ class Globals(object):
                         lock_factory,
                         memcache = None,
                         read_consistency_level = CL_ONE,
-                        write_consistency_level = CL_QUORUM,
+                        write_consistency_level = CL_ONE,
                         localcache_cls = LocalCache):
         return CassandraCacheChain(localcache_cls(),
                                    CassandraCache(keyspace, column_family,
