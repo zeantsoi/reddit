@@ -521,7 +521,7 @@ class CassandraCacheChain(CacheChain):
 
             if value != new_value:
                 self.cassa.set(key, new_value,
-                               write_consistency_level = CL_QUORUM)
+                               write_consistency_level = CL_ONE)
             for ca in self.caches[:-1]:
                 # and update the rest of the chain; assumes that
                 # Cassandra is always the last entry
