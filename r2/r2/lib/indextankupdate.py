@@ -32,7 +32,8 @@ from r2.lib.utils import domain, domain_permutations
 
 indextank_indexed_types = (Link,)
 
-index = indextank.IndexTank(api_key = g.INDEXTANK_API_KEY,
+index = indextank.IndexTank(host = g.INDEXTANK_HOST,
+                            api_key = g.INDEXTANK_API_KEY,
                             index_code = g.INDEXTANK_IDX_CODE)
 
 def maps_from_things(things):
@@ -115,7 +116,7 @@ def inject(things):
         for thing in delete_things:
             delete_thing(thing)
 
-def rebuild_index(after_id = None):
+def rebuild_index(after_id = None, estimate=10000000):
     cls = Link
 
     # don't pull spam/deleted
@@ -126,7 +127,7 @@ def rebuild_index(after_id = None):
 
     q = fetch_things2(q)
 
-    q = progress(q, verbosity=1000, estimate=10000000, persec=True)
+    q = progress(q, verbosity=1000, estimate=estimate, persec=True)
     for chunk in in_chunks(q):
         inject(chunk)
 

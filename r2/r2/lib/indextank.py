@@ -1,27 +1,25 @@
 import urllib
 import json 
 
-#BASE_URL = 'http://api.indextank.com/api/v0'
-BASE_URL = 'http://api.reddit.indextank.com/api/v0'
-#BASE_URL = 'http://api.it-test.flaptor.com/api/v0'
-
-
 class IndexTank:
     api_key=None
     def_index_code=None
     
-    def __init__(self, api_key, index_code=None):
+    def __init__(self, host, api_key, index_code=None):
+        self.host = host
         self.api_key = api_key
         self.def_index_code = index_code
     
     def __api_call(self, method, index_code=None, params={}):
+        base_url = 'http://%s/api/v0' % (self.host,)
+
         base_params = { 
             'api_key': self.api_key,
             'index_code': index_code or self.def_index_code,
         }
         base_params.update(params)
         params = urllib.urlencode(base_params)
-        url = "%s/%s"%(BASE_URL,method)
+        url = "%s/%s"%(base_url,method)
         res = urllib.urlopen(url,params)
         data = res.read()
         if 200 != res.getcode():
