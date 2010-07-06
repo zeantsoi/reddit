@@ -93,6 +93,13 @@ class Globals(object):
                    'allowed_css_linked_domains',
                    'authorized_cnames']
 
+    choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
+                                      'QUORUM': CL_QUORUM},
+                    'cassandra_wcl': {'ONE':    CL_ONE,
+                                      'QUORUM': CL_QUORUM},
+                    }
+
+
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
         Globals acts as a container for objects available throughout
@@ -130,6 +137,11 @@ class Globals(object):
                     v = self.to_bool(v)
                 elif k in self.tuple_props:
                     v = tuple(self.to_iter(v))
+                elif k in self.choice_props:
+                    if v not in self.choice_props[k]:
+                        raise ValueError("Unknown option for %r: %r not in %r"
+                                         % (k, v, self.choice_props[k]))
+                    v = self.choice_props[k][v]
                 setattr(self, k, v)
 
         self.running_as_script = global_conf.get('running_as_script', False)
@@ -161,6 +173,8 @@ class Globals(object):
                                                self.cassandra,
                                                self.make_lock,
                                                memcache = perma_memcache,
+                                               read_consistency_level = self.cassandra_rcl,
+                                               write_consistency_level = self.cassandra_wcl,
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
@@ -170,6 +184,11 @@ class Globals(object):
         self.urlcache = self.init_cass_cache('urls', 'urls',
                                              self.url_cassandra,
                                              self.make_lock,
+                                             # until we've merged this
+                                             # with the regular
+                                             # cluster, this will
+                                             # always be CL_ONE
+                                             read_consistency_level = CL_ONE,
                                              write_consistency_level = CL_ONE,
                                              localcache_cls = localcache_cls)
         self.cache_chains.append(self.urlcache)

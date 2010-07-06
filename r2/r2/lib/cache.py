@@ -500,13 +500,14 @@ class CassandraCacheChain(CacheChain):
             # this by not using memcached at all for these mutations,
             # which would require some more row-cache performace
             # testing)
+            rcl = wcl = self.cassa.write_consistency_level
             try:
                 value = None
                 if self.memcache:
                     value = self.memcache.get(key)
                 if value is None:
                     value = self.cassa.get(key,
-                                           read_consistency_level = CL_ONE)
+                                           read_consistency_level = rcl)
             except cassandra.ttypes.NotFoundException:
                 value = default
 
@@ -521,7 +522,7 @@ class CassandraCacheChain(CacheChain):
 
             if value != new_value:
                 self.cassa.set(key, new_value,
-                               write_consistency_level = CL_ONE)
+                               write_consistency_level = wcl)
             for ca in self.caches[:-1]:
                 # and update the rest of the chain; assumes that
                 # Cassandra is always the last entry
