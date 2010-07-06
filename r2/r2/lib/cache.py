@@ -556,6 +556,8 @@ class CassandraCache(CacheUtils):
         self.keyspace = keyspace
         self.column_family = column_family
         self.client = client
+        self.read_consistency_level = read_consistency_level
+        self.write_consistency_level = write_consistency_level
         self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
                                        self.column_family,
                                        read_consistency_level = read_consistency_level,
