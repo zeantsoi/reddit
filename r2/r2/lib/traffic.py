@@ -52,6 +52,8 @@ def load_traffic_uncached(interval, what, iden,
         args['n'] = npoints
     u = urlparse(traffic_url)
     try:
+        # traffic is down :(
+        raise socket.error
         conn = HTTPConnection(u.hostname, u.port)
         conn.request("GET", u.path + query_string(args))
         res = conn.getresponse()
