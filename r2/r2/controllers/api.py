@@ -30,7 +30,7 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, timefromnow
+from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
@@ -55,6 +55,8 @@ from r2.lib.filters import safemarkdown
 
 from datetime import datetime, timedelta
 from md5 import md5
+import urllib
+import urllib2
 
 def reject_vote(thing):
     voteword = request.params.get('dir')
@@ -1301,6 +1303,68 @@ class ApiController(RedditController):
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
 
+    @noresponse(secret = VPrintable('secret', 50),
+                payment_status = VPrintable('payment_status', 20),
+                txn_id = VPrintable('txn_id', 20),
+                paying_id = VPrintable('paying_id', 50),
+                payer_email = VPrintable('payer_email', 250),
+                mc_currency = VPrintable('mc_currency', 20),
+                mc_gross = VFloat('mc_gross'))
+    def POST_ipn(self, secret, payment_status, txn_id,
+                 paying_id, payer_email, mc_currency, mc_gross):
+
+        if secret != g.PAYPAL_SECRET:
+            log_text("invalid IPN secret",
+                     "%s guessed the wrong IPN secret" % request.ip,
+                     "warning")
+            raise ValueError
+
+        if payment_status.lower() == 'completed':
+            pass
+        else:
+            raise ValueError("Unknown IPN status: %r" % payment_status)
+
+        if mc_currency != 'USD':
+            raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
+
+        if request.POST:
+            parameters = request.POST.copy()
+        else:
+            parameters = request.GET.copy()
+
+        parameters['cmd']='_notify-validate'
+        params = urllib.urlencode(parameters)
+        req = urllib2.Request(g.PAYPAL_URL, params)
+        req.add_header("Content-type", "application/x-www-form-urlencoded")
+
+        response = urllib2.urlopen(req)
+        status = response.read()
+        if status != "VERIFIED":
+            raise ValueError("Invalid IPN response: %r" % status)
+
+        secret = randstr(10)
+        pennies = int(mc_gross * 100)
+
+        create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
+                              pennies, secret, c.start_time)
+
+        url = "http://www.reddit.com/thanks/" + secret
+
+        # No point in i18n, since we don't have access to the user's
+        # language info (or name) at this point
+        body = """
+Thanks for subscribing to reddit gold! We have received your PayPal
+transaction, number %s, contributing $%0.2f to the help-reddit-not-die fund.
+
+Your secret subscription code is %s. You can use it to associate this
+subscription with your reddit account -- just visit
+%s
+        """ % (txn_id, mc_gross, secret, url)
+
+        emailer.gold_email(body, payer_email, "reddit gold subscriptions")
+
+        return "Ok"
+
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
@@ -1493,6 +1557,38 @@ class ApiController(RedditController):
                 return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 
+
+    @validatedForm(VUser(),
+                   code = VPrintable("code", 30))
+    def POST_claimgold(self, form, jquery, code):
+        pennies = claim_gold(code, c.user._id)
+        if not code:
+            c.errors.add(errors.NO_TEXT, field = "code")
+        elif pennies is None:
+            c.errors.add(errors.INVALID_CODE, field = "code")
+            log_text ("invalid gold claim",
+                      "%s just tried to claim %s" % (c.user.name, code),
+                      "info")
+        elif pennies == 0:
+            c.errors.add(errors.CLAIMED_CODE, field = "code")
+            log_text ("invalid gold reclaim",
+                      "%s just tried to reclaim %s" % (c.user.name, code),
+                      "info")
+        elif pennies > 0:
+            log_text ("valid gold claim",
+                      "%s just claimed %s" % (c.user.name, code),
+                      "info")
+            g.cache.set("recent-gold-" + c.user.name, True, 600)
+            c.user.creddits += pennies
+            admintools.engolden(c.user)
+            form.set_html(".status", _("claimed!"))
+            jquery(".lounge").show()
+        else:
+            raise ValueError("pennies = %r?" % pennies)
+
+        # Activate any errors we just manually set
+        form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
+                        errors.NO_TEXT)
 
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):

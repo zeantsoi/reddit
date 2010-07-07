@@ -304,7 +304,6 @@ def sanitize_url(url, require_scheme = False):
                     return
         return url
 
-
 # Truncate a time to a certain number of minutes
 # e.g, trunc_time(5:52, 30) == 5:30
 def trunc_time(time, mins, hours=None):

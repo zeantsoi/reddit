@@ -1277,6 +1277,26 @@ class UploadedImage(Templated):
         Templated.__init__(self, status=status, img_src=img_src, name = name,
                            form_id = form_id)
 
+class Thanks(Templated):
+    """The page to claim reddit gold trophies"""
+    def __init__(self, secret=None):
+        if g.cache.get("recent-gold-" + c.user.name):
+            status = "recent"
+        elif c.user.gold:
+            status = "gold"
+        else:
+            status = "mundane"
+
+        if g.lounge_reddit:
+            lounge_url = "/r/" + g.lounge_reddit
+            lounge_html = (SC_OFF +
+                           markdown(strings.lounge_msg % dict(link=lounge_url))
+                           + SC_ON)
+        else:
+            lounge_html = None
+        Templated.__init__(self, status=status, secret=secret,
+                           lounge_html=lounge_html)
+
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
     def __init__(self, success=False):

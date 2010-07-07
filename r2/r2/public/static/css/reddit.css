@@ -3994,3 +3994,6 @@ a.pretty-button.positive.pressed {
     display: block;
     margin: 5px auto; 
 }
+
+.lounge { display: none }
+.lounge p { margin-top: 5px; }

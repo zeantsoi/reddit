@@ -80,7 +80,9 @@ class Account(Thing):
                      email = "",
                      email_verified = False,
                      ignorereports = False,
-                     pref_show_promote = None, 
+                     pref_show_promote = None,
+                     gold = False,
+                     creddits = 0,
                      )
 
     def karma(self, kind, sr = None):

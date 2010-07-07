@@ -22,7 +22,7 @@
 from r2.lib.utils import tup
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
-from r2.models import Report, Account
+from r2.models import Report, Account, Subreddit
 
 from pylons import g
 
@@ -172,6 +172,27 @@ class AdminTools(object):
                 sr.last_mod_action = datetime.now(g.tz)
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
+
+    def engolden(self, account):
+        from r2.lib.db.queries import changed
+        account.gold = True
+        Award.give_if_needed("reddit_gold", account)
+        account._commit()
+        if g.lounge_reddit:
+            sr = Subreddit._by_name(g.lounge_reddit)
+            sr.add_contributor(account)
+            changed(sr)
+
+
+    def degolden(self, account):
+        from r2.lib.db.queries import changed
+        account.gold = False
+        Award.take_away("reddit_gold", account)
+        account._commit()
+        if g.lounge_reddit:
+            sr = Subreddit._by_name(g.lounge_reddit)
+            sr.remove_contributor(account)
+            changed(sr)
 
 
 admintools = AdminTools()

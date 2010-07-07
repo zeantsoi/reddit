@@ -912,3 +912,9 @@ class FormsController(RedditController):
     def GET_try_compact(self, dest):
         c.render_style = "compact"
         return TryCompact(dest = dest).render()
+
+    @validate(VUser(),
+              secret=VPrintable("secret", 50))
+    def GET_thanks(self, secret):
+        """The page to claim reddit gold trophies"""
+        return BoringPage(_("thanks"), content=Thanks(secret)).render()
