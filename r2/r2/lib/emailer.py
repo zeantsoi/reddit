@@ -108,7 +108,7 @@ def i18n_email(email, body, name='', reply_to = ''):
                            reply_to = reply_to)
 
 def gold_email(body, to_address, from_name=g.domain):
-    return _gold_email(body, from_name, Email.Kind.GOLDMAIL)
+    return _gold_email(body, to_address, from_name, Email.Kind.GOLDMAIL)
 
 def nerds_email(body, from_name=g.domain):
     """Queues a feedback email to the nerds running this site."""
