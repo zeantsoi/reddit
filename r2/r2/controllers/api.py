@@ -1306,7 +1306,7 @@ class ApiController(RedditController):
     @noresponse(secret = VPrintable('secret', 50),
                 payment_status = VPrintable('payment_status', 20),
                 txn_id = VPrintable('txn_id', 20),
-                paying_id = VPrintable('paying_id', 50),
+                paying_id = VPrintable('payer_id', 50),
                 payer_email = VPrintable('payer_email', 250),
                 mc_currency = VPrintable('mc_currency', 20),
                 mc_gross = VFloat('mc_gross'))
