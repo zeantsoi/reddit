@@ -55,7 +55,7 @@ def _gold_email(body, to_address, from_name, kind):
     """
     For sending email to reddit gold subscribers
     """
-    Email.handler.add_to_queue(None, to_address, from_name, g.gold_email,
+    Email.handler.add_to_queue(None, to_address, from_name, g.feedback_email,
                                kind, body = body)
 
 def verify_email(user, dest):
