@@ -1303,17 +1303,17 @@ class ApiController(RedditController):
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
 
-    @noresponse(secret = VPrintable('secret', 50),
+    @noresponse(paypal_secret = VPrintable('secret', 50),
                 payment_status = VPrintable('payment_status', 20),
                 txn_id = VPrintable('txn_id', 20),
                 paying_id = VPrintable('payer_id', 50),
                 payer_email = VPrintable('payer_email', 250),
                 mc_currency = VPrintable('mc_currency', 20),
                 mc_gross = VFloat('mc_gross'))
-    def POST_ipn(self, secret, payment_status, txn_id,
+    def POST_ipn(self, paypal_secret, payment_status, txn_id,
                  paying_id, payer_email, mc_currency, mc_gross):
 
-        if secret != g.PAYPAL_SECRET:
+        if paypal_secret != g.PAYPAL_SECRET:
             log_text("invalid IPN secret",
                      "%s guessed the wrong IPN secret" % request.ip,
                      "warning")
@@ -1342,13 +1342,13 @@ class ApiController(RedditController):
         if status != "VERIFIED":
             raise ValueError("Invalid IPN response: %r" % status)
 
-        secret = randstr(10)
+        gold_secret = randstr(10)
         pennies = int(mc_gross * 100)
 
         create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
-                              pennies, secret, c.start_time)
+                              pennies, gold_secret, c.start_time)
 
-        url = "http://www.reddit.com/thanks/" + secret
+        url = "http://www.reddit.com/thanks/" + gold_secret
 
         # No point in i18n, since we don't have access to the user's
         # language info (or name) at this point
@@ -1359,7 +1359,7 @@ transaction, number %s, contributing $%0.2f to the help-reddit-not-die fund.
 Your secret subscription code is %s. You can use it to associate this
 subscription with your reddit account -- just visit
 %s
-        """ % (txn_id, mc_gross, secret, url)
+        """ % (txn_id, mc_gross, gold_secret, url)
 
         emailer.gold_email(body, payer_email, "reddit gold subscriptions")
 

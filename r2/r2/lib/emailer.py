@@ -55,7 +55,7 @@ def _gold_email(body, to_address, from_name, kind):
     """
     For sending email to reddit gold subscribers
     """
-    Email.handler.add_to_queue(None, to_address, from_name, g.feedback_email,
+    Email.handler.add_to_queue(None, to_address, from_name, g.goldthanks_email,
                                kind, body = body)
 
 def verify_email(user, dest):
@@ -79,7 +79,7 @@ def verify_email(user, dest):
 
 def password_email(user):
     """
-    For reseting a user's password.
+    For resetting a user's password.
     """
     from r2.lib.pages import PasswordReset
     key = passhash(random.randint(0, 1000), user.email)
