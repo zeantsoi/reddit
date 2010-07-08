@@ -36,6 +36,9 @@ index = indextank.IndexTank(host = g.INDEXTANK_HOST,
                             api_key = g.INDEXTANK_API_KEY,
                             index_code = g.INDEXTANK_IDX_CODE)
 
+def yesno(b):
+    return 'yes' if b else 'no'
+
 def maps_from_things(things):
     """We only know how to do links for now"""
 
@@ -55,13 +58,16 @@ def maps_from_things(things):
         d = dict(fullname = thing._fullname,
                  subreddit = sr.name,
                  reddit = sr.name,
-                 text = thing.title,
+                 text = ' '.join([thing.title, a.name, sr.name]),
                  author = a.name,
                  timestamp = thing._date.strftime("%s"),
                  ups = thing._ups,
                  downs = thing._downs,
                  num_comments = getattr(thing, "num_comments", 0),
-                 sr_id = str(thing.sr_id))
+                 sr_id = str(thing.sr_id),
+                 is_self = yesno(thing.is_self),
+                 over18 = yesno(sr.over_18),
+                 )
         if thing.is_self:
             d['site'] = g.domain
             if thing.selftext:
