@@ -519,16 +519,11 @@ class Comment(Thing, Printable):
         pass
 
     def _delete(self):
-        from r2.lib.db.queries import changed
-
         link = Link._byID(self.link_id, data = True)
         link._incr('num_comments', -1)
-        changed(link, True)
 
     @classmethod
     def _new(cls, author, link, parent, body, ip):
-        from r2.lib.db.queries import changed
-
         c = Comment(_ups = 1,
                     body = body,
                     link_id = link._id,
@@ -553,8 +548,6 @@ class Comment(Thing, Printable):
             name = 'selfreply'
 
         c._commit()
-
-        changed(link, True) # only the number of comments has changed
 
         inbox_rel = None
         # only global admins can be message spammed.
