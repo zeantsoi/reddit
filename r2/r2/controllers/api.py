@@ -1319,8 +1319,12 @@ class ApiController(RedditController):
                      "warning")
             raise ValueError
 
-        if payment_status.lower() == 'completed':
+        psl = payment_status.lower()
+        if psl == 'completed':
             pass
+        elif psl == 'refunded':
+            log_text("refund", "Just got notice of a refund.", "info")
+            # TODO: something useful when this happens
         else:
             raise ValueError("Unknown IPN status: %r" % payment_status)
 

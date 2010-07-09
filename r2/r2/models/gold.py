@@ -77,6 +77,10 @@ def claim_gold(secret, account_id):
     if not secret:
         return None
 
+    # The donation email has the code at the end of the sentence,
+    # so they might get sloppy and catch the period or some whitespace.
+    secret = secret.strip(". ")
+
     rp = gold_table.update(sa.and_(gold_table.c.status == 'unclaimed',
                                    gold_table.c.secret == secret),
                            values = {
