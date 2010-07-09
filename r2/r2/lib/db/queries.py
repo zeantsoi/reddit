@@ -7,7 +7,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment, link_comments, update_comment_vote
+from r2.lib.comment_tree import add_comment, link_comments, update_comment_votes
 
 import cPickle as pickle
 
@@ -960,7 +960,6 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 
     elif isinstance(thing, Comment):
         #update last modified
-        update_comment_vote(thing)
         if user._id == thing.author_id:
             set_last_modified(user, 'overview')
             set_last_modified(user, 'commented')
@@ -968,24 +967,28 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes(limit=None):
+def process_votes(limit=1000):
     # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msgs, chan):
-        assert(len(msgs) == 1)
-        msg = msgs[0]
+        #assert(len(msgs) == 1)
+        comments = []
+        for msg in msgs:
+            r = pickle.loads(msg.body)
 
-        r = pickle.loads(msg.body)
+            uid, tid, dir, ip, organic, cheater = r
+            voter = Account._byID(uid, data=True)
+            votee = Thing._by_fullname(tid, data = True)
+            if isinstance(votee, Comment):
+                comments.append(votee)
 
-        uid, tid, dir, ip, organic, cheater = r
-        voter = Account._byID(uid, data=True)
-        votee = Thing._by_fullname(tid, data = True)
+            print (voter, votee, dir, ip, organic, cheater)
+            handle_vote(voter, votee, dir, ip, organic,
+                        cheater = cheater)
 
-        print (voter, votee, dir, ip, organic, cheater)
-        handle_vote(voter, votee, dir, ip, organic,
-                    cheater = cheater)
+        update_comment_votes(comments)
 
-    amqp.handle_items('register_vote_q', _handle_vote)
+    amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
 try:
     from r2admin.lib.admin_queries import *
