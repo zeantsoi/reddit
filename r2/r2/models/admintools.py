@@ -176,7 +176,9 @@ class AdminTools(object):
     def engolden(self, account):
         from r2.lib.db.queries import changed
         account.gold = True
-        Award.give_if_needed("reddit_gold", account)
+        Award.give_if_needed("reddit_gold", account,
+                             description="Charter Member",
+                             url="/help/gold")
         account._commit()
         if g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
