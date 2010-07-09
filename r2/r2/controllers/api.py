@@ -1345,7 +1345,11 @@ class ApiController(RedditController):
             parameters = request.GET.copy()
 
         parameters['cmd']='_notify-validate'
-        params = urllib.urlencode(parameters)
+        try:
+            params = urllib.urlencode(parameters)
+        except UnicodeEncodeError:
+            g.log.error("problem urlencoding %r" % (parameters,))
+            raise
         req = urllib2.Request(g.PAYPAL_URL, params)
         req.add_header("Content-type", "application/x-www-form-urlencoded")
 
