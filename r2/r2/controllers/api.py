@@ -1346,7 +1346,7 @@ class ApiController(RedditController):
 
         parameters['cmd']='_notify-validate'
         try:
-            safer = dict([k, v.encode('utf-8')] for k, v in params.items())
+            safer = dict([k, v.encode('utf-8')] for k, v in parameters.items())
             params = urllib.urlencode(safer)
         except UnicodeEncodeError:
             g.log.error("problem urlencoding %r" % (parameters,))
