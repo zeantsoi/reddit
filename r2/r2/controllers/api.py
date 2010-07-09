@@ -1327,6 +1327,12 @@ class ApiController(RedditController):
             # TODO: something useful when this happens -- and don't
             # forget to verify first
             return "Ok"
+        elif psl == 'pending':
+            log_text("pending",
+                     "Just got notice of a Pending, whatever that is.", "info")
+            # TODO: something useful when this happens -- and don't
+            # forget to verify first
+            return "Ok"
         else:
             raise ValueError("Unknown IPN status: %r" % payment_status)
 
