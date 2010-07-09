@@ -37,12 +37,13 @@ class _CommentBuilder(Builder):
             g.log.error("Error - self.comment (%d) not in depth. Forcing update..."
                         % self.comment._id)
 
-            try:
-                r = link_comments(self.link._id, _update=True)
-                cids, cid_tree, depth, num_children = r
-            except TimeoutExpired:
-                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
-                raise
+# temporary
+#            try:
+#                r = link_comments(self.link._id, _update=True)
+#                cids, cid_tree, depth, num_children = r
+#            except TimeoutExpired:
+#                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
+#                raise
 
             if not self.comment._id in depth:
                 g.log.error("Update didn't help. This is gonna end in tears.")
