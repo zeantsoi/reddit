@@ -832,7 +832,9 @@ class DomainSR(FakeSubreddit):
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
-        return queries.get_domain_links(self.domain, sort, time)
+        # TODO: once the lists are precomputed properly, this can be
+        # switched over to use the non-_old variety.
+        return queries.get_domain_links_old(self.domain, sort, time)
 
 Sub = SubSR()
 Friends = FriendsSR()

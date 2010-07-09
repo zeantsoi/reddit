@@ -28,7 +28,7 @@ from pylons import g, config
 from r2.models import *
 from r2.lib import amqp, indextank
 from r2.lib.utils import in_chunks, progress
-from r2.lib.utils import domain, domain_permutations
+from r2.lib.utils import domain, UrlParser
 
 indextank_indexed_types = (Link,)
 
@@ -74,7 +74,7 @@ def maps_from_things(things):
                 d['selftext'] = thing.selftext
         elif not thing.is_self:
             d['url'] = thing.url
-            d['site'] = ' '.join(domain_permutations(domain(thing.url)))
+            d['site'] = ' '.join(UrlParser(thing.url).domain_permutations())
         maps.append(d)
     return maps
 

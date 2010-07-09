@@ -39,7 +39,7 @@ from pylons import g, config
 from r2.models import *
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
-from r2.lib.utils import timeago, domain_permutations
+from r2.lib.utils import timeago, UrlParser
 from r2.lib.utils import unicode_safe, tup
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
@@ -139,9 +139,9 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            Field('sr_id'),
                            Field('url', tokenize = True),
                            #Field('domain',
-                           #      lambda l: domain_permutations(domain(l.url))),
+                           #      lambda l: UrlParser(l.url).domain_permutations()),
                            Field('site',
-                                 lambda l: domain_permutations(domain(l.url))),
+                                 lambda l: UrlParser(l.url).domain_permutations()),
                            #Field('is_self','is_self'),
                            ),
                Comment:   (Field('contents', 'body', tokenize = True),

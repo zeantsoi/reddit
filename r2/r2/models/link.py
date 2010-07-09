@@ -22,7 +22,7 @@
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
 from r2.lib.db.operators import desc
-from r2.lib.utils import base_url, tup, domain, title_to_url
+from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
 from r2.lib.utils.trial_utils import trial_info
 from account import Account, DeletedUser
 from subreddit import Subreddit
@@ -64,6 +64,15 @@ class Link(Thing, Printable):
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
+
+    @classmethod
+    def by_url_key_new(cls, url):
+        maxlen = 250
+        template = 'byurl(%s,%s)'
+        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
+        hexdigest = md5(keyurl).hexdigest()
+        usable_len = maxlen-len(template)-len(hexdigest)
+        return template % (hexdigest, keyurl[:usable_len])
 
     @classmethod
     def by_url_key(cls, url):

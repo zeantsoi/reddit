@@ -386,8 +386,18 @@ def get_modqueue(sr):
 
     return merge_results(*results)
 
-def get_domain_links(domain, sort, time):
+def get_domain_links_old(domain, sort, time):
     return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
+
+def get_domain_links(domain, sort, time):
+    from r2.lib.db import operators
+    q = Link._query(operators.domain(Link.c.url) == domain,
+                    sort = db_sort(sort),
+                    data = True)
+    if time != "all":
+        q._filter(db_times[time])
+
+    return make_results(q)
 
 def user_query(kind, user, sort, time):
     """General profile-page query."""
@@ -540,6 +550,10 @@ def new_link(link):
     # that
 
     results.append(get_submitted(author, 'new', 'all'))
+
+    for domain in utils.UrlParser(link.url).domain_permutations():
+        results.append(get_domain_links(domain, 'new', "all"))
+
     if link._spam:
         results.append(get_spam_links(sr))
     else:
@@ -600,6 +614,10 @@ def new_vote(vote):
                    get_links(sr, 'top', 'all'),
                    get_links(sr, 'controversial', 'all'),
                    ]
+
+        for domain in utils.UrlParser(item.url).domain_permutations():
+            for sort in ("hot", "top", "controversial"):
+                results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item)
 
