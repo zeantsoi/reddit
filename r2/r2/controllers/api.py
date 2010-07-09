@@ -1324,7 +1324,9 @@ class ApiController(RedditController):
             pass
         elif psl == 'refunded':
             log_text("refund", "Just got notice of a refund.", "info")
-            # TODO: something useful when this happens
+            # TODO: something useful when this happens -- and don't
+            # forget to verify first
+            return "Ok"
         else:
             raise ValueError("Unknown IPN status: %r" % payment_status)
 
