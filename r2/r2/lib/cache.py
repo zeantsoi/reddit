@@ -501,6 +501,8 @@ class CassandraCacheChain(CacheChain):
             # which would require some more row-cache performace
             # testing)
             rcl = wcl = self.cassa.write_consistency_level
+            if rcl == CL_ZERO:
+                rcl = CL_ONE
             try:
                 value = None
                 if self.memcache:

@@ -27,7 +27,7 @@ import pycassa
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
+from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -93,9 +93,11 @@ class Globals(object):
                    'allowed_css_linked_domains',
                    'authorized_cnames']
 
-    choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
+    choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
+                                      'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
-                    'cassandra_wcl': {'ONE':    CL_ONE,
+                    'cassandra_wcl': {'ZERO':   CL_ZERO,
+                                      'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
                     }
 
