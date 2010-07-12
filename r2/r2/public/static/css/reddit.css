@@ -379,6 +379,11 @@ ul.flat-vert {text-align: left;}
     background-repeat:no-repeat;
 }
 
+.sidebox.gold .spacer {
+    background-image: url(/static/reddit_gold-40.png);  /* SPRITE */
+    background-repeat:no-repeat;
+}
+
 .sidebox.submit .spacer {
     background-image: url(/static/submit-alien.png);  /* SPRITE */
     background-repeat:no-repeat;

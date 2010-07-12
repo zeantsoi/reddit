@@ -222,6 +222,13 @@ class Reddit(Templated):
                               subtitles = rand_strings.get("create_reddit", 2),
                               show_cover = True, nocname=True))
 
+        if self.submit_box:
+            ps.append(SideBox(_('subscribe to reddit gold'),
+                              '/help/gold', 'gold',
+                              sr_path = False,
+                              subtitles = ["reddit appreciates your help."],
+                              show_cover = False, nocname = True))
+
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
