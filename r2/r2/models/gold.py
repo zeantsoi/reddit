@@ -106,3 +106,11 @@ def claim_gold(secret, account_id):
         return rows[0].pennies
     else:
         return 0
+
+def check_by_email(email):
+    s = sa.select([gold_table.c.status,
+                           gold_table.c.secret,
+                           gold_table.c.pennies,
+                           gold_table.c.account_id],
+                          gold_table.c.payer_email == email)
+    return s.execute().fetchall()
