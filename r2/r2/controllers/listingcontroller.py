@@ -559,11 +559,12 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        if not vuser.gold:
-            self.sort = 'new'
-            self.time = 'all'
-        if self.sort == 'hot':
-            self.time = 'all'
+        # disable for now
+        #if not vuser.gold:
+        self.sort = 'new'
+        self.time = 'all'
+        #if self.sort == 'hot':
+        #    self.time = 'all'
 
 
         # hide spammers profile pages
