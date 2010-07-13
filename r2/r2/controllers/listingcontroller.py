@@ -562,7 +562,7 @@ class UserController(ListingController):
         if not vuser.gold:
             self.sort = 'new'
             self.time = 'all'
-        if self.sort = 'hot':
+        if self.sort == 'hot':
             self.time = 'all'
 
 
