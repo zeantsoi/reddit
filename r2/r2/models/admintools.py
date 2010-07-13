@@ -173,11 +173,15 @@ class AdminTools(object):
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
 
-    def engolden(self, account):
+    def engolden(self, account, was_postcard=False):
         from r2.lib.db.queries import changed
         account.gold = True
+        if was_postcard:
+            description = "Postcard Brigade"
+        else:
+            description = "Charter Member"
         Award.give_if_needed("reddit_gold", account,
-                             description="Charter Member",
+                             description=description,
                              url="/help/gold")
         account._commit()
         if g.lounge_reddit:

@@ -138,6 +138,7 @@ string_dict = dict(
     unverified_quota_msg = _("You haven't [verified your email address](%(link1)s); until you do, your submitting privileges will be severely limited. Please try again in an hour or verify your email address. If you'd like an exemption from this rule, please [write to the moderators of this reddit](%(link2)s)."),
     read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to log in. we're sorry, and are working frantically to fix the problem."),
     lounge_msg = _("please grab a drink and join us in [the lounge](%(link)s)"),
+    postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
 )
 
 class StringHandler(object):

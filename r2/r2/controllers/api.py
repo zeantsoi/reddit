@@ -1577,8 +1577,18 @@ subscription with your reddit account -- just visit
 
 
     @validatedForm(VUser(),
-                   code = VPrintable("code", 30))
-    def POST_claimgold(self, form, jquery, code):
+                   code = VPrintable("code", 30),
+                   postcard_okay = VOneOf("postcard", ("yes", "no")),)
+    def POST_claimgold(self, form, jquery, code, postcard_okay):
+        if code.startswith("pc_"):
+            if postcard_okay is None:
+                jquery(".postcard").show()
+                form.set_html(".status", _("just one more question"))
+                return
+            else:
+                d = dict(user=c.user.name, okay=postcard_okay)
+                g.hardcache.set("postcard-" + code, d, 86400 * 30)
+
         pennies = claim_gold(code, c.user._id)
         if not code:
             c.errors.add(errors.NO_TEXT, field = "code")
@@ -1598,7 +1608,7 @@ subscription with your reddit account -- just visit
                       "info")
             g.cache.set("recent-gold-" + c.user.name, True, 600)
             c.user.creddits += pennies
-            admintools.engolden(c.user)
+            admintools.engolden(c.user, postcard_okay)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
         else:
@@ -1607,6 +1617,7 @@ subscription with your reddit account -- just visit
         # Activate any errors we just manually set
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
                         errors.NO_TEXT)
+
 
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):
