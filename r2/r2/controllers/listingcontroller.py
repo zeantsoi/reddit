@@ -516,17 +516,17 @@ class UserController(ListingController):
         q = None
         if self.where == 'overview':
             self.check_modified(self.vuser, 'overview')
-            q = queries.get_overview(self.vuser, 'new', 'all')
+            q = queries.get_overview(self.vuser, self.sort, self.time)
 
         elif self.where == 'comments':
             sup.set_sup_header(self.vuser, 'commented')
             self.check_modified(self.vuser, 'commented')
-            q = queries.get_comments(self.vuser, 'new', 'all')
+            q = queries.get_comments(self.vuser, self.sort, self.time)
 
         elif self.where == 'submitted':
             sup.set_sup_header(self.vuser, 'submitted')
             self.check_modified(self.vuser, 'submitted')
-            q = queries.get_submitted(self.vuser, 'new', 'all')
+            q = queries.get_submitted(self.vuser, self.sort, self.time)
 
         elif self.where in ('liked', 'disliked'):
             sup.set_sup_header(self.vuser, self.where)
@@ -547,13 +547,24 @@ class UserController(ListingController):
 
         return q
 
-    @validate(vuser = VExistingUname('username'))
-    def GET_listing(self, where, vuser, **env):
+    @validate(vuser = VExistingUname('username'),
+              sort = VMenu('t', SortMenu),
+              time = VMenu('t', TimeMenu))
+    def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
+        self.sort = sort
+        self.time = time
 
         # the validator will ensure that vuser is a valid account
         if not vuser:
             return self.abort404()
+
+        if not vuser.gold:
+            self.sort = 'new'
+            self.time = 'all'
+        if self.sort = 'hot':
+            self.time = 'all'
+
 
         # hide spammers profile pages
         if (not c.user_is_loggedin or

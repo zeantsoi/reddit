@@ -556,9 +556,8 @@ def new_link(link):
 
     if link._spam:
         results.append(get_spam_links(sr))
-    else:
-        add_queries(results, insert_items = link)
 
+    add_queries(results, insert_items = link)
     amqp.add_item('new_link', link._fullname)
 
 
@@ -607,13 +606,23 @@ def new_vote(vote):
 
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
+        results = []
+        author = Account._byID(item.author_id)
+        if author.gold:
+            for sort in ('hot', 'top', 'controversial', 'new'):
+                if isinstance(item, Link):
+                    results.append(get_submitted(author, sort, 'all'))
+                if isinstance(item, Comment):
+                    results.append(get_comments(author, sort, 'all'))
+
+
         # don't do 'new', because that was done by new_link, and the
         # time-filtered versions of top/controversial will be done by
         # mr_top
-        results = [get_links(sr, 'hot', 'all'),
-                   get_links(sr, 'top', 'all'),
-                   get_links(sr, 'controversial', 'all'),
-                   ]
+        results.extend([get_links(sr, 'hot', 'all'),
+                        get_links(sr, 'top', 'all'),
+                        get_links(sr, 'controversial', 'all'),
+                        ])
 
         for domain in utils.UrlParser(item.url).domain_permutations():
             for sort in ("hot", "top", "controversial"):
