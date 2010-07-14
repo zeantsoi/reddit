@@ -17,8 +17,9 @@
                     and a.thing_id = cast(d.value as int)
                     and a.key = 'gold'
                     and t.date > now() - interval '1 year'
-                ) to 'links.joined'"
-cat links.joined | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "write_permacache()"
+                ) to 'gold.joined'"
+
+cat gold.joined | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "write_permacache()"
 """
 import sys
 
