@@ -25,7 +25,7 @@ from validator import *
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu
+from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
 from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
@@ -235,7 +235,8 @@ class HotController(FixListing, ListingController):
             elif pos != 0:
                 pos = pos % len(spotlight_links)
 
-            spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
+            if c.user.pref_show_sponsors or not c.user.gold:
+                spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
             trial = populate_spotlight()
 
             # Need to do this again, because if there was a duplicate removed,
@@ -491,6 +492,15 @@ class UserController(ListingController):
     render_cls = ProfilePage
     show_nums = False
 
+    @property
+    def menus(self):
+        # TODO: remove admin restrictions
+        if (self.vuser.gold and c.user_is_admin and 
+            self.where in ('overview', 'submitted', 'comments')):
+            return [ProfileSortMenu(default = self.sort),
+                    TimeMenu(default = self.time)]
+        return []
+
     def title(self):
         titles = {'overview': _("overview for %(user)s"),
                   'comments': _("comments by %(user)s"),
@@ -507,7 +517,10 @@ class UserController(ListingController):
     def keep_fn(self):
         # keep promotions off of profile pages.
         def keep(item):
-            return (getattr(item, "promoted", None) is None and
+            wouldkeep = True
+            if self.time != 'all':
+                wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
+            return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
                      not getattr(item, "deleted", False)))
         return keep
@@ -548,7 +561,7 @@ class UserController(ListingController):
         return q
 
     @validate(vuser = VExistingUname('username'),
-              sort = VMenu('t', SortMenu),
+              sort = VMenu('t', ProfileSortMenu),
               time = VMenu('t', TimeMenu))
     def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
@@ -559,12 +572,12 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        # disable for now
-        #if not vuser.gold:
-        self.sort = 'new'
-        self.time = 'all'
-        #if self.sort == 'hot':
-        #    self.time = 'all'
+        # TODO: remove admin restrictions
+        if not vuser.gold or not c.user_is_admin:
+            self.sort = 'new'
+            self.time = 'all'
+        if self.sort == 'hot':
+            self.time = 'all'
 
 
         # hide spammers profile pages

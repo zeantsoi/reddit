@@ -422,6 +422,10 @@ class SortMenu(SimpleGetMenu):
         elif sort == 'confidence':
             return operators.desc('_confidence')
 
+class ProfileSortMenu(SortMenu):
+    default   = 'new'
+    options   = ('hot', 'new', 'top', 'controversial')
+
 class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
     default   = 'confidence'

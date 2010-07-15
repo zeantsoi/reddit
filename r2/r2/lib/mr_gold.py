@@ -12,7 +12,7 @@
                         reddit_data_link d,
                         reddit_data_account a
                   where t.thing_id = d.thing_id
-                    and not t.spam and not t.deleted
+                    and not t.deleted
                     and d.key = 'author_id'
                     and a.thing_id = cast(d.value as int)
                     and a.key = 'gold'
@@ -60,9 +60,9 @@ def time_listings(times = ('year','month','week','day','hour', 'all')):
                            contr, timestamp, fname)
                     if tkey == 'all':
                         yield ('user-new-%s-%d' % (tkey, author_id),
-                               contr, timestamp, fname)
+                               timestamp, timestamp, fname)
                         yield ('user-hot-%s-%d' % (tkey, author_id),
-                               contr, h, fname)
+                               h, timestamp, fname)
 
 
     mr_tools.mr_map(process)
@@ -81,7 +81,7 @@ def store_keys(key, maxes):
         account_id = int(account_id)
         fn = queries.get_submitted
         q = fn(Account._byID(account_id), sort, time)
-        q._insert_tuples([tuple([item[-1]] + map(float, item[:-1]))
+        q._replace([tuple([item[-1]] + map(float, item[:-1]))
                     for item in maxes])
 
 def write_permacache(fd = sys.stdin):

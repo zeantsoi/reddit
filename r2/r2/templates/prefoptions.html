@@ -229,6 +229,13 @@
   <tr>
     <th>${_("content options")}</th>
     <td class="prefright">
+      ## TODO: make c.user.gold
+      %if c.user_is_admin: 
+        ${checkbox(_("show the main ad box"), "adbox")}
+        <br/>
+        ${checkbox(_("show sponsored links"), "show_sponsors")}
+        <br/>
+      %endif
       ${checkbox(_("i am over eighteen years old and willing to view adult content"), "over_18")}
       &#32;<span class="little gray">(${_("required to view some reddits")})</span>
       <br/>

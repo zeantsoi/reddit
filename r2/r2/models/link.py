@@ -233,10 +233,10 @@ class Link(Thing, Printable):
         #
         # skip the item if 18+ and the user has that preference set
         # ignore skip if we are visiting a nsfw reddit
-        #if ( (user and user.pref_no_profanity) or
-        #     (not user and g.filter_over18) ) and wrapped.subreddit != c.site:
-        #    return not bool(wrapped.subreddit.over_18 or 
-        #                    wrapped._nsfw.findall(wrapped.title))
+        if ( not c.user_is_loggedin and
+             (wrapped.subreddit != c.site or c.site.name == 'multi')):
+            return not bool(wrapped.subreddit.over_18 or 
+                            wrapped.over_18)
 
         return True
 
