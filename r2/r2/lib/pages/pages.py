@@ -206,7 +206,7 @@ class Reddit(Templated):
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
-            if c.user.pref_adbox or not c.user.gold:
+            if c.user.pref_show_adbox or not c.user.gold:
                 ps.append(Ads())
             no_ads_yet = False
 
@@ -253,7 +253,7 @@ class Reddit(Templated):
 
 
         if no_ads_yet:
-            if c.user.pref_adbox or not c.user.gold:
+            if c.user.pref_show_adbox or not c.user.gold:
                 ps.append(Ads())
 
         if c.user_is_admin:

@@ -94,7 +94,7 @@ class PostController(ApiController):
               pref_threaded_messages = VBoolean("threaded_messages"),
               pref_collapse_read_messages = VBoolean("collapse_read_messages"),
               pref_private_feeds = VBoolean("private_feeds"),
-              pref_adbox = VBoolean("adbox"),
+              pref_show_adbox = VBoolean("show_adbox"),
               pref_show_sponsors = VBoolean("show_sponsors"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
@@ -113,7 +113,7 @@ class PostController(ApiController):
             kw['pref_label_nsfw'] = True
 
         if not c.user_is_admin: #TODO: make c.user.gold
-            kw['pref_adbox'] = True
+            kw['pref_show_adbox'] = True
             kw['pref_show_sponsors'] = True
 
         self.set_options(all_langs, pref_lang, **kw)

@@ -495,11 +495,13 @@ class UserController(ListingController):
     @property
     def menus(self):
         # TODO: remove admin restrictions
+        res = []
         if (self.vuser.gold and c.user_is_admin and 
             self.where in ('overview', 'submitted', 'comments')):
-            return [ProfileSortMenu(default = self.sort),
-                    TimeMenu(default = self.time)]
-        return []
+            res.append(ProfileSortMenu(default = self.sort))
+            if self.sort not in ("hot", "new"):
+                res.append(TimeMenu(default = self.time))
+        return res
 
     def title(self):
         titles = {'overview': _("overview for %(user)s"),
@@ -576,7 +578,7 @@ class UserController(ListingController):
         if not vuser.gold or not c.user_is_admin:
             self.sort = 'new'
             self.time = 'all'
-        if self.sort == 'hot':
+        if self.sort in  ('hot', 'new'):
             self.time = 'all'
 
 

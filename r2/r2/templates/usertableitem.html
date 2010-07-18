@@ -62,11 +62,13 @@
     %endif
   %elif thing.name == "note":
     <form action="/post/friendnote" id="friendnote-${thing.rel._fullname}"
-          method="post" class="pretty-form medium-text"
+          method="post" class="pretty-form medium-text friend-note"
           onsubmit="return post_form(this, 'friendnote');">
       <input type="hidden" name="name" value="${thing.user.name}" />
       <input type="text" maxlength="300" name="note" class="tiny"
+             onfocus="$(this).parent().addClass('edited')"
              value="${getattr(thing.rel, 'note', '')}" />
+      <button onclick="$(this).parent().removeClass('edited')" type="submit">submit</button>
       <span class="status"></span>
     </form>
   %elif thing.name == "age":

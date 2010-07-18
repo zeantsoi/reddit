@@ -4049,7 +4049,31 @@ a.pretty-button.positive.pressed {
     display: inline-block;
 }
 
-.gold-accent h1 {
+tr.gold-accent { 
+    display: table-row; 
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+tr.gold-accent + tr > td { 
+    padding-top: 10px; 
+}
+
+.friend-note button[type=submit] { 
+    display: none; 
+    font-size: x-small;
+    padding-top: 1px;
+    padding-bottom: 1px; 
+    margin: 0px;
+    margin-left: 5px;
+    width: 45px;
+}
+.friend-note.edited button[type=submit] { display: inline-block; }
+.friend-note.edited input[type=text] { width: 250px; margin-right: 0px; }
+
+
+.gold-accent h1, 
+.gold-accent th {
     color: #6a4d00;
     font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
                   Palatino,georgia,garamond,FreeSerif,serif;
