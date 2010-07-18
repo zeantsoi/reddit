@@ -1364,7 +1364,8 @@ class ApiController(RedditController):
 
         if g.cache.get("ipn-debug"):
             g.cache.delete("ipn-debug")
-            g.log.info("IPN: %r" % (parameters,))
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % k, v)
 
         parameters['cmd']='_notify-validate'
         try:
