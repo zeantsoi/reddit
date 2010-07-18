@@ -35,6 +35,7 @@ from r2.lib.authorize import Address, CreditCard
 
 from r2.controllers.errors import errors, UserRequiredException
 from r2.controllers.errors import VerifiedUserRequiredException
+from r2.controllers.errors import GoldRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
@@ -564,6 +565,12 @@ class VVerifiedUser(VUser):
         VUser.run(self)
         if not c.user.email_verified:
             raise VerifiedUserRequiredException
+
+class VGold(VUser):
+    def run(self):
+        VUser.run(self)
+        if not c.user.gold:
+            raise GoldRequiredException
 
 class VSponsorAdmin(VVerifiedUser):
     """

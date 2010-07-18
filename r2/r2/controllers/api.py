@@ -507,6 +507,9 @@ class ApiController(RedditController):
         fn = getattr(container, 'remove_' + type)
         fn(victim)
 
+        if type == "friend" and c.user.gold:
+            c.user.friend_rels_cache(_update=True)
+
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(victim, type, _update=True)
 
@@ -518,9 +521,10 @@ class ApiController(RedditController):
                    friend = VExistingUname('name'),
                    container = VByName('container'),
                    type = VOneOf('type', ('friend', 'moderator',
-                                          'contributor', 'banned')))
-    def POST_friend(self, form, jquery, ip, friend, 
-                    container, type):
+                                          'contributor', 'banned')),
+                   note = VLength('note', 300))
+    def POST_friend(self, form, jquery, ip, friend,
+                    container, type, note):
         """
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
@@ -543,6 +547,13 @@ class ApiController(RedditController):
             return
 
         new = fn(friend)
+
+        if type == "friend" and c.user.gold:
+            # Yes, the order of the next two lines is correct.
+            # First you recalculate the rel_ids, then you find
+            # the right one and update its data.
+            c.user.friend_rels_cache(_update=True)
+            c.user.add_friend_note(friend, note or '')
 
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(friend, type, _update=True)
@@ -573,6 +584,13 @@ class ApiController(RedditController):
 
                     queries.new_message(item, inbox_rel)
 
+
+    @validatedForm(VGold(),
+                   friend = VExistingUname('name'),
+                   note = VLength('note', 300))
+    def POST_friendnote(self, form, jquery, friend, note):
+        c.user.add_friend_note(friend, note)
+        form.set_html('.status', _("saved"))
 
     @validatedForm(VUser('curpass', default = ''),
                    VModhash(),
@@ -1343,6 +1361,10 @@ class ApiController(RedditController):
             parameters = request.POST.copy()
         else:
             parameters = request.GET.copy()
+
+        if g.cache.get("ipn-debug"):
+            g.cache.delete("ipn-debug")
+            g.log.info("IPN: %r" % (parameters,))
 
         parameters['cmd']='_notify-validate'
         try:

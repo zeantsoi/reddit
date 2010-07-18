@@ -184,6 +184,7 @@ class AdminTools(object):
                              description=description,
                              url="/help/gold")
         account._commit()
+        account.friend_rels_cache(_update=True)
         if g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.add_contributor(account)

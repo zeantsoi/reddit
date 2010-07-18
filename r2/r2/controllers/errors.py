@@ -137,3 +137,4 @@ class ErrorSet(object):
 
 class UserRequiredException(Exception): pass
 class VerifiedUserRequiredException(Exception): pass
+class GoldRequiredException(Exception): pass

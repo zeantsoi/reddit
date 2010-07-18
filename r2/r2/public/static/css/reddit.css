@@ -380,8 +380,35 @@ ul.flat-vert {text-align: left;}
 }
 
 .sidebox.gold .spacer {
+    /* TODO: replace the following with the new logo */
     background-image: url(/static/reddit_gold-40.png);  /* SPRITE */
     background-repeat:no-repeat;
+}
+
+.sidebox.gold .morelink {
+    border:none;
+    background-color:transparent;
+    background-image: url(/static/goldmorelink.png);  /* SPRITE */
+    background-position: 0 0;
+    background-repeat:no-repeat;
+    height:31px;
+}
+
+.sidebox.gold .morelink a, .sidebox.gold .morelink a:visited {
+    color:#9a7d2e;
+}
+
+.sidebox.gold .morelink:hover {
+    background-position: 0 -31px;
+}
+
+.sidebox.gold .morelink:hover a {
+    color:#ffffff;
+    margin-top:1px;
+}
+
+.sidebox.gold .morelink .nub {
+    display: none;
 }
 
 .sidebox.submit .spacer {
@@ -1471,7 +1498,7 @@ textarea.gray { color: gray; }
 
 .usertable { margin-left: 10px;} 
 .usertable { font-size: larger }
-.usertable td { padding: 0 .7em }
+.usertable td, .usertable th { padding: 0 .7em }
 .usertable { white-space: nowrap }
 
 
@@ -4011,4 +4038,44 @@ a.pretty-button.positive.pressed {
     font-size: smaller;
     background-color: white;
     padding: 5px;
+}
+
+.gold-accent {
+    margin-top: 10px;
+    padding: 0 10px 5px;
+    background-color: #fffdcc;
+    border: solid 1px #e1b000;
+    color: #9a7d2e;
+    display: inline-block;
+}
+
+.gold-accent h1 {
+    color: #6a4d00;
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
+                  Palatino,georgia,garamond,FreeSerif,serif;
+    font-variant: small-caps;
+}
+
+.gold-accent .pretty-form input[type=text] {
+    margin-top: 1px;
+    margin-bottom: 2px;
+    margin-left: 0;  /* or else friends with benefits'
+                        "note" td and th don't line up */
+}
+
+.gold-accent .pretty-form input[type=text]#name {
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+.gold-accent .pretty-form button {
+    background-color: #fff088;
+    color: #6a4d00;
+    border: 1px solid #9a7d2e;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+.tiny {
+    font-size: xx-small;
 }

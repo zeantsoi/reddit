@@ -240,6 +240,26 @@ class Account(Thing):
     def friends(self):
         return self.friend_ids()
 
+    # Used on the goldmember version of /prefs/friends
+    @memoize('account.friend_rels')
+    def friend_rels_cache(self):
+        q = Friend._query(Friend.c._thing1_id == self._id,
+                          Friend.c._name == 'friend')
+        return list(f._id for f in q)
+
+    def friend_rels(self, _update = False):
+        rel_ids = self.friend_rels_cache(_update=_update)
+        rels = Friend._byID_rel(rel_ids, return_dict=False,
+                                eager_load = True, data = True,
+                                thing_data = True)
+        return dict((r._thing2_id, r) for r in rels)
+
+    def add_friend_note(self, friend, note):
+        rels = self.friend_rels()
+        rel = rels[friend._id]
+        rel.note = note
+        rel._commit()
+
     def delete(self):
         self._deleted = True
         self._commit()
