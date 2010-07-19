@@ -1409,12 +1409,12 @@ class ApiController(RedditController):
         # language info (or name) at this point
         body = """
 Thanks for subscribing to reddit gold! We have received your PayPal
-transaction, number %s, contributing $%0.2f to the help-reddit-not-die fund.
+transaction, number %s.
 
 Your secret subscription code is %s. You can use it to associate this
 subscription with your reddit account -- just visit
 %s
-        """ % (txn_id, mc_gross, gold_secret, url)
+        """ % (txn_id, gold_secret, url)
 
         emailer.gold_email(body, payer_email, "reddit gold subscriptions")
 
