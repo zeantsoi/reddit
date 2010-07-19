@@ -1338,6 +1338,11 @@ class ApiController(RedditController):
                      "warning")
             raise ValueError
 
+        if request.POST:
+            parameters = request.POST.copy()
+        else:
+            parameters = request.GET.copy()
+
         if payment_status is None:
             for k, v in parameters.iteritems():
                 g.log.info("IPN: %r = %r" % (k, v))
@@ -1361,11 +1366,6 @@ class ApiController(RedditController):
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
-
-        if request.POST:
-            parameters = request.POST.copy()
-        else:
-            parameters = request.GET.copy()
 
         if g.cache.get("ipn-debug"):
             g.cache.delete("ipn-debug")
