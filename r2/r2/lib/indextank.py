@@ -25,10 +25,11 @@
 
 from pylons import g, config
 import cPickle as pickle
+from time import sleep
 
 from r2.models import *
 from r2.lib import amqp
-from r2.lib.contrib.indextank_client import IndexTank
+from r2.lib.contrib import indextank_clientv1
 from r2.lib.utils import in_chunks, progress, get_after, UrlParser
 from r2.lib.utils import domain, strordict_fullname
 
@@ -38,9 +39,8 @@ sorts = dict(relevance = 1,
              new = 2,
              top = 3)
 
-index = IndexTank(host = g.INDEXTANK_HOST,
-                  api_key = g.INDEXTANK_API_KEY,
-                  index_code = g.INDEXTANK_IDX_CODE)
+index = indextank_clientv1.ApiClient(g.INDEXTANK_API_URL).get_index('main')
+
 
 class Results(object):
     __slots__ = ['docs', 'hits']
@@ -53,9 +53,6 @@ class Results(object):
         return '%s(%r,%r)' % (self.__class__.__name__,
                               self.docs,
                               self.hits)
-
-class IndextankException(Exception):
-    pass
 
 class IndextankQuery(object):
     def __init__(self, query, sr, sort):
@@ -82,7 +79,7 @@ class IndextankQuery(object):
             return '+(%s)' % ' OR '.join(('%s:%s' % (field, sr_id))
                                          for sr_id in sr_ids)
 
-    def _run(self, num=1000, _update=False):
+    def _run(self, start=0, num=1000, _update=False):
         q = []
         q.append(self.query)
 
@@ -113,26 +110,22 @@ class IndextankQuery(object):
 
         query = ' '.join(q)
 
-        return self._run_cached(query, sorts[self.sort], _update=_update)
+        return self._run_cached(query, sorts[self.sort], start=start, num=num,
+                                _update=_update)
         
     @classmethod
-    def _run_cached(cls, query, sort, num=1000, _update=False):
+    def _run_cached(cls, query, sort, start=0, num=1000, _update=False):
         # we take and ignore the _update parameter to make plugging in
         # a @memoize later easy
 
         if g.sqlprinting:
             g.log.info('%s: %r %r' % (cls.__name__, query, sort))
 
-        ok, resp = index.search(query.encode('utf-8'), start=0, len=num,
-                                fetch_fields='docid', relevance_function=sort)
+        resp = index.search(query.encode('utf-8'), start=start, len=num,
+                            scoring_function=sort)
 
-        if not ok:
-            raise IndextankException(resp)
-
-        results = resp['results']
-
-        docs = [t['docid'] for t in results['docs']]
-        hits = results['matches']
+        docs = [t['docid'] for t in resp['results']]
+        hits = resp['matches']
 
         return Results(docs, hits)
 
@@ -193,7 +186,7 @@ def maps_from_things(things, boost_only = False):
             pass
     return maps
 
-def to_boosts(ups, downs, num_comments):
+def to_variables(ups, downs, num_comments):
     return {0: ups,
             1: downs,
             2: num_comments}
@@ -204,20 +197,15 @@ def inject_maps(maps, boost_only=False):
         ups = d.pop("ups")
         downs = d.pop("downs")
         num_comments = d.pop("num_comments")
-        boosts = to_boosts(ups, downs, num_comments)
+        boosts = to_variables(ups, downs, num_comments)
 
         if boost_only:
-            ok, result = index.boost(fullname, boosts=boosts)
+            index.update_variables(docid=fullname, variables=boosts)
         else:
-            ok, result = index.add(fullname, d, boosts)
-
-        if not ok:
-            raise Exception(result)
+            index.add_document(docid=fullname, fields=d, variables=boosts)
 
 def delete_thing(thing):
-    ok, result = index.delete(thing._fullname)
-    if not ok:
-        raise Exception(result)
+    index.delete_document(docid=thing._fullname)
 
 def inject(things, boost_only=False):
     things = [x for x in things if isinstance(x, indextank_indexed_types)]
@@ -289,10 +277,17 @@ def run_changed(drain=False, limit=1000):
 
         things = Thing._by_fullname(boost | add, data=True, return_dict=True)
 
+        print ("%d messages: %d docs, %d boosts (%d duplicates)"
+               % (len(changed),
+                  len(add),
+                  len(boost),
+                  len(changed) - len(things),
+               ))
+
         if boost:
             inject([things[fname] for fname in boost], boost_only=True)
         if add:
             inject([things[fname] for fname in add])
 
     amqp.handle_items('indextank_changes', _run_changed, limit=limit,
-                      drain=drain)
+                      drain=drain, verbose=False)
