@@ -1326,10 +1326,11 @@ class ApiController(RedditController):
                 txn_id = VPrintable('txn_id', 20),
                 paying_id = VPrintable('payer_id', 50),
                 payer_email = VPrintable('payer_email', 250),
+                item_number = VPrintable('item_number', 20),
                 mc_currency = VPrintable('mc_currency', 20),
                 mc_gross = VFloat('mc_gross'))
     def POST_ipn(self, paypal_secret, payment_status, txn_id,
-                 paying_id, payer_email, mc_currency, mc_gross):
+                 paying_id, payer_email, item_number, mc_currency, mc_gross):
 
         if paypal_secret != g.PAYPAL_SECRET:
             log_text("invalid IPN secret",
@@ -1383,8 +1384,21 @@ class ApiController(RedditController):
 #        if status != "VERIFIED":
 #            raise ValueError("Invalid IPN response: %r" % status)
 
-        gold_secret = randstr(10)
         pennies = int(mc_gross * 100)
+
+        if item_number and item_number == 'rgsub':
+            if pennies == 2999:
+                secret_prefix = "ys_"
+            elif pennies == 399:
+                secret_prefix = "m_"
+            else:
+                log_text("weird IPN subscription",
+                         "Got %d pennies via PayPal?" % pennies, "error")
+                secret_prefix = "w_"
+        else:
+            secret_prefix = "o_"
+
+        gold_secret = secret_prefix + randstr(10)
 
         create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
                               pennies, gold_secret, c.start_time)
@@ -1403,6 +1417,8 @@ subscription with your reddit account -- just visit
         """ % (txn_id, mc_gross, gold_secret, url)
 
         emailer.gold_email(body, payer_email, "reddit gold subscriptions")
+
+        g.log.info("Just got IPN for %d, secret=%s" % (pennies, gold_secret))
 
         return "Ok"
 
@@ -1604,6 +1620,7 @@ subscription with your reddit account -- just visit
                    postcard_okay = VOneOf("postcard", ("yes", "no")),)
     def POST_claimgold(self, form, jquery, code, postcard_okay):
         if code.startswith("pc_"):
+            gold_type = 'postcard'
             if postcard_okay is None:
                 jquery(".postcard").show()
                 form.set_html(".status", _("just one more question"))
@@ -1611,6 +1628,12 @@ subscription with your reddit account -- just visit
             else:
                 d = dict(user=c.user.name, okay=postcard_okay)
                 g.hardcache.set("postcard-" + code, d, 86400 * 30)
+        elif code.startswith("ys_"):
+            gold_type = 'yearly special'
+        elif code.startswith("m_"):
+            gold_type = 'monthly'
+        else:
+            gold_type = 'old'
 
         pennies = claim_gold(code, c.user._id)
         if not code:
@@ -1631,6 +1654,7 @@ subscription with your reddit account -- just visit
                       "info")
             g.cache.set("recent-gold-" + c.user.name, True, 600)
             c.user.creddits += pennies
+            c.user.gold_type = gold_type
             admintools.engolden(c.user, postcard_okay)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
