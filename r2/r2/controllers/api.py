@@ -1338,6 +1338,10 @@ class ApiController(RedditController):
                      "warning")
             raise ValueError
 
+        if payment_status is None:
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+
         psl = payment_status.lower()
         if psl == 'completed':
             pass
