@@ -1623,6 +1623,11 @@ subscription with your reddit account -- just visit
                    code = VPrintable("code", 30),
                    postcard_okay = VOneOf("postcard", ("yes", "no")),)
     def POST_claimgold(self, form, jquery, code, postcard_okay):
+        if not code:
+            c.errors.add(errors.NO_TEXT, field = "code")
+            form.has_errors("code", errors.NO_TEXT)
+            return
+
         if code.startswith("pc_"):
             gold_type = 'postcard'
             if postcard_okay is None:
@@ -1640,9 +1645,7 @@ subscription with your reddit account -- just visit
             gold_type = 'old'
 
         pennies = claim_gold(code, c.user._id)
-        if not code:
-            c.errors.add(errors.NO_TEXT, field = "code")
-        elif pennies is None:
+        if pennies is None:
             c.errors.add(errors.INVALID_CODE, field = "code")
             log_text ("invalid gold claim",
                       "%s just tried to claim %s" % (c.user.name, code),
