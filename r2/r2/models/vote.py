@@ -187,6 +187,8 @@ class Vote(MultiRelation('vote',
             cv.organic = v.organic
         cv._commit()
 
+        queries.changed(votee, True)
+
         return v
 
     #TODO make this generic and put on multirelation?

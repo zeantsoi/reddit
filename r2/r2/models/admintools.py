@@ -188,8 +188,6 @@ class AdminTools(object):
         if g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.add_contributor(account)
-            changed(sr)
-
 
     def degolden(self, account):
         from r2.lib.db.queries import changed
@@ -199,8 +197,6 @@ class AdminTools(object):
         if g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.remove_contributor(account)
-            changed(sr)
-
 
 admintools = AdminTools()
 

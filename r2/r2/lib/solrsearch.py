@@ -40,7 +40,7 @@ from r2.models import *
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib.utils import timeago, UrlParser
-from r2.lib.utils import unicode_safe, tup
+from r2.lib.utils import unicode_safe, tup, get_after, strordict_fullname
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
 
@@ -649,17 +649,6 @@ class DomainSearchQuery(SearchQuery):
         return q, dict(fl='fullname',
                        qt='standard')
 
-def get_after(fullnames, fullname, num):
-    if not fullname:
-        return fullnames[:num]
-
-    for i, item in enumerate(fullnames):
-        if item == fullname:
-            return fullnames[i+1:i+num+1]
-
-    return fullnames[:num]
-
-
 def run_commit(optimize=False):
     with SolrConnection(commit=True, optimize=optimize) as s:
         pass
@@ -674,8 +663,10 @@ def run_changed(drain=False):
     """
     def _run_changed(msgs, chan):
         print "changed: Processing %d items" % len(msgs)
+        msgs = [strordict_fullname(msg.body)
+                for msg in msgs]
+        fullnames = set(msg['fullname'] for msg in msgs)
 
-        fullnames = set([x.body for x in msgs])
         things = Thing._by_fullname(fullnames, data=True, return_dict=False)
         things = [x for x in things if isinstance(x, indexed_types)]
 
