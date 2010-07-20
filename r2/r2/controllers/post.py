@@ -112,7 +112,7 @@ class PostController(ApiController):
         if kw.get("pref_no_profanity") or c.user.pref_no_profanity:
             kw['pref_label_nsfw'] = True
 
-        if not c.user_is_admin:
+        if not c.user.gold:
             kw['pref_show_adbox'] = True
             kw['pref_show_sponsors'] = True
 
