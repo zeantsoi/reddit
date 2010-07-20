@@ -1352,6 +1352,8 @@ class ApiController(RedditController):
         psl = payment_status.lower()
         if psl == '' and parameters['txn_type'] == 'subscr_signup':
             return "Ok"
+        elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
+            return "Ok"
         elif psl == 'completed':
             pass
         elif psl == 'refunded':
