@@ -665,7 +665,11 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = c.can_reply or (item.sr_id in can_reply_srs) 
+            item.can_reply = False
+            if c.can_reply or (item.sr_id in can_reply_srs):
+                age = c.start_time - item._date
+                if age.days < g.REPLY_AGE_LIMIT:
+                    item.can_reply = True
 
 
             # not deleted on profile pages,

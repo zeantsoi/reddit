@@ -780,7 +780,9 @@ class ApiController(RedditController):
             if ((link.is_self and link.author_id == c.user._id)
                 or not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
-
+            parent_age = c.start_time - parent._date
+            if parent_age.days > g.REPLY_AGE_LIMIT:
+                c.errors.add(errors.TOO_OLD, field = "parent")
         #remove the ratelimit error if the user's karma is high
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -792,7 +794,8 @@ class ApiController(RedditController):
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
                                        errors.DELETED_COMMENT,
-                                       errors.DELETED_LINK)):
+                                       errors.DELETED_LINK,
+                                       errors.TOO_OLD)):
 
             if is_message:
                 to = Account._byID(parent.author_id)

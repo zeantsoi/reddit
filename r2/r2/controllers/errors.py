@@ -80,6 +80,7 @@ error_list = dict((
         ('CLAIMED_CODE', _("that code has already been claimed -- perhaps by you?")),
         ('NO_SELFS', _("that reddit doesn't allow text posts")),
         ('NO_LINKS', _("that reddit only allows text posts")),
+        ('TOO_OLD', _("that's a piece of history now; it's too late to reply to it")),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
