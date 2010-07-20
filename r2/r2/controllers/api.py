@@ -1347,11 +1347,12 @@ class ApiController(RedditController):
             parameters = request.GET.copy()
 
         if payment_status is None:
-            for k, v in parameters.iteritems():
-                g.log.info("IPN: %r = %r" % (k, v))
+            payment_status = ''
 
         psl = payment_status.lower()
-        if psl == 'completed':
+        if psl == '' and parameters['txn_type'] == 'subscr_signup':
+            return "Ok"
+        elif psl == 'completed':
             pass
         elif psl == 'refunded':
             log_text("refund", "Just got notice of a refund.", "info")
@@ -1365,6 +1366,9 @@ class ApiController(RedditController):
             # forget to verify first
             return "Ok"
         else:
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+
             raise ValueError("Unknown IPN status: %r" % payment_status)
 
         if mc_currency != 'USD':
