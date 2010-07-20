@@ -151,7 +151,8 @@ def maps_from_things(things, boost_only = False):
 
     for thing in things:
         try:
-            d = dict(ups = thing._ups,
+            d = dict(fullname = thing._fullname,
+                     ups = thing._ups,
                      downs = thing._downs,
                      num_comments = getattr(thing, 'num_comments', 0))
 
@@ -277,11 +278,12 @@ def run_changed(drain=False, limit=1000):
 
         things = Thing._by_fullname(boost | add, data=True, return_dict=True)
 
-        print ("%d messages: %d docs, %d boosts (%d duplicates)"
+        print ("%d messages: %d docs, %d boosts (%d duplicates, %s remaining)"
                % (len(changed),
                   len(add),
                   len(boost),
                   len(changed) - len(things),
+                  msgs[-1].delivery_info.get('message_count', 'unknown'),
                ))
 
         if boost:
