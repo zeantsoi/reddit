@@ -223,8 +223,7 @@ class Reddit(Templated):
                               subtitles = rand_strings.get("create_reddit", 2),
                               show_cover = True, nocname=True))
 
-        # TODO: enable on Monday
-        if False and self.submit_box:
+        if not c.user.gold and self.submit_box:
             ps.append(SideBox(_('New subscriber features'),
                               'http://blog.reddit.com', 'gold',
                               sr_path = False,
@@ -2132,7 +2131,7 @@ class FriendList(UserList):
     type = 'friend'
 
     def __init__(self, editable = True):
-        if c.user.gold and c.user_is_admin: #TODO: change on Monday
+        if c.user.gold:
             self.friend_rels = c.user.friend_rels()
             self.cells = ('user', 'sendmessage', 'note', 'age', 'remove')
             self._class = "gold-accent rounded"

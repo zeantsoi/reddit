@@ -85,7 +85,7 @@ class ListingController(RedditController):
         """list of menus underneat the header (e.g., sort, time, kind,
         etc) to be displayed on this listing page"""
         return []
-    
+
     @base_listing
     def build_listing(self, num, after, reverse, count):
         """uses the query() method to define the contents of the
@@ -494,9 +494,8 @@ class UserController(ListingController):
 
     @property
     def menus(self):
-        # TODO: remove admin restrictions
         res = []
-        if (self.vuser.gold and c.user_is_admin and 
+        if (self.vuser.gold and 
             self.where in ('overview', 'submitted', 'comments')):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
@@ -520,6 +519,8 @@ class UserController(ListingController):
         # keep promotions off of profile pages.
         def keep(item):
             wouldkeep = True
+            if item._deleted:
+                return False
             if self.time != 'all':
                 wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
             return wouldkeep and (getattr(item, "promoted", None) is None and
@@ -574,8 +575,7 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        # TODO: remove admin restrictions
-        if not vuser.gold or not c.user_is_admin:
+        if not vuser.gold:
             self.sort = 'new'
             self.time = 'all'
         if self.sort in  ('hot', 'new'):
