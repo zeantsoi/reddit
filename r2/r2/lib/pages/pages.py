@@ -225,7 +225,8 @@ class Reddit(Templated):
 
         if not c.user.gold and self.submit_box:
             ps.append(SideBox(_('New subscriber features'),
-                              'http://blog.reddit.com', 'gold',
+                              'http://blog.reddit.com/2010/07/three-new-features-for-reddit-gold.html',
+                              'gold',
                               sr_path = False,
                               subtitles = ["reddit gold just got better!",
                                            "(read all about it on the blog)"],
