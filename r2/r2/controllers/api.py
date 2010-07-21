@@ -1375,6 +1375,11 @@ class ApiController(RedditController):
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
 
+        if payer_email == 'kris@plaskey.com' and pennies < 399:
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+            return "Ok"
+
         if g.cache.get("ipn-debug"):
             g.cache.delete("ipn-debug")
             for k, v in parameters.iteritems():
