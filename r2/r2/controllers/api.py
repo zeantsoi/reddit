@@ -1353,6 +1353,12 @@ class ApiController(RedditController):
             return "Ok"
         elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
             return "Ok"
+        elif parameters['txn_type'] == 'send_money' and mc_gross < 3.95:
+            # Temporary block while the last of the "legacy" PWYW subscriptions
+            # roll in
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+            return "Ok"
         elif psl == 'completed':
             pass
         elif psl == 'refunded':
@@ -1374,11 +1380,6 @@ class ApiController(RedditController):
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
-
-        if payer_email == 'kris@plaskey.com' and mc_gross < 3.95:
-            for k, v in parameters.iteritems():
-                g.log.info("IPN: %r = %r" % (k, v))
-            return "Ok"
 
         if g.cache.get("ipn-debug"):
             g.cache.delete("ipn-debug")
