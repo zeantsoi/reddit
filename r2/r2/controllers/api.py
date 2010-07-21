@@ -1353,7 +1353,7 @@ class ApiController(RedditController):
             return "Ok"
         elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
             return "Ok"
-        elif parameters['txn_type'] == 'send_money' and mc_gross < 3.95:
+        elif parameters.get('txn_type', '') == 'send_money' and mc_gross < 3.95:
             # Temporary block while the last of the "legacy" PWYW subscriptions
             # roll in
             for k, v in parameters.iteritems():
