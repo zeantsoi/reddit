@@ -300,7 +300,7 @@ class HotController(FixListing, ListingController):
                 return s
 
         # no organic box on a hot page, then show a random promoted link
-        elif c.site != Default:
+        elif c.site != Default and c.user.pref_show_sponsors:
             link_ids = randomized_promotion_list(c.user, c.site)
             if link_ids:
                 res = wrap_links(link_ids, wrapper = self.builder_wrapper,
