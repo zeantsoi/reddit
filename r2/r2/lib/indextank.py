@@ -63,6 +63,9 @@ class IndextankQuery(object):
                                  self.query, self.sr, self.sort)
 
     def run(self, after=None, reverse=False, num=1000, _update=False):
+        if not self.query:
+            return Results([], 0)
+
         results = self._run(_update=_update)
 
         docs, hits = results.docs, results.hits
@@ -105,8 +108,8 @@ class IndextankQuery(object):
         elif isinstance(self.sr, ModContribSR):
             q.append(self._req_fs(
                     self.sr.sr_ids()))
-        elif not isinstance(self.sr, FakeSubreddit):
-            q.append(self._req_fs([self.sr._id]))
+        #elif not isinstance(self.sr, FakeSubreddit):
+        #    q.append(self._req_fs([self.sr._id]))
 
         query = ' '.join(q)
 

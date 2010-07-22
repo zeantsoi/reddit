@@ -1013,6 +1013,11 @@ def process_votes(limit=1000):
             if isinstance(votee, Comment):
                 comments.append(votee)
 
+            if not isinstance(votee, (Link, Comment)):
+                # I don't know how, but somebody is sneaking in votes
+                # for subreddits
+                continue
+
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
                         cheater = cheater)
