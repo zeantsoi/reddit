@@ -21,6 +21,7 @@
 ################################################################################
 
 <%!
+   from r2.models.subreddit import Default
    from r2.lib.template_helpers import add_sr, static
 %>
 
@@ -32,6 +33,18 @@
            value="${_('search reddit')}" class="gray"
          %endif
          name="q"/>
+  %if not thing.simple:
+    %if thing.site == Default:
+      <input type="hidden" name="restrict_sr" value="off" />
+    %else:
+      <br /><br />
+      <input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" />
+      <label for="restrict_sr">${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
+      <br /><br />
+    %endif
+    <input type="submit" />
+  %endif
+
   %for k, v in thing.search_params.iteritems():
     <input type="hidden" name="${k}" value="${v}" />
   %endfor

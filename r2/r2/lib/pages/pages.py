@@ -685,12 +685,15 @@ class SearchPage(BoringPage):
     searchbox = False
 
     def __init__(self, pagename, prev_search, elapsed_time,
-                 num_results, search_params = {}, *a, **kw):
+                 num_results, search_params = {},
+                 simple=False, restrict_sr = False, site=None,
+                 *a, **kw):
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
                                    search_params = search_params,
-                                   show_feedback = True)
+                                   show_feedback = True, site=site,
+                                   simple=simple, restrict_sr=restrict_sr)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -978,7 +981,8 @@ class SubredditsPage(Reddit):
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
                                    header = _('search reddits'),
-                                   search_params = {}
+                                   search_params = {},
+                                   simple=True,
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
 
@@ -1374,9 +1378,11 @@ class PaneStack(Templated):
 class SearchForm(Templated):
     """The simple search form in the header of the page.  prev_search
     is the previous search."""
-    def __init__(self, prev_search = '', search_params = {}):
+    def __init__(self, prev_search = '', search_params = {},
+                 site=None, simple=True, restrict_sr=False):
         Templated.__init__(self, prev_search = prev_search,
-                           search_params = search_params)
+                           search_params = search_params, site=site,
+                           simple=simple, restrict_sr=restrict_sr)
 
 
 class SearchBar(Templated):
@@ -1384,7 +1390,9 @@ class SearchBar(Templated):
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
-                 search_params = {}, show_feedback=False, **kw):
+                 search_params = {}, show_feedback=False,
+                 simple=False, restrict_sr=False, site=None,
+                 **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))
@@ -1399,7 +1407,9 @@ class SearchBar(Templated):
         else:
             self.num_results = num_results
 
-        Templated.__init__(self, search_params = search_params)
+        Templated.__init__(self, search_params = search_params,
+                           simple=simple, restrict_sr=restrict_sr,
+                           site=site)
 
 class SearchFail(Templated):
     """Search failure page."""

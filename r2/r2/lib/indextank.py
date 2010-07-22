@@ -108,8 +108,8 @@ class IndextankQuery(object):
         elif isinstance(self.sr, ModContribSR):
             q.append(self._req_fs(
                     self.sr.sr_ids()))
-        #elif not isinstance(self.sr, FakeSubreddit):
-        #    q.append(self._req_fs([self.sr._id]))
+        elif not isinstance(self.sr, FakeSubreddit):
+            q.append(self._req_fs([self.sr._id]))
 
         query = ' '.join(q)
 

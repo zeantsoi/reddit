@@ -462,45 +462,42 @@ class FrontController(RedditController):
                              num_results = num,
                              # update if we ever add sorts
                              search_params = {},
-                             title = _("search results")).render()
+                             title = _("search results"),
+                             simple=True).render()
         return res
 
     verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
     @base_listing
     @validate(query = nop('q'),
-              sort = VMenu('sort', SearchSortMenu, remember=False))
-    def GET_search(self, query, num, reverse, after, count, sort):
+              sort = VMenu('sort', SearchSortMenu, remember=False),
+              restrict_sr = VBoolean('restrict_sr', default=False))
+    def GET_search(self, query, num, reverse, after, count, sort, restrict_sr):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme = True)
             if url:
                 return self.redirect("/submit" + query_string({'url':url}))
 
-        q = IndextankQuery(query, c.site, sort)
+        if not restrict_sr:
+            site = Default
+        else:
+            site = c.site
+
+        q = IndextankQuery(query, site, sort)
 
         num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
                                      count = count)
 
-        if not isinstance(c.site,FakeSubreddit) and not c.cname:
-            all_reddits_link = "%s/search%s" % (subreddit.All.path,
-                                                query_string({'q': query}))
-            d =  {'reddit_name':      c.site.name,
-                  'reddit_link':      "http://%s/"%get_domain(cname = c.cname),
-                  'all_reddits_link': all_reddits_link}
-            infotext = strings.searching_a_reddit % d
-        else:
-            infotext = None
-
         res = SearchPage(_('search results'), query, t, num, content=spane,
                          nav_menus = [SearchSortMenu(default=sort)],
                          search_params = dict(sort = sort),
-                         infotext = infotext).render()
+                         simple=False, site=c.site, restrict_sr=restrict_sr).render()
 
         return res
 
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
-        thin wrapper for SearchBuilder."""
+           thin wrapper for SearchBuilder."""
 
         builder = SearchBuilder(query_obj,
                                 after = after, num = num, reverse = reverse,
