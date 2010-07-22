@@ -1206,3 +1206,21 @@ class Bomb(object):
     def __repr__(cls):
         raise Hell()
 
+def strordict_fullname(item, key='fullname'):
+    """Sometimes we migrate AMQP queues from simple strings to pickled
+    dictionaries. During the migratory period there may be items in
+    the queue of both types, so this function tries to detect which
+    the item is. It shouldn't really be used on a given queue for more
+    than a few hours or days"""
+    try:
+        d = pickle.loads(item)
+    except:
+        d = {key: item}
+
+    if (not isinstance(d, dict)
+        or key not in d
+        or not isinstance(d[key], str)):
+        raise ValueError('Error trying to migrate %r (%r)'
+                         % (item, d))
+
+    return d

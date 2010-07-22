@@ -339,6 +339,7 @@ class ApiController(RedditController):
 
         #update the queries
         queries.new_link(l)
+        changed(l)
 
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
@@ -971,9 +972,6 @@ class ApiController(RedditController):
                 set_last_modified(c.user, 'liked')
                 set_last_modified(c.user, 'disliked')
 
-            # flag search indexer that something has changed
-            changed(thing)
-
     @validatedForm(VUser(),
                    VModhash(),
                    # nop is safe: handled after auth checks below
@@ -1012,7 +1010,7 @@ class ApiController(RedditController):
             c.site.stylesheet_hash = md5(stylesheet_contents_parsed).hexdigest()
 
             set_last_modified(c.site,'stylesheet_contents')
-            changed(c.site)
+
             c.site._commit()
 
             form.set_html(".status", _('saved'))
@@ -1242,6 +1240,7 @@ class ApiController(RedditController):
                                      prefix = "create_reddit_")
 
             queries.new_subreddit(sr)
+            changed(sr)
 
         #editting an existing reddit
         elif sr.is_moderator(c.user) or c.user_is_admin:
@@ -1289,7 +1288,7 @@ class ApiController(RedditController):
             username = None
         d = dict(username=username, q=q, sort=sort, t=t)
         hex = md5(repr(d)).hexdigest()
-        key = "searchfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
+        key = "indextankfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
         d['timestamp'] = timestamp
         d['approval'] = approval
         g.hardcache.set(key, d, time=86400 * 7)
@@ -1351,6 +1350,14 @@ class ApiController(RedditController):
 
         psl = payment_status.lower()
         if psl == '' and parameters['txn_type'] == 'subscr_signup':
+            return "Ok"
+        elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
+            return "Ok"
+        elif parameters.get('txn_type', '') == 'send_money' and mc_gross < 3.95:
+            # Temporary block while the last of the "legacy" PWYW subscriptions
+            # roll in
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
             return "Ok"
         elif psl == 'completed':
             pass
@@ -1763,7 +1770,7 @@ subscription with your reddit account -- just visit
             else:
                 if sr.remove_subscriber(c.user):
                     sr._incr('_ups', -1)
-            changed(sr)
+            changed(sr, True)
         except CreationError:
             # This only seems to happen when someone is pounding on the
             # subscribe button or the DBs are really lagged; either way,

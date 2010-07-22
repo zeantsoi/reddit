@@ -692,10 +692,14 @@ def new_savehide(rel):
     elif name == 'unhide':
         add_queries([get_hidden(user)], delete_items = rel)
 
-def changed(things):
+def changed(things, boost_only=False):
     """Indicate to search that a given item should be updated in the index"""
     for thing in tup(things):
-        amqp.add_item('search_changes', thing._fullname,
+        msg = {'fullname': thing._fullname}
+        if boost_only:
+            msg['boost_only'] = True
+
+        amqp.add_item('search_changes', pickle.dumps(msg),
                       message_id = thing._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
 
