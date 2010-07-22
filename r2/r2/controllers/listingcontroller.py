@@ -564,8 +564,8 @@ class UserController(ListingController):
         return q
 
     @validate(vuser = VExistingUname('username'),
-              sort = VMenu('t', ProfileSortMenu),
-              time = VMenu('t', TimeMenu))
+              sort = VMenu('t', ProfileSortMenu, remember = False),
+              time = VMenu('t', TimeMenu, remember = False))
     def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
         self.sort = sort
