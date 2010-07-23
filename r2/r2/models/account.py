@@ -26,6 +26,7 @@ from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser, set_last_visit, last_visit
 from r2.lib.cache        import sgm
+from r2.lib.log import log_text
 
 from pylons import g
 import time, sha
@@ -252,6 +253,13 @@ class Account(Thing):
         rels = Friend._byID_rel(rel_ids, return_dict=False,
                                 eager_load = True, data = True,
                                 thing_data = True)
+        rels = list(rels)
+        if not (_update or list(self.friends) == [r._thing2_id for r in rels]):
+            log_text("friend-rels-bandaid",
+                     "Had to recalc friend_rels for %s" % self.name,
+                     "warning")
+            self.friend_ids(_update=True)
+            return self.friend_rels(_update=True)
         return dict((r._thing2_id, r) for r in rels)
 
     def add_friend_note(self, friend, note):
