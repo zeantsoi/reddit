@@ -254,14 +254,17 @@ class Account(Thing):
                                 eager_load = True, data = True,
                                 thing_data = True)
         rels = list(rels)
-        if not (_update or list(self.friends) == [r._thing2_id for r in rels]):
-            g.log.error("FR1: %r" % list(self.friends))
-            g.log.error("FR2: %r" % [r._thing2_id for r in rels])
-            log_text("friend-rels-bandaid",
-                     "Had to recalc friend_rels for %s" % self.name,
-                     "warning")
-            self.friend_ids(_update=True)
-            return self.friend_rels(_update=True)
+        if not _update:
+            sorted_1 = sorted([r._thing2_id for r in rels])
+            sorted_2 = sorted(list(self.friends))
+            if sorted_1 != sorted_2:
+                g.log.error("FR1: %r" % sorted_1)
+                g.log.error("FR2: %r" % sorted_2)
+                log_text("friend-rels-bandaid",
+                         "Had to recalc friend_rels for %s" % self.name,
+                         "warning")
+                self.friend_ids(_update=True)
+                return self.friend_rels(_update=True)
         return dict((r._thing2_id, r) for r in rels)
 
     def add_friend_note(self, friend, note):
