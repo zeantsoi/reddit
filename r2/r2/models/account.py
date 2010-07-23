@@ -255,8 +255,8 @@ class Account(Thing):
                                 thing_data = True)
         rels = list(rels)
         if not (_update or list(self.friends) == [r._thing2_id for r in rels]):
-            g.log.error("FR1: " % list(self.friends))
-            g.log.error("FR2: " % [r._thing2_id for r in rels])
+            g.log.error("FR1: %r" % list(self.friends))
+            g.log.error("FR2: %r" % [r._thing2_id for r in rels])
             log_text("friend-rels-bandaid",
                      "Had to recalc friend_rels for %s" % self.name,
                      "warning")
