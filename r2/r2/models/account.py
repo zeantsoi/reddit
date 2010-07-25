@@ -250,18 +250,28 @@ class Account(Thing):
 
     def friend_rels(self, _update = False):
         rel_ids = self.friend_rels_cache(_update=_update)
-        rels = Friend._byID_rel(rel_ids, return_dict=False,
-                                eager_load = True, data = True,
-                                thing_data = True)
-        rels = list(rels)
+        try:
+            rels = Friend._byID_rel(rel_ids, return_dict=False,
+                                    eager_load = True, data = True,
+                                    thing_data = True)
+            rels = list(rels)
+        except NotFound:
+            if _update:
+                raise
+            else:
+                log_text("friend-rels-bandaid 1",
+                         "Had to recalc friend_rels (1) for %s" % self.name,
+                         "warning")
+                return self.friend_rels(_update=True)
+
         if not _update:
             sorted_1 = sorted([r._thing2_id for r in rels])
             sorted_2 = sorted(list(self.friends))
             if sorted_1 != sorted_2:
                 g.log.error("FR1: %r" % sorted_1)
                 g.log.error("FR2: %r" % sorted_2)
-                log_text("friend-rels-bandaid",
-                         "Had to recalc friend_rels for %s" % self.name,
+                log_text("friend-rels-bandaid 2",
+                         "Had to recalc friend_rels (2) for %s" % self.name,
                          "warning")
                 self.friend_ids(_update=True)
                 return self.friend_rels(_update=True)
