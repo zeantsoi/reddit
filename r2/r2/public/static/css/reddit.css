@@ -4030,16 +4030,6 @@ a.pretty-button.positive.pressed {
 .lounge { display: none }
 .lounge p { margin-top: 5px; }
 
-.postcard {
-    display: none;
-}
-
-.postcard-msg {
-    font-size: smaller;
-    background-color: white;
-    padding: 5px;
-}
-
 .gold-accent {
     margin-top: 10px;
     padding: 0 10px 5px;

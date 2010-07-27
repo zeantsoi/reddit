@@ -22,7 +22,10 @@
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from pylons import g
+from datetime import datetime
 import sqlalchemy as sa
+
+gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
 
 ENGINE_NAME = 'authorize'
 
@@ -75,7 +78,7 @@ def create_claimed_gold (trans_id, payer_email, paying_id,
 # returns None if the ID was never valid
 def claim_gold(secret, account_id):
     if not secret:
-        return None
+        return None, None
 
     # The donation email has the code at the end of the sentence,
     # so they might get sloppy and catch the period or some whitespace.
@@ -95,17 +98,17 @@ def claim_gold(secret, account_id):
     else:
         raise ValueError("rowcount == %d?" % rp.rowcount)
 
-    s = sa.select([gold_table.c.pennies],
+    s = sa.select([gold_table.c.pennies, gold_table.c.date],
                   gold_table.c.secret == secret,
                   limit = 1)
     rows = s.execute().fetchall()
 
     if not rows:
-        return None
+        return None, None
     elif just_claimed:
-        return rows[0].pennies
+        return rows[0].pennies, rows[0].date < gold_bonus_cutoff
     else:
-        return 0
+        return 0, None
 
 def check_by_email(email):
     s = sa.select([gold_table.c.status,

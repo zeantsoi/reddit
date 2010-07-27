@@ -1642,23 +1642,8 @@ subscription with your reddit account -- just visit
             form.has_errors("code", errors.NO_TEXT)
             return
 
-        if code.startswith("pc_"):
-            gold_type = 'postcard'
-            if postcard_okay is None:
-                jquery(".postcard").show()
-                form.set_html(".status", _("just one more question"))
-                return
-            else:
-                d = dict(user=c.user.name, okay=postcard_okay)
-                g.hardcache.set("postcard-" + code, d, 86400 * 30)
-        elif code.startswith("ys_"):
-            gold_type = 'yearly special'
-        elif code.startswith("m_"):
-            gold_type = 'monthly'
-        else:
-            gold_type = 'old'
+        pennies, charter = claim_gold(code, c.user._id)
 
-        pennies = claim_gold(code, c.user._id)
         if pennies is None:
             c.errors.add(errors.INVALID_CODE, field = "code")
             log_text ("invalid gold claim",
@@ -1673,10 +1658,20 @@ subscription with your reddit account -- just visit
             log_text ("valid gold claim",
                       "%s just claimed %s" % (c.user.name, code),
                       "info")
+
+            if code.startswith("m_"):
+                c.user.gold_type = 'monthly'
+            elif code.startswith("ys_"):
+                c.user.gold_type = 'yearly special'
+            elif charter:
+                pennies += 500
+                c.user.gold_type = 'yearly special'
+            else:
+                c.user.gold_type = 'monthly'
+
             g.cache.set("recent-gold-" + c.user.name, True, 600)
             c.user.creddits += pennies
-            c.user.gold_type = gold_type
-            admintools.engolden(c.user, True)
+            admintools.engolden(c.user, charter)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
         else:

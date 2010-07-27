@@ -85,6 +85,7 @@ class Account(Thing):
                      ignorereports = False,
                      pref_show_promote = None,
                      gold = False,
+                     gold_charter = False,
                      creddits = 0,
                      )
 
