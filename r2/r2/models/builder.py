@@ -32,6 +32,7 @@ import subreddit
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
+from r2.lib.filters import _force_unicode
 from r2.lib.comment_tree import *
 from copy import deepcopy
 
@@ -135,7 +136,8 @@ class Builder(object):
                         rel = friend_rels[item.author_id]
                         note = getattr(rel, "note", None)
                         if note:
-                            label = "%s (%s)" % (_("friend"), note)
+                            label = u"%s (%s)" % (_("friend"), 
+                                                  _force_unicode(note))
                     add_attr(w.attribs, 'F', label)
 
             except AttributeError:
