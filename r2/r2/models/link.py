@@ -106,11 +106,18 @@ class Link(Thing, Printable):
 
     def set_url_cache(self):
         if self.url != 'self':
+            # old keys -- TODO remove once cache is primed
             key = self.by_url_key(self.url)
             link_ids = g.urlcache.get(key) or []
             if self._id not in link_ids:
                 link_ids.append(self._id)
             g.urlcache.set(key, link_ids)
+            # new keys
+            key = self.by_url_key_new(self.url)
+            link_ids = g.urlcache_new.get(key) or []
+            if self._id not in link_ids:
+                link_ids.append(self._id)
+            g.urlcache_new.set(key, link_ids)
 
     def update_url_cache(self, old_url):
         """Remove the old url from the by_url cache then update the
