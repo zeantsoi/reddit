@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.utils import tup
+from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
 from r2.models import Report, Account, Subreddit
@@ -173,13 +173,14 @@ class AdminTools(object):
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
 
-    def engolden(self, account, was_postcard=False):
+    def engolden(self, account, charter=False):
         from r2.lib.db.queries import changed
         account.gold = True
-        if was_postcard:
-            description = "Postcard Brigade"
-        else:
+        if charter:
             description = "Charter Member"
+            account.gold_charter = True
+        else:
+            description = "Since " + c.start_time.strftime("%B %Y")
         Award.give_if_needed("reddit_gold", account,
                              description=description,
                              url="/help/gold")
@@ -189,16 +190,29 @@ class AdminTools(object):
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.add_contributor(account)
 
-    def degolden(self, account):
+    def degolden(self, account, severe=False):
         from r2.lib.db.queries import changed
         account.gold = False
-        Award.take_away("reddit_gold", account)
+        if severe:
+            Award.take_away("reddit_gold", account)
         account._commit()
-        if g.lounge_reddit:
+        if severe and g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.remove_contributor(account)
 
 admintools = AdminTools()
+
+def all_gold_users():
+    q = Account._query(Account.c.gold == True, data=True)
+    return fetch_things2(q)
+
+def update_gold_users(deduction=0):
+    for account in all_gold_users():
+        creddits = account.getattr("creddits", 0) - deduction
+        if creddits < 0:
+            creddits = 0
+            admintools.degolden(account)
+        gold_type = account.getattr("gold_type", "charter")
 
 def is_banned_IP(ip):
     return False

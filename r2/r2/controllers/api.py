@@ -1676,7 +1676,7 @@ subscription with your reddit account -- just visit
             g.cache.set("recent-gold-" + c.user.name, True, 600)
             c.user.creddits += pennies
             c.user.gold_type = gold_type
-            admintools.engolden(c.user, postcard_okay)
+            admintools.engolden(c.user, True)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
         else:
