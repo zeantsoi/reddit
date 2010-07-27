@@ -608,12 +608,11 @@ def new_vote(vote):
         sr = item.subreddit_slow
         results = []
         author = Account._byID(item.author_id)
-        if author.gold:
-            for sort in ('hot', 'top', 'controversial', 'new'):
-                if isinstance(item, Link):
-                    results.append(get_submitted(author, sort, 'all'))
-                if isinstance(item, Comment):
-                    results.append(get_comments(author, sort, 'all'))
+        for sort in ('hot', 'top', 'controversial', 'new'):
+            if isinstance(item, Link):
+                results.append(get_submitted(author, sort, 'all'))
+            if isinstance(item, Comment):
+                results.append(get_comments(author, sort, 'all'))
 
 
         # don't do 'new', because that was done by new_link, and the
