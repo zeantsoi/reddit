@@ -1442,7 +1442,7 @@ subscription with your reddit account -- just visit
 
         emailer.gold_email(body, payer_email, "reddit gold subscriptions")
 
-        g.log.info("Just got IPN for %d, secret=%s" % (pennies, gold_secret))
+        g.log.info("Just got IPN for %d days, secret=%s" % (days, gold_secret))
 
         return "Ok"
 
@@ -1648,40 +1648,30 @@ subscription with your reddit account -- just visit
             form.has_errors("code", errors.NO_TEXT)
             return
 
-        pennies, charter = claim_gold(code, c.user._id)
+        days = claim_gold(code, c.user._id)
 
-        if pennies is None:
+        if days is None:
             c.errors.add(errors.INVALID_CODE, field = "code")
             log_text ("invalid gold claim",
                       "%s just tried to claim %s" % (c.user.name, code),
                       "info")
-        elif pennies == 0:
+        elif days == 0:
             c.errors.add(errors.CLAIMED_CODE, field = "code")
             log_text ("invalid gold reclaim",
                       "%s just tried to reclaim %s" % (c.user.name, code),
                       "info")
-        elif pennies > 0:
+        elif days > 0:
             log_text ("valid gold claim",
                       "%s just claimed %s" % (c.user.name, code),
                       "info")
 
-            if code.startswith("m_"):
-                c.user.gold_type = 'monthly'
-            elif code.startswith("ys_"):
-                c.user.gold_type = 'yearly special'
-            elif charter:
-                pennies += 500
-                c.user.gold_type = 'yearly special'
-            else:
-                c.user.gold_type = 'monthly'
+            admintools.engolden(c.user, days)
 
             g.cache.set("recent-gold-" + c.user.name, True, 600)
-            c.user.creddits += pennies
-            admintools.engolden(c.user, charter)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
         else:
-            raise ValueError("pennies = %r?" % pennies)
+            raise ValueError("days = %r?" % days)
 
         # Activate any errors we just manually set
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,

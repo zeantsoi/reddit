@@ -64,23 +64,12 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
                                 secret=secret,
                                 date=date)
 
-# caller is expected to engoldenate user
-def create_claimed_gold (trans_id, payer_email, paying_id,
-                         pennies, account, date):
-    gold_table.insert().execute(trans_id=trans_id,
-                                status="claimed",
-                                payer_email=payer_email,
-                                paying_id=paying_id,
-                                pennies=pennies,
-                                account_id=account._id,
-                                date=date)
-
-# returns the number of pennies paid, if there's valid unclaimed gold
+# returns the number of days, if there's valid unclaimed gold
 # returns 0 if the ID is valid but the gold's already been claimed
 # returns None if the ID was never valid
 def claim_gold(secret, account_id):
     if not secret:
-        return None, None
+        return None
 
     # The donation email has the code at the end of the sentence,
     # so they might get sloppy and catch the period or some whitespace.
@@ -100,22 +89,22 @@ def claim_gold(secret, account_id):
     else:
         raise ValueError("rowcount == %d?" % rp.rowcount)
 
-    s = sa.select([gold_table.c.pennies, gold_table.c.date],
+    s = sa.select([gold_table.c.days],
                   gold_table.c.secret == secret,
                   limit = 1)
     rows = s.execute().fetchall()
 
     if not rows:
-        return None, None
+        return None
     elif just_claimed:
-        return rows[0].pennies, rows[0].date < gold_bonus_cutoff
+        return rows[0].days
     else:
         return 0, None
 
 def check_by_email(email):
     s = sa.select([gold_table.c.status,
                            gold_table.c.secret,
-                           gold_table.c.pennies,
+                           gold_table.c.days,
                            gold_table.c.account_id],
                           gold_table.c.payer_email == email)
     return s.execute().fetchall()

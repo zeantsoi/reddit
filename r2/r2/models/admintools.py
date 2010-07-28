@@ -26,7 +26,7 @@ from r2.models import Report, Account, Subreddit
 
 from pylons import g
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from copy import copy
 
 class AdminTools(object):
@@ -173,19 +173,22 @@ class AdminTools(object):
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
 
-    def engolden(self, account, charter=False):
+    def engolden(self, account, days):
         from r2.lib.db.queries import changed
         account.gold = True
-        if charter:
-            description = "Charter Member"
-            account.gold_charter = True
-        else:
-            description = "Since " + c.start_time.strftime("%B %Y")
+
+        existing_expiration = gatattr(account, "gold_expiration", c.start_time)
+        account.gold_expiration = existing_expiration + timedelta(days)
+
+        description = "Since " + c.start_time.strftime("%B %Y")
         Award.give_if_needed("reddit_gold", account,
                              description=description,
                              url="/help/gold")
+
         account._commit()
+
         account.friend_rels_cache(_update=True)
+
         if g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.add_contributor(account)
@@ -203,7 +206,8 @@ class AdminTools(object):
 admintools = AdminTools()
 
 def all_gold_users():
-    q = Account._query(Account.c.gold == True, data=True)
+    q = Account._query(Account.c.gold == True, data=True,
+                       sort="_id")
     return fetch_things2(q)
 
 def update_gold_users(deduction=0):
