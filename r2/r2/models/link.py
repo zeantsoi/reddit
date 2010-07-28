@@ -66,19 +66,10 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @classmethod
-    def by_url_key_new(cls, url):
-        maxlen = 250
-        template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
-        hexdigest = md5(keyurl).hexdigest()
-        usable_len = maxlen-len(template)-len(hexdigest)
-        return template % (hexdigest, keyurl[:usable_len])
-
-    @classmethod
     def by_url_key(cls, url):
         maxlen = 250
         template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(base_url(url.lower()))
+        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
         hexdigest = md5(keyurl).hexdigest()
         usable_len = maxlen-len(template)-len(hexdigest)
         return template % (hexdigest, keyurl[:usable_len])
@@ -106,18 +97,11 @@ class Link(Thing, Printable):
 
     def set_url_cache(self):
         if self.url != 'self':
-            # old keys -- TODO remove once cache is primed
             key = self.by_url_key(self.url)
             link_ids = g.urlcache.get(key) or []
             if self._id not in link_ids:
                 link_ids.append(self._id)
             g.urlcache.set(key, link_ids)
-            # new keys
-            key = self.by_url_key_new(self.url)
-            link_ids = g.urlcache_new.get(key) or []
-            if self._id not in link_ids:
-                link_ids.append(self._id)
-            g.urlcache_new.set(key, link_ids)
 
     def update_url_cache(self, old_url):
         """Remove the old url from the by_url cache then update the

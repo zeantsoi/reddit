@@ -521,7 +521,7 @@ class UrlParser(object):
         """
         if not self.hostname:
             return ""
-        elif self.port:
+        elif getattr(self, "port", None):
             return self.hostname + ":" + str(self.port)
         return self.hostname
 

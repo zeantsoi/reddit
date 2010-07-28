@@ -54,7 +54,7 @@ from r2.lib import mr_tools
 from r2.lib.utils import timeago, UrlParser
 from r2.lib.jsontemplates import make_fullname # what a strange place
                                                # for this function
-
+import datetime
 
 def join_links():
     mr_tools.join_things(('author_id',))
@@ -75,7 +75,7 @@ def join_authors():
                                        'key', # e.g. 'sr_id'
                                        'tid'
                                        ]))
-            elif 'account' in val:    
+            elif 'account' in val:
                 gold = mr_tools.format_dataspec(val,
                                       ['data_type', # e.g. 'data'
                                        'thing_type', # e.g. 'link'
@@ -88,6 +88,32 @@ def join_authors():
                        author.key, thing_id)
 
     mr_tools.mr_reduce(process)
+
+def year_listings():
+    """
+    With an 'all' dump, generate the top and controversial per user per year
+    """
+    @mr_tools.dataspec_m_thing(('author_id', int),)
+    def process(link):
+        if not link.deleted:
+            author_id = link.author_id
+            ups = link.ups
+            downs = link.downs
+            sc = score(ups, downs)
+            contr = controversy(ups, downs)
+            if link.thing_type == 'link':
+                fname = make_fullname(Link, link.thing_id)
+            else:
+                fname = make_fullname(Comment, link.thing_id)
+            timestamp = link.timestamp
+            date = datetime.datetime.utcfromtimestamp(timestamp)
+            yield ('user-top-%s-%d' % (date.year, author_id),
+                   sc, timestamp, fname)
+            yield ('user-controversial-%s-%d' % (date.year, author_id),
+                   contr, timestamp, fname)
+
+    mr_tools.mr_map(process)
+
 
 
 def time_listings(times = ('year','month','week','day','hour', 'all')):

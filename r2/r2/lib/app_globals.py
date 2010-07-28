@@ -85,7 +85,6 @@ class Globals(object):
                    'local_rendercache',
                    'servicecaches',
                    'cassandra_seeds',
-                   'url_seeds',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -164,8 +163,6 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
-        if not self.url_seeds:
-            raise ValueError("url_seeds not set in the .ini")
         self.cassandra_seeds = list(self.cassandra_seeds)
         random.shuffle(self.cassandra_seeds)
         self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
@@ -181,31 +178,15 @@ class Globals(object):
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
-        self.url_seeds = list(self.url_seeds)
-        random.shuffle(self.url_seeds)
-        self.url_cassandra = pycassa.connect_thread_local(self.url_seeds)
-        self.urlcache_new = self.init_cass_cache('permacache', 'urls',
+        self.urlcache = self.init_cass_cache('permacache', 'urls',
                                              self.cassandra,
                                              self.make_lock,
                                              # TODO: increase this to QUORUM
                                              # once we switch to live
-                                             read_consistency_level = CL_ONE,
-                                             write_consistency_level = CL_ONE,
-                                             localcache_cls = localcache_cls)
-        self.cache_chains.append(self.urlcache_new)
-
-        self.urlcache = self.init_cass_cache('urls', 'urls',
-                                             self.url_cassandra,
-                                             self.make_lock,
-                                             # until we've merged this
-                                             # with the regular
-                                             # cluster, this will
-                                             # always be CL_ONE
-                                             read_consistency_level = CL_ONE,
+                                             read_consistency_level = self.cassandra_rcl,
                                              write_consistency_level = CL_ONE,
                                              localcache_cls = localcache_cls)
         self.cache_chains.append(self.urlcache)
-
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
