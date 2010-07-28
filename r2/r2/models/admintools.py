@@ -177,10 +177,12 @@ class AdminTools(object):
         from r2.lib.db.queries import changed
         account.gold = True
 
-        existing_expiration = gatattr(account, "gold_expiration", c.start_time)
+        now = datetime.now(g.display_tz)
+
+        existing_expiration = getattr(account, "gold_expiration", now)
         account.gold_expiration = existing_expiration + timedelta(days)
 
-        description = "Since " + c.start_time.strftime("%B %Y")
+        description = "Since " + now.strftime("%B %Y")
         Award.give_if_needed("reddit_gold", account,
                              description=description,
                              url="/help/gold")
