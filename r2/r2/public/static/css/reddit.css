@@ -4090,6 +4090,15 @@ tr.gold-accent + tr > td {
     -webkit-border-radius: 3px;
 }
 
+.gold-expiration-info {
+    margin: 3px 0 5px;
+}
+
+.gold-expiration-info .karma {
+    color: #583800;
+}
+
+
 .tiny {
     font-size: xx-small;
 }

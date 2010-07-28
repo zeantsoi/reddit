@@ -44,7 +44,7 @@ from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
-from r2.lib.utils import trunc_time
+from r2.lib.utils import trunc_time, timeuntil
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
@@ -1087,7 +1087,6 @@ class TrophyCase(Templated):
         self.user = user
         self.trophies = []
         self.invisible_trophies = []
-
         self.dupe_trophies = []
 
         award_ids_seen = []
@@ -1109,8 +1108,20 @@ class ProfileBar(Templated):
     def __init__(self, user):
         Templated.__init__(self, user = user)
         self.is_friend = None
-        self.my_fullname = c.user_is_loggedin and c.user._fullname
+        self.my_fullname = None
+        self.gold_remaining = None
         if c.user_is_loggedin:
+# TODO: change the next "if" to the following:
+#            if user._id == c.user._id or c.user_is_admin:
+            if c.user_is_admin:
+                gold_expiration = getattr(user, "gold_expiration", None)
+                if gold_expiration is None:
+                    self.gold_remaining = _("an unknown amount")
+                elif (gold_expiration - datetime.datetime.now(g.tz)).days < 1:
+                    self.gold_remaining = _("less than a day")
+                else:
+                    self.gold_remaining = timeuntil(gold_expiration)
+            self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
 
 class MenuArea(Templated):

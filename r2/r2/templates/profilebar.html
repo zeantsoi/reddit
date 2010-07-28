@@ -97,6 +97,18 @@
     ${_("comment karma")}
   %endif
 
+  %if thing.gold_remaining:
+    <div class="rounded gold-accent gold-expiration-info">
+      <div class="gold-remaining">
+        <span class="karma">
+          ${thing.gold_remaining}
+        </span>
+        &#32;
+        ${_("of reddit gold remaining")}
+      </div>
+    </div>
+  %endif
+
   <div class="bottom">
     %if thing.user != c.user:
       <img src="${static('mailgray.png')}"/>
