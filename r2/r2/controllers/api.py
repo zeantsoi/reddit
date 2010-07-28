@@ -1404,11 +1404,14 @@ class ApiController(RedditController):
 
         pennies = int(mc_gross * 100)
 
+        days = None
         if item_number and item_number == 'rgsub':
             if pennies == 2999:
                 secret_prefix = "ys_"
+                days = 366
             elif pennies == 399:
                 secret_prefix = "m_"
+                days = 31
             else:
                 log_text("weird IPN subscription",
                          "Got %d pennies via PayPal?" % pennies, "error")
@@ -1416,10 +1419,13 @@ class ApiController(RedditController):
         else:
             secret_prefix = "o_"
 
+        if not days:
+            days = 60 + int (31 * pennies / 250.0)
+
         gold_secret = secret_prefix + randstr(10)
 
         create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
-                              pennies, gold_secret, c.start_time)
+                              pennies, days, gold_secret, c.start_time)
 
         url = "http://www.reddit.com/thanks/" + gold_secret
 

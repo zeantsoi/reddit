@@ -43,7 +43,8 @@ gold_table = sa.Table('reddit_gold', METADATA,
                       sa.Column('paying_id', sa.String, nullable = False),
                       sa.Column('pennies', sa.Integer, nullable = False),
                       sa.Column('secret', sa.String, nullable = True),
-                      sa.Column('account_id', sa.String, nullable = True))
+                      sa.Column('account_id', sa.String, nullable = True),
+                      sa.Column('days', sa.Integer, nullable = True))
 
 indices = [index_str(gold_table, 'status', 'status'),
            index_str(gold_table, 'date', 'date'),
@@ -53,12 +54,13 @@ indices = [index_str(gold_table, 'status', 'status'),
 create_table(gold_table, indices)
 
 def create_unclaimed_gold (trans_id, payer_email, paying_id,
-                           pennies, secret, date):
+                           pennies, days, secret, date):
     gold_table.insert().execute(trans_id=trans_id,
                                 status="unclaimed",
                                 payer_email=payer_email,
                                 paying_id=paying_id,
                                 pennies=pennies,
+                                days=days,
                                 secret=secret,
                                 date=date)
 
