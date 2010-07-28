@@ -232,6 +232,8 @@ class Reddit(Templated):
                                            "(read all about it on the blog)"],
                               show_cover = False, nocname = True))
 
+        ps.append(unsafe("<a href='http://www.reddit.com/tb/cun4s'><img style='border:none' src='http://sp.reddit.com/cyanide_and_happiness.jpg'/></a>"))
+
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
