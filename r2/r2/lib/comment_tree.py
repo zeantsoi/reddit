@@ -172,12 +172,13 @@ def link_comments_and_sort(link_id, sort):
 
     # load the sorter
     key = sort_comments_key(link_id, sort)
-    sorter = g.permacache.get(key)
+    sorter = g.permacache.get(key) or {}
+    sorter_needed = [x for x in cids if x not in sorter]
     if sorter is None:
         g.log.debug("comment_tree.py: sorter (%s) cache miss for Link %s"
                     % (sort, link_id))
         sorter = {}
-    elif cids and not all(x in sorter for x in cids):
+    elif cids and sorter_needed:
         g.log.debug("Error in comment_tree: sorter (%s) inconsistent for Link %s"
                     % (sort, link_id))
         sorter = {}
@@ -208,7 +209,7 @@ def link_comments_and_sort(link_id, sort):
 
         # rebuild the sorts
         key = sort_comments_key(link_id, sort)
-        res = _comment_sorter_from_cids(cids, sort)
+        res = _comment_sorter_from_cids(sorter_needed, sort)
         with g.make_lock(sort_lock_key(link_id)):
             sorter = g.permacache.get(key) or {}
             sorter.update(res)
