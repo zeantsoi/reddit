@@ -984,7 +984,31 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes(limit=100):
+def process_votes_single(**kw):
+    # limit is taken but ignored for backwards compatibility
+
+    def _handle_vote(msg, chan):
+        #assert(len(msgs) == 1)
+        r = pickle.loads(msg.body)
+
+        uid, tid, dir, ip, organic, cheater = r
+        voter = Account._byID(uid, data=True)
+        votee = Thing._by_fullname(tid, data = True)
+        if isinstance(votee, Comment):
+            queue_comment_sort([votee._id])
+
+        if not isinstance(votee, (Link, Comment)):
+            # I don't know how, but somebody is sneaking in votes
+            # for subreddits
+            continue
+
+        print (voter, votee, dir, ip, organic, cheater)
+        handle_vote(voter, votee, dir, ip, organic,
+                    cheater = cheater)
+
+    amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
+
+def process_votes_multi(limit=100):
     # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msgs, chan):
@@ -1011,6 +1035,8 @@ def process_votes(limit=100):
         queue_comment_sort([x._id for x in comments])
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
+
+process_votes = process_votes_multi
 
 def queue_comment_sort(cids):
     for cid in cids:
