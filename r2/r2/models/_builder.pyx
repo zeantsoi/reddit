@@ -34,17 +34,17 @@ class _CommentBuilder(Builder):
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
-#            g.log.error("Error - self.comment (%d) not in depth. Forcing update..."
-#                        % self.comment._id)
-#
-#            try:
-#                r = link_comments(self.link._id, _update=True)
-#                cids, cid_tree, depth, num_children = r
-#            except TimeoutExpired:
-#                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
-#                raise
-#
-#            if not self.comment._id in depth:
+            g.log.error("Error - self.comment (%d) not in depth. Forcing update..."
+                        % self.comment._id)
+
+            try:
+                r = link_comments(self.link._id, _update=True)
+                cids, cid_tree, depth, num_children = r
+            except TimeoutExpired:
+                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
+                raise
+
+            if not self.comment._id in depth:
                 g.log.error("self.comment not in tree. This is gonna end in tears.")
 
         cdef list items = []
