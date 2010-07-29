@@ -175,6 +175,7 @@ def link_comments_and_sort(link_id, sort):
     sorter = g.permacache.get(key)
     sorter_needed = []
     if sorter is None:
+        sorter_needed = cids
         g.log.debug("comment_tree.py: sorter (%s) cache miss for Link %s"
                     % (sort, link_id))
         sorter = {}
