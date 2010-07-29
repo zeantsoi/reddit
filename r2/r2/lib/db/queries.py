@@ -997,14 +997,12 @@ def process_votes_single(**kw):
         if isinstance(votee, Comment):
             queue_comment_sort([votee._id])
 
-        if not isinstance(votee, (Link, Comment)):
-            # I don't know how, but somebody is sneaking in votes
-            # for subreddits
-            continue
-
-        print (voter, votee, dir, ip, organic, cheater)
-        handle_vote(voter, votee, dir, ip, organic,
-                    cheater = cheater)
+        # I don't know how, but somebody is sneaking in votes
+        # for subreddits
+        if isinstance(votee, (Link, Comment)):
+            print (voter, votee, dir, ip, organic, cheater)
+            handle_vote(voter, votee, dir, ip, organic,
+                        cheater = cheater)
 
     amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
 
