@@ -208,7 +208,7 @@ def link_comments_and_sort(link_id, sort):
         key = sort_comments_key(link_id, sort)
         res = _comment_sorter_from_cids(cids, sort)
         with g.make_lock(sort_lock_key(link_id)):
-            sorter = g.permacache.get(key)
+            sorter = g.permacache.get(key) or {}
             sorter.update(res)
             g.permacache.set(key, sorter)
 
@@ -235,11 +235,14 @@ def link_comments(link_id, _update=False):
 
             g.permacache.set(key, r)
 
-        with g.make_lock(sort_lock_key(link_id)):
-            # rebuild the sorts
-            for sort in ("_controversy","_date","_hot","_confidence","_score"):
-                g.permacache.set(sort_comments_key(link_id, sort),
-                                 _comment_sorter_from_cids(cids, sort))
+        for sort in ("_controversy","_date","_hot","_confidence","_score"): 
+           # rebuild the sorts
+            key = sort_comments_key(link_id, sort)
+            res = _comment_sorter_from_cids(cids, sort)
+            with g.make_lock(sort_lock_key(link_id)):
+                sorter = g.permacache.get(key) or {}
+                sorter.update(res)
+                g.permacache.set(key, sorter)
 
             return r
 
