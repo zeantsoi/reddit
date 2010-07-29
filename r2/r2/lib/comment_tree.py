@@ -50,7 +50,7 @@ def _get_sort_value(comment, sort):
 def add_comment(comment):
     with g.make_lock(lock_key(comment.link_id)):
         add_comment_nolock(comment)
-    update_comment_votes(comment)
+    #update_comment_votes(comment)
 
 def add_comment_nolock(comment):
     cm_id = comment._id
@@ -204,11 +204,13 @@ def link_comments_and_sort(link_id, sort):
                 parents = _parent_dict_from_tree(cid_tree)
                 g.permacache.set(key, parents)
 
+        # rebuild the sorts
+        key = sort_comments_key(link_id, sort)
+        res = _comment_sorter_from_cids(cids, sort))
         with g.make_lock(sort_lock_key(link_id)):
-            # rebuild the sorts
-            for sort in ("_controversy","_date","_hot","_confidence","_score"):
-                g.permacache.set(sort_comments_key(link_id, sort),
-                                 _comment_sorter_from_cids(cids, sort))
+            sorter = g.permacache.get(key)
+            sorter.update(res)
+            g.permacache.set(key, sorter)
 
     return cids, cid_tree, depth, num_children, parents, sorter
 
