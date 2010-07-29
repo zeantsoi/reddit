@@ -204,12 +204,6 @@ def link_comments_and_sort(link_id, sort):
                 parents = _parent_dict_from_tree(cid_tree)
                 g.permacache.set(key, parents)
 
-        with g.make_lock(sort_lock_key(link_id)):
-            key = sort_comments_key(link_id, sort)
-            if not sorter:
-                sorter = _comment_sorter_from_cids(cids, sort)
-                g.permacache.set(key, sorter)
-
     return cids, cid_tree, depth, num_children, parents, sorter
 
 
