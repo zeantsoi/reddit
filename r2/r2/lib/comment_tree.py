@@ -50,7 +50,7 @@ def _get_sort_value(comment, sort):
 def add_comment(comment):
     with g.make_lock(lock_key(comment.link_id)):
         add_comment_nolock(comment)
-    #update_comment_votes(comment)
+    update_comment_votes(comment)
 
 def add_comment_nolock(comment):
     cm_id = comment._id
