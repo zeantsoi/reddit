@@ -206,7 +206,7 @@ def link_comments_and_sort(link_id, sort):
 
         # rebuild the sorts
         key = sort_comments_key(link_id, sort)
-        res = _comment_sorter_from_cids(cids, sort))
+        res = _comment_sorter_from_cids(cids, sort)
         with g.make_lock(sort_lock_key(link_id)):
             sorter = g.permacache.get(key)
             sorter.update(res)
