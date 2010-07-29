@@ -126,7 +126,7 @@ def update_comment_votes(comments):
         link_map.setdefault(com.link_id, []).append(com)
     for link_id, coms in link_map.iteritems():
         for sort in ("_controversy", "_hot", "_confidence", "_score"):
-            with g.make_lock(sort_lock_key(link_id)):
+            with g.make_lock(sort_lock_key(link_id), time = 120, timeout = 120):
                 key = sort_comments_key(link_id, sort)
                 r = g.permacache.get(key)
                 # don't bother recomputing a non-existant sort dict, as
