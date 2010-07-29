@@ -32,6 +32,9 @@ def comments_key(link_id):
 def lock_key(link_id):
     return 'comment_lock_' + str(link_id)
 
+def sort_lock_key(link_id):
+    return 'comment_sort_lock_' + str(link_id)
+
 def parent_comments_key(link_id):
     return 'comments_parents_' + str(link_id)
 
@@ -47,6 +50,7 @@ def _get_sort_value(comment, sort):
 def add_comment(comment):
     with g.make_lock(lock_key(comment.link_id)):
         add_comment_nolock(comment)
+    update_comment_votes(comment)
 
 def add_comment_nolock(comment):
     cm_id = comment._id
@@ -101,16 +105,16 @@ def add_comment_nolock(comment):
     r[cm_id] = p_id
     g.permacache.set(key, r)
 
-    # update the list of sorts
-    for sort in ("_controversy", "_date", "_hot", "_confidence", "_score"):
-        key = sort_comments_key(link_id, sort)
-        r = g.permacache.get(key)
-        if r:
-            r[cm_id] = _get_sort_value(comment, sort)
-            g.permacache.set(key, r)
-
-    # do this last b/c we don't want the cids updated before the sorts
-    # and parents
+#    # update the list of sorts
+#    for sort in ("_controversy", "_date", "_hot", "_confidence", "_score"):
+#        key = sort_comments_key(link_id, sort)
+#        r = g.permacache.get(key)
+#        if r:
+#            r[cm_id] = _get_sort_value(comment, sort)
+#            g.permacache.set(key, r)
+#
+#    # do this last b/c we don't want the cids updated before the sorts
+#    # and parents
     g.permacache.set(comments_key(link_id),
                      (cids, comment_tree, depth, num_children))
 
@@ -121,8 +125,8 @@ def update_comment_votes(comments):
     for com in comments:
         link_map.setdefault(com.link_id, []).append(com)
     for link_id, coms in link_map.iteritems():
-        with g.make_lock(lock_key(link_id)):
-            for sort in ("_controversy", "_hot", "_confidence", "_score"):
+        for sort in ("_controversy", "_hot", "_confidence", "_score"):
+            with g.make_lock(sort_lock_key(link_id)):
                 key = sort_comments_key(link_id, sort)
                 r = g.permacache.get(key)
                 # don't bother recomputing a non-existant sort dict, as
@@ -195,15 +199,16 @@ def link_comments_and_sort(link_id, sort):
             r = g.permacache.get(comments_key(link_id))
             cids, cid_tree, depth, num_children = r
 
-            key = sort_comments_key(link_id, sort)
-            if not sorter:
-                sorter = _comment_sorter_from_cids(cids, sort)
-                g.permacache.set(key, sorter)
-
             key = parent_comments_key(link_id)
             if not parents:
                 parents = _parent_dict_from_tree(cid_tree)
                 g.permacache.set(key, parents)
+
+        with g.make_lock(sort_lock_key(link_id)):
+            key = sort_comments_key(link_id, sort)
+            if not sorter:
+                sorter = _comment_sorter_from_cids(cids, sort)
+                g.permacache.set(key, sorter)
 
     return cids, cid_tree, depth, num_children, parents, sorter
 
@@ -226,12 +231,14 @@ def link_comments(link_id, _update=False):
             g.permacache.set(parent_comments_key(link_id),
                              _parent_dict_from_tree(cid_tree))
 
+            g.permacache.set(key, r)
+
+        with g.make_lock(sort_lock_key(link_id)):
             # rebuild the sorts
             for sort in ("_controversy","_date","_hot","_confidence","_score"):
                 g.permacache.set(sort_comments_key(link_id, sort),
                                  _comment_sorter_from_cids(cids, sort))
 
-            g.permacache.set(key, r)
             return r
 
 
