@@ -987,7 +987,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 def process_votes_single(**kw):
     # limit is taken but ignored for backwards compatibility
 
-    def _handle_vote(msg, chan):
+    def _handle_vote(msg):
         #assert(len(msgs) == 1)
         r = pickle.loads(msg.body)
 
@@ -1034,7 +1034,7 @@ def process_votes_multi(limit=100):
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
-process_votes = process_votes_multi
+process_votes = process_votes_single
 
 def queue_comment_sort(cids):
     for cid in cids:
