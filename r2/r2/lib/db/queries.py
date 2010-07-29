@@ -1008,7 +1008,7 @@ def process_votes(limit=100):
             handle_vote(voter, votee, dir, ip, organic,
                         cheater = cheater)
 
-        update_comment_votes(comments)
+        queue_comment_sort([x._id for x in comments])
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
@@ -1016,7 +1016,7 @@ def queue_comment_sort(cids):
     for cid in cids:
         amqp.add_item('commentsort_q', str(cid))
 
-def process_comment_sorts(limit=100):
+def process_comment_sorts(limit=1000):
     def _handle_sort(msgs, chan):
         comments = Comment._byID(list(set(int(msg.body) for msg in msgs)),
                                  data = True, return_dict = False)
