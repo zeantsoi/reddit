@@ -126,15 +126,17 @@ def update_comment_votes(comments):
         link_map.setdefault(com.link_id, []).append(com)
     for link_id, coms in link_map.iteritems():
         for sort in ("_controversy", "_hot", "_confidence", "_score"):
-            with g.make_lock(sort_lock_key(link_id), time = 120, timeout = 120):
-                key = sort_comments_key(link_id, sort)
-                r = g.permacache.get(key)
-                # don't bother recomputing a non-existant sort dict, as
-                # we'll catch it next time we have to render something
-                if r:
-                    for comment in coms:
-                        r[comment._id] = _get_sort_value(comment, sort)
-                    g.permacache.set(key, r)
+            key = sort_comments_key(link_id, sort)
+            # generate an update dict outside of the lock to save time
+            # in the lock
+            r = {}
+            for comment in coms:
+                r[comment._id] = _get_sort_value(comment, sort)
+            # update the data inside the lock by loading the dict and updating it
+            with g.make_lock(sort_lock_key(link_id)):
+                sorter = g.permacache.get(key) or {}
+                sorter.update(r)
+                g.permacache.set(key, sorter)
 
 
 def delete_comment(comment):
