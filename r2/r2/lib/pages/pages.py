@@ -1116,7 +1116,7 @@ class ProfileBar(Templated):
             if c.user_is_admin:
                 gold_expiration = getattr(user, "gold_expiration", None)
                 if gold_expiration is None:
-                    if self.gold:
+                    if getattr(user, "gold", None):
                         self.gold_remaining = _("an unknown amount")
                 elif (gold_expiration - datetime.datetime.now(g.tz)).days < 1:
                     self.gold_remaining = _("less than a day")
