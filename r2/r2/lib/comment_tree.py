@@ -179,12 +179,21 @@ def link_comments_and_sort(link_id, sort):
         g.log.debug("comment_tree.py: sorter (%s) cache miss for Link %s"
                     % (sort, link_id))
         sorter = {}
-    else:
-        sorter_needed = [x for x in cids if x not in sorter]
-        if cids and sorter_needed:
-            g.log.debug("Error in comment_tree: sorter (%s) inconsistent for Link %s"
-                        % (sort, link_id))
-            sorter = {}
+
+    sorter_needed = [x for x in cids if x not in sorter]
+    if cids and sorter_needed:
+        from db import queries
+        g.log.debug("Error in comment_tree: sorter (%s) inconsistent for Link %s"
+                    % (sort, link_id))
+        key = sort_comments_key(link_id, sort)
+        res = _comment_sorter_from_cids(sorter_needed, sort)
+        sorter.update(res)
+        queries.queue_comment_sort(sorter_needed)
+
+        #with g.make_lock(sort_lock_key(link_id)):
+        #    sorter = g.permacache.get(key) or {}
+        #    sorter.update(res)
+        #    g.permacache.set(key, sorter)
 
     # load the parents
     key = parent_comments_key(link_id)
@@ -210,14 +219,6 @@ def link_comments_and_sort(link_id, sort):
                 parents = _parent_dict_from_tree(cid_tree)
                 g.permacache.set(key, parents)
 
-        # rebuild the sorts
-        if sorter_needed:
-            key = sort_comments_key(link_id, sort)
-            res = _comment_sorter_from_cids(sorter_needed, sort)
-            with g.make_lock(sort_lock_key(link_id)):
-                sorter = g.permacache.get(key) or {}
-                sorter.update(res)
-                g.permacache.set(key, sorter)
 
     return cids, cid_tree, depth, num_children, parents, sorter
 

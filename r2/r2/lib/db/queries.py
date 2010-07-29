@@ -898,19 +898,6 @@ def run_commentstree():
 
     amqp.consume_items('commentstree_q', _run_commentstree, verbose=False)
 
-#def run_new_links():
-#    """queue to add new links to the 'new' page. note that this isn't
-#       in use until the spam_q plumbing is"""
-#
-#    def _run_new_links(msg):
-#        link = Link._by_fullname(msg.body, data=True)
-#
-#        srs = Subreddit._byID(l.sr_id)
-#        results = [get_links(sr, 'new', 'all')]
-#        add_queries(results, insert_items = [link])
-#
-#    amqp.consume_items('newpage_q', _run_new_links, limit=100)
-
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
@@ -997,7 +984,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes(limit=1000):
+def process_votes(limit=100):
     # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msgs, chan):
@@ -1024,6 +1011,20 @@ def process_votes(limit=1000):
         update_comment_votes(comments)
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
+
+def queue_comment_sort(cids):
+    for cid in cids:
+        amqp.add_item('commentsort_q', str(cid))
+
+def process_comment_sorts(limit=100):
+    def _handle_sort(msgs, chan):
+        comments = Comment._byID(list(set(int(msg.body) for msg in msgs)),
+                                 data = True, return_dict = False)
+        print comments
+        update_comment_votes(comments)
+
+    amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
+
 
 try:
     from r2admin.lib.admin_queries import *
