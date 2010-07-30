@@ -99,7 +99,7 @@ def claim_gold(secret, account_id):
     elif just_claimed:
         return rows[0].days
     else:
-        return 0, None
+        return 0
 
 def check_by_email(email):
     s = sa.select([gold_table.c.status,
