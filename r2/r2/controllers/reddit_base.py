@@ -283,12 +283,6 @@ def set_subreddit():
     if isinstance(c.site, FakeSubreddit):
         c.default_sr = True
 
-    if c.site == Default:
-        try:
-            default_reddit = Subreddit._by_name(g.default_sr)
-        except NotFound:
-            pass
-
 def set_content_type():
     e = request.environ
     c.render_style = e['render_style']

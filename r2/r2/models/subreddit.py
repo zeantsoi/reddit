@@ -711,7 +711,7 @@ class AllSR(FakeSubreddit):
         return None
 
 
-class _DefaultSR(FakeSubreddit):
+class DefaultSR(FakeSubreddit):
     #notice the space before reddit.com
     name = ' reddit.com'
     path = '/'
@@ -746,15 +746,11 @@ class _DefaultSR(FakeSubreddit):
     def title(self):
         return _("reddit.com: what's new online!")
 
-# This is the base class for the instantiated front page reddit
-class DefaultSR(_DefaultSR):
-    pass
-
-class MultiReddit(_DefaultSR):
+class MultiReddit(DefaultSR):
     name = 'multi'
 
     def __init__(self, sr_ids, path):
-        _DefaultSR.__init__(self)
+        DefaultSR.__init__(self)
         self.real_path = path
         self.sr_ids = sr_ids
 
@@ -774,7 +770,7 @@ class RandomReddit(FakeSubreddit):
 class RandomNSFWReddit(FakeSubreddit):
     name = 'randnsfw'
 
-class ModContribSR(_DefaultSR):
+class ModContribSR(DefaultSR):
     name  = None
     title = None
     query_param = None

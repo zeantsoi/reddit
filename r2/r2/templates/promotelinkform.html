@@ -369,21 +369,6 @@
    </div>
 %endif
 
-%if thing.link and c.user_is_admin:
-  <%utils:line_field title="${_('media')}"
-                     description="">
-   width: 
-   <input type='text' style='width:auto'
-          name='embed_width' size='7' 
-          value='' /><br/>
-   height: 
-   <input type='text' style='width:auto' 
-          name='embed_height size='7'
-          value='' /><br/>
-   <textarea name="embed"></textarea>
- </%utils:line_field>
-%endif
-
 
 <div class="save-button">
   <%
