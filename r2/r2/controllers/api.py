@@ -1353,12 +1353,6 @@ class ApiController(RedditController):
             return "Ok"
         elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
             return "Ok"
-        elif parameters.get('txn_type', '') == 'send_money' and mc_gross < 3.95:
-            # Temporary block while the last of the "legacy" PWYW subscriptions
-            # roll in
-            for k, v in parameters.iteritems():
-                g.log.info("IPN: %r = %r" % (k, v))
-            return "Ok"
         elif psl == 'completed':
             pass
         elif psl == 'refunded':
@@ -1405,7 +1399,7 @@ class ApiController(RedditController):
         pennies = int(mc_gross * 100)
 
         days = None
-        if item_number and item_number == 'rgsub':
+        if item_number and item_number in ('rgsub', 'rgonetime'):
             if pennies == 2999:
                 secret_prefix = "ys_"
                 days = 366
