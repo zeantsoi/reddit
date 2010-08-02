@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
-from r2.models import Account, Default, make_feedurl
+from r2.models import Account, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
@@ -330,7 +330,7 @@ class Reddit(Templated):
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
 
-        if c.site != Default and not c.cname:
+        if not isinstance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
@@ -810,7 +810,7 @@ class LinkInfoPage(Reddit):
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
-        if c.site != Default and not c.cname:
+        if not isintance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
@@ -2695,7 +2695,7 @@ class RedditTraffic(Traffic):
             data.sort(key = lambda x: x[1][1], reverse = True)
             for d in data:
                 name = d[0]
-                for sr in (Default, Friends, All, Sub):
+                for isinstance(sr, DefaultSR) or sr in (Friends, All, Sub):
                     if name == sr.name:
                         name = sr
                         break
