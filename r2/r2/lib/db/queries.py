@@ -1050,16 +1050,26 @@ def reinsert_coment_sort(fname):
             line = line.strip('\n')
             amqp.add_item('commentsort_q', line)
 
+
+
+def commentsort_q_key(cid):
+    return "comment_sort_q_lock_%s" % cid
+
 def queue_comment_sort(cids):
+    already_queued = set(g.cache.add_multi(dict((commentsort_q_key(k), 1)
+                                                for k in cids)))
+    print already_queued
     for cid in cids:
-        amqp.add_item('commentsort_q', str(cid))
+        if commentsort_q_key(cid) not in already_queued:
+            amqp.add_item('commentsort_q', str(cid))
 
 def process_comment_sorts(limit=1000):
     def _handle_sort(msgs, chan):
-        comments = Comment._byID(list(set(int(msg.body) for msg in msgs)),
-                                 data = True, return_dict = False)
+        cids = list(set(int(msg.body) for msg in msgs))
+        comments = Comment._byID(cids, data = True, return_dict = False)
         print comments
         update_comment_votes(comments)
+        g.cache.delete_multi(map(commentsort_q_key, cids))
 
     amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
 
