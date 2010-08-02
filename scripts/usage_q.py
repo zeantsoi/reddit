@@ -57,6 +57,8 @@ def buckets(time):
            ]
 
 def run(limit=1000, verbose=False):
+    if verbose:
+        print "running"
     def myfunc(msgs, chan):
         incrs = {}
 

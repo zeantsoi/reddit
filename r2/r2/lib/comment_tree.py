@@ -188,7 +188,7 @@ def link_comments_and_sort(link_id, sort):
         key = sort_comments_key(link_id, sort)
         res = _comment_sorter_from_cids(sorter_needed, sort)
         sorter.update(res)
-        queries.queue_comment_sort(sorter_needed)
+        #queries.queue_comment_sort(sorter_needed)
 
         #with g.make_lock(sort_lock_key(link_id)):
         #    sorter = g.permacache.get(key) or {}
