@@ -160,7 +160,7 @@ def _add_item(routing_key, body, message_id = None,
                            routing_key = routing_key)
     except Exception as e:
         if e.errno == errno.EPIPE:
-            get_channel(True)
+            connection_manager.get_channel(True)
             add_item(routing_key, body, message_id)
         else:
             raise
