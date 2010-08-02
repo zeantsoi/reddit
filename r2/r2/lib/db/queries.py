@@ -1036,6 +1036,20 @@ def process_votes_multi(limit=100):
 
 process_votes = process_votes_multi
 
+
+def dump_comment_sort(**kw):
+    # limit is taken but ignored for backwards compatibility
+
+    def _handle_vote(msg):
+        print msg.body
+    amqp.consume_items('commentsort_q', _handle_vote, verbose = False)
+
+def reinsert_coment_sort(fname):
+    with open(fname, 'r') as handle:
+        for line in handle:
+            line = line.strip('\n')
+            amqp.add_item('commentsort_q', line)
+
 def queue_comment_sort(cids):
     for cid in cids:
         amqp.add_item('commentsort_q', str(cid))
