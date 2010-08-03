@@ -35,6 +35,7 @@ from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
 from r2.lib.jsontemplates import is_api
+from r2.lib.solrsearch import SearchQuery
 from r2.lib.indextank import IndextankQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib.utils.trial_utils import populate_spotlight
