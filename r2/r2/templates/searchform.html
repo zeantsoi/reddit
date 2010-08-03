@@ -34,7 +34,7 @@
          %endif
          name="q"/>
   %if not thing.simple:
-    %if thing.site == Default:
+    %if not thing.site or thing.site == Default:
       <input type="hidden" name="restrict_sr" value="off" />
     %else:
       <br /><br />

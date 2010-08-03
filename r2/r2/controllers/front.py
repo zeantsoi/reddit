@@ -37,7 +37,7 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
-from r2.lib.indextank import IndextankQuery
+from r2.lib.indextank import IndextankQuery, IndextankException
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -46,7 +46,7 @@ from listingcontroller import ListingController
 from pylons import c, request, request, Response
 
 import random as rand
-import re
+import re, socket
 import time as time_module
 from urllib import quote_plus
 
@@ -483,17 +483,20 @@ class FrontController(RedditController):
         else:
             site = c.site
 
-        q = IndextankQuery(query, site, sort)
+        try:
+            q = IndextankQuery(query, site, sort)
 
-        num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
-                                     count = count)
+            num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
+                                         count = count)
+            res = SearchPage(_('search results'), query, t, num, content=spane,
+                             nav_menus = [SearchSortMenu(default=sort)],
+                             search_params = dict(sort = sort),
+                             simple=False, site=c.site, restrict_sr=restrict_sr).render()
 
-        res = SearchPage(_('search results'), query, t, num, content=spane,
-                         nav_menus = [SearchSortMenu(default=sort)],
-                         search_params = dict(sort = sort),
-                         simple=False, site=c.site, restrict_sr=restrict_sr).render()
+            return res
+        except (IndextankException, socket.error), e:
+            return self.search_fail(e)
 
-        return res
 
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
@@ -510,32 +513,8 @@ class FrontController(RedditController):
         # computed after fetch_more
         try:
             res = listing.listing()
-        except SolrError, e:
-            try:
-                errmsg = "SolrError: %r %r" % (e, query_obj)
-            except UnicodeEncodeError:
-                errmsg = "SolrError involving unicode"
-
-            if (str(e) == 'None'):
-                # Production error logs only get non-None errors
-                g.log.debug(errmsg)
-            else:
-                g.log.error(errmsg)
-
-            sf = SearchFail()
-            sb = SearchBar(prev_search = query_obj.q)
-
-            us = unsafe(sb.render() + sf.render())
-
-            errpage = pages.RedditError(_('search failed'), us)
-
-            c.response = Response()
-            c.response.status_code = 503
-            request.environ['usable_error_content'] = errpage.render()
-            request.environ['retry_after'] = 60
-
-            abort(503)
-
+        except (IndextankException, SolrError, socket.error), e:
+            return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 
         return builder.total_num, timing, res

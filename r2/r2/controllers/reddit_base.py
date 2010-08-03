@@ -44,9 +44,10 @@ from datetime import datetime
 from hashlib import sha1, md5
 from urllib import quote, unquote
 import simplejson
-import locale
+import locale, socket
 
 from r2.lib.tracking import encrypt, decrypt
+from pylons import Response
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
@@ -775,3 +776,29 @@ class RedditController(MinimalController):
         if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
 
+    def search_fail(self, exception):
+        from r2.lib.contrib.pysolr import SolrError
+        from r2.lib.indextank import IndextankException
+        if isinstance(exception, SolrError):
+            errmsg = "SolrError: %r %r" % (e, self.builder_obj)
+
+            if (str(e) == 'None'):
+                # Production error logs only get non-None errors
+                g.log.debug(errmsg)
+            else:
+                g.log.error(errmsg)
+        elif isinstance(exception, (IndextankException, socket.error)):
+            g.log.error("IndexTank Error: %s" % repr(exception))
+
+        sf = pages.SearchFail()
+
+        us = filters.unsafe(sf.render())
+
+        errpage = pages.RedditError(_('search failed'), us)
+
+        c.response = Response()
+        c.response.status_code = 503
+        request.environ['usable_error_content'] = errpage.render()
+        request.environ['retry_after'] = 60
+
+        abort(503)
