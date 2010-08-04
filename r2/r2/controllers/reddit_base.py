@@ -787,7 +787,7 @@ class RedditController(MinimalController):
         from r2.lib.contrib.pysolr import SolrError
         from r2.lib.indextank import IndextankException
         if isinstance(exception, SolrError):
-            errmsg = "SolrError: %r %r" % (e, self.builder_obj)
+            errmsg = "SolrError: %r" % e
 
             if (str(e) == 'None'):
                 # Production error logs only get non-None errors
