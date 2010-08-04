@@ -908,10 +908,11 @@ for scraper in [ EmbedlyOEmbed,
 deepscrapers = [YoutubeEmbedDeepScraper]
 
 def get_media_embed(media_object):
-    for scraper in scrapers.get(media_object['type']):
+    for scraper in scrapers.get(media_object['type'], []):
         res = scraper.media_embed(**media_object)
         if res:
             return res
+    return GenericScraper.media_embed(**media_object)
 
 def convert_old_media_objects():
     q = Link._query(Link.c.media_object is not None,

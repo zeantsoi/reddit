@@ -130,9 +130,6 @@ class ApiController(RedditController):
         elif link1 and ('ALREADY_SUB', 'url')  in c.errors:
             links = filter_links(tup(link1), filter_spam = False)
 
-        if not links:
-            return abort(404, 'not found')
-
         listing = wrap_links(links, num = count)
         return BoringPage(_("API"), content = listing).render()
 

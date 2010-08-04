@@ -356,6 +356,34 @@
         %endif
       </div>
     </%utils:line_field>
+    <%utils:line_field title="${_('media')}" id="commenting-field">
+      <div class="delete-field">
+        <label for="width">Dimensions:</label>&#32;
+        <input name="media-width" type='text' size='5' maxsize='5' 
+               id="width"
+               style="width:auto"
+                 %if thing.link.media_object:
+                   value='${thing.link.media_object.get("width", 0)}'
+                 %else:
+                   value="width" class="gray"
+                 %endif
+               />
+        x <input name="media-height" type='text' size='5' maxsize='5'
+                 style="width:auto"
+                 %if thing.link.media_object:
+                   value='${thing.link.media_object.get("height", 0)}'
+                 %else:
+                   value="height" class="gray"
+                 %endif
+                 />
+        <p>
+          <label for="media-embed">Embed Code</label>
+          <textarea id="media-embed" name="media-embed" rows="7" cols="1">
+            ${thing.link.media_object.get('content','')}
+          </textarea>
+        </p>
+      </div>
+    </%utils:line_field>
 %else:
    <div class="spacer">
      <div class="infobar">

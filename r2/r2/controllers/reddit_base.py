@@ -35,7 +35,7 @@ from r2.models import *
 from errors import ErrorSet
 from validator import *
 from r2.lib.template_helpers import add_sr
-from r2.lib.jsontemplates import api_type
+from r2.lib.jsontemplates import api_type, is_api
 
 from Cookie import CookieError
 from copy import copy
@@ -315,6 +315,13 @@ def set_content_type():
         if ext in ("mobile", "m", "compact"):
             if request.GET.get("keep_extension"):
                 c.cookies['reddit_mobility'] = Cookie(ext, expires = NEVER)
+    # allow JSONP requests to generate callbacks, but do not allow
+    # the user to be logged in for these 
+    if (is_api() and request.method.upper() == "GET" and
+        request.GET.get("jsonp")):
+        c.allowed_callback = request.GET['jsonp']
+        c.user = UnloggedUser(get_browser_langs())
+        c.user_is_loggedin = False
 
 def get_browser_langs():
     browser_langs = []
@@ -669,7 +676,7 @@ class RedditController(MinimalController):
         maybe_admin = False
 
         # no logins for RSS feed unless valid_feed has already been called
-        if not c.user_is_loggedin:
+        if not c.user:
             if c.extension != "rss":
                 (c.user, maybe_admin) = \
                          valid_cookie(c.cookies[g.login_cookie].value
@@ -678,7 +685,7 @@ class RedditController(MinimalController):
                 if c.user:
                     c.user_is_loggedin = True
 
-            if not c.user_is_loggedin:
+            if not c.user:
                 c.user = UnloggedUser(get_browser_langs())
                 # patch for fixing mangled language preferences
                 if (not isinstance(c.user.pref_lang, basestring) or

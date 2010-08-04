@@ -34,6 +34,7 @@ from r2.controllers.reddit_base import RedditController
 
 from r2.lib.utils import make_offset_date
 from r2.lib.media import force_thumbnail, thumbnail_url
+from r2.lib.scraper import MediaEmbed
 from r2.lib import cssfilter
 from datetime import datetime
 
@@ -143,11 +144,15 @@ class PromoteController(ListingController):
                    max_clicks = VInt("maximum_clicks", min = 0),
                    set_views = VBoolean("set_maximum_views"),
                    max_views = VInt("maximum_views", min = 0),
+                   media_width = VInt("media-width", min = 0),
+                   media_height = VInt("media-height", min = 0),
+                   media_embed = VLength("media-embed", 1000)
                    )
     def POST_edit_promo(self, form, jquery, ip, l, title, url,
                         disable_comments,
                         set_clicks, max_clicks,
-                        set_views,  max_views):
+                        set_views,  max_views,
+                        media_height, media_width, media_embed):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
@@ -207,6 +212,16 @@ class PromoteController(ListingController):
 
             # comment disabling is free to be changed any time.
             l.disable_comments = disable_comments
+
+            if c.user_is_admin:
+                if media_embed and media_width and media_height:
+                    l.media_object = dict(height = media_height,
+                                          width = media_width,
+                                          content = media_embed,
+                                          type = 'custom')
+                else:
+                    l.media_object = None
+
             l._commit()
 
         form.redirect(promote.promo_edit_url(l))

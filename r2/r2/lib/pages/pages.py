@@ -37,7 +37,7 @@ from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
 from r2.lib.contrib.markdown import markdown
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
-from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF
+from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF, websafe_json
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
@@ -71,6 +71,8 @@ def responsive(res, space_compress = False):
     """
     if is_api():
         res = json_respond(res)
+        if c.allowed_callback:
+            res = "%s(%s)" % (websafe_json(c.allowed_callback), res)
     elif space_compress:
         res = spaceCompress(res)
     c.response.content = res
