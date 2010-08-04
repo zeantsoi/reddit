@@ -130,7 +130,7 @@ class ApiController(RedditController):
         elif link1 and ('ALREADY_SUB', 'url')  in c.errors:
             links = filter_links(tup(link1), filter_spam = False)
 
-        listing = wrap_links(filter(None, links), num = count)
+        listing = wrap_links(filter(None, links or []), num = count)
         return BoringPage(_("API"), content = listing).render()
 
     @validatedForm(VCaptcha(),
