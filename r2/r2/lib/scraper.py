@@ -912,7 +912,8 @@ def get_media_embed(media_object):
         res = scraper.media_embed(**media_object)
         if res:
             return res
-    return GenericScraper.media_embed(**media_object)
+    if 'content' in media_object:
+        return GenericScraper.media_embed(**media_object)
 
 def convert_old_media_objects():
     q = Link._query(Link.c.media_object is not None,
