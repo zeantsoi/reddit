@@ -379,7 +379,9 @@
         <p>
           <label for="media-embed">Embed Code</label>
           <textarea id="media-embed" name="media-embed" rows="7" cols="1">
-            ${thing.link.media_object.get('content','')}
+            %if thing.link.media_object:
+              ${thing.link.media_object.get('content','')}
+            %endif
           </textarea>
         </p>
       </div>
