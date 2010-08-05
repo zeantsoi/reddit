@@ -1575,7 +1575,7 @@ subscription with your reddit account -- just visit
         mc_key = "morechildren-%s" % request.ip
         try:
             count = g.cache.incr(mc_key)
-        except NotFound:
+        except:
             g.cache.set(mc_key, 1, time=30)
             count = 1
 
