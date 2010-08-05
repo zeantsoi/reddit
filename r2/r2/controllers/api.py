@@ -1573,8 +1573,12 @@ subscription with your reddit account -- just visit
         user = c.user if c.user_is_loggedin else None
 
         mc_key = "morechildren-%s" % request.ip
-        g.cache.add(mc_key, 0, time=30)
-        count = g.cache.incr(mc_key)
+        try:
+            count = g.cache.incr(mc_key)
+        except NotFound:
+            g.cache.set(mc_key, 1, time=30)
+            count = 1
+
         if count >= 10:
             if user:
                 name = user.name
