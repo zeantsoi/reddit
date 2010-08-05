@@ -1320,7 +1320,7 @@ class ApiController(RedditController):
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
 
-    @noresponse(paypal_secret = VPrintable('secret', 50),
+    @textresponse(paypal_secret = VPrintable('secret', 50),
                 payment_status = VPrintable('payment_status', 20),
                 txn_id = VPrintable('txn_id', 20),
                 paying_id = VPrintable('payer_id', 50),
@@ -1345,12 +1345,24 @@ class ApiController(RedditController):
         if payment_status is None:
             payment_status = ''
 
+        if parameters['txn_type'] == 'subscr_signup':
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_cancel':
+            cancel_subscription(parameters['subscr_id'])
+            return "Ok"
+        elif parameters['txn_type'] in ('new_case',
+            'recurring_payment_suspended_due_to_max_failed_payment'):
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_payment':
+            subscr_id = parameters['subscr_id']
+        elif parameters['txn_type'] == 'web_accept':
+            subscr_id = None
+        else:
+            raise ValueError("Unknown IPN txn_type %s" % parameters['txn_type'])
+
         psl = payment_status.lower()
-        if psl == '' and parameters['txn_type'] == 'subscr_signup':
-            return "Ok"
-        elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
-            return "Ok"
-        elif psl == 'completed':
+
+        if psl == 'completed':
             pass
         elif psl == 'refunded':
             log_text("refund", "Just got notice of a refund.", "info")
@@ -1416,7 +1428,8 @@ class ApiController(RedditController):
         gold_secret = secret_prefix + randstr(10)
 
         create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
-                              pennies, days, gold_secret, c.start_time)
+                              pennies, days, gold_secret, c.start_time,
+                              subscr_id)
 
         url = "http://www.reddit.com/thanks/" + gold_secret
 
@@ -1639,30 +1652,35 @@ subscription with your reddit account -- just visit
             form.has_errors("code", errors.NO_TEXT)
             return
 
-        days = claim_gold(code, c.user._id)
+        rv = claim_gold(code, c.user._id)
 
-        if days is None:
+        if rv is None:
             c.errors.add(errors.INVALID_CODE, field = "code")
             log_text ("invalid gold claim",
                       "%s just tried to claim %s" % (c.user.name, code),
                       "info")
-        elif days == 0:
+        elif rv == "already claimed":
             c.errors.add(errors.CLAIMED_CODE, field = "code")
             log_text ("invalid gold reclaim",
                       "%s just tried to reclaim %s" % (c.user.name, code),
                       "info")
-        elif days > 0:
+        else:
+            days, subscr_id = rv
+            if days <= 0:
+                raise ValueError("days = %r?" % days)
+
             log_text ("valid gold claim",
                       "%s just claimed %s" % (c.user.name, code),
                       "info")
+
+            if subscr_id:
+                c.user.gold_subscr_id = subscr_id
 
             admintools.engolden(c.user, days)
 
             g.cache.set("recent-gold-" + c.user.name, True, 600)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
-        else:
-            raise ValueError("days = %r?" % days)
 
         # Activate any errors we just manually set
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,

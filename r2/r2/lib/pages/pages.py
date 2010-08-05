@@ -389,11 +389,7 @@ class RedditFooter(CachedTemplate):
                     NavMenu([NamedButton("blog", False, nocname=True),
                          NamedButton("promote", False, nocname=True,
                                      dest = '/promoted', css_class = "red"),
-                         NamedButton("ad_inq", False, nocname=True),
-                         OffsiteButton('reddit.tv', "http://www.reddit.tv"),
-                         OffsiteButton('redditall', "http://www.redditall.com"),
-                         OffsiteButton(_('job board'),
-                                       "http://www.redditjobs.com")],
+                         NamedButton("ad_inq", False, nocname=True)],
                         title = _('about us'), type = 'flat_vert',
                         separator = ''),
                     NavMenu([OffsiteButton('BaconBuzz',
@@ -1112,16 +1108,15 @@ class ProfileBar(Templated):
         self.gold_remaining = None
         if c.user_is_loggedin:
 # TODO: change the next "if" to the following:
-#            if user._id == c.user._id or c.user_is_admin:
-            if c.user_is_admin:
-                gold_expiration = getattr(user, "gold_expiration", None)
-                if gold_expiration is None:
-                    if getattr(user, "gold", None):
-                        self.gold_remaining = _("an unknown amount")
-                elif (gold_expiration - datetime.datetime.now(g.tz)).days < 1:
+#           if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
+            if c.user_is_admin and getattr(user, "gold", None):
+                self.gold_expiration = getattr(user, "gold_expiration", None)
+                if self.gold_expiration is None:
+                    self.gold_remaining = _("an unknown amount")
+                elif (self.gold_expiration - datetime.datetime.now(g.tz)).days < 1:
                     self.gold_remaining = _("less than a day")
                 else:
-                    self.gold_remaining = timeuntil(gold_expiration)
+                    self.gold_remaining = timeuntil(self.gold_expiration)
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
 

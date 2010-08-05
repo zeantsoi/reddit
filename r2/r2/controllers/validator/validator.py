@@ -181,6 +181,10 @@ def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     return self.api_wrapper({})
 
 @api_validate
+def textresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
+    return self_method(self, *a, **kw)
+
+@api_validate
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     r = self_method(self, *a, **kw)
     return self.api_wrapper(r)

@@ -44,18 +44,22 @@ gold_table = sa.Table('reddit_gold', METADATA,
                       sa.Column('pennies', sa.Integer, nullable = False),
                       sa.Column('secret', sa.String, nullable = True),
                       sa.Column('account_id', sa.String, nullable = True),
-                      sa.Column('days', sa.Integer, nullable = True))
+                      sa.Column('days', sa.Integer, nullable = True),
+                      sa.Column('subscr_id', sa.String, nullable = True))
 
 indices = [index_str(gold_table, 'status', 'status'),
            index_str(gold_table, 'date', 'date'),
            index_str(gold_table, 'account_id', 'account_id'),
            index_str(gold_table, 'secret', 'secret', unique = True),
-           index_str(gold_table, 'payer_email', 'payer_email')]
+           index_str(gold_table, 'payer_email', 'payer_email'),
+           index_str(gold_table, 'subscr_id', 'subscr_id')]
 create_table(gold_table, indices)
 
 def create_unclaimed_gold (trans_id, payer_email, paying_id,
-                           pennies, days, secret, date):
+                           pennies, days, secret, date,
+                           subscr_id = None):
     gold_table.insert().execute(trans_id=trans_id,
+                                subscr_id=subscr_id,
                                 status="unclaimed",
                                 payer_email=payer_email,
                                 paying_id=paying_id,
@@ -64,9 +68,11 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
                                 secret=secret,
                                 date=date)
 
-# returns the number of days, if there's valid unclaimed gold
-# returns 0 if the ID is valid but the gold's already been claimed
 # returns None if the ID was never valid
+# returns "already claimed" if it's already been claimed
+# Otherwise, it's valid and the function claims it, returning a tuple with:
+#   * the number of days
+#   * the subscr_id, if any
 def claim_gold(secret, account_id):
     if not secret:
         return None
@@ -89,7 +95,7 @@ def claim_gold(secret, account_id):
     else:
         raise ValueError("rowcount == %d?" % rp.rowcount)
 
-    s = sa.select([gold_table.c.days],
+    s = sa.select([gold_table.c.days, gold_table.c.subscr_id],
                   gold_table.c.secret == secret,
                   limit = 1)
     rows = s.execute().fetchall()
@@ -97,9 +103,9 @@ def claim_gold(secret, account_id):
     if not rows:
         return None
     elif just_claimed:
-        return rows[0].days
+        return (rows[0].days, rows[0].subscr_id)
     else:
-        return 0
+        return "already claimed"
 
 def check_by_email(email):
     s = sa.select([gold_table.c.status,

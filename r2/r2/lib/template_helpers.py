@@ -346,7 +346,7 @@ def add_attr(attrs, code, label=None, link=None):
         if not label:
             label = _('reddit admin, speaking officially')
         if not link:
-            link = '/help/faq#Whomadereddit'
+            link = '/help/faq#Whorunsreddit'
     elif code in ('X', '@'):
         priority = 5
         cssclass = 'gray'

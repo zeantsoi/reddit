@@ -99,7 +99,8 @@
 
   %if thing.gold_remaining:
     <div class="rounded gold-accent gold-expiration-info">
-      <div class="gold-remaining">
+      <div class="gold-remaining"
+           title="${thing.gold_expiration.strftime('%Y-%m-%d')}">
         <span class="karma">
           ${thing.gold_remaining}
         </span>
