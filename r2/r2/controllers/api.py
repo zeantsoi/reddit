@@ -1345,21 +1345,6 @@ class ApiController(RedditController):
         if payment_status is None:
             payment_status = ''
 
-        if parameters['txn_type'] == 'subscr_signup':
-            return "Ok"
-        elif parameters['txn_type'] == 'subscr_cancel':
-            cancel_subscription(parameters['subscr_id'])
-            return "Ok"
-        elif parameters['txn_type'] in ('new_case',
-            'recurring_payment_suspended_due_to_max_failed_payment'):
-            return "Ok"
-        elif parameters['txn_type'] == 'subscr_payment':
-            subscr_id = parameters['subscr_id']
-        elif parameters['txn_type'] == 'web_accept':
-            subscr_id = None
-        else:
-            raise ValueError("Unknown IPN txn_type %s" % parameters['txn_type'])
-
         psl = payment_status.lower()
 
         if psl == 'completed':
@@ -1380,6 +1365,21 @@ class ApiController(RedditController):
                 g.log.info("IPN: %r = %r" % (k, v))
 
             raise ValueError("Unknown IPN status: %r" % payment_status)
+
+        if parameters['txn_type'] == 'subscr_signup':
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_cancel':
+            cancel_subscription(parameters['subscr_id'])
+            return "Ok"
+        elif parameters['txn_type'] in ('new_case',
+            'recurring_payment_suspended_due_to_max_failed_payment'):
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_payment':
+            subscr_id = parameters['subscr_id']
+        elif parameters['txn_type'] == 'web_accept':
+            subscr_id = None
+        else:
+            raise ValueError("Unknown IPN txn_type %s" % parameters['txn_type'])
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
