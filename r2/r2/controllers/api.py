@@ -1360,6 +1360,8 @@ class ApiController(RedditController):
             # TODO: something useful when this happens -- and don't
             # forget to verify first
             return "Ok"
+        elif psl == '':
+            pass
         else:
             for k, v in parameters.iteritems():
                 g.log.info("IPN: %r = %r" % (k, v))
@@ -1374,12 +1376,13 @@ class ApiController(RedditController):
         elif parameters['txn_type'] in ('new_case',
             'recurring_payment_suspended_due_to_max_failed_payment'):
             return "Ok"
-        elif parameters['txn_type'] == 'subscr_payment':
+        elif parameters['txn_type'] == 'subscr_payment' and psl == 'completed':
             subscr_id = parameters['subscr_id']
-        elif parameters['txn_type'] == 'web_accept':
+        elif parameters['txn_type'] == 'web_accept' and psl == 'completed':
             subscr_id = None
         else:
-            raise ValueError("Unknown IPN txn_type %s" % parameters['txn_type'])
+            raise ValueError("Unknown IPN txn_type / psl %s" %
+                             (parameters['txn_type'], psl))
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
@@ -1568,6 +1571,19 @@ subscription with your reddit account -- just visit
     def POST_morechildren(self, form, jquery,
                           link, sort, children, mc_id):
         user = c.user if c.user_is_loggedin else None
+
+        mc_key = "morechildren-%s" % request.ip
+        g.cache.add(mc_key, 0, time=30)
+        count = g.cache.incr(mc_key)
+        if count >= 10:
+            if user:
+                name = user.name
+            else:
+                name = "(unlogged user)"
+            g.log.warning("%s on %s hit morechildren %d times in 30 seconds"
+                          % (name, request.ip, count))
+            # TODO: redirect to rickroll or something
+
         if not link or not link.subreddit_slow.can_view(user):
             return abort(403,'forbidden')
 
