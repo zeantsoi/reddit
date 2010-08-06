@@ -238,3 +238,15 @@ def live_promo(thing):
 
 def finished_promo(thing):
     return _promo_email(thing, Email.Kind.FINISHED_PROMO)
+
+
+def send_html_email(to_addr, from_addr, subject, html):
+    from r2.lib.filters import _force_utf8
+    msg = MIMEText(_force_utf8(html), "html")
+    msg["Subject"] = subject
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+
+    session = smtplib.SMTP(g.smtp_server)
+    session.sendmail(from_addr, to_addr, msg.as_string())
+    session.quit()
