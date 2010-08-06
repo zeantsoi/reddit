@@ -220,16 +220,38 @@ class FrontController(RedditController):
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
                                        comment, context, num, **kw))
 
+        subtitle_buttons = []
+
         if c.focal_comment or context is not None:
             subtitle = None
         elif article.num_comments <= num:
-            subtitle = _("all %d comments") % article.num_comments
+            subtitle = _("all comments")
         else:
             subtitle = _("top %d comments") % num
+            if c.user_is_loggedin and c.user.gold:
+                link_class = "gold"
+                max_comm = g.max_comments_gold
+            else:
+                link_class = ""
+                max_comm = g.max_comments
+
+            if article.num_comments <= max_comm:
+                link_text = _("show all %d") % article.num_comments
+            elif num == max_comm:
+                link_text = None
+            else:
+                link_text = _("show %d") % max_comm
+
+            limit_param = "?limit=%d" % max_comm
+
+            if link_text:
+                more_link = article.make_permalink(c.site) + limit_param
+                subtitle_buttons = [ (link_text, more_link, link_class) ]
 
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane,
                            subtitle = subtitle,
+                           subtitle_buttons = subtitle_buttons,
                            nav_menus = [CommentSortMenu(default = sort)],
                            infotext = infotext).render()
         return res

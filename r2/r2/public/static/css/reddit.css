@@ -692,6 +692,32 @@ ul.flat-vert {text-align: left;}
 
 .menuarea .spacer {display: inline; margin-right: 15px}
 
+.panestack-title {
+    margin: 10px 310px 0px 10px;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted gray;
+}
+
+.panestack-title .title {
+    font-size: 16px;
+    font-weight: normal;
+    margin: 10px 0;
+}
+
+.panestack-title a.title-button {
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.panestack-title a.title-button.gold {
+    background-color: #fff088;
+    color: #8e752d;
+    border: 1px solid #9a7d2e;
+    padding: 1px 5px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
 .commentarea h1 {
     margin: 10px 310px 0px 10px;
     padding-bottom: 3px;

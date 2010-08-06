@@ -407,7 +407,7 @@ class SortMenu(SimpleGetMenu):
     def __init__(self, **kw):
         kw['title'] = _("sorted by")
         SimpleGetMenu.__init__(self, **kw)
-    
+
     @classmethod
     def operator(self, sort):
         if sort == 'hot':
