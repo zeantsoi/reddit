@@ -10,15 +10,8 @@
 
   <Keyspaces>
     <Keyspace Name="permacache">
-      <ColumnFamily CompareWith="BytesType" Name="permacache" RowsCached="3000000" />
-
-      <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
-      <ReplicationFactor>3</ReplicationFactor>
-      <EndPointSnitch>org.apache.cassandra.locator.EndPointSnitch</EndPointSnitch>
-    </Keyspace>
-
-    <Keyspace Name="urls">
-      <ColumnFamily CompareWith="UTF8Type" Name="urls" />
+      <ColumnFamily CompareWith="BytesType" Name="permacache" />
+      <ColumnFamily CompareWith="BytesType" Name="urls" RowsCached="10000000" />
 
       <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
       <ReplicationFactor>3</ReplicationFactor>
