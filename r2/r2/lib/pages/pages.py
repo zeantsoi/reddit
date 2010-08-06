@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
-from r2.models import Account, Default, make_feedurl
+from r2.models import Account, FakeAccount, Default, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
@@ -2840,6 +2840,55 @@ class PaymentForm(Templated):
         self.indx = indx
         Templated.__init__(self, **kw)
 
+class Promotion_Summary(Templated):
+    def __init__(self, ndays):
+        end_date = promote.promo_datetime_now().date()
+        start_date = promote.promo_datetime_now(offset = -ndays).date()
+
+        links = set()
+        authors = {}
+        author_score = {}
+        self.total = 0
+        for link, indx, s, e in Promote_Graph.get_current_promos(start_date, end_date):
+            sd, ed, bid, sr, trans_id = link.campaigns[indx]
+            if trans_id > 0: #ignore freebies
+                links.add(link)
+                link.bid = getattr(link, "bid", 0) + bid
+                link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
+
+                bid_per_day = bid / (ed - sd).days
+                if isinstance(sd, datetime.datetime):
+                    sd = sd.date()
+                if isinstance(ed, datetime.datetime):
+                    ed = ed.date()
+                sd = max(sd, start_date)
+                ed = min(ed, end_date)
+
+                self.total += bid_per_day * (ed - sd).days
+
+                authors.setdefault(link.author.name, []).append(link)
+                author_score[link.author.name] = author_score.get(link.author.name,0) + link._score
+
+        links = list(links)
+        links.sort(key = lambda x: x._score, reverse = True)
+        author_score = list(sorted(((v, k) for k,v in author_score.iteritems()),
+                                   reverse = True))
+
+        self.links = links
+        self.ndays = ndays
+        Templated.__init__(self)
+
+    @classmethod
+    def send_summary_email(cls, to_addr, ndays):
+        from r2.lib import emailer
+        c.site = DefaultSR()
+        c.user = FakeAccount()
+        p = cls(ndays)
+        emailer.send_html_email(to_addr, g.feedback_email,
+                                "Self-serve promotion summary for last %d days"
+                                % ndays, p.render('email'))
+
+
 class Promote_Graph(Templated):
     
     @classmethod
@@ -2897,6 +2946,7 @@ class Promote_Graph(Templated):
 
         start_date = promote.promo_datetime_now(offset = -7).date()
         end_date = promote.promo_datetime_now(offset = 7).date()
+
 
         size = (end_date - start_date).days
 

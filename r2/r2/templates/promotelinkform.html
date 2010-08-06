@@ -356,6 +356,7 @@
         %endif
       </div>
     </%utils:line_field>
+    %if c.user_is_sponsor:
     <%utils:line_field title="${_('media')}" id="commenting-field">
       <div class="delete-field">
         <label for="width">Dimensions:</label>&#32;
@@ -386,6 +387,7 @@
         </p>
       </div>
     </%utils:line_field>
+    %endif
 %else:
    <div class="spacer">
      <div class="infobar">

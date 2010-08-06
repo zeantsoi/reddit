@@ -74,8 +74,8 @@ class Builder(object):
             cup_infos = Account.cup_info_multi(aids)
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
-            if c.user.gold:
-                friend_rels = c.user.friend_rels()
+            if user and user.gold:
+                friend_rels = user.friend_rels()
 
         subreddits = Subreddit.load_subreddits(items)
 
