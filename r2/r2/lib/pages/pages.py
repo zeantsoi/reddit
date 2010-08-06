@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
-from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
+from r2.models import Account, FakeAccount, Default, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
