@@ -139,6 +139,8 @@ string_dict = dict(
     read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to log in. we're sorry, and are working frantically to fix the problem."),
     lounge_msg = _("please grab a drink and join us in [the lounge](%(link)s)"),
     postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
+    over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to reddit gold, it goes up to %(goldmax)d.)"),
+    over_comment_limit_gold = _("Sorry, the maximum number of comments is %d."),
 )
 
 class StringHandler(object):
