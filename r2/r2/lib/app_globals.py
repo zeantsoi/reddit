@@ -51,6 +51,7 @@ class Globals(object):
                  'QUOTA_THRESHOLD',
                  'num_comments',
                  'max_comments',
+                 'max_comments_gold',
                  'num_default_reddits',
                  'num_query_queue_workers',
                  'max_sr_images',

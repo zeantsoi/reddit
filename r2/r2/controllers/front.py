@@ -114,8 +114,7 @@ class FrontController(RedditController):
         return DetailsPage(link = article, expand_children=False).render()
 
 
-    def GET_selfserviceoatmeal(self
-):
+    def GET_selfserviceoatmeal(self):
         return BoringPage(_("self service help"), 
                           show_sidebar = False,
                           content = SelfServiceOatmeal()).render()
@@ -134,11 +133,9 @@ class FrontController(RedditController):
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),
               sort         = VMenu('controller', CommentSortMenu),
-              num_comments = VMenu('controller', NumCommentsMenu),
               limit        = VInt('limit'),
               depth        = VInt('depth'))
-    def GET_comments(self, article, comment, context, sort, num_comments,
-                     limit, depth):
+    def GET_comments(self, article, comment, context, sort, limit, depth):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
             return self.abort404()
@@ -170,11 +167,12 @@ class FrontController(RedditController):
 
         check_cheating('comments')
 
-        # figure out number to show based on the menu (when num_comments
-        # is 'true', the user wants to temporarily override their
-        # comments limit pref
-        user_num = c.user.pref_num_comments or g.num_comments
-        num = g.max_comments if num_comments == 'true' else user_num
+        if not c.user.pref_num_comments:
+            num = g.num_comments
+        elif c.user_is_admin: # MONDAY: gold, not admin
+            num = min(c.user.pref_num_comments, g.max_comments_gold)
+        else:
+            num = min(c.user.pref_num_comments, g.max_comments)
 
         kw = {}
         # allow depth to be reset (I suspect I'll turn the VInt into a
@@ -183,12 +181,29 @@ class FrontController(RedditController):
             kw['max_depth'] = depth
         elif c.render_style == "compact":
             kw['max_depth'] = 5
-        # allow the user's total count preferences to be overwritten
-        # (think of .embed as the use case together with depth=1)x
-        if limit is not None and 0 < limit < g.max_comments:
-            num = limit
 
         displayPane = PaneStack()
+
+        # allow the user's total count preferences to be overwritten
+        # (think of .embed as the use case together with depth=1)
+
+        if limit and limit > 0:
+            num = limit
+
+        # MONDAY: gold, not admins
+        if c.user_is_loggedin and c.user_is_admin:
+            if num > g.max_comments_gold:
+                displayPane.append(InfoBar(message =
+                                           strings.over_comment_limit_gold
+                                           % g.max_comments_gold))
+                num = g.max_comments_gold
+        elif num > g.max_comments:
+# MONDAY: uncomment
+#            displayPane.append(InfoBar(message =
+#                                       strings.over_comment_limit
+#                                       % dict(max=g.max_comments,
+#                                              goldmax=g.max_comments_gold)))
+            num = g.max_comments
 
         # if permalink page, add that message first to the content
         if comment:
@@ -211,16 +226,48 @@ class FrontController(RedditController):
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
                                        comment, context, num, **kw))
 
-        loc = None if c.focal_comment or context is not None else 'comments'
+        subtitle_buttons = []
+
+        if c.focal_comment or context is not None:
+            subtitle = None
+        elif article.num_comments <= num:
+            subtitle = _("all %d comments") % article.num_comments
+        else:
+            subtitle = _("top %d comments") % num
+
+            self._add_show_comments_link(subtitle_buttons, article, num,
+                                         g.max_comments, gold=False)
+
+            # MONDAY: gold, not admins
+            if c.user_is_loggedin and c.user_is_admin:
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments_gold, gold=True)
 
         res = LinkInfoPage(link = article, comment = comment,
-                           content = displayPane, 
-                           subtitle = _("comments"),
-                           nav_menus = [CommentSortMenu(default = sort), 
-                                        NumCommentsMenu(article.num_comments,
-                                                        default=num_comments)],
+                           content = displayPane,
+                           subtitle = subtitle,
+                           subtitle_buttons = subtitle_buttons,
+                           nav_menus = [CommentSortMenu(default = sort)],
                            infotext = infotext).render()
         return res
+
+    def _add_show_comments_link(self, array, article, num, max_comm, gold=False):
+        if num == max_comm:
+            return
+        elif article.num_comments <= max_comm:
+            link_text = _("show all %d") % article.num_comments
+        else:
+            link_text = _("show %d") % max_comm
+
+        limit_param = "?limit=%d" % max_comm
+
+        if gold:
+            link_class = "gold"
+        else:
+            link_class = ""
+
+        more_link = article.make_permalink(c.site) + limit_param
+        array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
               name = nop('name'))

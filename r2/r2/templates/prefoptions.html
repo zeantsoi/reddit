@@ -188,7 +188,12 @@
     <% s = c.user.pref_num_comments %>
     ${unsafe(_("display %(num)s comments by default") % \
     dict(num = input))}
-  &#32;<span class="little gray">(1 - ${g.max_comments})</span>
+    &#32;
+    <span class="little gray">
+      (1 - ${g.max_comments});
+      &#32;
+      ${_("the smaller the number, the faster your comments pages will load")}
+    </span>
     </td>
   </tr>
   <tr>

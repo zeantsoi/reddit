@@ -969,7 +969,7 @@ class VCssName(Validator):
     def run(self, name):
         if name and self.r_css_name.match(name):
             return name
-    
+
 class VMenu(Validator):
 
     def __init__(self, param, menu_cls, remember = True, **kw):
@@ -983,11 +983,11 @@ class VMenu(Validator):
             pref = "%s_%s" % (where, self.nav.get_param)
             user_prefs = copy(c.user.sort_options) if c.user else {}
             user_pref = user_prefs.get(pref)
-    
+
             # check to see if a default param has been set
             if not sort:
                 sort = user_pref
-            
+
         # validate the sort
         if sort not in self.nav.options:
             sort = self.nav.default
@@ -1000,7 +1000,7 @@ class VMenu(Validator):
             user._commit()
 
         return sort
-            
+
 
 class VRatelimit(Validator):
     def __init__(self, rate_user = False, rate_ip = False,

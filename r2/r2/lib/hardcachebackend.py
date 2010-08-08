@@ -89,7 +89,7 @@ class HardCacheBackend(object):
             return value
 
         except sa.exceptions.IntegrityError, e:
-            return self.get(category, ids)
+            return self.get(category, ids, force_write_table=True)
 
     def incr(self, category, ids, time=0, delta=1):
         self.delete_if_expired(category, ids)
@@ -109,9 +109,9 @@ class HardCacheBackend(object):
                                          }
                                ).execute()
         if rp.rowcount == 1:
-            return self.get(category, ids)
+            return self.get(category, ids, force_write_table=True)
         elif rp.rowcount == 0:
-            existing_value = self.get(category, ids)
+            existing_value = self.get(category, ids, force_write_table=True)
             if existing_value is None:
                 raise ValueError("[%s][%s] can't be incr()ed -- it's not set" %
                                  (category, ids))
@@ -121,12 +121,16 @@ class HardCacheBackend(object):
         else:
             raise ValueError("Somehow %d rows got updated" % rp.rowcount)
 
-    def get(self, category, ids):
-        s = sa.select([self.r_table.c.value,
-                       self.r_table.c.kind,
-                       self.r_table.c.expiration],
-                      sa.and_(self.r_table.c.category==category,
-                              self.r_table.c.ids==ids),
+    def get(self, category, ids, force_write_table=False):
+        if force_write_table:
+            table = self.w_table
+        else:
+            table = self.r_table
+        s = sa.select([table.c.value,
+                       table.c.kind,
+                       table.c.expiration],
+                      sa.and_(table.c.category==category,
+                              table.c.ids==ids),
                       limit = 1)
         rows = s.execute().fetchall()
         if len(rows) < 1:

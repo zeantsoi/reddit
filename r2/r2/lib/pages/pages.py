@@ -736,7 +736,7 @@ class LinkInfoPage(Reddit):
     passed to this class will also be rendered underneath the rendered
     Link.
     """
-    
+
     create_reddit_box = False
 
     def __init__(self, link = None, comment = None,
@@ -814,10 +814,12 @@ class LinkInfoPage(Reddit):
         return toolbar
     
     def content(self):
+        title_buttons = getattr(self, "subtitle_buttons", [])
         return self.content_stack((self.infobar, self.link_listing,
                                    PaneStack([PaneStack((self.nav_menu,
                                                          self._content))],
                                              title = self.subtitle,
+                                             title_buttons = title_buttons,
                                              css_class = "commentarea")))
 
     def rightbox(self):
@@ -1107,7 +1109,7 @@ class ProfileBar(Templated):
         self.my_fullname = None
         self.gold_remaining = None
         if c.user_is_loggedin:
-# TODO: change the next "if" to the following:
+# MONDAY: change the next "if" to the following:
 #           if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
             if c.user_is_admin and getattr(user, "gold", None):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
@@ -1362,13 +1364,14 @@ class PaneStack(Templated):
     """Utility class for storing and rendering a list of block elements."""
     
     def __init__(self, panes=[], div_id = None, css_class=None, div=False,
-                 title=""):
+                 title="", title_buttons = []):
         div = div or div_id or css_class or False
         self.div_id    = div_id
         self.css_class = css_class
         self.div       = div
         self.stack     = list(panes)
         self.title = title
+        self.title_buttons = title_buttons
         Templated.__init__(self)
 
     def append(self, item):
