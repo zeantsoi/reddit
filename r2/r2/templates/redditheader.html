@@ -38,8 +38,7 @@
         else:
             header_img = DefaultSR().header
     %>
-    ## TODO: admin -> gold
-    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img', title = c.site.header_title if c.user_is_admin else '')}
+    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img', title = c.site.header_title if c.user.gold else '')}
 
     ##keeps the height of the header from varying when there isnt any content
     &nbsp;

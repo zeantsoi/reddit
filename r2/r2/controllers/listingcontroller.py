@@ -474,9 +474,7 @@ class UserController(ListingController):
     @property
     def menus(self):
         res = []
-        # TODO: remove Monday
-        if ((self.vuser.gold or c.user_is_admin) and 
-            self.where in ('overview', 'submitted', 'comments')):
+        if (self.where in ('overview', 'submitted', 'comments')):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
                 res.append(TimeMenu(default = self.time))
@@ -555,10 +553,6 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        # TODO: remove Monday
-        if (not vuser.gold and not c.user_is_admin):
-            self.sort = 'new'
-            self.time = 'all'
         if self.sort in  ('hot', 'new'):
             self.time = 'all'
 

@@ -1109,9 +1109,7 @@ class ProfileBar(Templated):
         self.my_fullname = None
         self.gold_remaining = None
         if c.user_is_loggedin:
-# MONDAY: change the next "if" to the following:
-#           if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
-            if c.user_is_admin and getattr(user, "gold", None):
+            if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
                 if self.gold_expiration is None:
                     self.gold_remaining = _("an unknown amount")

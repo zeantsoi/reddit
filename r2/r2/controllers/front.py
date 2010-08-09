@@ -169,7 +169,7 @@ class FrontController(RedditController):
 
         if not c.user.pref_num_comments:
             num = g.num_comments
-        elif c.user_is_admin: # MONDAY: gold, not admin
+        elif c.user.gold:
             num = min(c.user.pref_num_comments, g.max_comments_gold)
         else:
             num = min(c.user.pref_num_comments, g.max_comments)
@@ -190,19 +190,17 @@ class FrontController(RedditController):
         if limit and limit > 0:
             num = limit
 
-        # MONDAY: gold, not admins
-        if c.user_is_loggedin and c.user_is_admin:
+        if c.user_is_loggedin and c.user.gold:
             if num > g.max_comments_gold:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
                                            % g.max_comments_gold))
                 num = g.max_comments_gold
         elif num > g.max_comments:
-# MONDAY: uncomment
-#            displayPane.append(InfoBar(message =
-#                                       strings.over_comment_limit
-#                                       % dict(max=g.max_comments,
-#                                              goldmax=g.max_comments_gold)))
+            displayPane.append(InfoBar(message =
+                                       strings.over_comment_limit
+                                       % dict(max=g.max_comments,
+                                              goldmax=g.max_comments_gold)))
             num = g.max_comments
 
         # if permalink page, add that message first to the content
@@ -240,8 +238,7 @@ class FrontController(RedditController):
             self._add_show_comments_link(subtitle_buttons, article, num,
                                          g.max_comments, gold=False)
 
-            # MONDAY: gold, not admins
-            if (c.user_is_loggedin and c.user_is_admin
+            if (c.user_is_loggedin and c.user.gold
                 and article.num_comments > g.max_comments):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
