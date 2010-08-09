@@ -87,9 +87,9 @@ class IndextankQuery(object):
         q = []
         q.append(self.query)
 
-        if self.sr == All or not self.sr or isinstnace(self.sr, DefaultSR):
+        if self.sr == All or not self.sr or isinstance(self.sr, DefaultSR):
             pass
-        #elif isinstnace(self.sr, DefaultSR):
+        #elif isinstance(self.sr, DefaultSR):
         #    q.append(self._req_fs(
         #            Subreddit.user_subreddits(c.user,over18=c.over18,
         #                                      ids=True, limit=None)))
