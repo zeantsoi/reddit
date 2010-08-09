@@ -783,7 +783,7 @@ class MultiReddit(_DefaultSR):
     name = 'multi'
 
     def __init__(self, sr_ids, path):
-        DefaultSR.__init__(self)
+        _DefaultSR.__init__(self)
         self.real_path = path
         self.sr_ids = sr_ids
 
