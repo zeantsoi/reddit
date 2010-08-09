@@ -20,7 +20,7 @@
       %if not getattr(l.author, "ignore_promos_report", False) and counter < 20:
        <% counter +=1 %>
          <li style="padding-bottom: 3px">
-           <a class="title" href="${l.url}"
+           <a class="title" href="${l.url}" rel="nofollow"
               style="text-decoration:none; font-size:larger">${l.title}</a><br/>
            <span style="color:gray; cont-size:smaller;">
              ${l.score} points submitted 
