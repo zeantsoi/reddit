@@ -266,7 +266,7 @@ class FrontController(RedditController):
         else:
             link_class = ""
 
-        more_link = article.make_permalink(c.site) + limit_param
+        more_link = article.make_permalink_slow() + limit_param
         array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
