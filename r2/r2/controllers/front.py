@@ -230,6 +230,8 @@ class FrontController(RedditController):
 
         if c.focal_comment or context is not None:
             subtitle = None
+        elif article.num_comments == 0:
+            subtitle = _("no comments (yet)")
         elif article.num_comments <= num:
             subtitle = _("all %d comments") % article.num_comments
         else:
