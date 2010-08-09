@@ -27,7 +27,6 @@ from pylons import c, request
 from validator import *
 
 from r2.models import *
-from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
@@ -1170,6 +1169,7 @@ class ApiController(RedditController):
                    sr = VByName('sr'),
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
+                   header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
                    description = VMarkdown("description", max_length = 5120),
                    lang = VLang("lang"),
@@ -1192,7 +1192,8 @@ class ApiController(RedditController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
-                           'show_media', 'type', 'link_type', 'lang', "css_on_cname",
+                           'show_media', 'type', 'link_type', 'lang',
+                           "css_on_cname", "header_title", 
                            'allow_top'))
 
         #if a user is banned, return rate-limit errors

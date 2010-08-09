@@ -36,10 +36,10 @@
         if c.site.header and c.allow_styles:
             header_img = c.site.header
         else:
-            header_img = DefaultSR.header
-
+            header_img = DefaultSR().header
     %>
-    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img')}
+    ## TODO: admin -> gold
+    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img', title = c.site.header_title if c.user_is_admin else '')}
 
     ##keeps the height of the header from varying when there isnt any content
     &nbsp;

@@ -526,7 +526,7 @@ class FrontController(RedditController):
                 return self.redirect("/submit" + query_string({'url':url}))
 
         if not restrict_sr:
-            site = Default
+            site = DefaultSR()
         else:
             site = c.site
 

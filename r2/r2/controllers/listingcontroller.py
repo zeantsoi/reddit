@@ -202,7 +202,7 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def spotlight(self):
-        if (c.site == Default
+        if (isinstance(c.site, DefaultSR)
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
@@ -278,7 +278,7 @@ class HotController(FixListing, ListingController):
                 return s
 
         # no organic box on a hot page, then show a random promoted link
-        elif c.site != Default and c.user.pref_show_sponsors:
+        elif not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors:
             link_ids = randomized_promotion_list(c.user, c.site)
             if link_ids:
                 res = wrap_links(link_ids, wrapper = self.builder_wrapper,
@@ -289,10 +289,10 @@ class HotController(FixListing, ListingController):
 
     def query(self):
         #no need to worry when working from the cache
-        if g.use_query_cache or c.site == Default:
+        if g.use_query_cache or isinstance(c.site, DefaultSR):
             self.fix_listing = False
 
-        if c.site == Default:
+        if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
                 srlimit = Subreddit.sr_limit
                 over18 = c.user.has_subscribed and c.over18
@@ -474,7 +474,8 @@ class UserController(ListingController):
     @property
     def menus(self):
         res = []
-        if (self.vuser.gold and 
+        # TODO: remove Monday
+        if ((self.vuser.gold or c.user_is_admin) and 
             self.where in ('overview', 'submitted', 'comments')):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
@@ -554,7 +555,8 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        if not vuser.gold:
+        # TODO: remove Monday
+        if (not vuser.gold and not c.user_is_admin):
             self.sort = 'new'
             self.time = 'all'
         if self.sort in  ('hot', 'new'):

@@ -225,6 +225,14 @@ function update_title(elem) {
         &#32;
         <span class="gray">(${_("leaves this page")})</span>
         </li>
+        %if c.user_is_admin:
+        <li>
+          <lable for="header-title">header mouseover text:</lable>
+          <input type="text" name="header-title" id="header-title"
+                 value="${thing.site.header_title}"
+                 />
+        </li>
+        %endif
         <li>
           <%utils:image_upload post_target="/api/upload_sr_img" 
                                current_image="${thing.site.header}"

@@ -240,12 +240,13 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
-    c.site = Default
+    default_sr = DefaultSR()
+    c.site = default_sr
     if not sr_name:
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
         if sub_domain and not sub_domain.endswith(g.media_domain):
-            c.site = Subreddit._by_domain(sub_domain) or Default
+            c.site = Subreddit._by_domain(sub_domain) or default_sr
     elif sr_name == 'r':
         #reddits
         c.site = Sub
@@ -278,7 +279,7 @@ def set_subreddit():
             elif not c.error_page:
                 abort(404)
     #if we didn't find a subreddit, check for a domain listing
-    if not sr_name and c.site == Default and domain:
+    if not sr_name and isinstance(c.site, DefaultSR) and domain:
         c.site = DomainSR(domain)
 
     if isinstance(c.site, FakeSubreddit):
