@@ -225,9 +225,9 @@ class Reddit(Templated):
                               subtitles = rand_strings.get("create_reddit", 2),
                               show_cover = True, nocname=True))
 
-        if False and not c.user.gold and self.submit_box:
+        if True and not c.user.gold and self.submit_box:
             ps.append(SideBox(_('New subscriber features'),
-                              'http://blog.reddit.com/2010/07/three-new-features-for-reddit-gold.html',
+                              'http://blog.reddit.com/2010/08/new-features-to-start-your-week.html',
                               'gold',
                               sr_path = False,
                               subtitles = ["reddit gold just got better!",
