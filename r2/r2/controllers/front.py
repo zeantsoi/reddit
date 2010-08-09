@@ -239,7 +239,8 @@ class FrontController(RedditController):
                                          g.max_comments, gold=False)
 
             # MONDAY: gold, not admins
-            if c.user_is_loggedin and c.user_is_admin:
+            if (c.user_is_loggedin and c.user_is_admin
+                and article.num_comments > g.max_comments):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
 
