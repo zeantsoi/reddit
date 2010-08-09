@@ -781,6 +781,7 @@ class DefaultSR(_DefaultSR):
 
 class MultiReddit(_DefaultSR):
     name = 'multi'
+    header = ""
 
     def __init__(self, sr_ids, path):
         _DefaultSR.__init__(self)
@@ -799,9 +800,11 @@ class MultiReddit(_DefaultSR):
 
 class RandomReddit(FakeSubreddit):
     name = 'random'
+    header = ""
 
 class RandomNSFWReddit(FakeSubreddit):
     name = 'randnsfw'
+    header = ""
 
 class ModContribSR(DefaultSR):
     name  = None
