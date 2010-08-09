@@ -33,7 +33,7 @@ try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
     # the stack trace won't be presented to the user in production
     from reddit_base import RedditController, Cookies
-    from r2.models.subreddit import Default, Subreddit
+    from r2.models.subreddit import DefaultSR, Subreddit
     from r2.models.link import Link
     from r2.lib import pages
     from r2.lib.strings import strings, rand_strings
@@ -110,7 +110,7 @@ class ErrorController(RedditController):
 
     def send403(self):
         c.response.status_code = 403
-        c.site = Default
+        c.site = DefaultSR()
         res = pages.RedditError(_("forbidden (%(domain)s)") %
                                 dict(domain=g.domain))
         return res.render()

@@ -21,7 +21,7 @@
 ################################################################################
 
 <%!
-   from r2.models.subreddit import Default
+   from r2.models.subreddit import DefaultSR
    from r2.lib.template_helpers import add_sr, static
 %>
 
@@ -34,7 +34,7 @@
          %endif
          name="q"/>
   %if not thing.simple:
-    %if not thing.site or thing.site == Default:
+    %if not thing.site or isinstance(thing.site, DefaultSR):
       <input type="hidden" name="restrict_sr" value="off" />
     %else:
       <br /><br />

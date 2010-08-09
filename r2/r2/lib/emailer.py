@@ -23,7 +23,7 @@ from email.MIMEText import MIMEText
 from pylons.i18n import _
 from pylons import c, g
 from r2.lib.utils import timeago, query_string
-from r2.models import passhash, Email, Default, has_opted_out, Account, Award
+from r2.models import passhash, Email, DefaultSR, has_opted_out, Account, Award
 import os, random, datetime
 import traceback, sys, smtplib
 
@@ -131,7 +131,7 @@ def send_queued_mail(test = False):
     from r2.lib.pages import PasswordReset, Share, Mail_Opt, VerifyEmail
     now = datetime.datetime.now(g.tz)
     if not c.site:
-        c.site = Default
+        c.site = DefaultSR()
 
     clear = False
     if not test:

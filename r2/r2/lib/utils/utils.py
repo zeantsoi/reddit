@@ -474,7 +474,7 @@ class UrlParser(object):
         On failure to find a subreddit, returns None.
         """
         from pylons import g
-        from r2.models import Subreddit, Sub, NotFound, Default
+        from r2.models import Subreddit, Sub, NotFound, DefaultSR
         try:
             if not self.hostname or self.hostname.startswith(g.domain):
                 if self.path.startswith('/r/'):
@@ -482,7 +482,7 @@ class UrlParser(object):
                 elif self.path.startswith('/reddits/'):
                     return Sub
                 else:
-                    return Default
+                    return DefaultSR()
             elif self.hostname:
                 return Subreddit._by_domain(self.hostname)
         except NotFound:

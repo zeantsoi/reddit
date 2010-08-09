@@ -34,22 +34,25 @@ def expiration_from_time(time):
 class HardCacheBackend(object):
     def __init__(self, gc):
         self.tdb = tdb_lite(gc)
-        metadata = self.tdb.make_metadata(gc.dbm.hardcache_db)
 
-        self.table = sa.Table(gc.db_app_name + '_hardcache', metadata,
-                         sa.Column('category', sa.String, nullable = False,
-                                   primary_key = True),
-                         sa.Column('ids', sa.String, nullable = False,
-                                   primary_key = True),
-                         sa.Column('value', sa.String, nullable = False),
-                         sa.Column('kind', sa.String, nullable = False),
-                         sa.Column('expiration',
-                                   sa.DateTime(timezone = True),
-                                   nullable = False)
-                         )
+        def _table(metadata): 
+            return sa.Table(gc.db_app_name + '_hardcache', metadata,
+                            sa.Column('category', sa.String, nullable = False,
+                                      primary_key = True),
+                            sa.Column('ids', sa.String, nullable = False,
+                                      primary_key = True),
+                            sa.Column('value', sa.String, nullable = False),
+                            sa.Column('kind', sa.String, nullable = False),
+                            sa.Column('expiration',
+                                      sa.DateTime(timezone = True),
+                                      nullable = False)
+                            )
+        self.w_table = _table(self.tdb.make_metadata(gc.dbm.hardcache_db))
+        self.r_table = _table(self.tdb.make_metadata(gc.dbm.hardcache_rdb))
 
-        indstr = self.tdb.index_str(self.table, 'expiration', 'expiration')
-        self.tdb.create_table(self.table, [ indstr ])
+        indstr = self.tdb.index_str(self.w_table, 'expiration', 'expiration')
+        self.tdb.create_table(self.w_table, [ indstr ])
+        self.tdb.create_table(self.r_table, [ indstr ])
 
     def set(self, category, ids, val, time):
 
@@ -59,7 +62,7 @@ class HardCacheBackend(object):
 
         expiration = expiration_from_time(time)
 
-        self.table.insert().execute(
+        self.w_table.insert().execute(
             category=category,
             ids=ids,
             value=value,
@@ -75,7 +78,7 @@ class HardCacheBackend(object):
         value, kind = self.tdb.py2db(val, True)
 
         try:
-            rp = self.table.insert().execute(
+            rp = self.w_table.insert().execute(
                 category=category,
                 ids=ids,
                 value=value,
@@ -86,29 +89,29 @@ class HardCacheBackend(object):
             return value
 
         except sa.exceptions.IntegrityError, e:
-            return self.get(category, ids)
+            return self.get(category, ids, force_write_table=True)
 
     def incr(self, category, ids, time=0, delta=1):
         self.delete_if_expired(category, ids)
 
         expiration = expiration_from_time(time)
 
-        rp = self.table.update(sa.and_(self.table.c.category==category,
-                                       self.table.c.ids==ids,
-                                       self.table.c.kind=='num'),
+        rp = self.w_table.update(sa.and_(self.w_table.c.category==category,
+                                       self.w_table.c.ids==ids,
+                                       self.w_table.c.kind=='num'),
                                values = {
-                                         self.table.c.value:
+                                         self.w_table.c.value:
                                          sa.cast(
-                                                 sa.cast(self.table.c.value,
+                                                 sa.cast(self.w_table.c.value,
                                                           sa.Integer) + delta,
                                                  sa.String),
-                                         self.table.c.expiration: expiration
+                                         self.w_table.c.expiration: expiration
                                          }
                                ).execute()
         if rp.rowcount == 1:
-            return self.get(category, ids)
+            return self.get(category, ids, force_write_table=True)
         elif rp.rowcount == 0:
-            existing_value = self.get(category, ids)
+            existing_value = self.get(category, ids, force_write_table=True)
             if existing_value is None:
                 raise ValueError("[%s][%s] can't be incr()ed -- it's not set" %
                                  (category, ids))
@@ -118,12 +121,16 @@ class HardCacheBackend(object):
         else:
             raise ValueError("Somehow %d rows got updated" % rp.rowcount)
 
-    def get(self, category, ids):
-        s = sa.select([self.table.c.value,
-                       self.table.c.kind,
-                       self.table.c.expiration],
-                      sa.and_(self.table.c.category==category,
-                              self.table.c.ids==ids),
+    def get(self, category, ids, force_write_table=False):
+        if force_write_table:
+            table = self.w_table
+        else:
+            table = self.r_table
+        s = sa.select([table.c.value,
+                       table.c.kind,
+                       table.c.expiration],
+                      sa.and_(table.c.category==category,
+                              table.c.ids==ids),
                       limit = 1)
         rows = s.execute().fetchall()
         if len(rows) < 1:
@@ -134,12 +141,12 @@ class HardCacheBackend(object):
             return self.tdb.db2py(rows[0].value, rows[0].kind)
 
     def get_multi(self, category, idses):
-        s = sa.select([self.table.c.ids,
-                       self.table.c.value,
-                       self.table.c.kind,
-                       self.table.c.expiration],
-                      sa.and_(self.table.c.category==category,
-                              sa.or_(*[self.table.c.ids==ids
+        s = sa.select([self.r_table.c.ids,
+                       self.r_table.c.value,
+                       self.r_table.c.kind,
+                       self.r_table.c.expiration],
+                      sa.and_(self.r_table.c.category==category,
+                              sa.or_(*[self.r_table.c.ids==ids
                                        for ids in idses])))
         rows = s.execute().fetchall()
 
@@ -153,14 +160,14 @@ class HardCacheBackend(object):
         return results
 
     def delete(self, category, ids):
-        self.table.delete(
-            sa.and_(self.table.c.category==category,
-                    self.table.c.ids==ids)).execute()
+        self.w_table.delete(
+            sa.and_(self.w_table.c.category==category,
+                    self.w_table.c.ids==ids)).execute()
 
     def ids_by_category(self, category, limit=1000):
-        s = sa.select([self.table.c.ids],
-                      sa.and_(self.table.c.category==category,
-                              self.table.c.expiration > datetime.now(g.tz)),
+        s = sa.select([self.r_table.c.ids],
+                      sa.and_(self.r_table.c.category==category,
+                              self.r_table.c.expiration > datetime.now(g.tz)),
                       limit = limit)
         rows = s.execute().fetchall()
         return [ r.ids for r in rows ]
@@ -169,26 +176,26 @@ class HardCacheBackend(object):
         if expiration is None:
             return True
         elif expiration == "now":
-            return self.table.c.expiration < datetime.now(g.tz)
+            return self.w_table.c.expiration < datetime.now(g.tz)
         else:
-            return self.table.c.expiration < expiration
+            return self.w_table.c.expiration < expiration
 
     def expired(self, expiration_clause, limit=1000):
-        s = sa.select([self.table.c.category,
-                       self.table.c.ids,
-                       self.table.c.expiration],
+        s = sa.select([self.w_table.c.category,
+                       self.w_table.c.ids,
+                       self.w_table.c.expiration],
                       expiration_clause,
                       limit = limit,
-                      order_by = self.table.c.expiration
+                      order_by = self.w_table.c.expiration
                       )
         rows = s.execute().fetchall()
         return [ (r.expiration, r.category, r.ids) for r in rows ]
 
     def delete_if_expired(self, category, ids, expiration="now"):
         expiration_clause = self.clause_from_expiration(expiration)
-        self.table.delete(sa.and_(self.table.c.category==category,
-                                  self.table.c.ids==ids,
-                                  expiration_clause)).execute()
+        self.w_table.delete(sa.and_(self.w_table.c.category==category,
+                                    self.w_table.c.ids==ids,
+                                    expiration_clause)).execute()
 
 
 def delete_expired(expiration="now", limit=5000):
@@ -207,7 +214,7 @@ def delete_expired(expiration="now", limit=5000):
     g.memcache.delete_multi(mc_keys)
 
     # Now delete them from the backend.
-    hcb.table.delete(expiration_clause).execute()
+    hcb.w_table.delete(expiration_clause).execute()
 
     # Note: In between the previous two steps, a key with a
     # near-instantaneous expiration could have been added and expired, and

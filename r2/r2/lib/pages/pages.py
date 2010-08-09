@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
-from r2.models import Account, FakeAccount, Default, DefaultSR, make_feedurl
+from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
@@ -332,7 +332,7 @@ class Reddit(Templated):
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
 
-        if c.site != Default and not c.cname:
+        if not isinstance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
@@ -808,7 +808,7 @@ class LinkInfoPage(Reddit):
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
-        if c.site != Default and not c.cname:
+        if not isinstance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
@@ -1109,7 +1109,7 @@ class ProfileBar(Templated):
         self.my_fullname = None
         self.gold_remaining = None
         if c.user_is_loggedin:
-# TODO: change the next "if" to the following:
+# MONDAY: change the next "if" to the following:
 #           if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
             if c.user_is_admin and getattr(user, "gold", None):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
@@ -2695,7 +2695,7 @@ class RedditTraffic(Traffic):
             data.sort(key = lambda x: x[1][1], reverse = True)
             for d in data:
                 name = d[0]
-                for sr in (Default, Friends, All, Sub):
+                for sr in (Friends, All, Sub, DefaultSR()):
                     if name == sr.name:
                         name = sr
                         break

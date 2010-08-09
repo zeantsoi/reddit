@@ -114,8 +114,7 @@ class FrontController(RedditController):
         return DetailsPage(link = article, expand_children=False).render()
 
 
-    def GET_selfserviceoatmeal(self
-):
+    def GET_selfserviceoatmeal(self):
         return BoringPage(_("self service help"), 
                           show_sidebar = False,
                           content = SelfServiceOatmeal()).render()
@@ -168,7 +167,12 @@ class FrontController(RedditController):
 
         check_cheating('comments')
 
-        num = c.user.pref_num_comments or g.num_comments
+        if not c.user.pref_num_comments:
+            num = g.num_comments
+        elif c.user_is_admin: # MONDAY: gold, not admin
+            num = min(c.user.pref_num_comments, g.max_comments_gold)
+        else:
+            num = min(c.user.pref_num_comments, g.max_comments)
 
         kw = {}
         # allow depth to be reset (I suspect I'll turn the VInt into a
@@ -186,17 +190,19 @@ class FrontController(RedditController):
         if limit and limit > 0:
             num = limit
 
-        if c.user_is_loggedin and c.user.gold:
+        # MONDAY: gold, not admins
+        if c.user_is_loggedin and c.user_is_admin:
             if num > g.max_comments_gold:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
                                            % g.max_comments_gold))
                 num = g.max_comments_gold
         elif num > g.max_comments:
-            displayPane.append(InfoBar(message =
-                                       strings.over_comment_limit
-                                       % dict(max=g.max_comments,
-                                              goldmax=g.max_comments_gold)))
+# MONDAY: uncomment
+#            displayPane.append(InfoBar(message =
+#                                       strings.over_comment_limit
+#                                       % dict(max=g.max_comments,
+#                                              goldmax=g.max_comments_gold)))
             num = g.max_comments
 
         # if permalink page, add that message first to the content
@@ -225,28 +231,17 @@ class FrontController(RedditController):
         if c.focal_comment or context is not None:
             subtitle = None
         elif article.num_comments <= num:
-            subtitle = _("all comments")
+            subtitle = _("all %d comments") % article.num_comments
         else:
             subtitle = _("top %d comments") % num
-            if c.user_is_loggedin and c.user.gold:
-                link_class = "gold"
-                max_comm = g.max_comments_gold
-            else:
-                link_class = ""
-                max_comm = g.max_comments
 
-            if article.num_comments <= max_comm:
-                link_text = _("show all %d") % article.num_comments
-            elif num == max_comm:
-                link_text = None
-            else:
-                link_text = _("show %d") % max_comm
+            self._add_show_comments_link(subtitle_buttons, article, num,
+                                         g.max_comments, gold=False)
 
-            limit_param = "?limit=%d" % max_comm
-
-            if link_text:
-                more_link = article.make_permalink(c.site) + limit_param
-                subtitle_buttons = [ (link_text, more_link, link_class) ]
+            # MONDAY: gold, not admins
+            if c.user_is_loggedin and c.user_is_admin:
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments_gold, gold=True)
 
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane,
@@ -255,6 +250,24 @@ class FrontController(RedditController):
                            nav_menus = [CommentSortMenu(default = sort)],
                            infotext = infotext).render()
         return res
+
+    def _add_show_comments_link(self, array, article, num, max_comm, gold=False):
+        if num == max_comm:
+            return
+        elif article.num_comments <= max_comm:
+            link_text = _("show all %d") % article.num_comments
+        else:
+            link_text = _("show %d") % max_comm
+
+        limit_param = "?limit=%d" % max_comm
+
+        if gold:
+            link_class = "gold"
+        else:
+            link_class = ""
+
+        more_link = article.make_permalink(c.site) + limit_param
+        array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
               name = nop('name'))
@@ -513,7 +526,7 @@ class FrontController(RedditController):
                 return self.redirect("/submit" + query_string({'url':url}))
 
         if not restrict_sr:
-            site = Default
+            site = DefaultSR()
         else:
             site = c.site
 
