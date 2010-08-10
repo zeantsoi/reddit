@@ -52,8 +52,11 @@ def add_comments(comments):
     for com in comments:
         link_map.setdefault(com.link_id, []).append(com)
     for link_id, coms in link_map.iteritems():
-        with g.make_lock(lock_key(link_id)):
-            add_comments_nolock(link_id, coms)
+        try:
+            with g.make_lock(lock_key(link_id)):
+                add_comments_nolock(link_id, coms)
+        except:
+            link_comments(link_id, _update = True)
 
 def add_comments_nolock(link_id, comments):
     #dfs to find the list of parents for the new comment
