@@ -46,10 +46,13 @@ $(function() {
                 b = lst[1];
                 querydict[a] = b;
             }); 
-        var submit = "/submit?url=" + encodeURIComponent(querydict.url);
-        if (querydict.title) {
-            submit += "&title=" + encodeURIComponent(querydict.title);
-        }
+	var submit = "/submit?url=" + encodeURIComponent(querydict.url);
+	if (querydict.sr) {
+	    submit = "/r/" + querydict.sr + submit;
+	}
+	if (querydict.title) {
+	    submit += "&title=" + encodeURIComponent(querydict.title);
+	}
         $("a").attr("href", submit);
         if(querydict.bgcolor) {
             $("body").css("background-color", color(querydict.bgcolor));
