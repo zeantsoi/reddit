@@ -7,7 +7,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment, link_comments, update_comment_votes
+from r2.lib.comment_tree import add_comments, link_comments, update_comment_votes
 
 import cPickle as pickle
 
@@ -574,8 +574,7 @@ def new_comment(comment, inbox_rels):
         add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
         if not g.amqp_host:
-            l = Link._byID(comment.link_id,data=True)
-            add_comment_tree(comment, l)
+            add_comment_tree([comment])
 
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments (to minimise lock contention)
@@ -853,11 +852,14 @@ def add_all_users():
     for user in fetch_things2(q):
         update_user(user)
 
-def add_comment_tree(comment, link):
+def add_comment_tree(comments):
     #update the comment cache
-    add_comment(comment)
+    add_comments(comments)
     #update last modified
-    set_last_modified(link, 'comments')
+    links = Link._byID(list(set(com.link_id for com in tup(comments))),
+                       data = True, return_dict = False)
+    for link in links:
+        set_last_modified(link, 'comments')
 
 # amqp queue processing functions
 
@@ -875,28 +877,17 @@ def run_new_comments():
 
     amqp.consume_items('newcomments_q', _run_new_comment)
 
-def run_commentstree():
+def run_commentstree(limit=100):
     """Add new incoming comments to their respective comments trees"""
 
-    def _run_commentstree(msg):
-        fname = msg.body
-        comment = Comment._by_fullname(fname, data=True)
+    def _run_commentstree(msgs, chan):
+        comments = Comment._by_fullname([msg.body for msg in msgs],
+                                        data = True, return_dict = False)
+        print 'Processing %r' % (comments,)
 
-        link = Link._byID(comment.link_id,
-                          data=True)
+        add_comment_tree(comments)
 
-        print 'Processing %r from %r' % (comment, link)
-
-        try:
-            add_comment_tree(comment, link)
-        except KeyError:
-            # Hackity hack. Try to recover from a corrupted comment
-            # tree
-            print "Trying to fix broken comments-tree."
-            link_comments(link._id, _update=True)
-            add_comment_tree(comment, link)
-
-    amqp.consume_items('commentstree_q', _run_commentstree, verbose=False)
+    amqp.handle_items('commentstree_q', _run_commentstree, limit = limit)
 
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):

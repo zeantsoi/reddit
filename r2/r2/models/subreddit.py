@@ -806,7 +806,7 @@ class RandomNSFWReddit(FakeSubreddit):
     name = 'randnsfw'
     header = ""
 
-class ModContribSR(DefaultSR):
+class ModContribSR(_DefaultSR):
     name  = None
     title = None
     query_param = None

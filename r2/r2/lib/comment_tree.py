@@ -46,36 +46,16 @@ def _get_sort_value(comment, sort):
         return comment._date
     return getattr(comment, sort), comment._date
 
+def add_comments(comments):
+    comments = tup(comments)
+    link_map = {}
+    for com in comments:
+        link_map.setdefault(com.link_id, []).append(com)
+    for link_id, coms in link_map.iteritems():
+        with g.make_lock(lock_key(link_id)):
+            add_comments_nolock(link_id, coms)
 
-def add_comment(comment):
-    with g.make_lock(lock_key(comment.link_id)):
-        add_comment_nolock(comment)
-    #update_comment_votes(comment)
-
-def add_comment_nolock(comment):
-    cm_id = comment._id
-    p_id = comment.parent_id
-    link_id = comment.link_id
-
-    cids, comment_tree, depth, num_children = link_comments(link_id)
-
-    #make sure we haven't already done this before (which would happen
-    #if the tree isn't cached when you add a comment)
-    if comment._id in cids:
-        return
-
-    #add to comment list
-    cids.append(comment._id)
-
-    #add to tree
-    comment_tree.setdefault(p_id, []).append(cm_id)
-
-    #add to depth
-    depth[cm_id] = depth[p_id] + 1 if p_id else 0
-
-    #update children
-    num_children[cm_id] = 0
-
+def add_comments_nolock(link_id, comments):
     #dfs to find the list of parents for the new comment
     def find_parents():
         stack = [cid for cid in comment_tree[None]]
@@ -91,10 +71,33 @@ def add_comment_nolock(comment):
                     stack.append(child)
 
 
-    #if this comment had a parent, find the parent's parents
-    if p_id:
-        for p_id in find_parents():
-            num_children[p_id] += 1
+    cids, comment_tree, depth, num_children = link_comments(link_id)
+
+    for comment in comments:
+        cm_id = comment._id
+        p_id = comment.parent_id
+
+        #make sure we haven't already done this before (which would happen
+        #if the tree isn't cached when you add a comment)
+        if comment._id in cids:
+            continue
+
+        #add to comment list
+        cids.append(comment._id)
+
+        #add to tree
+        comment_tree.setdefault(p_id, []).append(cm_id)
+
+        #add to depth
+        depth[cm_id] = depth[p_id] + 1 if p_id else 0
+
+        #update children
+        num_children[cm_id] = 0
+
+        #if this comment had a parent, find the parent's parents
+        if p_id:
+            for p_id in find_parents():
+                num_children[p_id] += 1
 
     # update our cache of children -> parents as well:
     key = parent_comments_key(link_id)
@@ -102,19 +105,12 @@ def add_comment_nolock(comment):
 
     if not r:
         r = _parent_dict_from_tree(comment_tree)
-    r[cm_id] = p_id
+
+    for comment in comments:
+        cm_id = comment._id
+        r[cm_id] = p_id
     g.permacache.set(key, r)
 
-#   # update the list of sorts
-#    for sort in ("_controversy", "_date", "_hot", "_confidence", "_score"):
-#        key = sort_comments_key(link_id, sort)
-#        r = g.permacache.get(key)
-#        if r:
-#            r[cm_id] = _get_sort_value(comment, sort)
-#            g.permacache.set(key, r)
-#
-#    # do this last b/c we don't want the cids updated before the sorts
-#    # and parents
     g.permacache.set(comments_key(link_id),
                      (cids, comment_tree, depth, num_children))
 

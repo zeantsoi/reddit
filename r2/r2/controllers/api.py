@@ -46,7 +46,7 @@ from r2.lib.db import queries
 from r2.lib.db.queries import changed
 from r2.lib import promote
 from r2.lib.media import force_thumbnail, thumbnail_url
-from r2.lib.comment_tree import add_comment, delete_comment
+from r2.lib.comment_tree import delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
