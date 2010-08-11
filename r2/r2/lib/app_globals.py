@@ -57,6 +57,7 @@ class Globals(object):
                  'max_sr_images',
                  'num_serendipity',
                  'sr_dropdown_threshold',
+                 'comment_visits_period',
                  ]
 
     float_props = ['min_promote_bid',

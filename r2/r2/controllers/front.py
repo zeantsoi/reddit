@@ -129,6 +129,37 @@ class FrontController(RedditController):
             return ShirtPage(link = article).render()
         return self.abort404()
 
+    def _comment_visits(self, article, user, new_visit=None):
+        hc_key = "comment_visits-%s-%s" % (user.name, article._id36)
+        old_visits = g.hardcache.get(hc_key, [])
+
+        append = False
+
+        if new_visit is None:
+            pass
+        elif len(old_visits) == 0:
+            append = True
+        else:
+            last_visit = max(old_visits)
+            time_since_last = new_visit - last_visit
+            if (time_since_last.days > 0
+                or time_since_last.seconds > g.comment_visits_period):
+                append = True
+            else:
+                # They were just here a few seconds ago; consider that
+                # the same "visit" as right now
+                old_visits.pop()
+
+        if append:
+            copy = list(old_visits) # make a copy
+            copy.append(new_visit)
+            if len(copy) > 10:
+                copy.pop(0)
+            g.hardcache.set(hc_key, copy, 86400 * 2)
+
+        return old_visits
+
+
     @validate(article      = VLink('article'),
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),
@@ -155,10 +186,21 @@ class FrontController(RedditController):
         #check for 304
         self.check_modified(article, 'comments')
 
-        # if there is a focal comment, communicate down to
-        # comment_skeleton.html who that will be
+        # If there is a focal comment, communicate down to
+        # comment_skeleton.html who that will be. Also, skip
+        # comment_visits check
+        previous_visits = None
         if comment:
             c.focal_comment = comment._id36
+        elif c.user_is_loggedin and c.user_is_admin: # GOLD
+            from datetime import datetime
+            before = datetime.now(g.tz)
+            previous_visits = self._comment_visits(article, c.user, c.start_time)
+            after = datetime.now(g.tz)
+            delta = (after - before)
+            msec = (delta.seconds * 1000 + delta.microseconds / 1000)
+            if msec >= 100:
+                g.log.warning("previous_visits code took %d msec" % msec)
 
         # check if we just came from the submit page
         infotext = None
@@ -219,6 +261,12 @@ class FrontController(RedditController):
                                         post_form = 'comment',
                                         display = display,
                                         cloneable = True))
+
+        if previous_visits:
+            displayPane.append(CommentVisitsBox(previous_visits))
+
+        # Used in template_helpers
+        c.previous_visits = previous_visits
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),

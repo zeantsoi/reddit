@@ -609,6 +609,8 @@ class Comment(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_attr
         from r2.lib import promote
+        from r2.lib.wrapped import CachedVariable
+
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
@@ -701,6 +703,7 @@ class Comment(Thing, Printable):
 
             item.editted = getattr(item, "editted", False)
 
+            item.render_css_class = "comment %s" % CachedVariable("time_period")
 
             #will get updated in builder
             item.num_children = 0

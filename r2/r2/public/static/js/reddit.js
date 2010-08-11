@@ -1323,3 +1323,15 @@ function search_feedback(elem, approval) {
   elem.addClass("pressed");
   return false;
 }
+
+function highlight_new_comments(period) {
+  var i;
+  for (i = 0 ; i <= 9; i++) {
+    items = $(".comment-period-" + i);
+    if (period >= 0 && i >= period) {
+      items.addClass("new-comment");
+    } else {
+      items.removeClass("new-comment");
+    }
+  }
+}

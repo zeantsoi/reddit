@@ -44,7 +44,7 @@ from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
-from r2.lib.utils import trunc_time, timeuntil
+from r2.lib.utils import trunc_time, timesince, timeuntil
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
@@ -726,6 +726,14 @@ class CommentsPanel(Templated):
 
         Templated.__init__(self, *a, **kw)
 
+class CommentVisitsBox(Templated):
+    def __init__(self, visits, *a, **kw):
+        self.visits = []
+        for visit in visits:
+            pretty = timesince(visit)
+            self.visits.append(pretty)
+        Templated.__init__(self, *a, **kw)
+
 class LinkInfoPage(Reddit):
     """Renders the varied /info pages for a link.  The Link object is
     passed via the link argument and the content passed to this class
@@ -812,7 +820,7 @@ class LinkInfoPage(Reddit):
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
-    
+
     def content(self):
         title_buttons = getattr(self, "subtitle_buttons", [])
         return self.content_stack((self.infobar, self.link_listing,

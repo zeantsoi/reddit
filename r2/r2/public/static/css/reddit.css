@@ -4128,3 +4128,22 @@ tr.gold-accent + tr > td {
 .tiny {
     font-size: xx-small;
 }
+
+.gold-accent.comment-visits-box {
+    color: #583800;
+    margin: 0px 5px 15px;
+    padding: 7px 10px 7px 7px;
+}
+
+.comment-visits-box .title {
+    font-weight: bold;
+}
+
+.comment-visits-box label {
+    margin-left: 5px;
+}
+
+.new-comment .usertext-body {
+    background-color: #cfc;
+    border: solid 1px #beb;
+}
