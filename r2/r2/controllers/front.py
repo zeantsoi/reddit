@@ -192,7 +192,9 @@ class FrontController(RedditController):
         previous_visits = None
         if comment:
             c.focal_comment = comment._id36
-        elif c.user_is_loggedin and c.user_is_admin: # GOLD
+        elif (c.user_is_loggedin and c.user_is_admin
+              and c.user.pref_highlight_new_comments): # TODO-GOLD
+            #TODO: remove this profiling if load seems okay
             from datetime import datetime
             before = datetime.now(g.tz)
             previous_visits = self._comment_visits(article, c.user, c.start_time)

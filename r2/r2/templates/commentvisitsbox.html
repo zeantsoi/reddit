@@ -26,24 +26,28 @@
   </div>
 
   %for i, visit in enumerate(thing.visits):
-  <input id="comment-visits-${i}" name="comment-visits"
-         type="radio" value="${i}"
-         onclick="highlight_new_comments(this.value)"
-         %if i + 1 == len(thing.visits):
-           class="last-comment-visit"
-         %endif
+  <div>
+    <input id="comment-visits-${i}" name="comment-visits"
+           type="radio" value="${i}"
+           onclick="highlight_new_comments(this.value)"
+           %if i + 1 == len(thing.visits):
+             class="last-comment-visit"
+           %endif
          />
-  <label for="comment-visits-${i}">
-    ${visit} ago
-  </label>
+    <label for="comment-visits-${i}">
+      ${visit} ago
+    </label>
+  </div>
   %endfor
 
-  <input id="comment-visits-none" name="comment-visits"
-         type="radio" value="none"
-         onclick="highlight_new_comments(-1)" />
-  <label for="comment-visits-none">
-    ${_("no highlighting")}
-  </label>
+  <div>
+    <input id="comment-visits-none" name="comment-visits"
+           type="radio" value="none"
+           onclick="highlight_new_comments(-1)" />
+    <label for="comment-visits-none">
+      ${_("no highlighting")}
+    </label>
+  </div>
 
 </div>
 
