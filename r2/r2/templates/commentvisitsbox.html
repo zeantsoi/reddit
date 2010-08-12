@@ -25,28 +25,26 @@
     ${_("You've been here before. To highlight comments that were posted since one of your visits, select it below:")}
   </div>
 
-  <ul>
-    <input id="comment-visits-none" name="comment-visits"
-           type="radio" value="none"
-           onclick="highlight_new_comments(-1)" />
-    <label for="comment-visits-none">
-      ${_("no highlighting")}
-    </label>
   %for i, visit in enumerate(thing.visits):
-    <li>
-      <input id="comment-visits-${i}" name="comment-visits"
-             type="radio" value="${i}"
-             onclick="highlight_new_comments(this.value)"
-             %if i + 1 == len(thing.visits):
-               class="last-comment-visit"
-             %endif
-             />
-      <label for="comment-visits-${i}">
-        ${visit} ago
-      </label>
-    </li>
+  <input id="comment-visits-${i}" name="comment-visits"
+         type="radio" value="${i}"
+         onclick="highlight_new_comments(this.value)"
+         %if i + 1 == len(thing.visits):
+           class="last-comment-visit"
+         %endif
+         />
+  <label for="comment-visits-${i}">
+    ${visit} ago
+  </label>
   %endfor
-  <li>
+
+  <input id="comment-visits-none" name="comment-visits"
+         type="radio" value="none"
+         onclick="highlight_new_comments(-1)" />
+  <label for="comment-visits-none">
+    ${_("no highlighting")}
+  </label>
+
 </div>
 
 <script type="text/javascript">

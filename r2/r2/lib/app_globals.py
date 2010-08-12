@@ -79,6 +79,7 @@ class Globals(object):
                   'exception_logging',
                   'amqp_logging',
                   'read_only_mode',
+                  'hardcache_profiling',
                   ]
 
     tuple_props = ['memcaches',
