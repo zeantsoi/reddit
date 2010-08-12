@@ -29,7 +29,7 @@ import pytz
 
 COUNT_CATEGORY = 'hc_count'
 ELAPSED_CATEGORY = 'hc_elapsed'
-TZ = pytz.timezone("UTC")
+TZ = pytz.timezone("MST")
 
 def expiration_from_time(time):
     if time <= 0:
@@ -42,7 +42,7 @@ class HardCacheBackend(object):
         self.profiling = gc.hardcache_profiling
         TZ = gc.display_tz
 
-        def _table(metadata): 
+        def _table(metadata):
             return sa.Table(gc.db_app_name + '_hardcache', metadata,
                             sa.Column('category', sa.String, nullable = False,
                                       primary_key = True),
