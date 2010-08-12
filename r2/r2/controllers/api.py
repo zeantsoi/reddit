@@ -1383,7 +1383,7 @@ class ApiController(RedditController):
             subscr_id = None
         else:
             raise ValueError("Unknown IPN txn_type / psl %r" %
-                             ((parameters['txn_type'], psl)))
+                             ((parameters['txn_type'], psl),))
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
