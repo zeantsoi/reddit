@@ -81,7 +81,7 @@ class HardCacheBackend(object):
 
         end_time = datetime.now(TZ)
 
-        period = end_time.strftime("%Y/%m/%d_H:%M")[:-1] + 'x'
+        period = end_time.strftime("%Y/%m/%d_%H:%M")[:-1] + 'x'
 
         elapsed = end_time - start_time
         msec = elapsed.seconds * 1000 + elapsed.microseconds / 1000
