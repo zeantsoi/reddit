@@ -1048,7 +1048,7 @@ def commentsort_q_key(cid):
 
 def queue_comment_sort(cids):
     already_queued = set(g.cache.add_multi(dict((commentsort_q_key(k), 1)
-                                                for k in cids), time=120))
+                                                for k in cids), time=5*60))
     for cid in cids:
         if commentsort_q_key(cid) not in already_queued:
             amqp.add_item('commentsort_q', str(cid))
