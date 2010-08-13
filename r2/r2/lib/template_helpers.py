@@ -172,10 +172,20 @@ def replace_render(listing, item, render_func):
 
             replacements['time_period'] = calc_time_period(item._date)
 
+        # Set in front.py:GET_comments()
+        replacements['previous_visits_hex'] = c.previous_visits_hex
+
         renderer = render_func or item.render
         res = renderer(style = style, **replacements)
+
         if isinstance(res, (str, unicode)):
-            return unsafe(res)
+            rv = unsafe(res)
+            if g.debug:
+                for leftover in re.findall('<\$>(.+?)(?:<|$)', rv):
+                    print "replace_render didn't replace %s" % leftover
+
+            return rv
+
         return res
 
     return _replace_render

@@ -266,9 +266,14 @@ class FrontController(RedditController):
 
         if previous_visits:
             displayPane.append(CommentVisitsBox(previous_visits))
+            # Used in later "more comments" renderings
+            pv_hex = md5(repr(previous_visits)).hexdigest()
+            g.cache.set(pv_hex, previous_visits, time=g.comment_visits_period)
+            c.previous_visits_hex = pv_hex
 
         # Used in template_helpers
         c.previous_visits = previous_visits
+
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
@@ -285,8 +290,9 @@ class FrontController(RedditController):
         else:
             subtitle = _("top %d comments") % num
 
-            self._add_show_comments_link(subtitle_buttons, article, num,
-                                         g.max_comments, gold=False)
+            if g.max_comments > num:
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments, gold=False)
 
             if (c.user_is_loggedin and c.user.gold
                 and article.num_comments > g.max_comments):

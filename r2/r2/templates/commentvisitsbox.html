@@ -35,14 +35,14 @@
            %endif
          />
     <label for="comment-visits-${i}">
-      ${visit} ago
+      ${visit} ${_("ago")}
     </label>
   </div>
   %endfor
 
   <div>
     <input id="comment-visits-none" name="comment-visits"
-           type="radio" value="none"
+           type="radio" value="-1"
            onclick="highlight_new_comments(-1)" />
     <label for="comment-visits-none">
       ${_("no highlighting")}

@@ -451,7 +451,6 @@ class HardcacheChain(CacheChain):
         auth_value = self.caches[-1].get(key)
 
         if auth_value is None:
-            self.caches[-1].set(key, 0, time)
             auth_value = 0
 
         try:

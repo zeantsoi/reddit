@@ -789,6 +789,8 @@ class MoreComments(Printable):
         return False
 
     def __init__(self, link, depth, parent_id = None):
+        from r2.lib.wrapped import CachedVariable
+
         if parent_id is not None:
             id36 = utils.to36(parent_id)
             self.parent_id = parent_id
@@ -799,6 +801,7 @@ class MoreComments(Printable):
         self.depth = depth
         self.children = []
         self.count = 0
+        self.previous_visits_hex = CachedVariable("previous_visits_hex")
 
     @property
     def _fullname(self):

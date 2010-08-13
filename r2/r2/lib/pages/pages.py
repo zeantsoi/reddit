@@ -730,7 +730,7 @@ class CommentVisitsBox(Templated):
     def __init__(self, visits, *a, **kw):
         self.visits = []
         for visit in visits:
-            pretty = timesince(visit)
+            pretty = timesince(visit, precision=60)
             self.visits.append(pretty)
         Templated.__init__(self, *a, **kw)
 
@@ -1124,7 +1124,8 @@ class ProfileBar(Templated):
                 elif (self.gold_expiration - datetime.datetime.now(g.tz)).days < 1:
                     self.gold_remaining = _("less than a day")
                 else:
-                    self.gold_remaining = timeuntil(self.gold_expiration)
+                    self.gold_remaining = timeuntil(self.gold_expiration,
+                                          precision=60 * 60 * 24 * 30) # months
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
 

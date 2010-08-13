@@ -1568,9 +1568,10 @@ subscription with your reddit account -- just visit
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
                    children = VCommentIDs('children'),
+                   pv_hex = VPrintable('pv_hex', 40),
                    mc_id = nop('id'))
-    def POST_morechildren(self, form, jquery,
-                          link, sort, children, mc_id):
+    def POST_morechildren(self, form, jquery, link, sort, children,
+                          pv_hex, mc_id):
         user = c.user if c.user_is_loggedin else None
 
         mc_key = "morechildren-%s" % request.ip
@@ -1591,6 +1592,9 @@ subscription with your reddit account -- just visit
 
         if not link or not link.subreddit_slow.can_view(user):
             return abort(403,'forbidden')
+
+        if pv_hex:
+            c.previous_visits = g.cache.get(pv_hex)
 
         if children:
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
@@ -1622,6 +1626,9 @@ subscription with your reddit account -- just visit
             # morechildren link
             jquery.things(str(mc_id)).remove()
             jquery.insert_things(a, append = True)
+
+            if pv_hex:
+                jquery.rehighlight_new_comments()
 
 
     @validate(uh = nop('uh'), # VModHash() will raise, check manually
