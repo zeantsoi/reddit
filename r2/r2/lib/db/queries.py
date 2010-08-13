@@ -1053,7 +1053,7 @@ def queue_comment_sort(cids):
         if commentsort_q_key(cid) not in already_queued:
             amqp.add_item('commentsort_q', str(cid))
 
-def process_comment_sorts(limit=100):
+def process_comment_sorts(limit=500):
     def _handle_sort(msgs, chan):
         cids = list(set(int(msg.body) for msg in msgs))
         comments = Comment._byID(cids, data = True, return_dict = False)
