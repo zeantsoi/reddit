@@ -148,7 +148,7 @@
 
     <Keyspace Name="permacache">
       <ColumnFamily CompareWith="BytesType" Name="permacache" />
-      <ColumnFamily CompareWith="BytesType" Name="urls" RowsCached="10000000" />
+      <ColumnFamily CompareWith="BytesType" Name="urls" RowsCached="100000" />
 
       <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
       <ReplicationFactor>3</ReplicationFactor>
@@ -162,6 +162,7 @@
 
       <!-- Views -->
       <ColumnFamily CompareWith="UTF8Type" Name="VotesByLink" />
+      <ColumnFamily CompareWith="UTF8Type" Name="CommentSortsCache" RowsCached="100000" />
 
       <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
       <ReplicationFactor>3</ReplicationFactor>
