@@ -192,8 +192,8 @@ class FrontController(RedditController):
         previous_visits = None
         if comment:
             c.focal_comment = comment._id36
-        elif (c.user_is_loggedin and c.user_is_admin
-              and c.user.pref_highlight_new_comments): # TODO-GOLD
+        elif (c.user_is_loggedin and c.user.gold and
+              c.user.pref_highlight_new_comments):
             #TODO: remove this profiling if load seems okay
             from datetime import datetime
             before = datetime.now(g.tz)
@@ -203,6 +203,10 @@ class FrontController(RedditController):
             msec = (delta.seconds * 1000 + delta.microseconds / 1000)
             if msec >= 100:
                 g.log.warning("previous_visits code took %d msec" % msec)
+
+            # TODO-GOLD: remove this
+            if not c.user_is_admin:
+                previous_visits = None
 
         # check if we just came from the submit page
         infotext = None
