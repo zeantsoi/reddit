@@ -19,12 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from __future__ import with_statement
-
 from pylons import g
 from itertools import chain
-from utils import tup
-from cache import sgm
+from r2.lib.utils import tup, to36
+from r2.lib.db.sorts import epoch_seconds
+from r2.lib.cache import sgm
 
 def comments_key(link_id):
     return 'comments_' + str(link_id)
@@ -39,12 +38,21 @@ def parent_comments_key(link_id):
     return 'comments_parents_' + str(link_id)
 
 def sort_comments_key(link_id, sort):
-    return 'comments_sort_%s_%s'  % (link_id, sort)
+    return 'comments_sort_%d_%s'  % (link_id, sort)
+
+def sort_comments_key2(link_id, sort):
+    assert sort.startswith('_')
+    return '%s%s'  % (to36(link_id), sort)
 
 def _get_sort_value(comment, sort):
     if sort == "_date":
         return comment._date
     return getattr(comment, sort), comment._date
+
+def _get_sort_value2(comment, sort):
+    if sort == "_date":
+        return epoch_seconds(comment._date)
+    return getattr(comment, sort)
 
 def add_comments(comments):
     comments = tup(comments)
@@ -119,6 +127,8 @@ def add_comments_nolock(link_id, comments):
 
 
 def update_comment_votes(comments):
+    from r2.models import CommentSortsCache
+
     comments = tup(comments)
     link_map = {}
     for com in comments:
@@ -137,6 +147,12 @@ def update_comment_votes(comments):
                 sorter.update(r)
                 g.permacache.set(key, sorter)
 
+            # Cassandra always uses the id36 instead of the integer
+            # ID, so we'll map that first before sending it
+            c_key = sort_comments_key2(link_id, sort)
+            c_r = dict((cm._id36, _get_sort_value2(cm, sort))
+                       for cm in coms)
+            CommentSortsCache._set_values(c_key, c_r)
 
 def delete_comment(comment):
     with g.make_lock(lock_key(comment.link_id)):

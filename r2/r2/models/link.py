@@ -34,6 +34,7 @@ from r2.lib import utils
 from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
+from r2.lib.db import tdb_cassandra
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
@@ -722,6 +723,13 @@ class Comment(Thing, Printable):
                                      extra_css = extra_css)
         # Run this last
         Printable.add_props(user, wrapped)
+
+class CommentSortsCache(tdb_cassandra.View):
+    """A cache of the sort-values of comments to avoid looking up all
+       of the comments in a big tree at render-time just to determine
+       the candidate order"""
+    _use_db = True
+    _value_type = 'float'
 
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in
