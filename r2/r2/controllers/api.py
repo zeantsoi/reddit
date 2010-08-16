@@ -260,7 +260,10 @@ class ApiController(RedditController):
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
-            if check_domain:
+            if url is None:
+                g.log.warning("%s is trying to submit url=None (title: %r)"
+                              % (request.ip, title))
+            elif check_domain:
                 banmsg = is_banned_domain(url)
 
 # Uncomment if we want to let spammers know we're on to them
@@ -1360,6 +1363,16 @@ class ApiController(RedditController):
                      "Just got notice of a Pending, whatever that is.", "info")
             # TODO: something useful when this happens -- and don't
             # forget to verify first
+            return "Ok"
+        elif psl == 'Reversed':
+            log_text("canceled_reversal",
+                     "Just got notice of a PayPal reversal.", "info")
+            # TODO: something useful when this happens -- and don't
+            # forget to verify first
+            return "Ok"
+        elif psl == 'Canceled_Reversal':
+            log_text("canceled_reversal",
+                     "Just got notice of a PayPal 'canceled reversal'.", "info")
             return "Ok"
         elif psl == '':
             pass
