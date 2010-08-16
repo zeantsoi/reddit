@@ -1109,7 +1109,7 @@ class TrophyCase(Templated):
         self.cup_info = user.cup_info()
         Templated.__init__(self)
 
-class ProfileBar(Templated): 
+class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
         Templated.__init__(self, user = user)

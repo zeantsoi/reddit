@@ -204,10 +204,6 @@ class FrontController(RedditController):
             if msec >= 100:
                 g.log.warning("previous_visits code took %d msec" % msec)
 
-            # TODO-GOLD: remove this
-            if not c.user_is_admin:
-                previous_visits = None
-
         # check if we just came from the submit page
         infotext = None
         if request.get.get('already_submitted'):
