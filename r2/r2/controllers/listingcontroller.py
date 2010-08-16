@@ -501,6 +501,11 @@ class UserController(ListingController):
                 return False
             if self.time != 'all':
                 wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
+            if c.user == self.vuser:
+                if not item.likes and self.where == 'liked':
+                    return False
+                if item.likes is not False and self.where == 'disliked':
+                    return False
             return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
                      not getattr(item, "deleted", False)))
