@@ -267,7 +267,7 @@ class ThingBase(object):
 
     @classmethod
     def _cache_key_id(cls, t_id):
-        cls._cache_prefix() + t_id
+        return cls._cache_prefix() + t_id
 
     @classmethod
     def _wcl(cls, wcl, default = None):
