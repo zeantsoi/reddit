@@ -4144,6 +4144,7 @@ tr.gold-accent + tr > td {
 }
 
 .new-comment .usertext-body {
-    background-color: #cfc;
-    border: solid 1px #beb;
+    background-color: #e5efff;
+    border: solid 1px #cddaf3;
+    margin: -1px;
 }

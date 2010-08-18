@@ -79,7 +79,6 @@ class Globals(object):
                   'exception_logging',
                   'amqp_logging',
                   'read_only_mode',
-                  'hardcache_profiling',
                   ]
 
     tuple_props = ['memcaches',
@@ -94,7 +93,8 @@ class Globals(object):
                    'automatic_reddits',
                    'agents',
                    'allowed_css_linked_domains',
-                   'authorized_cnames']
+                   'authorized_cnames',
+                   'hardcache_categories']
 
     choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
                                       'ONE':    CL_ONE,
@@ -393,8 +393,6 @@ class Globals(object):
 
         dbm.type_db = dbm.get_engine(gc['type_db'])
         dbm.relation_type_db = dbm.get_engine(gc['rel_type_db'])
-        dbm.hardcache_db = dbm.get_engine(gc['hardcache_db'])
-        dbm.hardcache_rdb = dbm.get_engine(gc['hardcache_rdb'])
 
         def split_flags(p):
             return ([n for n in p if not n.startswith("!")],
