@@ -327,7 +327,7 @@ def delete_expired(expiration="now", limit=5000):
 
     masters = set()
 
-    for engines in self.mapping.values():
+    for engines in hcb.mapping.values():
         masters.add(engines[-1])
 
     for engine in masters:
