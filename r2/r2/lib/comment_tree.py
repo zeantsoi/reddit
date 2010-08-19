@@ -182,7 +182,7 @@ def _get_comment_sorter(link_id, sort):
     return sorter
 
 def link_comments_and_sort(link_id, sort):
-    from r2.models import CommentSortsCache
+    from r2.models import Comment, CommentSortsCache
 
     # This has grown sort of organically over time. Right now the
     # cache of the comments tree consists in three keys:
@@ -271,6 +271,8 @@ def link_comments(link_id, _update=False):
                              _parent_dict_from_tree(cid_tree))
 
             g.permacache.set(key, r)
+
+        return r
 
 def _load_link_comments(link_id):
     from r2.models import Comment
