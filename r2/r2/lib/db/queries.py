@@ -1032,7 +1032,6 @@ def process_comment_sorts(limit=500):
         comments = Comment._byID(cids, data = True, return_dict = False)
         print comments
         update_comment_votes(comments)
-        g.cache.delete_multi(map(commentsort_q_key, cids))
 
     amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
 
