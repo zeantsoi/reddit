@@ -29,11 +29,13 @@ from pylons.i18n import _
 
 import subreddit
 
+from r2.lib.comment_tree import moderator_messages, sr_conversation, conversation
+from r2.lib.comment_tree import user_messages, subreddit_messages
+
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
-from r2.lib.comment_tree import *
 from copy import deepcopy
 
 import time

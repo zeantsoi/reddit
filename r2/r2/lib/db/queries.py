@@ -7,7 +7,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comments, link_comments, update_comment_votes
+from r2.lib.comment_tree import add_comments, update_comment_votes
 
 import cPickle as pickle
 
@@ -533,11 +533,6 @@ def all_queries(fn, obj, *param_lists):
     results = [fn(*p) for p in params]
     return results
 
-def display_jobs(jobs):
-    for r in jobs:
-        print r
-    print len(jobs)
-
 ## The following functions should be called after their respective
 ## actions to update the correct listings.
 def new_link(link):
@@ -1027,31 +1022,9 @@ def process_votes_multi(limit=100):
 
 process_votes = process_votes_multi
 
-
-def dump_comment_sort(**kw):
-    # limit is taken but ignored for backwards compatibility
-
-    def _handle_vote(msg):
-        print msg.body
-    amqp.consume_items('commentsort_q', _handle_vote, verbose = False)
-
-def reinsert_coment_sort(fname):
-    with open(fname, 'r') as handle:
-        for line in handle:
-            line = line.strip('\n')
-            amqp.add_item('commentsort_q', line)
-
-
-
-def commentsort_q_key(cid):
-    return "comment_sort_q_lock_%s" % cid
-
 def queue_comment_sort(cids):
-    already_queued = set(g.cache.add_multi(dict((commentsort_q_key(k), 1)
-                                                for k in cids), time=5*60))
-    for cid in cids:
-        if commentsort_q_key(cid) not in already_queued:
-            amqp.add_item('commentsort_q', str(cid))
+    for cid in tup(cids):
+        amqp.add_item('commentsort_q', str(cid))
 
 def process_comment_sorts(limit=500):
     def _handle_sort(msgs, chan):
@@ -1062,7 +1035,6 @@ def process_comment_sorts(limit=500):
         g.cache.delete_multi(map(commentsort_q_key, cids))
 
     amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
-
 
 try:
     from r2admin.lib.admin_queries import *

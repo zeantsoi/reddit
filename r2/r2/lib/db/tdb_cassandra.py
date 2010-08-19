@@ -671,7 +671,7 @@ class View(ThingBase):
         return uuid1()
 
     @classmethod
-    def _set_values(cls, row_key, col_values):
+    def _set_values(cls, row_key, col_values, write_consistency_level = None):
         """Set a set of column values in a row of a View without
            looking up the whole row first"""
         # col_values =:= dict(col_name -> col_value)
@@ -684,7 +684,7 @@ class View(ThingBase):
         # with some quick tweaks to pycassa we could have a version
         # that takes multiple row-keys too, if that ever becomes a
         # problem
-        cls._cf.insert(row_key, updates)
+        cls._cf.insert(row_key, updates, write_consistency_level = cls._wcl(write_consistency_level))
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))

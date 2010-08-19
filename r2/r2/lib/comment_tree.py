@@ -31,42 +31,39 @@ def comments_key(link_id):
 def lock_key(link_id):
     return 'comment_lock_' + str(link_id)
 
-def sort_lock_key(link_id):
-    return 'comment_sort_lock_' + str(link_id)
-
 def parent_comments_key(link_id):
     return 'comments_parents_' + str(link_id)
 
 def sort_comments_key(link_id, sort):
-    return 'comments_sort_%d_%s'  % (link_id, sort)
-
-def sort_comments_key2(link_id, sort):
     assert sort.startswith('_')
-    return '%s%s'  % (to36(link_id), sort)
+    return '%s%s' % (to36(link_id), sort)
 
 def _get_sort_value(comment, sort):
-    if sort == "_date":
-        return comment._date
-    return getattr(comment, sort), comment._date
-
-def _get_sort_value2(comment, sort):
     if sort == "_date":
         return epoch_seconds(comment._date)
     return getattr(comment, sort)
 
 def add_comments(comments):
     comments = tup(comments)
+
     link_map = {}
     for com in comments:
         link_map.setdefault(com.link_id, []).append(com)
+
     for link_id, coms in link_map.iteritems():
         try:
             with g.make_lock(lock_key(link_id)):
                 add_comments_nolock(link_id, coms)
         except:
+            # TODO: bare except?
+
+            # calculate it from scratch
             link_comments(link_id, _update = True)
+        update_comment_votes(coms)
 
 def add_comments_nolock(link_id, comments):
+    cids, comment_tree, depth, num_children = link_comments(link_id)
+
     #dfs to find the list of parents for the new comment
     def find_parents():
         stack = [cid for cid in comment_tree[None]]
@@ -75,14 +72,11 @@ def add_comments_nolock(link_id, comments):
             cur_cm = stack.pop()
             if cur_cm == cm_id:
                 return parents
-            elif comment_tree.has_key(cur_cm):
+            elif cur_cm in comment_tree:
                 #make cur_cm the end of the parents list
                 parents = parents[:depth[cur_cm]] + [cur_cm]
                 for child in comment_tree[cur_cm]:
                     stack.append(child)
-
-
-    cids, comment_tree, depth, num_children = link_comments(link_id)
 
     for comment in comments:
         cm_id = comment._id
@@ -125,34 +119,24 @@ def add_comments_nolock(link_id, comments):
     g.permacache.set(comments_key(link_id),
                      (cids, comment_tree, depth, num_children))
 
-
-def update_comment_votes(comments):
+def update_comment_votes(comments, write_consistency_level = None):
     from r2.models import CommentSortsCache
 
     comments = tup(comments)
+
     link_map = {}
     for com in comments:
         link_map.setdefault(com.link_id, []).append(com)
-    for link_id, coms in link_map.iteritems():
-        for sort in ("_controversy", "_hot", "_confidence", "_score"):
-            key = sort_comments_key(link_id, sort)
-            # generate an update dict outside of the lock to save time
-            # in the lock
-            r = {}
-            for comment in coms:
-                r[comment._id] = _get_sort_value(comment, sort)
-            # update the data inside the lock by loading the dict and updating it
-            with g.make_lock(sort_lock_key(link_id)):
-                sorter = g.permacache.get(key) or {}
-                sorter.update(r)
-                g.permacache.set(key, sorter)
 
+    for link_id, coms in link_map.iteritems():
+        for sort in ("_controversy", "_hot", "_confidence", "_score", "_date"):
             # Cassandra always uses the id36 instead of the integer
             # ID, so we'll map that first before sending it
-            c_key = sort_comments_key2(link_id, sort)
-            c_r = dict((cm._id36, _get_sort_value2(cm, sort))
+            c_key = sort_comments_key(link_id, sort)
+            c_r = dict((cm._id36, _get_sort_value(cm, sort))
                        for cm in coms)
-            CommentSortsCache._set_values(c_key, c_r)
+            CommentSortsCache._set_values(c_key, c_r,
+                                          write_consistency_level = write_consistency_level)
 
 def delete_comment(comment):
     with g.make_lock(lock_key(comment.link_id)):
@@ -169,7 +153,6 @@ def delete_comment(comment):
             g.permacache.set(comments_key(comment.link_id),
                              (cids, comment_tree, depth, num_children))
 
-
 def _parent_dict_from_tree(comment_tree):
     parents = {}
     for parent, childs in comment_tree.iteritems():
@@ -182,14 +165,52 @@ def _comment_sorter_from_cids(cids, sort):
     comments = Comment._byID(cids, data = False, return_dict = False)
     return dict((x._id, _get_sort_value(x, sort)) for x in comments)
 
+def _get_comment_sorter(link_id, sort):
+    from r2.models import CommentSortsCache
+    from r2.lib.db.tdb_cassandra import NotFound
+
+    key = sort_comments_key(link_id, sort)
+    try:
+        sorter = CommentSortsCache._byID(key)._values()
+    except NotFound:
+        return {}
+
+    # we store these id36ed, but there are still bits of the code that
+    # want to deal in integer IDs
+    sorter = dict((int(c_id, 36), val)
+                  for (c_id, val) in sorter.iteritems())
+    return sorter
+
 def link_comments_and_sort(link_id, sort):
+    from r2.models import CommentSortsCache
+
+    # This has grown sort of organically over time. Right now the
+    # cache of the comments tree consists in three keys:
+    # 1. The comments_key: A tuple of
+    #      (cids, comment_tree, depth, num_children)
+    #    given:
+    #      cids         =:= [comment_id]
+    #      comment_tree =:= dict(comment_id -> [comment_id])
+    #      depth        =:= dict(comment_id -> int depth)
+    #      num_children =:= dict(comment_id -> int num_children)
+    # 2. The parent_comments_key =:= dict(comment_id -> parent_id)
+    # 3. The comments_sorts keys =:= dict(comment_id36 -> float).
+    #    These are represented by a Cassandra model
+    #    (CommentSortsCache) rather than a permacache key. One of
+    #    these exists for each sort (hot, new, etc)
+
+    # performance hack: preload these into the LocalCache at the same
+    # time
+    g.permacache.get_multi([comments_key(link_id),
+                            parent_comments_key(link_id)])
+
     cids, cid_tree, depth, num_children = link_comments(link_id)
 
     # load the sorter
-    key = sort_comments_key(link_id, sort)
-    sorter = g.permacache.get(key)
+    sorter = _get_comment_sorter(link_id, sort)
+
     sorter_needed = []
-    if sorter is None:
+    if cids and not sorter:
         sorter_needed = cids
         g.log.debug("comment_tree.py: sorter (%s) cache miss for Link %s"
                     % (sort, link_id))
@@ -197,18 +218,8 @@ def link_comments_and_sort(link_id, sort):
 
     sorter_needed = [x for x in cids if x not in sorter]
     if cids and sorter_needed:
-        from db import queries
         g.log.debug("Error in comment_tree: sorter (%s) inconsistent for Link %s"
                     % (sort, link_id))
-        key = sort_comments_key(link_id, sort)
-        res = _comment_sorter_from_cids(sorter_needed, sort)
-        sorter.update(res)
-        queries.queue_comment_sort(sorter_needed)
-
-        #with g.make_lock(sort_lock_key(link_id)):
-        #    sorter = g.permacache.get(key) or {}
-        #    sorter.update(res)
-        #    g.permacache.set(key, sorter)
 
     # load the parents
     key = parent_comments_key(link_id)
@@ -222,7 +233,7 @@ def link_comments_and_sort(link_id, sort):
                     % link_id)
         parents = {}
 
-    if not sorter or not parents:
+    if not parents:
         with g.make_lock(lock_key(link_id)):
             # reload from the cache so the sorter and parents are
             # maximally consistent
@@ -257,18 +268,6 @@ def link_comments(link_id, _update=False):
                              _parent_dict_from_tree(cid_tree))
 
             g.permacache.set(key, r)
-
-        for sort in ("_controversy","_date","_hot","_confidence","_score"): 
-           # rebuild the sorts
-            key = sort_comments_key(link_id, sort)
-            res = _comment_sorter_from_cids(cids, sort)
-            with g.make_lock(sort_lock_key(link_id)):
-                sorter = g.permacache.get(key) or {}
-                sorter.update(res)
-                g.permacache.set(key, sorter)
-
-            return r
-
 
 def _load_link_comments(link_id):
     from r2.models import Comment
@@ -508,3 +507,26 @@ def compute_message_trees(messages):
 def tree_sort_fn(tree):
     root, threads = tree
     return threads[-1] if threads else root
+
+def _populate(after_id = None, estimate=54301242):
+    from r2.models import Comment, CommentSortsCache, desc
+    from r2.lib.db import tdb_cassandra
+    from r2.lib import utils
+
+    # larger has a chance to decrease the number of Cassandra writes,
+    # but the probability is low
+    chunk_size = 5000
+
+    q = Comment._query(Comment.c._spam==(True,False),
+                       Comment.c._deleted==(True,False),
+                       sort=desc('_date'))
+
+    if after_id is not None:
+        q._after(Comment._byID(after_id))
+
+    q = utils.fetch_things2(q, chunk_size=chunk_size)
+    q = utils.progress(q, verbosity=chunk_size, estimate = estimate)
+
+    for chunk in utils.in_chunks(q, chunk_size):
+        chunk = filter(lambda x: hasattr(x, 'link_id'), chunk)
+        update_comment_votes(chunk, write_consistency_level = tdb_cassandra.CL.ONE)
