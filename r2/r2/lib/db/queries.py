@@ -981,7 +981,7 @@ def process_votes_single(**kw):
         voter = Account._byID(uid, data=True)
         votee = Thing._by_fullname(tid, data = True)
         if isinstance(votee, Comment):
-            queue_comment_sort([votee._id])
+            update_comment_votes([votee])
 
         # I don't know how, but somebody is sneaking in votes
         # for subreddits
@@ -1016,15 +1016,11 @@ def process_votes_multi(limit=100):
             handle_vote(voter, votee, dir, ip, organic,
                         cheater = cheater)
 
-        queue_comment_sort([x._id for x in comments])
+        update_comment_votes(comments)
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
 process_votes = process_votes_multi
-
-def queue_comment_sort(cids):
-    for cid in tup(cids):
-        amqp.add_item('commentsort_q', str(cid))
 
 def process_comment_sorts(limit=500):
     def _handle_sort(msgs, chan):
