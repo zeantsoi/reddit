@@ -220,7 +220,7 @@ def link_comments_and_sort(link_id, sort):
     if cids and sorter_needed:
         g.log.warning(
             "Error in comment_tree: sorter %r inconsistent (missing %d e.g. %r)"
-            % (sort_comments_key(link_id, sort), len(sorter_needed), sorted_needed[:10]))
+            % (sort_comments_key(link_id, sort), len(sorter_needed), sorter_needed[:10]))
         update_comment_votes(Comment._byID(sorter_needed, return_dict=False))
         sorter.update(_comment_sorter_from_cids(sorter_needed, sort))
 
