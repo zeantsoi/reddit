@@ -218,7 +218,7 @@ def link_comments_and_sort(link_id, sort):
 
     sorter_needed = [x for x in cids if x not in sorter]
     if cids and sorter_needed:
-        g.log.warning(
+        g.log.debug(
             "Error in comment_tree: sorter %r inconsistent (missing %d e.g. %r)"
             % (sort_comments_key(link_id, sort), len(sorter_needed), sorter_needed[:10]))
         if not g.disallow_db_writes:
