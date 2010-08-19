@@ -218,8 +218,10 @@ def link_comments_and_sort(link_id, sort):
 
     sorter_needed = [x for x in cids if x not in sorter]
     if cids and sorter_needed:
-        g.log.debug("Error in comment_tree: sorter (%s) inconsistent for Link %s"
-                    % (sort, link_id))
+        g.log.warning(
+            "Error in comment_tree: sorter (%s) inconsistent for Link %s (missing %d)"
+            % (sort, link_id, len(sorted_needed)))
+        sorter.update(_comment_sorter_from_cids(sorter_needed))
 
     # load the parents
     key = parent_comments_key(link_id)
