@@ -43,7 +43,7 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
 
     draw_box(" ==== DATABASES ==== ", "#BBBBBB", center = True)
     for host in hosts:
-        if host.database:
+        if host.database or host.host.startswith('vote'):
             draw_box("  %s load: %s" % (host.host, host.load()),
                      get_load_level(host))
 

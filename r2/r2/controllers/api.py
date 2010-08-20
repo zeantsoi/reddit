@@ -86,13 +86,14 @@ class ApiminimalController(MinimalController):
         if not isinstance(c.site, FakeSubreddit):
             suffix = "-" + c.site.name
         def add_tracker(dest, where, what):
+            if not dest.startswith("javascript:"):
+                dest = tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
+                                                              dest = dest,
+                                                              ip = request.ip)
             jquery.set_tracker(
                 where,
                 tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
-                                                  ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
-                                                       dest = dest,
-                                                       ip = request.ip)
+                                                  ip = request.ip), dest
                 )
 
         if promoted:
