@@ -1388,6 +1388,10 @@ class ApiController(RedditController):
         elif parameters['txn_type'] == 'subscr_cancel':
             cancel_subscription(parameters['subscr_id'])
             return "Ok"
+        elif parameters['txn_type'] == 'subscr_failed':
+            log_text("failed_subscription",
+                     "Just got notice of a failed PayPal resub.", "info")
+            return "Ok"
         elif parameters['txn_type'] in ('new_case',
             'recurring_payment_suspended_due_to_max_failed_payment'):
             return "Ok"
