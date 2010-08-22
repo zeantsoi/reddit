@@ -734,6 +734,8 @@ class ApiController(RedditController):
                 item.body = text
             elif isinstance(item, Link):
                 kind = 'link'
+                if not getattr(item, "is_self", False):
+                    return abort(403, "forbidden")
                 item.selftext = text
 
             if item._deleted:
