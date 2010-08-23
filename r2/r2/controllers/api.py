@@ -1474,23 +1474,23 @@ class ApiController(RedditController):
                               pennies, days, gold_secret, c.start_time,
                               subscr_id)
 
-        url = "http://www.reddit.com/thanks/" + gold_secret
-
-        # No point in i18n, since we don't have access to the user's
-        # language info (or name) at this point
-        body = """
-Thanks for subscribing to reddit gold! We have received your PayPal
-transaction, number %s.
-
-Your secret subscription code is %s. You can use it to associate this
-subscription with your reddit account -- just visit
-%s""" % (txn_id, gold_secret, url)
-
-        emailer.gold_email(body, payer_email, "reddit gold subscriptions")
+        notify_unclaimed_gold(txn_id, gold_secret, payer_email, "Paypal")
 
         g.log.info("Just got IPN for %d days, secret=%s" % (days, gold_secret))
 
         return "Ok"
+
+    @textresponse(sn = VLength('serial-number', 100))
+    def POST_gcheckout(self, sn):
+        if sn:
+            g.log.error( "GOOGLE CHECKOUT: %s" % sn)
+            new_google_transaction(sn)
+            return '<notification-acknowledgment xmlns="http://checkout.google.com/schema/2" serial-number="%s" />' % sn
+        else:
+            g.log.error("GOOGLE CHCEKOUT: didn't work")
+            g.log.error(repr(list(request.POST.iteritems())))
+
+
 
     @noresponse(VUser(),
                 VModhash(),
