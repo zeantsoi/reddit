@@ -1449,6 +1449,25 @@ class ApiController(RedditController):
         if not days:
             days = 60 + int (31 * pennies / 250.0)
 
+        account_id = accountid_from_paypalsubscription(subscr_id)
+
+        if account_id:
+            try:
+                account = Account._byID(account_id)
+            except NotFound:
+                g.log.info("Just got IPN renewal for deleted account #%d"
+                           % account_id)
+                return "Ok"
+
+            create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                 pennies, days, None, account_id,
+                                 c.start_time, subscr_id)
+            admintools.engolden(account, days)
+
+            g.log.info("Just applied IPN renewal for %s, %d days" %
+                       (account.name, days))
+            return "Ok"
+
         gold_secret = secret_prefix + randstr(10)
 
         create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
@@ -1465,8 +1484,7 @@ transaction, number %s.
 
 Your secret subscription code is %s. You can use it to associate this
 subscription with your reddit account -- just visit
-%s
-        """ % (txn_id, gold_secret, url)
+%s""" % (txn_id, gold_secret, url)
 
         emailer.gold_email(body, payer_email, "reddit gold subscriptions")
 

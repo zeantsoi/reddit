@@ -68,6 +68,20 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
                                 secret=secret,
                                 date=date)
 
+def create_claimed_gold (trans_id, payer_email, paying_id,
+                         pennies, days, secret, account_id, date,
+                         subscr_id = None):
+    gold_table.insert().execute(trans_id=trans_id,
+                                subscr_id=subscr_id,
+                                status="claimed",
+                                payer_email=payer_email,
+                                paying_id=paying_id,
+                                pennies=pennies,
+                                days=days,
+                                secret=secret,
+                                account_id=account_id,
+                                date=date)
+
 # returns None if the ID was never valid
 # returns "already claimed" if it's already been claimed
 # Otherwise, it's valid and the function claims it, returning a tuple with:

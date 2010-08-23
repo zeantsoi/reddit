@@ -245,6 +245,18 @@ def all_gold_users():
                        sort="_id")
     return fetch_things2(q)
 
+def accountid_from_paypalsubscription(subscr_id):
+    if subscr_id is None:
+        return None
+
+    q = Account._query(Account.c.gold_subscr_id == subscr_id,
+                       data=False)
+    l = list(q)
+    if l:
+        return l[0]._id
+    else:
+        return None
+
 def update_gold_users(verbose=False):
     now = datetime.now(g.display_tz)
     minimum = None
@@ -263,7 +275,7 @@ def update_gold_users(verbose=False):
                 print "%s just expired" % account.name
             admintools.degolden(account)
             send_system_message(account, "Your reddit gold subscription has expired. :(",
-               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you don't want to, please write to us and tell us where we let you down, so we can work fixing the problem.\n\nThis is a system account whose mail we don't read very often, so please address all feedback to 912@reddit.com.")
+               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you don't want to, please write to us and tell us where we let you down, so we can work on fixing the problem.\n\nThis is a system account whose mail we don't read very often, so please address all feedback to 912@reddit.com.")
             continue
 
         if verbose:
@@ -282,7 +294,7 @@ def update_gold_users(verbose=False):
                 if verbose:
                     print "Sending notice to %s" % account.name
                 g.hardcache.set(hc_key, True, 86400 * 10)
-                send_system_message(account, "Your reddit gold is about to expire!",
+                send_system_message(account, "Your reddit gold subscription is about to expire!",
                                     "Your subscription to reddit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you think we suck, just let your subscription lapse and go back to being a regular user.\n\nBy the way, this is a system account whose mail we don't read very often, so if you need to reply, please write to 912@reddit.com.")
 
     if verbose:
