@@ -1367,13 +1367,13 @@ class ApiController(RedditController):
             # TODO: something useful when this happens -- and don't
             # forget to verify first
             return "Ok"
-        elif psl == 'Reversed':
+        elif psl == 'reversed':
             log_text("canceled_reversal",
                      "Just got notice of a PayPal reversal.", "info")
             # TODO: something useful when this happens -- and don't
             # forget to verify first
             return "Ok"
-        elif psl == 'Canceled_Reversal':
+        elif psl == 'canceled_reversal':
             log_text("canceled_reversal",
                      "Just got notice of a PayPal 'canceled reversal'.", "info")
             return "Ok"
