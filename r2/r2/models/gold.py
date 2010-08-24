@@ -22,7 +22,6 @@
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 
-from r2.lib import emailer
 from pylons import g, c
 from datetime import datetime
 import sqlalchemy as sa
@@ -98,6 +97,7 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
 
 # TODO: this should really live in emailer.py
 def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
+    from r2.lib import emailer
     url = "http://www.reddit.com/thanks/" + gold_secret
 
     # No point in i18n, since we don't have access to the user's
