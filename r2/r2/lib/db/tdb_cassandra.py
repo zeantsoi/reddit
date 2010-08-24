@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from datetime import datetime
+from socket import gethostbyaddr
 
 from pylons import g
 
@@ -688,3 +689,49 @@ class View(ThingBase):
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
+
+def ring_report():
+    sizes = {}
+    nodes = {} # token -> node
+
+    ring = cassandra.describe_ring(keyspace)
+    ring.sort(key=lambda tr: long(tr.start_token))
+
+    for x, tr in enumerate(ring):
+        next = ring[x+1] if x < len(ring)-1 else ring[0]
+
+        # tr = ring1[x]
+        # next = ring1[x+1]
+
+        s = long(tr.start_token)
+        e = long(tr.end_token)
+
+        if e > s:
+            # a regular range
+            l = e-s
+        else:
+            # range that overlaps 0
+            l = e+2**127-s
+
+        for ep in tr.endpoints:
+            sizes.setdefault(ep, []).append(float(l)/2**127)
+
+        natural = set(tr.endpoints) - set(next.endpoints)
+        assert len(natural) == 1
+        natural = natural.pop()
+
+        nodes[e] = natural
+
+    totalsize = sum(map(sum, sizes.values()))
+    for token, ip in sorted(nodes.items(),
+                              key = lambda x: x[0]):
+        size = sizes[ip]
+        name = gethostbyaddr(ip)[0]
+
+        fmt_perc = lambda num: '%s%2.2f%%' % (' ' if num < 10 else '',
+                                              num)
+        maxtoklen = len(str(2**127))
+
+        print '%16s\t%s\t%s\t%s' % (ip, name,
+                                    fmt_perc(sum(size)/totalsize * 100),
+                                    str(token).rjust(maxtoklen))
