@@ -69,6 +69,7 @@ $(function() {
         $(".button").height(h ? (h + "px") : "100%");
 
         var update_button = function(res) {
+	    try {
             var modhash = res.data.modhash;
             if (modhash) {
                 reddit.logged = true;
@@ -121,6 +122,9 @@ $(function() {
             }
             set_score_class();
             finalize_thing(data);
+	    } catch(e) {
+		make_submit();
+	    };
         };
 
         var make_submit = function() {
