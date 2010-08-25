@@ -245,11 +245,12 @@ def process_google_transaction(trans_id):
 
     if not auth:
         # see if the payment was declinded
-        status = trans.find('financial-order-state')
+        status = trans.findAll('financial-order-state')
         if 'PAYMENT_DECLINED' in [x.contents[0] for x in status]:
+            g.log.error("google declined transaction found: '%s'" % trans_id)
             rp = gold_table.update(
                 sa.and_(gold_table.c.status == 'uncharged',
-                        gold_table.c.trans_id == str(trans_id)),
+                        gold_table.c.trans_id == 'g' + str(trans_id)),
                 values = { gold_table.c.status : "declined" }).execute()
         else:
             g.log.error("google transaction not found: '%s'" % trans_id)
