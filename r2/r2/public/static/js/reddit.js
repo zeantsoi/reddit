@@ -931,6 +931,7 @@ function expando_child(elem) {
         expando.html($.unsafe(child_cache[key]));
     }
     expando.show();
+    return false;
 }
 
 function unexpando_child(elem) {

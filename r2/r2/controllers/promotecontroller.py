@@ -146,13 +146,16 @@ class PromoteController(ListingController):
                    max_views = VInt("maximum_views", min = 0),
                    media_width = VInt("media-width", min = 0),
                    media_height = VInt("media-height", min = 0),
-                   media_embed = VLength("media-embed", 1000)
+                   media_embed = VLength("media-embed", 1000),
+                   media_override = VBoolean("media-override"),
+                   domain_override = VLength("domain", 100)
                    )
     def POST_edit_promo(self, form, jquery, ip, l, title, url,
                         disable_comments,
                         set_clicks, max_clicks,
                         set_views,  max_views,
-                        media_height, media_width, media_embed):
+                        media_height, media_width, media_embed,
+                        media_override, domain_override):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
@@ -222,6 +225,10 @@ class PromoteController(ListingController):
                 else:
                     l.media_object = None
 
+                l.media_override = media_override
+
+                if getattr(link, "domain_override", False) or domain_override:
+                    l.domain_override = domain_override
             l._commit()
 
         form.redirect(promote.promo_edit_url(l))

@@ -17,7 +17,7 @@
 
   <ol><% counter = 0 %>
     %for l in thing.links:
-      %if not getattr(l.author, "ignore_promos_report", False) and counter < 20:
+      %if not getattr(l.author, "ignore_promos_report", False) and not getattr(l.author, "complimentary_promos", False)  and counter < 20:
        <% counter +=1 %>
          <li style="padding-bottom: 3px">
            <a class="title" href="${l.url}" rel="nofollow"

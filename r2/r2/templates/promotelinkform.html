@@ -302,6 +302,16 @@
     </button>
     <span class="title-status"></span>
   </div>
+  %if c.user_is_sponsor:
+  <label style="display:block; text-align:right" for="domain">Override display domain:</label>
+  <input id="domain" name="domain" type="text" 
+         %if getattr(link, "domain_override", False):
+           value="${link.domain_override}"
+         %else:
+           class="gray" value="optional" 
+         %endif
+         />
+  %endif
 </%utils:line_field>
 
 %if thing.link and (trusted or not promote.is_promoted(thing.link)):
@@ -385,6 +395,7 @@
             %endif
           </textarea>
         </p>
+          ${checkbox("media-override", "media override (adds an onclick to the link to generate a drop-down rather than a link out)", getattr(thing.link, "media_override", False) or False)}<br />
       </div>
     </%utils:line_field>
     %endif

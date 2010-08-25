@@ -381,7 +381,14 @@ def edit_campaign(link, index, dates, bid, sr):
             #TODO cancel any existing charges if the bid has changed
             if prev_bid != bid:
                 void_campaign(link, index, c.user)
+    author = Account._byID(link.author_id, True)
+    if getattr(author, "complimentary_promos", False):
+        free_campaign(link, index, c.user)
 
+def complimentary(username, value = True):
+    a = Account._by_name(username, True)
+    a.complimentary_promos = value
+    a._commit()
 
 def delete_campaign(link, index):
     with g.make_lock(campaign_lock(link)):

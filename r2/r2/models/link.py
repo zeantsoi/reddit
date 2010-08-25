@@ -356,8 +356,11 @@ class Link(Thing, Printable):
 
             item.score = max(0, item.score)
 
-            item.domain = (domain(item.url) if not item.is_self
-                           else 'self.' + item.subreddit.name)
+            if getattr(item, "domain_override", None):
+                item.domain = item.domain_override
+            else:
+                item.domain = (domain(item.url) if not item.is_self
+                               else 'self.' + item.subreddit.name)
             item.urlprefix = ''
             item.saved = bool(saved.get((user, item, 'save')))
             item.hidden = bool(hidden.get((user, item, 'hide')))
