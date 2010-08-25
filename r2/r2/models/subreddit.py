@@ -153,7 +153,6 @@ class Subreddit(Thing, Printable):
     @memoize('subreddit._by_domain')
     def _by_domain_cache(cls, name):
         q = cls._query(cls.c.domain == name,
-                       cls.c.over_18 == (True, False),
                        limit = 1)
         l = list(q)
         if l:
