@@ -22,6 +22,7 @@
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 
+from r2.lib import emailer
 from pylons import g, c
 from datetime import datetime
 import sqlalchemy as sa
@@ -97,7 +98,6 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
 
 # TODO: this should really live in emailer.py
 def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
-    from r2.lib import emailer
     url = "http://www.reddit.com/thanks/" + gold_secret
 
     # No point in i18n, since we don't have access to the user's
@@ -244,7 +244,15 @@ def process_google_transaction(trans_id):
     auth = trans.find("authorization-amount-notification")
 
     if not auth:
-        g.log.error("google transaction not found: '%s'" % trans_id)
+        # see if the payment was declinded
+        status = trans.find('financial-order-state')
+        if 'PAYMENT_DECLINED' in [x.contents[0] for x in status]:
+            rp = gold_table.update(
+                sa.and_(gold_table.c.status == 'uncharged',
+                        gold_table.c.trans_id == str(trans_id)),
+                values = { gold_table.c.status : "declined" }).execute()
+        else:
+            g.log.error("google transaction not found: '%s'" % trans_id)
     elif auth.find("financial-order-state").contents[0] == "CHARGEABLE":
         email = str(auth.find("email").contents[0])
         payer_id = str(auth.find('buyer-id').contents[0])
