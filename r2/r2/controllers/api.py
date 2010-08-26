@@ -1327,6 +1327,8 @@ class ApiController(RedditController):
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
 
+# TODO: we're well beyond the point where this function should have been
+# broken up and moved to its own file
     @textresponse(paypal_secret = VPrintable('secret', 50),
                 payment_status = VPrintable('payment_status', 20),
                 txn_id = VPrintable('txn_id', 20),
@@ -1334,9 +1336,10 @@ class ApiController(RedditController):
                 payer_email = VPrintable('payer_email', 250),
                 item_number = VPrintable('item_number', 20),
                 mc_currency = VPrintable('mc_currency', 20),
-                mc_gross = VFloat('mc_gross'))
-    def POST_ipn(self, paypal_secret, payment_status, txn_id,
-                 paying_id, payer_email, item_number, mc_currency, mc_gross):
+                mc_gross = VFloat('mc_gross'),
+                custom = VPrintable('custom', 50))
+    def POST_ipn(self, paypal_secret, payment_status, txn_id, paying_id,
+                 payer_email, item_number, mc_currency, mc_gross, custom):
 
         if paypal_secret != g.PAYPAL_SECRET:
             log_text("invalid IPN secret",
@@ -1440,14 +1443,10 @@ class ApiController(RedditController):
                 secret_prefix = "m_"
                 days = 31
             else:
-                log_text("weird IPN subscription",
-                         "Got %d pennies via PayPal?" % pennies, "error")
-                secret_prefix = "w_"
+                raise ValueError("Got %d pennies via PayPal?" % pennies)
+                # old formula: days = 60 + int (31 * pennies / 250.0)
         else:
-            secret_prefix = "o_"
-
-        if not days:
-            days = 60 + int (31 * pennies / 250.0)
+            raise ValueError("Got item number %r via PayPal?" % item_number)
 
         account_id = accountid_from_paypalsubscription(subscr_id)
 
@@ -1467,6 +1466,55 @@ class ApiController(RedditController):
             g.log.info("Just applied IPN renewal for %s, %d days" %
                        (account.name, days))
             return "Ok"
+
+        if custom:
+            gold_dict = g.hardcache.get("gold_dict-" + custom)
+            if gold_dict is None:
+                raise ValueError("No gold_dict for %r" % custom)
+
+            buyer_name = gold_dict['buyer']
+            try:
+                buyer = Account._by_name(buyer_name)
+            except NotFound:
+                g.log.info("Just got IPN for unknown buyer %s" % buyer_name)
+                return "Ok" # nothing we can do until they complain
+
+            if gold_dict['kind'] == 'self':
+                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                 pennies, days, None, buyer._id,
+                                 c.start_time, subscr_id)
+                admintools.engolden(buyer, days)
+
+                g.log.info("Just applied IPN for %s, %d days" %
+                           (buyer.name, days))
+
+#TODO: send a PM thanking them and showing them /r/lounge
+
+                g.hardcache.delete("gold_dict-" + custom)
+
+                return "Ok"
+            elif gold_dict['kind'] == 'gift':
+                recipient_name = gold_dict['recipient']
+                try:
+                    recipient = Account._by_name(recipient_name)
+                except NotFound:
+                    g.log.info("Just got IPN for unknown recipient %s"
+                               % recipient_name)
+                return "Ok" # nothing we can do until they complain
+                
+                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                 pennies, days, None, recipient._id,
+                                 c.start_time, subscr_id)
+                admintools.engolden(recipient, days)
+
+                g.log.info("Just applied IPN from %s to %s, %d days" %
+                           (buyer.name, recipient.name, days))
+
+#TODO: send PMs to buyer and recipient
+
+            else:
+                raise ValueError("Invalid gold_dict[kind] %r" %
+                                 gold_dict['kind'])
 
         gold_secret = secret_prefix + randstr(10)
 
