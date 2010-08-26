@@ -344,6 +344,7 @@ def get_transactions(link):
 
 
 def new_campaign(link, dates, bid, sr):
+    indx = None
     with g.make_lock(campaign_lock(link)):
         # get a copy of the attr so that it'll be
         # marked as dirty on the next write.
@@ -358,7 +359,12 @@ def new_campaign(link, dates, bid, sr):
         link.campaigns = {}
         link.campaigns = campaigns
         link._commit()
-        return indx
+
+    author = Account._byID(link.author_id, True)
+    if getattr(author, "complimentary_promos", False):
+        free_campaign(link, indx, c.user)
+
+    return indx
 
 def free_campaign(link, index, user):
     auth_campaign(link, index, user, -1)
