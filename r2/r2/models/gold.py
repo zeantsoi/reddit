@@ -268,6 +268,14 @@ def process_google_transaction(trans_id):
                 days = 31
             else:
                 g.log.error("Got %d pennies via Google?" % pennies)
+                rp = gold_table.update(
+                    sa.and_(gold_table.c.status == 'uncharged',
+                            gold_table.c.trans_id == 'g' + str(trans_id)),
+                    values = { gold_table.c.status : "strange",
+                               gold_table.c.pennies : pennies, 
+                               gold_table.c.payer_email : email,
+                               gold_table.c.paying_id : payer_id  
+                               }).execute()
                 return
         except ValueError:
             g.log.error("no amount in google checkout for transid %s"
