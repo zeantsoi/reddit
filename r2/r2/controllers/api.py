@@ -1397,6 +1397,10 @@ class ApiController(RedditController):
             log_text("failed_subscription",
                      "Just got notice of a failed PayPal resub.", "info")
             return "Ok"
+        elif parameters['txn_type'] == 'subscr_modify':
+            log_text("modified_subscription",
+                     "Just got notice of a modified PayPal sub.", "info")
+            return "Ok"
         elif parameters['txn_type'] in ('new_case',
             'recurring_payment_suspended_due_to_max_failed_payment'):
             return "Ok"

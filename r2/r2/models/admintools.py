@@ -183,10 +183,7 @@ class AdminTools(object):
             existing_expiration = now
         account.gold_expiration = existing_expiration + timedelta(days)
 
-        if getattr(account, "gold_charter", False):
-            description = "Charter Member (noncontinuous)"
-        else:
-            description = "Since " + now.strftime("%B %Y")
+        description = "Since " + now.strftime("%B %Y")
         trophy = Award.give_if_needed("reddit_gold", account,
                                      description=description,
                                      url="/help/gold")
@@ -205,20 +202,9 @@ class AdminTools(object):
 
         if severe:
             account.gold_charter = False
-            Award.take_away("reddit_gold", account)
-        else:
-            if getattr(account, "gold_charter", False):
-                description = "Charter Member Emeritus"
-            else:
-                description = "Member Emeritus"
+            Award.take_away("charter_subscriber", account)
 
-            trophy = Award.give_if_needed("reddit_gold", account,
-                                          description=description,
-                                          url="/help/gold")
-            if trophy and trophy.description != description:
-                trophy.description = description
-                trophy._commit()
-
+        Award.take_away("reddit_gold", account)
         account.gold = False
         account._commit()
 
@@ -283,7 +269,7 @@ def update_gold_users(verbose=False):
             if minimum is None or delta < minimum[0]:
                 minimum = (delta, account)
 
-        if days_left <= 7 and not g.hardcache.get(hc_key):
+        if days_left <= 3 and not g.hardcache.get(hc_key):
             if verbose:
                 print "%s expires soon: %s days" % (account.name, days_left)
             if getattr(account, "gold_subscr_id", None):
