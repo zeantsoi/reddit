@@ -3258,6 +3258,8 @@ ul.tabmenu.formtab {
 
 .award-square.mini .award-name {
     font-size: 18px;
+    min-height: 36px;
+    display: block;
 }
 
 .award-square .winner-info {
