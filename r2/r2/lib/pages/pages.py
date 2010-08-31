@@ -95,11 +95,11 @@ class Reddit(Templated):
 
     settings determined at class-declaration time
 
-        create_reddit_box  -- enable/disable display of the "Creat a reddit" box
-        submit_box         -- enable/disable display of the "Submit" box
-        searcbox           -- enable/disable display of the "search" box in the header
-        extension_handling -- enable/disable rendering using non-html templates
-          (e.g. js, xml for rss, etc.)
+      create_reddit_box -- enable/disable display of the "Create a reddit" box
+      submit_box        -- enable/disable display of the "Submit" box
+      searchbox         -- enable/disable the "search" box in the header
+      extension_handling -- enable/disable rendering using non-html templates
+                            (e.g. js, xml for rss, etc.)
     '''
 
     create_reddit_box  = True
@@ -219,11 +219,13 @@ class Reddit(Templated):
                               subtitles = [strings.submit_box_text],
                               show_cover = True))
 
-        if self.create_reddit_box:
-           ps.append(SideBox(_('Create your own reddit'),
-                              '/reddits/create', 'create',
-                              subtitles = rand_strings.get("create_reddit", 2),
-                              show_cover = True, nocname=True))
+        if self.create_reddit_box and c.user_is_loggedin:
+            delta = datetime.datetime.now(g.tz) - c.user._date
+            if delta.days > 30:
+                ps.append(SideBox(_('Create your own community'),
+                           '/reddits/create', 'create',
+                           subtitles = rand_strings.get("create_reddit", 2),
+                           show_cover = True, nocname=True))
 
         if False and not c.user.gold and self.submit_box:
             ps.append(SideBox(_('New: Google Checkout!'),

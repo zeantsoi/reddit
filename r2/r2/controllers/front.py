@@ -328,10 +328,10 @@ class FrontController(RedditController):
     @validate(VUser(),
               name = nop('name'))
     def GET_newreddit(self, name):
-        """Create a reddit form"""
+        """Create a community form"""
         title = _('create a reddit')
         content=CreateSubreddit(name = name or '')
-        res = FormPage(_("create a reddit"), 
+        res = FormPage(_("create a community"),
                        content = content,
                        ).render()
         return res
