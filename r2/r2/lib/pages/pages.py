@@ -162,7 +162,7 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
 
     def sr_admin_menu(self):
-        buttons = [NamedButton('edit', css_class = 'reddit-edit'),
+        buttons = [NamedButton('community_settings', css_class = 'reddit-edit'),
                    NamedButton('modmail', dest = "message/inbox",
                                css_class = 'moderator-mail'),
                    NamedButton('moderators', css_class = 'reddit-moderators')]
@@ -487,7 +487,7 @@ class SubredditInfoBar(CachedTemplate):
                     NamedButton('reports'),
                     NavButton(menu.banusers, 'banned'),
                     NamedButton('traffic'),
-                    NamedButton('edit'),
+                    NavButton(menu.community_settings, 'edit'),
                     ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         separator = '')]
@@ -963,7 +963,7 @@ class EditReddit(Reddit):
         is_moderator = c.user_is_loggedin and \
             c.site.is_moderator(c.user) or c.user_is_admin
 
-        title = _('manage your reddit') if is_moderator else \
+        title = _('community settings') if is_moderator else \
                 _('about %(site)s') % dict(site=c.site.name)
 
         Reddit.__init__(self, title = title, *a, **kw)
@@ -1217,9 +1217,10 @@ class SubredditTopBar(CachedTemplate):
         drop_down_buttons = []
         for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
             drop_down_buttons.append(SubredditButton(sr))
-        drop_down_buttons.append(NamedButton('edit', sr_path = False,
-                                             css_class = 'bottom-option',
-                                             dest = '/reddits/'))
+        drop_down_buttons.append(NavButton(menu.edit_subscriptions,
+                                           sr_path = False,
+                                           css_class = 'bottom-option',
+                                           dest = '/reddits/'))
         return SubredditMenu(drop_down_buttons,
                              title = _('my reddits'),
                              type = 'srdrop')
