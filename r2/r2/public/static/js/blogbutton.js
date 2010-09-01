@@ -46,13 +46,13 @@ $(function() {
                 b = lst[1];
                 querydict[a] = b;
             }); 
-	var submit = "/submit?url=" + encodeURIComponent(querydict.url);
-	if (querydict.sr) {
-	    submit = "/r/" + querydict.sr + submit;
-	}
-	if (querydict.title) {
-	    submit += "&title=" + encodeURIComponent(querydict.title);
-	}
+        var submit = "/submit?url=" + encodeURIComponent(querydict.url);
+        if (querydict.sr) {
+            submit = "/r/" + querydict.sr + submit;
+        }
+        if (querydict.title) {
+            submit += "&title=" + encodeURIComponent(querydict.title);
+        }
         $("a").attr("href", submit);
         if(querydict.bgcolor) {
             $("body").css("background-color", color(querydict.bgcolor));
@@ -61,7 +61,8 @@ $(function() {
             $(".blog").css("border-color", color(querydict.bordercolor));
         }
 
-        $("a").attr("target", (querydict.newwindow)?"_top":"_parent");
+        var target = (querydict.newwindow)?"_blank":"_top";
+        $("a").attr("target", target);
 
         var w = $("body").width();
         var h = $("body").height();
@@ -136,13 +137,18 @@ $(function() {
                 submit += "&title=" + encodeURIComponent(querydict.title);
             }
             $(".score:visible").fadeOut(function() {
-                    $(".score").html('<a class="submit" target="_top" href="' +
+                    $(".score").html('<a class="submit" target="' +
+                                     target + '" href="' +
                                      submit + '">submit</a>');
                     $(this).fadeIn().css("display", "");});
             $(".bling a, a.bling").attr("href", submit);
             $(".arrow").each(function() {
                     $(this).get(0).onclick = function() {
-                        window.parent.location = submit;
+                        if(target == '_blank'){
+                            window.open(submit, target);
+                        } else {
+                            window.parent.location = submit;
+                       }
                     }
                 });
         }
