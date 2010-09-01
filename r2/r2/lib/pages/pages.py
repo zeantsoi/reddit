@@ -1449,14 +1449,15 @@ class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The
     top 30px of the page are dedicated to the toolbar, while the rest
     of the page will show the results of following the link."""
-    def __init__(self, url='', title='', fullname=None):
+    def __init__(self, url='', title='', fullname=None, thumbnail=None):
         if title:
             title = (_('%(site_title)s via %(domain)s')
                      % dict(site_title = _force_unicode(title),
                             domain     = g.domain))
         else:
             title = g.domain
-        Templated.__init__(self, url = url, title = title, fullname = fullname)
+        Templated.__init__(self, url = url, title = title,
+                           fullname = fullname, thumbnail = thumbnail)
 
 dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+\.\w+(/|$)")
 class FrameToolbar(Wrapped):

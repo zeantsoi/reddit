@@ -35,6 +35,9 @@
            instead of just having /favicon.ico exist. -->
       <link rel="icon" href="http://${domain(thing.url)}/favicon.ico" type="image/x-icon">
     %endif
+    %if thing.thumbnail:
+    <link rel="image_src" type="image/png" href="${thing.thumbnail}" />
+    %endif
 
   </head>
   <frameset framespacing="0" frameborder="0" border="0" rows="20px, 100%"
