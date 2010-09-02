@@ -210,7 +210,7 @@ def populate_spotlight():
     trial = assign_trial(c.user, juries_already_on, ip, slash16)
 
     if trial is None:
-        #g.log.debug("nothing available")
+        g.log.debug("nothing available")
         g.cache.delete("global-jury-key")
         return None
 

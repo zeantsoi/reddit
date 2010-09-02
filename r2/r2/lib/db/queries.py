@@ -142,6 +142,7 @@ class CachedResults(object):
         self._insert_tuples([self.make_item_tuple(item) for item in tup(items)])
 
     def _insert_tuples(self, t):
+
         def _mutate(data):
             data = data or []
 
@@ -903,37 +904,26 @@ def prequeued_vote_key(user, item):
 def get_likes(user, items):
     if not user or not items:
         return {}
-
-    res = {}
-
-    # avoid requesting items that they can't have voted on (we're
-    # still using the tdb_sql Thing API for this)
-    for item in items:
-        # we can only vote on links and comments
-        if isinstance(item, (Link, Comment)):
-            rel = Vote.rel(user.__class__, item.__class__)
-            if rel._can_skip_lookup(user, item):
-                res[(user, item)] = None
-        else:
-            res[(user, item)] = None
-
-    # then check the prequeued_vote_keys
     keys = {}
-    for item in items:
-        if (user, item) not in res:
-            key = prequeued_vote_key(user, item)
-            keys[key] = (user, item)
-    if keys:
-        r = g.cache.get_multi(keys.keys())
-        for key, v in r.iteritems():
-            res[keys[key]] = (True if v == '1'
-                              else False if v == '-1'
-                              else None)
+    res = {}
+    keys = dict((prequeued_vote_key(user, item), (user,item))
+                for item in items)
+    r = g.cache.get_multi(keys.keys())
 
-    # now hit Cassandra with the remainder
+    # populate the result set based on what we fetched from the cache first
+    for k, v in r.iteritems():
+        res[keys[k]] = v
+
+    # now hit the vote db with the remainder
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])
 
-    res.update(likes)
+    for k, v in likes.iteritems():
+        res[k] = v._name
+
+    # lastly, translate into boolean:
+    for k in res.keys():
+        res[k] = (True if res[k] == '1'
+                  else False if res[k] == '-1' else None)
 
     return res
 
@@ -958,6 +948,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
         new_vote(v)
 
         #update the modified flags
+        set_last_modified(user, 'liked')
         if user._id == thing.author_id:
             set_last_modified(user, 'overview')
             set_last_modified(user, 'submitted')
@@ -966,10 +957,8 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 
             #update sup listings
             if dir:
-                set_last_modified(user, 'liked')
                 sup.add_update(user, 'liked')
             elif dir is False:
-                set_last_modified(user, 'disliked')
                 sup.add_update(user, 'disliked')
 
     elif isinstance(thing, Comment):

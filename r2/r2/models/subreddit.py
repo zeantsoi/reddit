@@ -272,14 +272,13 @@ class Subreddit(Thing, Printable):
                     if getattr(l, "sr_id", None) is not None)
         subreddits = {}
         if srids:
-            subreddits = cls._byID(srids, data=True)
+            subreddits = cls._byID(srids, True)
 
         if subreddits and c.user_is_loggedin:
-            # populate the localcache
+            # dict( {Subreddit,Account,name} -> Relationship )
             SRMember._fast_query(subreddits.values(), (c.user,),
                                  ('subscriber','contributor','moderator'),
-                                 data=False, # these don't have data
-                                 eager_load=True, thing_data=True)
+                                 data=True, eager_load=True, thing_data=True)
 
         return subreddits if return_dict else subreddits.values()
 
