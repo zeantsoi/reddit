@@ -82,7 +82,6 @@ class Globals(object):
                   ]
 
     tuple_props = ['memcaches',
-                   'permacache_memcaches',
                    'rendercaches',
                    'local_rendercache',
                    'servicecaches',
@@ -97,14 +96,12 @@ class Globals(object):
                    'hardcache_categories',
                    'proxy_addr']
 
-    choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
-                                      'ONE':    CL_ONE,
+    choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
                     'cassandra_wcl': {'ZERO':   CL_ZERO,
                                       'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
                     }
-
 
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
@@ -167,29 +164,24 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
+
         self.cassandra_seeds = list(self.cassandra_seeds)
         random.shuffle(self.cassandra_seeds)
         self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
-        perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
-                          if self.permacache_memcaches
-                          else None)
         self.permacache = self.init_cass_cache('permacache', 'permacache',
-                                               self.cassandra,
-                                               self.make_lock,
-                                               memcache = perma_memcache,
+                                               self.cassandra, self.make_lock,
                                                read_consistency_level = self.cassandra_rcl,
                                                write_consistency_level = self.cassandra_wcl,
                                                localcache_cls = localcache_cls)
+
         self.cache_chains.append(self.permacache)
 
         self.urlcache = self.init_cass_cache('permacache', 'urls',
-                                             self.cassandra,
-                                             self.make_lock,
-                                             # TODO: increase this to QUORUM
-                                             # once we switch to live
+                                             self.cassandra, self.make_lock,
                                              read_consistency_level = self.cassandra_rcl,
-                                             write_consistency_level = CL_ONE,
+                                             write_consistency_level = self.cassandra_wcl,
                                              localcache_cls = localcache_cls)
+
         self.cache_chains.append(self.urlcache)
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
@@ -347,13 +339,11 @@ class Globals(object):
             self.version = self.short_version = '(unknown)'
 
         if self.log_start:
-            self.log.error("reddit app %s:%s started %s at %s" %
-                           (self.reddit_host, self.reddit_pid,
-                            self.short_version, datetime.now()))
+            self.log.error("reddit app %s:%s started %s at %s" % (self.reddit_host, self.reddit_pid,
+                                                                  self.short_version, datetime.now()))
 
     def init_cass_cache(self, keyspace, column_family, cassandra_client,
                         lock_factory,
-                        memcache = None,
                         read_consistency_level = CL_ONE,
                         write_consistency_level = CL_ONE,
                         localcache_cls = LocalCache):
@@ -362,7 +352,6 @@ class Globals(object):
                                                   cassandra_client,
                                                   read_consistency_level = read_consistency_level,
                                                   write_consistency_level = write_consistency_level),
-                                   memcache = memcache,
                                    lock_factory = lock_factory)
 
     @staticmethod

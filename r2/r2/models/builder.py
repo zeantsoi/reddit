@@ -58,6 +58,7 @@ class Builder(object):
     def wrap_items(self, items):
         from r2.lib.db import queries
         from r2.lib.template_helpers import add_attr
+
         user = c.user if c.user_is_loggedin else None
 
         #get authors

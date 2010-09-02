@@ -96,6 +96,8 @@ class IndextankQuery(object):
         elif isinstance(self.sr, MultiReddit):
             q.append(self._req_fs(
                     self.sr.sr_ids))
+        elif isinstance(self.sr, DomainSR):
+            q.append('+site:%s' % (self.sr.domain))
         elif self.sr == Friends and c.user_is_loggedin and c.user.friends:
             friend_ids = c.user.friends[:100] # we're not about to
                                               # look up more than 100

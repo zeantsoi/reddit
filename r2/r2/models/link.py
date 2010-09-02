@@ -614,6 +614,7 @@ class Comment(Thing, Printable):
         from r2.lib.template_helpers import add_attr
         from r2.lib import promote
         from r2.lib.wrapped import CachedVariable
+        from r2.models import SRMember
 
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
@@ -634,9 +635,16 @@ class Comment(Thing, Printable):
         if parent_ids:
             parents = Comment._byID(parent_ids, data=True)
 
-        can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
-                        if c.user_is_loggedin else set()
-        can_reply_srs.add(promote.get_promote_srid())
+        # performance hack: get this into the localcache in batch so
+        # that can_comment can check it
+        if c.user_is_loggedin:
+            SRMember._fast_query(subreddits, (user,), ('banned',), data=False)
+
+            can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
+                                if c.user_is_loggedin else set()
+            can_reply_srs.add(promote.get_promote_srid())
+        else:
+            can_reply_srs = set()
 
         min_score = user.pref_min_comment_score
 

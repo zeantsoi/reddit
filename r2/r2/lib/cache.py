@@ -473,79 +473,50 @@ CL_QUORUM = cassandra.ttypes.ConsistencyLevel.QUORUM
 CL_ALL = cassandra.ttypes.ConsistencyLevel.ALL
 
 class CassandraCacheChain(CacheChain):
-    def __init__(self, localcache, cassa, lock_factory, memcache=None, **kw):
-        if memcache:
-            caches = (localcache, memcache, cassa)
-        else:
-            caches = (localcache, cassa)
-
+    def __init__(self, localcache, cassa, lock_factory, **kw):
+        caches = (localcache, cassa)
         self.cassa = cassa
-        self.memcache = memcache
         self.make_lock = lock_factory
         CacheChain.__init__(self, caches, **kw)
+
+    def _mutate(self, key, mutation_fn, default=None):
+        """The portion of self.mutate that occurs inside of the
+           lock"""
+        # we have to do some of the the work of the cache chain here
+        # so that we can be sure that the mutate can occur inside of a
+        # lock and be as atomic as we can make it. This requires us to
+        # know the structure of the chain, which means that changing
+        # the chain will probably require changing this function.
+        rcl = wcl = self.cassa.write_consistency_level
+        if rcl == CL_ZERO:
+            rcl = CL_ONE # can't read with ZERO
+
+        try:
+            value = self.cassa.get(key, read_consistency_level = rcl)
+        except cassandra.ttypes.NotFoundException:
+            value = default
+
+        # due to an old bug in NoneResult caching, we still have some
+        # of these around
+        if value == NoneResult:
+            value = default
+
+        new_value = mutation_fn(copy(value)) # send in a copy in case
+                                             # they mutate it in-place
+
+        if value != new_value:
+            self.cassa.set(key, new_value,
+                           write_consistency_level = wcl)
+
+        # only one other entry in the cache chain
+        self.caches[0][key] = new_value
+
+        return new_value
 
     def mutate(self, key, mutation_fn, default = None):
         """Mutate a Cassandra key as atomically as possible"""
         with self.make_lock('mutate_%s' % key):
-            # we have to do some of the the work of the cache chain
-            # here so that we can be sure that if the value isn't in
-            # memcached (an atomic store), we fetch it from Cassandra
-            # with CL_QUORUM (because otherwise it's not an atomic
-            # store). This requires us to know the structure of the
-            # chain, which means that changing the chain will probably
-            # require changing this function. (This has an edge-case
-            # where memcached was populated by a ONE read rather than
-            # a QUORUM one just before running this. We could avoid
-            # this by not using memcached at all for these mutations,
-            # which would require some more row-cache performace
-            # testing)
-            rcl = wcl = self.cassa.write_consistency_level
-            if rcl == CL_ZERO:
-                rcl = CL_ONE
-            try:
-                value = None
-                if self.memcache:
-                    value = self.memcache.get(key)
-                if value is None:
-                    value = self.cassa.get(key,
-                                           read_consistency_level = rcl)
-            except cassandra.ttypes.NotFoundException:
-                value = default
-
-            # due to an old bug in NoneResult caching, we still have
-            # some of these around
-            if value == NoneResult:
-                value = default
-
-            new_value = mutation_fn(copy(value)) # send in a copy in
-                                                 # case they mutate it
-                                                 # in-place
-
-            if value != new_value:
-                self.cassa.set(key, new_value,
-                               write_consistency_level = wcl)
-            for ca in self.caches[:-1]:
-                # and update the rest of the chain; assumes that
-                # Cassandra is always the last entry
-                ca.set(key, new_value)
-        return new_value
-
-    def bulk_load(self, start='', end='', chunk_size = 100):
-        """Try to load everything out of Cassandra and put it into
-           memcached"""
-        cf = self.cassa.cf
-        for rows in in_chunks(cf.get_range(start=start,
-                                           finish=end,
-                                           columns=['value']),
-                              chunk_size):
-            print rows[0][0]
-            rows = dict((key, pickle.loads(cols['value']))
-                        for (key, cols)
-                        in rows
-                        if (cols
-                            # hack
-                            and len(key) < 250))
-            self.memcache.set_multi(rows)
+            return self._mutate(key, mutation_fn, default=default)
 
 
 class CassandraCache(CacheUtils):
@@ -598,7 +569,7 @@ class CassandraCache(CacheUtils):
         wcl = self._wcl(write_consistency_level)
         ret = self.cf.insert(key, {'value': pickle.dumps(val)},
                               write_consistency_level = wcl)
-        self._warm([key])
+
         return ret
 
     def set_multi(self, keys, prefix='',
@@ -613,20 +584,12 @@ class CassandraCache(CacheUtils):
             if val != NoneResult:
                 ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
                                           write_consistency_level = wcl)
-        self._warm(keys.keys())
 
         return ret
-
-    def _warm(self, keys):
-        import random
-        if False and random.random() > 0.98:
-            print 'Warming', keys
-            self.cf.multiget(keys)
 
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
         self.cf.remove(key, write_consistency_level = wcl)
-
 
 def test_cache(cache, prefix=''):
     #basic set/get
