@@ -237,6 +237,9 @@ class Reddit(Templated):
                                            "(read all about it on the blog)"],
                               show_cover = False, nocname = True))
 
+        ps.append(unsafe("<a href='http://blog.reddit.com/2010/09/reddit-helps-break-down-border-also.html'><img style='border:none' src='http://sp.reddit.com/mission.jpg'/></a>"))
+
+
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
