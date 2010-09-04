@@ -4135,6 +4135,7 @@ tr.gold-accent + tr > td {
     color: #583800;
     margin: 0px 5px 15px;
     padding: 7px 10px 7px 7px;
+    max-width: 500px;
 }
 
 .comment-visits-box .title {

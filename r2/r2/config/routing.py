@@ -176,7 +176,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
-       requirements=dict(action="help|blog"))
+       requirements=dict(action="help|blog|faq"))
     mc('/help/*anything', controller='embed', action='help')
 
     mc('/goto', controller='toolbar', action='goto')
