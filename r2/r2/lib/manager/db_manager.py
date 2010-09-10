@@ -130,13 +130,13 @@ class db_manager:
             else:
                 load, avg_load, conns, avg_conns, max_conns = ip_loads[ip]
 
-                #prune high-connection machines
-                #if conns < .9 * max_conns:
-                max_load = max(load, avg_load)
-                total_load += max_load
-                have_loads.append((ip, max_load))
-                #else:
-                #    no_connections.append(ip)
+                # remove high load machines from the pool.
+                if load < 100:
+                    max_load = max(load, avg_load)
+                    total_load += max_load
+                    have_loads.append((ip, max_load))
+                else:
+                    no_connections.append(ip)
 
         if total_load:
             avg_load = total_load / max(len(have_loads), 1)

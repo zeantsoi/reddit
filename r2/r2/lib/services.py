@@ -139,6 +139,11 @@ class AppServiceMonitor(Templated):
     def get_db_load(cls, names):
         return g.servicecache.get_multi(names, prefix = cls.cache_key_small)
 
+    @classmethod
+    def mark_db_down(cls, name):
+        g.servicecache.set(self.cache_key_small + name,
+                           ( 10 ** 6, 10 ** 6, -1, -1, -1))
+
     def server_load(self, mach_name):
         h = self.from_cache(host) 
         return h.load.most_recent()
