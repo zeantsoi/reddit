@@ -241,6 +241,7 @@ class Link(Thing, Printable):
         if wrapped.promoted is not None:
             s.extend([getattr(wrapped, "promote_status", -1),
                       getattr(wrapped, "disable_comments", False),
+                      getattr(wrapped, "media_override", False),
                       wrapped._date,
                       c.user_is_sponsor,
                       wrapped.url, repr(wrapped.title)])

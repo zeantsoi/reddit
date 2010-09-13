@@ -216,7 +216,7 @@ class PromoteController(ListingController):
             # comment disabling is free to be changed any time.
             l.disable_comments = disable_comments
 
-            if c.user_is_sponsor:
+            if c.user_is_sponsor or c.user.trusted_sponsor:
                 if media_embed and media_width and media_height:
                     l.media_object = dict(height = media_height,
                                           width = media_width,
