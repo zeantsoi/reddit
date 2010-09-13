@@ -3158,13 +3158,14 @@ def render_ad(reddit_name=None, codename=None):
 
     for adsr in AdSR.by_sr_merged(sr):
         ad = adsr._thing1
-        ads[ad.codename] = (ad, adsr.weight)
+        if not (ad.codename == "DART" and sr.over_18):
+            ads[ad.codename] = (ad, adsr.weight)
 
     total_weight = sum(t[1] for t in ads.values())
 
     if total_weight == 0:
         log_text("no ads", "No ads found for %s" % reddit_name, "error")
-        abort(404)
+        return ""
 
     lotto = random.randint(0, total_weight - 1)
     winner = None
