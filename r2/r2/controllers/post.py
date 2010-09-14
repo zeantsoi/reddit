@@ -78,6 +78,7 @@ class PostController(ApiController):
               pref_hide_ups = VBoolean('hide_ups'),
               pref_hide_downs = VBoolean('hide_downs'),
               pref_over_18 = VBoolean('over_18'),
+              pref_research = VBoolean('research'),
               pref_numsites = VInt('numsites', 1, 100),
               pref_lang = VLang('lang'),
               pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
