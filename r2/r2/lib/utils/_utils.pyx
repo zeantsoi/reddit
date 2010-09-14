@@ -256,7 +256,7 @@ cdef list _l(l):
     else:
         return list(l)
 
-def get_after(list fullnames, fullname, int num, bool reverse=False):
+def get_after(list fullnames, fullname, int num, reverse=False):
     cdef int i
 
     if reverse:
