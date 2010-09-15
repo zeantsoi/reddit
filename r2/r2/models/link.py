@@ -59,6 +59,7 @@ class Link(Thing, Printable):
                      pending = False,
                      disable_comments = False,
                      selftext = '',
+                     noselfreply = False,
                      ip = '0.0.0.0')
     _essentials = ('sr_id',)
     _nsfw = re.compile(r"\bnsfw\b", re.I)
@@ -556,7 +557,7 @@ class Comment(Thing, Printable):
         name = 'inbox'
         if parent:
             to = Account._byID(parent.author_id, True)
-        elif link.is_self:
+        elif link.is_self and not link.noselfreply:
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
 
