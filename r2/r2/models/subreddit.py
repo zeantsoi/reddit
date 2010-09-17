@@ -66,7 +66,6 @@ class Subreddit(Thing, Printable):
                      sponsorship_url = None,
                      sponsorship_img = None,
                      sponsorship_name = None,
-
                      # do we allow self-posts, links only, or any?
                      link_type = 'any', # one of ('link', 'self', 'any')
                      )

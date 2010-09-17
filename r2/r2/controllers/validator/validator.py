@@ -452,6 +452,18 @@ class VMarkdown(VLength):
             # reraise the original error with the original stack trace
             raise s[1], None, s[2]
 
+class VSelfText(VMarkdown):
+
+    def set_max_length(self, val):
+        self._max_length = val
+
+    def get_max_length(self):
+        if c.site.link_type == "self":
+            return self._max_length * 2.5
+        return self._max_length
+
+    max_length = property(get_max_length, set_max_length)
+
 class VSubredditName(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_SR_NAME, *a, **kw)

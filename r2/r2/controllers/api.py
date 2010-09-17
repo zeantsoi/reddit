@@ -192,7 +192,7 @@ class ApiController(RedditController):
                    url = VUrl(['url', 'sr']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
-                   selftext = VMarkdown('text'),
+                   selftext = VSelfText('text'),
                    kind = VOneOf('kind', ['link', 'self']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'),
@@ -723,7 +723,7 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
-                   text = VMarkdown('text'))
+                   text = VSelfText('text'))
     def POST_editusertext(self, form, jquery, item, text):
         if (not form.has_errors("text",
                                 errors.NO_TEXT, errors.TOO_LONG) and
