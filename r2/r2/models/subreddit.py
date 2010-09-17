@@ -740,7 +740,7 @@ class _DefaultSR(FakeSubreddit):
 
     @property
     def title(self):
-        return _("reddit.com: what's new online!")
+        return _("reddit.com: where dreams come true")
 
 # This is the base class for the instantiated front page reddit
 class DefaultSR(_DefaultSR):
