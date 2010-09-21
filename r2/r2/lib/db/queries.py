@@ -994,11 +994,11 @@ def process_votes_single(**kw):
 
 def process_votes_multi(limit=100):
     # limit is taken but ignored for backwards compatibility
-
     def _handle_vote(msgs, chan):
-        #assert(len(msgs) == 1)
         comments = []
+
         for msg in msgs:
+            tag = msg.delivery_tag
             r = pickle.loads(msg.body)
 
             uid, tid, dir, ip, organic, cheater = r
@@ -1013,14 +1013,18 @@ def process_votes_multi(limit=100):
                 continue
 
             print (voter, votee, dir, ip, organic, cheater)
-            handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater)
+            try:
+                handle_vote(voter, votee, dir, ip, organic,
+                            cheater = cheater)
+            except Exception, e:
+                print 'Rejecting %r:%r because of %r' % (msg.delivery_tag, r,e)
+                chan.basic_reject(msg.delivery_tag, requeue=True)
 
         update_comment_votes(comments)
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
-process_votes = process_votes_multi
+process_votes = process_votes_single
 
 def process_comment_sorts(limit=500):
     def _handle_sort(msgs, chan):
