@@ -202,8 +202,7 @@ class Reddit(Templated):
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
-        if not isinstance(c.site, FakeSubreddit):
-            ps.append(SponsorshipBox())
+        ps.append(SponsorshipBox())
 
         no_ads_yet = True
         #don't show the subreddit info bar on cnames

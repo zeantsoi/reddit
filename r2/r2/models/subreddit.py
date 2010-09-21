@@ -751,6 +751,10 @@ class DefaultSR(_DefaultSR):
             self._base = None
 
     @property
+    def _fullname(self):
+        return "default"
+
+    @property
     def header(self):
         return (self._base and self._base.header) or _DefaultSR.header
 
