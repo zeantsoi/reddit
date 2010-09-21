@@ -2585,7 +2585,6 @@ class PromotedTraffic(Traffic):
             self.preliminary = (until + datetime.timedelta(1) > now)
             self.traffic = load_traffic('hour', "thing", thing._fullname,
                                         start_time = d, stop_time = until)
-
             # load monthly totals if we have them, otherwise use the daily totals
             self.totals =  load_traffic('month', "thing", thing._fullname)
             if not self.totals:
@@ -2599,10 +2598,6 @@ class PromotedTraffic(Traffic):
 
         if len(imp) > 2:
             imp_total = sum(x[2] for x in imp)
-            # ensure total consistency:
-            if self.totals:
-                self.totals[1] = imp_total
-
             imp_total = locale.format('%d', imp_total, True)
             
             self.imp_graph = TrafficGraph(imp[-72:], ylabels = ['uniques', 'total'],
@@ -2610,9 +2605,6 @@ class PromotedTraffic(Traffic):
                                                    imp_total))
             cli = self.slice_traffic(self.traffic, 2, 3)
             cli_total = sum(x[2] for x in cli)
-            # ensure total consistency
-            if self.totals:
-                self.totals[3] = cli_total
             cli_total = locale.format('%d', cli_total, True)
             self.cli_graph = TrafficGraph(cli[-72:], ylabels = ['uniques', 'total'],
                                           title = ("recent clicks (%s total)" %
