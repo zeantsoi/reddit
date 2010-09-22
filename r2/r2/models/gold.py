@@ -191,9 +191,16 @@ def new_google_transaction(trans_id):
                                     secret=None,
                                     date=datetime.now(g.tz))
     except IntegrityError:
-        # google guarantees that they will send us a bunch of these.  we only
-        # need to store one to process the transaction
-        g.log.error("transaction id already exists in table: %s" % key)
+        s = sa.select([gold_table.c.trans_id],
+                      sa.and_(gold_table.c.status == 'declined',
+                              gold_table.c.trans_id == "g" + str(key)))
+        res = s.execute().fetchall()
+        if res:
+            gold_table.update(gold_table.c.trans_id == "g" + str(key),
+                              values = { gold_table.c.status : 'uncharged' }
+                              ).execute()
+        else:
+            g.log.error("transaction id already exists in table: %s" % key)
 
 
 def _google_ordernum_request(ordernums):
@@ -252,8 +259,9 @@ def process_google_transaction(trans_id):
                 sa.and_(gold_table.c.status == 'uncharged',
                         gold_table.c.trans_id == 'g' + str(trans_id)),
                 values = { gold_table.c.status : "declined" }).execute()
-        else:
-            g.log.error("google transaction not found: '%s'" % trans_id)
+        elif 'REVIEWING' not in [x.contents[0] for x in status]:
+            g.log.error("google transaction not found: '%s', status: %s"
+                        % (trans_id, [x.contents[0] for x in status]))
     elif auth.find("financial-order-state").contents[0] == "CHARGEABLE":
         email = str(auth.find("email").contents[0])
         payer_id = str(auth.find('buyer-id').contents[0])
