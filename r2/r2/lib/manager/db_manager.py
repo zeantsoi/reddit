@@ -76,8 +76,10 @@ class db_manager:
             yield name, (type1_name, type2_name, engines) 
 
     def mark_dead(self, engine):
+        from r2.lib import services
         logger.error("db_manager: marking connection dead: %r" % engine)
         self.dead[engine] = time.time()
+        services.AppServiceMonitor.mark_db_down(engine.url.host)
 
     def test_engine(self, engine):
         try:

@@ -141,7 +141,7 @@ class AppServiceMonitor(Templated):
 
     @classmethod
     def mark_db_down(cls, name):
-        g.servicecache.set(self.cache_key_small + name,
+        g.servicecache.set(cls.cache_key_small + name,
                            ( 10 ** 6, 10 ** 6, -1, -1, -1))
 
     def server_load(self, mach_name):
