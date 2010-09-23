@@ -3128,7 +3128,6 @@ class ComScore(CachedTemplate):
 def render_ad(reddit_name=None, codename=None):
     if not reddit_name:
         reddit_name = g.default_sr
-        return Dart_Ad(reddit_name).render()
 
     if codename:
         if codename == "DART":
