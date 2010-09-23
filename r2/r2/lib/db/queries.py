@@ -6,7 +6,7 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
-from r2.lib import amqp, sup
+from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 
 import cPickle as pickle
@@ -391,7 +391,7 @@ def get_domain_links_old(domain, sort, time):
 
 def get_domain_links(domain, sort, time):
     from r2.lib.db import operators
-    q = Link._query(operators.domain(Link.c.url) == domain,
+    q = Link._query(operators.domain(Link.c.url) == filters._force_utf8(domain),
                     sort = db_sort(sort),
                     data = True)
     if time != "all":
@@ -498,7 +498,7 @@ def get_unread_inbox(user):
                          get_unread_messages(user),
                          get_unread_selfreply(user))
 
-def add_queries(queries, insert_items = None, delete_items = None):
+def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
        recomputed against the database."""
@@ -508,10 +508,16 @@ def add_queries(queries, insert_items = None, delete_items = None):
     for q in queries:
         if insert_items and q.can_insert():
             log.debug("Inserting %s into query %s" % (insert_items, q))
-            worker.do(q.insert, insert_items)
+            if foreground:
+                q.insert(insert_items)
+            else:
+                worker.do(q.insert, insert_items)
         elif delete_items and q.can_delete():
             log.debug("Deleting %s from query %s" % (delete_items, q))
-            worker.do(q.delete, delete_items)
+            if foreground:
+                q.delete(delete_items)
+            else:
+                worker.do(q.delete, delete_items)
         else:
             raise Exception("Cannot update query %r!" % (q,))
 
@@ -591,7 +597,7 @@ def new_subreddit(sr):
     amqp.add_item('new_subreddit', sr._fullname)
 
 
-def new_vote(vote):
+def new_vote(vote, foreground=False):
     user = vote._thing1
     item = vote._thing2
 
@@ -621,7 +627,7 @@ def new_vote(vote):
             for sort in ("hot", "top", "controversial"):
                 results.append(get_domain_links(domain, sort, "all"))
 
-        add_queries(results, insert_items = item)
+        add_queries(results, insert_items = item, foreground=foreground)
 
     vote._fast_query_timestamp_touch(user)
     
@@ -927,7 +933,7 @@ def get_likes(user, items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, organic, cheater = False):
+def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
@@ -945,7 +951,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
     #                    sr_id, time = 86400 * 7) # 1 week for now
 
     if isinstance(thing, Link):
-        new_vote(v)
+        new_vote(v, foreground=foreground)
 
         #update the modified flags
         set_last_modified(user, 'liked')
@@ -988,7 +994,7 @@ def process_votes_single(**kw):
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater)
+                        cheater = cheater, foreground=True)
 
     amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
 
@@ -1015,7 +1021,7 @@ def process_votes_multi(limit=100):
             print (voter, votee, dir, ip, organic, cheater)
             try:
                 handle_vote(voter, votee, dir, ip, organic,
-                            cheater = cheater)
+                            cheater=cheater, foreground=True)
             except Exception, e:
                 print 'Rejecting %r:%r because of %r' % (msg.delivery_tag, r,e)
                 chan.basic_reject(msg.delivery_tag, requeue=True)
