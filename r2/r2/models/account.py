@@ -112,6 +112,10 @@ class Account(Thing):
                     return 0
 
     def incr_karma(self, kind, sr, amt):
+        if sr.name.startswith('_'):
+            g.log.info("Ignoring karma increase for subreddit %r" % (sr.name,))
+            return
+
         prop = '%s_%s_karma' % (sr.name, kind)
         if hasattr(self, prop):
             return self._incr(prop, amt)

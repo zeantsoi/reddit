@@ -377,7 +377,7 @@ class VCssMeasure(Validator):
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"^[\w]{3,20}$", re.UNICODE)
+subreddit_rx = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_]{2,20}$")
 
 def chksrname(x):
     #notice the space before reddit.com
