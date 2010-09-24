@@ -1224,3 +1224,18 @@ def strordict_fullname(item, key='fullname'):
                          % (item, d))
 
     return d
+
+def thread_dump(*a):
+    import sys, traceback
+    from datetime import datetime
+
+    sys.stderr.write('%(t)s Thread Dump @%(d)s %(t)s\n' % dict(t='*'*15,
+                                                               d=datetime.now()))
+
+    for thread_id, stack in sys._current_frames().items():
+        sys.stderr.write('\t-- Thread ID: %s--\n' %  (thread_id,))
+
+        for filename, lineno, fnname, line in traceback.extract_stack(stack):
+            sys.stderr.write('\t\t%(filename)s(%(lineno)d): %(fnname)s\n'
+                             % dict(filename=filename, lineno=lineno, fnname=fnname))
+            sys.stderr.write('\t\t\t%(line)s\n' % dict(line=line))

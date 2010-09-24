@@ -22,12 +22,14 @@
 from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
+import signal
 from datetime import timedelta, datetime
 import pycassa
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
 from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
+from r2.lib.utils import thread_dump
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -151,6 +153,10 @@ class Globals(object):
                 setattr(self, k, v)
 
         self.running_as_script = global_conf.get('running_as_script', False)
+
+        if hasattr(signal, 'SIGUSR1'):
+            # not all platforms have user signals
+            signal.signal(signal.SIGUSR1, thread_dump)
 
         # initialize caches. Any cache-chains built here must be added
         # to cache_chains (closed around by reset_caches) so that they
