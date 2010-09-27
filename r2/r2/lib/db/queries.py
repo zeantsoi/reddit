@@ -994,7 +994,7 @@ def process_votes_single(**kw):
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater, foreground=True)
+                        cheater = cheater, foreground=False)
 
     amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
 
@@ -1021,7 +1021,7 @@ def process_votes_multi(limit=100):
             print (voter, votee, dir, ip, organic, cheater)
             try:
                 handle_vote(voter, votee, dir, ip, organic,
-                            cheater=cheater, foreground=True)
+                            cheater=cheater, foreground=False)
             except Exception, e:
                 print 'Rejecting %r:%r because of %r' % (msg.delivery_tag, r,e)
                 chan.basic_reject(msg.delivery_tag, requeue=True)
@@ -1030,7 +1030,7 @@ def process_votes_multi(limit=100):
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
-process_votes = process_votes_multi
+process_votes = process_votes_single
 
 def process_comment_sorts(limit=500):
     def _handle_sort(msgs, chan):
