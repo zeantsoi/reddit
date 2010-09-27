@@ -1030,7 +1030,7 @@ def process_votes_multi(limit=100):
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
-process_votes = process_votes_single
+process_votes = process_votes_multi
 
 def process_comment_sorts(limit=500):
     def _handle_sort(msgs, chan):
