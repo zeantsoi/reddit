@@ -747,11 +747,11 @@ class ApiController(RedditController):
                 or (item._ups + item._downs > 2)):
                 item.editted = True
 
-            try:
-                lv = levenshtein(old, text)
-                item.levenshtein = getattr(item, 'levenshtein', 0) + lv
-            except:
-                pass
+            #try:
+            #    lv = levenshtein(old, text)
+            #    item.levenshtein = getattr(item, 'levenshtein', 0) + lv
+            #except:
+            #    pass
 
             item._commit()
 
