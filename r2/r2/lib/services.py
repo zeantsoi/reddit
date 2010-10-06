@@ -190,7 +190,12 @@ class AppServiceMonitor(Templated):
 def mark_db_down(servicecache, name):
     servicecache.set(AppServiceMonitor.cache_key_small + name,
                        ( 10 ** 6, 10 ** 6, -1, -1, -1))
-    
+
+def get_db_load(servicecache, names):
+    return servicecache.get_multi(names,
+                                  prefix = AppServiceMonitor.cache_key_small)
+
+
 class DataLogger(object):
     """
     simple stat tracker class.  Elements are added to a list of length

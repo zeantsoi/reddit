@@ -380,6 +380,8 @@ class Globals(object):
         return (x.strip() for x in v.split(delim) if x)
 
     def load_db_params(self, gc):
+        from r2.lib.services import get_db_load
+
         self.databases = tuple(self.to_iter(gc['databases']))
         self.db_params = {}
         if not self.databases:
@@ -395,7 +397,10 @@ class Globals(object):
                 params['db_user'] = self.db_user
             if params['db_pass'] == "*":
                 params['db_pass'] = self.db_pass
-            dbm.setup_db(db_name, **params)
+            ip = params['db_host']
+            ip_loads = get_db_load(self.servicecache, ip)
+            if ip not in ip_loads or ip_loads[ip][0] < 1000:
+                dbm.setup_db(db_name, **params)
             self.db_params[db_name] = params
 
         dbm.type_db = dbm.get_engine(gc['type_db'])
@@ -413,12 +418,12 @@ class Globals(object):
                 kind = params[0]
                 if kind == 'thing':
                     engines, flags = split_flags(params[1:])
-                    dbm.add_thing(name, [dbm.get_engine(n) for n in engines],
+                    dbm.add_thing(name, dbm.get_engines(engines),
                                   **flags)
                 elif kind == 'relation':
                     engines, flags = split_flags(params[3:])
                     dbm.add_relation(name, params[1], params[2],
-                                     [dbm.get_engine(n) for n in engines],
+                                     dbm.get_engines(engines),
                                      **flags)
         return dbm
 

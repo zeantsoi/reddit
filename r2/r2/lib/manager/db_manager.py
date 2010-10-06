@@ -97,6 +97,9 @@ class db_manager:
     def get_engine(self, name):
         return self._engines[name]
 
+    def get_engines(self, names):
+        return [self._engines[name] for name in names if name in self._engines]
+
     def get_read_table(self, tables):
         from r2.lib.services import AppServiceMonitor
         # short-cut for only one element
