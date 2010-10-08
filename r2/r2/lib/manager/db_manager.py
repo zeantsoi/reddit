@@ -61,10 +61,10 @@ class db_manager:
         self._relations[name] = (type1, type2, relation_dbs)
         self.avoid_master_reads[name] = avoid_master
 
-    def setup_db(self, db_name, **params):
+    def setup_db(self, db_name, g_override=None, **params):
         engine = get_engine(**params)
         self._engines[db_name] = engine
-        self.test_engine(engine)
+        self.test_engine(engine, g_override)
 
     def things_iter(self):
         for name, engines in self._things.iteritems():
@@ -75,13 +75,16 @@ class db_manager:
             engines = [e for e in engines if e not in self.dead]
             yield name, (type1_name, type2_name, engines) 
 
-    def mark_dead(self, engine):
+    def mark_dead(self, engine, g_override=None):
         from r2.lib import services
         logger.error("db_manager: marking connection dead: %r" % engine)
         self.dead[engine] = time.time()
-        services.AppServiceMonitor.mark_db_down(engine.url.host)
+        if g_override is None:
+            services.AppServiceMonitor.mark_db_down(engine.url.host)
+        else:
+            services.mark_db_down(g_override.servicecache, engine.url.host)
 
-    def test_engine(self, engine):
+    def test_engine(self, engine, g_override=None):
         try:
             list(engine.execute("select 1"))
             if engine in self.dead:
@@ -91,7 +94,7 @@ class db_manager:
         except Exception, e:
             logger.error(traceback.format_exc())
             logger.error("connection failure: %r" % engine)
-            self.mark_dead(engine)
+            self.mark_dead(engine, g_override)
             return False
 
     def get_engine(self, name):

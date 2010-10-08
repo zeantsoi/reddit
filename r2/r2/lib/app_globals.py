@@ -400,7 +400,7 @@ class Globals(object):
             ip = params['db_host']
             ip_loads = get_db_load(self.servicecache, ip)
             if ip not in ip_loads or ip_loads[ip][0] < 1000:
-                dbm.setup_db(db_name, **params)
+                dbm.setup_db(db_name, g_override=self, **params)
             self.db_params[db_name] = params
 
         dbm.type_db = dbm.get_engine(gc['type_db'])
