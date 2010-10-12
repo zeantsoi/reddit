@@ -294,9 +294,8 @@ def get_spam(sr):
         results = [ get_spam_links(sr) for sr in srs ]
         return merge_results(*results)
     else:
-        return get_spam_links(sr)
-    #return merge_results(get_spam_links(sr),
-    #                     get_spam_comments(sr))
+        return merge_results(get_spam_links(sr),
+                             get_spam_comments(sr))
 
 def get_reported_links(sr):
     q_l = Link._query(Link.c.reported != 0,
@@ -315,12 +314,13 @@ def get_reported_comments(sr):
 def get_reported(sr):
     if isinstance(sr, ModContribSR):
         srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
-        results = [ get_reported_links(sr) for sr in srs ]
+        results = []
+        results.extend(get_reported_links(sr) for sr in srs)
+        results.extend(get_reported_comments(sr) for sr in srs)
         return merge_results(*results)
     else:
-        return get_reported_links(sr)
-    #return merge_results(get_reported_links(sr),
-    #                     get_reported_comments(sr))
+        return merge_results(get_reported_links(sr),
+                             get_reported_comments(sr))
 
 # TODO: Wow, what a hack. I'm doing this in a hurry to make
 # /r/blah/about/trials and /r/blah/about/modqueue work. At some point
@@ -378,11 +378,15 @@ def get_modqueue(sr):
 
         for sr in srs:
             results.append(get_reported_links(sr))
+            results.append(get_reported_comments(sr))
             results.append(get_spam_links(sr))
+            results.append(get_spam_comments(sr))
     else:
         results.append(get_trials_links(sr))
         results.append(get_reported_links(sr))
+        results.append(get_reported_comments(sr))
         results.append(get_spam_links(sr))
+        results.append(get_spam_comments(sr))
 
     return merge_results(*results)
 
@@ -569,9 +573,9 @@ def new_comment(comment, inbox_rels):
         job.append(get_all_comments())
         add_queries(job, delete_items = comment)
     else:
-        #if comment._spam:
-        #    sr = Subreddit._byID(comment.sr_id)
-        #    job.append(get_spam_comments(sr))
+        if comment._spam:
+            sr = Subreddit._byID(comment.sr_id)
+            job.append(get_spam_comments(sr))
         add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
         if not g.amqp_host:
@@ -746,7 +750,7 @@ def del_or_ban(things, why):
             add_queries(results, delete_items = links)
 
         if comments:
-            # add_queries([get_spam_comments(sr)], insert_items = comments)
+            add_queries([get_spam_comments(sr)], insert_items = comments)
             add_queries([get_all_comments()], delete_items = comments)
 
     changed(things)
@@ -776,7 +780,7 @@ def unban(things):
             add_queries(results, insert_items = links)
 
         if comments:
-            #add_queries([get_spam_comments(sr)], delete_items = comments)
+            add_queries([get_spam_comments(sr)], delete_items = comments)
             add_queries([get_all_comments()], insert_items = comments)
 
     changed(things)
@@ -785,9 +789,9 @@ def new_report(thing):
     if isinstance(thing, Link):
         sr = Subreddit._byID(thing.sr_id)
         add_queries([get_reported_links(sr)], insert_items = thing)
-    #elif isinstance(thing, Comment):
-    #    sr = Subreddit._byID(thing.sr_id)
-    #    add_queries([get_reported_comments(sr)], insert_items = thing)
+    elif isinstance(thing, Comment):
+        sr = Subreddit._byID(thing.sr_id)
+        add_queries([get_reported_comments(sr)], insert_items = thing)
 
 def clear_reports(things):
     by_srid, srs = _by_srid(things)
@@ -810,9 +814,9 @@ def add_all_ban_report_srs():
     q = Subreddit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
         add_queries([get_spam_links(sr),
-                     #get_spam_comments(sr),
+                     get_spam_comments(sr),
                      get_reported_links(sr),
-                     #get_reported_comments(sr),
+                     get_reported_comments(sr),
                      ])
         
 def add_all_srs():
@@ -825,9 +829,9 @@ def add_all_srs():
         for q in all_queries(get_links, sr, time_filtered_sorts, db_times.keys()):
             q.update()
         get_spam_links(sr).update()
-        #get_spam_comments(sr).update()
+        get_spam_comments(sr).update()
         get_reported_links(sr).update()
-        #get_reported_comments(sr).update()
+        get_reported_comments(sr).update()
 
 def update_user(user):
     if isinstance(user, str):

@@ -370,7 +370,7 @@ class FrontController(RedditController):
 
         def keep_fn(x):
             # no need to bother mods with banned users, or deleted content
-            if x.hidden or x._deleted:
+            if getattr(x,'hidden',False) or x._deleted:
                 return False
 
             if location == "reports":
