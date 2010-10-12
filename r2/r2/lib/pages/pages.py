@@ -22,7 +22,7 @@
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
@@ -205,8 +205,14 @@ class Reddit(Templated):
         ps.append(SponsorshipBox())
 
         no_ads_yet = True
-        #don't show the subreddit info bar on cnames
+        if isinstance(c.site, MultiReddit) and c.user_is_loggedin:
+            srs = Subreddit._byID(c.site.sr_ids,data=True,
+                                  return_dict=False)
+            if srs:
+                ps.append(SideContentBox(_('these reddits'),[SubscriptionBox(srs=srs)]))
+
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
+            #don't show the subreddit info bar on cnames
             ps.append(SubredditInfoBar())
             if c.user.pref_show_adbox or not c.user.gold:
                 ps.append(Ads())
@@ -1282,11 +1288,16 @@ class SubredditTopBar(CachedTemplate):
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
+    def __init__(self, srs=None):
+        if srs is None:
+            srs = Subreddit.user_subreddits(c.user, ids = False)
+        srs.sort(key = lambda sr: sr.name.lower())
+        self.srs = srs
+        Templated.__init__(self, srs=srs)
+
     @property
     def reddits(self):
-        srs = Subreddit.user_subreddits(c.user, ids = False)
-        srs.sort(key = lambda sr: sr.name.lower())
-        return wrap_links(srs)
+        return wrap_links(self.srs)
 
 class CreateSubreddit(Templated):
     """reddit creation form."""
