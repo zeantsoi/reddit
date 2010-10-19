@@ -218,7 +218,9 @@ class Reddit(Templated):
                 ps.append(Ads())
             no_ads_yet = False
 
-        if request.fullpath == '/' and not c.cname:
+        if (request.fullpath == '/' and
+            (c.user.pref_show_sponsorships or not c.user.gold) and
+            not c.cname):
             ps.append(unsafe("<iframe id='opera-ad-frame' frameborder='0' scrolling='no' name='opera-ad-frame' src='http://www.opera.com/portal/reddit/banner/' style='height: 100px; width: 300px;'></iframe>"))
 
         if self.submit_box:

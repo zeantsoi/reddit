@@ -67,7 +67,8 @@ class Account(Thing):
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
                      pref_show_adbox = True,
-                     pref_show_sponsors = True,
+                     pref_show_sponsors = True, # sponsored links
+                     pref_show_sponsorships = True,
                      pref_highlight_new_comments = True,
                      mobile_compress = False,
                      mobile_thumbnail = True,
