@@ -3713,6 +3713,10 @@ dd { margin-left: 20px;  }
     font-size: 19px;
 }
 
+.titlebox h1 a {
+    color: black;
+}
+
 .titlebox .karma {
     font-size: 18px;
     font-weight: bold;

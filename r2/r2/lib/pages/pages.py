@@ -162,7 +162,7 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
 
     def sr_admin_menu(self):
-        buttons = [NavButton('community_settings', css_class = 'reddit-edit',
+        buttons = [NavButton(menu.community_settings, css_class = 'reddit-edit',
                              dest = "edit"),
                    NamedButton('modmail', dest = "message/inbox",
                                css_class = 'moderator-mail'),
