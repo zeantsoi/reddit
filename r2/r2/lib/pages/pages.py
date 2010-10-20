@@ -373,8 +373,6 @@ class RedditFooter(CachedTemplate):
 
     def __init__(self):
         self.nav = [NavMenu([
-                         OffsiteButton(_("gold"), nocname=True,
-                                       dest = '/help/gold', css_class = "buygold"),
                          OffsiteButton("mobile",
                                        "/static/reddit_mobile/index.htm"),
                          OffsiteButton("rss", dest = '/.rss'),
@@ -402,7 +400,10 @@ class RedditFooter(CachedTemplate):
                          NamedButton("widget", True)],
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
-                    NavMenu([NamedButton("blog", False, nocname=True),
+                    NavMenu([
+                         NamedButton("blog", False, nocname=True),
+                         NamedButton("gold", False, nocname=True,
+                                     dest = '/help/gold', css_class = "buygold"),
                          NamedButton("promote", False, nocname=True,
                                      dest = '/promoted', css_class = "red"),
                          NamedButton("ad_inq", False, nocname=True)],
