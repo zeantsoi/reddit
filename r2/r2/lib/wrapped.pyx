@@ -362,6 +362,7 @@ class Templated(object):
         return res
 
     def _write_cache(self, keys):
+        return
         from pylons import g
 
         if not keys:
@@ -374,6 +375,7 @@ class Templated(object):
         g.rendercache.set_multi(toset)
 
     def _read_cache(self, keys):
+        return {}
         from pylons import g
 
         ekeys = {}
