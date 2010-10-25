@@ -70,6 +70,7 @@
                          style = "" if thing.creating else "display: none")}
 
         ${error_field("TOO_LONG", thing.name, "span")}
+        ${error_field("INVALID_EXPONENT", thing.name, "span")}
         ${error_field("RATELIMIT", "ratelimit", "span")}
         ${error_field("NO_TEXT", thing.name, "span")}
         ${error_field("TOO_OLD", "parent", "span")}

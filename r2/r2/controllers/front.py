@@ -275,14 +275,9 @@ class FrontController(RedditController):
         c.previous_visits = previous_visits
 
 
-        if num == 1000:
-            num_override = 1500
-        else:
-            num_override = num
-
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
-                                       comment, context, num_override, **kw))
+                                       comment, context, num, **kw))
 
         subtitle_buttons = []
 

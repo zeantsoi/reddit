@@ -27,6 +27,7 @@ from cStringIO import StringIO
 from xml.sax.handler import ContentHandler
 from lxml.sax import saxify
 import lxml.etree
+from BeautifulSoup import BeautifulSoup
 
 from pylons import g, c
 
@@ -160,7 +161,7 @@ markdown_ok_tags = {
     }
 markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
                          'pre', 'code', 'blockquote', 'center',
-                         'tbody', 'thead', "tr",
+                         'tbody', 'thead', 'tr', 'sup', 'del',
                          'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
 for bt in markdown_boring_tags:
     markdown_ok_tags[bt] = ()
@@ -175,6 +176,15 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
     tree = lxml.etree.parse(s)
     handler = SouptestSaxHandler(markdown_ok_tags)
     saxify(tree, handler)
+
+    if '<sup>' in smd and not c.user.gold:
+        soup = BeautifulSoup(smd)
+        for sup in soup('sup'):
+            ss = str(sup).lower()
+            if (not ss.startswith('<sup>') or
+                not ss.endswith('</sup>') or
+                ss[5:-6] not in ('0', '1', '2')):
+                raise OverflowError("invalid exponent")
 
     return smd
 

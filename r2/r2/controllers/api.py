@@ -174,7 +174,8 @@ class ApiController(RedditController):
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
                                 errors.NO_USER, errors.SUBREDDIT_NOEXIST) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
-                form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
+                form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG,
+                                errors.INVALID_EXPONENT) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
 
             m, inbox_rel = Message._new(c.user, to, subject, body, ip)
@@ -273,7 +274,7 @@ class ApiController(RedditController):
 #                return
 
         else:
-            form.has_errors('text', errors.TOO_LONG)
+            form.has_errors('text', errors.TOO_LONG, errors.INVALID_EXPONENT)
 
         if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
             pass
@@ -726,7 +727,8 @@ class ApiController(RedditController):
                    text = VSelfText('text'))
     def POST_editusertext(self, form, jquery, item, text):
         if (not form.has_errors("text",
-                                errors.NO_TEXT, errors.TOO_LONG) and
+                                errors.NO_TEXT, errors.TOO_LONG,
+                                errors.INVALID_EXPONENT) and
             not form.has_errors("thing_id", errors.NOT_AUTHOR)):
 
             if isinstance(item, Comment):
@@ -800,6 +802,7 @@ class ApiController(RedditController):
 
         if (not commentform.has_errors("text",
                                        errors.NO_TEXT,
+                                       errors.INVALID_EXPONENT,
                                        errors.TOO_LONG) and
             not commentform.has_errors("ratelimit",
                                        errors.RATELIMIT) and

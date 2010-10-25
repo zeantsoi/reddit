@@ -497,6 +497,7 @@ class UserController(ListingController):
         # keep promotions off of profile pages.
         def keep(item):
             wouldkeep = True
+            # TODO: Consider a flag to disable this (and see below plus builder.py)
             if item._deleted:
                 return False
             if self.time != 'all':
@@ -618,6 +619,7 @@ class MessageController(ListingController):
     def keep_fn(self):
         def keep(item):
             wouldkeep = item.keep_item(item)
+            # TODO: Consider a flag to disable this (and see above plus builder.py)
             if item._deleted or item._spam:
                 return False
             # don't show user their own unread stuff

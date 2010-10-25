@@ -471,6 +471,7 @@ class SearchBuilder(IDBuilder):
         # doesn't use the default keep_item because we want to keep
         # things that were voted on, even if they've chosen to hide
         # them in normal listings
+        # TODO: Consider a flag to disable this (and see listingcontroller.py)
         if item._spam or item._deleted:
             return False
         else:
