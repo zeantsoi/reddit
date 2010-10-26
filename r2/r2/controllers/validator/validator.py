@@ -442,10 +442,6 @@ class VMarkdown(VLength):
         try:
             markdown_souptest(text)
             return text
-        except OverflowError:
-            print "overflow"
-            self.set_error(errors.INVALID_EXPONENT)
-            return text
         except ValueError:
             import sys
             user = "???"

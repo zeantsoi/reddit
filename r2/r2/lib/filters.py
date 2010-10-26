@@ -177,15 +177,6 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
     handler = SouptestSaxHandler(markdown_ok_tags)
     saxify(tree, handler)
 
-    if '<sup>' in smd and not c.user.gold:
-        soup = BeautifulSoup(smd)
-        for sup in soup('sup'):
-            ss = str(sup).lower()
-            if (not ss.startswith('<sup>') or
-                not ss.endswith('</sup>') or
-                ss[5:-6] not in ('0', '1', '2')):
-                raise OverflowError("invalid exponent")
-
     return smd
 
 #TODO markdown should be looked up in batch?
