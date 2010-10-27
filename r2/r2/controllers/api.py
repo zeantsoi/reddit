@@ -2232,4 +2232,6 @@ class ApiController(RedditController):
                      c.start_time.astimezone(g.display_tz).strftime("%Y-%m-%d %H:%M:%S"))
             key = "rally-%s-%s" % (c.user.name, friend.name)
             g.hardcache.add(key, d, 86400 * 365)
+            g.log.info("%s from %s met %s" %
+                       (c.user.name, request.ip, friend.name))
             form.set_html(".status", "Your connection has been noted. And here's a link to <a href='%s'>%s's userpage</a> if you want to become reddit friends." % (user_page, friend.name))

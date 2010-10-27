@@ -203,7 +203,8 @@ class Reddit(Templated):
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
-        ps.append(SponsorshipBox())
+        if c.user.pref_show_sponsorships or not c.user.gold:
+            ps.append(SponsorshipBox())
 
         no_ads_yet = True
         if isinstance(c.site, MultiReddit) and c.user_is_loggedin:
