@@ -28,7 +28,9 @@
 
   %if thing.link:
     <div class="rallyinfo">
-      Print this page out and take it with you to the rally.
+      Print this page out and take it with you to the rally.<br/>
+      Optionally, handwrite answers to the conversation-starters on the right.<br/>
+      And please don't pass your code around online.
 ## See <a href="http://blog.reddit.com/something">this link</a> for details.
     </div>
     <table class="rally">
@@ -39,6 +41,7 @@
           <p>Hometown: ____________________________________________</p>
           <p>Hobbies: ______________________________________________</p>
           <p>Favorite reddits: ________________________________________</p>
+          <p>Rallying for:&nbsp;&nbsp;[&nbsp;&nbsp;] Fear&nbsp;&nbsp;&nbsp;[&nbsp;&nbsp;] Sanity&nbsp;&nbsp;&nbsp;[&nbsp;&nbsp;] Other: __________________</p>
         </td>
       </tr>
       <tr> <td>
@@ -78,7 +81,7 @@
         </%utils:round_field>
       </div>
 
-      <button type="submit" class="btn">${_("submit")}</button>
+      <button type="submit" class="btn">${"I swear I met this person in real life."}</button>
       <div class="status"></div>
     </form>
   %endif
