@@ -173,6 +173,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/thanks', controller='forms', action="thanks", secret = '')
     mc('/thanks/:secret', controller='forms', action="thanks")
 
+    mc('/rally', controller='forms', action="rally", friend = None, code = None)
+    mc('/rally/:friend/:code', controller='forms', action="rally")
+
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))

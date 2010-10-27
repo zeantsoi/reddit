@@ -983,3 +983,10 @@ class FormsController(RedditController):
     def GET_thanks(self, secret):
         """The page to claim reddit gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
+
+    @validate(VUser())
+    def GET_rally(self, friend, code):
+        """Temporary URL for DC Rally networking"""
+        r = Rally(friend, code)
+        return BoringPage(_("rally"), content=r, show_sidebar=False,
+                          footer=False, srbar=False).render()

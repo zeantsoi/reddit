@@ -31,6 +31,7 @@ from r2.models import *
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
+from r2.lib.utils import rally_code
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget, UrlParser
@@ -2193,3 +2194,42 @@ class ApiController(RedditController):
                 jquery.redirect(res)
             else:    
                 form.set_html(".status", _("error (sorry)"))
+
+    @validatedForm(VUser(),
+                   friend = VExistingUname('friend'),
+                   code = VPrintable("code", 200))
+    def POST_rally(self, form, jquery, friend, code):
+        if form.has_errors("friend", errors.USER_DOESNT_EXIST,
+                                     errors.NO_USER):
+            pass
+
+        if form.has_errors("code", errors.NO_TEXT):
+            pass
+
+        if form.has_error():
+            return
+
+        if friend._id == c.user._id:
+            form.set_html(".status", "Nice try, but you can't vouch for yourself.")
+            return
+
+        try:
+            ic = int(code)
+        except ValueError:
+            ic = -1
+
+        compose_link = "/message/compose?to=%s&subject=we+met+at+the+rally" % friend.name
+        user_page = "/user/" + friend.name
+
+        real_code = rally_code(friend)
+        if ic != real_code:
+            g.log.warning("%s from %s guessed %s for %s" %
+                          (c.user.name, request.ip, code, friend.name))
+            form.set_html(".status", "You seem to have the wrong code. :( However, if you <a href='%s'>write to %s</a> you can find out the correct one." % (compose_link, friend.name))
+        else:
+            d = dict(ip=request.ip,
+                     timestamp =
+                     c.start_time.astimezone(g.display_tz).strftime("%Y-%m-%d %H:%M:%S"))
+            key = "rally-%s-%s" % (c.user.name, friend.name)
+            g.hardcache.add(key, d, 86400 * 365)
+            form.set_html(".status", "Your connection has been noted. And here's a link to <a href='%s'>%s's userpage</a> if you want to become reddit friends." % (user_page, friend.name))

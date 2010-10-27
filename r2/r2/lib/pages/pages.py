@@ -114,7 +114,8 @@ class Reddit(Templated):
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
-                 show_sidebar = True, footer = True, **context):
+                 show_sidebar = True, footer = True, srbar = True,
+                 **context):
         Templated.__init__(self, **context)
         self.title          = title
         self.robots         = robots
@@ -124,7 +125,7 @@ class Reddit(Templated):
         self.space_compress = space_compress
         # instantiate a footer
         self.footer         = RedditFooter() if footer else None
-        
+
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
 
@@ -151,7 +152,7 @@ class Reddit(Templated):
             self.infobar = InfoBar(message = infotext)
 
         self.srtopbar = None
-        if not c.cname and not is_api():
+        if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
         if c.user_is_loggedin and self.show_sidebar and not is_api():
@@ -237,7 +238,7 @@ class Reddit(Templated):
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
 
-        if True and not c.user.gold and self.submit_box:
+        if False and not c.user.gold and self.submit_box:
             ps.append(SideBox(_('New subscriber features!'),
                               'http://blog.reddit.com/2010/10/quiet-ads-new-features-and-important.html',
                               'gold',
@@ -636,6 +637,7 @@ class BoringPage(Reddit):
         name = c.site.name or g.default_sr
         if "title" not in context:
             context['title'] = "%s: %s" % (name, pagename)
+
         Reddit.__init__(self, **context)
 
     def build_toolbars(self):
@@ -1351,6 +1353,24 @@ class Thanks(Templated):
             lounge_html = None
         Templated.__init__(self, status=status, secret=secret,
                            lounge_html=lounge_html)
+
+class Rally(Templated):
+    """Temporary URL for DC Rally networking"""
+    def __init__(self, friend, code):
+        from r2.lib.utils import rally_code
+
+        if friend is None:
+            code = rally_code(c.user)
+            link = "reddit.com/rally/%s/%d" % (c.user.name, code)
+            since = c.user._date.strftime("%m/%Y")
+            karma = "%d / %d" % (c.user.link_karma, c.user.comment_karma)
+        else:
+            link = None
+            since = None
+            karma = None
+
+        Templated.__init__(self, friend=friend, link=link, code=code,
+                           since=since, karma=karma)
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""

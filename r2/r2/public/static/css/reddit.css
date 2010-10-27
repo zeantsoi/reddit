@@ -4172,3 +4172,56 @@ tr.gold-accent + tr > td {
     border: solid 1px #cddaf3;
     margin: -1px 0;
 }
+
+.rallyinfo {
+    margin-top: 10px;
+    font-style: italic;
+}
+
+.rally td {
+    text-align: center;
+}
+
+.rally .username {
+    font-size: 25px;
+    font-family: monospace;
+}
+
+.rally .code {
+    font-size: 20px;
+}
+
+.rally .actualcode {
+    font-family: monospace;
+}
+
+.rally .codetitle {
+    color: #888;
+}
+
+.rally .userlink {
+    line-height: 25px;
+    font-size: 10px;
+    font-family: monospace;
+}
+
+.rally-instructions {
+    font-size: 15px;
+    margin-bottom: 5px;
+}
+
+.rallyform .status {
+    margin-top: 10px;
+}
+
+.rally .age, .rally .karma {
+    font-style: italic;
+}
+
+.rally .faves {
+    vertical-align: top;
+    text-align: left;
+    padding-top: 20px;
+    font-size: 15px;
+    line-height: 30px;
+}

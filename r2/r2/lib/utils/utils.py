@@ -1239,3 +1239,11 @@ def thread_dump(*a):
             sys.stderr.write('\t\t%(filename)s(%(lineno)d): %(fnname)s\n'
                              % dict(filename=filename, lineno=lineno, fnname=fnname))
             sys.stderr.write('\t\t\t%(line)s\n' % dict(line=line))
+
+def rally_code(account):
+    from hashlib import md5
+    from pylons import g
+    hash_in = str(account._id) + g.SECRET
+    md5hex = md5(hash_in).hexdigest()
+    i = int(md5hex[:8], 16)
+    return i % 100
