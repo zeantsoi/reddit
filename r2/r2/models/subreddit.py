@@ -182,6 +182,9 @@ class Subreddit(Thing, Printable):
     def subscribers(self):
         return self.subscriber_ids()
 
+    def spammy(self):
+        return self._spam
+
     def can_comment(self, user):
         if c.user_is_admin:
             return True
@@ -598,6 +601,9 @@ class FakeSubreddit(Subreddit):
         from r2.lib.db import queries
         return queries.get_all_comments()
 
+    def spammy(self):
+        return False
+
 class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
@@ -797,6 +803,10 @@ class MultiReddit(_DefaultSR):
         _DefaultSR.__init__(self)
         self.real_path = path
         self.sr_ids = sr_ids
+
+    def spammy(self):
+        srs = Subreddit._byID(self.sr_ids, return_dict=False)
+        return any(sr._spam for sr in srs)
 
     @property
     def path(self):

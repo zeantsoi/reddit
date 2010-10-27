@@ -739,7 +739,7 @@ class RedditController(MinimalController):
 
 
         # check that the site is available:
-        if c.site._spam and not c.user_is_admin and not c.error_page:
+        if c.site.spammy() and not c.user_is_admin and not c.error_page:
             abort(404, "not found")
 
         # check if the user has access to this subreddit
