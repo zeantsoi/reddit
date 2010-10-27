@@ -1362,9 +1362,9 @@ class Rally(Templated):
 
         if friend is None:
             code = rally_code(c.user)
-            link = "reddit.com/rally/%s/%d" % (c.user.name, code)
+            link = "reddit.com/rally/%s/%s" % (c.user.name, code)
             since = c.user._date.strftime("%m/%Y")
-            lk = max(0,c.user.link_karma)
+            lk = max(0, c.user.link_karma)
             ck = max(0, c.user.comment_karma)
             karma = "%d / %d" % (lk, ck)
         else:

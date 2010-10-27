@@ -1246,4 +1246,4 @@ def rally_code(account):
     hash_in = str(account._id) + g.SECRET
     md5hex = md5(hash_in).hexdigest()
     i = int(md5hex[:8], 16)
-    return i % 100
+    return '%0.2d' % (i % 100)

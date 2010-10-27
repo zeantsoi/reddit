@@ -2221,7 +2221,7 @@ class ApiController(RedditController):
         compose_link = "/message/compose?to=%s&subject=we+met+at+the+rally" % friend.name
         user_page = "/user/" + friend.name
 
-        real_code = rally_code(friend)
+        real_code = int(rally_code(friend))
         if ic != real_code:
             g.log.warning("%s from %s guessed %s for %s" %
                           (c.user.name, request.ip, code, friend.name))
