@@ -1364,7 +1364,9 @@ class Rally(Templated):
             code = rally_code(c.user)
             link = "reddit.com/rally/%s/%d" % (c.user.name, code)
             since = c.user._date.strftime("%m/%Y")
-            karma = "%d / %d" % (c.user.link_karma, c.user.comment_karma)
+            lk = max(0,c.user.link_karma)
+            ck = max(0, c.user.comment_karma)
+            karma = "%d / %d" % (lk, ck)
         else:
             link = None
             since = None
