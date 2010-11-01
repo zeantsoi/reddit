@@ -1360,20 +1360,10 @@ class Rally(Templated):
     def __init__(self, friend, code):
         from r2.lib.utils import rally_code
 
-        if friend is None:
-            code = rally_code(c.user)
-            link = "reddit.com/rally/%s/%s" % (c.user.name, code)
-            since = c.user._date.strftime("%m/%Y")
-            lk = max(0, c.user.link_karma)
-            ck = max(0, c.user.comment_karma)
-            karma = "%d / %d" % (lk, ck)
-        else:
-            link = None
-            since = None
-            karma = None
+        users_code = rally_code(c.user)
 
-        Templated.__init__(self, friend=friend, link=link, code=code,
-                           since=since, karma=karma)
+        Templated.__init__(self, friend=friend, code=code,
+                           users_code=users_code)
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""

@@ -26,37 +26,6 @@
 
 <%! from r2.lib.strings import strings %>
 
-  %if thing.link:
-    <div class="rallyinfo">
-      Print this page out and take it with you to the rally.<br/>
-      Optionally, handwrite answers to the conversation-starters on the right.<br/>
-      And please don't pass your code around online.
-## See <a href="http://blog.reddit.com/something">this link</a> for details.
-    </div>
-    <table class="rally">
-      <tr> <td>
-          <img src="http://chart.apis.google.com/chart?cht=qr&chs=200x200&chl=http%3a//www.${thing.link}" />
-      </td> <td rowspan="2" class="faves">
-          <p>First name: ____________________________________________</p>
-          <p>Hometown: ____________________________________________</p>
-          <p>Hobbies: ______________________________________________</p>
-          <p>Favorite reddits: ________________________________________</p>
-          <p>Rallying for:&nbsp;&nbsp;[&nbsp;&nbsp;] Fear&nbsp;&nbsp;&nbsp;[&nbsp;&nbsp;] Sanity&nbsp;&nbsp;&nbsp;[&nbsp;&nbsp;] Other: __________________</p>
-        </td>
-      </tr>
-      <tr> <td>
-          <div class="username">${c.user.name}</div>
-          <div class="code">
-            <span class="codetitle">code:&#32;</span>
-            <span class="actualcode">${thing.code}</span>
-          </div>
-          <div class="userlink">${thing.link}</div>
-          <div class="age">redditor since ${thing.since}</div>
-          <div class="karma">karma: ${thing.karma}</div>
-      </td> </tr>
-    </div>
-</table>
-  %else:
     <form id="rally" action="/api/rally" method="post"
           class="rallyform content"
           onsubmit="return post_form(this, 'rally');">
@@ -84,4 +53,5 @@
       <button type="submit" class="btn">${"I swear I met this person in real life."}</button>
       <div class="status"></div>
     </form>
-  %endif
+<br/>
+<i>Note: Your own code was ${thing.users_code}, in case you forgot.</i>
