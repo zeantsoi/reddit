@@ -240,9 +240,9 @@ def finished_promo(thing):
     return _promo_email(thing, Email.Kind.FINISHED_PROMO)
 
 
-def send_html_email(to_addr, from_addr, subject, html):
+def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     from r2.lib.filters import _force_utf8
-    msg = MIMEText(_force_utf8(html), "html")
+    msg = MIMEText(_force_utf8(html), subtype)
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = to_addr

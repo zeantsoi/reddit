@@ -2230,3 +2230,31 @@ class ApiController(RedditController):
             g.log.info("%s from %s met %s" %
                        (c.user.name, request.ip, friend.name))
             form.set_html(".status", "Your connection has been noted. And here's a link to <a href='%s'>%s's userpage</a> if you want to become reddit friends." % (user_page, friend.name))
+
+    @validatedForm(VVerifiedUser(),
+                   role = VPrintable('role', 100),
+                   resume = VLength("resume", 30000))
+    def POST_apply(self, form, jquery, role, resume):
+        from r2.lib.emailer import send_html_email
+
+        if form.has_errors("resume", errors.NO_TEXT):
+            pass
+
+        if form.has_error():
+            return
+
+        if role not in ("programmer", "sysadmin", "sysarch", "dba"):
+            form.set_html(".status", "Please pick a role other than 'cheater'")
+        else:
+            from_addr = "%s <%s>" % (c.user.name, c.user.email)
+            to_addr = "apply-" + role + "@reddit.com"
+            subject = "%s wants to be a reddit %s!" % (c.user.name, role)
+            body = "karma: (%d / %d)\n" % (c.user.link_karma,
+                                           c.user.comment_karma)
+            body += "registered %s\n" % c.user._date.strftime("%Y-%m-%d")
+            body += "ip: %s\n\n" % request.ip
+            body += resume
+            send_html_email(to_addr, from_addr, subject, body, "plain")
+            g.log.info("got resume from %s at %s" %
+                       (c.user.name, request.ip))
+            form.set_html(".status", "Your resume has just been emailed to the reddit admins. Thanks for applying!")

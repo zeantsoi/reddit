@@ -1365,6 +1365,16 @@ class Rally(Templated):
         Templated.__init__(self, friend=friend, code=code,
                            users_code=users_code)
 
+class Apply(Templated):
+    """Temporary URL for job applicants"""
+    def __init__(self, code):
+        if code.strip() == g.apply_secret:
+            Templated.__init__(self, code="valid")
+        elif code.lower() == 'x':
+            Templated.__init__(self, code="x")
+        else:
+            Templated.__init__(self, code="invalid")
+
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
     def __init__(self, success=False):

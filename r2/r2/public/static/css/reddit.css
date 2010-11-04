@@ -4231,3 +4231,7 @@ tr.gold-accent + tr > td {
     font-size: 15px;
     line-height: 30px;
 }
+
+.role {
+    width: 800px;
+}

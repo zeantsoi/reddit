@@ -990,3 +990,9 @@ class FormsController(RedditController):
         r = Rally(friend, code)
         return BoringPage(_("rally"), content=r, show_sidebar=False,
                           footer=False, srbar=False).render()
+
+    @validate(VVerifiedUser())
+    def GET_apply(self, code):
+        """Temporary URL for job applicants"""
+        r = Apply(code)
+        return BoringPage(_("apply"), content=r, show_sidebar=False).render()

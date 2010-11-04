@@ -1,0 +1,85 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field, success_field"/>
+<%namespace name="utils" file="utils.html"/>
+<%namespace file="createsubreddit.html" import="radio_type"/>
+
+<%! from r2.lib.strings import strings %>
+
+%if thing.code == "x":
+<span class="error">That was just a placeholder. You need to actually&#32;<i>solve</i>&#32;for X.</span>
+%elif thing.code == "invalid":
+<span class="error">Sorry, that's not the right code. :(</span>
+%else:
+
+    <form id="apply" action="/api/apply" method="post"
+          class="content"
+          onsubmit="return post_form(this, 'apply');">
+
+      <div class="rally-instructions">
+        You solved the puzzle &mdash; congratulations! Please select the role that
+        best describes you and paste a plaintext version of your resume and
+        a&#32;<b>brief</b>&#32;cover letter.<br/>(If you're not actually interested
+        in the job, please don't send us a "not interested; just wanted to brag"
+        message.)
+      </div>
+
+  <%utils:line_field css_class="role" title="role">
+    <div class="delete-field">
+      <table>
+      ${radio_type("role", "programmer", "programmer",
+                   _("first and foremost, you like to write code"),
+                   False)}
+
+      ${radio_type("role", "sysadmin", "unix admin",
+                   _("you know how to use mknod, lsof, and hdparm"),
+                   False)}
+
+      ${radio_type("role", "sysarch", "systems architect",
+                   _("you've designed and supported massive server clusters"),
+                   False)}
+
+      ${radio_type("role", "dba", "dba / ddbms expert",
+                   _('you mumble "functional index" and "vacuum analyze" in your sleep ... or you actually know wtf a supercolumn is'),
+                   False)}
+
+      ${radio_type("role", "cheater", "cheater",
+                   _("you're actually not very technical and only got here by cheating"),
+                   True)}
+      </table>
+    </div>
+  </%utils:line_field>
+
+      <div class="spacer">
+        <textarea rows="100" cols="80"
+                  name="resume"
+                  ></textarea>
+        <br/>
+         ${error_field("NO_TEXT", "resume")}
+      </div>
+
+      <button type="submit" class="btn">${"hire me"}</button>
+      <br/>
+      <div class="status"></div>
+    </form>
+%endif
