@@ -977,11 +977,6 @@ class ApiController(RedditController):
         organic = vote_type == 'organic'
         queries.queue_vote(user, thing, dir, ip, organic, store = store,
                            cheater = (errors.CHEATER, None) in c.errors)
-        if store:
-            # update relevant caches
-            if isinstance(thing, Link):
-                set_last_modified(c.user, 'liked')
-                set_last_modified(c.user, 'disliked')
 
     @validatedForm(VUser(),
                    VModhash(),

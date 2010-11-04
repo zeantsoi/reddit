@@ -41,6 +41,7 @@ disallow_db_writes = g.disallow_db_writes
 tz = g.tz
 read_consistency_level = g.cassandra_rcl
 write_consistency_level = g.cassandra_wcl
+debug = g.debug
 
 # descriptions of the CFs available on boot.
 boot_cfs = cassandra.describe_keyspace(keyspace)
@@ -102,23 +103,22 @@ class ThingMeta(type):
                                    % (cls._type_prefix, name))
 
             if cls._type_prefix in thing_types:
-                raise InvariantException("Redefining type #%s?" % (cls._type_prefix))
+                raise InvariantException("Redefining type %r?" % (cls._type_prefix))
 
+            # if we weren't given a specific _cf_name, we can use the
+            # classes's name
             cf_name = cls._cf_name or name
 
             # make sure the CF for this type exists, or refuse to
             # start
-            if cf_name not in boot_cfs:
+            if debug and cf_name not in boot_cfs:
                 # do another lookup in case both this class and the CF
-                # were created after boot (this may have the effect of
-                # doubling the connection load on the seed node(s) if
-                # someone rolls a patch without first creating the
-                # appropriate CFs if that drives reddit into a restart
-                # loop; if that happens often just remove the next two
-                # lines)
+                # were created after boot. This is really unlikely,
+                # and probably only happens in development
                 boot_cfs = cassandra.describe_keyspace(keyspace)
-                if name not in boot_cfs:
-                    raise ConfigurationException("ColumnFamily %r does not exist" % (name,))
+
+            if cf_name not in boot_cfs:
+                raise ConfigurationException("ColumnFamily %r does not exist" % (cf_name,))
 
             thing_types[cls._type_prefix] = cls
 
@@ -199,8 +199,7 @@ class ThingBase(object):
         if not len(ids):
             if is_single:
                 raise InvariantException("whastis?")
-            else:
-                return {}
+            return {}
 
         # all keys must be strings or directly convertable to strings
         assert all(isinstance(_id, basestring) and str(_id) for _id in ids)
@@ -374,9 +373,9 @@ class ThingBase(object):
             # the _orig columns as dirty (but "less dirty" than the
             # _dirties)
             upd = self._orig.copy()
+            self._orig.clear()
             upd.update(self._dirties)
             self._dirties = upd
-            self._orig.clear()
 
         # Cassandra values are untyped byte arrays, so we need to
         # serialize everything, filtering out anything that's been
@@ -386,7 +385,6 @@ class ThingBase(object):
                        in self._dirties.iteritems()
                        if (attr not in self._orig or
                            val != self._orig[attr]))
-
 
         if not self._committed and self._timestamp_prop and self._timestamp_prop not in updates:
             # auto-create timestamps on classes that request them
@@ -468,7 +466,9 @@ class ThingBase(object):
         return ret
 
     # allow the dictionary mutation syntax; it makes working some some
-    # keys a bit easier
+    # keys a bit easier. Go through our regular
+    # __getattr__/__setattr__ functions where all of the appropriate
+    # work is done
     def __getitem__(self, key):
         return self.__getattr__(self, attr)
 
@@ -540,7 +540,6 @@ class Relation(ThingBase):
 
         rels = cls._byID(ids).values()
 
-        # does anybody actually use us this way?
         if thing1s_is_single and thing2s_is_single:
             if rels:
                 assert len(rels) == 1
