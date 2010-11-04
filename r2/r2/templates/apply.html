@@ -41,9 +41,10 @@
       <div class="rally-instructions">
         You solved the puzzle &mdash; congratulations! Please select the role that
         best describes you and paste a plaintext version of your resume and
-        a&#32;<b>brief</b>&#32;cover letter.<br/>(If you're not actually interested
-        in the job, please don't send us a "not interested; just wanted to brag"
-        message.)
+        a&#32;<b>brief</b>&#32;cover letter.
+      </div>
+      <div style="color:red; font-weight: bold">
+        If you're not actually applying, please do not spam this form.
       </div>
 
   <%utils:line_field css_class="role" title="role">
@@ -80,7 +81,15 @@
          ${error_field("NO_TEXT", "resume")}
       </div>
 
+      <input id="really" name="really" type="checkbox" />
+      <label for="really" style="font-size: 18px">
+        I'm actually applying for the job and have pasted in a plain text copy of my resume.
+      </label>
+
+      <br/>
+      <br/>
       <button type="submit" class="btn">${"hire me"}</button>
+      <br/>
       <br/>
       <div class="status"></div>
     </form>

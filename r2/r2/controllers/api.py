@@ -2233,8 +2233,9 @@ class ApiController(RedditController):
 
     @validatedForm(VVerifiedUser(),
                    role = VPrintable('role', 100),
-                   resume = VLength("resume", 30000))
-    def POST_apply(self, form, jquery, role, resume):
+                   resume = VLength("resume", 30000),
+                   really = VBoolean('really'))
+    def POST_apply(self, form, jquery, role, resume, really):
         from r2.lib.emailer import send_html_email
 
         if form.has_errors("resume", errors.NO_TEXT):
@@ -2243,7 +2244,9 @@ class ApiController(RedditController):
         if form.has_error():
             return
 
-        if role not in ("programmer", "sysadmin", "sysarch", "dba"):
+        if not really:
+            form.set_html(".status", "If you're applying, check the box. If you're not applying, please don't submit the form. We really, really mean it.")
+        elif role not in ("programmer", "sysadmin", "sysarch", "dba"):
             form.set_html(".status", "Please pick a role other than 'cheater'")
         else:
             from_addr = "%s <%s>" % (c.user.name, c.user.email)
