@@ -1370,6 +1370,8 @@ class Apply(Templated):
     def __init__(self, code):
         if code.strip() == g.apply_secret:
             Templated.__init__(self, code="valid")
+        elif code.lower() == '01189998819991197253':
+            Templated.__init__(self, code="it")
         elif code.lower() == 'x':
             Templated.__init__(self, code="x")
         else:

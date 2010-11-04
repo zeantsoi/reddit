@@ -994,5 +994,9 @@ class FormsController(RedditController):
     @validate(VVerifiedUser())
     def GET_apply(self, code):
         """Temporary URL for job applicants"""
+        if code == 'robots.txt':
+            from pylons import response
+            response.headers['Content-Type'] = 'text/plain'
+            return "User-Agent: *\nDisallow: /apply/01189998819991197253\n"
         r = Apply(code)
         return BoringPage(_("apply"), content=r, show_sidebar=False).render()

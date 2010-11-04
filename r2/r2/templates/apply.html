@@ -30,7 +30,9 @@
 <span class="error">That was just a placeholder. You need to actually&#32;<i>solve</i>&#32;for X.</span>
 %elif thing.code == "invalid":
 <span class="error">Sorry, that's not the right code. :(</span>
-%else:
+%elif thing.code == "it":
+<span class="error">Nice try.</span>
+%elif thing.code == "valid":
 
     <form id="apply" action="/api/apply" method="post"
           class="content"
@@ -82,4 +84,6 @@
       <br/>
       <div class="status"></div>
     </form>
+%else:
+huh?
 %endif
