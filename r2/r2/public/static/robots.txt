@@ -13,6 +13,7 @@ User-Agent: Gort
 Disallow: /earth
 
 User-Agent: *
+Disallow: /apply/01189998819991197253
 Disallow: /api
 Disallow: /post
 Disallow: /submit
