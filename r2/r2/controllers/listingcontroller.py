@@ -147,6 +147,8 @@ class ListingController(RedditController):
             wouldkeep = item.keep_item(item)
             if getattr(item, "promoted", None) is not None:
                 return False
+            if item._deleted and not c.user_is_admin:
+                return False
             return wouldkeep
         return keep
 
