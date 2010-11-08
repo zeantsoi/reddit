@@ -52,6 +52,7 @@ from errorlog import ErrorlogController
 from promotecontroller import PromoteController
 from mediaembed import MediaembedController
 from mediaembed import AdController
+from logitech import LogitechController ## LOGITECH
 
 from querycontroller import QueryController
 

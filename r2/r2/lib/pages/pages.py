@@ -213,6 +213,14 @@ class Reddit(Templated):
             if srs:
                 ps.append(SideContentBox(_('these reddits'),[SubscriptionBox(srs=srs)]))
 
+        ## LOGITECH
+        from r2.controllers.logitech import LogitechReddit
+        if isinstance(c.site, LogitechReddit):
+            ps.append(SubredditInfoBar())
+            if c.user.pref_show_adbox or not c.user.gold:
+                ps.append(Ads())
+            no_ads_yet = False
+
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             #don't show the subreddit info bar on cnames
             ps.append(SubredditInfoBar())
@@ -227,7 +235,8 @@ class Reddit(Templated):
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
-                              sr_path = True,
+                              sr_path = (isinstance(c.site,DefaultSR)
+                                         or not isinstance(c.site, FakeSubreddit)),
                               subtitles = [strings.submit_box_text],
                               show_cover = True))
 
@@ -314,12 +323,18 @@ class Reddit(Templated):
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
     def build_toolbars(self):
+        ## LOGITECH
+        from r2.controllers.logitech import LogitechReddit
+
         """Sets the layout of the navigation topbar on a Reddit.  The result
         is a list of menus which will be rendered in order and
         displayed at the top of the Reddit."""
         if c.site == Friends:
             main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
                             NamedButton('comments')]
+        elif isinstance(c.site, LogitechReddit):
+            ## LOGITECH
+            main_buttons = [NamedButton('hot', dest='', aliases=['/hot'])]
         else:
             main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
                             NamedButton('new'), 
