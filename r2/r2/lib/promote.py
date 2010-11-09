@@ -688,9 +688,16 @@ def make_daily_promotions(offset = 0, test = False):
 
 
 def get_promotion_list(user, site):
+    ## LOGITECH
+    from r2.controllers.logitech import LogitechReddit
+
     # site is specified, pick an ad from that site
     if not isinstance(site, FakeSubreddit):
         srids = set([site._id])
+    elif isinstance(site, LogitechReddit): ## LOGITECH
+        srids = set([site.master._id])
+    elif isinstance(site, MultiReddit):
+        srids = set(site.sr_ids)
     # site is Fake, user is not.  Pick based on their subscriptions.
     elif user and not isinstance(user, FakeAccount):
         srids = set(Subreddit.reverse_subscriber_ids(user) + [""])

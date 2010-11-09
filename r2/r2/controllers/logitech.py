@@ -3,7 +3,7 @@ from validator import *
 from r2.models.subreddit import MultiReddit
 from r2.lib.normalized_hot import normalized_hot
 from reddit_base import RedditController, base_listing
-from r2.controllers import ListingController
+from r2.controllers import HotController
 
 from pylons.i18n import _
 from hashlib import md5
@@ -13,15 +13,16 @@ from hashlib import md5
 class LogitechReddit(MultiReddit):
     path = '/entertainment'
     name = 'entertainment mix'
-    sr_names = ['entertainment','videos','movies']
+    sr_names = ['entertainment','videos','movies',
+                'scifi','television','wearethefilmmakers','movieclub']
 
     stylesheet_master = 'logitech' # pull the stylesheet and whatnot
                                    # from this reddit
-    sr_names += [stylesheet_master] # this one must be present
 
     def __init__(self):
         srs = Subreddit._by_name(self.sr_names)
         self.__srs = srs
+        self.__master = Subreddit._by_name(self.stylesheet_master)
         sr_ids = set( sr._id for sr in srs.values() )
         MultiReddit.__init__(self, sr_ids, '/logitech')
 
@@ -30,7 +31,7 @@ class LogitechReddit(MultiReddit):
 
     @property
     def master(self):
-        return self.__srs[self.stylesheet_master]
+        return self.__master
 
     def inherit_prop(name):
         def fn(self):
@@ -54,7 +55,7 @@ class LogitechReddit(MultiReddit):
     # this one's a hack
     _fullname = inherit_prop('_fullname')
 
-class LogitechController(ListingController):
+class LogitechController(HotController):
     def title(self):
         return c.site.title
 
@@ -65,4 +66,4 @@ class LogitechController(ListingController):
     @validate()
     def GET_listing(self, **env):
         c.site = LogitechReddit()
-        return ListingController.GET_listing(self, **env)
+        return HotController.GET_listing(self, **env)
