@@ -164,13 +164,14 @@
      </Keyspace>
 
     <Keyspace Name="permacache">
+      <!-- this is still behind a memcached, so no row cache for now -->
       <ColumnFamily CompareWith="BytesType"
                     Name="permacache"
-                    RowsCached="100000"
         />
       <ColumnFamily CompareWith="BytesType"
                     Name="urls"
                     RowsCached="100000"
+                    RowCacheSavePeriodInSeconds="3600"
         />
 
       <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
@@ -182,11 +183,11 @@
       <!-- Relations -->
       <ColumnFamily CompareWith="UTF8Type"
                     Name="LinkVote"
-                    RowsCached="1000000"
+                    RowsCached="100000"
         />
       <ColumnFamily CompareWith="UTF8Type"
                     Name="CommentVote"
-                    RowsCached="1000000"
+                    RowsCached="100000"
         />
 
       <!-- Views -->
@@ -194,8 +195,12 @@
                     Name="VotesByLink"
         />
       <ColumnFamily CompareWith="UTF8Type"
+                    Name="VotesByDay"
+        />
+      <ColumnFamily CompareWith="UTF8Type"
                     Name="CommentSortsCache"
-                    RowsCached="100000"
+                    RowsCached="200000"
+                    RowCacheSavePeriodInSeconds="3600"
         />
 
       <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
