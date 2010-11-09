@@ -12,7 +12,6 @@ from hashlib import md5
 
 class LogitechReddit(MultiReddit):
     path = '/entertainment'
-    name = 'entertainment mix'
     sr_names = ['entertainment','videos','movies',
                 'scifi','television','wearethefilmmakers','movieclub']
 
@@ -51,6 +50,7 @@ class LogitechReddit(MultiReddit):
     sponsorship_name = inherit_prop('sponsorship_name')
 
     title = inherit_prop('title')
+    name = inherit_prop('title') # n.b. these are equal
 
     # this one's a hack
     _fullname = inherit_prop('_fullname')
