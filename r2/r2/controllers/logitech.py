@@ -56,6 +56,8 @@ class LogitechReddit(MultiReddit):
     _fullname = inherit_prop('_fullname')
 
 class LogitechController(HotController):
+    nextprev = False
+
     def title(self):
         return c.site.title
 
