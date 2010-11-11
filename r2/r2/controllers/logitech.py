@@ -67,6 +67,10 @@ class LogitechController(HotController):
     @base_listing
     @validate()
     def GET_listing(self, **env):
-        return self.abort404()
-        c.site = LogitechReddit()
-        return HotController.GET_listing(self, **env)
+        lr = LogitechReddit()
+
+        if lr.master.is_special(c.user):
+            c.site = lr
+            return HotController.GET_listing(self, **env)
+        else:
+            return self.abort404()
