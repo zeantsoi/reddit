@@ -71,6 +71,7 @@ class LogitechController(HotController):
 
         if lr.master.is_special(c.user):
             c.site = lr
+            c.disablesearchbox = True
             return HotController.GET_listing(self, **env)
         else:
             return self.abort404()

@@ -197,7 +197,7 @@ class Reddit(Templated):
 
         ps = PaneStack(css_class='spacer')
 
-        if self.searchbox:
+        if self.searchbox and not c.disablesearchbox: ## LOGITECH
             ps.append(SearchForm())
 
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
