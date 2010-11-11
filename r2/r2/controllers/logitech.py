@@ -69,7 +69,7 @@ class LogitechController(HotController):
     def GET_listing(self, **env):
         lr = LogitechReddit()
 
-        if lr.master.is_special(c.user):
+        if lr.master.can_view(c.user):
             c.site = lr
             c.disablesearchbox = True
             return HotController.GET_listing(self, **env)
