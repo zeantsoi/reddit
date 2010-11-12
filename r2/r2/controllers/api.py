@@ -395,22 +395,13 @@ class ApiController(RedditController):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
-        throttled = False
-        wrong_password = form.has_errors("passwd",
-                                         errors.WRONG_PASSWORD)
-
-        if login_throttle(username, wrong_password = wrong_password):
+        if login_throttle(username, wrong_password = form.has_errors("passwd",
+                                                     errors.WRONG_PASSWORD)):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-
-            if not wrong_password:
-                throttled = True
 
             c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
 
-        if form.has_errors("passwd", errors.WRONG_PASSWORD):
-            ttext = ' (throttled)' if throttled else ''
-            g.log.error('Rejected login from %r from %r %s' % (username, request.ip, ttext))
-        else:
+        if not form.has_errors("passwd", errors.WRONG_PASSWORD):
             self._login(form, user, dest, rem)
 
     @validatedForm(VCaptcha(),
