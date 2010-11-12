@@ -396,11 +396,14 @@ class ApiController(RedditController):
             dest = reason[1]
 
         throttled = False
+        wrong_password = form.has_errors("passwd",
+                                         errors.WRONG_PASSWORD)
 
-        if login_throttle(username, wrong_password = form.has_errors("passwd",
-                                                     errors.WRONG_PASSWORD)):
+        if login_throttle(username, wrong_password = wrong_password):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-            throttled = True
+
+            if not wrong_password:
+                throttled = True
 
             c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
 
