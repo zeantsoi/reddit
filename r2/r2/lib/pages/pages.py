@@ -635,9 +635,12 @@ class MessageCompose(Templated):
     """Compose message form."""
     def __init__(self,to='', subject='', message='', success='', 
                  captcha = None):
+        from r2.models.admintools import *
+
         Templated.__init__(self, to = to, subject = subject,
-                         message = message, success = success, 
-                         captcha = captcha)
+                         message = message, success = success,
+                         captcha = captcha,
+                         admins = admintools.admin_list())
 
     
 class BoringPage(Reddit):

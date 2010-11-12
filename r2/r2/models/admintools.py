@@ -212,6 +212,9 @@ class AdminTools(object):
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.remove_contributor(account)
 
+    def admin_list(self):
+        return list(g.admins)
+
 admintools = AdminTools()
 
 def cancel_subscription(subscr_id):
