@@ -33,66 +33,13 @@
 %elif thing.code == "it":
 <span class="error">Nice try.</span>
 %elif thing.code == "valid":
+<div class="rally-instructions">
+You solved the puzzle &mdash; congratulations! But now the bad news: we're no longer accepting applications for this position. :(
+</div>
 
-    <form id="apply" action="/api/apply" method="post"
-          class="content"
-          onsubmit="return post_form(this, 'apply');">
-
-      <div class="rally-instructions">
-        You solved the puzzle &mdash; congratulations! Please select the role that
-        best describes you and paste a plaintext version of your resume and
-        a&#32;<b>brief</b>&#32;cover letter.
-        <div style="color:red; font-weight: bold">
-          If you're not actually applying, please do not spam this form.
-        </div>
-      </div>
-
-  <%utils:line_field css_class="role" title="role">
-    <div class="delete-field">
-      <table>
-      ${radio_type("role", "programmer", "programmer",
-                   _("first and foremost, you like to write code"),
-                   False)}
-
-      ${radio_type("role", "sysadmin", "unix admin",
-                   _("you know how to use mknod, lsof, and hdparm"),
-                   False)}
-
-      ${radio_type("role", "sysarch", "systems architect",
-                   _("you've designed and supported massive server clusters"),
-                   False)}
-
-      ${radio_type("role", "dba", "ddbms expert",
-                   _("you've heard of Bloom filters and you even know wtf a supercolumn is"),
-                   False)}
-
-      ${radio_type("role", "cheater", "cheater",
-                   _("you're actually not very technical and only got here by cheating"),
-                   True)}
-      </table>
-    </div>
-  </%utils:line_field>
-
-      <div class="spacer">
-        <textarea rows="100" cols="80"
-                  name="resume"
-                  ></textarea>
-        <br/>
-         ${error_field("NO_TEXT", "resume")}
-      </div>
-
-      <input id="really" name="really" type="checkbox" />
-      <label for="really" style="font-size: 18px">
-        I'm actually applying for the job and have pasted in a plain text copy of my resume.
-      </label>
-
-      <br/>
-      <br/>
-      <button type="submit" class="btn">${"hire me"}</button>
-      <br/>
-      <br/>
-      <div class="status"></div>
-    </form>
+<div class="rally-instructions">
+Keep your eye on the reddit blog, though. This won't be the last time we hire!
+</div>
 %else:
 huh?
 %endif
