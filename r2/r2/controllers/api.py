@@ -406,7 +406,7 @@ class ApiController(RedditController):
 
         if form.has_errors("passwd", errors.WRONG_PASSWORD):
             ttext = ' (throttled)' if throttled else ''
-            g.log.error('Rejected login from %r from %r %s' % (username, c.ip, ttext))
+            g.log.error('Rejected login from %r from %r %s' % (username, request.ip, ttext))
         else:
             self._login(form, user, dest, rem)
 
