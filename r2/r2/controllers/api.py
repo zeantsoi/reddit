@@ -731,7 +731,6 @@ class ApiController(RedditController):
             not form.has_errors("thing_id", errors.NOT_AUTHOR)):
 
             if isinstance(item, Comment):
-                abort(503, "reddit is under heavy load :(")
                 kind = 'comment'
                 old = item.body
                 item.body = text
@@ -774,8 +773,6 @@ class ApiController(RedditController):
                    parent = VSubmitParent(['thing_id', 'parent']),
                    comment = VMarkdown(['text', 'comment']))
     def POST_comment(self, commentform, jquery, parent, comment, ip):
-        abort(503, "reddit is under heavy load :(")
-        
         should_ratelimit = True
         #check the parent type here cause we need that for the
         #ratelimit checks

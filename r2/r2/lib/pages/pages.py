@@ -148,7 +148,6 @@ class Reddit(Templated):
                 infotext = strings.iphone_first
             elif c.firsttime and c.site.firsttext:
                 infotext = c.site.firsttext
-            infotext = "reddit's comments database decided it doesn't want to be a database anymore; we're working on it :("
         if infotext:
             self.infobar = InfoBar(message = infotext)
 
