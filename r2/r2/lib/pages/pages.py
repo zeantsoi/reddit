@@ -218,7 +218,7 @@ class Reddit(Templated):
         if isinstance(c.site, LogitechReddit):
             ps.append(SubredditInfoBar())
             if c.user.pref_show_adbox or not c.user.gold:
-                ps.append(Ads())
+                ps.append(Ads(logitech=True))
             no_ads_yet = False
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
@@ -3195,6 +3195,14 @@ class ComScore(CachedTemplate):
 def render_ad(reddit_name=None, codename=None):
     if not reddit_name:
         reddit_name = g.default_sr
+
+    ## LOGITECH
+    if reddit_name == 'entertainment mix':
+        from r2.controllers.logitech import LogitechReddit
+
+        lr = LogitechReddit()
+        c.site, c.default_sr = lr, False
+        return Dart_Ad(reddit_name).render()
 
     if codename:
         if codename == "DART":

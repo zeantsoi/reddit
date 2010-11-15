@@ -71,6 +71,7 @@ class LogitechController(HotController):
 
         if lr.master.can_view(c.user):
             c.site = lr
+            c.default_sr = False
             c.disablesearchbox = True
             return HotController.GET_listing(self, **env)
         else:
