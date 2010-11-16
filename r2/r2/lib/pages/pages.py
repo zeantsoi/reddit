@@ -3194,10 +3194,9 @@ class ComScore(CachedTemplate):
 
 def render_ad(reddit_name=None, codename=None):
     if not reddit_name:
+        reddit_name = g.default_sr
         if g.frontpage_dart:
             return Dart_Ad(reddit_name).render()
-
-        reddit_name = g.default_sr
 
     ## LOGITECH
     if reddit_name == 'entertainment mix':
