@@ -37,7 +37,8 @@ import string
 strip_sr          = re.compile('^/r/[a-zA-Z0-9_-]+')
 strip_s_path      = re.compile('^/s/')
 leading_slash     = re.compile('^/+')
-has_protocol      = re.compile('^https?:')
+has_protocol      = re.compile('^[a-zA-Z_-]+:')
+allowed_protocol  = re.compile('^https?:')
 need_insert_slash = re.compile('^https?:/[^/]')
 def demangle_url(path):
     # there's often some URL mangling done by the stack above us, so
@@ -46,7 +47,10 @@ def demangle_url(path):
     path = strip_s_path.sub('', path)
     path = leading_slash.sub("", path)
 
-    if not has_protocol.match(path):
+    if has_protocol.match(path):
+        if not allowed_protocol.match(path):
+            return None
+    else:
         path = 'http://%s' % path
 
     if need_insert_slash.match(path):
@@ -202,7 +206,11 @@ class ToolbarController(RedditController):
             link = list(wrap_links(link, wrapper = FrameToolbar))
         if link:
             res = link[0]
-        elif url and demangle_url(url): # also check for validity
+        elif url:
+            url = demangle_url(url)
+            if not url:  # also check for validity
+                return self.abort404()
+
             res = FrameToolbar(link = None,
                                title = None,
                                url = url,
