@@ -3222,7 +3222,7 @@ def render_ad(reddit_name=None, codename=None):
 
         lr = LogitechReddit()
         c.site, c.default_sr = lr, False
-        return Dart_Ad(reddit_name).render()
+        return Dart_Ad("entertainmentmix").render()
 
     if codename:
         if codename == "DART":
