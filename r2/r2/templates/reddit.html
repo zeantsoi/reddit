@@ -172,6 +172,9 @@
       %if g.tracker_url and thing.site_tracking:
         <img alt="" src="${tracking.UserInfo.gen_url()}"/>
       %endif
+      %if g.newtracker_url and thing.site_tracking:
+        <img alt="" src="${tracking.UserInfoNew.gen_url()}"/>
+      %endif
     %endif
     ${framebuster()}
     ##
