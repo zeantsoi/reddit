@@ -1154,7 +1154,7 @@ class ProfileBar(Templated):
         self.my_fullname = None
         self.gold_remaining = None
         if c.user_is_loggedin:
-            if c.user_is_admin or c.user.gold_tokens > 0:
+            if c.user_is_admin or c.user.gold_creddits > 0:
                 if user._id == c.user._id:
                     pass
 #                    self.giftmsg = _("gift yourself some gold")
@@ -1386,10 +1386,10 @@ class GiftGold(Templated):
     """The page to gift reddit gold trophies"""
     def __init__(self, recipient):
         if c.user_is_admin:
-            gold_tokens = 500
+            gold_creddits = 500
         else:
-            gold_tokens = c.user.gold_tokens
-        Templated.__init__(self, recipient=recipient, gold_tokens=gold_tokens)
+            gold_creddits = c.user.gold_creddits
+        Templated.__init__(self, recipient=recipient, gold_creddits=gold_creddits)
 
 class Rally(Templated):
     """Temporary URL for DC Rally networking"""

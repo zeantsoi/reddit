@@ -1798,6 +1798,11 @@ class ApiController(RedditController):
             if subscr_id:
                 c.user.gold_subscr_id = subscr_id
 
+            if days > 300:
+                g.log.info ("%s claimed %d days and would have earned creddit."
+                            % (c.user, days))
+#                c.user.gold_creddits += 3
+
             admintools.engolden(c.user, days)
 
             g.cache.set("recent-gold-" + c.user.name, True, 600)
@@ -1845,12 +1850,12 @@ class ApiController(RedditController):
             amount = "%d months" % months
 
         if not c.user_is_admin:
-            if months > c.user.gold_tokens:
+            if months > c.user.gold_creddits:
                 form.set_html(".status", _("you can't give that many months"))
                 return
 
-            c.user.gold_tokens -= months
-            c.user.gold_token_escrow += months
+            c.user.gold_creddits -= months
+            c.user.gold_creddit_escrow += months
             c.user._commit()
 
         admintools.engolden(recipient, 31 * months)
@@ -1868,9 +1873,10 @@ class ApiController(RedditController):
         send_system_message(recipient, subject, message, distinguish=True)
 
         if not c.user_is_admin:
-            c.user.gold_token_escrow -= months
+            c.user.gold_creddit_escrow -= months
             c.user._commit()
 
+        g.log.info("%s gifted %s to %s" % (c.user.name, amount, recipient.name))
         form.set_html(".status", _("the gold has been delivered!"))
 
     @validatedForm(user = VUserWithEmail('name'))

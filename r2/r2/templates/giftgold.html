@@ -26,8 +26,8 @@
 
 <%! from r2.lib.strings import strings %>
 
-%if thing.gold_tokens <= 0:
-  ${_("you'll need to blah blah blah")}
+%if thing.gold_creddits <= 0:
+  ${_("This feature is still in beta. If you'd like to participate, see the reddit blog.")}
 %else:
   <form id="giftgold" action="/api/giftgold" method="post"
         class="content"
@@ -35,20 +35,20 @@
     <h1>${_("well, aren't you nice?")}</h1>
 
     <p class="blurb">
-      %if thing.gold_tokens == 1:
+      %if thing.gold_creddits == 1:
       ${_("You can give one month of reddit gold.")}
       %else:
-      ${_("You can give up to %s months of reddit gold.") % thing.gold_tokens}
+      ${_("You can give up to %s months of reddit gold.") % thing.gold_creddits}
       %endif
-    &#32;
-    <a href="asdf">
-      ${_("(If you want more, you can get them here.)")}
-    </a>
+###    &#32;
+###    <a href="asdf">
+###      ${_("(If you want more, you can get them here.)")}
+###    </a>
     </p>
 
     <div class="spacer">
       <%utils:round_field title="${_('how many months?')}">
-      <input type="text" name="months" value="${'1' if thing.gold_tokens == 1 else ''}"/>
+      <input type="text" name="months" value="${'1' if thing.gold_creddits == 1 else ''}"/>
       ${error_field("BAD_STRING", "months")}
       ${error_field("NO_TEXT", "months")}
       </%utils:round_field>
