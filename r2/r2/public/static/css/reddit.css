@@ -2257,6 +2257,9 @@ textarea.gray { color: gray; }
 
 /* default form styles */
 
+form .blurb {
+    margin-bottom: 5px;
+}
 
 form .spacer + .spacer {
     margin: 15px 0;
@@ -2268,8 +2271,8 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .pretty-form {
     font-size: larger;
-    vertical-align: top; 
- }
+    vertical-align: top;
+}
 
 .pretty-form p {margin: 3px ;}
 .pretty-form input[type=checkbox],
@@ -4147,6 +4150,16 @@ tr.gold-accent + tr > td {
     color: #583800;
 }
 
+.giftgold {
+    margin-bottom: 5px;
+}
+.giftgold a {
+    padding-left: 20px;
+    color: #9a7d2e;
+    font-weight: bold;
+    background-image: url(/static/giftgold.png);
+    background-repeat:no-repeat;
+}
 
 .tiny {
     font-size: xx-small;

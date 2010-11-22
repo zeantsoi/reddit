@@ -991,6 +991,19 @@ class FormsController(RedditController):
         return BoringPage(_("rally"), content=r, show_sidebar=False,
                           footer=False, srbar=False).render()
 
+    @validate(VUser(),
+              recipient = VExistingUname("recipient"))
+    def GET_giftgold(self, recipient):
+        """The page to gift reddit gold trophies"""
+
+        if recipient is None:
+            recipient_name = ''
+        else:
+            recipient_name = recipient.name
+
+        return BoringPage(_("give the gift of reddit gold"),
+                          content=GiftGold(recipient_name)).render()
+
     @validate(VVerifiedUser())
     def GET_apply(self, code):
         """Temporary URL for job applicants"""

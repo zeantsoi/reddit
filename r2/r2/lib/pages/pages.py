@@ -1154,7 +1154,16 @@ class ProfileBar(Templated):
         self.my_fullname = None
         self.gold_remaining = None
         if c.user_is_loggedin:
-            if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
+            if c.user_is_admin or c.user.gold_tokens > 0:
+                if user._id == c.user._id:
+                    pass
+#                    self.giftmsg = _("gift yourself some gold")
+                else:
+                    self.giftmsg = _("give %(user)s the gift of reddit gold" %
+                                     dict(user=user.name))
+
+            if ((user._id == c.user._id or c.user_is_admin)
+                and getattr(user, "gold", None)):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
                 if self.gold_expiration is None:
                     self.gold_remaining = _("an unknown amount")
@@ -1372,6 +1381,15 @@ class Thanks(Templated):
             lounge_html = None
         Templated.__init__(self, status=status, secret=secret,
                            lounge_html=lounge_html)
+
+class GiftGold(Templated):
+    """The page to gift reddit gold trophies"""
+    def __init__(self, recipient):
+        if c.user_is_admin:
+            gold_tokens = 500
+        else:
+            gold_tokens = c.user.gold_tokens
+        Templated.__init__(self, recipient=recipient, gold_tokens=gold_tokens)
 
 class Rally(Templated):
     """Temporary URL for DC Rally networking"""

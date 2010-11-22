@@ -89,7 +89,8 @@ class Account(Thing):
                      pref_show_promote = None,
                      gold = False,
                      gold_charter = False,
-                     creddits = 0,
+                     gold_tokens = 0,
+                     gold_token_escrow = 0,
                      )
 
     def karma(self, kind, sr = None):

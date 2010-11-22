@@ -113,6 +113,14 @@
     </div>
   %endif
 
+  %if getattr(thing, "giftmsg", None):
+    <div class="giftgold">
+      <a href="/giftgold/${thing.user.name}">
+        ${thing.giftmsg}
+      </a>
+    </div>
+  %endif
+
   <div class="bottom">
     %if thing.user != c.user:
       <img src="${static('mailgray.png')}"/>

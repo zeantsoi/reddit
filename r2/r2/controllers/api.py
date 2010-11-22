@@ -1509,7 +1509,7 @@ class ApiController(RedditController):
                     g.log.info("Just got IPN for unknown recipient %s"
                                % recipient_name)
                 return "Ok" # nothing we can do until they complain
-                
+
                 create_claimed_gold ("P" + txn_id, payer_email, paying_id,
                                  pennies, days, None, recipient._id,
                                  c.start_time, subscr_id)
@@ -1809,6 +1809,70 @@ class ApiController(RedditController):
                         errors.NO_TEXT)
 
 
+    @validatedForm(VUser(),
+                   months = VPrintable("months", max_length=100),
+                   recipient = VExistingUname("recipient"))
+    def POST_giftgold(self, form, jquery, months, recipient):
+        anonymous = False
+        if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
+                                        errors.NO_USER):
+            pass
+
+        if months is None:
+            c.errors.add(errors.NO_TEXT, field = "months")
+        else:
+            try:
+                months = int(months)
+                if months < 0:
+                    c.errors.add(errors.BAD_STRING, field = "months")
+            except ValueError:
+                c.errors.add(errors.BAD_STRING, field = "months")
+
+        if form.has_errors("months", errors.BAD_STRING,
+                           errors.NO_TEXT):
+            pass
+
+        if form.has_error():
+            return
+
+        if months == 0:
+            form.set_html(".status", _("thanks for nothing."))
+            return
+
+        if months == 1:
+            amount = "a month"
+        else:
+            amount = "%d months" % months
+
+        if not c.user_is_admin:
+            if months > c.user.gold_tokens:
+                form.set_html(".status", _("you can't give that many months"))
+                return
+
+            c.user.gold_tokens -= months
+            c.user.gold_token_escrow += months
+            c.user._commit()
+
+        admintools.engolden(recipient, 31 * months)
+
+        if anonymous:
+            sender = "someone"
+            md_sender = "An anonymous redditor"
+        else:
+            sender = c.user.name
+            md_sender = "[%s](/user/%s)" % (sender, sender)
+
+        subject = sender + " just sent you reddit gold!"
+        message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
+
+        send_system_message(recipient, subject, message, distinguish=True)
+
+        if not c.user_is_admin:
+            c.user.gold_token_escrow -= months
+            c.user._commit()
+
+        form.set_html(".status", _("the gold has been delivered!"))
+
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):
         if form.has_errors('name', errors.USER_DOESNT_EXIST):
@@ -1820,7 +1884,7 @@ class ApiController(RedditController):
             form.set_html(".status",
                           _("an email will be sent to that account's address shortly"))
 
-            
+
     @validatedForm(cache_evt = VCacheKey('reset', ('key',)),
                    password  = VPassword(['passwd', 'passwd2']))
     def POST_resetpassword(self, form, jquery, cache_evt, password):
