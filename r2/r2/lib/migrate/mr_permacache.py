@@ -50,7 +50,7 @@ psql -F"\t" -A -t -d newreddit -U ri -h $VOTEDBHOST \
 pv reddit_linkvote.dump | ./mr_permacache "linkvote_listings()" | sort -T. -S200m > linkvotes.listings
 
 #savehide
-psql -F"\t" -A -t -d newreddit -U ri -h $VOTEDBHOST \
+psql -F"\t" -A -t -d newreddit -U ri -h $SAVEHIDEDBHOST \
      -c "\\copy (select r.rel_id, 'savehide',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
                    from reddit_rel_savehide r) to 'reddit_savehide.dump'"

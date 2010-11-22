@@ -27,6 +27,7 @@ from account import Account
 from link import Link, Comment
 
 from pylons import g
+from datetime import datetime, timedelta
 
 __all__ = ['Vote', 'CassandraLinkVote', 'CassandraCommentVote', 'score_changes']
 
@@ -70,7 +71,38 @@ class VotesByLink(tdb_cassandra.View):
     @classmethod
     def get_all(cls, link_id):
         vbl = cls._byID(link_id)
-        return CassandraLinkVote._byID(vbl._t.values()).values()
+        return CassandraLinkVote._byID(vbl._values()).values()
+
+class VotesByDay(tdb_cassandra.View):
+    _use_db = True
+    _type_prefix = 'VotesByDay'
+
+    # _view_of = CassandraLinkVote
+
+    @staticmethod
+    def _id_for_day(dt):
+        return dt.strftime('%Y-%j')
+
+    @classmethod
+    def _votes_for_period(ls, start_date, length):
+        """An iterator yielding every vote that occured in the given
+           period in no particular order
+
+           start_date =:= datetime()
+           length =:+ timedelta()
+        """
+
+        # n.b. because of the volume of data involved this has to do
+        # multiple requests and can be quite slow
+
+        thisdate = start_date
+        while thisdate <= start_date + length:
+            for voteid_chunk in in_chunks(cls._byID(cls._id_for_date(thisdate)),
+                                      chunk_size=1000):
+                for vote in LinkVote._byID(voteid_chunk).values():
+                    yield vote
+
+            thisdate += timedelta(days=1)
 
 class CassandraLinkVote(CassandraVote):
     _use_db = True
@@ -79,20 +111,22 @@ class CassandraLinkVote(CassandraVote):
 
     # these parameters aren't actually meaningful, they just help
     # keep track
-    # _views = [VotesByLink]
+    # _views = [VotesByLink, VotesByDay]
     _thing1_cls = Account
     _thing2_cls = Link
 
     def _on_create(self):
-        try:
-            vbl = VotesByLink._byID(self.thing1_id)
-        except tdb_cassandra.NotFound:
-            vbl = VotesByLink(_id=self.thing1_id)
+        # it's okay if these indices get lost
+        wcl = tdb_cassandra.CL.ONE
 
-        vbl[self._id] = self._id
-        vbl._commit()
+        v_id = {self._id: self._id}
 
-        CassandraVote._on_create(self)
+        VotesByLink._set_values(self.thing1_id, v_id,
+                                write_consistency_level=wcl)
+        VotesByDay._set_values(VotesByDay._id_for_day(self.date), v_id,
+                               write_consistency_level=wcl)
+
+        return CassandraVote._on_create(self)
 
 class CassandraCommentVote(CassandraVote):
     _use_db = True
@@ -148,8 +182,6 @@ class Vote(MultiRelation('vote',
             is_new = True
             oldamount = 0
             v = rel(sub, obj, str(amount))
-            v.author_id = obj.author_id
-            v.sr_id = sr._id
             v.ip = ip
             old_valid_thing = v.valid_thing = valid_thing(v, karma, cheater = cheater)
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
@@ -226,7 +258,9 @@ class Vote(MultiRelation('vote',
         for relcls, items in rels.iteritems():
             ids = dict((item._id36, item)
                        for item in items)
-            for (thing1_id36, thing2_id36), rel in relcls._fast_query(sub._id36, ids).iteritems():
+            votes = relcls._fast_query(sub._id36, ids,
+                                       properties=['name'])
+            for (thing1_id36, thing2_id36), rel in votes.iteritems():
                 ret[(sub, ids[thing2_id36])] = (True if rel.name == '1'
                                                  else False if rel.name == '-1'
                                                  else None)

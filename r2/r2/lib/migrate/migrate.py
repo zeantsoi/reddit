@@ -403,3 +403,52 @@ def prime_url_cache(f, verbosity = 10000):
         if counter % verbosity == 0:
             print "%6d: %s" % (counter, line)
             print "--> doing %5.2f / s" % (float(counter) / (time.time() - start_time))
+
+def port_cassavotes():
+    from r2.models import *
+    from r2.models.vote import CassandraVote, CassandraLinkVote, CassandraCommentVote
+    from r2.lib.db.tdb_cassandra import CL
+    from r2.lib.utils import fetch_things2, to36, progress
+
+    ts = [(Vote.rel(Account, Link), CassandraLinkVote),
+          (Vote.rel(Account, Comment), CassandraCommentVote)]
+
+    dataattrs = set(['valid_user', 'valid_thing', 'ip', 'organic'])
+
+    for prel, crel in ts:
+        vq = prel._query(sort=desc('_date'),
+                         data=True,
+                         eager_load=False)
+        vq = fetch_things2(vq)
+        vq = progress(vq, persec=True)
+        for v in vq:
+            t1 = to36(v._thing1_id)
+            t2 = to36(v._thing2_id)
+            cv = crel(thing1_id = t1,
+                      thing2_id = t2,
+                      date=v._date,
+                      name=v._name)
+            for dkey, dval in v._t.iteritems():
+                if dkey in dataattrs:
+                    setattr(cv, dkey, dval)
+
+            cv._commit(write_consistency_level=CL.ONE)
+
+def port_cassasaves():
+    from r2.models import *
+    from r2.lib.db.tdb_cassandra import CL
+    from r2.lib.utils import fetch_things2, to36, progress
+
+    for sh in progress(
+        fetch_things2(
+            SaveHide._query(
+                SaveHide.c._name == 'save',
+                sort=desc('_date'),
+                data=False,
+                eager_load=False)),
+        estimate=12489897):
+
+        csh = CassandraSave(thing1_id = to36(sh._thing1_id),
+                            thing2_id = to36(sh._thing2_id),
+                            date = sh._date)
+        csh._commit(write_consistency_level = CL.ONE)

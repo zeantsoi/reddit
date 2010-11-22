@@ -962,8 +962,10 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        # TODO: temporary hack until we migrate the rest of the vote data
-        if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
+        # TODO: temporary hack until we migrate the rest of the vote
+        # data. n.b. we're missing two phases of data, the
+        # pre-Cassandra votes and the pre-EC2 votes
+        if thing._date < datetime(2010, 6, 8, 0, 0, 0, 0, g.tz):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 

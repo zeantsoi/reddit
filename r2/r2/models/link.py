@@ -169,9 +169,13 @@ class Link(Thing, Printable):
         return cls._somethinged(SaveHide, user, link, 'save')
 
     def _save(self, user):
+        # dual-write CassandraSaves
+        CassandraSave._save(user, self)
         return self._something(SaveHide, user, self._saved, 'save')
 
     def _unsave(self, user):
+        # dual-write CassandraSaves
+        CassandraSave._unsave(user, self)
         return self._unsomething(user, self._saved, 'save')
 
     @classmethod
@@ -306,12 +310,17 @@ class Link(Thing, Printable):
         cname = c.cname
         site = c.site
 
-        saved = Link._saved(user, wrapped) if user_is_loggedin else {}
-        hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
-        trials = trial_info(wrapped)
+        if user_is_loggedin:
+            #id36s = [ w._id36 for w in wrapped ]
+            #saved = CassandraSave._fast_query(user._id36, id36s)
 
-        #clicked = Link._clicked(user, wrapped) if user else {}
-        clicked = {}
+            saved = Link._saved(user, wrapped)
+            hidden = Link._hidden(user, wrapped)
+            clicked = {}
+        else:
+            saved = hidden = clicked = {}
+
+        trials = trial_info(wrapped)
 
         for item in wrapped:
             show_media = False
@@ -364,9 +373,15 @@ class Link(Thing, Printable):
                 item.domain = (domain(item.url) if not item.is_self
                                else 'self.' + item.subreddit.name)
             item.urlprefix = ''
-            item.saved = bool(saved.get((user, item, 'save')))
-            item.hidden = bool(hidden.get((user, item, 'hide')))
-            item.clicked = bool(clicked.get((user, item, 'click')))
+
+            if user_is_loggedin:
+                # item.saved = (user._id36, item._id36) in saved
+                item.saved = bool(saved.get((user, item, 'save')))
+                item.hidden = bool(hidden.get((user, item, 'hide')))
+                item.clicked = bool(clicked.get((user, item, 'click')))
+            else:
+                item.saved = item.hidden = item.clicked = False
+
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
             if item.is_self:
@@ -1046,6 +1061,67 @@ class Message(Thing, Printable):
 
 class SaveHide(Relation(Account, Link)): pass
 class Click(Relation(Account, Link)): pass
+
+class SimpleRelation(tdb_cassandra.Relation):
+    _use_db = False
+
+    @classmethod
+    def _create(cls, user, link):
+        n = cls(thing1_id = user._id36,
+                thing2_id = link._id36)
+        n._commit()
+        return n
+
+    @classmethod
+    def _uncreate(cls, user, link):
+        try:
+            cls._fast_query(user._id36, link._id36)._destroy()
+        except tdb_cassandra.NotFound:
+            pass
+
+class CassandraSave(SimpleRelation):
+    _use_db = True
+    _cf_name = 'Save'
+
+    # thing1_cls = Account
+    # thing2_cls = Link
+
+    @classmethod
+    def _save(cls, *a, **kw):
+        return cls._create(*a, **kw)
+
+    @classmethod
+    def _unsave(cls, *a, **kw):
+        return cls._uncreate(*a, **kw)
+
+    def _on_create(self):
+        # it's okay if these indices get lost
+        wcl = tdb_cassandra.CL.ONE
+
+        SavesByAccount._set_values(self.thing1_id,
+                                   {self._id: self._id},
+                                   write_consistency_level=wcl)
+
+        return SimpleRelation._on_create(self)
+
+    def _on_destroy(self):
+        sba = SavesByAccount._byID(self.thing1_id)
+        del sba[self._id]
+        sba._commit()
+
+        return SimpleRelation._on_destroy(self)
+
+class CassandraHide(SimpleRelation):
+    _use_db = True
+    _cf_name = 'Hide'
+
+class CassandraClick(SimpleRelation):
+    _use_db = True
+    _cf_name = 'Click'
+
+class SavesByAccount(tdb_cassandra.View):
+    _use_db = True
+    _cf_name = 'SavesByAccount'
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
