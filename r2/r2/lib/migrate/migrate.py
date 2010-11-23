@@ -405,7 +405,7 @@ def prime_url_cache(f, verbosity = 10000):
             print "--> doing %5.2f / s" % (float(counter) / (time.time() - start_time))
 
 def port_cassavotes():
-    from r2.models import *
+    from r2.models import Vote, Account, Link, Comment
     from r2.models.vote import CassandraVote, CassandraLinkVote, CassandraCommentVote
     from r2.lib.db.tdb_cassandra import CL
     from r2.lib.utils import fetch_things2, to36, progress
@@ -434,19 +434,22 @@ def port_cassavotes():
 
             cv._commit(write_consistency_level=CL.ONE)
 
-def port_cassasaves():
-    from r2.models import *
+def port_cassasaves(after_id=None, estimate=12489897):
+    from r2.models import SaveHide, CassandraSave
+    from r2.lib.db.operators import desc
     from r2.lib.db.tdb_cassandra import CL
     from r2.lib.utils import fetch_things2, to36, progress
 
-    for sh in progress(
-        fetch_things2(
-            SaveHide._query(
-                SaveHide.c._name == 'save',
-                sort=desc('_date'),
-                data=False,
-                eager_load=False)),
-        estimate=12489897):
+    q = SaveHide._query(
+        SaveHide.c._name == 'save',
+        sort=desc('_date'),
+        data=False,
+        eager_load=False)
+
+    if after_id is not None:
+        q._after(SaveHide._byID(after_id))
+
+    for sh in progress(fetch_things2(q), estimate=estimate):
 
         csh = CassandraSave(thing1_id = to36(sh._thing1_id),
                             thing2_id = to36(sh._thing2_id),
