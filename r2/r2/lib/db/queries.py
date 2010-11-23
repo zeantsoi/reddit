@@ -575,8 +575,7 @@ def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
     job = [get_comments(author, 'new', 'all'),
            get_comments(author, 'top', 'all'),
-           get_comments(author, 'controversial', 'all'),
-           get_comments(author, 'old', 'all')]
+           get_comments(author, 'controversial', 'all')]
 
     if comment._deleted:
         job.append(get_all_comments())
