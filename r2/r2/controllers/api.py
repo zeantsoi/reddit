@@ -1802,7 +1802,7 @@ class ApiController(RedditController):
 
             if days > 300:
                 g.log.info ("%s claimed %d days and would have earned creddit."
-                            % (c.user, days))
+                            % (c.user.name, days))
 #                c.user.gold_creddits += 3
 
             admintools.engolden(c.user, days)
