@@ -635,8 +635,6 @@ class MessageCompose(Templated):
     """Compose message form."""
     def __init__(self,to='', subject='', message='', success='', 
                  captcha = None):
-        from r2.models.admintools import *
-
         Templated.__init__(self, to = to, subject = subject,
                          message = message, success = success,
                          captcha = captcha,
@@ -2925,7 +2923,8 @@ class RedditAds(Templated):
 
 class PaymentForm(Templated):
     def __init__(self, link, indx, **kw):
-        self.countries = pycountry.countries
+        self.countries = [pycountry.countries.get(name=n) 
+                          for n in g.allowed_pay_countries]
         self.link = promote.editable_add_props(link)
         self.campaign = self.link.campaigns[indx]
         self.indx = indx

@@ -98,7 +98,8 @@ class Globals(object):
                    'allowed_css_linked_domains',
                    'authorized_cnames',
                    'hardcache_categories',
-                   'proxy_addr']
+                   'proxy_addr',
+                   'allowed_pay_countries']
 
     choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
                                       'ONE':    CL_ONE,

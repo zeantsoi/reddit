@@ -1316,8 +1316,8 @@ class VDestination(Validator):
         return "/"
 
 class ValidAddress(Validator):
-    def __init__(self, param, usa_only = True):
-        self.usa_only = usa_only
+    def __init__(self, param, allowed_countries = ["United States"]):
+        self.allowed_countries = allowed_countries
         Validator.__init__(self, param)
 
     def set_error(self, msg, field):
@@ -1338,14 +1338,12 @@ class ValidAddress(Validator):
             self.set_error(_("please provide your state"), "state")
         elif not zipCode:
             self.set_error(_("please provide your zip or post code"), "zip")
-        elif (not self.usa_only and
-              (not country or not pycountry.countries.get(alpha2=country))):
+        elif not country:
             self.set_error(_("please pick a country"), "country")
         else:
-            if self.usa_only:
-                country = 'United States'
-            else:
-                country = pycountry.countries.get(alpha2=country).name
+            country = pycountry.countries.get(alpha2=country)
+            if country.name not in self.allowed_countries:
+                self.set_error(_("Our ToS don't cover your country (yet). Sorry."), "country")
             return Address(firstName = firstName,
                            lastName = lastName,
                            company = company or "",
