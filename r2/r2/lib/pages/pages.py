@@ -248,9 +248,9 @@ class Reddit(Templated):
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
 
-        if False and self.submit_box:
+        if True and self.submit_box:
             ps.append(SideBox(_('reddit gold weekend bonus'),
-                              'http://blog.reddit.com/',
+                              'http://www.reddit.com/tb/ec5z7',
                               'gold',
                               sr_path = False,
                               subtitles = ["This weekend, yearly subscriptions come with",
