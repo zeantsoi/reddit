@@ -1801,9 +1801,9 @@ class ApiController(RedditController):
                 c.user.gold_subscr_id = subscr_id
 
             if days > 300:
-                g.log.info ("%s claimed %d days and would have earned creddit."
+                g.log.info ("%s claimed %d days and earned 3 creddits."
                             % (c.user.name, days))
-#                c.user.gold_creddits += 3
+                c.user.gold_creddits += 3
 
             admintools.engolden(c.user, days)
 
@@ -1830,8 +1830,6 @@ class ApiController(RedditController):
         else:
             try:
                 months = int(months)
-                if months < 0:
-                    c.errors.add(errors.BAD_STRING, field = "months")
             except ValueError:
                 c.errors.add(errors.BAD_STRING, field = "months")
 
@@ -1840,6 +1838,10 @@ class ApiController(RedditController):
             pass
 
         if form.has_error():
+            return
+
+        if months < 0 or c.user._id == recipient._id:
+            form.set_html(".status", _("nice try."))
             return
 
         if months == 0:
