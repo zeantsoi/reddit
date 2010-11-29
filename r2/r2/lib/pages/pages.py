@@ -249,12 +249,12 @@ class Reddit(Templated):
                            show_cover = True, nocname=True))
 
         if True and self.submit_box:
-            ps.append(SideBox(_('reddit gold weekend bonus'),
+            ps.append(SideBox(_('reddit gold beta testing offer'),
                               'http://www.reddit.com/tb/ec5z7',
                               'gold',
                               sr_path = False,
-                              subtitles = ["This weekend, yearly subscriptions come with",
-                                           "three bonus months you can share or hoard!"],
+                              subtitles = ["Just a few hours left to get three",
+                                           "bonus months and help us test gifting"],
                               show_cover = False, nocname = True))
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
