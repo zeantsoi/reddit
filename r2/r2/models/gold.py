@@ -102,7 +102,7 @@ def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
 
     # No point in i18n, since we don't have access to the user's
     # language info (or name) at this point
-    if gold_secret.startswith("c_"):
+    if gold_secret.startswith("cr_"):
         body = """
 Thanks for buying reddit gold gift creddits! We have received your %s
 transaction, number %s.
@@ -288,10 +288,10 @@ def process_google_transaction(trans_id):
         try:
             pennies = int(float(auth.find("order-total").contents[0])*100)
             if pennies == 2999:
-                secret = "c_" if is_creddits else "ys_"
+                secret = "cr_" if is_creddits else "ys_"
                 days = 366
             elif pennies == 399:
-                secret = "c_" if is_creddits else "m_"
+                secret = "cr_" if is_creddits else "m_"
                 days = 31
             else:
                 g.log.error("Got %d pennies via Google?" % pennies)

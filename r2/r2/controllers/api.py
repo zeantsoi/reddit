@@ -1448,7 +1448,7 @@ class ApiController(RedditController):
         if item_number is None:
             raise ValueError("Got no item_number via PayPal?")
         elif item_number == 'creddits':
-            secret_prefix = 'c_'
+            secret_prefix = 'cr_'
             if pennies >= 2999:
                 days = 12 * 31 * int(pennies / 2999)
             else:
@@ -1807,7 +1807,7 @@ class ApiController(RedditController):
             if subscr_id:
                 c.user.gold_subscr_id = subscr_id
 
-            if code.startswith("c_"):
+            if code.startswith("cr_"):
                 c.user.gold_creddits += int(days / 31)
                 c.user._commit()
                 form.set_html(".status", _("claimed! now go to someone's userpage and give them a present!"))
