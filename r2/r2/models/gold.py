@@ -249,6 +249,15 @@ def process_google_transaction(trans_id):
 
     # get the financial details
     auth = trans.find("authorization-amount-notification")
+    
+    # creddits?
+    is_creddits = False
+    cart = trans.find("shopping-cart")
+    if cart:
+        for item in cart.findAll("item-name"):
+            if "creddit" in item.contents[0]:
+                is_creddits = True
+                break
 
     if not auth:
         # see if the payment was declinded
@@ -269,10 +278,10 @@ def process_google_transaction(trans_id):
         try:
             pennies = int(float(auth.find("order-total").contents[0])*100)
             if pennies == 2999:
-                secret = "ys_"
+                secret = "c_" if is_creddits else "ys_"
                 days = 366
             elif pennies == 399:
-                secret = "m_"
+                secret = "c_" if is_creddits else "m_"
                 days = 31
             else:
                 g.log.error("Got %d pennies via Google?" % pennies)

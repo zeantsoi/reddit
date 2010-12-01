@@ -1445,7 +1445,15 @@ class ApiController(RedditController):
         pennies = int(mc_gross * 100)
 
         days = None
-        if item_number and item_number in ('rgsub', 'rgonetime'):
+        if item_number is None:
+            raise ValueError("Got no item_number via PayPal?")
+        elif item_number == 'creddits':
+            secret_prefix = 'c_'
+            if pennies >= 2999:
+                days = 12 * 31 * int(pennies / 2999)
+            else:
+                days = 31 * int(pennies / 399)
+        elif item_number in ('rgsub', 'rgonetime'):
             if pennies == 2999:
                 secret_prefix = "ys_"
                 days = 366
@@ -1768,9 +1776,8 @@ class ApiController(RedditController):
 
 
     @validatedForm(VUser(),
-                   code = VPrintable("code", 30),
-                   postcard_okay = VOneOf("postcard", ("yes", "no")),)
-    def POST_claimgold(self, form, jquery, code, postcard_okay):
+                   code = VPrintable("code", 30))
+    def POST_claimgold(self, form, jquery, code):
         if not code:
             c.errors.add(errors.NO_TEXT, field = "code")
             form.has_errors("code", errors.NO_TEXT)
@@ -1800,16 +1807,16 @@ class ApiController(RedditController):
             if subscr_id:
                 c.user.gold_subscr_id = subscr_id
 
-            if days > 300:
-                g.log.info ("%s claimed %d days and earned 3 creddits."
-                            % (c.user.name, days))
-                c.user.gold_creddits += 3
+            if code.startswith("c_"):
+                c.user.gold_creddits += int(days / 31)
+                c.user._commit()
+                form.set_html(".status", _("claimed! now go to someone's userpage and give them a present!"))
+            else:
+                admintools.engolden(c.user, days)
 
-            admintools.engolden(c.user, days)
-
-            g.cache.set("recent-gold-" + c.user.name, True, 600)
-            form.set_html(".status", _("claimed!"))
-            jquery(".lounge").show()
+                g.cache.set("recent-gold-" + c.user.name, True, 600)
+                form.set_html(".status", _("claimed!"))
+                jquery(".lounge").show()
 
         # Activate any errors we just manually set
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,

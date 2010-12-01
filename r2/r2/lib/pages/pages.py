@@ -1365,7 +1365,9 @@ class UploadedImage(Templated):
 class Thanks(Templated):
     """The page to claim reddit gold trophies"""
     def __init__(self, secret=None):
-        if g.cache.get("recent-gold-" + c.user.name):
+        if secret and secret.startswith("c_"):
+            status = "creddits"
+        elif g.cache.get("recent-gold-" + c.user.name):
             status = "recent"
         elif c.user.gold:
             status = "gold"
