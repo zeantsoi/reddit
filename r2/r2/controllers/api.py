@@ -74,8 +74,7 @@ def reject_vote(thing):
 
 class ApiminimalController(MinimalController):
     """
-    Put API calls in here which won't come from logged in users (or
-    don't rely on the user being logged int)
+    Put API calls in here which don't rely on the user being logged in
     """
 
     @validatedForm(promoted = VByName('ids', thing_cls = Link,
@@ -105,8 +104,9 @@ class ApiminimalController(MinimalController):
 
         if sponsorships:
             for s in sponsorships:
-                add_tracker(s.sponsorship_url, s._fullname,
-                            "%s_%s" % (s._fullname, s.sponsorship_name))
+                if getattr(s, 'sponsorship_url', None):
+                    add_tracker(s.sponsorship_url, s._fullname,
+                                "%s_%s" % (s._fullname, s.sponsorship_name))
 
 
 class ApiController(RedditController):
