@@ -1349,7 +1349,7 @@ class ValidAddress(Validator):
                            company = company or "",
                            address = address,
                            city = city, state = state,
-                           zip = zipCode, country = country,
+                           zip = zipCode, country = country.name,
                            phoneNumber = phoneNumber or "")
 
 class ValidCard(Validator):
