@@ -311,10 +311,9 @@ class Link(Thing, Printable):
         site = c.site
 
         if user_is_loggedin:
-            #id36s = [ w._id36 for w in wrapped ]
-            #saved = CassandraSave._fast_query(user._id36, id36s)
+            id36s = [ w._id36 for w in wrapped ]
+            saved = CassandraSave._fast_query(user._id36, id36s)
 
-            saved = Link._saved(user, wrapped)
             hidden = Link._hidden(user, wrapped)
             clicked = {}
         else:
@@ -375,8 +374,8 @@ class Link(Thing, Printable):
             item.urlprefix = ''
 
             if user_is_loggedin:
-                # item.saved = (user._id36, item._id36) in saved
-                item.saved = bool(saved.get((user, item, 'save')))
+                item.saved = (user._id36, item._id36) in saved
+
                 item.hidden = bool(hidden.get((user, item, 'hide')))
                 item.clicked = bool(clicked.get((user, item, 'click')))
             else:
