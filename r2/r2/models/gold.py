@@ -102,7 +102,17 @@ def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
 
     # No point in i18n, since we don't have access to the user's
     # language info (or name) at this point
-    body = """
+    if gold_secret.startswith("c_"):
+        body = """
+Thanks for buying reddit gold gift creddits! We have received your %s
+transaction, number %s.
+
+Your secret claim code is %s. To associate the
+creddits with your reddit account, just visit
+%s
+""" % (source, txn_id, gold_secret, url)
+    else:
+        body = """
 Thanks for subscribing to reddit gold! We have received your %s
 transaction, number %s.
 
