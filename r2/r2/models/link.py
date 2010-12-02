@@ -311,8 +311,12 @@ class Link(Thing, Printable):
         site = c.site
 
         if user_is_loggedin:
-            id36s = [ w._id36 for w in wrapped ]
-            saved = CassandraSave._fast_query(user._id36, id36s)
+            saved_lu = []
+            for item in wrapped:
+                if not SaveHide._can_skip_lookup(user, item):
+                    saved_lu.append(item._id36)
+
+            saved = CassandraSave._fast_query(user._id36, saved_lu)
 
             hidden = Link._hidden(user, wrapped)
             clicked = {}

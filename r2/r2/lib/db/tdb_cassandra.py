@@ -648,6 +648,10 @@ class Relation(ThingBase):
         thing1_ids, thing1s_is_single = tup(thing1_ids, True)
         thing2_ids, thing2s_is_single = tup(thing2_ids, True)
 
+        if not thing1_ids or not thing2_ids:
+            # nothing to permute
+            return {}
+
         if properties is not None:
             properties = set(properties)
 
