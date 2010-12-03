@@ -248,13 +248,13 @@ class Reddit(Templated):
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
 
-        if False and self.submit_box:
-            ps.append(SideBox(_('new gold features'),
-                              'http://www.reddit.com/tb/ec5z7',
+        if True and self.submit_box:
+            ps.append(SideBox(_('reddit gold creddits: now for sale!'),
+                              'http://www.reddit.com/tb/efpn0',
                               'gold',
                               sr_path = False,
-                              subtitles = ["reddit gold just got better!",
-                                           "read all about it on the blog"],
+                              subtitles = ["check it out: you can now give gold",
+                                           "subscriptions to deserving redditors"],
                               show_cover = False, nocname = True))
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
