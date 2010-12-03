@@ -777,6 +777,8 @@ class ApiController(RedditController):
         #check the parent type here cause we need that for the
         #ratelimit checks
         if isinstance(parent, Message):
+            if not getattr(parent, "repliable", True):
+                abort(403, 'forbidden')
             is_message = True
             should_ratelimit = False
         else:
@@ -1825,9 +1827,10 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    months = VPrintable("months", max_length=100),
-                   recipient = VExistingUname("recipient"))
-    def POST_giftgold(self, form, jquery, months, recipient):
-        anonymous = False
+                   recipient = VExistingUname("recipient"),
+                   giftmessage = VLength("giftmessage", max_length=10000),
+                   signed = VBoolean('signed'))
+    def POST_giftgold(self, form, jquery, months, recipient, giftmessage, signed):
         if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
                                         errors.NO_USER):
             pass
@@ -1847,7 +1850,7 @@ class ApiController(RedditController):
         if form.has_error():
             return
 
-        if months < 0 or c.user._id == recipient._id:
+        if months < 0:
             form.set_html(".status", _("nice try."))
             return
 
@@ -1869,19 +1872,25 @@ class ApiController(RedditController):
             c.user.gold_creddit_escrow += months
             c.user._commit()
 
-        admintools.engolden(recipient, 31 * months)
+        days = 31 * months
 
-        if anonymous:
-            sender = "someone"
-            md_sender = "An anonymous redditor"
-        else:
+        admintools.engolden(recipient, days)
+
+        if signed:
             sender = c.user.name
             md_sender = "[%s](/user/%s)" % (sender, sender)
+        else:
+            sender = "someone"
+            md_sender = "An anonymous redditor"
+
+        create_gift_gold (c.user._id, recipient._id, days, c.start_time, signed)
 
         subject = sender + " just sent you reddit gold!"
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
+        if giftmessage and giftmessage.strip():
+            message += "\n\n" + strings.giftgold_note + giftmessage
 
-        send_system_message(recipient, subject, message, distinguish=True)
+        send_system_message(recipient, subject, message)
 
         if not c.user_is_admin:
             c.user.gold_creddit_escrow -= months

@@ -27,27 +27,19 @@
 <%! from r2.lib.strings import strings %>
 
 %if thing.gold_creddits <= 0:
-  ${_("This feature is still in beta. If you'd like to participate, see the reddit blog.")}
+  ${_("You don't have any gold creddits.")}
+  &#32;
+  <a href="/help/gold">
+    ${_("You can purchase some here.")}
+  </a>
 %else:
   <form id="giftgold" action="/api/giftgold" method="post"
-        class="content"
+        class="content gold-form"
         onsubmit="return post_form(this, 'giftgold');">
     <h1>${_("well, aren't you nice?")}</h1>
 
-    <p class="blurb">
-      %if thing.gold_creddits == 1:
-      ${_("You can give one month of reddit gold.")}
-      %else:
-      ${_("You can give up to %s months of reddit gold.") % thing.gold_creddits}
-      %endif
-###    &#32;
-###    <a href="asdf">
-###      ${_("(If you want more, you can get them here.)")}
-###    </a>
-    </p>
-
     <div class="spacer">
-      <%utils:round_field title="${_('how many months?')}">
+      <%utils:round_field title="${_('how many months? (you have %d available)') % thing.gold_creddits}">
       <input type="text" name="months" value="${'1' if thing.gold_creddits == 1 else ''}"/>
       ${error_field("BAD_STRING", "months")}
       ${error_field("NO_TEXT", "months")}
@@ -62,7 +54,27 @@
       </%utils:round_field>
     </div>
 
-  <button type="submit" class="btn">${_("give")}</button>
+    <div class="spacer">
+      <%utils:round_field title="${_('let them know who you are?')}">
+      ${radio_type("signed", "yes", _("yes, include my username"),
+                   "",
+                   True)}
+      <br/>
+      ${radio_type("signed", "no", _("no, make it anonymous"),
+                   "",
+                   False)}
+      </%utils:round_field>
+    </div>
+
+    <div class="spacer">
+      <%utils:round_field title="${_('gift message (optional)')}">
+      <textarea rows="5" cols="40" name="giftmessage" id="giftmessage">
+      </textarea>
+      </%utils:round_field>
+    </div>
+
+
+  <button type="submit" class="btn gold-button">${_("give")}</button>
   <span class="status"></span>
 
   </form>

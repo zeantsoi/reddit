@@ -31,6 +31,7 @@ from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr
 from httplib import HTTPSConnection
 from urlparse import urlparse
+from time import time
 import socket, base64
 from BeautifulSoup import BeautifulStoneSoup
 
@@ -47,7 +48,7 @@ gold_table = sa.Table('reddit_gold', METADATA,
                       # status can be: invalid, unclaimed, claimed
                       sa.Column('status', sa.String, nullable = False),
                       sa.Column('date', sa.DateTime(timezone=True),
-                                nullable = False, 
+                                nullable = False,
                                 default = sa.func.now()),
                       sa.Column('payer_email', sa.String, nullable = False),
                       sa.Column('paying_id', sa.String, nullable = False),
@@ -68,7 +69,7 @@ create_table(gold_table, indices)
 def create_unclaimed_gold (trans_id, payer_email, paying_id,
                            pennies, days, secret, date,
                            subscr_id = None):
-    
+
     try:
         gold_table.insert().execute(trans_id=str(trans_id),
                                     subscr_id=subscr_id,
@@ -136,6 +137,18 @@ def create_claimed_gold (trans_id, payer_email, paying_id,
                                 days=days,
                                 secret=secret,
                                 account_id=account_id,
+                                date=date)
+
+def create_gift_gold (giver_id, recipient_id, days, date, signed):
+    trans_id = "X%d%s-%s" % (int(time()), randstr(2), 'S' if signed else 'A')
+
+    gold_table.insert().execute(trans_id=trans_id,
+                                status="gift",
+                                paying_id=giver_id,
+                                payer_email='',
+                                pennies=0,
+                                days=days,
+                                account_id=recipient_id,
                                 date=date)
 
 # returns None if the ID was never valid
@@ -287,11 +300,17 @@ def process_google_transaction(trans_id):
         days = None
         try:
             pennies = int(float(auth.find("order-total").contents[0])*100)
-            if pennies == 2999:
-                secret = "cr_" if is_creddits else "ys_"
+            if is_creddits:
+                secret = "cr_"
+                if pennies >= 2999:
+                    days = 12 * 31 * int(pennies / 2999)
+                else:
+                    days = 31 * int(pennies / 399)
+            elif pennies == 2999:
+                secret = "ys_"
                 days = 366
             elif pennies == 399:
-                secret = "cr_" if is_creddits else "m_"
+                secret = "m_"
                 days = 31
             else:
                 g.log.error("Got %d pennies via Google?" % pennies)
@@ -299,9 +318,9 @@ def process_google_transaction(trans_id):
                     sa.and_(gold_table.c.status == 'uncharged',
                             gold_table.c.trans_id == 'g' + str(trans_id)),
                     values = { gold_table.c.status : "strange",
-                               gold_table.c.pennies : pennies, 
+                               gold_table.c.pennies : pennies,
                                gold_table.c.payer_email : email,
-                               gold_table.c.paying_id : payer_id  
+                               gold_table.c.paying_id : payer_id
                                }).execute()
                 return
         except ValueError:

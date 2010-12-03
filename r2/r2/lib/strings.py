@@ -141,7 +141,8 @@ string_dict = dict(
     postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
     over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to reddit gold, it goes up to %(goldmax)d.)"),
     over_comment_limit_gold = _("Sorry, the maximum number of comments is %d."),
-    youve_got_gold = _("%(sender)s just sent you %(amount)s of reddit gold! Wasn't that nice?\n\n----\n\n*This is a system account whose mail we don't read very often, so please address all feedback to 912@reddit.com.*"),
+    youve_got_gold = _("%(sender)s just sent you %(amount)s of reddit gold! Wasn't that nice?"),
+    giftgold_note = _("Here's a note that was included:\n\n----\n\n"),
 )
 
 class StringHandler(object):

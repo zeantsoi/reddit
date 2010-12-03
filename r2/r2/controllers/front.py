@@ -1002,6 +1002,7 @@ class FormsController(RedditController):
             recipient_name = recipient.name
 
         return BoringPage(_("give the gift of reddit gold"),
+                          show_sidebar = False,
                           content=GiftGold(recipient_name)).render()
 
     @validate(VVerifiedUser())

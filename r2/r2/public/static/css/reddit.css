@@ -4172,6 +4172,24 @@ tr.gold-accent + tr > td {
     max-width: 550px;
 }
 
+.gold-form {
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua", Palatino,georgia,garamond,FreeSerif,serif;
+}
+
+.gold-form .roundfield {
+    border: 1px solid #E1B000;
+    background-color: #fffdcc;
+    color: #6a4d00;
+}
+
+.gold-button {
+    color: #482800;
+    background-color: #efcc4c;
+    border-color: #fff088 #fff088 #6a3d00 #6a3d00;
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
+                  Palatino,georgia,garamond,FreeSerif,serif;
+}
+
 .comment-visits-box .title {
     font-weight: bold;
 }

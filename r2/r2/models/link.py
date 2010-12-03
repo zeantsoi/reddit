@@ -909,6 +909,7 @@ class Message(Thing, Printable):
             elif sr.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
+
         # if there is a "to" we may have to create an inbox relation as well
         # also, only global admins can be message spammed.
         if to and (not m._spam or to.name in g.admins):
