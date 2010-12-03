@@ -42,7 +42,6 @@ def set_downs():
         if c != sr._downs and c > 0:
             sr._downs = max(c, 0)
             sr._commit()
-    count.clear_sr_counts(names)
 
 def cache_lists():
     def _chop(srs):

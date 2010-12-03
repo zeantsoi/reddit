@@ -146,7 +146,7 @@ class Vote(MultiRelation('vote',
     @classmethod
     def vote(cls, sub, obj, dir, ip, organic = False, cheater = False):
         from admintools import valid_user, valid_thing, update_score
-        from r2.lib.count import incr_counts
+        from r2.lib.count import incr_sr_count
         from r2.lib.db import queries
 
         sr = obj.subreddit_slow
@@ -208,7 +208,7 @@ class Vote(MultiRelation('vote',
         #update the sr's valid vote count
         if is_new and v.valid_thing and kind == 'link':
             if sub._id != obj.author_id:
-                incr_counts([sr])
+                incr_sr_count(sr)
 
         # now write it out to Cassandra. We'll write it out to both
         # this way for a while
