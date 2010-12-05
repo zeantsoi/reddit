@@ -248,7 +248,7 @@ class Reddit(Templated):
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
 
-        if True and self.submit_box:
+        if False and self.submit_box:
             ps.append(SideBox(_('reddit gold creddits: now for sale!'),
                               'http://www.reddit.com/tb/efpn0',
                               'gold',
