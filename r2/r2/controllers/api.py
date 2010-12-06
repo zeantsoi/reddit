@@ -31,7 +31,6 @@ from r2.models import *
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
-from r2.lib.utils import rally_code
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget, UrlParser
@@ -2279,75 +2278,3 @@ class ApiController(RedditController):
                 jquery.redirect(res)
             else:    
                 form.set_html(".status", _("error (sorry)"))
-
-    @validatedForm(VUser(),
-                   friend = VExistingUname('friend'),
-                   code = VPrintable("code", 200))
-    def POST_rally(self, form, jquery, friend, code):
-        if form.has_errors("friend", errors.USER_DOESNT_EXIST,
-                                     errors.NO_USER):
-            pass
-
-        if form.has_errors("code", errors.NO_TEXT):
-            pass
-
-        if form.has_error():
-            return
-
-        if friend._id == c.user._id:
-            form.set_html(".status", "Nice try, but you can't vouch for yourself.")
-            return
-
-        try:
-            ic = int(code)
-        except ValueError:
-            ic = -1
-
-        compose_link = "/message/compose?to=%s&subject=we+met+at+the+rally" % friend.name
-        user_page = "/user/" + friend.name
-
-        real_code = int(rally_code(friend))
-        if ic != real_code:
-            g.log.warning("%s from %s guessed %s for %s" %
-                          (c.user.name, request.ip, code, friend.name))
-            form.set_html(".status", "You seem to have the wrong code. :( However, if you <a href='%s'>write to %s</a> you can find out the correct one." % (compose_link, friend.name))
-        else:
-            d = dict(ip=request.ip,
-                     timestamp =
-                     c.start_time.astimezone(g.display_tz).strftime("%Y-%m-%d %H:%M:%S"))
-            key = "rally-%s-%s" % (c.user.name, friend.name)
-            g.hardcache.add(key, d, 86400 * 365)
-            g.log.info("%s from %s met %s" %
-                       (c.user.name, request.ip, friend.name))
-            form.set_html(".status", "Your connection has been noted. And here's a link to <a href='%s'>%s's userpage</a> if you want to become reddit friends." % (user_page, friend.name))
-
-    @validatedForm(VVerifiedUser(),
-                   role = VPrintable('role', 100),
-                   resume = VLength("resume", 30000),
-                   really = VBoolean('really'))
-    def POST_apply(self, form, jquery, role, resume, really):
-        from r2.lib.emailer import send_html_email
-
-        if form.has_errors("resume", errors.NO_TEXT):
-            pass
-
-        if form.has_error():
-            return
-
-        if not really:
-            form.set_html(".status", "If you're applying, check the box. If you're not applying, please don't submit the form. We really, really mean it.")
-        elif role not in ("programmer", "sysadmin", "sysarch", "dba"):
-            form.set_html(".status", "Please pick a role other than 'cheater'")
-        else:
-            from_addr = "%s <%s>" % (c.user.name, c.user.email)
-            to_addr = "apply-" + role + "@reddit.com"
-            subject = "%s wants to be a reddit %s!" % (c.user.name, role)
-            body = "karma: (%d / %d)\n" % (c.user.link_karma,
-                                           c.user.comment_karma)
-            body += "registered %s\n" % c.user._date.strftime("%Y-%m-%d")
-            body += "ip: %s\n\n" % request.ip
-            body += resume
-            send_html_email(to_addr, from_addr, subject, body, "plain")
-            g.log.info("got resume from %s at %s" %
-                       (c.user.name, request.ip))
-            form.set_html(".status", "Your resume has just been emailed to the reddit admins. Thanks for applying!")

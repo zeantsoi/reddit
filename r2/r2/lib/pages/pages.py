@@ -228,10 +228,6 @@ class Reddit(Templated):
                 ps.append(Ads())
             no_ads_yet = False
 
-        if (request.fullpath.lower().startswith('/r/operabrowser') and
-            (c.user.pref_show_sponsorships or not c.user.gold)):
-            ps.append(unsafe("<iframe id='opera-ad-frame' frameborder='0' scrolling='no' name='opera-ad-frame' src='http://www.opera.com/portal/reddit/banner/' style='height: 100px; width: 300px;'></iframe>"))
-
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
@@ -1392,28 +1388,6 @@ class GiftGold(Templated):
         else:
             gold_creddits = c.user.gold_creddits
         Templated.__init__(self, recipient=recipient, gold_creddits=gold_creddits)
-
-class Rally(Templated):
-    """Temporary URL for DC Rally networking"""
-    def __init__(self, friend, code):
-        from r2.lib.utils import rally_code
-
-        users_code = rally_code(c.user)
-
-        Templated.__init__(self, friend=friend, code=code,
-                           users_code=users_code)
-
-class Apply(Templated):
-    """Temporary URL for job applicants"""
-    def __init__(self, code):
-        if code.strip() == g.apply_secret:
-            Templated.__init__(self, code="valid")
-        elif code.lower() == '01189998819991197253':
-            Templated.__init__(self, code="it")
-        elif code.lower() == 'x':
-            Templated.__init__(self, code="x")
-        else:
-            Templated.__init__(self, code="invalid")
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""

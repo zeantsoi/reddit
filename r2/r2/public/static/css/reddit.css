@@ -4204,65 +4204,6 @@ tr.gold-accent + tr > td {
     margin: -1px 0;
 }
 
-.rallyinfo {
-    margin-top: 10px;
-    font-style: italic;
-}
-
-.rally td {
-    text-align: center;
-}
-
-.rally .username {
-    font-size: 25px;
-    font-family: monospace;
-}
-
-.rally .code {
-    font-size: 20px;
-}
-
-.rally .actualcode {
-    font-family: monospace;
-}
-
-.rally .codetitle {
-    color: #888;
-}
-
-.rally .userlink {
-    line-height: 25px;
-    font-size: 10px;
-    font-family: monospace;
-}
-
-.rally-instructions {
-    font-size: 15px;
-    margin-bottom: 5px;
-}
-
-.rallyform .status {
-    margin-top: 10px;
-}
-
-.rallyform button {
-    height: 80px;
-    width: 150px;
-}
-
-.rally .age, .rally .karma {
-    font-style: italic;
-}
-
-.rally .faves {
-    vertical-align: top;
-    text-align: left;
-    padding-top: 20px;
-    padding-left: 10px;
-    font-size: 15px;
-    line-height: 30px;
-}
-
 .role {
     width: 800px;
 }

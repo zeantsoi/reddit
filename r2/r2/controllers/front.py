@@ -984,13 +984,6 @@ class FormsController(RedditController):
         """The page to claim reddit gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
 
-    @validate(VUser())
-    def GET_rally(self, friend, code):
-        """Temporary URL for DC Rally networking"""
-        r = Rally(friend, code)
-        return BoringPage(_("rally"), content=r, show_sidebar=False,
-                          footer=False, srbar=False).render()
-
     @validate(VUser(),
               recipient = VExistingUname("recipient"))
     def GET_giftgold(self, recipient):
@@ -1004,13 +997,3 @@ class FormsController(RedditController):
         return BoringPage(_("give the gift of reddit gold"),
                           show_sidebar = False,
                           content=GiftGold(recipient_name)).render()
-
-    @validate(VVerifiedUser())
-    def GET_apply(self, code):
-        """Temporary URL for job applicants"""
-        if code == 'robots.txt':
-            from pylons import response
-            response.headers['Content-Type'] = 'text/plain'
-            return "User-Agent: *\nDisallow: /apply/01189998819991197253\n"
-        r = Apply(code)
-        return BoringPage(_("apply"), content=r, show_sidebar=False).render()

@@ -13,7 +13,6 @@ User-Agent: Gort
 Disallow: /earth
 
 User-Agent: *
-Disallow: /apply/01189998819991197253
 Disallow: /api
 Disallow: /post
 Disallow: /submit
@@ -25,5 +24,4 @@ Disallow: /login
 Disallow: /reddits/search
 Disallow: /search
 Disallow: /r/*/search
-Disallow: /apply/*
 Allow: /

@@ -176,11 +176,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/giftgold', controller='forms', action="giftgold", recipient = '')
     mc('/giftgold/:recipient', controller='forms', action="giftgold")
 
-    mc('/rally', controller='forms', action="rally", friend = None, code = None)
-    mc('/rally/:friend/:code', controller='forms', action="rally")
-
-    mc('/apply/:code', controller='forms', action="apply")
-
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
