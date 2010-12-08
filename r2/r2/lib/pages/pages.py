@@ -2523,7 +2523,7 @@ def make_link_child(item):
             try:
                 media_embed = get_media_embed(item.media_object)
             except TypeError:
-                g.log.warning("link %s has a bad media object" % link._id36)
+                g.log.warning("link %s has a bad media object" % item)
                 media_embed = None
 
             if media_embed:
