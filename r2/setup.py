@@ -139,14 +139,13 @@ setup(
                       "cython==0.14",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
-                      "BeautifulSoup == 3.0.8.1", # last version to use the good parser
+                      "BeautifulSoup",
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",
                       "py_interface",
                       "pycountry",
-                      "python-cassandra",
-                      "thrift" # required by Cassandra
+                      "thrift05", "pycassa==1.0.5",
                       ],
     packages=find_packages(),
     include_package_data=True,
@@ -170,11 +169,6 @@ setup(
     restcontroller = pylons.commands:RestControllerCommand
     """,
 )
-
-
-# the cassandra stuff we'll need. down here because it needs to be
-# done *after* thrift is installed
-easy_install(["http://github.com/downloads/pycassa/pycassa/pycassa-0.3.0.tar.gz"])
 
 # running setup.py always fucks up the build directory, which we don't
 # need anyway.

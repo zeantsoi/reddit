@@ -50,6 +50,7 @@ class CassandraVote(tdb_cassandra.Relation):
                    'notes', 'ip')
 
     _defaults = {'organic': False}
+    _default_ttls = {'ip': 30*24*60*60}
 
     @classmethod
     def _rel(cls, thing1_cls, thing2_cls):

@@ -24,11 +24,11 @@ from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
 import signal
 from datetime import timedelta, datetime
-import pycassa
+from pycassa.pool import ConnectionPool as PycassaConnectionPool
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
+from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
 from r2.lib.utils import thread_dump
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
@@ -103,11 +103,9 @@ class Globals(object):
                    'proxy_addr',
                    'allowed_pay_countries']
 
-    choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
-                                      'ONE':    CL_ONE,
+    choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
-                    'cassandra_wcl': {'ZERO':   CL_ZERO,
-                                      'ONE':    CL_ONE,
+                    'cassandra_wcl': {'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
                     }
 
@@ -177,30 +175,23 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
-        self.cassandra_seeds = list(self.cassandra_seeds)
-        random.shuffle(self.cassandra_seeds)
-        self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
+        self.cassandra = PycassaConnectionPool('reddit',
+                                        server_list = self.cassandra_seeds,
+                                        # TODO: .ini setting
+                                        timeout=5, max_retries=5)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
-        self.permacache = self.init_cass_cache('reddit', 'permacache',
-                                               self.cassandra,
-                                               self.make_lock,
-                                               memcache = perma_memcache,
-                                               read_consistency_level = self.cassandra_rcl,
-                                               write_consistency_level = self.cassandra_wcl,
-                                               localcache_cls = localcache_cls)
+        self.permacache = CassandraCacheChain(localcache_cls(),
+                                              CassandraCache('permacache',
+                                                             self.cassandra,
+                                                             read_consistency_level = self.cassandra_rcl,
+                                                             write_consistency_level = self.cassandra_wcl),
+                                              memcache = perma_memcache,
+                                              lock_factory = self.make_lock)
+
         self.cache_chains.append(self.permacache)
 
-        self.urlcache = self.init_cass_cache('reddit', 'urls',
-                                             self.cassandra,
-                                             self.make_lock,
-                                             # TODO: increase this to QUORUM
-                                             # once we switch to live
-                                             read_consistency_level = self.cassandra_rcl,
-                                             write_consistency_level = CL_ONE,
-                                             localcache_cls = localcache_cls)
-        self.cache_chains.append(self.urlcache)
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
@@ -372,20 +363,6 @@ class Globals(object):
             self.log.error("reddit app %s:%s started %s at %s" %
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
-
-    def init_cass_cache(self, keyspace, column_family, cassandra_client,
-                        lock_factory,
-                        memcache = None,
-                        read_consistency_level = CL_ONE,
-                        write_consistency_level = CL_ONE,
-                        localcache_cls = LocalCache):
-        return CassandraCacheChain(localcache_cls(),
-                                   CassandraCache(keyspace, column_family,
-                                                  cassandra_client,
-                                                  read_consistency_level = read_consistency_level,
-                                                  write_consistency_level = write_consistency_level),
-                                   memcache = memcache,
-                                   lock_factory = lock_factory)
 
     @staticmethod
     def to_bool(x):

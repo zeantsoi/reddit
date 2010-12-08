@@ -24,9 +24,9 @@ from socket import gethostbyaddr
 
 from pylons import g
 
-import pycassa
-import cassandra.ttypes
-from cassandra.ttypes import ConsistencyLevel
+from pycassa import ColumnFamily
+from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
+from pycassa.system_manager import SystemManager, UTF8_TYPE
 
 from r2.lib.utils import tup, Storage
 from r2.lib.db.sorts import epoch_seconds
@@ -36,6 +36,7 @@ from itertools import chain
 
 cassandra = g.cassandra
 thing_cache = g.thing_cache
+seeds = g.cassandra_seeds
 keyspace = 'reddit'
 disallow_db_writes = g.disallow_db_writes
 tz = g.tz
@@ -43,15 +44,13 @@ log = g.log
 read_consistency_level = g.cassandra_rcl
 write_consistency_level = g.cassandra_wcl
 debug = g.debug
-
-# descriptions of the CFs available on boot.
-boot_cfs = cassandra.describe_keyspace(keyspace)
+make_lock = g.make_lock
+db_create_tables = g.db_create_tables
 
 thing_types = {}
 
 # The available consistency levels
-CL = Storage(ZERO   = ConsistencyLevel.ZERO,
-             ANY    = ConsistencyLevel.ANY,
+CL = Storage(ANY    = ConsistencyLevel.ANY,
              ONE    = ConsistencyLevel.ONE,
              QUORUM = ConsistencyLevel.QUORUM,
              ALL    = ConsistencyLevel.ALL)
@@ -79,7 +78,7 @@ class TdbException(CassandraException):
     """Exceptions caused by bugs in our callers or subclasses"""
     pass
 
-class NotFound(CassandraException):
+class NotFound(CassandraException, NotFoundException):
     """Someone asked us for an ID that isn't stored in the DB at
        all. This is probably an end-user's fault."""
     pass
@@ -93,11 +92,14 @@ def will_write(fn):
         return fn(*a, **kw)
     return _fn
 
+def get_manager():
+    # n.b. does not retry against multiple servers
+    server = seeds[0]
+    return SystemManager(server)
+
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
         type.__init__(cls, name, bases, dct)
-
-        global boot_cfs
 
         if cls._use_db:
             if cls._type_prefix is None:
@@ -115,26 +117,33 @@ class ThingMeta(type):
             # classes's name
             cf_name = cls._cf_name or name
 
-            # make sure the CF for this type exists, or refuse to
-            # start
-            if debug and cf_name not in boot_cfs:
-                # do another lookup in case both this class and the CF
-                # were created after boot. This is really unlikely,
-                # and probably only happens in development
-                boot_cfs = cassandra.describe_keyspace(keyspace)
-
-            if cf_name not in boot_cfs:
-                raise ConfigurationException("ColumnFamily %r does not exist" % (cf_name,))
-
             thing_types[cls._type_prefix] = cls
 
             cls._read_consistency_level = read_consistency_level
             cls._write_consistency_level = write_consistency_level
 
-            cls._cf = pycassa.ColumnFamily(cassandra, keyspace,
-                                           cf_name,
-                                           read_consistency_level = read_consistency_level,
-                                           write_consistency_level = write_consistency_level)
+            try:
+                cls._cf = ColumnFamily(cassandra,
+                                       cf_name,
+                                       read_consistency_level = read_consistency_level,
+                                       write_consistency_level = write_consistency_level)
+            except NotFoundException:
+                if not db_create_tables:
+                    raise
+
+                manager = get_manager()
+
+                log.warning("Creating Cassandra Column Family %s" % (cf_name,))
+                with make_lock('cassandra_schema'):
+                    manager.create_column_family(keyspace, cf_name,
+                                                 comparator_type = cls._compare_with)
+                log.warning("Created Cassandra Column Family %s" % (cf_name,))
+
+                # try again to look it up
+                cls._cf = ColumnFamily(cassandra,
+                                       cf_name,
+                                       read_consistency_level = read_consistency_level,
+                                       write_consistency_level = write_consistency_level)
 
         cls._kind = name
 
@@ -142,7 +151,7 @@ class ThingMeta(type):
         return '<thing: %s>' % cls.__name__
 
 class ThingBase(object):
-    # base class for Things and Relation
+    # base class for Thing and Relation
 
     __metaclass__ = ThingMeta
 
@@ -154,6 +163,11 @@ class ThingBase(object):
     _type_prefix = None # this must be present for classes with _use_db==True
 
     _use_db = False
+
+    # the Cassandra column-comparator (internally orders column
+    # names). In real life you can't change this without some changes
+    # to tdb_cassandra to support other attr types
+    _compare_with = UTF8_TYPE
 
     _value_type = None # if set, overrides all of the _props types
                        # below. Used for Views. One of 'int', 'float',
@@ -174,6 +188,24 @@ class ThingBase(object):
     # want a default to be a boolean and want it to be storable you'll
     # also have to set it in _bool_props
     _defaults = {}
+
+    # The default TTL in seconds to add to all columns. Note: if an
+    # entire object is expected to have a TTL, it should be considered
+    # immutable! (You don't want to write out an object with an author
+    # and date, then go update author or add a new column, then have
+    # the original columns expire. Then when you go to look it up, the
+    # inherent properties author and/or date will be gone and only the
+    # updated columns will be present.) This is an expected convention
+    # and is not enforced.
+    _ttl = None
+
+    # A per-class dictionary of default TTLs that new columns of this
+    # class should have
+    _default_ttls = {}
+
+    # A per-instance property defining the TTL of individual columns
+    # (that must also appear in self._dirties)
+    _column_ttls = {}
 
     # a timestamp property that will automatically be added to newly
     # created Things (disable by setting to None)
@@ -204,6 +236,7 @@ class ThingBase(object):
         self._partial = None if _partial is None else frozenset(_partial)
 
         self._deletes = set()
+        self._column_ttls = {}
 
         # our row key
         self._id = _id
@@ -230,7 +263,8 @@ class ThingBase(object):
         def reject_bad_partials(cached, still_need):
             # tell sgm that the match it found in the cache isn't good
             # enough if it's a partial that doesn't include our
-            # properties, we still need to look these items up
+            # properties. we still need to look those items up to get
+            # the properties that we're after
             stillfind = set()
 
             for k, v in cached.iteritems():
@@ -426,6 +460,10 @@ class ThingBase(object):
         if self._id is None:
             raise TdbException("Can't commit %r without an ID" % (self,))
 
+        if self._committed and self._ttl:
+            log.warning("Using a full-TTL object %r in a mutable fashion"
+                        % (self,))
+
         if not self._committed:
             # if this has never been committed we should also consider
             # the _orig columns as dirty (but "less dirty" than the
@@ -436,9 +474,9 @@ class ThingBase(object):
             self._dirties = upd
 
         # Cassandra values are untyped byte arrays, so we need to
-        # serialize everything, filtering out anything that's been
-        # dirtied but doesn't actually differ from what's already in
-        # the DB
+        # serialize everything while filtering out anything that's
+        # been dirtied but doesn't actually differ from what's already
+        # in the DB
         updates = dict((attr, self._serialize_column(attr, val))
                        for (attr, val)
                        in self._dirties.iteritems()
@@ -468,16 +506,19 @@ class ThingBase(object):
         if not updates and not self._deletes:
             return
 
+        # actually write out the changes to the CF
         wcl = self._wcl(write_consistency_level)
-
-        # actually write out the changes to the CF. TODO: these should
-        # occur in a single batch_mutate
-        self._cf.insert(self._id, updates,
-                        write_consistency_level = wcl)
-        self._cf.remove(self._id, self._deletes,
-                        write_consistency_level = wcl)
+        with self._cf.batch(write_consistency_level = wcl) as b:
+            if updates:
+                for k, v in updates.iteritems():
+                    b.insert(self._id,
+                             {k: v},
+                             ttl=self._column_ttls.get(k, self._ttl))
+            if self._deletes:
+                b.remove(self._id, self._deletes)
 
         self._orig.update(self._dirties)
+        self._column_ttls.clear()
         self._dirties.clear()
         for k in self._deletes:
             try:
@@ -499,6 +540,7 @@ class ThingBase(object):
 
         self._dirties.clear()
         self._deletes.clear()
+        self._column_ttls.clear()
 
     def __getattr__(self, attr):
         if attr.startswith('_'):
@@ -532,6 +574,8 @@ class ThingBase(object):
         except KeyError:
             pass
         self._dirties[attr] = val
+        if attr in self._default_ttls:
+            self.column_ttls[attr] = self._default_ttls[attr]
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
@@ -578,6 +622,11 @@ class ThingBase(object):
                 raise AttributeError("_get on unrequested key from partial")
             return default
 
+    def _set_ttl(self, key, ttl):
+        assert key in self._dirties
+        assert isinstance(ttl, (long, int))
+        self._column_ttls[key] = ttl
+
     def _on_create(self):
         """A hook executed on creation, good for creation of static
            Views. Subclasses should call their parents' hook(s) as
@@ -604,12 +653,18 @@ class ThingBase(object):
                               id_str,
                               comm_str, part_str)
 
-    def __del__(self):
-        if not self._committed:
-            # normally we'd log this with g.log or something, but we
-            # can't guarantee that the thread destructing us has
-            # access to g
-            print "Warning: discarding uncomitted %r; this is usually a bug" % (self,)
+    if debug:
+        # we only want this with g.debug because overriding __del__
+        # can play hell with memory leaks
+        def __del__(self):
+                if not self._committed:
+                    # normally we'd log this with g.log or something,
+                    # but we can't guarantee that the thread
+                    # destructing us has access to g
+                    print "Warning: discarding uncomitted %r; this is usually a bug" % (self,)
+                elif self._dirty:
+                    print ("Warning: discarding dirty %r; this is usually a bug (_dirties=%r, _deletes=%r)"
+                           % (self,self._dirties,self._deletes))
 
 class Thing(ThingBase):
     _timestamp_prop = 'date'
@@ -620,10 +675,11 @@ class Relation(ThingBase):
     def __init__(self, thing1_id, thing2_id, **kw):
         # NB! When storing relations between postgres-backed Thing
         # objects, these IDs are actually ID36s
-        return ThingBase.__init__(self,
-                                  _id = self._rowkey(thing1_id, thing2_id),
-                                  thing1_id=thing1_id, thing2_id=thing2_id,
-                                  **kw)
+        ThingBase.__init__(self,
+                           _id = self._rowkey(thing1_id, thing2_id),
+                           **kw)
+        self._orig['thing1_id'] = thing1_id
+        self._orig['thing2_id'] = thing2_id
 
     @will_write
     def _destroy(self, write_consistency_level = None):
@@ -689,11 +745,14 @@ class Relation(ThingBase):
             raise InvariantException("Looked up %r with unmatched IDs (%r)"
                                      % (cls, t_id))
 
-        r = cls(thing1_id=columns['thing1_id'], thing2_id=columns['thing2_id'])
-        r._orig = columns
-        assert r._id == t_id
-        r._committed = True
-        return r
+        # if modifying this, check ThingBase._from_columns and see if
+        # you should change it as well
+        thing1_id, thing2_id = columns['thing1_id'], columns['thing2_id']
+        t = cls(thing1_id = thing1_id, thing2_id = thing2_id)
+        assert t._id == t_id
+        t._orig = columns
+        t._committed = True
+        return t
 
     @staticmethod
     def _rowkey(thing1_id36, thing2_id36):
@@ -747,7 +806,12 @@ class Query(object):
 
     @will_write
     def _delete_all(self, write_consistency_level = None):
+        # uncomment to use on purpose
         raise InvariantException("Nice try, FBI")
+
+        # TODO: this could use cf.truncate instead and be *way*
+        # faster, but it wouldn't flush the thing_cache at the same
+        # time that way
 
         q = self.copy()
         q.after = q.limit = None
@@ -795,6 +859,7 @@ class View(ThingBase):
     # Views are Things like any other, but may have special key
     # characteristics
 
+    # these default to not having a timestamp column
     _timestamp_prop = None
 
     _value_type = 'str'
@@ -814,7 +879,9 @@ class View(ThingBase):
 
     @classmethod
     @will_write
-    def _set_values(cls, row_key, col_values, write_consistency_level = None):
+    def _set_values(cls, row_key, col_values,
+                    write_consistency_level = None,
+                    ttl=None):
         """Set a set of column values in a row of a View without
            looking up the whole row first"""
         # col_values =:= dict(col_name -> col_value)
@@ -822,10 +889,21 @@ class View(ThingBase):
         updates = dict((col_name, cls._serialize_column(col_name, col_val))
                        for (col_name, col_val) in col_values.iteritems())
 
-        # with some quick tweaks to pycassa we could have a version
-        # that takes multiple row-keys too, if that ever becomes a
-        # problem
-        cls._cf.insert(row_key, updates, write_consistency_level = cls._wcl(write_consistency_level))
+        # if they didn't give us a TTL, use the default TTL for the
+        # class. This will be further overwritten below per-column
+        # based on the _default_ttls class dict. Note! There is no way
+        # to use this API to express that you don't want a TTL if
+        # there is a default set on either the row or the column
+        default_ttl = None if ttl is None else self._ttl
+
+        with cls._cf.batch(write_consistency_level = cls._wcl(write_consistency_level)) as b:
+            # with some quick tweaks we could have a version that
+            # operates across multiple row keys, but this is not it
+            for k, v in updates.iteritems():
+                ttl = cls._default_ttls.get(k, default_ttl)
+                b.insert(row_key,
+                         {k: v},
+                         ttl = cls._default_ttls.get(k, default_ttl))
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
@@ -837,13 +915,25 @@ class View(ThingBase):
             del self._dirties[key]
         except KeyError:
             pass
+        try:
+            del self._column_ttls[key]
+        except KeyError:
+            pass
         self._deletes.add(key)
 
+def schema_report():
+    manager = get_manager()
+    print manager.describe_keyspace(keyspace)
+
 def ring_report():
+    # uses a silly algorithm to pick natural endpoints that requires N>=RF+1
+
     sizes = {}
     nodes = {} # token -> node
 
-    ring = cassandra.describe_ring(keyspace)
+    manager = get_manager()
+
+    ring = manager.describe_ring(keyspace)
     ring.sort(key=lambda tr: long(tr.start_token))
 
     for x, tr in enumerate(ring):

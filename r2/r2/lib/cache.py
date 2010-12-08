@@ -27,8 +27,9 @@ from copy import copy
 import pylibmc
 from _pylibmc import MemcachedError
 
-import pycassa
-import cassandra.ttypes
+from pycassa import ColumnFamily
+from pycassa.cassandra.ttypes import ConsistencyLevel
+from pycassa.cassandra.ttypes import NotFoundException as CassandraNotFound
 
 from r2.lib.contrib import memcache
 from r2.lib.utils import in_chunks, prefix_keys, trace
@@ -469,6 +470,7 @@ class HardcacheChain(CacheChain):
         # the hardcache is always the last item in a HardCacheChain
         return self.caches[-1].backend
 
+<<<<<<< HEAD
 class StaleCacheChain(CacheChain):
     """A cache chain of two cache chains. When allowed by `stale`,
        answers may be returned by a "closer" but potentially older
@@ -548,10 +550,9 @@ class StaleCacheChain(CacheChain):
         return '<%s %r>' % (self.__class__.__name__,
                             (self.localcache, self.stalecache, self.realcache))
 
-CL_ZERO = cassandra.ttypes.ConsistencyLevel.ZERO
-CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
-CL_QUORUM = cassandra.ttypes.ConsistencyLevel.QUORUM
-CL_ALL = cassandra.ttypes.ConsistencyLevel.ALL
+CL_ONE = ConsistencyLevel.ONE
+CL_QUORUM = ConsistencyLevel.QUORUM
+CL_ALL = ConsistencyLevel.ALL
 
 class CassandraCacheChain(CacheChain):
     def __init__(self, localcache, cassa, lock_factory, memcache=None, **kw):
@@ -581,9 +582,6 @@ class CassandraCacheChain(CacheChain):
             # which would require some more row-cache performace
             # testing)
             rcl = wcl = self.cassa.write_consistency_level
-            if rcl == CL_ZERO:
-                rcl = CL_ONE
-
             if willread:
                 try:
                     value = None
@@ -634,20 +632,19 @@ class CassandraCacheChain(CacheChain):
 
 
 class CassandraCache(CacheUtils):
-    """A cache that uses a Cassandra cluster. Uses a single keyspace
-       and column family and only the column-name 'value'"""
-    def __init__(self, keyspace, column_family, client,
+    """A cache that uses a Cassandra ColumnFamily. Uses only the
+       column-name 'value'"""
+    def __init__(self, column_family, client,
                  read_consistency_level = CL_ONE,
                  write_consistency_level = CL_QUORUM):
-        self.keyspace = keyspace
         self.column_family = column_family
         self.client = client
         self.read_consistency_level = read_consistency_level
         self.write_consistency_level = write_consistency_level
-        self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
-                                       self.column_family,
-                                       read_consistency_level = read_consistency_level,
-                                       write_consistency_level = write_consistency_level)
+        self.cf = ColumnFamily(self.client,
+                               self.column_family,
+                               read_consistency_level = read_consistency_level,
+                               write_consistency_level = write_consistency_level)
 
     def _rcl(self, alternative):
         return (alternative if alternative is not None
@@ -663,7 +660,7 @@ class CassandraCache(CacheUtils):
             row = self.cf.get(key, columns=['value'],
                               read_consistency_level = rcl)
             return pickle.loads(row['value'])
-        except (cassandra.ttypes.NotFoundException, KeyError):
+        except (CassandraNotFound, KeyError):
             return default
 
     def simple_get_multi(self, keys, read_consistency_level = None):
@@ -675,29 +672,36 @@ class CassandraCache(CacheUtils):
                     for (key, row) in rows.iteritems())
 
     def set(self, key, val,
-            write_consistency_level = None, time = None):
+            write_consistency_level = None,
+            time = None):
         if val == NoneResult:
             # NoneResult caching is for other parts of the chain
             return
 
         wcl = self._wcl(write_consistency_level)
         ret = self.cf.insert(key, {'value': pickle.dumps(val)},
-                              write_consistency_level = wcl)
+                              write_consistency_level = wcl,
+                             ttl = time)
         self._warm([key])
         return ret
 
     def set_multi(self, keys, prefix='',
-                  write_consistency_level = None, time = None):
+                  write_consistency_level = None,
+                  time = None):
         if not isinstance(keys, dict):
+            # allow iterables yielding tuples
             keys = dict(keys)
-        keys = dict(('%s%s' % (prefix, key), val)
-                     for (key, val) in keys.iteritems())
+
         wcl = self._wcl(write_consistency_level)
         ret = {}
-        for key, val in keys.iteritems():
-            if val != NoneResult:
-                ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
-                                          write_consistency_level = wcl)
+
+        with self.cf.batch(write_consistency_level = wcl):
+            for key, val in keys.iteritems():
+                if val != NoneResult:
+                    ret[key] = self.cf.insert('%s%s' % (prefix, key),
+                                              {'value': pickle.dumps(val)},
+                                              ttl = time)
+
         self._warm(keys.keys())
 
         return ret

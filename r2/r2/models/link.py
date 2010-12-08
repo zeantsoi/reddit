@@ -68,52 +68,48 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @classmethod
-    def by_url_key(cls, url):
-        maxlen = 250
-        template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
-        hexdigest = md5(keyurl).hexdigest()
-        usable_len = maxlen-len(template)-len(hexdigest)
-        return template % (hexdigest, keyurl[:usable_len])
-
-    @classmethod
     def _by_url(cls, url, sr):
         from subreddit import FakeSubreddit
         if isinstance(sr, FakeSubreddit):
             sr = None
 
-        url = cls.by_url_key(url)
-        link_ids = g.urlcache.get(url)
-        if link_ids:
-            links = Link._byID(link_ids, data = True, return_dict = False)
-            links = [l for l in links if not l._deleted]
+        try:
+            lbu = LinksByUrl._byID(LinksByUrl._key_from_url(url))
+        except tdb_cassandra.NotFound:
+            # translate the tdb_cassandra.NotFound into the NotFound
+            # the caller is expecting
+            raise NotFound('Link "%s"' % url)
 
-            if links and sr:
-                for link in links:
-                    if sr._id == link.sr_id:
-                        return link
-            elif links:
-                return links
+        link_id36s = lbu._values()
 
-        raise NotFound, 'Link "%s"' % url
+        links = Link._byID36(link_id36s, data = True, return_dict = False)
+        links = [l for l in links if not l._deleted]
+
+        if links and sr:
+            for link in links:
+                if sr._id == link.sr_id:
+                    # n.b. returns the first one if there are multiple
+                    return link
+        elif links:
+            return links
+
+        raise NotFound('Link "%s"' % url)
 
     def set_url_cache(self):
         if self.url != 'self':
-            key = self.by_url_key(self.url)
-            link_ids = g.urlcache.get(key) or []
-            if self._id not in link_ids:
-                link_ids.append(self._id)
-            g.urlcache.set(key, link_ids)
+            LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
+                                   {self._id36: self._id36})
 
     def update_url_cache(self, old_url):
         """Remove the old url from the by_url cache then update the
         cache with the new url."""
         if old_url != 'self':
-            key = self.by_url_key(old_url)
-            link_ids = g.urlcache.get(key) or []
-            while self._id in link_ids:
-                link_ids.remove(self._id)
-            g.urlcache.set(key, link_ids)
+            try:
+                lbu = LinksByUrl._key_from_url(old_url)
+                del lbu[self._id36]
+                lbu._commit()
+            except tdb_cassandra.NotFound:
+                pass
         self.set_url_cache()
 
     @property
@@ -509,6 +505,14 @@ class Link(Thing, Printable):
         on the wrapped link (as .subreddit), and that should be used
         when possible. """
         return Subreddit._byID(self.sr_id, True, return_dict = False)
+
+class LinksByUrl(tdb_cassandra.View):
+    _use_db = True
+
+    @classmethod
+    def _key_from_url(cls, url):
+        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
+        return keyurl
 
 # Note that there are no instances of PromotedLink or LinkCompressed,
 # so overriding their methods here will not change their behaviour

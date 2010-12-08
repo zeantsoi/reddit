@@ -171,8 +171,6 @@ def pushup_permacache(verbosity=1000):
         for link in fetch_things2(l_q, verbosity):
             yield comments_key(link._id)
             yield last_modified_key(link, 'comments')
-            if not getattr(link, 'is_self', False) and hasattr(link, 'url'):
-                yield Link.by_url_key(link.url)
 
         a_q = Account._query(Account.c._spam == (True, False),
                              sort=desc('_date'),
@@ -224,52 +222,6 @@ def pushup_permacache(verbosity=1000):
         print 'Done %d: %r' % (done, keys[-1])
         populate(keys)
 
-def add_byurl_prefix():
-    """Run one before the byurl prefix is set, and once after (killing
-       it after it gets when it started the first time"""
-
-    from datetime import datetime
-    from r2.models import Link
-    from r2.lib.filters import _force_utf8
-    from pylons import g
-    from r2.lib.utils import fetch_things2
-    from r2.lib.db.operators import desc
-    from r2.lib.utils import base_url
-
-    now = datetime.now(g.tz)
-    print 'started at %s' % (now,)
-
-    l_q = Link._query(
-        Link.c._date < now,
-        data=True,
-        sort=desc('_date'))
-
-    # from link.py
-    def by_url_key(url, prefix=''):
-        s = _force_utf8(base_url(url.lower()))
-        return '%s%s' % (prefix, s)
-
-    done = 0
-    for links in fetch_things2(l_q, 1000, chunks=True):
-        done += len(links)
-        print 'Doing: %r, %s..%s' % (done, links[-1]._date, links[0]._date)
-
-        # only links with actual URLs
-        links = filter(lambda link: (not getattr(link, 'is_self', False)
-                                     and getattr(link, 'url', '')),
-                       links)
-
-        # old key -> new key
-        translate = dict((by_url_key(link.url),
-                          by_url_key(link.url, prefix='byurl_'))
-                         for link in links)
-
-        old = g.permacache.get_multi(translate.keys())
-        new = dict((translate[old_key], value)
-                   for (old_key, value)
-                   in old.iteritems())
-        g.permacache.set_multi(new)
-
 # alter table bids DROP constraint bids_pkey;
 # alter table bids add column campaign integer;
 # update bids set campaign = 0;
@@ -317,92 +269,6 @@ def promote_v2():
             l._commit()
         else:
             print "no campaign information: ", l
-
-
-def shorten_byurl_keys():
-    """We changed by_url keys from a format like
-           byurl_google.com...
-       to:
-           byurl(1d5920f4b44b27a802bd77c4f0536f5a, google.com...)
-       so that they would fit in memcache's 251-char limit
-    """
-
-    from datetime import datetime
-    from hashlib import md5
-    from r2.models import Link
-    from r2.lib.filters import _force_utf8
-    from pylons import g
-    from r2.lib.utils import fetch_things2, in_chunks
-    from r2.lib.db.operators import desc
-    from r2.lib.utils import base_url, progress
-
-    # from link.py
-    def old_by_url_key(url):
-        prefix='byurl_'
-        s = _force_utf8(base_url(url.lower()))
-        return '%s%s' % (prefix, s)
-    def new_by_url_key(url):
-        maxlen = 250
-        template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(base_url(url.lower()))
-        hexdigest = md5(keyurl).hexdigest()
-        usable_len = maxlen-len(template)-len(hexdigest)
-        return template % (hexdigest, keyurl[:usable_len])
-
-    verbosity = 1000
-
-    l_q = Link._query(
-        Link.c._spam == (True, False),
-        data=True,
-        sort=desc('_date'))
-    for links in (
-        in_chunks(
-            progress(
-                fetch_things2(l_q, verbosity),
-                key = lambda link: link._date,
-                verbosity=verbosity,
-                estimate=int(9.9e6),
-                persec=True,
-                ),
-            verbosity)):
-        # only links with actual URLs
-        links = filter(lambda link: (not getattr(link, 'is_self', False)
-                                     and getattr(link, 'url', '')),
-                       links)
-
-        # old key -> new key
-        translate = dict((old_by_url_key(link.url),
-                          new_by_url_key(link.url))
-                         for link in links)
-
-        old = g.permacache.get_multi(translate.keys())
-        new = dict((translate[old_key], value)
-                   for (old_key, value)
-                   in old.iteritems())
-        g.permacache.set_multi(new)
-
-def prime_url_cache(f, verbosity = 10000):
-    import gzip, time
-    from pylons import g
-    handle = gzip.open(f, 'rb')
-    counter = 0
-    start_time = time.time()
-    for line in handle:
-        try:
-            tid, key, url, kind = line.split('|')
-            tid = int(tid)
-            if url.lower() != "self":
-                key = Link.by_url_key_new(url)
-                link_ids = g.urlcache.get(key) or []
-                if tid not in link_ids:
-                    link_ids.append(tid)
-                    g.urlcache.set(key, link_ids)
-        except ValueError:
-            print "FAIL: %s" % line
-        counter += 1
-        if counter % verbosity == 0:
-            print "%6d: %s" % (counter, line)
-            print "--> doing %5.2f / s" % (float(counter) / (time.time() - start_time))
 
 def port_cassavotes():
     from r2.models import Vote, Account, Link, Comment
@@ -455,3 +321,22 @@ def port_cassasaves(after_id=None, estimate=12489897):
                             thing2_id = to36(sh._thing2_id),
                             date = sh._date)
         csh._commit(write_consistency_level = CL.ONE)
+
+def port_cassaurls():
+    from r2.models import Link, LinksByUrl
+    from r2.lib.db import tdb_cassandra
+    from r2.lib.db.operators import desc
+    from r2.lib.db.tdb_cassandra import CL
+    from r2.lib.utils import fetch_things2, in_chunks, progress
+
+    q = Link._query(Link.c._spam == (True, False),
+                    sort=desc('_date'), data=True)
+    q = fetch_things2(q)
+    q = progress(q, estimate=13617246)
+    q = (l for l in q if getattr(l, 'url', 'self') != 'self')
+    chunks = in_chunks(q, 500)
+
+    for chunk in chunks:
+        with LinksByUrl._cf.batch(write_consistency_level = CL.ONE) as b:
+            for l in chunk:
+                b.insert(LinksByUrl._key_from_url(l.url), {l._id36: l._id36})
