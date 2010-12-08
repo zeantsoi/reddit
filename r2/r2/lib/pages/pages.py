@@ -2520,7 +2520,12 @@ def make_link_child(item):
         if isinstance(item.media_object, basestring):
             media_embed = item.media_object
         else:
-            media_embed = get_media_embed(item.media_object)
+            try:
+                media_embed = get_media_embed(item.media_object)
+            except TypeError:
+                g.log.warning("link %s has a bad media object" % link._id36)
+                media_embed = None
+
             if media_embed:
                 media_embed =  MediaEmbed(media_domain = g.media_domain,
                                           height = media_embed.height + 10,
