@@ -136,6 +136,14 @@
                 world!"</pre>
             </td>
         </tr>
+        <tr>
+            <td>~~${_( "strikethrough")}~~</td>
+            <td><strike>${_( "strikethrough")}</strike></td>
+        </tr>
+        <tr>
+            <td>^${_( "superscript")}</td>
+            <td><sup>${_( "superscript")}</sup></td>
+        </tr>
       </table>
       </div>
     </div>
