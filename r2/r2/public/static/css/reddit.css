@@ -371,10 +371,19 @@ ul.flat-vert {text-align: left;}
 .raisedbox li {margin-bottom: 2px;}
 
 .sidebox .spacer {
+    position: relative;
     margin-top: 10px;
     padding: 5px 0 0 44px;
     min-height: 41px;
     background: white none no-repeat scroll top left;
+}
+
+.sidebox .spacer a {
+    position: absolute;
+    top: 0; left: 0px;
+    display: block;
+    height: 40px;
+    width: 40px;
 }
 
 .sidebox.create .spacer {
