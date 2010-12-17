@@ -136,7 +136,7 @@ setup(
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
-                      "cython==0.13",
+                      "cython==0.14",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup == 3.0.8.1", # last version to use the good parser

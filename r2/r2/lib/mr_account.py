@@ -59,36 +59,6 @@ import datetime
 def join_links():
     mr_tools.join_things(('author_id',))
 
-
-def join_authors():
-    """A reducer that joins thing table dumps and data table dumps"""
-    def process(thing_id, vals):
-        data = {}
-        authors = []
-        gold = None
-
-        for val in vals:
-            if ('comment' in val) or ("link" in val):
-                authors.append(mr_tools.format_dataspec(val,
-                                      ['data_type', # e.g. 'data'
-                                       'thing_type', # e.g. 'link'
-                                       'key', # e.g. 'sr_id'
-                                       'tid'
-                                       ]))
-            elif 'account' in val:
-                gold = mr_tools.format_dataspec(val,
-                                      ['data_type', # e.g. 'data'
-                                       'thing_type', # e.g. 'link'
-                                       'key', # e.g. 'sr_id'
-                                       'value'])
-
-        if gold is not None:
-            for author in authors:
-                yield (author.tid, author.data_type, author.thing_type,
-                       author.key, thing_id)
-
-    mr_tools.mr_reduce(process)
-
 def year_listings():
     """
     With an 'all' dump, generate the top and controversial per user per year
