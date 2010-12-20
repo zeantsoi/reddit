@@ -613,12 +613,13 @@ def new_vote(vote, foreground=False):
     user = vote._thing1
     item = vote._thing2
 
-    if not isinstance(item, Link):
+    if not isinstance(item, (Link, Comment)):
         return
 
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
         results = []
+
         author = Account._byID(item.author_id)
         for sort in ('hot', 'top', 'controversial', 'new'):
             if isinstance(item, Link):
@@ -626,33 +627,35 @@ def new_vote(vote, foreground=False):
             if isinstance(item, Comment):
                 results.append(get_comments(author, sort, 'all'))
 
+        if isinstance(item, Link):
+            # don't do 'new', because that was done by new_link, and
+            # the time-filtered versions of top/controversial will be
+            # done by mr_top
+            results.extend([get_links(sr, 'hot', 'all'),
+                            get_links(sr, 'top', 'all'),
+                            get_links(sr, 'controversial', 'all'),
+                            ])
 
-        # don't do 'new', because that was done by new_link, and the
-        # time-filtered versions of top/controversial will be done by
-        # mr_top
-        results.extend([get_links(sr, 'hot', 'all'),
-                        get_links(sr, 'top', 'all'),
-                        get_links(sr, 'controversial', 'all'),
-                        ])
-
-        for domain in utils.UrlParser(item.url).domain_permutations():
-            for sort in ("hot", "top", "controversial"):
-                results.append(get_domain_links(domain, sort, "all"))
+            for domain in utils.UrlParser(item.url).domain_permutations():
+                for sort in ("hot", "top", "controversial"):
+                    results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item, foreground=foreground)
 
     vote._fast_query_timestamp_touch(user)
     
-    #must update both because we don't know if it's a changed vote
-    if vote._name == '1':
-        add_queries([get_liked(user)], insert_items = vote)
-        add_queries([get_disliked(user)], delete_items = vote)
-    elif vote._name == '-1':
-        add_queries([get_liked(user)], delete_items = vote)
-        add_queries([get_disliked(user)], insert_items = vote)
-    else:
-        add_queries([get_liked(user)], delete_items = vote)
-        add_queries([get_disliked(user)], delete_items = vote)
+    if isinstance(item, Link):
+        # must update both because we don't know if it's a changed
+        # vote
+        if vote._name == '1':
+            add_queries([get_liked(user)], insert_items = vote, foreground = foreground)
+            add_queries([get_disliked(user)], delete_items = vote, foreground = foreground)
+        elif vote._name == '-1':
+            add_queries([get_liked(user)], delete_items = vote, foreground = foreground)
+            add_queries([get_disliked(user)], insert_items = vote, foreground = foreground)
+        else:
+            add_queries([get_liked(user)], delete_items = vote, foreground = foreground)
+            add_queries([get_disliked(user)], delete_items = vote, foreground = foreground)
 
 def new_message(message, inbox_rels):
     from r2.lib.comment_tree import add_message
@@ -978,14 +981,6 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
-    # keep track of upvotes in the hard cache by subreddit
-    #sr_id = getattr(thing, "sr_id", None)
-    #if (sr_id and dir > 0 and getattr(thing, "author_id", None) != user._id
-    #    and v.valid_thing):
-    #    now = datetime.now(g.tz).strftime("%Y/%m/%d")
-    #    g.hardcache.add("subreddit_vote-%s_%s_%s" % (now, sr_id, user._id),
-    #                    sr_id, time = 86400 * 7) # 1 week for now
-
     if isinstance(thing, Link):
         new_vote(v, foreground=foreground)
 
@@ -1031,7 +1026,7 @@ def process_votes_single(**kw):
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater, foreground=False)
+                        cheater = cheater, foreground=True)
 
     amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
 
@@ -1068,15 +1063,6 @@ def process_votes_multi(limit=100):
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
 process_votes = process_votes_single
-
-def process_comment_sorts(limit=500):
-    def _handle_sort(msgs, chan):
-        cids = list(set(int(msg.body) for msg in msgs))
-        comments = Comment._byID(cids, data = True, return_dict = False)
-        print comments
-        update_comment_votes(comments)
-
-    amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
 
 try:
     from r2admin.lib.admin_queries import *
