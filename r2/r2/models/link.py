@@ -388,8 +388,11 @@ class Link(Thing, Printable):
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
             if item.is_self:
-                item.url = item.make_permalink(item.subreddit, 
+                item.url = item.make_permalink(item.subreddit,
                                                force_domain = True)
+
+            if g.shortdomain:
+                item.shortlink = g.shortdomain + '/' + item._id36
 
             # do we hide the score?
             if user_is_admin:

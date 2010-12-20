@@ -1514,7 +1514,6 @@ class Frame(Wrapped):
         Templated.__init__(self, url = url, title = title,
                            fullname = fullname, thumbnail = thumbnail)
 
-dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+\.\w+(/|$)")
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
 
@@ -1538,7 +1537,6 @@ class FrameToolbar(Wrapped):
         self.site_description = c.site.description
         self.default_sr = c.default_sr
 
-        self.dorks = bool( dorks_re.match(self.url) )
         Wrapped.__init__(self, link)
         if link is None:
             self.add_props(c.user, [self])
