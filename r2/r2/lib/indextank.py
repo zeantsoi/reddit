@@ -30,7 +30,7 @@ from time import sleep
 from r2.models import *
 from r2.lib import amqp
 from r2.lib.contrib import indextank_clientv1
-from r2.lib.contrib.indextank_clientv1 import HttpException as IndextankException
+from r2.lib.contrib.indextank_clientv1 import HttpException as IndextankException, InvalidQuery as InvalidIndextankQuery
 from r2.lib.utils import in_chunks, progress, get_after, UrlParser
 from r2.lib.utils import domain, strordict_fullname
 

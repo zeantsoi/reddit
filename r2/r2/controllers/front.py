@@ -37,7 +37,7 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
-from r2.lib.indextank import IndextankQuery, IndextankException
+from r2.lib.indextank import IndextankQuery, IndextankException, InvalidIndextankQuery
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -45,6 +45,7 @@ import r2.lib.db.thing as thing
 from listingcontroller import ListingController
 from pylons import c, request, request, Response
 
+import string
 import random as rand
 import re, socket
 import time as time_module
@@ -587,19 +588,36 @@ class FrontController(RedditController):
             site = c.site
 
         try:
-            q = IndextankQuery(query, site, sort)
+            cleanup_message = None
+            try:
+                q = IndextankQuery(query, site, sort)
+                num, t, spane = self._search(q, num=num, after=after, 
+                                             reverse = reverse, count = count)
+            except InvalidIndextankQuery:
+                # delete special characters from the query and run again
+                special_characters = '+-&|!(){}[]^"~*?:\\'
+                translation = dict((ord(char), None) 
+                                   for char in list(special_characters))
+                cleaned = query.translate(translation)
 
-            num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
-                                         count = count)
+                q = IndextankQuery(cleaned, site, sort)
+                num, t, spane = self._search(q, num=num, after=after, 
+                                             reverse = reverse, count = count)
+                cleanup_message = _('I couldn\'t understand your query, ' +
+                                    'so I simplified it and searched for ' + 
+                                    '"%(clean_query)s" instead.') % {
+                                        'clean_query': cleaned }
+		
             res = SearchPage(_('search results'), query, t, num, content=spane,
                              nav_menus = [SearchSortMenu(default=sort)],
-                             search_params = dict(sort = sort),
-                             simple=False, site=c.site, restrict_sr=restrict_sr).render()
+                             search_params = dict(sort = sort), 
+                             infotext=cleanup_message,
+                             simple=False, site=c.site, 
+                             restrict_sr=restrict_sr).render()
 
             return res
         except (IndextankException, socket.error), e:
             return self.search_fail(e)
-
 
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
