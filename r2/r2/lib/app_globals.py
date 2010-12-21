@@ -37,7 +37,9 @@ from r2.lib.manager import db_manager
 
 class Globals(object):
 
-    int_props = ['page_cache_time',
+    int_props = ['db_pool_size',
+                 'db_pool_overflow_size',
+                 'page_cache_time',
                  'solr_cache_time',
                  'num_mc_clients',
                  'MIN_DOWN_LINK',
@@ -401,6 +403,12 @@ class Globals(object):
                 params['db_pass'] = self.db_pass
             if params['db_port'] == "*":
                 params['db_port'] = self.db_port
+
+            if params['pool_size'] == "*":
+                params['pool_size'] = self.db_pool_size
+            if params['max_overflow'] == "*":
+                params['max_overflow'] = self.db_pool_overflow_size
+
             ip = params['db_host']
             ip_loads = get_db_load(self.servicecache, ip)
             if ip not in ip_loads or ip_loads[ip][0] < 1000:
