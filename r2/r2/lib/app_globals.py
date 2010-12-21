@@ -390,7 +390,7 @@ class Globals(object):
             return
 
         dbm = db_manager.db_manager()
-        db_param_names = ('name', 'db_host', 'db_user', 'db_pass',
+        db_param_names = ('name', 'db_host', 'db_user', 'db_pass', 'db_port',
                           'pool_size', 'max_overflow')
         for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
@@ -399,6 +399,8 @@ class Globals(object):
                 params['db_user'] = self.db_user
             if params['db_pass'] == "*":
                 params['db_pass'] = self.db_pass
+            if params['db_port'] == "*":
+                params['db_port'] = self.db_port
             ip = params['db_host']
             ip_loads = get_db_load(self.servicecache, ip)
             if ip not in ip_loads or ip_loads[ip][0] < 1000:
