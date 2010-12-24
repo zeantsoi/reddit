@@ -134,6 +134,10 @@ ul.flat-vert {text-align: left;}
 
 #header-img {margin-top: 2px; margin-right: 5px;}
 
+#header-img-a {
+vertical-align: bottom;
+}
+
 #header-top {
     position: absolute;
     right: 5px;
