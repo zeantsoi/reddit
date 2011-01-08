@@ -767,6 +767,8 @@ class VPassword(Validator):
 user_rx = re.compile(r"^[\w-]{3,20}$", re.UNICODE)
 
 def chkuser(x):
+    if any(c.isspace() for c in x):
+        return None
     try:
         return str(x) if user_rx.match(x) else None
     except TypeError:
