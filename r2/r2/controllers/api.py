@@ -747,6 +747,9 @@ class ApiController(RedditController):
                 or (item._ups + item._downs > 2)):
                 item.editted = True
 
+            if hasattr(item, "bestof_magic") and item.bestof_magic():
+                item.editted = False
+
             #try:
             #    lv = levenshtein(old, text)
             #    item.levenshtein = getattr(item, 'levenshtein', 0) + lv
