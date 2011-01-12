@@ -62,6 +62,7 @@ class Globals(object):
                  'num_serendipity',
                  'sr_dropdown_threshold',
                  'comment_visits_period',
+                 'bestof_magic_userid',
                  ]
 
     float_props = ['min_promote_bid',
