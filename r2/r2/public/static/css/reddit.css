@@ -1403,6 +1403,49 @@ textarea.gray { color: gray; }
     width: 305px;
 }
 
+#searchexpando {
+    display: none;
+    margin: 5px 0 0 0;
+    -moz-border-radius:3px;
+    -webkit-border-radius:3px;
+    border-radius:3px;
+}
+
+#searchexpando input, #searchexpando p {
+    margin-bottom: 10px;
+}
+
+#searchexpando dl {
+    margin: 10px 0;
+}
+
+#searchexpando dt {
+    margin: 0;
+}
+
+#previoussearch p {
+    margin: 5px 0;
+}
+
+#moresearchinfo {
+    display: none;
+    padding-top: 5px;
+    max-width: 300px;
+    border: 0 solid orange;
+}
+
+label + #moresearchinfo {
+    border-width: 1px 0 0 0;
+}
+
+#previoussearch #moresearchinfo {
+    border-color: gray;
+    margin: 5px 0;
+}
+
+#search_hidemore {
+    float: right;
+}
 
 .searchparams { margin: 5px 20px 5px 20px
 }

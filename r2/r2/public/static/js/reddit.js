@@ -9,10 +9,23 @@ function open_menu(menu) {
         .addClass("active inuse");
 };
 
-function close_menus() {
+function close_menus(event) {
     $(".drop-choices.inuse").not(".active")
         .removeClass("inuse");
     $(".drop-choices.active").removeClass("active");
+
+    /* hide the search expando if the user clicks elsewhere on the page */ 
+    if ($(event.target).closest("#search").length == 0) {
+        $("#moresearchinfo").slideUp();
+
+        if ($("#searchexpando").length == 1) {
+            $("#searchexpando").slideUp(function() {
+                $("#search_showmore").parent().show();
+            });
+        } else {
+            $("#search_showmore").parent().show();
+        }
+    }
 };
 
 function hover_open_menu(menu) { };
@@ -1255,10 +1268,25 @@ function juryvote(elem, dir) {
 
 /* The ready method */
 $(function() {
+        $("body").click(close_menus);
+
         /* set function to be called on thing creation/replacement,
          * and call it on all things currently rendered in the
          * page. */
         $("body").set_thing_init(updateEventHandlers);
+
+        /* Fall back to the old ".gray" system if placeholder isn't supported
+         * by this browser */
+        if (!('placeholder' in document.createElement('input'))) {
+            $("textarea[placeholder], input[placeholder]")
+                .addClass("gray")
+                .each(function() {
+                    var element = $(this);
+                    var placeholder_text = element.attr('placeholder');
+                    element.val(placeholder_text);
+                });
+        }
+
         /* Set up gray inputs and textareas to clear on focus */
         $("textarea.gray, input.gray")
             .focus( function() {
@@ -1282,6 +1310,26 @@ $(function() {
         /* visually mark the last-clicked entry */
         last_click();
 
+        /* search form help expando */
+        /* TODO: use focusin and focusout in jQuery 1.4 */
+        $("#search input[name=q]").focus(function () {
+            $("#searchexpando").slideDown();
+        });
+
+        $("#search_showmore").click(function(event) {
+            $("#search_showmore").parent().hide();
+            $("#moresearchinfo").slideDown();
+            event.preventDefault();
+        });
+
+        $("#moresearchinfo")
+            .prepend('<a href="#" id="search_hidemore">[-]</a>')
+
+        $("#search_hidemore").click(function(event) {
+            $("#search_showmore").parent().show();
+            $("#moresearchinfo").slideUp();
+            event.preventDefault();
+        });
     });
 
 function show_friend(account_fullname) {

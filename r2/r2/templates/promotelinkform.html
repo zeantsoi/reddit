@@ -376,7 +376,7 @@
                  %if thing.link.media_object:
                    value='${thing.link.media_object.get("width", 0)}'
                  %else:
-                   value="width" class="gray"
+                   placeholder="${_('width')}"
                  %endif
                />
         x <input name="media-height" type='text' size='5' maxsize='5'
@@ -384,7 +384,7 @@
                  %if thing.link.media_object:
                    value='${thing.link.media_object.get("height", 0)}'
                  %else:
-                   value="height" class="gray"
+                   placeholder="${_('height')}"
                  %endif
                  />
         <p>
