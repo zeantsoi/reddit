@@ -117,7 +117,7 @@ def _expand_macros(tokdict,macrodict):
 def _compile_regexes(tokdict):
     """ Compile all regular expressions into callable objects """
     for key, value in tokdict.items():
-        tokdict[key] = re.compile('^(?:%s)$' % value, re.I).match
+        tokdict[key] = re.compile('\A(?:%s)\Z' % value, re.I).match
     return tokdict
 _compile_regexes(_expand_macros(custom_values,custom_macros))
 
@@ -166,7 +166,7 @@ class ValidationError(Exception):
         return "ValidationError%s: %s (%s)" % (line, self.message, obj)
 
 # local urls should be in the static directory
-local_urls = re.compile(r'^/static/[a-z./-]+$')
+local_urls = re.compile(r'\A/static/[a-z./-]+\Z')
 # substitutable urls will be css-valid labels surrounded by "%%"
 custom_img_urls = re.compile(r'%%([a-zA-Z0-9\-]+)%%')
 def valid_url(prop,value,report):
@@ -255,8 +255,8 @@ def valid_value(prop,value,report):
     if value.primitiveType == CSSPrimitiveValue.CSS_URI:
         valid_url(prop,value,report)
 
-error_message_extract_re = re.compile('.*\\[([0-9]+):[0-9]*:.*\\]$')
-only_whitespace          = re.compile('^\s*$')
+error_message_extract_re = re.compile('.*\\[([0-9]+):[0-9]*:.*\\]\Z')
+only_whitespace          = re.compile('\A\s*\Z')
 def validate_css(string):
     p = CSSParser(raiseExceptions = True)
 

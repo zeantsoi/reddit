@@ -133,17 +133,20 @@ class BaseController(WSGIController):
             # make sure to pass the port along if not 80
             if not kw.has_key('port'):
                 kw['port'] = request.port
-    
+
             # disentagle the cname (for urls that would have
             # cnameframe=1 in them)
             u.mk_cname(**kw)
-    
+
             # make sure the extensions agree with the current page
             if c.extension:
                 u.set_extension(c.extension)
 
         # unparse and encode it un utf8
-        return _force_unicode(u.unparse()).encode('utf8')
+        rv = _force_unicode(u.unparse()).encode('utf8')
+        if any(ch.isspace() for ch in rv):
+            raise ValueError("Space characters in redirect URL: [%r]" % rv)
+        return rv
 
 
     @classmethod
@@ -158,11 +161,11 @@ class BaseController(WSGIController):
         params = dict(dest = cls.format_output_url(request.fullpath))
         if c.extension == "widget" and request.GET.get("callback"):
             params['callback'] = request.GET.get("callback")
-        
+
         path = add_sr(cls.format_output_url(form_path) +
                       query_string(params))
         return cls.redirect(path)
-    
+
     @classmethod
     def redirect(cls, dest, code = 302):
         """

@@ -373,11 +373,11 @@ class VLimit(Validator):
         return min(max(i, 1), 100)
 
 class VCssMeasure(Validator):
-    measure = re.compile(r"^\s*[\d\.]+\w{0,3}\s*$")
+    measure = re.compile(r"\A\s*[\d\.]+\w{0,3}\s*\Z")
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_]{2,20}$")
+subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
 
 def chksrname(x):
     #notice the space before reddit.com
@@ -391,7 +391,7 @@ def chksrname(x):
 
 
 class VLength(Validator):
-    only_whitespace = re.compile(r"^\s*$", re.UNICODE)
+    only_whitespace = re.compile(r"\A\s*\Z", re.UNICODE)
 
     def __init__(self, param, max_length,
                  empty_error = errors.NO_TEXT,
@@ -514,7 +514,7 @@ def fullname_regex(thing_cls = None, multiple = False):
     pattern += r"_[0-9a-z]+"
     if multiple:
         pattern = r"(%s *,? *)+" % pattern
-    return re.compile(r"^" + pattern + r"$")
+    return re.compile(r"\A" + pattern + r"\Z")
 
 class VByName(Validator):
     splitter = re.compile('[ ,]+')
@@ -750,7 +750,7 @@ class VSubmitSR(Validator):
 
         return sr
 
-pass_rx = re.compile(r"^.{3,20}$")
+pass_rx = re.compile(r"\A.{3,20}\Z")
 
 def chkpass(x):
     return x if x and pass_rx.match(x) else None
@@ -764,7 +764,7 @@ class VPassword(Validator):
         else:
             return password.encode('utf8')
 
-user_rx = re.compile(r"^[\w-]{3,20}$", re.UNICODE)
+user_rx = re.compile(r"\A[\w-]{3,20}\Z", re.UNICODE)
 
 def chkuser(x):
     if x is None:
@@ -983,7 +983,7 @@ class VCssName(Validator):
     returns a name iff it consists of alphanumeric characters and
     possibly "-", and is below the length limit.
     """
-    r_css_name = re.compile(r"^[a-zA-Z0-9\-]{1,100}$")
+    r_css_name = re.compile(r"\A[a-zA-Z0-9\-]{1,100}\Z")
     def run(self, name):
         if name and self.r_css_name.match(name):
             return name
@@ -1188,7 +1188,7 @@ class ValidEmails(Validator):
 
 
 class VCnameDomain(Validator):
-    domain_re  = re.compile(r'^([\w\-_]+\.)+[\w]+$')
+    domain_re  = re.compile(r'\A([\w\-_]+\.)+[\w]+\Z')
 
     def run(self, domain):
         if (domain
@@ -1381,7 +1381,7 @@ class ValidCard(Validator):
                               cardCode = cardCode)
 
 class VTarget(Validator):
-    target_re = re.compile("^[\w_-]{3,20}$") 
+    target_re = re.compile("\A[\w_-]{3,20}\Z")
     def run(self, name):
         if name and self.target_re.match(name):
             return name

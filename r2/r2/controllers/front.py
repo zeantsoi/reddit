@@ -573,7 +573,7 @@ class FrontController(RedditController):
                              simple=True).render()
         return res
 
-    verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
+    verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
     @validate(query = nop('q'),
               sort = VMenu('sort', SearchSortMenu, remember=False),

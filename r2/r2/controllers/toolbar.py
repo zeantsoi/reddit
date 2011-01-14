@@ -34,12 +34,12 @@ from pylons import c, Response
 import string
 
 # strips /r/foo/, /s/, or both
-strip_sr          = re.compile('^/r/[a-zA-Z0-9_-]+')
-strip_s_path      = re.compile('^/s/')
-leading_slash     = re.compile('^/+')
-has_protocol      = re.compile('^[a-zA-Z_-]+:')
-allowed_protocol  = re.compile('^https?:')
-need_insert_slash = re.compile('^https?:/[^/]')
+strip_sr          = re.compile('\A/r/[a-zA-Z0-9_-]+')
+strip_s_path      = re.compile('\A/s/')
+leading_slash     = re.compile('\A/+')
+has_protocol      = re.compile('\A[a-zA-Z_-]+:')
+allowed_protocol  = re.compile('\Ahttps?:')
+need_insert_slash = re.compile('\Ahttps?:/[^/]')
 def demangle_url(path):
     # there's often some URL mangling done by the stack above us, so
     # let's clean up the URL before looking it up

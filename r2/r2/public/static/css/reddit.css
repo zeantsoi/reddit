@@ -392,7 +392,6 @@ ul.flat-vert {text-align: left;}
 }
 
 .sidebox.gold .spacer {
-    /* TODO: replace the following with the new logo */
     background-image: url(/static/reddit_gold-40.png);  /* SPRITE */
     background-repeat:no-repeat;
 }

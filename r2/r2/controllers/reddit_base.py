@@ -414,7 +414,7 @@ def set_recent_reddits():
 
 def set_colors():
     theme_rx = re.compile(r'')
-    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
+    color_rx = re.compile(r'\A([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?\Z')
     c.theme = None
     if color_rx.match(request.get.get('bgcolor') or ''):
         c.bgcolor = request.get.get('bgcolor')
