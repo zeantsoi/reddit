@@ -265,7 +265,7 @@ class ApiController(RedditController):
                 g.log.warning("%s is trying to submit url=None (title: %r)"
                               % (request.ip, title))
             elif check_domain:
-                banmsg = is_banned_domain(url)
+                banmsg = is_banned_domain(url, request.ip)
 
 # Uncomment if we want to let spammers know we're on to them
 #            if banmsg:
@@ -979,9 +979,8 @@ class ApiController(RedditController):
         if getattr(c.user, "suspicious", False):
             g.log.info("%s cast a %d vote on %s", c.user.name, dir, thing._fullname)
 
-        if (hasattr(thing, "bestof_magic") and
-            thing.bestof_magic() == "comment" and dir < 0):
-            dir = 0
+        if (hasattr(thing, "bestof_magic") and thing.bestof_magic() == "comment"):
+            return
 
         dir = (True if dir > 0
                else False if dir < 0

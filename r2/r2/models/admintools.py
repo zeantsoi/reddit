@@ -309,7 +309,7 @@ def update_gold_users(verbose=False):
 def is_banned_IP(ip):
     return False
 
-def is_banned_domain(dom):
+def is_banned_domain(dom, ip):
     return None
 
 def valid_thing(v, karma, *a, **kw):

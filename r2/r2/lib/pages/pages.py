@@ -200,6 +200,19 @@ class Reddit(Templated):
         if self.searchbox and not c.disablesearchbox: ## LOGITECH
             ps.append(SearchForm())
 
+        bestof_contents = g.hardcache.get("dipswitch-bestofbox")
+        if bestof_contents:
+            bestof_top = """
+<a href='http://www.reddit.com/r/bestof2010/new?sort=new'>
+  <div class='rounded'
+       style='color: black; border: 1px solid black; padding: 2px 2px 0 4px; min-height: 40px'
+    >
+  <img style='float: left; vertical-align: bottom' src='/static/bestof_award.png'/>
+  <b>Best of Reddit:</b>
+  &#32;
+"""
+            ps.append(unsafe(bestof_top + bestof_contents + "</div></a>"))
+
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
@@ -1428,7 +1441,7 @@ class PermalinkMessage(Templated):
 
 class PaneStack(Templated):
     """Utility class for storing and rendering a list of block elements."""
-    
+
     def __init__(self, panes=[], div_id = None, css_class=None, div=False,
                  title="", title_buttons = []):
         div = div or div_id or css_class or False
@@ -1443,7 +1456,7 @@ class PaneStack(Templated):
     def append(self, item):
         """Appends an element to the end of the current stack"""
         self.stack.append(item)
-    
+
     def push(self, item):
         """Prepends an element to the top of the current stack"""
         self.stack.insert(0, item)
