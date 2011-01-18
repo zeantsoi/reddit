@@ -522,9 +522,9 @@ class MinimalController(BaseController):
 
     def try_pagecache(self):
         #check content cache
-        if not c.user_is_loggedin:
+        if request.method == 'GET' and not c.user_is_loggedin:
             r = g.rendercache.get(self.request_key())
-            if r and request.method == 'GET':
+            if r:
                 r, c.cookies = r
                 response = c.response
                 response.headers = r.headers
