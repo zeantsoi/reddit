@@ -262,7 +262,8 @@ class Link(Thing, Printable):
 
     def bestof_magic(self):
         if (self.author_id == g.bestof_magic_userid and
-            hasattr(self, "distinguished") and self.distinguished):
+            hasattr(self, "distinguished") and self.distinguished
+            and self.distinguished != 'no'):
             return "link"
         else:
             return None
@@ -628,7 +629,8 @@ class Comment(Thing, Printable):
 
     def bestof_magic(self):
         if (self.author_id == g.bestof_magic_userid and
-            hasattr(self, "distinguished") and self.distinguished):
+            hasattr(self, "distinguished") and self.distinguished
+            and self.distinguished != 'no'):
             return "comment"
         else:
             return None
