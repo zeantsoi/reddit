@@ -356,7 +356,7 @@ class Link(Thing, Printable):
                 item.thumbnail = thumbnail_url(item)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
-                    item.thumbnail = "/static/nsfw.png"
+                    item.thumbnail = "/static/nsfw2.png"
                 else:
                     item.thumbnail = ""
             elif not show_media:
