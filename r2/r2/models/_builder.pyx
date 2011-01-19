@@ -216,14 +216,6 @@ class _CommentBuilder(Builder):
             mc2.count += 1
             iteration_count += 1
 
-        if self.link.bestof_magic():
-            if self.link._spam and not (c.user_is_loggedin and
-                                        c.user._id == g.bestof_magic_userid):
-                final = []
-            else:
-                from random import shuffle
-                shuffle (final)
-
         return final
 
 class _MessageBuilder(Builder):

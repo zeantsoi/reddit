@@ -1032,7 +1032,6 @@ function reply(elem) {
     form.show();
     //update the cancel button to call the toggle button's click
     form.find(".cancel").get(0).onclick = function() {form.hide()};
-    $(elem).thing().find(".showreplies:visible").click();
     return false; 
 }
 

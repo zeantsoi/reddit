@@ -200,19 +200,6 @@ class Reddit(Templated):
         if self.searchbox and not c.disablesearchbox: ## LOGITECH
             ps.append(SearchForm())
 
-        bestof_contents = g.hardcache.get("dipswitch-bestofbox")
-        if bestof_contents:
-            bestof_top = """
-<a href='http://www.reddit.com/r/bestof2010/new?sort=new'>
-  <div class='rounded'
-       style='color: black; border: 1px solid black; padding: 2px 2px 0 4px; min-height: 40px'
-    >
-  <img style='float: left; vertical-align: bottom' src='/static/bestof_award.png'/>
-  <b>Best of Reddit:</b>
-  &#32;
-"""
-            ps.append(unsafe(bestof_top + bestof_contents + "</div></a>"))
-
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 

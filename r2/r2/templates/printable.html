@@ -109,17 +109,7 @@ thing id-${what._fullname}
 </%def>
 
 <%def name="Child(display=True)">
-%if hasattr(thing, "bestof_magic") and thing.bestof_magic() == "comment" and hasattr(thing, "child"):
-     <div class="morecomments" style="margin: 5px 0 15px 30px;">
-       <a href="#" style="color: #888888; font-size: smaller" class="showreplies"
-          onclick="$(this).hide();$(this).parent().parent().find('.noncollapsed').show();return false;">
-         [show replies]
-       </a>
-     </div>
-    <div class="child noncollapsed" style="display:none">
-%else:
 <div class="child" ${(not display and "style='display:none'" or "")}>
-%endif
   ${thing.childlisting}
 </div>
 </%def>

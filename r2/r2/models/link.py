@@ -260,14 +260,6 @@ class Link(Thing, Printable):
         s.append(getattr(wrapped, 'media_object', {}))
         return s
 
-    def bestof_magic(self):
-        if (self.author_id == g.bestof_magic_userid and
-            hasattr(self, "distinguished") and self.distinguished
-            and self.distinguished != 'no'):
-            return "link"
-        else:
-            return None
-
     def make_permalink(self, sr, force_domain = False):
         from r2.lib.template_helpers import get_domain
         p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
@@ -626,14 +618,6 @@ class Comment(Thing, Printable):
         s = Printable.wrapped_cache_key(wrapped, style)
         s.extend([wrapped.body])
         return s
-
-    def bestof_magic(self):
-        if (self.author_id == g.bestof_magic_userid and
-            hasattr(self, "distinguished") and self.distinguished
-            and self.distinguished != 'no'):
-            return "comment"
-        else:
-            return None
 
     def make_permalink(self, link, sr=None, context=None, anchor=False):
         url = link.make_permalink(sr) + self._id36
