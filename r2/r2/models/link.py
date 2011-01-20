@@ -1023,6 +1023,7 @@ class Message(Thing, Printable):
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
+                item.permalink = item.lookups[0].make_permalink(link, sr=sr)
                 item.link_permalink = link.make_permalink(sr)
                 if item.parent_id:
                     item.subject = _('comment reply')
