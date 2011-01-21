@@ -127,10 +127,10 @@ subscription with your reddit account -- just visit
 
 def create_claimed_gold (trans_id, payer_email, paying_id,
                          pennies, days, secret, account_id, date,
-                         subscr_id = None):
+                         subscr_id = None, status="claimed"):
     gold_table.insert().execute(trans_id=trans_id,
                                 subscr_id=subscr_id,
-                                status="claimed",
+                                status=status,
                                 payer_email=payer_email,
                                 paying_id=paying_id,
                                 pennies=pennies,

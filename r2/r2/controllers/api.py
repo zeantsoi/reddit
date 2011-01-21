@@ -1823,7 +1823,6 @@ class ApiController(RedditController):
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
                         errors.NO_TEXT)
 
-
     @validatedForm(VUser(),
                    months = VPrintable("months", max_length=100),
                    recipient = VExistingUname("recipient"),

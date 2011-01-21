@@ -4165,7 +4165,7 @@ tr.gold-accent + tr > td {
 .friend-note.edited input[type=text] { width: 250px; margin-right: 0px; }
 
 
-.gold-accent h1, 
+.gold-accent h1,
 .gold-accent th {
     color: #6a4d00;
     font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
@@ -4227,6 +4227,7 @@ tr.gold-accent + tr > td {
 
 .gold-form {
     font-family: "Hoefler Text","Palatino Linotype","Book Antiqua", Palatino,georgia,garamond,FreeSerif,serif;
+    min-height: 400px;
 }
 
 .gold-form .roundfield {
@@ -4235,10 +4236,36 @@ tr.gold-accent + tr > td {
     color: #6a4d00;
 }
 
+.gold-form .roundfield-content .gray a {
+    margin-left: 0.8em;
+    font-size: small;
+}
+
+.gold-form .note {
+    font-size: 11px;
+    font-style: italic;
+    color: #222;
+    margin-top: 7px;
+}
+
+.gold-subsection {
+    display: none;
+    position: absolute;
+}
+
 .gold-button {
+    margin-top: 8px;
+    margin-right: 8px;
     color: #482800;
     background-color: #efcc4c;
     border-color: #fff088 #fff088 #6a3d00 #6a3d00;
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
+                  Palatino,georgia,garamond,FreeSerif,serif;
+}
+
+.gold-dropdown {
+    color: #482800;
+    background-color: #fff088;
     font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
                   Palatino,georgia,garamond,FreeSerif,serif;
 }

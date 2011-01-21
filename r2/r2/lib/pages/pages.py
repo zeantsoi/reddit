@@ -1380,6 +1380,56 @@ class Thanks(Templated):
         Templated.__init__(self, status=status, secret=secret,
                            lounge_html=lounge_html)
 
+class Gold(Templated):
+    def __init__(self):
+        Templated.__init__(self)
+
+class GoldPayment(Templated):
+    def __init__(self, goldtype, period, months, passthrough):
+        if goldtype == "autorenew":
+            summary = strings.gold_summary_autorenew % dict(user=c.user.name)
+            if period == "monthly":
+                paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYMONTH
+            elif period == "yearly":
+                paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
+
+            quantity = None
+            google_link = None
+        elif goldtype == "onetime":
+            if months < 12:
+                paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
+                quantity = months
+            else:
+                paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYYEAR
+                quantity = months / 12
+                months = quantity * 12
+
+            summary = strings.gold_summary_onetime % dict(user=c.user.name,
+                                     amount=Score.somethings(months, "month"))
+
+            google_link = None
+
+        elif goldtype == "creddits":
+            if months < 12:
+                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
+                quantity = months
+            else:
+                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
+                quantity = months / 12
+                months = quantity * 12
+            summary = strings.gold_summary_creddits % dict(
+                                     amount=Score.somethings(months, "month"))
+
+            quantity = None
+            google_link = None
+
+        Templated.__init__(self, goldtype=goldtype, period=period,
+                           months=months, quantity=quantity,
+                           summary=summary,
+                           passthrough=passthrough,
+                           google_link=google_link,
+                           paypal_buttonid=paypal_buttonid)
+
 class GiftGold(Templated):
     """The page to gift reddit gold trophies"""
     def __init__(self, recipient):

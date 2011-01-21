@@ -30,6 +30,7 @@ from r2.lib.jsontemplates import is_api
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
+from r2.lib.utils import randstr
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe
 from r2.lib.emailer import has_opted_out, Email
@@ -1015,3 +1016,42 @@ class FormsController(RedditController):
         return BoringPage(_("give the gift of reddit gold"),
                           show_sidebar = False,
                           content=GiftGold(recipient_name)).render()
+
+    @validate(VUser(),
+              goldtype = VOneOf("goldtype",
+                                ("autorenew", "onetime", "creddits")),
+              period = VOneOf("period", ("monthly", "yearly")),
+              months = VInt("months"))
+    def GET_gold(self, goldtype, period, months):
+        start_over = False
+        if goldtype == "autorenew":
+            if period is None:
+                start_over = True
+        elif goldtype in ("onetime", "creddits"):
+            if months is None or months < 1:
+                start_over = True
+        else:
+            start_over = True
+
+        if start_over:
+            return BoringPage(_("reddit gold"),
+                              show_sidebar = False,
+                              content=Gold()).render()
+        else:
+            payment_blob = dict(goldtype     = goldtype,
+                                account_id   = c.user._id,
+                                account_name = c.user.name,
+                                status       = "initialized")
+            passthrough = randstr(15)
+
+            g.hardcache.set("payment_blob-" + passthrough,
+                            payment_blob, 86400 * 30)
+
+            g.log.info("just set payment_blob-%s" % passthrough)
+
+            return BoringPage(_("reddit gold"),
+                              show_sidebar = False,
+                              content=GoldPayment(goldtype, period,
+                                                  months, passthrough)
+                              ).render()
+

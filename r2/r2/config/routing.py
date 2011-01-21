@@ -173,6 +173,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/thanks', controller='forms', action="thanks", secret = '')
     mc('/thanks/:secret', controller='forms', action="thanks")
 
+    mc('/goldtest', controller='forms', action="gold")
+
     mc('/giftgold', controller='forms', action="giftgold", recipient = '')
     mc('/giftgold/:recipient', controller='forms', action="giftgold")
 
@@ -210,6 +212,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     mc('/api/ipn/:secret', controller='api', action='ipn')
+    mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')

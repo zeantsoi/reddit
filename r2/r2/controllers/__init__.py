@@ -64,4 +64,4 @@ except ImportError:
 from api import ApiminimalController
 from admin import AdminController
 from redirect import RedirectController
-
+from ipn import IpnController
