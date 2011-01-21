@@ -233,7 +233,10 @@ class IpnController(RedditController):
                 message = ":)"
 
         elif payment_blob['goldtype'] == 'creddits':
-            recipient._incr("gold_creddits", int(days / 31))
+            if pennies >= 2999:
+                recipient._incr("gold_creddits", 12 * int(pennies / 2999))
+            else:
+                recipient._incr("gold_creddits", int(pennies / 399))
             recipient._commit()
             subject = _("thanks for buying creddits!")
             message = _("now go to someone's userpage and give them a present")
