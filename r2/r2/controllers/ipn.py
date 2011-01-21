@@ -48,25 +48,25 @@ def check_payment_status(payment_status):
 
 def check_txn_type(txn_type, psl):
     if txn_type == 'subscr_signup':
-        return ("Ok", None)
+        return ("Ok", False)
     elif txn_type == 'subscr_cancel':
         cancel_subscription(parameters['subscr_id'])
-        return ("Ok", None)
+        return ("Ok", False)
     elif txn_type == 'subscr_failed':
         log_text("failed_subscription",
                  "Just got notice of a failed PayPal resub.", "info")
-        return ("Ok", None)
+        return ("Ok", False)
     elif txn_type == 'subscr_modify':
         log_text("modified_subscription",
                  "Just got notice of a modified PayPal sub.", "info")
-        return ("Ok", None)
+        return ("Ok", False)
     elif txn_type in ('new_case',
         'recurring_payment_suspended_due_to_max_failed_payment'):
-        return ("Ok", None)
+        return ("Ok", False)
     elif txn_type == 'subscr_payment' and psl == 'completed':
-        return (None, parameters['subscr_id'])
+        return (None, True)
     elif txn_type == 'web_accept' and psl == 'completed':
-        return (None, None)
+        return (None, False)
     else:
         raise ValueError("Unknown IPN txn_type / psl %r" %
                          ((txn_type, psl),))
@@ -133,9 +133,13 @@ class IpnController(RedditController):
             return response
 
         # Return early if it's a txn_type we don't care about
-        response, subscr_id = check_txn_type(parameters['txn_type'], psl)
+        response, is_autorenew = check_txn_type(parameters['txn_type'], psl)
         if response:
             return response
+        if is_autorenew:
+            subscr_id = parameters['subscr_id']
+        else:
+            subscr_id = None
 
         # Check for the debug flag, and if so, dump the IPN dict
         if g.cache.get("ipn-debug"):
