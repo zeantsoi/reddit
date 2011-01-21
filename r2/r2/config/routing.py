@@ -173,7 +173,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/thanks', controller='forms', action="thanks", secret = '')
     mc('/thanks/:secret', controller='forms', action="thanks")
 
-    mc('/goldtest', controller='forms', action="gold")
+    mc('/gold', controller='forms', action="gold")
 
     mc('/giftgold', controller='forms', action="giftgold", recipient = '')
     mc('/giftgold/:recipient', controller='forms', action="giftgold")
