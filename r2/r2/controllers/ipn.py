@@ -48,24 +48,24 @@ def check_payment_status(payment_status):
 
 def check_txn_type(txn_type, psl):
     if txn_type == 'subscr_signup':
-        return ("Ok", False)
+        return ("Ok", None)
     elif txn_type == 'subscr_cancel':
         return ("Ok", "cancel")
     elif txn_type == 'subscr_failed':
         log_text("failed_subscription",
                  "Just got notice of a failed PayPal resub.", "info")
-        return ("Ok", False)
+        return ("Ok", None)
     elif txn_type == 'subscr_modify':
         log_text("modified_subscription",
                  "Just got notice of a modified PayPal sub.", "info")
-        return ("Ok", False)
+        return ("Ok", None)
     elif txn_type in ('new_case',
         'recurring_payment_suspended_due_to_max_failed_payment'):
-        return ("Ok", False)
+        return ("Ok", None)
     elif txn_type == 'subscr_payment' and psl == 'completed':
         return (None, "new")
     elif txn_type == 'web_accept' and psl == 'completed':
-        return (None, False)
+        return (None, None)
     else:
         raise ValueError("Unknown IPN txn_type / psl %r" %
                          ((txn_type, psl),))
