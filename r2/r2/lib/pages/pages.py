@@ -1420,7 +1420,6 @@ class GoldPayment(Templated):
             summary = strings.gold_summary_creddits % dict(
                                      amount=Score.somethings(months, "month"))
 
-            quantity = None
             google_link = None
 
         Templated.__init__(self, goldtype=goldtype, period=period,
