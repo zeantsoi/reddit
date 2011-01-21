@@ -50,8 +50,7 @@ def check_txn_type(txn_type, psl):
     if txn_type == 'subscr_signup':
         return ("Ok", False)
     elif txn_type == 'subscr_cancel':
-        cancel_subscription(parameters['subscr_id'])
-        return ("Ok", False)
+        return ("Ok", "cancel")
     elif txn_type == 'subscr_failed':
         log_text("failed_subscription",
                  "Just got notice of a failed PayPal resub.", "info")
@@ -64,7 +63,7 @@ def check_txn_type(txn_type, psl):
         'recurring_payment_suspended_due_to_max_failed_payment'):
         return ("Ok", False)
     elif txn_type == 'subscr_payment' and psl == 'completed':
-        return (None, True)
+        return (None, "new")
     elif txn_type == 'web_accept' and psl == 'completed':
         return (None, False)
     else:
@@ -133,13 +132,18 @@ class IpnController(RedditController):
             return response
 
         # Return early if it's a txn_type we don't care about
-        response, is_autorenew = check_txn_type(parameters['txn_type'], psl)
+        response, subscription = check_txn_type(parameters['txn_type'], psl)
+        if subscription is None:
+            subscr_id = None
+        elif subscription == "new":
+            subscr_id = parameters['subscr_id']
+        elif subscription == "cancel":
+            cancel_subscription(parameters['subscr_id'])
+        else:
+            raise ValueError("Weird subscription: %r" % subscription)
+
         if response:
             return response
-        if is_autorenew:
-            subscr_id = parameters['subscr_id']
-        else:
-            subscr_id = None
 
         # Check for the debug flag, and if so, dump the IPN dict
         if g.cache.get("ipn-debug"):
@@ -213,6 +217,9 @@ class IpnController(RedditController):
         # Begin critical section
         payment_blob['status'] = 'processing'
         g.hardcache.set("payment_blob-%s" % custom, payment_blob, 86400 * 30)
+
+        if subscr_id:
+            recipient.gold_subscr_id = subscr_id
 
         if payment_blob['goldtype'] in ('autorenew', 'onetime'):
             admintools.engolden(recipient, days)
