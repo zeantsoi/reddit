@@ -51,6 +51,8 @@ def check_txn_type(txn_type, psl):
         return ("Ok", None)
     elif txn_type == 'subscr_cancel':
         return ("Ok", "cancel")
+    elif txn_type == 'subscr_eot':
+        return ("Ok", None)
     elif txn_type == 'subscr_failed':
         log_text("failed_subscription",
                  "Just got notice of a failed PayPal resub.", "info")
@@ -189,7 +191,7 @@ class IpnController(RedditController):
 
         if not custom:
             dump_parameters(parameters)
-            raise ValueError("Got IPN with txn_id=%d and no custom"
+            raise ValueError("Got IPN with txn_id=%s and no custom"
                              % txn_id)
         payment_blob = g.hardcache.get("payment_blob-%s" % custom)
         if not payment_blob:
