@@ -1386,6 +1386,12 @@ class Gold(Templated):
 
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, passthrough):
+
+        if period == "monthly" or 1 <= months < 12:
+            price = 3.99
+        else:
+            price = 29.99
+
         if goldtype == "autorenew":
             summary = strings.gold_summary_autorenew % dict(user=c.user.name)
             if period == "monthly":
@@ -1394,7 +1400,7 @@ class GoldPayment(Templated):
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
 
             quantity = None
-            google_link = None
+            google_id = None
         elif goldtype == "onetime":
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
@@ -1407,8 +1413,7 @@ class GoldPayment(Templated):
             summary = strings.gold_summary_onetime % dict(user=c.user.name,
                                      amount=Score.somethings(months, "month"))
 
-            google_link = None
-
+            google_id = g.GOOGLE_ID
         elif goldtype == "creddits":
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
@@ -1420,13 +1425,13 @@ class GoldPayment(Templated):
             summary = strings.gold_summary_creddits % dict(
                                      amount=Score.somethings(months, "month"))
 
-            google_link = None
+            google_id = g.GOOGLE_ID
 
         Templated.__init__(self, goldtype=goldtype, period=period,
-                           months=months, quantity=quantity,
+                           months=months, quantity=quantity, price=price,
                            summary=summary,
                            passthrough=passthrough,
-                           google_link=google_link,
+                           google_id=google_id,
                            paypal_buttonid=paypal_buttonid)
 
 class GiftGold(Templated):

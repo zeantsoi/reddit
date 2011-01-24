@@ -31,10 +31,27 @@
     <%utils:round_field title="">
     ${_("Please select a payment method.")}
     <br/>
-%if thing.google_link:
-    <a href="${thing.google_link}">
-      <button class="btn gold-button">${_("Google Checkout")}</button>
-    </a>
+%if thing.google_id:
+    <form action="https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/${thing.google_id}" id="BB_BuyButtonForm" method="post" name="BB_BuyButtonForm" target="_top" style="display:inline">
+        <input name="item_name_1" type="hidden" value="creddits"/>
+        <input name="item_description_1" type="hidden"
+               %if thing.months != thing.quantity:
+                 value="${thing.quantity} year(s) of reddit Gold"
+               %else:
+                 value="${thing.quantity} month(s) of reddit Gold"
+               %endif
+               />
+        <input name="item_quantity_1" type="hidden"
+               value="${thing.quantity}"/>
+        <input name="item_price_1" type="hidden"
+               value="${thing.price}"/>
+        <input type="hidden"
+               name="shopping-cart.items.item-1.merchant-private-item-data"
+               value="${thing.passthrough}"/>
+        <input name="item_currency_1" type="hidden" value="USD"/>
+        <input name="_charset_" type="hidden" value="utf-8"/>
+        <button class="btn gold-button">${_("Google Checkout")}</button>
+    </form>
 %endif
 
     <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
@@ -48,9 +65,8 @@
       <button type="submit" class="btn gold-button">${_("PayPal")}</button>
     </form>
 
-    %if not thing.google_link:
-##    <div class="note">${_("Note: Google Checkout does not support ongoing subscriptions at this time.")}</a>
-    <div class="note">${_("Note: Google Checkout support is temporarily unavailable.")}</a>
+    %if not thing.google_id:
+    <div class="note">${_("Note: Google Checkout does not support ongoing subscriptions at this time.")}</a>
     %endif
     </%utils:round_field>
   </div>

@@ -211,6 +211,8 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
 
     mc('/api/distinguish/:how', controller='api', action="distinguish")
+    # wherever this is, google has to agree.
+    mc('/api/gcheckout', controller='ipn', action='gcheckout')
     mc('/api/ipn/:secret', controller='api', action='ipn')
     mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
