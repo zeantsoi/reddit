@@ -357,9 +357,8 @@ class Globals(object):
             self.version = self.short_version = '(unknown)'
 
         if self.log_start:
-            self.log.error("reddit app (%s) %s:%s started %s at %s" %
-                           (self.instancename, self.reddit_host,
-                            self.reddit_pid,
+            self.log.error("reddit app %s:%s started %s at %s" %
+                           (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
 
     def init_cass_cache(self, keyspace, column_family, cassandra_client,
