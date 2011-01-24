@@ -201,7 +201,7 @@ class IpnController(RedditController):
                             _google_charge_and_ship(sn)
 
                         parameters = request.POST.copy()
-                        self.finish(parameters, "google_%s" % sn,
+                        self.finish(parameters, "g%s" % sn,
                                     email, payer_id, None,
                                     custom, pennies, days)
                     except ValueError, e:
@@ -302,7 +302,7 @@ class IpnController(RedditController):
             raise ValueError("Got IPN with txn_id=%s and no custom"
                              % txn_id)
 
-        self.finish(parameters, txn_id,
+        self.finish(parameters, "P" + txn_id,
                     payer_email, paying_id, subscr_id,
                     custom, pennies, days)
 
@@ -314,25 +314,25 @@ class IpnController(RedditController):
 #        g.log.error("Got back: %s" % payment_blob)
         if not payment_blob:
             dump_parameters(parameters)
-            raise ValueError("Got invalid custom '%s' in IPN" % custom)
+            raise ValueError("Got invalid custom '%s' in IPN/GC" % custom)
         account_id = payment_blob.get('account_id', None)
         if not account_id:
             dump_parameters(parameters)
-            raise ValueError("No account_id in IPN with custom='%s'" % custom)
+            raise ValueError("No account_id in IPN/GC with custom='%s'" % custom)
         try:
             recipient = Account._byID(account_id)
         except NotFound:
             dump_parameters(parameters)
-            raise ValueError("Invalid account_id %d in IPN with custom='%s'"
+            raise ValueError("Invalid account_id %d in IPN/GC with custom='%s'"
                              % (account_id, custom))
         if payment_blob['status'] == 'initialized':
             pass
         elif payment_blob['status'] == 'processed':
             dump_parameters(parameters)
-            raise ValueError("Got IPN for an already-processed payment")
+            raise ValueError("Got IPN/GC for an already-processed payment")
         else:
             dump_parameters(parameters)
-            raise ValueError("Got status '%s' in IPN" % payment_blob['status'])
+            raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
 
         # Begin critical section
         payment_blob['status'] = 'processing'
