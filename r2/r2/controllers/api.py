@@ -169,9 +169,9 @@ class ApiController(RedditController):
                    body = VMarkdown(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
-        handles message composition under /message/compose.  
+        handles message composition under /message/compose.
         """
-        if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
+        if not (form.has_errors("to",  errors.USER_DOESNT_EXIST,
                                 errors.NO_USER, errors.SUBREDDIT_NOEXIST) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or

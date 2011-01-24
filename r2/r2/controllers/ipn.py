@@ -152,12 +152,12 @@ def _google_checkout_post(url, params):
     return BeautifulStoneSoup(response)
 
 class IpnController(RedditController):
-    @textresponse(sn = VLength('serial-number', 100))
-    def POST_gcheckout(self, sn):
-        if sn:
-            sn = sn.split('-')[0]
-            g.log.error( "GOOGLE CHECKOUT: %s" % sn)
-            trans = _google_ordernum_request(sn)
+    @textresponse(full_sn = VLength('serial-number', 100))
+    def POST_gcheckout(self, full_sn):
+        if full_sn:
+            short_sn = full_sn.split('-')[0]
+            g.log.error( "GOOGLE CHECKOUT: %s" % short_sn)
+            trans = _google_ordernum_request(short_sn)
 
             # get the financial details
             auth = trans.find("authorization-amount-notification")
@@ -167,15 +167,15 @@ class IpnController(RedditController):
                 status = trans.findAll('financial-order-state')
                 if 'PAYMENT_DECLINED' in [x.contents[0] for x in status]:
                     g.log.error("google declined transaction found: '%s'" %
-                                sn)
+                                short_sn)
                 elif 'REVIEWING' not in [x.contents[0] for x in status]:
                     g.log.error(("google transaction not found: " +
                                  "'%s', status: %s")
-                                % (sn, [x.contents[0] for x in status]))
+                                % (short_sn, [x.contents[0] for x in status]))
                 else:
                     g.log.error(("google transaction status: " +
                                  "'%s', status: %s")
-                                % (sn, [x.contents[0] for x in status]))
+                                % (short_sn, [x.contents[0] for x in status]))
             elif auth.find("financial-order-state"
                            ).contents[0] == "CHARGEABLE":
                 email = str(auth.find("email").contents[0])
@@ -198,20 +198,20 @@ class IpnController(RedditController):
                             days = 31 * (pennies / 399)
                         charged = trans.find("charge-amount-notification")
                         if not charged:
-                            _google_charge_and_ship(sn)
+                            _google_charge_and_ship(short_sn)
 
                         parameters = request.POST.copy()
-                        self.finish(parameters, "g%s" % sn,
+                        self.finish(parameters, "g%s" % short_sn,
                                     email, payer_id, None,
                                     custom, pennies, days)
                     except ValueError, e:
                         g.log.error(e)
                 else:
-                    raise ValueError("Got no custom blob for %s" % sn)
+                    raise ValueError("Got no custom blob for %s" % short_sn)
 
             return (('<notification-acknowledgment ' +
                      'xmlns="http://checkout.google.com/schema/2" ' +
-                     'serial-number="%s" />') % sn)
+                     'serial-number="%s" />') % full_sn)
         else:
             g.log.error("GOOGLE CHCEKOUT: didn't work")
             g.log.error(repr(list(request.POST.iteritems())))
