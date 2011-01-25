@@ -183,7 +183,7 @@ class Globals(object):
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
-        self.permacache = self.init_cass_cache('permacache', 'permacache',
+        self.permacache = self.init_cass_cache('reddit', 'permacache',
                                                self.cassandra,
                                                self.make_lock,
                                                memcache = perma_memcache,
@@ -192,7 +192,7 @@ class Globals(object):
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
-        self.urlcache = self.init_cass_cache('permacache', 'urls',
+        self.urlcache = self.init_cass_cache('reddit', 'urls',
                                              self.cassandra,
                                              self.make_lock,
                                              # TODO: increase this to QUORUM
