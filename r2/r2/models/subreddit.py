@@ -333,18 +333,20 @@ class Subreddit(Thing, Printable):
             item.contributor = bool(item.type != 'public' and
                                     (item.moderator or
                                      rels.get((item, user, 'contributor'))))
+
+            # Don't reveal revenue information via /r/lounge's subscribers
+            if (g.lounge_reddit and item.name == g.lounge_reddit
+                and not c.user_is_admin):
+                item._ups = 0
+
             item.score = item._ups
+
             # override "voting" score behavior (it will override the use of
             # item.score in builder.py to be ups-downs)
             item.likes = item.subscriber or None
             base_score = item.score - (1 if item.likes else 0)
             item.voting_score = [(base_score + x - 1) for x in range(3)]
             item.score_fmt = Score.subscribers
-
-            # Don't reveal revenue information via /r/lounge's subscribers
-            if (g.lounge_reddit and item.name == g.lounge_reddit
-                and not c.user_is_admin):
-                item._ups = 0
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
