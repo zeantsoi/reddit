@@ -909,6 +909,9 @@ def run_commentstree(limit=100):
 
     amqp.handle_items('commentstree_q', _run_commentstree, limit = limit)
 
+vote_link_q = 'vote_link_q'
+vote_comment_q = 'vote_comment_q'
+
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
@@ -917,7 +920,12 @@ def queue_vote(user, thing, dir, ip, organic = False,
     # queue the vote to be stored unless told not to
     if store:
         if g.amqp_host:
-            amqp.add_item('register_vote_q',
+            if isinstance(thing, Link):
+                qname = vote_link_q
+            elif isinstance(thing, Comment):
+                qname = vote_comment_q
+
+            amqp.add_item(qname,
                           pickle.dumps((user._id, thing._fullname,
                                         dir, ip, organic, cheater)))
         else:
@@ -1008,7 +1016,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
             sup.add_update(user, 'commented')
 
 
-def process_votes_single(**kw):
+def process_votes_single(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msg):
@@ -1028,9 +1036,9 @@ def process_votes_single(**kw):
             handle_vote(voter, votee, dir, ip, organic,
                         cheater = cheater, foreground=True)
 
-    amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
+    amqp.consume_items(qname, _handle_vote, verbose = False)
 
-def process_votes_multi(limit=100):
+def process_votes_multi(qname, limit=100):
     # limit is taken but ignored for backwards compatibility
     def _handle_vote(msgs, chan):
         comments = []
@@ -1060,7 +1068,7 @@ def process_votes_multi(limit=100):
 
         update_comment_votes(comments)
 
-    amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
+    amqp.handle_items(qname, _handle_vote, limit = limit)
 
 process_votes = process_votes_single
 
