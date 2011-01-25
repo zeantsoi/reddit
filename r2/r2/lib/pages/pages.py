@@ -1024,6 +1024,7 @@ class SubredditsPage(Reddit):
                                    header = _('search reddits'),
                                    search_params = {},
                                    simple=True,
+                                   subreddit_search=True
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
 
@@ -1511,10 +1512,12 @@ class SearchForm(Templated):
     """The simple search form in the header of the page.  prev_search
     is the previous search."""
     def __init__(self, prev_search = '', search_params = {},
-                 site=None, simple=True, restrict_sr=False):
+                 site=None, simple=True, restrict_sr=False, 
+                 subreddit_search=False):
         Templated.__init__(self, prev_search = prev_search,
                            search_params = search_params, site=site,
-                           simple=simple, restrict_sr=restrict_sr)
+                           simple=simple, restrict_sr=restrict_sr, 
+                           subreddit_search=subreddit_search)
 
 
 class SearchBar(Templated):
@@ -1523,7 +1526,8 @@ class SearchBar(Templated):
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
                  search_params = {}, show_feedback=False,
-                 simple=False, restrict_sr=False, site=None,
+                 simple=False, restrict_sr=False, site=None, 
+                 subreddit_search=False,
                  **kw):
 
         # not listed explicitly in args to ensure it translates properly
@@ -1541,7 +1545,7 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params,
                            simple=simple, restrict_sr=restrict_sr,
-                           site=site)
+                           site=site, subreddit_search=subreddit_search)
 
 class SearchFail(Templated):
     """Search failure page."""

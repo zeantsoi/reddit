@@ -1415,6 +1415,10 @@ textarea.gray { color: gray; }
     margin-bottom: 10px;
 }
 
+#searchexpando {
+    padding-top: 10px;
+}
+
 #searchexpando dl {
     margin: 10px 0;
 }
@@ -1432,10 +1436,12 @@ textarea.gray { color: gray; }
     padding-top: 5px;
     max-width: 300px;
     border: 0 solid orange;
+    margin-top: -5px;
 }
 
 label + #moresearchinfo {
     border-width: 1px 0 0 0;
+    margin-top: 0px;
 }
 
 #previoussearch #moresearchinfo {
@@ -1445,6 +1451,7 @@ label + #moresearchinfo {
 
 #search_hidemore {
     float: right;
+    margin-left: 5px;
 }
 
 .searchparams { margin: 5px 20px 5px 20px

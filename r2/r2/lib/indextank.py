@@ -78,7 +78,7 @@ class IndextankQuery(object):
 
     def _req_fs(self, sr_ids, field='sr_id'):
         if len(sr_ids) == 1:
-            return '+%s:%d' % (field, sr_ids[0])
+            return '+%s:%s' % (field, sr_ids[0])
         else:
             return '+(%s)' % ' OR '.join(('%s:%s' % (field, sr_id))
                                          for sr_id in sr_ids)
