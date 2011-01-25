@@ -101,7 +101,7 @@ class Subreddit(Thing, Printable):
 
 
     _specials = {}
-    
+
     @classmethod
     def _by_name(cls, names, _update = False):
         #lower name here so there is only one cache
@@ -340,6 +340,11 @@ class Subreddit(Thing, Printable):
             base_score = item.score - (1 if item.likes else 0)
             item.voting_score = [(base_score + x - 1) for x in range(3)]
             item.score_fmt = Score.subscribers
+
+            # Don't reveal revenue information via /r/lounge's subscribers
+            if (g.lounge_reddit and item.name == g.lounge_reddit
+                and not c.user_is_admin):
+                item._ups = 0
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText

@@ -400,7 +400,7 @@ class BrowseController(ListingController):
     @property
     def menus(self):
         return [ControversyTimeMenu(default = self.time)]
-    
+
     def query(self):
         return c.site.get_links(self.sort, self.time)
 
@@ -455,14 +455,14 @@ class ByIDController(ListingController):
 #class RecommendedController(ListingController):
 #    where = 'recommended'
 #    title_text = _('recommended for you')
-#    
+#
 #    @property
 #    def menus(self):
 #        return [RecSortMenu(default = self.sort)]
-#    
+#
 #    def query(self):
 #        return get_recommended(c.user._id, sort = self.sort)
-#        
+#
 #    @validate(VUser(),
 #              sort = VMenu("controller", RecSortMenu))
 #    def GET_listing(self, sort, **env):

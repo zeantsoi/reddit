@@ -647,7 +647,7 @@ class RedditController(MinimalController):
     def login(user, admin = False, rem = False):
         c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(admin = admin),
                                            expires = NEVER if rem else None)
-        
+
     @staticmethod
     def logout(admin = False):
         c.cookies[g.login_cookie] = Cookie(value='')
@@ -745,7 +745,7 @@ class RedditController(MinimalController):
         # check if the user has access to this subreddit
         if not c.site.can_view(c.user) and not c.error_page:
             abort(403, "forbidden")
- 
+
         #check over 18
         if (c.site.over_18 and not c.over18 and
             request.path not in  ("/frame", "/over18")

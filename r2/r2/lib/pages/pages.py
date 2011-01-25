@@ -498,11 +498,11 @@ class SubredditInfoBar(CachedTemplate):
 
         # we want to cache on the number of subscribers
         self.subscribers = self.sr._ups
-        
+
         #so the menus cache properly
         self.path = request.path
         CachedTemplate.__init__(self)
-    
+
     def nav(self):
         buttons = [NavButton(plurals.moderators, 'moderators')]
         if self.type != 'public':
