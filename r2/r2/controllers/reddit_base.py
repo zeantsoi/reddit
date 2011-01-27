@@ -610,6 +610,12 @@ class MinimalController(BaseController):
                         sampling_rate = g.usage_sampling,
                         action = action)
 
+        # this thread is probably going to be reused, but it could be
+        # a while before it is. So we might as well dump the cache in
+        # the mean time so that we don't have dead objects hanging
+        # around taking up memory
+        g.reset_caches()
+
     def abort404(self):
         abort(404, "not found")
 
