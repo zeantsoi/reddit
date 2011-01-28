@@ -51,8 +51,8 @@ class CacheUtils(object):
         for k,v in keys.iteritems():
             self.add(prefix+str(k), v, time = time)
 
-    def get_multi(self, keys, prefix=''):
-        return prefix_keys(keys, prefix, self.simple_get_multi)
+    def get_multi(self, keys, prefix='', **kw):
+        return prefix_keys(keys, prefix, lambda k: self.simple_get_multi(k, **kw))
 
 class PyMemcache(CacheUtils, memcache.Client):
     """We still use our patched python-memcache to talk to the
@@ -382,11 +382,11 @@ class CacheChain(CacheUtils, local):
 
         return default
 
-    def get_multi(self, keys, prefix='', allow_local = True):
-        l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local)
+    def get_multi(self, keys, prefix='', allow_local = True, **kw):
+        l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local, **kw)
         return prefix_keys(keys, prefix, l)
 
-    def simple_get_multi(self, keys, allow_local = True):
+    def simple_get_multi(self, keys, allow_local = True, stale=None):
         out = {}
         need = set(keys)
         for c in self.caches:
@@ -466,6 +466,77 @@ class HardcacheChain(CacheChain):
     def backend(self):
         # the hardcache is always the last item in a HardCacheChain
         return self.caches[-1].backend
+
+class StaleCacheChain(CacheChain):
+    """A cache chain of two cache chains. When allowed by `stale`,
+       answers may be returned by a "closer" but potentially older
+       cache. Probably doesn't play well with NoneResult cacheing"""
+    staleness = 30
+
+    def __init__(self, localcache, stalecache, realcache):
+        self.localcache = localcache
+        self.stalecache = stalecache
+        self.realcache = realcache
+        self.caches = (localcache, realcache) # for the other
+                                              # CacheChain machinery
+
+    def get(self, key, default=None, stale = False, **kw):
+        if kw.get('allow_local', True) and key in self.caches[0]:
+            return self.caches[0][key]
+
+        if stale:
+            stale_value = self.stalecache.get(key)
+            if stale_value is not None:
+                return stale_value # never return stale data into the
+                                   # LocalCache, or people that didn't
+                                   # say they'll take stale data may
+                                   # get it
+
+        value = CacheChain.get(self, key, **kw)
+        if value is None:
+            return default
+
+        if value is not None and stale:
+            self.stalecache.set(key, value, time=self.staleness)
+
+        return value
+
+    def simple_get_multi(self, keys, stale = False, **kw):
+        if not isinstance(keys, set):
+            keys = set(keys)
+
+        ret = {}
+
+        if kw.get('allow_local'):
+            for k in list(keys):
+                if k in self.localcache:
+                    ret[k] = self.localcache[k]
+                    keys.remove(k)
+
+        if keys and stale:
+            stale_values = self.stalecache.simple_get_multi(keys)
+            # never put stale data into the localcache
+            for k, v in stale_values.iteritems():
+                ret[k] = v
+                keys.remove(k)
+
+        if keys:
+            values = self.realcache.simple_get_multi(keys)
+            if values and stale:
+                self.stalecache.set_multi(values, time=self.staleness)
+            self.localcache.update(values)
+            ret.update(values)
+
+        return ret
+
+    def reset(self):
+        newcache = self.localcache.__class__()
+        self.localcache = newcache
+        self.caches = (newcache,) +  self.caches[1:]
+
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__,
+                            (self.localcache, self.stalecache, self.realcache))
 
 CL_ZERO = cassandra.ttypes.ConsistencyLevel.ZERO
 CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
@@ -739,3 +810,25 @@ def make_key(iden, *a, **kw):
     h.update(_conv(kw))
 
     return '%s(%s)' % (iden, h.hexdigest())
+
+def test_stale():
+    from pylons import g
+    ca = g.cache
+    assert isinstance(ca, StaleCacheChain)
+
+    ca.localcache.clear()
+
+    ca.stalecache.set('foo', 'bar', time=ca.staleness)
+    assert ca.stalecache.get('foo') == 'bar'
+    ca.realcache.set('foo', 'baz')
+    assert ca.realcache.get('foo') == 'baz'
+
+    assert ca.get('foo', stale=True) == 'bar'
+    ca.localcache.clear()
+    assert ca.get('foo', stale=False) == 'baz'
+    ca.localcache.clear()
+
+    assert ca.get_multi(['foo'], stale=True) == {'foo': 'bar'}
+    assert len(ca.localcache) == 0
+    assert ca.get_multi(['foo'], stale=False) == {'foo': 'baz'}
+    ca.localcache.clear()

@@ -72,14 +72,14 @@ class Builder(object):
         email_attrses = {}
         friend_rels = None
         if aids:
-            authors = Account._byID(aids, True) if aids else {}
+            authors = Account._byID(aids, data=True, stale=True) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
-        subreddits = Subreddit.load_subreddits(items)
+        subreddits = Subreddit.load_subreddits(items, stale=True)
 
         if not user:
             can_ban_set = set()

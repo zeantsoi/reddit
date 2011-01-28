@@ -331,7 +331,7 @@ class DataThing(object):
 
     #TODO error when something isn't found?
     @classmethod
-    def _byID(cls, ids, data=False, return_dict=True, extra_props=None):
+    def _byID(cls, ids, data=False, return_dict=True, extra_props=None, stale=False):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
 
@@ -345,7 +345,7 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(cache, ids, items_db, prefix)
+        bases = sgm(cache, ids, items_db, prefix, stale=stale)
 
         #check to see if we found everything we asked for
         for i in ids:
@@ -406,7 +406,7 @@ class DataThing(object):
     @classmethod
     def _by_fullname(cls, names,
                      return_dict = True, 
-                     data=False, extra_props=None):
+                     **kw):
         names, single = tup(names, True)
 
         table = {}
@@ -431,8 +431,7 @@ class DataThing(object):
         # lookup ids for each type
         identified = {}
         for real_type, thing_ids in table.iteritems():
-            i = real_type._byID(thing_ids, data = data,
-                                extra_props = extra_props)
+            i = real_type._byID(thing_ids, **kw)
             identified[real_type] = i
 
         # interleave types in original order of the name

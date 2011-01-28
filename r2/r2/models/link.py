@@ -640,7 +640,7 @@ class Comment(Thing, Printable):
 
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
-                           return_dict = True)
+                           return_dict = True, stale=True)
 
         #get srs for comments that don't have them (old comments)
         for cm in wrapped:
@@ -648,7 +648,7 @@ class Comment(Thing, Printable):
                 cm.sr_id = links[cm.link_id].sr_id
 
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
-                                     data=True,return_dict=False)
+                                     data=True, return_dict=False, stale=True)
         cids = dict((w._id, w) for w in wrapped)
         parent_ids = set(cm.parent_id for cm in wrapped
                          if getattr(cm, 'parent_id', None)

@@ -26,7 +26,7 @@ import signal
 from datetime import timedelta, datetime
 import pycassa
 from r2.lib.cache import LocalCache, SelfEmptyingCache
-from r2.lib.cache import CMemcache
+from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
 from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
 from r2.lib.utils import thread_dump
@@ -86,7 +86,8 @@ class Globals(object):
                   'frontpage_dart',
                   ]
 
-    tuple_props = ['memcaches',
+    tuple_props = ['stalecaches',
+                   'memcaches',
                    'permacache_memcaches',
                    'rendercaches',
                    'local_rendercache',
@@ -204,7 +205,12 @@ class Globals(object):
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.cache = MemcacheChain((localcache_cls(), self.memcache))
+        if self.stalecaches:
+            self.cache = StaleCacheChain(localcache_cls(),
+                                         CMemcache(self.stalecaches, num_clients=num_mc_clients),
+                                         self.memcache)
+        else:
+            self.cache = MemcacheChain((localcache_cls(), self.memcache))
         self.cache_chains.append(self.cache)
 
         self.rendercache = MemcacheChain((localcache_cls(),

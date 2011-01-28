@@ -48,7 +48,7 @@ CAMPAIGN = Enum("start", "end", "bid", "sr", "trans_id")
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
     try:
-        sr = Subreddit._by_name(name)
+        sr = Subreddit._by_name(name, stale=True)
     except NotFound:
         sr = Subreddit._new(name = name,
                             title = "promoted links",
