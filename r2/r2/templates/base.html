@@ -23,6 +23,7 @@
 
    from r2.lib.template_helpers import static
    from r2.models import Link, Comment, Subreddit
+   from r2.lib.tracking import UserInfo
 %>
 <%namespace file="utils.html" import="js_preamble"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -94,6 +95,8 @@ reddit, reddit.com, vote, comment, submit
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', '${g.googleanalytics}']);
+  _gaq.push(['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3]);
+  _gaq.push(['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3]);
   _gaq.push(['_trackPageview']);
 
   (function() {
