@@ -90,7 +90,7 @@ reddit, reddit.com, vote, comment, submit
 </%def>
 
 <%def name="head()">
-%if g.googleanalytics:
+%if g.googleanalytics and thing.site_tracking:
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
