@@ -50,6 +50,7 @@ from r2.lib.tracking import encrypt, decrypt
 from pylons import Response
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
+DELETE = 'Thu, 01-Jan-1970 00:00:01 GMT'
 
 cache_affecting_cookies = ('reddit_first','over18','_options')
 
@@ -656,7 +657,7 @@ class RedditController(MinimalController):
 
     @staticmethod
     def logout(admin = False):
-        c.cookies[g.login_cookie] = Cookie(value='')
+        c.cookies[g.login_cookie] = Cookie(value='', expires=DELETE)
 
     def pre(self):
         c.response_wrappers = []
