@@ -1578,6 +1578,7 @@ class FrameToolbar(Wrapped):
     cachable = True
     extension_handling = False
     cache_ignore = Link.cache_ignore
+    site_tracking = True
     def __init__(self, link, title = None, url = None, expanded = False, **kw):
         if link:
             self.title = link.title
