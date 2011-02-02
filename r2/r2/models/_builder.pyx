@@ -122,7 +122,7 @@ class _CommentBuilder(Builder):
 
 
         # items is a list of things we actually care about so load them
-        items = Comment._byID(items, data = True, return_dict = False)
+        items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
         cdef list wrapped = self.wrap_items(items)
 
 

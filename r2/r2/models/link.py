@@ -655,7 +655,7 @@ class Comment(Thing, Printable):
                          and cm.parent_id not in cids)
         parents = {}
         if parent_ids:
-            parents = Comment._byID(parent_ids, data=True)
+            parents = Comment._byID(parent_ids, data=True, stale=True)
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()

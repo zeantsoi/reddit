@@ -241,6 +241,8 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
+    can_stale = request.method.upper() in ('GET','HEAD')
+
     default_sr = DefaultSR()
     c.site = default_sr
     if not sr_name:
@@ -257,7 +259,7 @@ def set_subreddit():
                 srs = set()
                 sr_names = sr_name.split('+')
                 real_path = sr_name
-                srs = Subreddit._by_name(sr_names).values()
+                srs = Subreddit._by_name(sr_names, stale=can_stale).values()
                 if len(srs) != len(sr_names):
                     abort(404)
                 elif any(isinstance(sr, FakeSubreddit)
@@ -272,7 +274,7 @@ def set_subreddit():
                     sr_ids = [sr._id for sr in srs]
                     c.site = MultiReddit(sr_ids, real_path)
             else:
-                c.site = Subreddit._by_name(sr_name)
+                c.site = Subreddit._by_name(sr_name, stale=can_stale)
         except NotFound:
             sr_name = chksrname(sr_name)
             if sr_name:
@@ -523,7 +525,7 @@ class MinimalController(BaseController):
 
     def try_pagecache(self):
         #check content cache
-        if request.method == 'GET' and not c.user_is_loggedin:
+        if request.method.upper() == 'GET' and not c.user_is_loggedin:
             r = g.rendercache.get(self.request_key())
             if r:
                 r, c.cookies = r
@@ -571,7 +573,7 @@ class MinimalController(BaseController):
         #return
         #set content cache
         if (g.page_cache_time
-            and request.method == 'GET'
+            and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
             and response.status_code != 503
@@ -641,7 +643,7 @@ class MinimalController(BaseController):
 
     def api_wrapper(self, kw):
         data = simplejson.dumps(kw)
-        if request.method == "GET" and request.GET.get("callback"):
+        if request.method.upper() == "GET" and request.GET.get("callback"):
             return "%s(%s)" % (websafe_json(request.GET.get("callback")),
                                websafe_json(data))
         return self.sendstring(data)
@@ -706,7 +708,7 @@ class RedditController(MinimalController):
             if not c.user._loaded:
                 c.user._load()
             c.modhash = c.user.modhash()
-            if request.method.lower() == 'get':
+            if request.method.upper() == 'GET':
                 read_mod_cookie()
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime
