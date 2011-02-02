@@ -90,7 +90,6 @@ class Globals(object):
                    'memcaches',
                    'permacache_memcaches',
                    'rendercaches',
-                   'local_rendercache',
                    'servicecaches',
                    'cassandra_seeds',
                    'admins',

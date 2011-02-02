@@ -897,12 +897,15 @@ def title_to_url(title, max_length = 50):
             title = title[:last_word]
     return title or "_"
 
-def trace(fn):
+def dbg(s):
     import sys
+    sys.stderr.write('%s\n' % (s,))
+
+def trace(fn):
     def new_fn(*a,**kw):
         ret = fn(*a,**kw)
-        sys.stderr.write("Fn: %s; a=%s; kw=%s\nRet: %s\n"
-                         % (fn,a,kw,ret))
+        dbg("Fn: %s; a=%s; kw=%s\nRet: %s"
+            % (fn,a,kw,ret))
         return ret
     return new_fn
 

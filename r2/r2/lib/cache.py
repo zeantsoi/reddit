@@ -31,7 +31,7 @@ import pycassa
 import cassandra.ttypes
 
 from r2.lib.contrib import memcache
-from r2.lib.utils import in_chunks, prefix_keys
+from r2.lib.utils import in_chunks, prefix_keys, trace
 from r2.lib.hardcachebackend import HardCacheBackend
 
 from r2.lib.sgm import sgm # get this into our namespace so that it's
@@ -485,7 +485,7 @@ class StaleCacheChain(CacheChain):
             return self.caches[0][key]
 
         if stale:
-            stale_value = self.stalecache.get(key)
+            stale_value = self._getstale([key]).get(key, None)
             if stale_value is not None:
                 return stale_value # never return stale data into the
                                    # LocalCache, or people that didn't
@@ -514,7 +514,7 @@ class StaleCacheChain(CacheChain):
                     keys.remove(k)
 
         if keys and stale:
-            stale_values = self.stalecache.simple_get_multi(keys)
+            stale_values = self._getstale(keys)
             # never put stale data into the localcache
             for k, v in stale_values.iteritems():
                 ret[k] = v
@@ -529,10 +529,18 @@ class StaleCacheChain(CacheChain):
 
         return ret
 
+    def _getstale(self, keys):
+        # this is only in its own function to make tapping it for
+        # debugging easier
+        return self.stalecache.simple_get_multi(keys)
+
     def reset(self):
         newcache = self.localcache.__class__()
         self.localcache = newcache
         self.caches = (newcache,) +  self.caches[1:]
+        if isinstance(self.realcache, CacheChain):
+            assert isinstance(self.realcache.caches[0], LocalCache)
+            self.realcache.caches = (newcache,) + self.realcache.caches[1:]
 
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__,
