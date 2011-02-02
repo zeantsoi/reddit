@@ -210,9 +210,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     # wherever this is, google has to agree.
     mc('/api/gcheckout', controller='ipn', action='gcheckout')
-    mc('/api/ipn/:secret', controller='api', action='ipn')
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
-    mc('/ipn/:secret', controller='ipn', action='ipn')
+    mc('/api/ipn/:secret', controller='ipn', action='ipn')
+    mc('/ipn/:secret',     controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
