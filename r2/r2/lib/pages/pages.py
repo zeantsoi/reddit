@@ -1151,13 +1151,16 @@ class ProfileBar(Templated):
         self.my_fullname = None
         self.gold_remaining = None
         if c.user_is_loggedin:
-            if c.user_is_admin or c.user.gold_creddits > 0:
-                if user._id == c.user._id:
-                    pass
-#                    self.giftmsg = _("gift yourself some gold")
-                else:
-                    self.giftmsg = _("give %(user)s the gift of reddit gold" %
-                                     dict(user=user.name))
+            if user._id != c.user._id:
+                self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
+                self.giftmsg = _("give %(user)s some reddit gold" %
+                                 dict(user=user.name))
+            elif c.user.gold:
+                self.goldlink = "/gold"
+                self.giftmsg = _("renew your reddit gold")
+            else:
+                self.goldlink = "/gold"
+                self.giftmsg = _("buy yourself reddit gold")
 
             if ((user._id == c.user._id or c.user_is_admin)
                 and getattr(user, "gold", None)):
@@ -1382,11 +1385,20 @@ class Thanks(Templated):
                            lounge_html=lounge_html)
 
 class Gold(Templated):
-    def __init__(self):
-        Templated.__init__(self)
+    def __init__(self, goldtype, period, months, signed,
+                 recipient, recipient_name):
+
+        Templated.__init__(self, goldtype = goldtype, period = period,
+                           months = months, signed = signed,
+                           recipient_name = recipient_name,
+                           user_creddits = c.user.gold_creddits,
+                           bad_recipient =
+                           bool(recipient_name and not recipient))
 
 class GoldPayment(Templated):
-    def __init__(self, goldtype, period, months, passthrough):
+    def __init__(self, goldtype, period, months, signed,
+                 recipient, giftmessage, passthrough):
+        pay_from_creddits = False
 
         if period == "monthly" or 1 <= months < 12:
             price = 3.99
@@ -1415,22 +1427,43 @@ class GoldPayment(Templated):
                                      amount=Score.somethings(months, "month"))
 
             google_id = g.GOOGLE_ID
-        elif goldtype == "creddits":
+        else:
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
                 quantity = months
             else:
                 paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
                 quantity = months / 12
+
+            if goldtype == "creddits":
                 months = quantity * 12
-            summary = strings.gold_summary_creddits % dict(
-                                     amount=Score.somethings(months, "month"))
+                summary = strings.gold_summary_creddits % dict(
+                          amount=Score.somethings(months, "month"))
+            elif goldtype == "gift":
+                if signed:
+                    format = strings.gold_summary_signed_gift
+                else:
+                    format = strings.gold_summary_anonymous_gift
+
+                if months <= c.user.gold_creddits:
+                    pay_from_creddits = True
+                elif months >= 12:
+                    # If you're not paying with creddits, you have to either
+                    # buy by month or spend a multiple of 12 months
+                    months = quantity * 12
+
+                summary = format % dict(
+                          amount=Score.somethings(months, "month"),
+                          recipient = recipient.name)
+            else:
+                raise ValueError("wtf is %r" % goldtype)
 
             google_id = g.GOOGLE_ID
 
         Templated.__init__(self, goldtype=goldtype, period=period,
                            months=months, quantity=quantity, price=price,
-                           summary=summary,
+                           summary=summary, giftmessage=giftmessage,
+                           pay_from_creddits=pay_from_creddits,
                            passthrough=passthrough,
                            google_id=google_id,
                            paypal_buttonid=paypal_buttonid)

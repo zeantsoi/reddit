@@ -1004,44 +1004,51 @@ class FormsController(RedditController):
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
 
     @validate(VUser(),
-              recipient = VExistingUname("recipient"))
-    def GET_giftgold(self, recipient):
-        """The page to gift reddit gold trophies"""
-
-        if recipient is None:
-            recipient_name = ''
-        else:
-            recipient_name = recipient.name
-
-        return BoringPage(_("give the gift of reddit gold"),
-                          show_sidebar = False,
-                          content=GiftGold(recipient_name)).render()
-
-    @validate(VUser(),
               goldtype = VOneOf("goldtype",
-                                ("autorenew", "onetime", "creddits")),
+                                ("autorenew", "onetime", "creddits", "gift")),
               period = VOneOf("period", ("monthly", "yearly")),
-              months = VInt("months"))
-    def GET_gold(self, goldtype, period, months):
+              months = VInt("months"),
+              # variables below are just for gifts
+              signed = VBoolean("signed"),
+              recipient_name = VPrintable("recipient", max_length = 50),
+              giftmessage = VLength("giftmessage", 10000))
+    def GET_gold(self, goldtype, period, months,
+                 signed, recipient_name, giftmessage):
         start_over = False
+        recipient = None
         if goldtype == "autorenew":
             if period is None:
                 start_over = True
         elif goldtype in ("onetime", "creddits"):
             if months is None or months < 1:
                 start_over = True
+        elif goldtype == "gift":
+            if months is None or months < 1:
+                start_over = True
+            try:
+                recipient = Account._by_name(recipient_name or "")
+            except NotFound:
+                start_over = True
         else:
+            goldtype = ""
             start_over = True
 
         if start_over:
             return BoringPage(_("reddit gold"),
                               show_sidebar = False,
-                              content=Gold()).render()
+                              content=Gold(goldtype, period, months, signed,
+                                           recipient, recipient_name)).render()
         else:
             payment_blob = dict(goldtype     = goldtype,
                                 account_id   = c.user._id,
                                 account_name = c.user.name,
                                 status       = "initialized")
+
+            if goldtype == "gift":
+                payment_blob["signed"] = signed
+                payment_blob["recipient"] = recipient_name
+                payment_blob["giftmessage"] = giftmessage
+
             passthrough = randstr(15)
 
             g.hardcache.set("payment_blob-" + passthrough,
@@ -1051,7 +1058,8 @@ class FormsController(RedditController):
 
             return BoringPage(_("reddit gold"),
                               show_sidebar = False,
-                              content=GoldPayment(goldtype, period,
-                                                  months, passthrough)
+                              content=GoldPayment(goldtype, period, months,
+                                                  signed, recipient,
+                                                  giftmessage, passthrough)
                               ).render()
 

@@ -495,7 +495,7 @@ class MinimalController(BaseController):
                         c.over18,
                         c.firsttime,
                         c.extension,
-                        c.render_style, 
+                        c.render_style,
                         cookies_key)
 
     def cached_response(self):
@@ -506,7 +506,7 @@ class MinimalController(BaseController):
         c.start_time = datetime.now(g.tz)
         g.reset_caches()
 
-        c.domain_prefix = request.environ.get("reddit-domain-prefix", 
+        c.domain_prefix = request.environ.get("reddit-domain-prefix",
                                               g.domain_prefix)
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:

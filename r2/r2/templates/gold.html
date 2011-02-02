@@ -28,8 +28,7 @@
 
 <script type="text/javascript">
   $(function() {
-    $(".gold-form [name='goldtype']")
-       .attr('checked', false)
+    $(".gold-form [type='radio'][name='goldtype']")
        .change(function() {
           var button = $(this);
           var selection = "." + button.val();
@@ -39,6 +38,19 @@
           others.fadeOut('fast');
           selected.fadeIn('fast');
     });
+
+##  http://stackoverflow.com/questions/208471/g/1080243#1080243
+    if ($.browser.msie) {
+      $(".gold-form [type='radio'][name='goldtype']").click(function() {
+        this.blur();
+        this.focus();
+      });
+    }
+
+    var checked = $(".gold-form input[name='goldtype']:radio:checked");
+    if (checked && checked[0]) {
+      $(".gold-subsection." + checked[0].value).show();
+    }
   });
 </script>
 
@@ -68,31 +80,28 @@
 
 <div class="gold-form">
   <h1>
-    ${_("reddit gold")}
-    (<a href="/help/gold">help</a>)
+    <img src="/static/giftgold.png" /> &#32;
+    ${_("reddit gold")} (<a href="/help/gold">help</a>)
   </h1>
 
-  <form class="content spacer">
+  <form class="content">
     <%utils:round_field title="">
-    ${radio_type("goldtype", "autorenew", _("buy for yourself, as an ongoing subscription"),
-      "", False)}<br/>
-    ${radio_type("goldtype", "onetime", _("buy for yourself, as a one-time purchase"),
-      "", False)}<br/>
-##    ${radio_type("goldtype", "gift", _("give reddit gold to someone else"),
-##      "", False)}<br/>
-##    ${radio_type("goldtype", "creddits", _('buy reddit gold "creddits"'),
-##      unsafe("<a href='/help/creddits'>details</a>"),
-##      False)}<br/>
-    ${radio_type("goldtype", "creddits", _("buy reddit gold for someone else"),
+    ${radio_type("goldtype", "autorenew", _("Buy for yourself, as an ongoing subscription"),
+      "", thing.goldtype == "autorenew")}<br/>
+    ${radio_type("goldtype", "onetime", _("Buy for yourself, as a one-time purchase"),
+      "", thing.goldtype == "onetime")}<br/>
+    ${radio_type("goldtype", "gift", _("Give reddit gold to someone else"),
+      "", thing.goldtype == "gift")}<br/>
+    ${radio_type("goldtype", "creddits", _('Buy reddit gold "creddits"'),
       unsafe("<a href='/help/creddits'>details</a>"),
-      False)}<br/>
+      thing.goldtype == "creddits")}<br/>
     </%utils:round_field>
   </form>
 
   <%self:goldsec goldtype="autorenew">
-    <%utils:round_field title="monthly or yearly?">
-    ${radio_type("period", "monthly", _("$3.99 / month"), "", False)}<br/>
-    ${radio_type("period", "yearly", _("$29.99 / year (which works out to just $2.50 / month!)"),
+    <%utils:round_field title="${'Monthly or yearly?'}">
+      ${radio_type("period", "monthly", _("$3.99 / month"), "", False)}<br/>
+      ${radio_type("period", "yearly", _("$29.99 / year (which works out to just $2.50 / month!)"),
       "", True)}<br/>
       <button type="submit" class="btn gold-button">${_("subscribe")}</button>
       <span class="status"></span>
@@ -100,7 +109,7 @@
   </%self:goldsec>
 
   <%self:goldsec goldtype="onetime">
-    <%utils:round_field title="how many months?">
+    <%utils:round_field title="${_('How many months?')}">
       ${gold_dropdown("months")}
       <button type="submit" class="btn gold-button">${_("buy")}</button>
       <span class="status"></span>
@@ -108,17 +117,60 @@
   </%self:goldsec>
 
   <%self:goldsec goldtype="gift">
-    <%utils:round_field title="how many months?">
-    who? [_____________]<br/>
-    what? [_____________]<br/>
-    where? [_____________]<br/>
-    when? [_____________]<br/>
-    why? [_____________]
+    <%utils:round_field title="${_('How much gold do you wish to bestow?')}">
+      %if thing.user_creddits:
+        <select name="months" class="gold-dropdown">
+          %for i in range(1, thing.user_creddits + 1):
+             <option value="${i}">
+               ${unsafe(Score.somethings(i, "month"))}
+             </option>
+          %endfor
+        </select>
+        <br/>
+        <span class="note">
+          ${_("Note: If you want to give more than %(number)d, you'll need to buy more creddits.") % dict(number=thing.user_creddits)}
+        </span>
+      %else:
+        ${gold_dropdown("months")}
+      %endif
+
+      <div class="spacer">
+        ${_("To whom are you giving said gold?")}
+        <input type="text" name="recipient" value="${thing.recipient_name}" />
+        ${error_field("NO_USER", "recipient", "span")}
+        ${error_field("USER_DOESNT_EXIST", "recipient", "span")}
+        %if thing.bad_recipient:
+          <br/>
+          <span class="wrong">${_("that user doesn't exist")}</span>
+        %endif
+      </div>
+
+      <div class="spacer">
+        ${_("Do you want them to know it came from you?")}
+        <br/>
+        ${radio_type("signed", "yes", _("yes, include my username"),
+                     "",
+                     True)}
+        <br/>
+        ${radio_type("signed", "no", _("no, make it anonymous"),
+                     "",
+                     False)}
+      </div>
+
+      <div class="spacer">
+        ${_("Gift message (optional):")}
+        <textarea rows="5" cols="40" name="giftmessage" id="giftmessage">
+        </textarea>
+      </div>
+
+      <button type="submit" class="btn gold-button">${_("give")}</button>
+      <span class="status"></span>
+
     </%utils:round_field>
   </%self:goldsec>
 
   <%self:goldsec goldtype="creddits">
-    <%utils:round_field title="how many creddits would you like to buy? (each will allow you to give one month of reddit gold)">
+    <%utils:round_field title="${_('How many creddits would you like to buy? (each will allow you to give one month of reddit gold)')}">
       ${gold_dropdown("creddits")}
       <button type="submit" class="btn gold-button">${_("buy")}</button>
       <span class="status"></span>

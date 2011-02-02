@@ -267,7 +267,7 @@ def update_gold_users(verbose=False):
                 print "%s just expired" % account.name
             admintools.degolden(account)
             send_system_message(account, "Your reddit gold subscription has expired. :(",
-               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you don't want to, please write to us at 912@reddit.com and tell us where we let you down, so we can work on fixing the problem.")
+               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/gold) Or, if you don't want to, please write to us at 912@reddit.com and tell us where we let you down, so we can work on fixing the problem.")
             continue
 
         count += 1
@@ -293,7 +293,7 @@ def update_gold_users(verbose=False):
                     print "Sending notice to %s" % account.name
                 g.hardcache.set(hc_key, True, 86400 * 10)
                 send_system_message(account, "Your reddit gold subscription is about to expire!",
-                                    "Your subscription to reddit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you think we suck, just let your subscription lapse and go back to being a regular user.\n\nIf you have any questions, please write to 912@reddit.com.")
+                                    "Your subscription to reddit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/gold) Or, if you think we suck, just let your subscription lapse and go back to being a regular user.\n\nIf you have any questions, please write to 912@reddit.com.")
 
     if verbose:
         for exp_date in sorted(expiration_dates.keys()):

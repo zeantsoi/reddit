@@ -12,6 +12,19 @@ from r2.models import *
 
 from reddit_base import RedditController
 
+def get_blob(code):
+    key = "payment_blob-" + code
+    with g.make_lock("payment_blob_lock-" + code):
+        blob = g.hardcache.get(key)
+        if not blob:
+            raise NotFound("No payment_blob-" + code)
+        if blob.get('status', None) != 'initialized':
+            raise ValueError("payment_blob %s has status = %s" %
+                             (code, blob.get('status', None)))
+        blob['status'] = "locked"
+        g.hardcache.set(key, blob, 86400 * 30)
+    return key, blob
+
 def dump_parameters(parameters):
     for k, v in parameters.iteritems():
         g.log.info("IPN: %r = %r" % (k, v))
@@ -66,6 +79,8 @@ def check_txn_type(txn_type, psl):
         log_text("modified_subscription",
                  "Just got notice of a modified PayPal sub.", "info")
         return ("Ok", None)
+    elif txn_type == 'send_money':
+        return ("Ok", None)
     elif txn_type in ('new_case',
         'recurring_payment_suspended_due_to_max_failed_payment'):
         return ("Ok", None)
@@ -111,6 +126,40 @@ def existing_subscription(subscr_id):
 
     return account
 
+def months_and_days_from_pennies(pennies):
+    if pennies >= 2999:
+        months = 12 * (pennies / 2999)
+        days  = 366 * (pennies / 2999)
+    else:
+        months = pennies / 399
+        days   = 31 * months
+    return (months, days)
+
+def send_gift(buyer, recipient, months, days, signed, giftmessage):
+    admintools.engolden(recipient, days)
+    if signed:
+        sender = buyer.name
+        md_sender = "[%s](/user/%s)" % (sender, sender)
+    else:
+        sender = "someone"
+        md_sender = "An anonymous redditor"
+
+    create_gift_gold (buyer._id, recipient._id, days, c.start_time, signed)
+    if months == 1:
+        amount = "a month"
+    else:
+        amount = "%d months" % months
+
+    subject = sender + " just sent you reddit gold!"
+    message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
+
+    if giftmessage and giftmessage.strip():
+        message += "\n\n" + strings.giftgold_note + giftmessage
+
+    send_system_message(recipient, subject, message)
+
+    g.log.info("%s gifted %s to %s" % (buyer.name, amount, recipient.name))
+
 def _google_ordernum_request(ordernums):
     d = Document()
     n = d.createElement("notification-history-request")
@@ -152,6 +201,63 @@ def _google_checkout_post(url, params):
     return BeautifulStoneSoup(response)
 
 class IpnController(RedditController):
+    # Used when buying gold with creddits
+    @validatedForm(VUser(),
+                   months = VInt("months"),
+                   passthrough = VPrintable("passthrough", max_length=50))
+    def POST_spendcreddits(self, form, jquery, months, passthrough):
+        if months is None or months < 1:
+            form.set_html(".status", _("nice try."))
+            return
+
+        days = months * 31
+
+        if not passthrough:
+            raise ValueError("/spendcreddits got no passthrough?")
+
+        blob_key, payment_blob = get_blob(passthrough)
+        if payment_blob["goldtype"] != "gift":
+            raise ValueError("/spendcreddits payment_blob %s has goldtype %s" %
+                             (passthrough, payment_blob["goldtype"]))
+
+        signed = payment_blob["signed"]
+        giftmessage = payment_blob["giftmessage"]
+        recipient_name = payment_blob["recipient"]
+
+        if payment_blob["account_id"] != c.user._id:
+            fmt = ("/spendcreddits payment_blob %s has userid %d " +
+                   "but c.user._id is %d")
+            raise ValueError(fmt % passthrough,
+                             payment_blob["account_id"],
+                             c.user._id)
+
+        try:
+            recipient = Account._by_name(recipient_name)
+        except NotFound:
+            raise ValueError("Invalid username %s in spendcreddits, buyer = %s"
+                             % (recipient_name, c.user.name))
+
+        if not c.user_is_admin:
+            if months > c.user.gold_creddits:
+                raise ValueError("%s is trying to sneak around the creddit check"
+                                 % c.user.name)
+
+            c.user.gold_creddits -= months
+            c.user.gold_creddit_escrow += months
+            c.user._commit()
+
+        send_gift(c.user, recipient, months, days, signed, giftmessage)
+
+        if not c.user_is_admin:
+            c.user.gold_creddit_escrow -= months
+            c.user._commit()
+
+        payment_blob["status"] = "processed"
+        g.hardcache.set(blob_key, payment_blob, 86400 * 30)
+
+        form.set_html(".status", _("the gold has been delivered!"))
+        jquery("button").hide()
+
     @textresponse(full_sn = VLength('serial-number', 100))
     def POST_gcheckout(self, full_sn):
         if full_sn:
@@ -192,10 +298,7 @@ class IpnController(RedditController):
                     try:
                         pennies = int(float(trans.find("order-total"
                                                       ).contents[0])*100)
-                        if pennies >= 2999:
-                            days = 366 * (pennies / 2999)
-                        else:
-                            days = 31 * (pennies / 399)
+                        months, days = months_and_days_from_pennies(pennies)
                         charged = trans.find("charge-amount-notification")
                         if not charged:
                             _google_charge_and_ship(short_sn)
@@ -203,7 +306,7 @@ class IpnController(RedditController):
                         parameters = request.POST.copy()
                         self.finish(parameters, "g%s" % short_sn,
                                     email, payer_id, None,
-                                    custom, pennies, days)
+                                    custom, pennies, months, days)
                     except ValueError, e:
                         g.log.error(e)
                 else:
@@ -271,12 +374,8 @@ class IpnController(RedditController):
             dump_parameters(parameters)
             raise ValueError("Got incomplete IPN")
 
-        # Calculate pennies and days
         pennies = int(mc_gross * 100)
-        if pennies >= 2999:
-            days = 366 * (pennies / 2999)
-        else:
-            days = 31 * (pennies / 399)
+        months, days = months_and_days_from_pennies(pennies)
 
         # Special case: autorenewal payment
         existing = existing_subscription(subscr_id)
@@ -304,45 +403,30 @@ class IpnController(RedditController):
 
         self.finish(parameters, "P" + txn_id,
                     payer_email, paying_id, subscr_id,
-                    custom, pennies, days)
+                    custom, pennies, months, days)
 
     def finish(self, parameters, txn_id,
                payer_email, paying_id, subscr_id,
-               custom, pennies, days):
-#        g.log.error("Looking up: %s" % ("payment_blob-%s" % custom))
-        payment_blob = g.hardcache.get("payment_blob-%s" % custom)
-#        g.log.error("Got back: %s" % payment_blob)
-        if not payment_blob:
+               custom, pennies, months, days):
+
+        blob_key, payment_blob = get_blob(custom)
+
+        buyer_id = payment_blob.get('account_id', None)
+        if not buyer_id:
             dump_parameters(parameters)
-            raise ValueError("Got invalid custom '%s' in IPN/GC" % custom)
-        account_id = payment_blob.get('account_id', None)
-        if not account_id:
-            dump_parameters(parameters)
-            raise ValueError("No account_id in IPN/GC with custom='%s'" % custom)
+            raise ValueError("No buyer_id in IPN/GC with custom='%s'" % custom)
         try:
-            recipient = Account._byID(account_id)
+            buyer = Account._byID(buyer_id)
         except NotFound:
             dump_parameters(parameters)
-            raise ValueError("Invalid account_id %d in IPN/GC with custom='%s'"
-                             % (account_id, custom))
-        if payment_blob['status'] == 'initialized':
-            pass
-        elif payment_blob['status'] == 'processed':
-            dump_parameters(parameters)
-            raise ValueError("Got IPN/GC for an already-processed payment")
-        else:
-            dump_parameters(parameters)
-            raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
-
-        # Begin critical section
-        payment_blob['status'] = 'processing'
-        g.hardcache.set("payment_blob-%s" % custom, payment_blob, 86400 * 30)
+            raise ValueError("Invalid buyer_id %d in IPN/GC with custom='%s'"
+                             % (buyer_id, custom))
 
         if subscr_id:
-            recipient.gold_subscr_id = subscr_id
+            buyer.gold_subscr_id = subscr_id
 
         if payment_blob['goldtype'] in ('autorenew', 'onetime'):
-            admintools.engolden(recipient, days)
+            admintools.engolden(buyer, days)
 
             subject = _("thanks for buying reddit gold!")
 
@@ -351,25 +435,38 @@ class IpnController(RedditController):
                 message = strings.lounge_msg % dict(link=lounge_url)
             else:
                 message = ":)"
-
         elif payment_blob['goldtype'] == 'creddits':
-            if pennies >= 2999:
-                recipient._incr("gold_creddits", 12 * int(pennies / 2999))
-            else:
-                recipient._incr("gold_creddits", int(pennies / 399))
-            recipient._commit()
+            buyer._incr("gold_creddits", months)
+            buyer._commit()
             subject = _("thanks for buying creddits!")
-            message = _("now go to someone's userpage and give them a present")
+            message = _("To spend them, visit [/gold](/gold) or your favorite person's userpage.")
+        elif payment_blob['goldtype'] == 'gift':
+            recipient_name = payment_blob.get('recipient', None)
+            try:
+                recipient = Account._by_name(recipient_name)
+            except NotFound:
+                dump_parameters(parameters)
+                raise ValueError("Invalid recipient_name %s in IPN/GC with custom='%s'"
+                                 % (recipient_name, custom))
+            signed = payment_blob.get("signed", False)
+            giftmessage = payment_blob.get("giftmessage", False)
+            send_gift(buyer, recipient, months, days, signed, giftmessage)
+            payment_blob['status'] = 'processed'
+            g.hardcache.set("payment_blob-%s" % custom, payment_blob, 86400 * 30)
+            return # Bail out early, because none of the rest applies to gifts
+        else:
+            dump_parameters(parameters)
+            raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
 
         # Reuse the old "secret" column as a place to record the goldtype
         # and "custom", just in case we need to debug it later or something
         secret = payment_blob['goldtype'] + "-" + custom
 
         create_claimed_gold(txn_id, payer_email, paying_id, pennies, days,
-                            secret, account_id, c.start_time,
+                            secret, buyer_id, c.start_time,
                             subscr_id, status="autoclaimed")
 
-        send_system_message(recipient, subject, message)
+        send_system_message(buyer, subject, message)
 
-        payment_blob['status'] = 'processed'
-        g.hardcache.set("payment_blob-%s" % custom, payment_blob, 86400 * 30)
+        payment_blob["status"] = "processed"
+        g.hardcache.set(blob_key, payment_blob, 86400 * 30)

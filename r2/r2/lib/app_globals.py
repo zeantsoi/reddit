@@ -336,6 +336,13 @@ class Globals(object):
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
 
+        for arg in sys.argv:
+            tokens = arg.split("=")
+            if len(tokens) == 2:
+                k, v = tokens
+                self.log.debug("Overriding g.%s to %s" % (k, v))
+                setattr(self, k, v)
+
         #the shutdown toggle
         self.shutdown = False
 

@@ -113,13 +113,11 @@
     </div>
   %endif
 
-  %if getattr(thing, "giftmsg", None):
-    <div class="giftgold">
-      <a href="/giftgold/${thing.user.name}">
-        ${thing.giftmsg}
-      </a>
-    </div>
-  %endif
+  <div class="giftgold">
+    <a href="${thing.goldlink}">
+      ${thing.giftmsg}
+    </a>
+  </div>
 
   <div class="bottom">
     %if thing.user != c.user:
