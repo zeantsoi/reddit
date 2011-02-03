@@ -683,6 +683,7 @@ class ApiController(RedditController):
         elif isinstance(thing, Comment):
             parent_id = getattr(thing, 'parent_id', None)
             link_id = thing.link_id
+            recipient = None
 
             if parent_id:
                 parent_comment = Comment._byID(parent_id, data=True)
