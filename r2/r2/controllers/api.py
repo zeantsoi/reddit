@@ -694,10 +694,12 @@ class ApiController(RedditController):
 
             thing._delete()
             delete_comment(thing)
-            inbox_class = Inbox.rel(Account, Comment)
-            d = inbox_class._fast_query(recipient, thing, ("inbox", "selfreply"))
-            rels = filter(None, d.values()) or None
-            queries.new_comment(thing, rels)
+
+            if recipient:
+                inbox_class = Inbox.rel(Account, Comment)
+                d = inbox_class._fast_query(recipient, thing, ("inbox", "selfreply"))
+                rels = filter(None, d.values()) or None
+                queries.new_comment(thing, rels)
 
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
