@@ -1388,10 +1388,15 @@ class Gold(Templated):
     def __init__(self, goldtype, period, months, signed,
                  recipient, recipient_name):
 
+        if c.user_is_admin:
+            user_creddits = 50
+        else:
+            user_creddits = c.user.gold_creddits
+
         Templated.__init__(self, goldtype = goldtype, period = period,
                            months = months, signed = signed,
                            recipient_name = recipient_name,
-                           user_creddits = c.user.gold_creddits,
+                           user_creddits = user_creddits,
                            bad_recipient =
                            bool(recipient_name and not recipient))
 
@@ -1404,6 +1409,11 @@ class GoldPayment(Templated):
             price = 3.99
         else:
             price = 29.99
+
+        if c.user_is_admin:
+            user_creddits = 50
+        else:
+            user_creddits = c.user.gold_creddits
 
         if goldtype == "autorenew":
             summary = strings.gold_summary_autorenew % dict(user=c.user.name)
@@ -1445,7 +1455,7 @@ class GoldPayment(Templated):
                 else:
                     format = strings.gold_summary_anonymous_gift
 
-                if months <= c.user.gold_creddits:
+                if months <= user_creddits:
                     pay_from_creddits = True
                 elif months >= 12:
                     # If you're not paying with creddits, you have to either
