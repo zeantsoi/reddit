@@ -170,10 +170,13 @@
       %endif
 
       %if g.tracker_url and thing.site_tracking:
-        <img alt="" src="${tracking.UserInfo.gen_url()}"/>
+        <img alt="" src="${tracking.UserInfo.gen_url()}" id="oldpixel"/>
       %endif
+
       %if g.newtracker_url and thing.site_tracking:
-        <img alt="" src="${tracking.UserInfoNew.gen_url()}"/>
+        <script type="text/javascript">
+            grab_tracking_pixel('${tracking.UserInfoNew.gen_url()}');
+        </script>
       %endif
     %endif
     ${framebuster()}
