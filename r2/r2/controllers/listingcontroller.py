@@ -500,7 +500,7 @@ class UserController(ListingController):
         def keep(item):
             wouldkeep = True
             # TODO: Consider a flag to disable this (and see below plus builder.py)
-            if item._deleted:
+            if item._deleted and not c.user_is_admin:
                 return False
             if self.time != 'all':
                 wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
@@ -622,7 +622,7 @@ class MessageController(ListingController):
         def keep(item):
             wouldkeep = item.keep_item(item)
             # TODO: Consider a flag to disable this (and see above plus builder.py)
-            if item._deleted or item._spam:
+            if (item._deleted or item._spam) and not c.user_is_admin:
                 return False
             # don't show user their own unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')

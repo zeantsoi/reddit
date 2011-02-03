@@ -681,9 +681,23 @@ class ApiController(RedditController):
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
+            parent_id = getattr(thing, 'parent_id', None)
+            link_id = thing.link_id
+
+            if parent_id:
+                parent_comment = Comment._byID(parent_id, data=True)
+                recipient = Account._byID(parent_comment.author_id)
+            else:
+                parent_link = Link._byID(link_id, data=True)
+                if parent_link.is_self:
+                    recipient = Account._byID(parent_link.author_id)
+
             thing._delete()
             delete_comment(thing)
-            queries.new_comment(thing, None)
+            inbox_class = Inbox.rel(Account, Comment)
+            d = inbox_class._fast_query(recipient, thing, ("inbox", "selfreply"))
+            rels = filter(None, d.values()) or None
+            queries.new_comment(thing, rels)
 
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))

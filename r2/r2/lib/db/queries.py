@@ -577,17 +577,22 @@ def new_comment(comment, inbox_rels):
            get_comments(author, 'top', 'all'),
            get_comments(author, 'controversial', 'all')]
 
+    sr = Subreddit._byID(comment.sr_id)
+
     if comment._deleted:
+        job_key = "delete_items"
+        job.append(get_sr_comments(sr))
         job.append(get_all_comments())
-        add_queries(job, delete_items = comment)
     else:
-        sr = Subreddit._byID(comment.sr_id)
+        job_key = "insert_items"
         if comment._spam:
             job.append(get_spam_comments(sr))
-        add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
         if not g.amqp_host:
             add_comment_tree([comment])
+
+    job_dict = { job_key: comment }
+    add_queries(job, **job_dict)
 
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments (to minimise lock contention)
@@ -595,13 +600,22 @@ def new_comment(comment, inbox_rels):
     if inbox_rels:
         for inbox_rel in tup(inbox_rels):
             inbox_owner = inbox_rel._thing1
+            job_dict = { job_key: inbox_rel }
             if inbox_rel._name == "inbox":
-                add_queries([get_inbox_comments(inbox_owner)],
-                            insert_items = inbox_rel)
+                inbox_func  = get_inbox_comments
+                unread_func = get_unread_comments
+            elif inbox_rel._name == "selfreply":
+                inbox_func = get_inbox_selfreply
+                unread_func = get_unread_selfreply
             else:
-                add_queries([get_inbox_selfreply(inbox_owner)],
-                            insert_items = inbox_rel)
-            set_unread(comment, inbox_owner, True)
+                raise ValueError("wtf is " + inbox_rel._name)
+
+            add_queries([inbox_func(inbox_owner)], **job_dict)
+
+            if comment._deleted:
+                add_queries([unread_func(inbox_owner)], **job_dict)
+            else:
+                set_unread(comment, inbox_owner, True)
 
 
 def new_subreddit(sr):
