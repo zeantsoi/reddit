@@ -1153,14 +1153,14 @@ class ProfileBar(Templated):
         if c.user_is_loggedin:
             if user._id != c.user._id:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
-                self.giftmsg = _("give %(user)s some reddit gold" %
+                self.giftmsg = _("buy %(user)s a month of reddit gold" %
                                  dict(user=user.name))
             elif c.user.gold:
                 self.goldlink = "/gold"
                 self.giftmsg = _("renew your reddit gold")
             else:
                 self.goldlink = "/gold"
-                self.giftmsg = _("buy yourself reddit gold")
+                self.giftmsg = _("treat yourself to reddit gold")
 
             if ((user._id == c.user._id or c.user_is_admin)
                 and getattr(user, "gold", None)):

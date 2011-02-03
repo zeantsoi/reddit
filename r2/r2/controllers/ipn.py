@@ -389,12 +389,11 @@ class IpnController(RedditController):
                 g.log.info("Just applied IPN renewal for %s, %d days" %
                            (existing.name, days))
             return "Ok"
+        elif subscr_id:
+            g.log.warning("IPN subscription %s is not associated with anyone"
+                          % subscr_id)
 
         # More sanity checks that all non-autorenewals should pass:
-
-        # Temporary hack for payments that come in as code is rolling
-        if not custom:
-            custom = g.hardcache.get("custom_override-" + txn_id)
 
         if not custom:
             dump_parameters(parameters)
