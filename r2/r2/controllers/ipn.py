@@ -424,6 +424,7 @@ class IpnController(RedditController):
         if subscr_id:
             buyer.gold_subscr_id = subscr_id
 
+        instagift = False
         if payment_blob['goldtype'] in ('autorenew', 'onetime'):
             admintools.engolden(buyer, days)
 
@@ -450,9 +451,9 @@ class IpnController(RedditController):
             signed = payment_blob.get("signed", False)
             giftmessage = payment_blob.get("giftmessage", False)
             send_gift(buyer, recipient, months, days, signed, giftmessage)
-            payment_blob['status'] = 'processed'
-            g.hardcache.set("payment_blob-%s" % custom, payment_blob, 86400 * 30)
-            return # Bail out early, because none of the rest applies to gifts
+            instagift = True
+            subject = _("thanks for giving reddit gold!")
+            message = _("Your gift to %s has been delivered." % recipient.name)
         else:
             dump_parameters(parameters)
             raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
@@ -461,9 +462,14 @@ class IpnController(RedditController):
         # and "custom", just in case we need to debug it later or something
         secret = payment_blob['goldtype'] + "-" + custom
 
+        if instagift:
+            status="instagift"
+        else:
+            status="processed"
+
         create_claimed_gold(txn_id, payer_email, paying_id, pennies, days,
                             secret, buyer_id, c.start_time,
-                            subscr_id, status="autoclaimed")
+                            subscr_id, status=status)
 
         send_system_message(buyer, subject, message)
 
