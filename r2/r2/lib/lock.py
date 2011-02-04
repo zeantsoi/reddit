@@ -64,7 +64,7 @@ class MemcacheLock(object):
         #try and fetch the lock, looping until it's available
         while not self.cache.add(self.key, my_info, time = self.time):
             if (datetime.now() - start).seconds > self.timeout:
-                if verbose:
+                if self.verbose:
                     info = self.cache.get(self.key)
                     if info:
                         info = "%s %s\n%s" % info
