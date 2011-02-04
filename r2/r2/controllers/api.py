@@ -382,22 +382,24 @@ class ApiController(RedditController):
         form.redirect(dest)
 
 
-    @validatedForm(VRatelimit(rate_ip = True, prefix = 'login_',
-                              error = errors.WRONG_PASSWORD),
+    @validatedForm(VDelay("login"),
                    user = VLogin(['user', 'passwd']),
                    username = VLength('user', max_length = 100),
                    dest   = VDestination(),
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_login(self, form, jquery, user, username, dest, rem, reason):
+        if form.has_errors('vdelay', errors.RATELIMIT):
+            jquery(".recover-password").addClass("attention")
+            return
 
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
         if login_throttle(username, wrong_password = form.has_errors("passwd",
                                                      errors.WRONG_PASSWORD)):
-            VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-
+            VDelay.record_violation("login", seconds=1, growfast=True)
+            jquery(".recover-password").addClass("attention")
             c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
 
         if not form.has_errors("passwd", errors.WRONG_PASSWORD):
