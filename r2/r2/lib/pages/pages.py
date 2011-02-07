@@ -3269,11 +3269,12 @@ class RawString(Templated):
        return unsafe(self.s)
 
 class Dart_Ad(CachedTemplate):
-    def __init__(self, tag = None):
+    def __init__(self, dartsite, tag):
         tag = tag or "homepage"
         tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
                                           ip = request.ip)
-        Templated.__init__(self, tag = tag, tracker_url = tracker_url)
+        Templated.__init__(self, tag = tag, dartsite = dartsite,
+                           tracker_url = tracker_url)
 
     def render(self, *a, **kw):
         res = CachedTemplate.render(self, *a, **kw)
@@ -3296,7 +3297,7 @@ def render_ad(reddit_name=None, codename=None):
     if not reddit_name:
         reddit_name = g.default_sr
         if g.frontpage_dart:
-            return Dart_Ad(reddit_name).render()
+            return Dart_Ad("reddit.dart", reddit_name).render()
 
     ## LOGITECH
     if reddit_name == 'entertainment mix':
@@ -3304,11 +3305,22 @@ def render_ad(reddit_name=None, codename=None):
 
         lr = LogitechReddit()
         c.site, c.default_sr = lr, False
-        return Dart_Ad("entertainmentmix").render()
+        return Dart_Ad("reddit.dart", "entertainmentmix").render()
+
+    try:
+        sr = Subreddit._by_name(reddit_name)
+    except NotFound:
+        return Dart_Ad("reddit.dart", g.default_sr).render()
+
+    if sr.over_18:
+        dartsite = "reddit.dart.nsfw"
+    else:
+        dartsite = "reddit.dart"
+
 
     if codename:
         if codename == "DART":
-            return Dart_Ad(reddit_name).render()
+            return Dart_Ad(dartsite, reddit_name).render()
         else:
             try:
                 ad = Ad._by_codename(codename)
@@ -3317,17 +3329,11 @@ def render_ad(reddit_name=None, codename=None):
             attrs = ad.important_attrs()
             return HouseAd(**attrs).render()
 
-    try:
-        sr = Subreddit._by_name(reddit_name)
-    except NotFound:
-        return Dart_Ad(g.default_sr).render()
-
     ads = {}
 
     for adsr in AdSR.by_sr_merged(sr):
         ad = adsr._thing1
-        if not (ad.codename == "DART" and sr.over_18):
-            ads[ad.codename] = (ad, adsr.weight)
+        ads[ad.codename] = (ad, adsr.weight)
 
     total_weight = sum(t[1] for t in ads.values())
 
@@ -3343,7 +3349,7 @@ def render_ad(reddit_name=None, codename=None):
             winner = t[0]
 
             if winner.codename == "DART":
-                return Dart_Ad(reddit_name).render()
+                return Dart_Ad(dartsite, reddit_name).render()
             else:
                 attrs = winner.important_attrs()
                 return HouseAd(**attrs).render()
@@ -3355,7 +3361,7 @@ def render_ad(reddit_name=None, codename=None):
              (reddit_name, total_weight),
              "error")
 
-    return Dart_Ad(reddit_name).render()
+    return Dart_Ad(dartsite, reddit_name).render()
 
 class TryCompact(Reddit):
     def __init__(self, dest, **kw):
