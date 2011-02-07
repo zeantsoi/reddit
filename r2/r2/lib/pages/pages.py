@@ -1150,28 +1150,36 @@ class ProfileBar(Templated):
         self.is_friend = None
         self.my_fullname = None
         self.gold_remaining = None
-        if c.user_is_loggedin:
-            if user._id != c.user._id:
-                self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
-                self.giftmsg = _("buy %(user)s a month of reddit gold" %
-                                 dict(user=user.name))
-            elif c.user.gold:
-                self.goldlink = "/gold"
-                self.giftmsg = _("renew your reddit gold")
-            else:
-                self.goldlink = "/gold"
-                self.giftmsg = _("treat yourself to reddit gold")
+        running_out_of_gold = False
 
+        if c.user_is_loggedin:
             if ((user._id == c.user._id or c.user_is_admin)
                 and getattr(user, "gold", None)):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
                 if self.gold_expiration is None:
                     self.gold_remaining = _("an unknown amount")
-                elif (self.gold_expiration - datetime.datetime.now(g.tz)).days < 1:
-                    self.gold_remaining = _("less than a day")
                 else:
-                    self.gold_remaining = timeuntil(self.gold_expiration,
-                                          precision=60 * 60 * 24 * 30) # months
+                    gold_days_left = (self.gold_expiration -
+                                      datetime.datetime.now(g.tz)).days
+                    if gold_days_left < 7:
+                        running_out_of_gold = True
+
+                    if gold_days_left < 1:
+                        self.gold_remaining = _("less than a day")
+                    else:
+                        self.gold_remaining = timeuntil(self.gold_expiration,
+                                        precision=60 * 60 * 24 * 30) # months
+            if user._id != c.user._id:
+                self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
+                self.giftmsg = _("buy %(user)s a month of reddit gold" %
+                                 dict(user=user.name))
+            elif running_out_of_gold:
+                self.goldlink = "/gold"
+                self.giftmsg = _("renew your reddit gold")
+            elif not c.user.gold:
+                self.goldlink = "/gold"
+                self.giftmsg = _("treat yourself to reddit gold")
+
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
 
