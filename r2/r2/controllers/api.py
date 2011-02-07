@@ -107,6 +107,10 @@ class ApiminimalController(MinimalController):
                     add_tracker(s.sponsorship_url, s._fullname,
                                 "%s_%s" % (s._fullname, s.sponsorship_name))
 
+    @validatedForm()
+    def POST_new_captcha(self, form, jquery, *a, **kw):
+        jquery("body").captcha(get_iden())
+
 
 class ApiController(RedditController):
     """
@@ -1665,11 +1669,6 @@ class ApiController(RedditController):
         c.user.pref_frame = True
         c.user._commit()
 
-
-
-    @validatedForm()
-    def POST_new_captcha(self, form, jquery, *a, **kw):
-        jquery("body").captcha(get_iden())
 
     @noresponse(VAdmin(),
                 tr = VTranslation("lang"), 
