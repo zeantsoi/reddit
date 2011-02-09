@@ -167,7 +167,9 @@ class DataThing(object):
                     print "Some dumbass forgot a comma."
                     essentials = essentials,
 
-                if attr in essentials:
+                deleted = object.__getattribute__(self, "_deleted")
+
+                if attr in essentials and not deleted:
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s Forcing reload." % (descr, nl),
                           "warning")
