@@ -243,7 +243,7 @@ class _MessageBuilder(Builder):
 
     def get_items(self):
         tree = self.get_tree()
-        g.log.info("holy crap someone actually called this " + request.fullpath)
+
         prev = next = None
         if not self.parent:
             if self.num is not None:
@@ -316,6 +316,9 @@ class _MessageBuilder(Builder):
                         child.focal = True
                     else:
                         child.collapsed = child.is_collapsed
+                    if not self.keep_item(child):
+                        raise ValueError("can't keep %r" % child)
+
                     parent.child.things.append(child)
             parent.is_parent = True
             # the parent might be the focal message on a permalink page
