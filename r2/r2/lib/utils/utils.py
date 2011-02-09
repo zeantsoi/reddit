@@ -790,6 +790,7 @@ def fix_if_broken(thing, delete = True):
             getattr(thing, attr)
         except AttributeError:
             # that failed; let's explicitly load it and try again
+            g.memcache.delete(thing._cache_key())
             thing._load()
             try:
                 getattr(thing, attr)

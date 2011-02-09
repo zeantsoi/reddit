@@ -174,7 +174,7 @@ class DataThing(object):
                 else:
                     nl += " and is NOT deleted."
 
-                if attr in essentials and not deleted and False:
+                if attr in essentials and not deleted:
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s Forcing reload." % (descr, nl),
                           "warning")
