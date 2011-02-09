@@ -144,9 +144,9 @@ class DataThing(object):
                     cl = "???"
 
                 if self._loaded:
-                    nl = "it IS loaded."
+                    nl = "it IS loaded"
                 else:
-                    nl = "it is NOT loaded."
+                    nl = "it is NOT loaded"
 
                 # The %d format is nicer since it has no "L" at the
                 # end, but if we can't do that, fall back on %r.
@@ -168,6 +168,11 @@ class DataThing(object):
                     essentials = essentials,
 
                 deleted = object.__getattribute__(self, "_deleted")
+
+                if deleted:
+                    nl += " and IS deleted."
+                else:
+                    nl += " and is NOT deleted."
 
                 if attr in essentials and not deleted:
                     log_text ("essentials-bandaid-reload",
