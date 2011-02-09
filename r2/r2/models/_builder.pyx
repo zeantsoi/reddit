@@ -243,7 +243,7 @@ class _MessageBuilder(Builder):
 
     def get_items(self):
         tree = self.get_tree()
-
+        g.log.info("holy crap someone actually called this " + request.fullpath)
         prev = next = None
         if not self.parent:
             if self.num is not None:
