@@ -471,7 +471,7 @@ class StaleCacheChain(CacheChain):
     """A cache chain of two cache chains. When allowed by `stale`,
        answers may be returned by a "closer" but potentially older
        cache. Probably doesn't play well with NoneResult cacheing"""
-    staleness = 30
+    staleness = 120
 
     def __init__(self, localcache, stalecache, realcache):
         self.localcache = localcache

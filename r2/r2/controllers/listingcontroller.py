@@ -629,14 +629,6 @@ class MessageController(ListingController):
                 and (item.author_id == c.user._id or not item.new)):
                 return False
 
-            if not isinstance(c.site, FakeSubreddit):
-                sr_id = getattr(item, "sr_id", None)
-
-                if sr_id is None or sr_id != c.site._id:
-                    g.log.error("MessageController: /r/%s has %s with sr_id=%r"
-                                % (c.site.name, item._fullname, sr_id))
-                    return False
-
             return wouldkeep
         return keep
 

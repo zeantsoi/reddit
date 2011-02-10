@@ -241,6 +241,20 @@ class _MessageBuilder(Builder):
     def _tree_filter(self, x):
         return tree_sort_fn(x) < self.after._id
 
+    def _viewable_message(self, m):
+        if (c.user_is_admin
+            or getattr(m, "author_id", 0) == c.user._id
+            or getattr(m, "to_id", 0)     == c.user._id):
+                return True
+
+        # m is wrapped at this time, so it should have an SR
+        subreddit = getattr(m, "subreddit", None)
+        if subreddit and subreddit.is_moderator(c.user):
+            return True
+
+        return False
+
+
     def get_items(self):
         tree = self.get_tree()
 
@@ -276,6 +290,9 @@ class _MessageBuilder(Builder):
         messages = Message._byID(message_ids, data = True, return_dict = False)
         wrapped = {}
         for m in self.wrap_items(messages):
+            if not self._viewable_message(m):
+                raise ValueError("%r is not viewable by %s; path is %s" %
+                                 (m, c.user.name, request.fullpath))
             wrapped[m._id] = m
 
         if prev:
@@ -316,8 +333,6 @@ class _MessageBuilder(Builder):
                         child.focal = True
                     else:
                         child.collapsed = child.is_collapsed
-                    if not self.keep_item(child):
-                        raise ValueError("can't keep %r" % child)
 
                     parent.child.things.append(child)
             parent.is_parent = True
