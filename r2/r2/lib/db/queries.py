@@ -242,6 +242,10 @@ class MergedCachedResults(object):
         for x in self.data:
             yield x[0]
 
+    def update(self):
+        for x in self.cached_results:
+            x.update()
+
 def make_results(query, filter = filter_identity):
     if g.use_query_cache:
         return CachedResults(query, filter)
