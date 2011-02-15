@@ -869,6 +869,9 @@ class LinkInfoPage(Reddit):
             rb.insert(1, LinkInfoBar(a = self.link))
         return rb
 
+class LinkCommentSep(Templated):
+    pass
+
 class CommentPane(Templated):
     def cache_key(self):
         num = self.article.num_comments

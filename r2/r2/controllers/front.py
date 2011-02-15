@@ -253,6 +253,8 @@ class FrontController(RedditController):
         if comment:
             displayPane.append(PermalinkMessage(article.make_permalink_slow()))
 
+        displayPane.append(LinkCommentSep())
+
         # insert reply box only for logged in user
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
@@ -275,7 +277,6 @@ class FrontController(RedditController):
 
         # Used in template_helpers
         c.previous_visits = previous_visits
-
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
