@@ -61,7 +61,6 @@ def check_payment_status(payment_status):
     elif psl == '':
         return (None, psl)
     else:
-        dump_parameters(parameters)
         raise ValueError("Unknown IPN status: %r" % payment_status)
 
 def check_txn_type(txn_type, psl):

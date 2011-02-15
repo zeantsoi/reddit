@@ -462,6 +462,8 @@ class HardcacheChain(CacheChain):
         for c in self.caches:
             c.set(key, auth_value, time=time)
 
+        return auth_value
+
     @property
     def backend(self):
         # the hardcache is always the last item in a HardCacheChain
