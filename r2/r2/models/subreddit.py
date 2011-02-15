@@ -445,8 +445,8 @@ class Subreddit(Thing, Printable):
                                                       return_dict=False,
                                                       stale=stale)
         else:
-            limit = g.num_default_reddits if limit is None else limit
-            return cls.default_subreddits(ids = ids, over18=over18, limit = limit,
+            return cls.default_subreddits(ids = ids, over18=over18,
+                                          limit=g.num_default_reddits,
                                           stale=stale)
 
     @classmethod
