@@ -758,6 +758,8 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
         if len(items) < chunk_size:
             done = True
 
+        after = items[-1]
+
         if batch_fn:
             items = batch_fn(items)
 
@@ -766,7 +768,6 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
         else:
             for i in items:
                 yield i
-        after = items[-1]
 
         if not done:
             query._rules = deepcopy(orig_rules)
