@@ -60,7 +60,8 @@ def cache_lists():
             # skip special system reddits like promos
             continue
 
-        if sr.type not in ('public', 'restricted'):
+        type = getattr(sr, 'type', 'private')
+        if type not in ('public', 'restricted'):
             # skips reddits that can't appear in the default list
             # because of permissions
             continue
