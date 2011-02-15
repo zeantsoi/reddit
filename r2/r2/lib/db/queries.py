@@ -132,8 +132,8 @@ class CachedResults(object):
         "True if a item can be removed from the listing, always true for now."
         return True
 
-    def _mutate(self, fn):
-        self.data = query_cache.mutate(self.iden, fn, default=[])
+    def _mutate(self, fn, willread=True):
+        self.data = query_cache.mutate(self.iden, fn, default=[], willread=willread)
         self._fetched=True
 
     def insert(self, items):
@@ -184,7 +184,7 @@ class CachedResults(object):
            private API"""
         def _mutate(data):
             return tuples
-        self._mutate(_mutate)
+        self._mutate(_mutate, willread=False)
 
     def update(self):
         """Runs the query and stores the result in the cache. This is
@@ -267,8 +267,11 @@ def merge_results(*results):
         return m
 
 def get_links(sr, sort, time):
+    return _get_links(sr._id, sort, time)
+
+def _get_links(sr_id, sort, time):
     """General link query for a subreddit."""
-    q = Link._query(Link.c.sr_id == sr._id,
+    q = Link._query(Link.c.sr_id == sr_id,
                     sort = db_sort(sort),
                     data = True)
 
@@ -406,9 +409,9 @@ def get_domain_links(domain, sort, time):
 
     return make_results(q)
 
-def user_query(kind, user, sort, time):
+def user_query(kind, user_id, sort, time):
     """General profile-page query."""
-    q = kind._query(kind.c.author_id == user._id,
+    q = kind._query(kind.c.author_id == user_id,
                     kind.c._spam == (True, False),
                     sort = db_sort(sort))
     if time != 'all':
@@ -426,11 +429,17 @@ def get_sr_comments(sr):
                        sort = desc('_date'))
     return make_results(q)
 
+def _get_comments(user_id, sort, time):
+    return user_query(Comment, user_id, sort, time)
+
 def get_comments(user, sort, time):
-    return user_query(Comment, user, sort, time)
+    return _get_comments(user._id, sort, time)
+
+def _get_submitted(user_id, sort, time):
+    return user_query(Link, user_id, sort, time)
 
 def get_submitted(user, sort, time):
-    return user_query(Link, user, sort, time)
+    return _get_submitted(user._id, sort, time)
 
 def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),

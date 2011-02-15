@@ -47,7 +47,7 @@ cat $THING |  sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_account.py
 """
 import sys
 
-from r2.models import Account, Subreddit, Link, Comment
+from r2.models import Account, Subreddit, Link, Comment, NotFound
 from r2.lib.db.sorts import epoch_seconds, score, controversy, _hot
 from r2.lib.db import queries
 from r2.lib import mr_tools
@@ -135,14 +135,14 @@ def store_keys(key, maxes):
 
     acc_str, sort, time, account_id = key.split('-')
     account_id = int(account_id)
-    fn = queries.get_submitted if key.startswith('link-') else queries.get_comments
+    fn = queries._get_submitted if key.startswith('link-') else queries._get_comments
 
-    q = fn(Account._byID(account_id), sort, time)
+    q = fn(account_id, sort, time)
     if time == 'all':
         if sort == 'new':
             q._insert_tuples([(item[-1], float(item[0]))
                               for item in maxes])
-        else:    
+        else:
             q._insert_tuples([tuple([item[-1]] + map(float, item[:-1]))
                               for item in maxes])
     else:    

@@ -565,7 +565,7 @@ class CassandraCacheChain(CacheChain):
         self.make_lock = lock_factory
         CacheChain.__init__(self, caches, **kw)
 
-    def mutate(self, key, mutation_fn, default = None):
+    def mutate(self, key, mutation_fn, default = None, willread=True):
         """Mutate a Cassandra key as atomically as possible"""
         with self.make_lock('mutate_%s' % key):
             # we have to do some of the the work of the cache chain
@@ -583,26 +583,30 @@ class CassandraCacheChain(CacheChain):
             rcl = wcl = self.cassa.write_consistency_level
             if rcl == CL_ZERO:
                 rcl = CL_ONE
-            try:
+
+            if willread:
+                try:
+                    value = None
+                    if self.memcache:
+                        value = self.memcache.get(key)
+                    if value is None:
+                        value = self.cassa.get(key,
+                                               read_consistency_level = rcl)
+                except cassandra.ttypes.NotFoundException:
+                    value = default
+
+                # due to an old bug in NoneResult caching, we still
+                # have some of these around
+                if value == NoneResult:
+                    value = default
+
+            else:
                 value = None
-                if self.memcache:
-                    value = self.memcache.get(key)
-                if value is None:
-                    value = self.cassa.get(key,
-                                           read_consistency_level = rcl)
-            except cassandra.ttypes.NotFoundException:
-                value = default
 
-            # due to an old bug in NoneResult caching, we still have
-            # some of these around
-            if value == NoneResult:
-                value = default
+            # send in a copy in case they mutate it in-place
+            new_value = mutation_fn(copy(value))
 
-            new_value = mutation_fn(copy(value)) # send in a copy in
-                                                 # case they mutate it
-                                                 # in-place
-
-            if value != new_value:
+            if not willread or value != new_value:
                 self.cassa.set(key, new_value,
                                write_consistency_level = wcl)
             for ca in self.caches[:-1]:
