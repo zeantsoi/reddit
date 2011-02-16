@@ -74,7 +74,7 @@ def run(streamfile=None, verbose=False):
                 make_lock_seen = True
             elif (text.startswith("(ProgrammingError) server closed the connection")):
                 flaky_db_seen = True
-            if '/cassandra/' in filename:
+            if '/cassandra/' in filename.lower():
                 cassandra_seen = True
             key_material += "%s %s " % (filename, funcname)
             pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
@@ -103,10 +103,8 @@ def run(streamfile=None, verbose=False):
             select_pos = exc_str.find("SELECT")
             if select_pos > 0:
                 exc_str = exc_str[pos]
-        elif exc_type == "NoServerAvailable":
-            fingerprint = "cassandra_suckitude"
-        elif exc_type == "TimedOutException" and cassandra_seen:
-            fingerprint = "cassandra_suckitude #2"
+        elif cassandra_seen:
+            fingerprint = "something's wrong with cassandra"
         else:
             fingerprint = md5(key_material).hexdigest()
 
