@@ -58,8 +58,7 @@ def set_last_visit(thing):
     from pylons import g
     from r2.lib.cache import CL_ONE
     key = last_modified_key(thing, "visit")
-    g.permacache.set(key, make_last_modified(),
-                     write_consistency_level = CL_ONE)
+    g.permacache.set(key, make_last_modified())
 
 def last_visit(thing):
     from pylons import g
