@@ -470,7 +470,6 @@ class HardcacheChain(CacheChain):
         # the hardcache is always the last item in a HardCacheChain
         return self.caches[-1].backend
 
-<<<<<<< HEAD
 class StaleCacheChain(CacheChain):
     """A cache chain of two cache chains. When allowed by `stale`,
        answers may be returned by a "closer" but potentially older
