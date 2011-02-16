@@ -724,47 +724,57 @@ class EmbedlyOEmbed(OEmbed):
     =======================
     documentation: http://api.embed.ly
     """
-    domains = ['23hq.com', '5min.com', 'abcnews.go.com', 'achewood.com',
-        'amazon.com', 'animoto.com', 'asofterworld.com', 'atom.com',
-        'audioboo.com', 'bambuser.com', 'bandcamp.com', 'bigthink.com',
-        'blip.tv', 'boston.com', 'brainbird.net', 'break.com', 'brizzly.com',
-        'cbsnews.com', 'chart.ly', 'cl.ly', 'clikthrough.com', 'cnbc.com',
-        'cnn.com', 'colbertnation.com', 'collegehumor.com',
-        'comedycentral.com', 'compete.com', 'crackle.com', 'craigslist.org',
-        'crunchbase.com', 'dailybooth.com', 'dailymile.com', 'dailymotion.com',
-        'deviantart.com', 'digg.com', 'dipdive.com', 'dotsub.com',
-        'dribbble.com', 'edition.cnn.com', 'emberapp.com', 'entertonement.com',
-        'escapistmagazine.com', 'espn.go.com', 'facebook.com', 'fancast.com',
-        'flickr.com', 'fora.tv', 'fotopedia.com', 'foxsports.com',
+    domains = ['23hq.com', '5min.com', '99dollarmusicvideos.com',
+        'abcnews.go.com', 'achewood.com', 'allthingsd.com', 'amazon.com',
+        'aniboom.com', 'animoto.com', 'asofterworld.com', 'atom.com',
+        'audioboo.com', 'bambuser.com', 'bandcamp.com', 'barelydigital.com',
+        'barelypolitical.com', 'bigthink.com', 'blip.tv', 'boston.com',
+        'brainbird.net', 'bravotv.com', 'break.com', 'brizzly.com',
+        'cbsnews.com', 'channelfrederator.com', 'chart.ly', 'cl.ly',
+        'clikthrough.com', 'clipshack.com', 'cnbc.com', 'cnn.com',
+        'colbertnation.com', 'collegehumor.com', 'comedycentral.com',
+        'compete.com', 'confreaks.net', 'crackle.com', 'craigslist.org',
+        'crocodoc.com', 'crunchbase.com', 'dailybooth.com', 'dailymile.com',
+        'dailymotion.com', 'deviantart.com', 'digg.com', 'dipdive.com',
+        'discovery.com', 'dotsub.com', 'dribbble.com', 'edition.cnn.com',
+        'emberapp.com', 'entertonement.com', 'escapistmagazine.com',
+        'espn.go.com', 'facebook.com', 'fancast.com', 'flickr.com', 'fora.tv',
+        'formspring.me', 'fotopedia.com', 'foxsports.com',
         'freemusicarchive.org', 'funnyordie.com', 'gametrailers.com',
         'gist.github.com', 'globalpost.com', 'godtube.com', 'google.com',
-        'howcast.com', 'huffduffer.com', 'hulu.com', 'img.ly', 'imgur.com',
-        'indenti.ca', 'instagr.am', 'issuu.com', 'justin.tv',
-        'kickstarter.com', 'kinomap.com', 'kiva.org', 'koldcast.tv', 'last.fm',
-        'liveleak.com', 'livestream.com', 'maps.google.com', 'meadd.com',
+        'grindtv.com', 'grooveshark.com', 'guardian.co.uk', 'howcast.com',
+        'huffduffer.com', 'hulu.com', 'hungrynation.tv', 'ifood.tv', 'img.ly',
+        'imgur.com', 'indenti.ca', 'indymogul.com', 'instagr.am', 'issuu.com',
+        'justin.tv', 'kickstarter.com', 'kinomap.com', 'kiva.org',
+        'koldcast.tv', 'last.fm', 'liveleak.com', 'livestream.com',
+        'logotv.com', 'lonelyplanet.com', 'maps.google.com', 'meadd.com',
         'mediamatters.org', 'meetup.com', 'metacafe.com', 'metacdn.com',
         'mixcloud.com', 'mixergy.com', 'mobypicture.com', 'money.cnn.com',
-        'movies.yahoo.com', 'msnbc.com', 'my.opera.com', 'myloc.me', 'nfb.ca',
-        'npr.org', 'nzonscreen.com', 'overstream.net', 'pastebin.com',
-        'pastie.org', 'phodroid.com', 'photobucket.com', 'photozou.jp',
-        'picasaweb.google.com', 'picplz.com', 'pikchur.com', 'ping.fm',
-        'plixi.com', 'polldaddy.com', 'polleverywhere.com', 'posterous.com',
-        'prezi.com', 'qik.com', 'quantcast.com', 'questionablecontent.net',
-        'qwantz.com', 'radionomy.com', 'rdio.com', 'redux.com',
-        'revision3.com', 'revver.com', 'schooltube.com', 'scrapblog.com',
-        'screencast.com', 'screenr.com', 'scribd.com', 'sendables.jibjab.com',
-        'share.ovi.com', 'shitmydadsays.com', 'shopstyle.com', 'skitch.com',
-        'slideshare.net', 'smugmug.com', 'someecards.com', 'soundcloud.com',
-        'speakerdeck.com', 'spike.com', 'statsheet.com', 'status.net',
-        'storify.com', 'studivz.net', 'tangle.com', 'teachertube.com',
+        'movies.yahoo.com', 'msnbc.com', 'my.opera.com', 'myloc.me',
+        'nationalgeographic.com', 'nfb.ca', 'npr.org', 'nzonscreen.com',
+        'overstream.net', 'pastebin.com', 'pastie.org', 'phodroid.com',
+        'photobucket.com', 'photozou.jp', 'picasaweb.google.com', 'picplz.com',
+        'pikchur.com', 'ping.fm', 'plixi.com', 'polldaddy.com',
+        'polleverywhere.com', 'posterous.com', 'prezi.com', 'qik.com',
+        'quantcast.com', 'questionablecontent.net', 'qwantz.com', 'qwiki.com',
+        'radionomy.com', 'radioreddit.com', 'rdio.com', 'redux.com',
+        'revision3.com', 'revver.com', 'saynow.com', 'schooltube.com',
+        'scrapblog.com', 'screencast.com', 'screenr.com', 'scribd.com',
+        'sendables.jibjab.com', 'share.ovi.com', 'shitmydadsays.com',
+        'shopstyle.com', 'skitch.com', 'slideshare.net', 'smugmug.com',
+        'snotr.com', 'someecards.com', 'soundcloud.com', 'speakerdeck.com',
+        'spike.com', 'statsheet.com', 'status.net', 'storify.com',
+        'streetfire.net', 'studivz.net', 'tangle.com', 'teachertube.com',
         'techcrunch.tv', 'ted.com', 'thedailyshow.com', 'theonion.com',
-        'timetoast.com', 'tinypic.com', 'traileraddict.com', 'trailerspy.com',
-        'trutv.com', 'tumblr.com', 'tweetphoto.com', 'twitgoo.com',
+        'threadbanger.com', 'timetoast.com', 'tinypic.com', 'tmiweekly.com',
+        'traileraddict.com', 'trailerspy.com', 'trooptube.tv', 'trutv.com',
+        'tumblr.com', 'tweetphoto.com', 'twitgoo.com', 'twitlonger.com',
         'twitpic.com', 'twitrpix.com', 'twitter.com', 'twitvid.com',
-        'uservoice.com', 'ustream.com', 'viddler.com', 'video.google.com',
-        'video.pbs.org', 'video.yahoo.com', 'vids.myspace.com', 'vimeo.com',
-        'washingtonpost.com', 'whitehouse.gov', 'wordpress.tv',
-        'worldstarhiphop.com', 'xkcd.com', 'xtranormal.com', 'yfrog.com',
+        'ultrakawaii.com', 'uservoice.com', 'ustream.com', 'viddler.com',
+        'video.google.com', 'video.pbs.org', 'video.yahoo.com',
+        'vids.myspace.com', 'vimeo.com', 'vodcars.com', 'washingtonpost.com',
+        'whitehouse.gov', 'wistia.com', 'wordpress.tv', 'worldstarhiphop.com',
+        'xiami.com', 'xkcd.com', 'xtranormal.com', 'yfrog.com', 'youku.com',
         'youtube.com', 'zapiks.com', 'zero-inch.com']
 
     url_re = re.compile(
@@ -828,6 +838,10 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/dipdive\\.com\\/v\\/.*|' +
         'http:\\/\\/.*\\.dipdive\\.com\\/media\\/.*|' +
         'http:\\/\\/.*\\.dipdive\\.com\\/v\\/.*|' +
+        'http:\\/\\/v\\.youku\\.com\\/v_show\\/.*\\.html|' +
+        'http:\\/\\/v\\.youku\\.com\\/v_playlist\\/.*\\.html|' +
+        'http:\\/\\/www\\.snotr\\.com\\/video\\/.*|' +
+        'http:\\/\\/snotr\\.com\\/video\\/.*|' +
         'http:\\/\\/www\\.whitehouse\\.gov\\/photos-and-video\\/video\\/.*|' +
         'http:\\/\\/www\\.whitehouse\\.gov\\/video\\/.*|' +
         'http:\\/\\/wh\\.gov\\/photos-and-video\\/video\\/.*|' +
@@ -844,10 +858,9 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/funnyordie\\.com\\/m\\/.*|' +
         'http:\\/\\/www\\.vimeo\\.com\\/groups\\/.*\\/videos\\/.*|' +
         'http:\\/\\/www\\.vimeo\\.com\\/.*|' +
-        'http:\\/\\/vimeo\\.com\\/m\\/\\#\\/featured\\/.*|' +
         'http:\\/\\/vimeo\\.com\\/groups\\/.*\\/videos\\/.*|' +
         'http:\\/\\/vimeo\\.com\\/.*|' +
-        'http:\\/\\/vimeo\\.com\\/m\\/\\#\\/featured\\/.*|' +
+        'http:\\/\\/vimeo\\.com\\/m\\/\\#\\/.*|' +
         'http:\\/\\/www\\.ted\\.com\\/talks\\/.*\\.html.*|' +
         'http:\\/\\/www\\.ted\\.com\\/talks\\/lang\\/.*\\/.*\\.html.*|' +
         'http:\\/\\/www\\.ted\\.com\\/index\\.php\\/talks\\/.*\\.html.*|' +
@@ -891,6 +904,71 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.trutv\\.com\\/video\\/.*|' +
         'http:\\/\\/www\\.nzonscreen\\.com\\/title\\/.*|' +
         'http:\\/\\/nzonscreen\\.com\\/title\\/.*|' +
+        'http:\\/\\/app\\.wistia\\.com\\/embed\\/medias\\/.*|' +
+        'https:\\/\\/app\\.wistia\\.com\\/embed\\/medias\\/.*|' +
+        'http:\\/\\/hungrynation\\.tv\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.hungrynation\\.tv\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/hungrynation\\.tv\\/episode\\/.*|' +
+        'http:\\/\\/www\\.hungrynation\\.tv\\/episode\\/.*|' +
+        'http:\\/\\/indymogul\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.indymogul\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/indymogul\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.indymogul\\.com\\/episode\\/.*|' +
+        'http:\\/\\/channelfrederator\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.channelfrederator\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/channelfrederator\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.channelfrederator\\.com\\/episode\\/.*|' +
+        'http:\\/\\/tmiweekly\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.tmiweekly\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/tmiweekly\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.tmiweekly\\.com\\/episode\\/.*|' +
+        'http:\\/\\/99dollarmusicvideos\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.99dollarmusicvideos\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/99dollarmusicvideos\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.99dollarmusicvideos\\.com\\/episode\\/.*|' +
+        'http:\\/\\/ultrakawaii\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.ultrakawaii\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/ultrakawaii\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.ultrakawaii\\.com\\/episode\\/.*|' +
+        'http:\\/\\/barelypolitical\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.barelypolitical\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/barelypolitical\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.barelypolitical\\.com\\/episode\\/.*|' +
+        'http:\\/\\/barelydigital\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.barelydigital\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/barelydigital\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.barelydigital\\.com\\/episode\\/.*|' +
+        'http:\\/\\/threadbanger\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.threadbanger\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/threadbanger\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.threadbanger\\.com\\/episode\\/.*|' +
+        'http:\\/\\/vodcars\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/www\\.vodcars\\.com\\/.*\\/episode\\/.*|' +
+        'http:\\/\\/vodcars\\.com\\/episode\\/.*|' +
+        'http:\\/\\/www\\.vodcars\\.com\\/episode\\/.*|' +
+        'http:\\/\\/confreaks\\.net\\/videos\\/.*|' +
+        'http:\\/\\/www\\.confreaks\\.net\\/videos\\/.*|' +
+        'http:\\/\\/video\\.allthingsd\\.com\\/video\\/.*|' +
+        'http:\\/\\/aniboom\\.com\\/animation-video\\/.*|' +
+        'http:\\/\\/www\\.aniboom\\.com\\/animation-video\\/.*|' +
+        'http:\\/\\/clipshack\\.com\\/Clip\\.aspx\\?.*|' +
+        'http:\\/\\/www\\.clipshack\\.com\\/Clip\\.aspx\\?.*|' +
+        'http:\\/\\/grindtv\\.com\\/.*\\/video\\/.*|' +
+        'http:\\/\\/www\\.grindtv\\.com\\/.*\\/video\\/.*|' +
+        'http:\\/\\/ifood\\.tv\\/recipe\\/.*|' +
+        'http:\\/\\/ifood\\.tv\\/video\\/.*|' +
+        'http:\\/\\/ifood\\.tv\\/channel\\/user\\/.*|' +
+        'http:\\/\\/www\\.ifood\\.tv\\/recipe\\/.*|' +
+        'http:\\/\\/www\\.ifood\\.tv\\/video\\/.*|' +
+        'http:\\/\\/www\\.ifood\\.tv\\/channel\\/user\\/.*|' +
+        'http:\\/\\/logotv\\.com\\/video\\/.*|' +
+        'http:\\/\\/www\\.logotv\\.com\\/video\\/.*|' +
+        'http:\\/\\/lonelyplanet\\.com\\/Clip\\.aspx\\?.*|' +
+        'http:\\/\\/www\\.lonelyplanet\\.com\\/Clip\\.aspx\\?.*|' +
+        'http:\\/\\/streetfire\\.net\\/video\\/.*\\.htm.*|' +
+        'http:\\/\\/www\\.streetfire\\.net\\/video\\/.*\\.htm.*|' +
+        'http:\\/\\/trooptube\\.tv\\/videos\\/.*|' +
+        'http:\\/\\/www\\.trooptube\\.tv\\/videos\\/.*|' +
         'http:\\/\\/www\\.godtube\\.com\\/featured\\/video\\/.*|' +
         'http:\\/\\/godtube\\.com\\/featured\\/video\\/.*|' +
         'http:\\/\\/www\\.godtube\\.com\\/watch\\/.*|' +
@@ -901,12 +979,21 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/gist\\.github\\.com\\/.*|' +
         'http:\\/\\/twitter\\.com\\/.*\\/status\\/.*|' +
         'http:\\/\\/twitter\\.com\\/.*\\/statuses\\/.*|' +
+        'http:\\/\\/www\\.twitter\\.com\\/.*\\/status\\/.*|' +
+        'http:\\/\\/www\\.twitter\\.com\\/.*\\/statuses\\/.*|' +
         'http:\\/\\/mobile\\.twitter\\.com\\/.*\\/status\\/.*|' +
         'http:\\/\\/mobile\\.twitter\\.com\\/.*\\/statuses\\/.*|' +
+        'https:\\/\\/twitter\\.com\\/.*\\/status\\/.*|' +
+        'https:\\/\\/twitter\\.com\\/.*\\/statuses\\/.*|' +
+        'https:\\/\\/www\\.twitter\\.com\\/.*\\/status\\/.*|' +
+        'https:\\/\\/www\\.twitter\\.com\\/.*\\/statuses\\/.*|' +
+        'https:\\/\\/mobile\\.twitter\\.com\\/.*\\/status\\/.*|' +
+        'https:\\/\\/mobile\\.twitter\\.com\\/.*\\/statuses\\/.*|' +
         'http:\\/\\/www\\.crunchbase\\.com\\/.*\\/.*|' +
         'http:\\/\\/crunchbase\\.com\\/.*\\/.*|' +
         'http:\\/\\/www\\.slideshare\\.net\\/.*\\/.*|' +
         'http:\\/\\/www\\.slideshare\\.net\\/mobile\\/.*\\/.*|' +
+        'http:\\/\\/slidesha\\.re\\/.*|' +
         'http:\\/\\/.*\\.scribd\\.com\\/doc\\/.*|' +
         'http:\\/\\/screenr\\.com\\/.*|' +
         'http:\\/\\/polldaddy\\.com\\/community\\/poll\\/.*|' +
@@ -922,6 +1009,7 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.kickstarter\\.com\\/projects\\/.*\\/.*|' +
         'http:\\/\\/www\\.scrapblog\\.com\\/viewer\\/viewer\\.aspx.*|' +
         'http:\\/\\/ping\\.fm\\/p\\/.*|' +
+        'http:\\/\\/chart\\.ly\\/symbols\\/.*|' +
         'http:\\/\\/chart\\.ly\\/.*|' +
         'http:\\/\\/maps\\.google\\.com\\/maps\\?.*|' +
         'http:\\/\\/maps\\.google\\.com\\/\\?.*|' +
@@ -985,6 +1073,18 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.metacdn\\.com\\/api\\/users\\/.*\\/media\\/.*|' +
         'http:\\/\\/prezi\\.com\\/.*\\/.*|' +
         'http:\\/\\/.*\\.uservoice\\.com\\/.*\\/suggestions\\/.*|' +
+        'http:\\/\\/formspring\\.me\\/.*|' +
+        'http:\\/\\/www\\.formspring\\.me\\/.*|' +
+        'http:\\/\\/formspring\\.me\\/.*\\/q\\/.*|' +
+        'http:\\/\\/www\\.formspring\\.me\\/.*\\/q\\/.*|' +
+        'http:\\/\\/twitlonger\\.com\\/show\\/.*|' +
+        'http:\\/\\/www\\.twitlonger\\.com\\/show\\/.*|' +
+        'http:\\/\\/tl\\.gd\\/.*|' +
+        'http:\\/\\/www\\.qwiki\\.com\\/q\\/.*|' +
+        'http:\\/\\/crocodoc\\.com\\/.*|' +
+        'http:\\/\\/.*\\.crocodoc\\.com\\/.*|' +
+        'https:\\/\\/crocodoc\\.com\\/.*|' +
+        'https:\\/\\/.*\\.crocodoc\\.com\\/.*|' +
         'http:\\/\\/.*yfrog\\..*\\/.*|' +
         'http:\\/\\/tweetphoto\\.com\\/.*|' +
         'http:\\/\\/www\\.flickr\\.com\\/photos\\/.*|' +
@@ -1057,6 +1157,8 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/instagr\\.am\\/p\\/.*|' +
         'http:\\/\\/skitch\\.com\\/.*\\/.*\\/.*|' +
         'http:\\/\\/img\\.skitch\\.com\\/.*|' +
+        'https:\\/\\/skitch\\.com\\/.*\\/.*\\/.*|' +
+        'https:\\/\\/img\\.skitch\\.com\\/.*|' +
         'http:\\/\\/share\\.ovi\\.com\\/media\\/.*\\/.*|' +
         'http:\\/\\/www\\.questionablecontent\\.net\\/|' +
         'http:\\/\\/questionablecontent\\.net\\/|' +
@@ -1087,6 +1189,7 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/amzn\\.com\\/.*|' +
         'http:\\/\\/www\\.shopstyle\\.com\\/browse.*|' +
         'http:\\/\\/www\\.shopstyle\\.com\\/action\\/apiVisitRetailer.*|' +
+        'http:\\/\\/api\\.shopstyle\\.com\\/action\\/apiVisitRetailer.*|' +
         'http:\\/\\/www\\.shopstyle\\.com\\/action\\/viewLook.*|' +
         'http:\\/\\/soundcloud\\.com\\/.*|' +
         'http:\\/\\/soundcloud\\.com\\/.*\\/.*|' +
@@ -1120,6 +1223,15 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.audioboo\\.fm\\/boos\\/.*|' +
         'http:\\/\\/audioboo\\.fm\\/boos\\/.*|' +
         'http:\\/\\/boo\\.fm\\/b.*|' +
+        'http:\\/\\/www\\.xiami\\.com\\/song\\/.*|' +
+        'http:\\/\\/xiami\\.com\\/song\\/.*|' +
+        'http:\\/\\/www\\.saynow\\.com\\/playMsg\\.html.*|' +
+        'http:\\/\\/www\\.saynow\\.com\\/playMsg\\.html.*|' +
+        'http:\\/\\/listen\\.grooveshark\\.com\\/s\\/.*|' +
+        'http:\\/\\/radioreddit\\.com\\/songs.*|' +
+        'http:\\/\\/www\\.radioreddit\\.com\\/songs.*|' +
+        'http:\\/\\/radioreddit\\.com\\/\\?q=songs.*|' +
+        'http:\\/\\/www\\.radioreddit\\.com\\/\\?q=songs.*|' +
         'http:\\/\\/espn\\.go\\.com\\/video\\/clip.*|' +
         'http:\\/\\/espn\\.go\\.com\\/.*\\/story.*|' +
         'http:\\/\\/abcnews\\.com\\/.*\\/video\\/.*|' +
@@ -1152,7 +1264,20 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/multimedia\\.foxsports\\.com\\/m\\/video\\/.*\\/.*|' +
         'http:\\/\\/msn\\.foxsports\\.com\\/video.*|' +
         'http:\\/\\/www\\.globalpost\\.com\\/video\\/.*|' +
-        'http:\\/\\/www\\.globalpost\\.com\\/dispatch\\/.*|'
+        'http:\\/\\/www\\.globalpost\\.com\\/dispatch\\/.*|' +
+        'http:\\/\\/guardian\\.co\\.uk\\/.*\\/video\\/.*\\/.*\\/.*\\/.*|' +
+        'http:\\/\\/www\\.guardian\\.co\\.uk\\/.*\\/video\\/.*\\/.*\\/.*\\/.*|' +
+        'http:\\/\\/bravotv\\.com\\/.*\\/.*\\/videos\\/.*|' +
+        'http:\\/\\/www\\.bravotv\\.com\\/.*\\/.*\\/videos\\/.*|' +
+        'http:\\/\\/video\\.nationalgeographic\\.com\\/.*\\/.*\\/.*\\.html|' +
+        'http:\\/\\/dsc\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/animal\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/health\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/investigation\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/military\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/planetgreen\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/science\\.discovery\\.com\\/videos\\/.*|' +
+        'http:\\/\\/tlc\\.discovery\\.com\\/videos\\/.*|'
         , re.I
     )
     
