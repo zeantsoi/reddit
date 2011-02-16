@@ -178,7 +178,7 @@ class Globals(object):
         self.cassandra = PycassaConnectionPool('reddit',
                                         server_list = self.cassandra_seeds,
                                         # TODO: .ini setting
-                                        timeout=5, max_retries=5)
+                                        timeout=10, max_retries=3)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
