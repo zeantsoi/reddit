@@ -174,7 +174,7 @@ class Vote(MultiRelation('vote',
             #these still need to be recalculated
             old_valid_thing = getattr(v, 'valid_thing', False)
             v.valid_thing = (valid_thing(v, karma, cheater = cheater)
-                             and v.valid_thing)
+                             and getattr(v,'valid_thing', False))
             v.valid_user = (v.valid_user
                             and v.valid_thing
                             and valid_user(v, sr, karma))
