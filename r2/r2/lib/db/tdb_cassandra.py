@@ -575,7 +575,7 @@ class ThingBase(object):
             pass
         self._dirties[attr] = val
         if attr in self._default_ttls:
-            self.column_ttls[attr] = self._default_ttls[attr]
+            self._column_ttls[attr] = self._default_ttls[attr]
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
