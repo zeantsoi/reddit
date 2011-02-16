@@ -322,7 +322,7 @@ def port_cassasaves(after_id=None, estimate=12489897):
                             date = sh._date)
         csh._commit(write_consistency_level = CL.ONE)
 
-def port_cassaurls():
+def port_cassaurls(after_id=None, estimate=15231317):
     from r2.models import Link, LinksByUrl
     from r2.lib.db import tdb_cassandra
     from r2.lib.db.operators import desc
@@ -331,12 +331,18 @@ def port_cassaurls():
 
     q = Link._query(Link.c._spam == (True, False),
                     sort=desc('_date'), data=True)
-    q = fetch_things2(q)
-    q = progress(q, estimate=13617246)
-    q = (l for l in q if getattr(l, 'url', 'self') != 'self')
+    if after_id:
+        q._after(Link._byID(after_id,data=True))
+    q = fetch_things2(q, chunk_size=500)
+    q = progress(q, estimate=estimate)
+    q = (l for l in q
+         if getattr(l, 'url', 'self') != 'self'
+         and not getattr(l, 'is_self', False))
     chunks = in_chunks(q, 500)
 
     for chunk in chunks:
         with LinksByUrl._cf.batch(write_consistency_level = CL.ONE) as b:
             for l in chunk:
-                b.insert(LinksByUrl._key_from_url(l.url), {l._id36: l._id36})
+                k = LinksByUrl._key_from_url(l.url)
+                if k:
+                    b.insert(k, {l._id36: l._id36})

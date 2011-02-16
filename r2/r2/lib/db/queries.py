@@ -424,8 +424,11 @@ def get_all_comments():
     return make_results(q)
 
 def get_sr_comments(sr):
+    return _get_sr_comments(sr._id)
+
+def _get_sr_comments(sr_id):
     """the subreddit /r/foo/comments page"""
-    q = Comment._query(Comment.c.sr_id == sr._id,
+    q = Comment._query(Comment.c.sr_id == sr_id,
                        sort = desc('_date'))
     return make_results(q)
 
@@ -744,7 +747,7 @@ def changed(things, boost_only=False):
                       message_id = thing._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
 
-def _by_srid(things):
+def _by_srid(things,srs=True):
     """Takes a list of things and returns them in a dict separated by
        sr_id, in addition to the looked-up subreddits"""
     ret = {}
@@ -753,9 +756,11 @@ def _by_srid(things):
         if getattr(thing, 'sr_id', None) is not None:
             ret.setdefault(thing.sr_id, []).append(thing)
 
-    srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
-
-    return ret, srs
+    if srs:
+        _srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
+        return ret, _srs
+    else:
+        return ret
 
 def ban(things):
     del_or_ban(things, "ban")
@@ -908,21 +913,24 @@ def add_comment_tree(comments):
 
 # amqp queue processing functions
 
-def run_new_comments():
+def run_new_comments(limit=1000):
     """Add new incoming comments to the /comments page"""
     # this is done as a queue because otherwise the contention for the
     # lock on the query would be very high
 
-    def _run_new_comment(msg):
-        fname = msg.body
-        comment = Comment._by_fullname(fname,data=True)
-        sr = Subreddit._byID(comment.sr_id)
+    def _run_new_comments(msgs, chan):
+        fnames = [msg.body for msg in msgs]
 
-        add_queries([get_all_comments(),
-                     get_sr_comments(sr)],
-                    insert_items = [comment])
+        comments = Comment._by_fullname(fnames, data=True, return_dict=False)
+        add_queries([get_all_comments()],
+                    insert_items=comments)
 
-    amqp.consume_items('newcomments_q', _run_new_comment)
+        bysrid = _by_srid(comments, False)
+        for srid, sr_comments in bysrid.iteritems():
+            add_queries([_get_sr_comments(srid)],
+                        insert_items=sr_comments)
+
+    amqp.handle_items('newcomments_q', _run_new_comments, limit=limit)
 
 def run_commentstree(limit=100):
     """Add new incoming comments to their respective comments trees"""
