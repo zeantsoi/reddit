@@ -142,6 +142,9 @@ def run(streamfile=None, verbose=False):
         if not existing:
             existing = dict(exception=exc_str, traceback=tb, occurrences=[])
 
+        existing.setdefault('times_seen', 0)
+        existing['times_seen'] += 1
+
         limited_append(existing['occurrences'], d['occ'])
 
         g.hardcache.set(err_key, existing, 7 * 86400)

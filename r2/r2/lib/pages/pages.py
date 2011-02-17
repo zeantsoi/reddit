@@ -1902,7 +1902,7 @@ class AdminErrorLog(Templated):
         date_groupings = {}
         hexkeys_seen = {}
 
-        idses = hcb.ids_by_category("error")
+        idses = hcb.ids_by_category("error", limit=5000)
         errors = g.hardcache.get_multi(prefix="error-", keys=idses)
 
         for ids in idses:
@@ -1917,7 +1917,7 @@ class AdminErrorLog(Templated):
                          "warning")
                 continue
 
-            tpl = (len(d['occurrences']), hexkey, d)
+            tpl = (d.get('times_seen', 1), hexkey, d)
             date_groupings.setdefault(date, []).append(tpl)
 
         self.nicknames = {}
