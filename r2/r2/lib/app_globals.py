@@ -176,9 +176,11 @@ class Globals(object):
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
         self.cassandra = PycassaConnectionPool('reddit',
-                                        server_list = self.cassandra_seeds,
-                                        # TODO: .ini setting
-                                        timeout=15, max_retries=3)
+                                               server_list = self.cassandra_seeds,
+                                               # TODO: .ini setting
+                                               timeout=15, max_retries=3,
+                                               prefill=False,
+                                               recycle=-1)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
