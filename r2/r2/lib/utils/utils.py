@@ -775,12 +775,12 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             items = list(query)
 
 def fix_if_broken(thing, delete = True):
-    from r2.models import Link, Comment, Subreddit
+    from r2.models import Link, Comment, Subreddit, Message
 
     # the minimum set of attributes that are required
     attrs = dict((cls, cls._essentials)
                  for cls
-                 in (Link, Comment, Subreddit))
+                 in (Link, Comment, Subreddit, Message))
 
     if thing.__class__ not in attrs:
         raise TypeError

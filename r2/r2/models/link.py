@@ -863,6 +863,7 @@ class Message(Thing, Printable):
                      new = False,  first_message = None, to_id = None,
                      sr_id = None, to_collapse = None, author_collapse = None)
     _data_int_props = Thing._data_int_props + ('reported', )
+    _essentials = ('author_id',)
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
 
     @classmethod
