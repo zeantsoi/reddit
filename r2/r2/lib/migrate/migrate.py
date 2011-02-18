@@ -346,3 +346,19 @@ def port_cassaurls(after_id=None, estimate=15231317):
                 k = LinksByUrl._key_from_url(l.url)
                 if k:
                     b.insert(k, {l._id36: l._id36})
+
+def port_cassahides():
+    from r2.models import SaveHide, CassandraHide
+    from r2.lib.db.tdb_cassandra import CL
+    from r2.lib.db.operators import desc
+    from r2.lib.utils import fetch_things2, timeago, progress
+
+    q = SaveHide._query(SaveHide.c._date > timeago('1 week'),
+                        SaveHide.c._name == 'hide',
+                        sort=desc('_date'))
+    q = fetch_things2(q)
+    q = progress(q, estimate=1953374)
+
+    for sh in q:
+        CassandraHide._hide(sh._thing1, sh._thing2,
+                            write_consistency_level=CL.ONE)

@@ -186,9 +186,11 @@ class Link(Thing, Printable):
         return cls._somethinged(SaveHide, user, link, 'hide')
 
     def _hide(self, user):
+        CassandraHide._hide(user, self)
         return self._something(SaveHide, user, self._hidden, 'hide')
 
     def _unhide(self, user):
+        CassandraHide._unhide(user, self)
         return self._unsomething(user, self._hidden, 'hide')
 
     def link_domain(self):
@@ -312,9 +314,9 @@ class Link(Thing, Printable):
                 if not SaveHide._can_skip_lookup(user, item):
                     saved_lu.append(item._id36)
 
-            saved = CassandraSave._fast_query(user._id36, saved_lu)
+            saved  = CassandraSave._fast_query(user._id36, saved_lu)
+            hidden = CassandraHide._fast_query(user._id36, saved_lu)
 
-            hidden = Link._hidden(user, wrapped)
             clicked = {}
         else:
             saved = hidden = clicked = {}
@@ -374,9 +376,9 @@ class Link(Thing, Printable):
             item.urlprefix = ''
 
             if user_is_loggedin:
-                item.saved = (user._id36, item._id36) in saved
+                item.saved =  (user._id36, item._id36) in saved
+                item.hidden = (user._id36, item._id36) in hidden
 
-                item.hidden = bool(hidden.get((user, item, 'hide')))
                 item.clicked = bool(clicked.get((user, item, 'click')))
             else:
                 item.saved = item.hidden = item.clicked = False
@@ -1078,10 +1080,10 @@ class SimpleRelation(tdb_cassandra.Relation):
     _use_db = False
 
     @classmethod
-    def _create(cls, user, link):
+    def _create(cls, user, link, write_consistency_level = None):
         n = cls(thing1_id = user._id36,
                 thing2_id = link._id36)
-        n._commit()
+        n._commit(write_consistency_level=write_consistency_level)
         return n
 
     @classmethod
@@ -1127,6 +1129,14 @@ class CassandraHide(SimpleRelation):
     _use_db = True
     _cf_name = 'Hide'
     _ttl = 7*24*60*60
+
+    @classmethod
+    def _hide(cls, *a, **kw):
+        return cls._create(*a, **kw)
+
+    @classmethod
+    def _unhide(cls, *a, **kw):
+        return cls._uncreate(*a, **kw)
 
 class CassandraClick(SimpleRelation):
     _use_db = True
