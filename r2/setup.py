@@ -70,11 +70,11 @@ except ImportError:
 try:
     import paste
     vers = getattr(paste, "__version__", "(undefined)")
-    assert vers == '1.7.2-reddit-0.1', \
+    assert vers == '1.7.2-reddit-0.2', \
            ("reddit is only compatible with its own magical version of paste, not '%s'" % vers)
 except (ImportError, AssertionError):
     print "Installing reddit's magical version of paste"
-    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.1.tar.gz"])
+    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.2.tar.gz"])
 
 #install the devel version of py-amqplib until the cheeseshop version is updated
 try:
