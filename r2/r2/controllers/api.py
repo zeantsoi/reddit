@@ -316,7 +316,7 @@ class ApiController(RedditController):
 
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
-                         c.user, sr, ip)
+                         c.user, sr, ip, spam=c.user._spam)
 
         if banmsg:
             admintools.spam(l, banner = "domain (%s)" % banmsg)

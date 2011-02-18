@@ -122,13 +122,13 @@ class Link(Thing, Printable):
         return submit_url
 
     @classmethod
-    def _submit(cls, title, url, author, sr, ip):
+    def _submit(cls, title, url, author, sr, ip, spam=False):
         from r2.models import admintools
 
         l = cls(_ups = 1,
                 title = title,
                 url = url,
-                _spam = author._spam,
+                _spam = spam,
                 author_id = author._id,
                 sr_id = sr._id,
                 lang = sr.lang,

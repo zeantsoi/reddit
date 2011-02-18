@@ -508,6 +508,9 @@ def accept_promotion(link):
         promotion_log(link, "requeued")
         #TODO: smarter would be nice, but this will have to do for now
         make_daily_promotions()
+    if link._spam:
+        link._spam = False
+        link._commit()
     emailer.accept_promo(link)
 
 def reject_promotion(link, reason = None):
