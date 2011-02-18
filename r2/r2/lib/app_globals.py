@@ -179,8 +179,7 @@ class Globals(object):
                                                server_list = self.cassandra_seeds,
                                                # TODO: .ini setting
                                                timeout=15, max_retries=3,
-                                               prefill=False,
-                                               recycle=-1)
+                                               prefill=False)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)

@@ -1126,6 +1126,7 @@ class CassandraSave(SimpleRelation):
 class CassandraHide(SimpleRelation):
     _use_db = True
     _cf_name = 'Hide'
+    _ttl = 7*24*60*60
 
 class CassandraClick(SimpleRelation):
     _use_db = True
