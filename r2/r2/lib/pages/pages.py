@@ -197,7 +197,7 @@ class Reddit(Templated):
 
         ps = PaneStack(css_class='spacer')
 
-        if self.searchbox and not c.disablesearchbox: ## LOGITECH
+        if self.searchbox:
             ps.append(SearchForm())
 
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
@@ -212,14 +212,6 @@ class Reddit(Templated):
                                   return_dict=False)
             if srs:
                 ps.append(SideContentBox(_('these reddits'),[SubscriptionBox(srs=srs)]))
-
-        ## LOGITECH
-        from r2.controllers.logitech import LogitechReddit
-        if isinstance(c.site, LogitechReddit):
-            ps.append(SubredditInfoBar())
-            if c.user.pref_show_adbox or not c.user.gold:
-                ps.append(Ads(logitech=True))
-            no_ads_yet = False
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             #don't show the subreddit info bar on cnames
@@ -319,18 +311,12 @@ class Reddit(Templated):
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
     def build_toolbars(self):
-        ## LOGITECH
-        from r2.controllers.logitech import LogitechReddit
-
         """Sets the layout of the navigation topbar on a Reddit.  The result
         is a list of menus which will be rendered in order and
         displayed at the top of the Reddit."""
         if c.site == Friends:
             main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
                             NamedButton('comments')]
-        elif isinstance(c.site, LogitechReddit):
-            ## LOGITECH
-            main_buttons = [NamedButton('hot', dest='', aliases=['/hot'])]
         else:
             main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
                             NamedButton('new'), 
@@ -3309,14 +3295,6 @@ def render_ad(reddit_name=None, codename=None):
         reddit_name = g.default_sr
         if g.frontpage_dart:
             return Dart_Ad("reddit.dart", reddit_name).render()
-
-    ## LOGITECH
-    if reddit_name == 'entertainment mix':
-        from r2.controllers.logitech import LogitechReddit
-
-        lr = LogitechReddit()
-        c.site, c.default_sr = lr, False
-        return Dart_Ad("reddit.dart", "entertainmentmix").render()
 
     try:
         sr = Subreddit._by_name(reddit_name)

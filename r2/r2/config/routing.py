@@ -251,9 +251,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/comscore-iframe/', controller='mediaembed', action='comscore')
     mc('/comscore-iframe/*url', controller='mediaembed', action='comscore')
 
-    ## LOGITECH
-    mc('/entertainment', controller='logitech', action='listing')
-
     # This route handles displaying the error page and 
     # graphics used in the 404/500
     # error pages. It should likely stay at the top 
