@@ -975,6 +975,8 @@ class ApiController(RedditController):
                 dir = VInt('dir', min=-1, max=1),
                 thing = VByName('id'))
     def POST_vote(self, dir, thing, ip, vote_type):
+        from r2.models.admintools import valid_vote
+
         ip = request.ip
         user = c.user
         store = True
@@ -986,11 +988,7 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        # TODO: temporary hack until we migrate the rest of the vote
-        # data. n.b. we're missing two phases of data, the
-        # pre-Cassandra votes and the pre-EC2 votes
-        if thing._date < datetime(2010, 6, 8, 0, 0, 0, 0, g.tz):
-            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
+        if not valid_vote(thing):
             store = False
 
         if getattr(c.user, "suspicious", False):
