@@ -15,6 +15,9 @@ class _CommentBuilder(Builder):
         self.context = context
         self.load_more = load_more
         self.max_depth = max_depth
+
+        # This is almost always True, except in the toolbar comments panel,
+        # where we never want to see "continue this thread" links
         self.continue_this_thread = continue_this_thread
 
         self.sort = sort
@@ -132,9 +135,15 @@ class _CommentBuilder(Builder):
             elif self.continue_this_thread:
                 #add the recursion limit
                 p_id = parents[to_add]
-                w = Wrapped(MoreRecursion(self.link, 0, p_id))
-                w.children.append(to_add)
-                extra[p_id] = w
+                if p_id is None:
+                    fmt = ("tree problem: Wanted to add 'continue this " +
+                           "thread' for %s, which has depth %d, but we " +
+                           "don't know the parent")
+                    g.log.info(fmt % (to_add, depth[to_add]))
+                else:
+                    w = Wrapped(MoreRecursion(self.link, 0, p_id))
+                    w.children.append(to_add)
+                    extra[p_id] = w
         debug_dict["candidates_after"] = repr(candidates)
 
         # items is a list of things we actually care about so load them
