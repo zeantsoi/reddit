@@ -308,7 +308,7 @@ $.fn.vote = function(vh, callback, event, ui_only) {
 };
 
 $.fn.show_unvotable_message = function() {
-  $(this).thing().find(".unvotable-message").css("display", "inline-block");
+  $(this).thing().find(".entry:first .unvotable-message").css("display", "inline-block");
 };
 
 $.fn.thing = function() {
