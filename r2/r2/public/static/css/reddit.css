@@ -1901,6 +1901,17 @@ label + #moresearchinfo {
     font-style: italic;
 }
 
+.unvotable-message {
+    border: solid 1px #ff6600;
+    margin-top: 4px;
+    padding: 1px 3px;
+
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+
+    display: none;
+}
 
 .bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }

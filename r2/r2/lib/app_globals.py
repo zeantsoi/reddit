@@ -47,6 +47,7 @@ class Globals(object):
                  'MIN_DOWN_KARMA',
                  'MIN_RATE_LIMIT_KARMA',
                  'MIN_RATE_LIMIT_COMMENT_KARMA',
+                 'VOTE_AGE_LIMIT',
                  'REPLY_AGE_LIMIT',
                  'WIKI_KARMA',
                  'HOT_PAGE_AGE',

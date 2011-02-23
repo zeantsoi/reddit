@@ -975,8 +975,6 @@ class ApiController(RedditController):
                 dir = VInt('dir', min=-1, max=1),
                 thing = VByName('id'))
     def POST_vote(self, dir, thing, ip, vote_type):
-        from r2.models.admintools import valid_vote
-
         ip = request.ip
         user = c.user
         store = True
@@ -988,7 +986,9 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        if not valid_vote(thing):
+        thing_age = c.start_time - thing._date
+        if thing_age.days > g.VOTE_AGE_LIMIT:
+            g.log.debug("ignoring vote on old thing %s" % thing._fullname)
             store = False
 
         if getattr(c.user, "suspicious", False):
