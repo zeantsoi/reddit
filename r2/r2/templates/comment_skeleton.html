@@ -53,7 +53,7 @@ ${self.tagline(True)}
 <div class="noncollapsed" ${(collapse and "style='display:none'" or "")}>
   <p class="tagline">
     ${self.tagline()}
-%if not thing.votable:
+%if not getattr(thing, "votable", True):
     <div class="unvotable-message">${strings.unvotable_message}</div>
 %endif
   </p>
