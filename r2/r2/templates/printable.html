@@ -121,7 +121,7 @@ thing id-${what._fullname}
    fullname = this._fullname
 %>
   <div class="arrow ${_class}"
-       %if thing.votable:
+       %if getattr(thing, "votable", True):
          onclick="$(this).vote('${thing.votehash}', null, event)"
        %else:
          onclick="$(this).show_unvotable_message()"
