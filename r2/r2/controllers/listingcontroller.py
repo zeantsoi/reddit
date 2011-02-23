@@ -723,7 +723,7 @@ class MessageController(ListingController):
 
     @validate(VUser(),
               message = VMessageID('mid'),
-              mark = VOneOf('mark',('true','false'), default = 'true'))
+              mark = VOneOf('mark',('true','false')))
     def GET_listing(self, where, mark, message, subwhere = None, **env):
         if not (c.default_sr or c.site.is_moderator(c.user) or c.user_is_admin):
             abort(403, "forbidden")
@@ -732,7 +732,14 @@ class MessageController(ListingController):
         else:
             self.where = where
         self.subwhere = subwhere
-        self.mark = mark
+        if mark is not None:
+            self.mark = mark
+        elif is_api():
+            self.mark = 'false'
+        elif c.render_style and c.render_style == "xml":
+            self.mark = 'false'
+        else:
+            self.mark = 'true'
         self.message = message
         return ListingController.GET_listing(self, **env)
 
