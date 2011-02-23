@@ -170,6 +170,8 @@ class _CommentBuilder(Builder):
                 final.append(cm)
 
         debug_dict["final"] = [cm._id36 for cm in final]
+        debug_dict["depth"] = depth
+        debug_dict["extra"] = extra
 
         for p_id, morelink in extra.iteritems():
             try:
@@ -182,6 +184,7 @@ class _CommentBuilder(Builder):
                         g.memcache.delete("debug-comment-tree")
                         for k in sorted(debug_dict.keys()):
                             g.log.info("tree debug: %s = %r" % (k,debug_dict[k]))
+                        g.log.info("tree debug: p_id = %r" % p_id)
                     raise KeyError("%r not in cids but it wasn't ignored" % p_id)
 
             parent.child = empty_listing(morelink)
