@@ -181,7 +181,7 @@
       </a>
     </%def>
 
-    %if thing.votable:
+    %if getattr(thing, "votable", True):
       ${arrow("up",   thing.upstyle,   _("like"))}
       ${arrow("down", thing.downstyle, _("dislike"))}
     %endif

@@ -124,7 +124,7 @@
     ${bottom_buttons()}
   %endif
 
-%if not thing.votable:
+%if not getattr(thing, "votable", True):
   <div class="unvotable-message">${strings.unvotable_message}</div>
 %endif
 
