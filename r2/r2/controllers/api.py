@@ -1626,9 +1626,11 @@ class ApiController(RedditController):
         elif form.has_errors('name', errors.NO_EMAIL_FOR_USER):
             return
         else:
-            emailer.password_email(user)
-            form.set_html(".status",
-                          _("an email will be sent to that account's address shortly"))
+            if emailer.password_email(user):
+                form.set_html(".status",
+                      _("an email will be sent to that account's address shortly"))
+            else:
+                form.set_html(".status", _("try again tomorrow"))
 
 
     @validatedForm(cache_evt = VCacheKey('reset', ('key',)),
