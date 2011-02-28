@@ -287,10 +287,8 @@ class DataThing(object):
 
             for essential in essentials:
                 if essential not in i._t:
-                    # TODO: Throw an exception here
-                    print "%s is missing %s, and yet we just marked it as loaded" % (i._fullname, essential)
-                    sys.stdout.flush()
-
+                    raise AttributeError("%s is missing %s, but we just marked it as loaded"
+                                         % (i._fullname, essential))
             i._asked_for_data = True
             to_save[i._id] = i
 
