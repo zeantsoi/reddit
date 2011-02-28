@@ -61,7 +61,7 @@ class Link(Thing, Printable):
                      selftext = '',
                      noselfreply = False,
                      ip = '0.0.0.0')
-    _essentials = ('sr_id',)
+    _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
     def __init__(self, *a, **kw):

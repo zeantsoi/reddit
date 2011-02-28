@@ -275,10 +275,22 @@ class DataThing(object):
         need_ids = [n._id for n in need]
         datas = cls._get_data(cls._type_id, need_ids)
         to_save = {}
+        try:
+            essentials = object.__getattribute__(cls, "_essentials")
+        except AttributeError:
+            essentials = ()
+
         for i in need:
             #if there wasn't any data, keep the empty dict
             i._t.update(datas.get(i._id, i._t))
             i._loaded = True
+
+            for essential in essentials:
+                if essential not in i._t:
+                    # TODO: Throw an exception here
+                    print "%s is missing %s, and yet we just marked it as loaded" % (i._fullname, essential)
+                    sys.stdout.flush()
+
             i._asked_for_data = True
             to_save[i._id] = i
 
