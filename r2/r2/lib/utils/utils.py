@@ -774,7 +774,7 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             query._after(after)
             items = list(query)
 
-def fix_if_broken(thing, delete = True):
+def fix_if_broken(thing, delete = True, fudge_links = False):
     from r2.models import Link, Comment, Subreddit, Message
 
     # the minimum set of attributes that are required
@@ -792,21 +792,28 @@ def fix_if_broken(thing, delete = True):
         except AttributeError:
             # that failed; let's explicitly load it and try again
 
-            # we don't have g
-            print "You might want to try this:"
-            print "   g.memcache.delete('%s')" % thing._cache_key()
-
-            thing._load()
+            thing._load(check_essentials=False)
             try:
                 getattr(thing, attr)
             except AttributeError:
                 if not delete:
                     raise
-                # it still broke. We should delete it
+                if isinstance(thing, Link) and fudge_links:
+                    if attr == "sr_id":
+                        thing.sr_id = 6
+                        print "Fudging %s.sr_id to %d" % (thing._fullname,
+                                                          thing.sr_id)
+                    elif attr == "author_id":
+                        thing.author_id = 8244672
+                        print "Fudging %s.author_id to %d" % (thing._fullname,
+                                                              thing.author_id)
+                    else:
+                        print "Got weird attr %s; can't fudge" % attr
                 print "%s is missing %r, deleting" % (thing._fullname, attr)
                 thing._deleted = True
                 thing._commit()
-                break
+                if not (isinstance(thing, Link) and fudge_links):
+                    break
 
 
 def find_recent_broken_things(from_time = None, to_time = None,

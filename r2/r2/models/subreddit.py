@@ -715,7 +715,7 @@ class AllSR(FakeSubreddit):
         from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(Link.c._date < timeago("1 minute"),
+        q = Link._query(Link.c.sr_id > 0,
                         sort = queries.db_sort(sort),
                         read_cache = True,
                         write_cache = True,
