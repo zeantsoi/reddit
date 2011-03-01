@@ -287,7 +287,7 @@ class DataThing(object):
 
             for essential in essentials:
                 if essential not in i._t:
-                    raise AttributeError("%s is missing %s, but we just marked it as loaded"
+                    raise AttributeError("Refusing to cache %s; it's missing %s"
                                          % (i._fullname, essential))
             i._asked_for_data = True
             to_save[i._id] = i
