@@ -594,6 +594,12 @@ class MinimalController(BaseController):
                                     domain  = v.domain,
                                     expires = v.expires)
 
+        g.requests_processed += 1
+        if g.requests_processed >= 100000:
+            # TODO: die
+            if g.requests_processed % 100000 == 0:
+                g.log.info("I've processed %d requests!" % g.requests_processed)
+
         if g.usage_sampling <= 0.0:
             return
 
@@ -612,12 +618,6 @@ class MinimalController(BaseController):
                         end_time = datetime.now(g.tz),
                         sampling_rate = g.usage_sampling,
                         action = action)
-
-        g.requests_processed += 1
-        if g.requests_processed >= 100000:
-            # TODO: die
-            if g.requests_processed % 100000 == 0:
-                g.log.info("I've processed %d requests!" % g.requests_processed)
 
         # this thread is probably going to be reused, but it could be
         # a while before it is. So we might as well dump the cache in
