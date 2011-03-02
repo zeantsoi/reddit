@@ -614,7 +614,7 @@ class MinimalController(BaseController):
                         action = action)
 
         g.requests_processed += 1
-        if g.requests_processed > 100000:
+        if g.requests_processed >= 100000:
             # TODO: die
             if g.requests_processed % 100000 == 0:
                 g.log.info("I've processed %d requests!" % g.requests_processed)
