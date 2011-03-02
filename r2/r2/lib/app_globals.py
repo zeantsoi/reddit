@@ -54,6 +54,8 @@ class Globals(object):
                  'MODWINDOW',
                  'RATELIMIT',
                  'QUOTA_THRESHOLD',
+                 'LOGANS_RUN_LOW',
+                 'LOGANS_RUN_HIGH',
                  'num_comments',
                  'max_comments',
                  'max_comments_gold',
@@ -252,6 +254,11 @@ class Globals(object):
         self.stats_collector = QueryStats()
 
         self.requests_processed = 0
+        if self.LOGANS_RUN_LOW:
+            self.logans_run_limit = random.randint(self.LOGANS_RUN_LOW,
+                                                   self.LOGANS_RUN_HIGH)
+        else:
+            self.logans_run_limit = 0
 
         # set the modwindow
         self.MODWINDOW = timedelta(self.MODWINDOW)

@@ -595,10 +595,13 @@ class MinimalController(BaseController):
                                     expires = v.expires)
 
         g.requests_processed += 1
-        if g.requests_processed >= 100000:
-            # TODO: die
-            if g.requests_processed % 100000 == 0:
-                g.log.info("I've processed %d requests!" % g.requests_processed)
+        if g.logans_run_limit:
+            if g.requests_processed == g.logans_run_limit:
+                g.log.info("I've processed %d requests! Shutting down..."
+                           % g.requests_processed)
+                g.shutdown = 'init'
+            elif g.requests_processed == g.logans_run_limit + 10:
+                g.log.info("Why am I still here? I should have shut down.")
 
         if g.usage_sampling <= 0.0:
             return
