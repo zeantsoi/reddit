@@ -478,7 +478,7 @@ class Link(Thing, Printable):
 
             item.approval_checkmark = None
 
-            item_age = c.start_time - item._date
+            item_age = datetime.now(g.tz) - item._date
             if item_age.days > g.VOTE_AGE_LIMIT:
                 item.votable = False
             else:
@@ -709,7 +709,7 @@ class Comment(Thing, Printable):
 
             item.can_reply = False
             if c.can_reply or (item.sr_id in can_reply_srs):
-                age = c.start_time - item._date
+                age = datetime.now(g.tz) - item._date
                 if age.days < g.REPLY_AGE_LIMIT:
                     item.can_reply = True
 

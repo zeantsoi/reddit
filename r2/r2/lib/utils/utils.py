@@ -785,6 +785,7 @@ def fix_if_broken(thing, delete = True, fudge_links = False):
     if thing.__class__ not in attrs:
         raise TypeError
 
+    tried_loading = False
     for attr in attrs[thing.__class__]:
         try:
             # try to retrieve the attribute
@@ -792,7 +793,10 @@ def fix_if_broken(thing, delete = True, fudge_links = False):
         except AttributeError:
             # that failed; let's explicitly load it and try again
 
-            thing._load(check_essentials=False)
+            if not tried_loading:
+                tried_loading = True
+                thing._load(check_essentials=False)
+
             try:
                 getattr(thing, attr)
             except AttributeError:
@@ -809,10 +813,14 @@ def fix_if_broken(thing, delete = True, fudge_links = False):
                                                               thing.author_id)
                     else:
                         print "Got weird attr %s; can't fudge" % attr
-                print "%s is missing %r, deleting" % (thing._fullname, attr)
-                thing._deleted = True
+
+                if not thing._deleted:
+                    print "%s is missing %r, deleting" % (thing._fullname, attr)
+                    thing._deleted = True
+
                 thing._commit()
-                if not (isinstance(thing, Link) and fudge_links):
+
+                if not fudge_links:
                     break
 
 

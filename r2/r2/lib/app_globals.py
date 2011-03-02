@@ -251,6 +251,8 @@ class Globals(object):
         #make a query cache
         self.stats_collector = QueryStats()
 
+        self.requests_processed = 0
+
         # set the modwindow
         self.MODWINDOW = timedelta(self.MODWINDOW)
 
