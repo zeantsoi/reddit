@@ -594,14 +594,10 @@ class MinimalController(BaseController):
                                     domain  = v.domain,
                                     expires = v.expires)
 
-        g.requests_processed += 1
         if g.logans_run_limit:
-            if g.requests_processed == g.logans_run_limit:
-                g.log.info("I've processed %d requests! Shutting down..."
-                           % g.requests_processed)
+            if c.start_time > g.logans_run_limit and not g.shutdown:
+                g.log.info("Time to restart. It's been an honor serving with you.")
                 g.shutdown = 'init'
-            elif g.requests_processed == g.logans_run_limit + 10:
-                g.log.info("Why am I still here? I should have shut down.")
 
         if g.usage_sampling <= 0.0:
             return

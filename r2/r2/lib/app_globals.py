@@ -253,13 +253,6 @@ class Globals(object):
         #make a query cache
         self.stats_collector = QueryStats()
 
-        self.requests_processed = 0
-        if self.LOGANS_RUN_LOW:
-            self.logans_run_limit = random.randint(self.LOGANS_RUN_LOW,
-                                                   self.LOGANS_RUN_HIGH)
-        else:
-            self.logans_run_limit = 0
-
         # set the modwindow
         self.MODWINDOW = timedelta(self.MODWINDOW)
 
@@ -374,6 +367,18 @@ class Globals(object):
             self.log.error("reddit app %s:%s started %s at %s" %
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
+
+        if self.LOGANS_RUN_LOW:
+            minutes_to_live = random.randint(self.LOGANS_RUN_LOW,
+                                             self.LOGANS_RUN_HIGH)
+            self.logans_run_limit = datetime.now(self.tz) + timedelta(0,
+                                                 minutes_to_live * 60)
+            disptime = self.logans_run_limit.astimezone(self.display_tz)
+            self.log.info("Will shut down at %s (%d minutes from now)" %
+                (disptime.strftime("%H:%M:%S"), minutes_to_live))
+        else:
+            self.logans_run_limit = None
+
 
     @staticmethod
     def to_bool(x):
