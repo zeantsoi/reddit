@@ -97,14 +97,6 @@ def run(streamfile=None, verbose=False):
         elif exc_desc.startswith("(OperationalError) server closed the " +
                                  "connection unexpectedly"):
             fingerprint = "flaky_db_op"
-        elif exc_type == "ProgrammingError" and flaky_db_seen:
-            fingerprint = "flaky_db_prog"
-            # SQLAlchemy includes the entire query in the exception
-            # description which can sometimes be gigantic, in the case of
-            # SELECTs. Get rid of it.
-            select_pos = exc_str.find("SELECT")
-            if select_pos > 0:
-                exc_str = exc_str[pos]
         elif cassandra_seen:
             fingerprint = "something's wrong with cassandra"
         else:
