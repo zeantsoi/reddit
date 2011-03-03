@@ -76,6 +76,8 @@ def run(streamfile=None, verbose=False):
                 flaky_db_seen = True
             if '/cassandra/' in filename.lower():
                 cassandra_seen = True
+            if '/pycassa/' in filename.lower():
+                cassandra_seen = True
             key_material += "%s %s " % (filename, funcname)
             pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
             pretty_lines.append ("    %s" % text)
