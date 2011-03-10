@@ -779,7 +779,7 @@ class DefaultSR(_DefaultSR):
 
     @property
     def _fullname(self):
-        return "default"
+        return "t5_6"
 
     @property
     def header(self):
