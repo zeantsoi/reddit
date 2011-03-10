@@ -530,7 +530,7 @@ class VByName(Validator):
         if items and self.multiple:
             items = [item for item in self.splitter.split(items)
                      if item and self.re.match(item)]
-        if items:
+        if items and (self.multiple or self.re.match(items)):
             try:
                 return Thing._by_fullname(items, return_dict = False,
                                           data=True)
