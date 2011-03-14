@@ -4291,6 +4291,57 @@ tr.gold-accent + tr > td {
     margin-top: 3px;
 }
 
+.mold-form {
+    min-height: 600px;
+    line-height: 22px;
+}
+
+.mold-form .roundfield {
+    border: 1px solid #50a040;
+    background-color: #f0ffe8;
+    color: #6a4d00;
+}
+
+.mold-form .roundfield-content .gray a {
+    margin-left: 0.8em;
+    font-size: small;
+}
+
+.mold-form a { color:  #52892E; }
+
+.mold-form .note {
+    font-size: 12px;
+    font-style: italic;
+    color: #363636;
+    margin-top: 10px;
+    width: 250px;
+    display: inline-block;
+}
+
+.mold-form .spacer {
+    margin-top: 20px !important;
+}
+
+.mold-form textarea, .mold-form input[type=text] {
+    margin-top: 3px;
+}
+
+.mold-area h1 {
+    color: #50a040;
+}
+
+.mold-area .helplink {
+    color: #82a200;
+}
+
+.mold-area .content {
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    border: 1px solid #50a040;
+    background-color: #edf7f2;
+    border-radius: 7px;
+}
+
 .gold-logo {
     float: left;
     margin-right: 15px;
@@ -4303,6 +4354,20 @@ tr.gold-accent + tr > td {
     padding: 0 10px;
     margin-bottom: 15px;
     display: inline-block;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.moldmessage {
+    border: solid #484 1px;
+    color: black;
+    background-color: #ceb;
+    padding: 0 10px;
+    margin-bottom: 15px;
+    display: inline-block;
+    width: 300px;
+    overflow: hidden;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;

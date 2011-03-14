@@ -504,6 +504,7 @@ class MinimalController(BaseController):
     def pre(self):
 
         c.start_time = datetime.now(g.tz)
+        c.mold = None
         g.reset_caches()
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix",
@@ -725,6 +726,8 @@ class RedditController(MinimalController):
                 c.show_mod_mail = Subreddit.reverse_moderator_ids(c.user)
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
+            if getattr(c.user, "mold", False):
+                c.mold = g.hardcache.get("mold-" + c.user.name)
             if request.path != '/validuser' and not g.disallow_db_writes:
                 c.user.update_last_visit(c.start_time)
 
@@ -824,3 +827,4 @@ class RedditController(MinimalController):
         request.environ['retry_after'] = 60
 
         abort(503)
+

@@ -45,6 +45,7 @@ from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
 from r2.lib.utils import trunc_time, timesince, timeuntil
+from r2.lib.utils import forbidden_letters
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
@@ -196,6 +197,10 @@ class Reddit(Templated):
         """generates content in <div class="rightbox">"""
 
         ps = PaneStack(css_class='spacer')
+
+#        if c.mold:
+#            for item in mold:
+#                ...
 
         if self.searchbox:
             ps.append(SearchForm())
@@ -1064,7 +1069,7 @@ class ProfilePage(Reddit):
     object of the user must be passed in as the first argument, along
     with the current sub-page (to determine the title to be rendered
     on the page)"""
-    
+
     searchbox         = False
     create_reddit_box = False
     submit_box        = False
@@ -1078,13 +1083,13 @@ class ProfilePage(Reddit):
         main_buttons = [NavButton(menu.overview, '/', aliases = ['/overview']),
                    NamedButton('comments'),
                    NamedButton('submitted')]
-        
+
         if votes_visible(self.user):
             main_buttons += [NamedButton('liked'),
                         NamedButton('disliked'),
                         NamedButton('hidden')]
 
-            
+
         toolbar = [PageNameNav('nomenu', title = self.user.name),
                    NavMenu(main_buttons, base_path = path, type="tabmenu")]
 
@@ -1092,7 +1097,7 @@ class ProfilePage(Reddit):
             from admin_pages import AdminProfileMenu
             toolbar.append(AdminProfileMenu(path))
         return toolbar
-    
+
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
@@ -1104,6 +1109,17 @@ class ProfilePage(Reddit):
                  extra_class="trophy-area")
 
         rb.push(scb)
+
+        #  vvvvvvvvvvvvvvvvv MOLD   (leave the right half alone)
+        if c.user_is_sponsor and getattr(self.user, "mold", False):
+            mi = MoldInfo(self.user)
+            helplink = ( "/help/mold", _("what's this?") )
+            scb = SideContentBox(title=_("reddit mold"),
+                                 helplink=helplink, content=[mi],
+                                 extra_class="mold-area")
+            rb.push(scb)
+
+
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.push(AdminSidebar(self.user))
@@ -1130,6 +1146,23 @@ class TrophyCase(Templated):
                 award_ids_seen.append(trophy._thing2_id)
 
         self.cup_info = user.cup_info()
+        Templated.__init__(self)
+
+class MoldInfo(Templated):
+    def __init__(self, user):
+        self.user = user
+        self.mold = g.hardcache.get("mold-" + user.name, [])
+        self.moldlen = len(self.mold)
+        fl = list(forbidden_letters(self.moldlen))
+        if self.moldlen > 1:
+            fl[-1] = "and " + fl[-1]
+
+        self.forbidden_letters = ", ".join(fl)
+        if user.gold:
+            self.numcomments = 1500 - 10 * self.moldlen
+        else:
+            self.numcomments =  500 - 10 * self.moldlen
+
         Templated.__init__(self)
 
 class ProfileBar(Templated):
@@ -1396,6 +1429,23 @@ class Gold(Templated):
                            user_creddits = user_creddits,
                            bad_recipient =
                            bool(recipient_name and not recipient))
+
+class Mold(Templated):
+    def __init__(self, recipient, recipient_name, user_spores, preview):
+        Templated.__init__(self,
+                           recipient_name = recipient_name,
+                           user_spores = user_spores,
+                           bad_recipient =
+                           bool(recipient_name and not recipient),
+                           preview = preview)
+
+class MoldPayment(Templated):
+    def __init__(self, recipient, giftmessage):
+        # MOLD: change this text
+        summary = "This is what %s will see on April 1 if you click 'give' below." % recipient.name
+
+        Templated.__init__(self, recipient=recipient.name,
+                           summary=summary, giftmessage=giftmessage)
 
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,

@@ -1,0 +1,25 @@
+%if thing.moldlen:
+  <div>
+    ${thing.user.name} has
+    %if thing.moldlen != 1:
+      been given ${thing.moldlen} helpings of
+    %endif
+    reddit mold, and thus
+    &#32;
+    %if thing.numcomments <= 0:
+      can no longer read any comments
+    %else:
+      can only see ${thing.numcomments} comments at a time
+    %endif
+    &#32;
+    and is henceforth forbidden from using the
+    &#32;
+    %if thing.moldlen == 1:
+      letter E.
+    %elif thing.moldlen == 2:
+      letters E and X.
+    %else:
+      following letters: ${thing.forbidden_letters}
+    %endif
+  </div>
+%endif

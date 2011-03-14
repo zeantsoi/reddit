@@ -31,6 +31,7 @@ from r2.models import *
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
+from r2.lib.utils import forbidden_letter
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget, UrlParser
@@ -313,6 +314,19 @@ class ApiController(RedditController):
                 form.set_html(".status", md)
                 return
 
+        if c.mold:
+            fl = forbidden_letter(request.post.title.upper(), len(c.mold))
+            if fl:
+                err = strings.bad_letter % {"letter": fl}
+                form.set_html(".status", err)
+                return
+
+            if selftext:
+                fl = forbidden_letter(selftext.upper(), len(c.mold))
+                if fl:
+                    err = strings.bad_letter % {"letter": fl}
+                    form.set_html(".status", err)
+                    return
 
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
@@ -752,6 +766,13 @@ class ApiController(RedditController):
                                 errors.NO_TEXT, errors.TOO_LONG) and
             not form.has_errors("thing_id", errors.NOT_AUTHOR)):
 
+            if c.mold:
+                fl = forbidden_letter(text.upper(), len(c.mold))
+                if fl:
+                    err = strings.bad_letter % {"letter": fl}
+                    form.set_html(".status", err)
+                    return
+
             if isinstance(item, Comment):
                 kind = 'comment'
                 old = item.body
@@ -819,6 +840,14 @@ class ApiController(RedditController):
             parent_age = c.start_time - parent._date
             if parent_age.days > g.REPLY_AGE_LIMIT:
                 c.errors.add(errors.TOO_OLD, field = "parent")
+
+            if c.mold:
+                fl = forbidden_letter(comment.upper(), len(c.mold))
+                if fl:
+                    err = strings.bad_letter % {"letter": fl}
+                    commentform.set_html(".status", err)
+                    return
+
         #remove the ratelimit error if the user's karma is high
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))

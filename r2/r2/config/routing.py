@@ -174,6 +174,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/thanks/:secret', controller='forms', action="thanks")
 
     mc('/gold', controller='forms', action="gold")
+    mc('/mold', controller='forms', action="mold")
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
@@ -211,6 +212,7 @@ def make_map(global_conf={}, app_conf={}):
     # wherever this is, google has to agree.
     mc('/api/gcheckout', controller='ipn', action='gcheckout')
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
+    mc('/api/spendmold', controller='ipn', action="spendmold")
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
     mc('/ipn/:secret',     controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',

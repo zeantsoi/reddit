@@ -34,7 +34,10 @@
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
         header_title = c.site.header_title
-        if c.site.header and c.allow_styles:
+        if c.mold:
+            header_img = "http://sp.reddit.com/moldheader.png"
+            header_title = "You've got reddit mold!"
+        elif c.site.header and c.allow_styles:
             header_img = c.site.header
         else:
             d = DefaultSR()

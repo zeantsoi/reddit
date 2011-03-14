@@ -236,18 +236,27 @@ class FrontController(RedditController):
         if limit and limit > 0:
             num = limit
 
+        if c.mold:
+            penalty = 10 * len(c.mold)
+        else:
+            penalty = 0
+
         if c.user_is_loggedin and c.user.gold:
-            if num > g.max_comments_gold:
+            if num > g.max_comments_gold - penalty:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
-                                           % g.max_comments_gold))
-                num = g.max_comments_gold
-        elif num > g.max_comments:
+                                           % max(0, g.max_comments_gold - penalty)))
+                num = g.max_comments_gold - penalty
+        elif num > g.max_comments - penalty:
             displayPane.append(InfoBar(message =
                                        strings.over_comment_limit
-                                       % dict(max=g.max_comments,
-                                              goldmax=g.max_comments_gold)))
-            num = g.max_comments
+                                       % dict(max=max(0, g.max_comments - penalty),
+                                              goldmax=max(0,
+                                                   g.max_comments_gold - penalty))))
+            num = g.max_comments - penalty
+
+        if num < 0:
+            num = 0
 
         # if permalink page, add that message first to the content
         if comment:
@@ -293,14 +302,14 @@ class FrontController(RedditController):
         else:
             subtitle = _("top %d comments") % num
 
-            if g.max_comments > num:
+            if g.max_comments - penalty > num:
                 self._add_show_comments_link(subtitle_buttons, article, num,
-                                             g.max_comments, gold=False)
+                                             g.max_comments - penalty, gold=False)
 
             if (c.user_is_loggedin and c.user.gold
-                and article.num_comments > g.max_comments):
+                and article.num_comments > g.max_comments - penalty):
                 self._add_show_comments_link(subtitle_buttons, article, num,
-                                             g.max_comments_gold, gold=True)
+                                             g.max_comments_gold - penalty, gold=True)
 
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane,
@@ -1063,4 +1072,33 @@ class FormsController(RedditController):
                                                   signed, recipient,
                                                   giftmessage, passthrough)
                               ).render()
+
+
+    @validate(VUser(),
+              recipient_name = VPrintable("recipient", max_length = 50),
+              giftmessage = VLength("giftmessage", 10000),
+              preview = VBoolean("preview"))
+    def GET_mold(self, recipient_name, giftmessage, preview):
+        if not c.user_is_sponsor:
+            abort(404) # MOLD
+        user_spores = getattr(c.user, "mold_spores", 0)
+        recipient = None
+        try:
+            recipient = Account._by_name(recipient_name or "")
+            if user_spores > 0 and giftmessage is not None:
+                return BoringPage(_("reddit mold"),
+                                  show_sidebar = False,
+                                  content=MoldPayment(recipient,
+                                                      giftmessage)
+                                  ).render()
+        except NotFound:
+            pass
+
+        return BoringPage(_("reddit mold"),
+                          show_sidebar = False,
+                          content=Mold(recipient,
+                                       recipient_name,
+                                       user_spores,
+                                       preview)).render()
+
 
