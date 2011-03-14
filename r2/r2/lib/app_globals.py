@@ -180,6 +180,7 @@ class Globals(object):
             raise ValueError("cassandra_seeds not set in the .ini")
         self.cassandra = PycassaConnectionPool('reddit',
                                                server_list = self.cassandra_seeds,
+                                               pool_size = len(self.cassandra_seeds),
                                                # TODO: .ini setting
                                                timeout=15, max_retries=3,
                                                prefill=False)
