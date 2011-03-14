@@ -71,12 +71,16 @@ class Builder(object):
         authors = {}
         cup_infos = {}
         email_attrses = {}
+        molds = {}
         friend_rels = None
         if aids:
             authors = Account._byID(aids, data=True, stale=self.stale) if aids else {}
+            author_names = [a.name for a in authors.values()]
             cup_infos = Account.cup_info_multi(aids)
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
+                # MOLD: move the next line outside the if case
+                molds = g.hardcache.get_multi(author_names, prefix="mold-")
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
@@ -157,6 +161,18 @@ class Builder(object):
             if False and w.author and c.user_is_admin:
                 for attr in email_attrses[w.author._id]:
                     add_attr(w.attribs, attr[2], label=attr[1])
+
+            if w.author and w.author.name in molds:
+                mold = molds[w.author.name]
+                moldlen = len(mold)
+                if moldlen > 0:
+                    if moldlen == 1:
+                        label = "someone gave %s reddit mold!" % w.author.name
+                    else:
+                        label = "%s got reddit mold %d times!" % (w.author.name, moldlen)
+                    add_attr(w.attribs, 'mold:%d' % moldlen,
+                             label=label,
+                             link = "/user/%s" % w.author.name)
 
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]

@@ -1,0 +1,21 @@
+<%
+   from r2.lib.filters import unsafe, safemarkdown
+%>
+
+<div class="moldtaunt">
+  ${unsafe(safemarkdown(thing.message))}
+  <img style="margin: 10px 0px; float: right"
+       src="http://static.reddit.com/award/mold-40.png" /> &#32;
+  <span class="note">
+    <span style="width: 15px; display: inline-block">&mdash;</span>
+    a
+    &#32;
+    <a href="http://www.reddit.com/help/mold">reddit mold</a>
+    &#32;
+    message
+    <br/>
+    <span style="width: 15px; display: inline-block">&nbsp;</span>
+    from
+    &#32;
+    <a href="/user/${thing.sender}">${thing.sender}</a></span>
+</div>

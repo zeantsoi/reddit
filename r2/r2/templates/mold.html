@@ -71,12 +71,17 @@
       </div>
 
       <div class="spacer">
-        What message do you want to put in their sidebar?
+        What message do you want to put in their sidebar?<br/>(300 chars max)
         <textarea rows="5" cols="40" name="giftmessage" id="giftmessage">
+          ${thing.giftmessage}
         </textarea>
         %if thing.preview:
           <br/>
-          <span class="wrong">You need to include a message.</span>
+          %if thing.giftmessage:
+            <span class="wrong">You need to keep it under 300 characters.</span>
+          %else:
+            <span class="wrong">You need to include a message.</span>
+          %endif
         %endif
       </div>
 

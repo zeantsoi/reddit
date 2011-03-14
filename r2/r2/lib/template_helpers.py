@@ -397,6 +397,14 @@ def add_attr(attrs, code, label=None, link=None):
             raise ValueError ("Need a label")
         if not link:
             raise ValueError ("Need a link")
+    elif code.startswith ('mold:'):
+        priority = 100
+        code = code[5:]
+        cssclass = 'mold-recipient'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
     else:
         raise ValueError ("Got weird code [%s]" % code)
 

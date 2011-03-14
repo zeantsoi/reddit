@@ -544,6 +544,7 @@ ul.flat-vert {text-align: left;}
 .tagline .submitter { color: #0055df }
 .tagline .moderator, .green { color: #228822 }
 .tagline .admin { color: #ff0011; }
+.tagline .userattrs .mold-recipient { color: green; font-weight: bold }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
 
@@ -4314,8 +4315,16 @@ tr.gold-accent + tr > td {
     font-style: italic;
     color: #363636;
     margin-top: 10px;
-    width: 250px;
+    width: 239px;
     display: inline-block;
+}
+
+.moldtaunt .note {
+    font-size: 12px;
+    font-style: italic;
+    color: #363636;
+    display: inline-block;
+    margin-top: 10px;
 }
 
 .mold-form .spacer {
@@ -4366,7 +4375,20 @@ tr.gold-accent + tr > td {
     padding: 0 10px;
     margin-bottom: 15px;
     display: inline-block;
-    width: 300px;
+    width: 280px;
+    overflow: hidden;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.moldtaunt {
+    border: solid #484 1px;
+    color: black;
+    background-color: #ceb;
+    padding: 0 10px;
+    display: inline-block;
+    width: 279px;
     overflow: hidden;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;

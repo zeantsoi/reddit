@@ -198,12 +198,12 @@ class Reddit(Templated):
 
         ps = PaneStack(css_class='spacer')
 
-#        if c.mold:
-#            for item in mold:
-#                ...
-
         if self.searchbox:
             ps.append(SearchForm())
+
+        if c.mold:
+            for item in c.mold:
+                ps.append(MoldTaunt(item))
 
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
@@ -1165,6 +1165,12 @@ class MoldInfo(Templated):
 
         Templated.__init__(self)
 
+class MoldTaunt(Templated):
+    def __init__(self, item):
+        self.sender = item['sender']
+        self.message = item['message']
+        Templated.__init__(self)
+
 class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
@@ -1431,12 +1437,13 @@ class Gold(Templated):
                            bool(recipient_name and not recipient))
 
 class Mold(Templated):
-    def __init__(self, recipient, recipient_name, user_spores, preview):
+    def __init__(self, recipient, recipient_name, giftmessage, user_spores, preview):
         Templated.__init__(self,
                            recipient_name = recipient_name,
                            user_spores = user_spores,
                            bad_recipient =
                            bool(recipient_name and not recipient),
+                           giftmessage = giftmessage,
                            preview = preview)
 
 class MoldPayment(Templated):
