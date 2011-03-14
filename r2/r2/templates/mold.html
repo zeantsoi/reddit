@@ -24,7 +24,10 @@
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="createsubreddit.html" import="radio_type"/>
 
-<%! from r2.lib.strings import strings, Score %>
+<%!
+   from r2.lib.strings import strings, Score
+   from r2.lib.filters import keep_space
+ %>
 
 %if thing.user_spores < 1:
 <table style="margin-left: 5px">
@@ -73,7 +76,7 @@
       <div class="spacer">
         What message do you want to put in their sidebar?<br/>(300 chars max)
         <textarea rows="5" cols="40" name="giftmessage" id="giftmessage">
-          ${thing.giftmessage}
+          ${keep_space(thing.giftmessage)}
         </textarea>
         %if thing.preview:
           <br/>

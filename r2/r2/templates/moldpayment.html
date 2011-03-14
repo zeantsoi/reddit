@@ -25,7 +25,7 @@
 <%namespace file="createsubreddit.html" import="radio_type"/>
 
 <%
-   from r2.lib.filters import unsafe, safemarkdown
+   from r2.lib.filters import unsafe, safemarkdown, keep_space
 %>
 
 <div class="content mold-form" style="margin-left: 5px">
@@ -56,7 +56,7 @@
               class="content"
               onsubmit="return post_form(this, 'spendmold');">
           <input type="hidden" name="recipient" value="${thing.recipient}" />
-          <input type="hidden" name="giftmessage" value="${thing.giftmessage}" />
+          <input type="hidden" name="giftmessage" value="${keep_space(thing.giftmessage)}" />
           <button class="btn mold-button">${_("give")}</button>
           <span class="status"></span>
         </form>
