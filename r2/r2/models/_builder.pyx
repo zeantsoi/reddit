@@ -327,8 +327,9 @@ class _MessageBuilder(Builder):
         wrapped = {}
         for m in self.wrap_items(messages):
             if not self._viewable_message(m):
-                raise ValueError("%r is not viewable by %s; path is %s" %
+                g.log.warning("%r is not viewable by %s; path is %s" %
                                  (m, c.user.name, request.fullpath))
+                continue
             wrapped[m._id] = m
 
         if prev:
@@ -338,6 +339,8 @@ class _MessageBuilder(Builder):
 
         final = []
         for parent, children in tree:
+            if parent not in wrapped:
+                continue
             parent = wrapped[parent]
             if children:
                 # if no parent is specified, check if any of the messages are
