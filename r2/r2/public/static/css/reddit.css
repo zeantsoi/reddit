@@ -4376,6 +4376,7 @@ tr.gold-accent + tr > td {
     margin-bottom: 15px;
     display: inline-block;
     width: 280px;
+    max-height: 300px;
     overflow: hidden;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
@@ -4389,6 +4390,7 @@ tr.gold-accent + tr > td {
     padding: 0 10px;
     display: inline-block;
     width: 279px;
+    max-height: 300px;
     overflow: hidden;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
