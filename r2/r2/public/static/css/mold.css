@@ -23,21 +23,21 @@ body {
     border-left: solid 1px #8b8;
 }
 
-.titlebox .usertext-body .md ul li a {
+#header-bottom-left .titlebox .usertext-body .md ul li a {
    background-color: #EFF7FF;
    border-left: 1px solid #82a200;
    border-right: 1px solid #82a200;
    border-top: 1px solid #82a200;
 }
 
-.titlebox .usertext-body .md ul li a:hover {
+#header-bottom-left .titlebox .usertext-body .md ul li a:hover {
    border-left-color: #82a200; 
    border-right-color: #82a200;
    border-top-color: #82a200;
    background-color: #edf2c9; 
 
 }
-.titlebox .usertext-body .md ul li a {
+#header-bottom-left .titlebox .usertext-body .md ul li a {
     background-color:#EFF7FF;
     padding:2px 6px 0;
     color:#82a200;
