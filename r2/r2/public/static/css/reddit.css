@@ -4397,6 +4397,17 @@ tr.gold-accent + tr > td {
     border-radius: 3px;
 }
 
+.moldsporeinfo {
+    border: solid #484 1px;
+    background-color: #ceb;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    padding: 1px 3px;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
 .gold-button {
     padding-top: 2px;
     margin-top: 8px;

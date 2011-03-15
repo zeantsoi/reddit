@@ -1181,6 +1181,11 @@ class ProfileBar(Templated):
         running_out_of_gold = False
 
         if c.user_is_loggedin:
+            #  MOLD: swap the following two lines
+#            if (c.user_is_admin or user._id == c.user._id) and getattr(user, "mold_spores", 0):
+            if c.user_is_admin and getattr(c.user, "mold_spores", 0):
+                self.mold_spores = user.mold_spores
+
             if ((user._id == c.user._id or c.user_is_admin)
                 and getattr(user, "gold", None)):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
@@ -1440,11 +1445,13 @@ class Mold(Templated):
     def __init__(self, recipient, recipient_name, giftmessage, user_spores, preview):
         if giftmessage is None:
             giftmessage = ''
+
         Templated.__init__(self,
                            recipient_name = recipient_name,
                            user_spores = user_spores,
                            bad_recipient =
                            bool(recipient_name and not recipient),
+                           recipient_is_user = recipient and recipient._id == c.user._id,
                            giftmessage = giftmessage,
                            preview = preview)
 

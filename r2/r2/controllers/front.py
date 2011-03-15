@@ -1086,7 +1086,10 @@ class FormsController(RedditController):
         recipient = None
         try:
             recipient = Account._by_name(recipient_name or "")
-            if user_spores > 0 and giftmessage is not None and len(giftmessage) <= 300:
+            if (user_spores > 0 and
+                giftmessage is not None and
+                len(giftmessage) <= 300 and
+                recipient._id != c.user._id):
                 return BoringPage(_("reddit mold"),
                                   show_sidebar = False,
                                   content=MoldPayment(recipient,

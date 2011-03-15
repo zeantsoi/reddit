@@ -70,6 +70,8 @@
         %if thing.bad_recipient:
           <br/>
           <span class="wrong">${_("that user doesn't exist")}</span>
+        %elif thing.recipient_is_user:
+          <span class="wrong">You really don't want to do that.</span>
         %endif
       </div>
 
