@@ -1438,6 +1438,8 @@ class Gold(Templated):
 
 class Mold(Templated):
     def __init__(self, recipient, recipient_name, giftmessage, user_spores, preview):
+        if giftmessage is None:
+            giftmessage = ''
         Templated.__init__(self,
                            recipient_name = recipient_name,
                            user_spores = user_spores,

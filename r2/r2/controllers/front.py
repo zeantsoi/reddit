@@ -248,7 +248,8 @@ class FrontController(RedditController):
                                            % max(0, g.max_comments_gold - penalty)))
                 num = g.max_comments_gold - penalty
         elif num > g.max_comments - penalty:
-            displayPane.append(InfoBar(message =
+            if limit:
+                displayPane.append(InfoBar(message =
                                        strings.over_comment_limit
                                        % dict(max=max(0, g.max_comments - penalty),
                                               goldmax=max(0,
