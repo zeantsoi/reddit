@@ -171,7 +171,7 @@ button.button {
 
 .message .triangle_link .button_contents,
 .comment .triangle_link .button_contents {
-    background: url(/static/compact/mobilesprite.png) no-repeat -51px -2px;
+    background: url(/static/compact/mobilesprite2.png) no-repeat -51px -2px;
     display: inline-block;
     height: 16px;
     margin-bottom: -1px;
@@ -324,7 +324,7 @@ body[orient="landscape"] > #topbar > h1 {
 	margin-right: 5px;
 }
 #topbar > .right > .button > .button_contents {
-    background: url(/static/compact/mobilesprite.png) -52px -3px no-repeat;
+    background: url(/static/compact/mobilesprite2.png) -52px -3px no-repeat;
     width: 16px; height: 16px;
     display: inline-block;
     margin-bottom: -1px;
@@ -422,7 +422,7 @@ body[orient="landscape"] > #topbar > h1 {
     cursor: pointer;
     display: block;
     margin: 1px auto 0px;
-    background: url(/static/compact/mobilesprite.png) no-repeat;
+    background: url(/static/compact/mobilesprite2.png) no-repeat;
 }
 .link .arrow.up, .link .arrow.upmod, .comment .arrow.up, .comment .arrow.upmod {
     background-position: 0px 0px;
