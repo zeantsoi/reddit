@@ -96,6 +96,12 @@
       <tr>
         <th>duration</th>
         <td class="prefright">
+		  <% 
+			mindate = thing.startdate
+			if c.user_is_sponsor:
+				mindate = thing.mindate
+	      %>
+          <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
           <%self:datepicker name="startdate", value="${thing.startdate}"
                             minDateSrc="#date-min" initfuncname="init_startdate">
           function(elem) {

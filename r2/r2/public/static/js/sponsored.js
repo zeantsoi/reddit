@@ -43,7 +43,7 @@ function attach_calendar(where, min_date_src, max_date_src, callback) {
                $(this).datepicker(
                   {
                       defaultDate: dateFromInput(target),
-                          minDate: "+4D", //Will have to figure out in the future
+                          minDate: dateFromInput(min_date_src),
                           maxDate: dateFromInput(max_date_src),
                           prevText: "&laquo;", nextText: "&raquo;",
                           altField: "#" + target.attr("id"),
