@@ -99,7 +99,7 @@
 		  <% 
 			mindate = thing.startdate
 			if c.user_is_sponsor:
-				mindate = thing.mindate
+				mindate = thing.promote_date_today.strftime('%m/%d/%Y')
 	      %>
           <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
           <%self:datepicker name="startdate", value="${thing.startdate}"

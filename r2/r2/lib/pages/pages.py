@@ -2581,6 +2581,7 @@ class PromoteLinkForm(Templated):
         now = promote.promo_datetime_now()
 
         # min date is the day before the first possible start date.
+        self.promote_date_today = now
         mindate = (make_offset_date(now, g.min_promote_future,
                                     business_days = True) -
                    datetime.timedelta(1))
