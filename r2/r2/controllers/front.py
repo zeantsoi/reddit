@@ -1080,8 +1080,6 @@ class FormsController(RedditController):
               giftmessage = VLength("giftmessage", 10000),
               preview = VBoolean("preview"))
     def GET_mold(self, recipient_name, giftmessage, preview):
-        if not c.user_is_sponsor:
-            abort(404) # MOLD
         user_spores = getattr(c.user, "mold_spores", 0)
         recipient = None
         try:

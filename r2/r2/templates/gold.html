@@ -92,7 +92,7 @@
       "", thing.goldtype == "onetime")}<br/>
     ${radio_type("goldtype", "gift", _("Give reddit gold to someone else"),
       "", thing.goldtype == "gift")}<br/>
-%if False:
+%if True:
 ## MOLD
     ${radio_type("goldtype", "creddits", _('Buy reddit gold "creddits"'),
       unsafe("<a href='/help/mold'>SPECIAL: they come with reddit mold!</a>"),
@@ -179,7 +179,7 @@
   <%self:goldsec goldtype="creddits">
     <%utils:round_field title="${_('How many creddits would you like to buy? (each will allow you to give one month of reddit gold)')}">
       ${gold_dropdown("creddits")}
-%if False:
+%if True:
 ## MOLD
       <div style="color: #52992E; font-weight: bold; font-size: small; line-height: 18px; margin-top: 5px; font-family: 'Hoefler Text','Palatino Linotype','Book Antiqua',Palatino,georgia,garamond,FreeSerif,serif; ">
         For each creddit you buy today, you'll receive a free spore of reddit mold!

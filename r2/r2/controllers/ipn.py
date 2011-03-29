@@ -204,9 +204,6 @@ class IpnController(RedditController):
                    recipient_name = VPrintable("recipient", max_length=50),
                    giftmessage = VLength("giftmessage", 10000))
     def POST_spendmold(self, form, jquery, recipient_name, giftmessage):
-        if recipient_name not in g.admins + g.sponsors:
-            raise ValueError("%s tried to give mold to %s" % (c.user.name, recipient_name)) # MOLD
-
         try:
             recipient = Account._by_name(recipient_name)
         except NotFound:
@@ -481,7 +478,7 @@ class IpnController(RedditController):
                 message = ":)"
         elif payment_blob['goldtype'] == 'creddits':
             buyer._incr("gold_creddits", months)
-            # buyer._incr("mold_spores", months) # MOLD
+            buyer._incr("mold_spores", months) # MOLD
             buyer._commit()
             subject = _("thanks for buying creddits!")
             message = _("To spend them, visit [/gold](/gold) or your favorite person's userpage.")
