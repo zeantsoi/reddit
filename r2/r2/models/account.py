@@ -92,6 +92,7 @@ class Account(Thing):
                      gold_charter = False,
                      gold_creddits = 0,
                      gold_creddit_escrow = 0,
+                     mold_spores = 0,
                      )
 
     def karma(self, kind, sr = None):
