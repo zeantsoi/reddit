@@ -40,7 +40,8 @@ class Account(Thing):
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
                                                'reported', 'gold_creddits', 
-                                               'mold_spores')
+                                               'mold_spores',
+                                               'mold_spores_from_admins')
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
@@ -93,6 +94,7 @@ class Account(Thing):
                      gold_creddits = 0,
                      gold_creddit_escrow = 0,
                      mold_spores = 0,
+                     mold_spores_from_admins = 0,
                      )
 
     def karma(self, kind, sr = None):
