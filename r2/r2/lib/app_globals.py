@@ -87,6 +87,7 @@ class Globals(object):
                   'amqp_logging',
                   'read_only_mode',
                   'frontpage_dart',
+                  'allow_wiki_editing',
                   ]
 
     tuple_props = ['stalecaches',
