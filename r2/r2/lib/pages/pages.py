@@ -1111,7 +1111,7 @@ class ProfilePage(Reddit):
         rb.push(scb)
 
         #  vvvvvvvvvvvvvvvvv MOLD   (leave the right half alone)
-        if c.user_is_sponsor and getattr(self.user, "mold", False):
+        if getattr(self.user, "mold", False):
             mi = MoldInfo(self.user)
             helplink = ( "/help/mold", _("what's this?") )
             scb = SideContentBox(title=_("reddit mold"),
@@ -1314,7 +1314,7 @@ class SubredditTopBar(CachedTemplate):
                         sorted(self.my_reddits,
                                key = lambda sr: sr._downs,
                                reverse=True)
-                        if sr.name not in g.automatic_reddits
+                        if sr.name not in g.automatic_reddits and sr.name != 'basement'
                         ]
         return NavMenu(srs,
                        type='flatlist', separator = '-',
@@ -1457,7 +1457,7 @@ class Mold(Templated):
 class MoldPayment(Templated):
     def __init__(self, recipient, giftmessage):
         # MOLD: change this text
-        summary = "This is what %s will see on April 1 if you click 'give' below." % recipient.name
+        summary = "This is what %s will see if you click 'give' below." % recipient.name
 
         Templated.__init__(self, recipient=recipient.name,
                            summary=summary, giftmessage=giftmessage)

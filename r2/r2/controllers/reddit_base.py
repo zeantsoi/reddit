@@ -727,7 +727,7 @@ class RedditController(MinimalController):
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             # MOLD
-            if c.user_is_admin and getattr(c.user, "mold", False):
+            if getattr(c.user, "mold", False):
                 c.mold = g.hardcache.get("mold-" + c.user.name)
             if request.path != '/validuser' and not g.disallow_db_writes:
                 c.user.update_last_visit(c.start_time)

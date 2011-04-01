@@ -239,7 +239,7 @@ class IpnController(RedditController):
         c.user._commit()
 
         # MOLD: Change the text on the next line
-        form.set_html(".status", _("the mold will be delivered on April 1!"))
+        form.set_html(".status", _("the mold has been delivered!"))
         jquery("button").hide()
 
     # Used when buying gold with creddits

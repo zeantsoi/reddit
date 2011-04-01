@@ -80,7 +80,7 @@ class Builder(object):
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
                 # MOLD: move the next line outside the if case
-                molds = g.hardcache.get_multi(author_names, prefix="mold-")
+            molds = g.hardcache.get_multi(author_names, prefix="mold-")
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
