@@ -200,10 +200,6 @@ def _google_checkout_post(url, params):
     return BeautifulStoneSoup(response)
 
 class IpnController(RedditController):
-    @validatedForm(VUser(),
-                   recipient_name = VPrintable("recipient", max_length=50),
-                   giftmessage = VLength("giftmessage", 10000))
-
     # Used when buying gold with creddits
     @validatedForm(VUser(),
                    months = VInt("months"),
