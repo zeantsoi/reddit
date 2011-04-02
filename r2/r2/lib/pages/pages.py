@@ -1272,7 +1272,7 @@ class SubredditTopBar(CachedTemplate):
                         sorted(self.my_reddits,
                                key = lambda sr: sr._downs,
                                reverse=True)
-                        if sr.name not in g.automatic_reddits and sr.name != 'basement'
+                        if sr.name not in g.automatic_reddits
                         ]
         return NavMenu(srs,
                        type='flatlist', separator = '-',
