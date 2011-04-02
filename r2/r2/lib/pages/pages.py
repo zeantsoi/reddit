@@ -1508,7 +1508,6 @@ class GoldPayment(Templated):
                 quantity = months / 12
 
             if goldtype == "creddits":
-                months = quantity * 12
                 summary = strings.gold_summary_creddits % dict(
                           amount=Score.somethings(months, "month"))
             elif goldtype == "gift":
