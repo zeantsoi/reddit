@@ -45,7 +45,6 @@ from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
 from r2.lib.utils import trunc_time, timesince, timeuntil
-from r2.lib.utils import forbidden_letters
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
@@ -200,10 +199,6 @@ class Reddit(Templated):
 
         if self.searchbox:
             ps.append(SearchForm())
-
-        if c.mold:
-            for item in c.mold:
-                ps.append(MoldTaunt(item))
 
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
@@ -1110,16 +1105,6 @@ class ProfilePage(Reddit):
 
         rb.push(scb)
 
-        #  vvvvvvvvvvvvvvvvv MOLD   (leave the right half alone)
-        if getattr(self.user, "mold", False):
-            mi = MoldInfo(self.user)
-            helplink = ( "/help/mold", _("what's this?") )
-            scb = SideContentBox(title=_("reddit mold"),
-                                 helplink=helplink, content=[mi],
-                                 extra_class="mold-area")
-            rb.push(scb)
-
-
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.push(AdminSidebar(self.user))
@@ -1148,29 +1133,6 @@ class TrophyCase(Templated):
         self.cup_info = user.cup_info()
         Templated.__init__(self)
 
-class MoldInfo(Templated):
-    def __init__(self, user):
-        self.user = user
-        self.mold = g.hardcache.get("mold-" + user.name, [])
-        self.moldlen = len(self.mold)
-        fl = list(forbidden_letters(self.moldlen))
-        if self.moldlen > 1:
-            fl[-1] = "and " + fl[-1]
-
-        self.forbidden_letters = ", ".join(fl)
-        if user.gold:
-            self.numcomments = 1500 - 10 * self.moldlen
-        else:
-            self.numcomments =  500 - 10 * self.moldlen
-
-        Templated.__init__(self)
-
-class MoldTaunt(Templated):
-    def __init__(self, item):
-        self.sender = item['sender']
-        self.message = item['message']
-        Templated.__init__(self)
-
 class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
@@ -1181,10 +1143,6 @@ class ProfileBar(Templated):
         running_out_of_gold = False
 
         if c.user_is_loggedin:
-            #  MOLD: swap the following two lines
-            if (c.user_is_admin or user._id == c.user._id) and getattr(user, "mold_spores", 0):
-                self.mold_spores = user.mold_spores
-
             if ((user._id == c.user._id or c.user_is_admin)
                 and getattr(user, "gold", None)):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
@@ -1440,27 +1398,6 @@ class Gold(Templated):
                            bad_recipient =
                            bool(recipient_name and not recipient))
 
-class Mold(Templated):
-    def __init__(self, recipient, recipient_name, giftmessage, user_spores, preview):
-        if giftmessage is None:
-            giftmessage = ''
-
-        Templated.__init__(self,
-                           recipient_name = recipient_name,
-                           user_spores = user_spores,
-                           bad_recipient =
-                           bool(recipient_name and not recipient),
-                           recipient_is_user = recipient and recipient._id == c.user._id,
-                           giftmessage = giftmessage,
-                           preview = preview)
-
-class MoldPayment(Templated):
-    def __init__(self, recipient, giftmessage):
-        # MOLD: change this text
-        summary = "This is what %s will see if you click 'give' below." % recipient.name
-
-        Templated.__init__(self, recipient=recipient.name,
-                           summary=summary, giftmessage=giftmessage)
 
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,

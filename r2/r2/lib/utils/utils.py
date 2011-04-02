@@ -1340,13 +1340,3 @@ def thread_dump(*a):
                              % dict(filename=filename, lineno=lineno, fnname=fnname))
             sys.stderr.write('\t\t\t%(line)s\n' % dict(line=line))
 
-def forbidden_letters(moldcount):
-    letters = "EXVODFBZWJGITYKSQLRUNCA"
-    return letters[0:moldcount]
-
-def forbidden_letter(uc_text, moldcount):
-    for letter in forbidden_letters(moldcount):
-        if letter in uc_text:
-            return letter
-    return None
-

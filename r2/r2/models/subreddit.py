@@ -441,8 +441,6 @@ class Subreddit(Thing, Printable):
             if limit and len(sr_ids) > limit:
                 sr_ids.sort()
                 sr_ids = cls.random_reddits(user.name, sr_ids, limit)
-            if c.mold:
-                sr_ids.append(4595193)
             return sr_ids if ids else Subreddit._byID(sr_ids,
                                                       data=True,
                                                       return_dict=False,

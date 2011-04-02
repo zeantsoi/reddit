@@ -203,44 +203,6 @@ class IpnController(RedditController):
     @validatedForm(VUser(),
                    recipient_name = VPrintable("recipient", max_length=50),
                    giftmessage = VLength("giftmessage", 10000))
-    def POST_spendmold(self, form, jquery, recipient_name, giftmessage):
-        try:
-            recipient = Account._by_name(recipient_name)
-        except NotFound:
-            raise ValueError("Invalid username %s in spendcreddits, buyer = %s"
-                             % (recipient_name, c.user.name))
-
-        if c.user.mold_spores < 1:
-            raise ValueError("%s is trying to sneak around the mold spore check"
-                             % c.user.name)
-
-        c.user.mold_spores -= 1
-        if getattr(c.user, "mold_spore_escrow", 0) < 1:
-            c.user.mold_spore_escrow = 0
-        c.user.mold_spore_escrow += 1
-        c.user._commit()
-
-        key = "mold-" + recipient.name
-        existing = g.hardcache.get(key, [])
-
-        d = dict(sender=c.user.name, message=giftmessage)
-        existing.append(d)
-        g.hardcache.set(key, existing, 86400 * 60)
-        recipient.mold = True
-        recipient._commit()
-
-        Trophy._new(recipient, Award._by_codename("mold"),
-                    description="from " + c.user.name,
-                    url="/help/mold", cup_info=None)
-
-        g.log.info("%s sent mold to %s" % (c.user.name, recipient.name))
-
-        c.user.mold_spore_escrow -= 1
-        c.user._commit()
-
-        # MOLD: Change the text on the next line
-        form.set_html(".status", _("the mold has been delivered!"))
-        jquery("button").hide()
 
     # Used when buying gold with creddits
     @validatedForm(VUser(),
@@ -478,7 +440,6 @@ class IpnController(RedditController):
                 message = ":)"
         elif payment_blob['goldtype'] == 'creddits':
             buyer._incr("gold_creddits", months)
-            buyer._incr("mold_spores", months) # MOLD
             buyer._commit()
             subject = _("thanks for buying creddits!")
             message = _("To spend them, visit [/gold](/gold) or your favorite person's userpage.")

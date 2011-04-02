@@ -121,16 +121,6 @@
   </div>
 %endif
 
-  %if getattr(thing, "mold_spores", 0):
-    <div class="moldsporeinfo">
-    %if thing.mold_spores == 1:
-      You've got a &#32; <a href="/help/mold">mold spore</a>!
-    %else:
-      You have ${thing.mold_spores} &#32; <a href="/help/mold">mold spores</a>!
-    %endif
-    </div>
-  %endif
-
   <div class="bottom">
     %if thing.user != c.user:
       <img src="${static('mailgray.png')}"/>

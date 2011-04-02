@@ -236,28 +236,20 @@ class FrontController(RedditController):
         if limit and limit > 0:
             num = limit
 
-        if c.mold:
-            penalty = 10 * len(c.mold)
-        else:
-            penalty = 0
-
         if c.user_is_loggedin and c.user.gold:
-            if num > g.max_comments_gold - penalty:
+            if num > g.max_comments_gold:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
-                                           % max(0, g.max_comments_gold - penalty)))
-                num = g.max_comments_gold - penalty
+                                           % max(0, g.max_comments_gold)))
+                num = g.max_comments_gold
         elif num > g.max_comments - penalty:
             if limit:
                 displayPane.append(InfoBar(message =
                                        strings.over_comment_limit
-                                       % dict(max=max(0, g.max_comments - penalty),
+                                       % dict(max=max(0, g.max_comments),
                                               goldmax=max(0,
-                                                   g.max_comments_gold - penalty))))
-            num = g.max_comments - penalty
-
-        if num < 0:
-            num = 0
+                                                   g.max_comments_gold))))
+            num = g.max_comments
 
         # if permalink page, add that message first to the content
         if comment:
@@ -303,14 +295,14 @@ class FrontController(RedditController):
         else:
             subtitle = _("top %d comments") % num
 
-            if g.max_comments - penalty > num:
+            if g.max_comments > num:
                 self._add_show_comments_link(subtitle_buttons, article, num,
-                                             g.max_comments - penalty, gold=False)
+                                             g.max_comments, gold=False)
 
             if (c.user_is_loggedin and c.user.gold
-                and article.num_comments > g.max_comments - penalty):
+                and article.num_comments > g.max_comments):
                 self._add_show_comments_link(subtitle_buttons, article, num,
-                                             g.max_comments_gold - penalty, gold=True)
+                                             g.max_comments_gold, gold=True)
 
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane,
@@ -1073,35 +1065,5 @@ class FormsController(RedditController):
                                                   signed, recipient,
                                                   giftmessage, passthrough)
                               ).render()
-
-
-    @validate(VUser(),
-              recipient_name = VPrintable("recipient", max_length = 50),
-              giftmessage = VLength("giftmessage", 10000),
-              preview = VBoolean("preview"))
-    def GET_mold(self, recipient_name, giftmessage, preview):
-        user_spores = getattr(c.user, "mold_spores", 0)
-        recipient = None
-        try:
-            recipient = Account._by_name(recipient_name or "")
-            if (user_spores > 0 and
-                giftmessage is not None and
-                len(giftmessage) <= 300 and
-                recipient._id != c.user._id):
-                return BoringPage(_("reddit mold"),
-                                  show_sidebar = False,
-                                  content=MoldPayment(recipient,
-                                                      giftmessage)
-                                  ).render()
-        except NotFound:
-            pass
-
-        return BoringPage(_("reddit mold"),
-                          show_sidebar = False,
-                          content=Mold(recipient,
-                                       recipient_name,
-                                       giftmessage,
-                                       user_spores,
-                                       preview)).render()
 
 
