@@ -40,7 +40,7 @@
 </script>
 
 
-<%def name="datepicker(name, value, minDateSrc = '', maxDateSrc ='', initfuncname = '')">
+<%def name="datepicker(name, value, minDateSrc = '', maxDateSrc ='', initfuncname = '', min_date_offset=0)">
   <div class="date-input">
     <input name="${name}"
            value="${value}" id="${name}" class="rounded styled-input" readonly="readonly" size="10" />
@@ -48,8 +48,7 @@
     <script type="text/javascript">
       ${initfuncname} = function() {
           attach_calendar("#${name}", "${minDateSrc}", "${maxDateSrc}",
-             ${caller.body()}
-          )
+                          ${caller.body()}, ${min_date_offset})
       };
     </script>
   </div>
@@ -118,7 +117,7 @@
           </%self:datepicker>
           -
           <%self:datepicker name="enddate", value="${thing.enddate}"
-                            minDateSrc="#startdate" initfuncname="init_enddate">
+                            minDateSrc="#startdate" initfuncname="init_enddate" min_date_offset="86400000">
             function(elem) { update_bid(elem); }
           </%self:datepicker>
           
@@ -153,13 +152,14 @@
                   onclick="return targeting_off(this)"
                   checked="checked" /> 
            <label for="no_targeting">no targeting (displays site-wide)</label>
-           <br/>
+           <p id="no_targeting_minimum" class="minimum-spend">minimum $20 / day</p>
            <input id="targeting" class="nomargin" 
                   type="radio"  value="one" name="targeting"
                   onclick="return targeting_on(this)" /> 
            <label for="targeting">
              enable targeting (runs on a specific reddit)
            </label>
+           <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
            <script type="text/javascript">
              $(function() 
                 { 
@@ -427,11 +427,12 @@
       %for i in xrange(0, 28):
       <%
          is_today = (i == 14)
+         the_future = (i >= 14)
          day = (thing.now + datetime.timedelta(i-14))
          CPC = CPM = imp_traffic = cli_traffic = "---"
          if thing.promo_traffic.has_key(day):
             imp_traffic, cli_traffic = thing.promo_traffic[day]
-            if thing.market.has_key(i) and not is_today:
+            if thing.market.has_key(i) and not the_future:
                CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
                CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
        %>

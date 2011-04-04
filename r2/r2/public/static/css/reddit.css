@@ -133,6 +133,15 @@ label.disabled { color: gray; }
     box-shadow: inset 0px -1px 0px hsla(0,0%, 100%, .7);
 }
 
+.fancybutton.disabled, 
+.fancybutton.disabled:active {
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(210, 24%, 93%)), to( hsl(210, 24%, 89%)));
+    background:-moz-linear-gradient(top, hsl(210, 24%, 93%), hsl(210, 24%, 89%));
+    background-color: #D4E3F2;
+    border-color: #999;
+    color: #999;
+}
+
 /* header / menus */
 
 .hover a:hover { text-decoration: underline }
@@ -3272,6 +3281,17 @@ ul.tabmenu.formtab {
     margin-right: 3px; 
 }
 
+.prefright p.minimum-spend {
+    padding-left: 1em;
+    font-size: small;
+    color: gray;
+}
+
+.prefright p.minimum-spend.error {
+    font-weight: bold;
+    color: red;
+}
+
 .existing-campaigns > table > tbody > tr > td { 
     text-align: right;
     border: 1px solid #369;
@@ -3309,6 +3329,7 @@ ul.tabmenu.formtab {
 .existing-campaigns td > button { margin: 0px 5px 0px 0px;  }
 
 .campaign .bid-info { font-size: x-small; }
+.campaign .bid-info.error { color: red; }
 .campaign .buttons { float:right; }
 .campaign td.prefright { 
     padding: 4px;
@@ -4241,6 +4262,7 @@ a.pretty-button.positive.pressed {
     color: white;
     background-image: url(/static/bg-button-positive-pressed.png);
 }
+
 
 /*
 .jury-box .pretty-button a.pressed {
