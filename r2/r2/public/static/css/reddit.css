@@ -971,13 +971,13 @@ a.star { text-decoration: none; color: #ff8b60 }
 .comment .collapsed { font-size: x-small; 
     color: gray; 
     font-style: italic; 
-    padding-left: 17px;
+    padding-left: 15px;
     padding-bottom: 10px; }
 .comment .collapsed a { color: gray; }
 .comment .expand {
     font-style: normal; 
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 0px;
+    margin-right: 3px;
     padding: 1px; }
 .comment .expand:hover {
     text-decoration: none;
