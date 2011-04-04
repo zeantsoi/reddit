@@ -101,17 +101,11 @@ ${parent.collapsed()}
       <em>*</em>&nbsp;
     %endif
   %endif
-  %if showexpandcollapse:
-    <a href="#" class="expand"
-       %if collapse:
-         onclick="return showcomment(this)">
-       %else:
-         onclick="return hidecomment(this)">
-       %endif
-    %if collapse:
+  %if collapse:
+    &nbsp;<a href="#" class="expand"
+       onclick="return showcomment(this)">
        (${thing.num_children} 
         ${ungettext("child", "children", thing.num_children)})
-    %endif
     </a>
   %endif
 </%def>
