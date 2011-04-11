@@ -26,6 +26,7 @@ Disallow: /*.wired
 Disallow: /*/comments/*?*sort=
 Disallow: /r/*/comments/*/*/c*
 Disallow: /r/*/submit
+Disallow: /message/compose*
 Disallow: /api
 Disallow: /post
 Disallow: /submit
