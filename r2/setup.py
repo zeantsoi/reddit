@@ -76,15 +76,6 @@ except (ImportError, AssertionError):
     print "Installing reddit's magical version of paste"
     easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.2.tar.gz"])
 
-# install dev version of pycassa which cleans up connection retrying
-try:
-    import pycassa
-    # HORRIBLE HACK because pycassa doesn't expose its version number
-    assert "1.0.7_devel" in pycassa.__file__
-except (ImportError, AssertionError):
-    print "Installing development version of pycassa"
-    easy_install(["http://addons.reddit.com/pycassa/pycassa-1.0.7-devel.tgz"])
-
 #install the devel version of py-amqplib until the cheeseshop version is updated
 try:
     import amqplib
@@ -155,6 +146,7 @@ setup(
                       "py_interface",
                       "pycountry",
                       "thrift05",
+                      "pycassa==1.0.8",
                       ],
     packages=find_packages(),
     include_package_data=True,
