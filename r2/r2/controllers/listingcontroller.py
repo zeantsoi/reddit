@@ -784,6 +784,11 @@ class RedditsController(ListingController):
             # Consider resurrecting when it is not the World Cup
             #if c.content_langs != 'all':
             #    reddits._filter(Subreddit.c.lang == c.content_langs)
+
+            if g.domain != 'reddit.com':
+                # don't try to render special subreddits (like promos)
+                reddits._filter(Subreddit.c.author_id != -1)
+
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
 
