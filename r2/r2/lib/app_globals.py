@@ -88,6 +88,7 @@ class Globals(object):
                   'read_only_mode',
                   'frontpage_dart',
                   'allow_wiki_editing',
+                  'heavy_load_mode',
                   ]
 
     tuple_props = ['stalecaches',
@@ -157,6 +158,10 @@ class Globals(object):
                                          % (k, v, self.choice_props[k]))
                     v = self.choice_props[k][v]
                 setattr(self, k, v)
+
+        # heavy load mode is read only mode with a different infobar
+        if self.heavy_load_mode:
+            self.read_only_mode = True
 
         self.running_as_script = global_conf.get('running_as_script', False)
 

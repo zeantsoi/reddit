@@ -141,7 +141,10 @@ class Reddit(Templated):
                 u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
             self.canonical_link = u.unparse()
         if self.show_firsttext and not infotext:
-            if g.read_only_mode:
+            if g.heavy_load_mode:
+                # heavy load mode message overrides read only
+                infotext = strings.heavy_load_msg
+            elif g.read_only_mode:
                 # temporary hack
                 # infotext = strings.read_only_msg
                 infotext = "reddit is in \"emergency read-only mode\" right now because Amazon is experiencing a degradation. they are [working on it](http://status.aws.amazon.com) but we are still waiting for them to get to our volumes. you won't be able to log in. we're sorry and will fix the site as soon as we can."
@@ -157,7 +160,8 @@ class Reddit(Templated):
         if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
-        if c.user_is_loggedin and self.show_sidebar and not is_api():
+        if (c.user_is_loggedin and self.show_sidebar and not is_api() 
+            and not g.read_only_mode):
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
@@ -222,7 +226,7 @@ class Reddit(Templated):
                 ps.append(Ads())
             no_ads_yet = False
 
-        if self.submit_box:
+        if self.submit_box and not g.read_only_mode:
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
                               sr_path = (isinstance(c.site,DefaultSR)
@@ -324,8 +328,10 @@ class Reddit(Templated):
                             NamedButton('new'), 
                             NamedButton('controversial'),
                             NamedButton('top'),
-                            NamedButton('saved', False)
                             ]
+
+            if not g.read_only_mode:
+                main_buttons.append(NamedButton('saved', False))
 
         more_buttons = []
 
