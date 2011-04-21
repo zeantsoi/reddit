@@ -142,7 +142,9 @@ class Reddit(Templated):
             self.canonical_link = u.unparse()
         if self.show_firsttext and not infotext:
             if g.read_only_mode:
-                infotext = strings.read_only_msg
+                # temporary hack
+                # infotext = strings.read_only_msg
+                infotext = "reddit is in \"emergency read-only mode\" right now because Amazon is experiencing a degradation. they are [working on it](http://status.aws.amazon.com) but we are still waiting for them to get to our volumes. you won't be able to log in. we're sorry and will fix the site as soon as we can."
             elif (c.firsttime == 'mobile_suggest' and
                   c.render_style != 'compact'):
                 infotext = strings.iphone_first
