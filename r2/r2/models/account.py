@@ -536,7 +536,7 @@ def valid_cookie(cookie):
     except NotFound:
         return (False, False)
 
-    if g.read_only_mode and (not account.gold or (account._id % 17 == 0)):
+    if g.read_only_mode and (not account.gold or any((account._id % n == 0) for n in (13, 17))):
         return (False, False)
 
     if cookie == account.make_cookie(timestr, admin = False):
