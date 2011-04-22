@@ -145,13 +145,7 @@ class Reddit(Templated):
                 # heavy load mode message overrides read only
                 infotext = strings.heavy_load_msg
             elif g.read_only_mode:
-                # temporary hack
-                # infotext = strings.read_only_msg
-                infotext = """
-**UPDATE: We are slowly getting our capacity back, and as such users are being randomly granted access back to the site. Please check back soon, as you may be able to log in shortly. Thanks!**
-
-reddit is in \"emergency mode\" right now because Amazon is experiencing a degradation. they are [working on it](http://status.aws.amazon.com) but we are still waiting for them to get to our volumes. there is no ETA at this time, but we are trying to work some magic and will very slowly be bringing the site back up. please stand by.
-"""
+                infotext = strings.read_only_msg
             elif (c.firsttime == 'mobile_suggest' and
                   c.render_style != 'compact'):
                 infotext = strings.iphone_first
@@ -229,7 +223,7 @@ reddit is in \"emergency mode\" right now because Amazon is experiencing a degra
                 ps.append(Ads())
             no_ads_yet = False
 
-        if self.submit_box and c.user_is_loggedin:
+        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode):
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
                               sr_path = (isinstance(c.site,DefaultSR)
@@ -333,7 +327,7 @@ reddit is in \"emergency mode\" right now because Amazon is experiencing a degra
                             NamedButton('top'),
                             ]
 
-            if c.user_is_loggedin:
+            if c.user_is_loggedin or not g.read_only_mode:
                 main_buttons.append(NamedButton('saved', False))
 
         more_buttons = []
