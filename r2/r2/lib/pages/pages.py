@@ -147,7 +147,7 @@ class Reddit(Templated):
             elif g.read_only_mode:
                 # temporary hack
                 # infotext = strings.read_only_msg
-                infotext = "reddit is in \"emergency read-only mode\" right now because Amazon is experiencing a degradation. they are [working on it](http://status.aws.amazon.com) but we are still waiting for them to get to our volumes. there is no ETA at this time, but we are trying to work some magic and will very slowly be bringing the site back up. please stand by."
+                infotext = "reddit is in \"emergency mode\" right now because Amazon is experiencing a degradation. they are [working on it](http://status.aws.amazon.com) but we are still waiting for them to get to our volumes. there is no ETA at this time, but we are trying to work some magic and will very slowly be bringing the site back up. please stand by."
             elif (c.firsttime == 'mobile_suggest' and
                   c.render_style != 'compact'):
                 infotext = strings.iphone_first
