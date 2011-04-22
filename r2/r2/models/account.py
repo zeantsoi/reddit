@@ -529,14 +529,14 @@ def valid_cookie(cookie):
     except:
         return (False, False)
 
-    if g.read_only_mode:
-        return (False, False)
-
     try:
         account = Account._byID(uid, True)
         if account._deleted:
             return (False, False)
     except NotFound:
+        return (False, False)
+
+    if g.read_only_mode and not account.gold:
         return (False, False)
 
     if cookie == account.make_cookie(timestr, admin = False):
