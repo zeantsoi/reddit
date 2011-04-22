@@ -148,7 +148,7 @@ class Reddit(Templated):
                 # temporary hack
                 # infotext = strings.read_only_msg
                 infotext = """
-**UPDATE:  We are slowly getting our capacity back and as such allowing a random subsets of redditors access to the site as we increase capacity.  Please check back soon, as you may be able to log in if you are lucky.  Thanks!  **
+**UPDATE: We are slowly getting our capacity back, and as such users are being randomly granted access back to the site. Please check back soon, as you may be able to log in shortly. Thanks!**
 
 reddit is in \"emergency mode\" right now because Amazon is experiencing a degradation. they are [working on it](http://status.aws.amazon.com) but we are still waiting for them to get to our volumes. there is no ETA at this time, but we are trying to work some magic and will very slowly be bringing the site back up. please stand by.
 """
