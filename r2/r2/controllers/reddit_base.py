@@ -306,7 +306,7 @@ def set_content_type():
             user = valid_feed(request.GET.get("user"),
                               request.GET.get("feed"),
                               request.path)
-            if user and (not user.gold or not g.read_only_mode):
+            if user and not g.read_only_mode:
                 c.user = user
                 c.user_is_loggedin = True
         if ext in ("mobile", "m") and not request.GET.get("keep_extension"):

@@ -143,7 +143,7 @@
       ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
     </li>
   %endif
-  % if c.user.gold or not g.read_only_mode:
+  % if c.user_is_loggedin or not g.read_only_mode:
   <li class="share">
     ${self.toggle_button("share-button", _("share"), _("cancel"),
                          "share", "cancelShare", login_required = True)}

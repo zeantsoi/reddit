@@ -160,8 +160,7 @@ class Reddit(Templated):
         if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
-        if (c.user_is_loggedin and self.show_sidebar and not is_api() 
-            and (c.user.gold or not g.read_only_mode)):
+        if c.user_is_loggedin and self.show_sidebar and not is_api():
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
@@ -226,7 +225,7 @@ class Reddit(Templated):
                 ps.append(Ads())
             no_ads_yet = False
 
-        if self.submit_box and (c.user.gold or not g.read_only_mode):
+        if self.submit_box and c.user_is_loggedin:
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
                               sr_path = (isinstance(c.site,DefaultSR)
@@ -330,7 +329,7 @@ class Reddit(Templated):
                             NamedButton('top'),
                             ]
 
-            if c.user.gold or not g.read_only_mode:
+            if c.user_is_loggedin:
                 main_buttons.append(NamedButton('saved', False))
 
         more_buttons = []
