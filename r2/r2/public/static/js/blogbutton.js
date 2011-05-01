@@ -1,5 +1,5 @@
 $(function() {
-        reddit.is_button = true;
+        reddit.external_frame = true;
 
         /* set default arrow behavior */
         var state = null;
