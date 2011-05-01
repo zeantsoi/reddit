@@ -1,4 +1,6 @@
 $(function() {
+        reddit.is_button = true;
+
         /* set default arrow behavior */
         var state = null;
         function color(x) {
