@@ -1,10 +1,10 @@
 function update_box(elem) {
-   $(elem).prevAll('*[type="checkbox"]:first').attr('checked', true);
+   $(elem).prevAll('*[type="checkbox"]:first').prop('checked', true);
 };
 
 function update_bid(elem) {
     var form = $(elem).parents(".campaign");
-    var is_targeted = $("#targeting").attr("checked");
+    var is_targeted = $("#targeting").prop("checked");
     var bid = parseFloat(form.find('*[name="bid"]').val());
     var ndays = ((Date.parse(form.find('*[name="enddate"]').val()) -
              Date.parse(form.find('*[name="startdate"]').val())) / (86400*1000));
@@ -21,12 +21,12 @@ function update_bid(elem) {
         }
 
         form.find('button[name="create"], button[name="edit"]')
-            .attr("disabled", "disabled")
+            .prop("disabled", "disabled")
             .addClass("disabled");
     } else {
         $(".bid-info").removeClass("error");
         form.find('button[name="create"], button[name="edit"]')
-            .removeAttr("disabled")
+            .removeProp("disabled")
             .removeClass("disabled");
     }
 
@@ -86,14 +86,14 @@ function attach_calendar(where, min_date_src, max_date_src, callback, min_date_o
 
 function targeting_on(elem) {
     $(elem).parents(".campaign").find(".targeting")
-        .find('*[name="sr"]').attr("disabled", "").end().slideDown();
+        .find('*[name="sr"]').prop("disabled", "").end().slideDown();
 
     update_bid(elem);
 }
 
 function targeting_off(elem) {
     $(elem).parents(".campaign").find(".targeting")
-        .find('*[name="sr"]').attr("disabled", "disabled").end().slideUp();
+        .find('*[name="sr"]').prop("disabled", "disabled").end().slideUp();
 
     update_bid(elem);
 }
@@ -297,14 +297,14 @@ function edit_campaign(elem) {
                         var radios=c.find('*[name="targeting"]');
                         if (targeting) {
                             radios.filter('*[value="one"]')
-                                .attr("checked", "checked");
-                            c.find('*[name="sr"]').val(targeting).attr("disabled", "").end()
+                                .prop("checked", "checked");
+                            c.find('*[name="sr"]').val(targeting).prop("disabled", "").end()
                                 .find(".targeting").show();
                         }
                         else {
                             radios.filter('*[value="none"]')
-                                .attr("checked", "checked");
-                            c.find('*[name="sr"]').val("").attr("disabled", "disabled").end()
+                                .prop("checked", "checked");
+                            c.find('*[name="sr"]').val("").prop("disabled", "disabled").end()
                                 .find(".targeting").hide();
                         }
                         /* attach the dates to the date widgets */
@@ -330,9 +330,9 @@ function create_campaign(elem) {
                 .find('input[name="indx"]').val('').end()
                 .find('input[name="sr"]').val('').end()
                 .find('input[name="targeting"][value="none"]')
-                                .attr("checked", "checked").end()
+                                .prop("checked", "checked").end()
                 .find(".targeting").hide().end()
-                .find('*[name="sr"]').val("").attr("disabled", "disabled").end()
+                .find('*[name="sr"]').val("").prop("disabled", "disabled").end()
                 .fadeIn();
             update_bid('*[name="bid"]');
         });
