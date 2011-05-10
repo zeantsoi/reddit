@@ -429,7 +429,7 @@ $.fn.new_thing_child = function(what, use_listing) {
         new_form = what.hide()
             .prependTo(where)
             .show()
-            .find('input[name=parent]').attr('value', id).end();
+            .find('input[name="parent"]').val(id).end();
     
     return (new_form).randomize_ids();
 };
@@ -591,7 +591,7 @@ $.fn.captcha = function(iden) {
     if(iden) {
         c.attr("src", "http://" + reddit.ajax_domain 
                + "/captcha/" + iden + ".png")
-            .parents("form").find("input[name=iden]").attr("value", iden);
+            .parents("form").find('input[name="iden"]').val(iden);
     }
     return c;
 };
@@ -642,7 +642,7 @@ $.fn.select_line = function(lineNo) {
                 caret_pos = 1;
             }
             
-            var lines = $(this).attr("value").split(newline);
+            var lines = $(this).val().split(newline);
             
             for(var x=0; x<lineNo-1; x++) 
                 caret_pos += lines[x].length + newline_length;
