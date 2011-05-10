@@ -687,7 +687,7 @@ $.apply_stylesheet = function(cssText) {
         /* for everyone else, we walk <head> for the <link> or <style>
          * that has the old stylesheet, and delete it. Then we add a
          * <style> with the new one */
-        $("head").children("*[title=" + sheet_title + "]").remove();
+        $("head").children('*[title="' + sheet_title + '"]').remove();
         $("head").append("<style type='text/css' media='screen' title='" + 
                          sheet_title + "'>" + cssText + "</style>");
   }

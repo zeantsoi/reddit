@@ -75,8 +75,8 @@ function get_form_fields(form, fields, filter_func) {
             var type = $(this).attr("type");
             if (filter_func(this) && 
                 ( (type != "radio" && type != "checkbox") || 
-                  $(this).attr("checked")) )
-                fields[$(this).attr("name")] = $(this).attr("value");
+                  $(this).is(":checked")) )
+                fields[$(this).attr("name")] = $(this).val();
         });
     if (fields.id == null) {
         fields.id = $(form).attr("id") ? ("#" + $(form).attr("id")) : "";
@@ -164,7 +164,7 @@ function change_state(elem, op, callback, keep) {
         callback(form.length ? form : elem, op);
     }
     if(!$.defined(keep)) {
-        form.html(form.attr("executed").value);
+        form.html(form.find('[name="executed"]').prop("value"));
     }
     return false;
 };
