@@ -164,7 +164,7 @@ function change_state(elem, op, callback, keep) {
         callback(form.length ? form : elem, op);
     }
     if(!$.defined(keep)) {
-        form.html(form.find('[name="executed"]').prop("value"));
+        form.html(form.find('[name="executed"]').val());
     }
     return false;
 };
@@ -1031,7 +1031,7 @@ function comment_reply_for_elem(elem) {
     if (!form.length || form.parent().thing_id() != thing.thing_id()) {
         form = $(".usertext.cloneable:first").clone(true);
         elem.new_thing_child(form);
-        form.attr("thing_id").value = thing_id;
+        form.prop("thing_id").value = thing_id;
         form.attr("id", "commentreply_" + thing_id);
         form.find(".error").hide();
     }
