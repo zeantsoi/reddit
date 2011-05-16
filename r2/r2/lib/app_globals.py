@@ -91,6 +91,7 @@ class Globals(object):
                   'allow_wiki_editing',
                   'heavy_load_mode',
                   'disable_captcha',
+                  'disable_ads',
                   ]
 
     tuple_props = ['stalecaches',
