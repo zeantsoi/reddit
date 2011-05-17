@@ -67,7 +67,7 @@ def external(name):
     """
 
     resources = {
-        "jquery.js": static("jquery.js") #"http://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js",
+        "jquery.js": "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js",
     }
 
     return resources[name]
