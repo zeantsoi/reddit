@@ -650,12 +650,11 @@ class FrontController(RedditController):
         href = comment.make_permalink_slow(context=5, anchor=True)
         return self.redirect(href)
 
-    @validate(VUser(), 
-              VSRSubmitPage(),
+    @validate(can_submit = VSRSubmitPage(),
               url = VRequired('url', None),
               title = VRequired('title', None),
               then = VOneOf('then', ('tb','comments'), default = 'comments'))
-    def GET_submit(self, url, title, then):
+    def GET_submit(self, url, title, then, can_submit):
         """Submit form."""
         if url and not request.get.get('resubmit'):
             # check to see if the url has already been submitted
@@ -669,6 +668,9 @@ class FrontController(RedditController):
                                  content = wrap_links(links),
                                  infotext = infotext).render()
                 return res
+
+        if not can_submit:
+            raise UserRequiredException
 
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = (Subreddit.submit_sr_names(c.user) or
