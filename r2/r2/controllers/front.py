@@ -599,7 +599,7 @@ class FrontController(RedditController):
                                              reverse = reverse, count = count)
             except InvalidIndextankQuery:
                 # strip the query down to a whitelist
-                cleaned = re.sub("([^A-z0-9 ]+)", "", query)
+                cleaned = re.sub("[^\w\s]+", "", query)
                 cleaned = cleaned.lower()
 
                 # if it was nothing but mess, we have to stop
