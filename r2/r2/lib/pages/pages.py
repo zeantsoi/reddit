@@ -2678,9 +2678,11 @@ class MediaEmbed(Templated):
 class SelfTextChild(LinkChild):
     css_style = "selftext"
     def content(self):
+        expunged = getattr(self.link, "verdict", "") == "admin-removed"
         u = UserText(self.link, self.link.selftext,
                      editable = c.user == self.link.author,
-                     nofollow = self.nofollow)
+                     nofollow = self.nofollow,
+                     expunged=expunged)
         return u.render()
 
 class UserText(CachedTemplate):
@@ -2696,7 +2698,8 @@ class UserText(CachedTemplate):
                  post_form = 'editusertext',
                  cloneable = False,
                  extra_css = '',
-                 name = "text"):
+                 name = "text",
+                 expunged=False):
 
         css_class = "usertext"
         if cloneable:
@@ -2719,7 +2722,8 @@ class UserText(CachedTemplate):
                                 post_form = post_form,
                                 cloneable = cloneable,
                                 css_class = css_class,
-                                name = name)
+                                name = name,
+                                expunged=expunged)
 
 class MediaEmbedBody(CachedTemplate):
     """What's rendered inside the iframe that contains media objects"""
