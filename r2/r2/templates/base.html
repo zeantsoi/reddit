@@ -110,6 +110,7 @@ reddit, reddit.com, vote, comment, submit
   _gaq.push(['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3]);
   _gaq.push(['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3]);
   _gaq.push(['_trackPageview']);
+  _gaq.push(['_trackPageLoadTime']);
 
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
