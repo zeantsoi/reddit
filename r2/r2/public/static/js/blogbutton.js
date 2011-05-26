@@ -25,6 +25,17 @@ $(function() {
                 $(".entry").removeClass("dislikes").removeClass("likes");
             }
         }
+        function submit_url(url, sr, title) {
+            var submit = "http:///www.reddit.com";
+            if (sr) {
+                submit += "/r/" + sr;
+            }
+            submit += "/submit?url=" + encodeURIComponent(url);
+            if (title) {
+                submit += "&title=" + encodeURIComponent(title);
+            }
+            return submit;
+        }
         $(".arrow.up").click(function() {
                 state = $(this).hasClass("up") ? 1: 0;
                 set_score_class();
@@ -48,14 +59,7 @@ $(function() {
                 b = lst[1];
                 querydict[a] = b;
             }); 
-        var submit = "http://www.reddit.com/submit?url=" + encodeURIComponent(querydict.url);
-        if (querydict.sr) {
-            submit = "/r/" + querydict.sr + submit;
-        }
-        if (querydict.title) {
-            submit += "&title=" + encodeURIComponent(querydict.title);
-        }
-        $("a").attr("href", submit);
+        $("a").attr("href", submit_url(querydict.url, querydict.sr, querydict.title));
         if(querydict.bgcolor) {
             $("body").css("background-color", color(querydict.bgcolor));
         }
@@ -131,13 +135,7 @@ $(function() {
         };
 
         var make_submit = function() {
-            var submit = "http://www.reddit.com/submit?url=" + encodeURIComponent(querydict.url);
-            if (querydict.sr) {
-                submit = "/r/" + querydict.sr + submit;
-            }
-            if (querydict.title) {
-                submit += "&title=" + encodeURIComponent(querydict.title);
-            }
+            var submit = submit_url(querydict.url, querydict.sr, querydict.title);
             $(".score:visible").fadeOut(function() {
                     $(".score").html('<a class="submit" target="' +
                                      target + '" href="' +
