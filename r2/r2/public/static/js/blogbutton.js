@@ -48,7 +48,7 @@ $(function() {
                 b = lst[1];
                 querydict[a] = b;
             }); 
-        var submit = "/submit?url=" + encodeURIComponent(querydict.url);
+        var submit = "http://www.reddit.com/submit?url=" + encodeURIComponent(querydict.url);
         if (querydict.sr) {
             submit = "/r/" + querydict.sr + submit;
         }
@@ -131,7 +131,7 @@ $(function() {
         };
 
         var make_submit = function() {
-            var submit = "/submit?url=" + encodeURIComponent(querydict.url);
+            var submit = "http://www.reddit.com/submit?url=" + encodeURIComponent(querydict.url);
             if (querydict.sr) {
                 submit = "/r/" + querydict.sr + submit;
             }
