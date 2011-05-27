@@ -92,7 +92,7 @@ $(function() {
             };
             /* add the thing's id */
             $(".thing").addClass("id-" + data.name);
-            $(".bling a, a.bling").attr("href", data.permalink);
+            $(".bling a, a.bling").attr("href", "http://www.reddit.com"+data.permalink);
             if(data.likes) {
                 real_state = 1;
                 transition_score(function() {
