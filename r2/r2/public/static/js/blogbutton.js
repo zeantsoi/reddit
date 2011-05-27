@@ -172,6 +172,7 @@ $(function() {
             options.url = "http://buttons.reddit.com" + target;
             options.dataType = options.jsonp = "jsonp";
             options.jsonpCallback = "buttonInfoCb";
+            options.cache = true;
         }
 
         if ($.defined(querydict.url)) {
