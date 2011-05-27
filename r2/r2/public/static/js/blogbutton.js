@@ -153,23 +153,34 @@ $(function() {
                 });
         }
 
-        var url = "/button_info.json";
+        var options = {
+            type: "GET", url: null,
+            data: {},
+            success : update_button,
+            error: make_submit
+        };
+
+        var target = "/button_info.json";
         if (querydict.sr) {
-            url = "/r/" + querydict.sr + url;
-        }
-        params = {};
-        if ($.defined(querydict.url)) {
-            params["url"] = querydict.url;
-        }
-        if ($.defined(querydict.id)) {
-            params["id"] = querydict.id;
+            target = "/r/" + querydict.sr + target;
         }
 
-        $.ajax({ type: "GET", url: url,
-                    data: params, 
-                    success : update_button,
-                    error: make_submit,
-                    dataType: "json"});
+        if ($.cookie_read("session", "reddit_").data) {
+            options.url = target;
+            options.dataType = "json";
+        } else {
+            options.url = "http://buttons.reddit.com" + target;
+            options.dataType = options.jsonp = "jsonp";
+        }
+
+        if ($.defined(querydict.url)) {
+            options.data["url"] = querydict.url;
+        }
+        if ($.defined(querydict.id)) {
+            options.data["id"] = querydict.id;
+        }
+
+        $.ajax(options);
    }
   );
 
