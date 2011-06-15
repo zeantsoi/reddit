@@ -169,7 +169,7 @@ for bt in markdown_boring_tags:
 
 markdown_xhtml_dtd_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    'dtds/xhtml.dtd')
+    'contrib/dtds/xhtml.dtd')
 
 markdown_dtd = '<!DOCTYPE div- SYSTEM "file://%s">' % markdown_xhtml_dtd_path
 
