@@ -26,8 +26,8 @@
 <% import random %>
 <%def name="areyousure(name)">
   <% yes, no = random.choice((("yes", "no"), ("no", "yes"))) %>
-  <% syes = _(str(yes)) %>
-  <% sno = _(str(no)) %>
+  <% syes = _(yes) %>
+  <% sno = _(no) %>
   
 
   <div class="spacer">
