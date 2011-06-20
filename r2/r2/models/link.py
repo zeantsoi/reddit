@@ -560,13 +560,6 @@ class Comment(Thing, Printable):
     def _markdown(self):
         pass
 
-    def _delete(self):
-        from r2.lib.db.queries import changed
-
-        link = Link._byID(self.link_id, data = True)
-        link._incr('num_comments', -1)
-        changed(link, True)
-
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.db.queries import changed
@@ -584,8 +577,6 @@ class Comment(Thing, Printable):
         if parent:
             c.parent_id = parent._id
 
-        link._incr('num_comments', 1)
-
         to = None
         name = 'inbox'
         if parent:
@@ -595,8 +586,6 @@ class Comment(Thing, Printable):
             name = 'selfreply'
 
         c._commit()
-
-        changed(link, True) # only the number of comments has changed
 
         inbox_rel = None
         # only global admins can be message spammed.
