@@ -515,6 +515,7 @@ class Link(Thing, Printable):
                     item.reveal_trial_info = True
                     item.use_big_modbuttons = True
 
+            item.expunged = False
             if item.is_self:
                 item.expunged = Link._should_expunge_selftext(item)
 
