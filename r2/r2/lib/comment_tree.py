@@ -22,7 +22,6 @@
 from pylons import g
 from itertools import chain
 from r2.lib.utils import tup, to36
-from r2.lib.db.queries import changed
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
 from r2.models.link import Link
@@ -132,6 +131,7 @@ def add_comments_nolock(link_id, comments):
     # update the link's comment count and schedule it for search reindexing
     link = Link._byID(link_id, data = True)
     link._incr('num_comments', len(comments))
+    from r2.lib.db.queries import changed
     changed(link)
 
     g.permacache.set(key, r)
@@ -176,6 +176,7 @@ def delete_comment(comment):
         # update the link's comment count and schedule it for search reindexing
         link = Link._byID(comment.link_id, data = True)
         link._incr('num_comments', -1)
+        from r2.lib.db.queries import changed
         changed(link)
 
 def _parent_dict_from_tree(comment_tree):
@@ -304,6 +305,7 @@ def link_comments(link_id, _update=False):
             link = Link._byID(link_id, data = True)
             link.num_comments = num_comments
             link._commit()
+            from r2.lib.db.queries import changed
             changed(link)
 
         return r
