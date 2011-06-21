@@ -602,6 +602,8 @@ class Comment(Thing, Printable):
         if parent:
             c.parent_id = parent._id
 
+        link._incr('num_comments', 1)
+
         to = None
         name = 'inbox'
         if parent:
@@ -611,6 +613,8 @@ class Comment(Thing, Printable):
             name = 'selfreply'
 
         c._commit()
+
+        changed(link, True)  # link's number of comments changed
 
         inbox_rel = None
         # only global admins can be message spammed.
