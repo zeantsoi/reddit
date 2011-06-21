@@ -794,6 +794,7 @@ class CommentSortsCache(tdb_cassandra.View):
        the candidate order"""
     _use_db = True
     _value_type = 'float'
+    _use_new_ring = True
 
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in

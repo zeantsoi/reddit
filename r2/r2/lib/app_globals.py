@@ -102,6 +102,7 @@ class Globals(object):
                    'rendercaches',
                    'servicecaches',
                    'cassandra_seeds',
+                   'new_cassandra_seeds',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -215,6 +216,11 @@ class Globals(object):
                                                # TODO: .ini setting
                                                timeout=15, max_retries=3,
                                                prefill=False)
+        self.new_cassandra = PycassaConnectionPool('reddit',
+                                                   server_list=self.new_cassandra_seeds,
+                                                   pool_size=len(self.new_cassandra_seeds),
+                                                   timeout=15, max_retries=3,
+                                                   prefill=False)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)

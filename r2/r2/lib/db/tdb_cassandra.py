@@ -34,10 +34,13 @@ from r2.lib import cache
 from uuid import uuid1
 from itertools import chain
 
-cassandra = g.cassandra
-thing_cache = g.thing_cache
-seeds = g.cassandra_seeds
+old_cassandra = g.cassandra
+old_seeds = g.cassandra_seeds
+new_cassandra = g.new_cassandra
+new_seeds = g.new_cassandra_seeds
+
 keyspace = 'reddit'
+thing_cache = g.thing_cache
 disallow_db_writes = g.disallow_db_writes
 tz = g.tz
 log = g.log
@@ -92,7 +95,7 @@ def will_write(fn):
         return fn(*a, **kw)
     return _fn
 
-def get_manager():
+def get_manager(seeds):
     # n.b. does not retry against multiple servers
     server = seeds[0]
     return SystemManager(server)
@@ -122,8 +125,16 @@ class ThingMeta(type):
             cls._read_consistency_level = read_consistency_level
             cls._write_consistency_level = write_consistency_level
 
+            # classes with "_use_new_ring = True" get mapped to CFs on the new ring
+            if not getattr(cls, '_use_new_ring', False):
+                connection_pool = old_cassandra
+                cassandra_seeds = old_seeds
+            else:
+                connection_pool = new_cassandra
+                cassandra_seeds = new_seeds
+
             try:
-                cls._cf = ColumnFamily(cassandra,
+                cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
                                        read_consistency_level = read_consistency_level,
                                        write_consistency_level = write_consistency_level)
@@ -131,7 +142,7 @@ class ThingMeta(type):
                 if not db_create_tables:
                     raise
 
-                manager = get_manager()
+                manager = get_manager(cassandra_seeds)
 
                 log.warning("Creating Cassandra Column Family %s" % (cf_name,))
                 with make_lock('cassandra_schema'):
@@ -140,7 +151,7 @@ class ThingMeta(type):
                 log.warning("Created Cassandra Column Family %s" % (cf_name,))
 
                 # try again to look it up
-                cls._cf = ColumnFamily(cassandra,
+                cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
                                        read_consistency_level = read_consistency_level,
                                        write_consistency_level = write_consistency_level)
