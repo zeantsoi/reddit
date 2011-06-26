@@ -123,8 +123,10 @@ class ThingMeta(type):
 
             thing_types[cls._type_prefix] = cls
 
-            cls._read_consistency_level = read_consistency_level
-            cls._write_consistency_level = write_consistency_level
+            if not getattr(cls, "_read_consistency_level", None):
+                cls._read_consistency_level = read_consistency_level
+            if not getattr(cls, "_write_consistency_level", None):
+                cls._write_consistency_level = write_consistency_level
 
             # classes with "_use_new_ring = True" get mapped to CFs on the new ring
             if not getattr(cls, '_use_new_ring', False):
@@ -137,8 +139,8 @@ class ThingMeta(type):
             try:
                 cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
-                                       read_consistency_level = read_consistency_level,
-                                       write_consistency_level = write_consistency_level)
+                                       read_consistency_level = cls._read_consistency_level,
+                                       write_consistency_level = cls._write_consistency_level)
             except NotFoundException:
                 if not db_create_tables:
                     raise
@@ -154,8 +156,8 @@ class ThingMeta(type):
                 # try again to look it up
                 cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
-                                       read_consistency_level = read_consistency_level,
-                                       write_consistency_level = write_consistency_level)
+                                       read_consistency_level = cls._read_consistency_level,
+                                       write_consistency_level = cls._write_consistency_level)
 
         cls._kind = name
 
