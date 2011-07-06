@@ -4054,6 +4054,7 @@ dd { margin-left: 20px;  }
     padding: 5px;
     border: 1px solid gray;
     font-size: larger;
+    list-style: none;
 }
 
 .sidecontentbox .more { 
@@ -4071,10 +4072,6 @@ dd { margin-left: 20px;  }
     margin: 0;
     color: gray;
     font-size: 130%;
-}
-
-.sidecontentbox .author {
-    display: block;
 }
 
 .titlebox form.toggle {
