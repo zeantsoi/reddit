@@ -143,7 +143,7 @@ ${first_defined(kw[1:])}
     href = add_sr(redir_path, sr_path=_sr_path, nocname=nocname)
     if (not target or target == '_parent') and c.cname:
         target = '_top'
-    if c.cname and path.startswith('http://'):
+    if c.cname and redir_path.startswith('http://'):
         target = '_top'
     if target:
         kw['target'] = target
