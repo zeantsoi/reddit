@@ -111,11 +111,14 @@ class CMemcache(CacheUtils):
         self.min_compress_len = 512*1024
 
     def get(self, key, default = None):
-        with self.clients.reserve() as mc:
-            ret =  mc.get(key)
-            if ret is None:
-                return default
-            return ret
+        try:
+            with self.clients.reserve() as mc:
+                ret =  mc.get(key)
+                if ret is None:
+                    return default
+                return ret
+        except MemcachedError, e:
+            raise MemcachedError("fatal memcached error, key was [%s]" % key, e)
 
     def get_multi(self, keys, prefix = ''):
         with self.clients.reserve() as mc:
@@ -172,6 +175,8 @@ class CMemcache(CacheUtils):
                 return mc.add(key, val, time=time)
         except pylibmc.DataExists:
             return None
+        except MemcachedError, e:
+            raise MemcachedError("fatal memcached error, key was [%s]" % key, e)
 
     def delete(self, key, time=0):
         with self.clients.reserve() as mc:
