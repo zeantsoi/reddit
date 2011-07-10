@@ -85,13 +85,13 @@ except ImportError:
 
 # we're using a custom build of pylibmc at the moment, so we need to
 # be sure that we have the right version
-pylibmc_version = '1.1.1-reddit-0.1'
+pylibmc_version = '1.1.1-reddit-0.2'
 try:
     import pylibmc
     assert pylibmc.__version__ == pylibmc_version
 except (ImportError, AssertionError):
     print "Installing pylibmc"
-    easy_install(["https://github.com/downloads/reddit/pylibmc/pylibmc-1.1.1-reddit-0.1.tgz"])
+    easy_install(["https://github.com/downloads/reddit/pylibmc/pylibmc-" + pylibmc_version + ".tgz"])
 
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
