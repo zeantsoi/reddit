@@ -66,6 +66,7 @@ class CassandraVote(tdb_cassandra.Relation):
 class VotesByLink(tdb_cassandra.View):
     _use_db = True
     _type_prefix = 'VotesByLink'
+    _use_new_ring = True
 
     # _view_of = CassandraLinkVote
 
