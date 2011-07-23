@@ -152,7 +152,7 @@ def create_gift_gold (giver_id, recipient_id, days, date, signed):
                                 date=date)
 
 def account_by_payingid(paying_id):
-    s = sa.select([gold_table.c.account_id],
+    s = sa.select([sa.distinct(gold_table.c.account_id)],
                   gold_table.c.paying_id == paying_id)
     res = s.execute().fetchall()
 
