@@ -188,12 +188,10 @@ class Link(Thing, Printable):
 
     def _hide(self, user):
         CassandraHide._hide(user, self)
-        OldCassandraHide._hide(user, self)
         return self._something(SaveHide, user, self._hidden, 'hide')
 
     def _unhide(self, user):
         CassandraHide._unhide(user, self)
-        OldCassandraHide._unhide(user, self)
         return self._unsomething(user, self._hidden, 'hide')
 
     def link_domain(self):
@@ -1194,19 +1192,6 @@ class CassandraHide(SimpleRelation):
     _cf_name = 'Hide'
     _ttl = 7*24*60*60
     _use_new_ring = True
-
-    @classmethod
-    def _hide(cls, *a, **kw):
-        return cls._create(*a, **kw)
-
-    @classmethod
-    def _unhide(cls, *a, **kw):
-        return cls._uncreate(*a, **kw)
-
-class OldCassandraHide(SimpleRelation):
-    _use_db = True
-    _cf_name = 'Hide'
-    _ttl = 7*24*60*60
 
     @classmethod
     def _hide(cls, *a, **kw):
