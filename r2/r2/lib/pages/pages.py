@@ -806,7 +806,9 @@ class LinkInfoPage(Reddit):
         # defaults whether or not there is a comment
         params = {'title':_force_unicode(link_title), 'site' : c.site.name}
         title = strings.link_info_title % params
-        short_description = _truncate(link.selftext.strip(), MAX_DESCRIPTION_LENGTH) if link else None
+        short_description = None
+        if link and link.selftext:
+            short_description = _truncate(link.selftext.strip(), MAX_DESCRIPTION_LENGTH)
         # only modify the title if the comment/author are neither deleted nor spam
         if comment and not comment._deleted and not comment._spam:
             author = Account._byID(comment.author_id, data=True)
