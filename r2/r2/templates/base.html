@@ -34,7 +34,7 @@
     
     <meta name="keywords" content="${self.keywords()}" />
     <meta name="title" content="${self.Title()}" />
-    <meta name="description" content="${thing.short_description or g.short_description}" />
+    <meta name="description" content="${getattr(thing, 'short_description', None) or g.short_description}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     
