@@ -356,6 +356,7 @@ ul.flat-vert {text-align: left;}
     z-index: 100;
 }
 
+.tabpane-content { border: 1px solid #5f99cf; }
 
 #search input[type=text] {
     border: 1px solid gray;
