@@ -52,24 +52,5 @@ $(function() {
         
         expando.addClass("tracked");
     }
-    
-    $("body").delegate("a.title, a.thumbnail, a.reddit-link-title, .self a.comments",
-                       "mouseup", function(e) {
-        switch (e.which){
-            /* Record left and middle clicks */
-            case 1:
-            /* CAUTION - left click case falls through to middle click */
-            case 2:
-                recordOutboundLink($(this));
-                break;
-            default:
-                /* right-clicks and non-standard clicks ignored; no way to
-                   know if context menu is used to pull up new tab or not */
-                break;
-        }
-        
-    });
-    
-    $("body").delegate("div.expando-button", "click", recordExpando);
 
 });
