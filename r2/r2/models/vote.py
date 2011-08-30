@@ -45,6 +45,7 @@ def score_changes(amount, old_amount):
 
 class CassandraVote(tdb_cassandra.Relation):
     _use_db = False
+    _use_new_ring = True
 
     _bool_props = ('valid_user', 'valid_thing', 'organic')
     _str_props  = ('name', # one of '-1', '0', '1'
@@ -80,6 +81,18 @@ class CassandraVote(tdb_cassandra.Relation):
             cv.organic = getattr(v, 'organic', False)
         cv._commit()
 
+class OldCassandraVote(CassandraVote):
+    _use_new_ring = False
+
+    @classmethod
+    def _rel(cls, thing1_cls, thing2_cls):
+        if (thing1_cls, thing2_cls) == (Account, Link):
+            return OldCassandraLinkVote
+        elif (thing1_cls, thing2_cls) == (Account, Comment):
+            return OldCassandraCommentVote
+
+        raise TdbException("Can't find relation for %r(%r,%r)"
+                           % (cls, thing1_cls, thing2_cls))
 
 class VotesByLink(tdb_cassandra.View):
     _use_db = True
@@ -130,7 +143,7 @@ class VotesByDay(tdb_cassandra.View):
 
 class CassandraLinkVote(CassandraVote):
     _use_db = True
-    _type_prefix = 'r6'
+    _type_prefix = 'LinkVote'
     _cf_name = 'LinkVote'
 
     # these parameters aren't actually meaningful, they just help
@@ -152,7 +165,41 @@ class CassandraLinkVote(CassandraVote):
 
         return CassandraVote._on_create(self)
 
+class OldCassandraLinkVote(OldCassandraVote):
+    _use_db = True
+    _type_prefix = 'r6'
+    _cf_name = 'LinkVote'
+
+    # these parameters aren't actually meaningful, they just help
+    # keep track
+    # _views = [VotesByLink, VotesByDay]
+    _thing1_cls = Account
+    _thing2_cls = Link
+
+    def _on_create(self):
+        # it's okay if these indices get lost
+        wcl = tdb_cassandra.CL.ONE
+
+        v_id = {self._id: self._id}
+
+        VotesByLink._set_values(self.thing2_id, v_id,
+                                write_consistency_level=wcl)
+        VotesByDay._set_values(VotesByDay._id_for_day(self.date), v_id,
+                               write_consistency_level=wcl)
+
+        return OldCassandraVote._on_create(self)
+
 class CassandraCommentVote(CassandraVote):
+    _use_db = True
+    _type_prefix = 'CommentVote'
+    _cf_name = 'CommentVote'
+
+    # these parameters aren't actually meaningful, they just help
+    # keep track
+    _thing1_cls = Account
+    _thing2_cls = Comment
+
+class OldCassandraCommentVote(OldCassandraVote):
     _use_db = True
     _type_prefix = 'r5'
     _cf_name = 'CommentVote'
@@ -237,6 +284,7 @@ class Vote(MultiRelation('vote',
         # now write it out to Cassandra. We'll write it out to both
         # this way for a while
         CassandraVote._copy_from(v)
+        OldCassandraVote._copy_from(v)
 
         queries.changed(v._thing2, True)
 
@@ -256,7 +304,7 @@ class Vote(MultiRelation('vote',
         rels = {}
         for obj in objs:
             try:
-                types = CassandraVote._rel(sub.__class__, obj.__class__)
+                types = OldCassandraVote._rel(sub.__class__, obj.__class__)
             except TdbException:
                 # for types for which we don't have a vote rel, we'll
                 # skip them
@@ -333,7 +381,7 @@ def test():
     print 'fast_query', CassandraLinkVote._fast_query('abc', ['def'])
 
     assert CassandraLinkVote._fast_query('abc', 'def') == v2
-    assert CassandraLinkVote._byID('abc_def') == CassandraLinkVote._by_fullname('r6_abc_def')
+    assert CassandraLinkVote._byID('abc_def') == CassandraLinkVote._by_fullname('LinkVote_abc_def')
 
     print 'all', list(CassandraLinkVote._all()), list(VotesByLink._all())
 
