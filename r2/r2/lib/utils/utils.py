@@ -207,7 +207,7 @@ class Results():
             raise StopIteration
 
 def strip_www(domain):
-    if domain.count('.') > 2 and domain.startswith("www."):
+    if domain.count('.') >= 2 and domain.startswith("www."):
         return domain[4:]
     else:
         return domain
