@@ -113,6 +113,7 @@ class VotesByLink(tdb_cassandra.View):
 class VotesByDay(tdb_cassandra.View):
     _use_db = True
     _type_prefix = 'VotesByDay'
+    _use_new_ring = True
 
     # _view_of = CassandraLinkVote
 
