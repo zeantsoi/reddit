@@ -676,7 +676,7 @@ class Comment(Thing, Printable):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        from r2.lib.template_helpers import add_attr
+        from r2.lib.template_helpers import add_attr, get_domain
         from r2.lib import promote
         from r2.lib.wrapped import CachedVariable
         from r2.lib.pages import WrappedUser
