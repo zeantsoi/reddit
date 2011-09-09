@@ -177,19 +177,6 @@ class OldCassandraLinkVote(OldCassandraVote):
     _thing1_cls = Account
     _thing2_cls = Link
 
-    def _on_create(self):
-        # it's okay if these indices get lost
-        wcl = tdb_cassandra.CL.ONE
-
-        v_id = {self._id: self._id}
-
-        VotesByLink._set_values(self.thing2_id, v_id,
-                                write_consistency_level=wcl)
-        VotesByDay._set_values(VotesByDay._id_for_day(self.date), v_id,
-                               write_consistency_level=wcl)
-
-        return OldCassandraVote._on_create(self)
-
 class CassandraCommentVote(CassandraVote):
     _use_db = True
     _type_prefix = 'CommentVote'
