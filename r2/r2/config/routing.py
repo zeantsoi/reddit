@@ -31,7 +31,7 @@ def make_map(global_conf={}, app_conf={}):
     mc = map.connect
 
     admin_routes.add(mc)
-
+    mc('/college', controller='college', action='rankings')
     mc('/login',    controller='forms', action='login')
     mc('/register',    controller='forms', action='register')
     mc('/logout',   controller='forms', action='logout')

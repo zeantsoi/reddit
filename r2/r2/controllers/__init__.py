@@ -54,6 +54,7 @@ from mediaembed import MediaembedController
 from mediaembed import AdController
 
 from querycontroller import QueryController
+from collegecontroller import CollegeController
 
 try:
     from r2admin.controllers.adminapi import ApiController

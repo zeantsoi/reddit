@@ -1,0 +1,169 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%namespace file="utils.html" import="plain_link" />
+<style type="text/css">
+  .body-text {
+    font-size: small;
+    margin-left: 15px;
+    width: 850px;  }
+  .college-table {
+    font-size: small;
+    color: black;
+    margin-left: 5px;}
+  .header-field-left {
+    text-align: left;
+    color: black;
+    border-bottom: thin dotted;
+    font-weight: bold;
+    padding: 5px 10px; }
+  .header-field {
+    text-align: center;
+    color: black;
+    border-bottom: thin dotted;
+    padding: 5px 10px; }
+  .header-field-bold {
+    text-align: center;
+    color: black;
+    border-bottom: thin dotted;
+    padding: 5px 10px;
+    font-weight: bold; }
+  .odd-row {
+    text-align: left;
+    padding: 2px 10px;
+    border-bottom: solid #cdcdcd 1px;
+    background-color: whitesmoke; }
+  .even-row {
+    text-align: left;
+    padding: 2px 10px;
+    border-bottom: solid #cdcdcd 1px;
+    background-color: white; }
+  .top-row {
+    color: #339933;
+    font-size: large;
+    font-weight: bold;
+    text-align: left;
+    padding: 2px;
+    border-bottom: solid #cdcdcd 1px;          
+    background-color: #E6F2E6; }
+  .first-row {
+    color: goldenrod;
+    font-size: large;
+    font-weight: bold;
+    text-align: left;
+    padding: 2px;
+    border-bottom: solid #cdcdcd 1px;
+    background-color: cornsilk; }
+  .second-row {                                                            
+    color: #868686;
+    font-size: large;
+    font-weight: bold;
+    text-align: left;
+    padding: 2px;
+    border-bottom: solid #cdcdcd 1px;
+    background-color: #ECECEC; }
+  .simple-num {
+    width: 120px;
+    text-align: center; }
+  .text {
+    width: 500px;
+    text-align: left;
+    padding: 2px 10px; }
+</style>
+
+<p class="body-text">
+<b><a href="http://blog.reddit.com/2011/08/grow-college-subreddit-competition.html">Grow A College Subreddit Competition Announcement</a></b>&#32;and&#32;<b><a href="http://blog.reddit.com/2011/08/from-aberystwyth-to-york-update-on-grow.html">Update</a></b><br><br>
+Here are the current subscriber counts for the Grow a College Subreddit Competition (updated ${thing.timesince} ago). Remember, there will be fabulous prizes for 
+(1) best percentage growth, (2) best absolute growth, and (3) admin's choice. <br><br>
+The school name is taken from the Subreddit's title so it  may not be simple or accurate.<br><br>
+We are tracking ${len(thing.colleges)} College Subreddits. If yours isn't listed&#32;<a href="http://www.reddit.com/message/compose/?to=hueypriest">PM hueypriest</a>.<br><br>
+</p>
+
+<table class="college-table">
+<thead>
+<tr>
+  <td class="header-field-left">School Name</td>
+% for field in ['top','contest','day']:
+     % if thing.sort == field:
+       <td class="header-field-bold">
+     % else:
+       <td class="header-field">
+     % endif
+     ${thing.buttons[field].render()}
+     </td> 
+% endfor
+</tr>
+</thead>
+<tbody>
+<% college = thing.colleges[0] %>
+<tr class="first-row">
+  <td class="text">
+    ${plain_link(college.title, college.path, sr_path=False, cname=False, _class="subreddit hover")}
+    &#32;
+    ${college.short_name}
+  </td>
+  <td class="simple-num">${college.current}</td>
+  <td class="simple-num">${college.delta_total}</td>
+  <td class="simple-num">${college.delta_period}</td>
+</tr>
+<% college = thing.colleges[1] %>
+<tr class="second-row">
+  <td class="text">
+    ${plain_link(college.title, college.path, sr_path=False, cname=False, _class="subreddit hover")}
+    &#32;
+    ${college.short_name}
+  </td>
+  <td class="simple-num">${college.current}</td>
+  <td class="simple-num">${college.delta_total}</td>
+  <td class="simple-num">${college.delta_period}</td>
+</tr>
+%for college in thing.colleges[2:10]:
+<tr class="top-row">
+  <td class="text">
+    ${plain_link(college.title, college.path, sr_path=False, cname=False, _class="subreddit hover")}
+    &#32;
+    ${college.short_name}
+  </td>
+  <td class="simple-num">${college.current}</td>
+  <td class="simple-num">${college.delta_total}</td>
+  <td class="simple-num">${college.delta_period}</td>
+</tr>
+%endfor
+<% oddrow = True %>
+%for college in thing.colleges[10:]:
+  % if oddrow:
+    <tr class="odd-row">
+  % else:
+    <tr class="even-row">
+  % endif
+    <% oddrow = not oddrow %>
+    <td class="text">
+      ${plain_link(college.title, college.path, sr_path=False, cname=False, _class="subreddit hover")}
+      &#32;
+      ${college.short_name}
+    </td>
+    <td class="simple-num">${college.current}</td>
+    <td class="simple-num">${college.delta_total}</td>
+    <td class="simple-num">${college.delta_period}</td>
+  </tr>
+%endfor
+</tbody>
+</table>
