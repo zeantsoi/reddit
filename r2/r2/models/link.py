@@ -1225,7 +1225,7 @@ class CassandraHide(SimpleRelation):
     _use_db = True
     _cf_name = 'Hide'
     _ttl = 7*24*60*60
-    _use_hide_ring = True
+    _use_new_ring = True
 
     @classmethod
     def _hide(cls, *a, **kw):
