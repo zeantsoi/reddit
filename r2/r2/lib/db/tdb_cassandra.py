@@ -39,6 +39,8 @@ old_cassandra = g.cassandra
 old_seeds = g.cassandra_seeds
 new_cassandra = g.new_cassandra
 new_seeds = g.new_cassandra_seeds
+hide_cassandra = g.hide_cassandra
+hide_seeds = g.hide_seeds
 
 keyspace = 'reddit'
 thing_cache = g.thing_cache
@@ -129,7 +131,10 @@ class ThingMeta(type):
                 cls._write_consistency_level = write_consistency_level
 
             # classes with "_use_new_ring = True" get mapped to CFs on the new ring
-            if not getattr(cls, '_use_new_ring', False):
+            if getattr(cls, '_use_hide_ring', False):
+                connection_pool = hide_cassandra
+                cassandra_seeds = hide_seeds
+            elif not getattr(cls, '_use_new_ring', False):
                 connection_pool = old_cassandra
                 cassandra_seeds = old_seeds
             else:
