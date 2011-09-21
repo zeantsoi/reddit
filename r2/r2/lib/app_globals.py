@@ -37,6 +37,16 @@ from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 
+class CassandraPoolListener(object):
+    def __init__(self, log):
+        self.log = log
+
+    def connection_failed(self, dic):
+        self.log.warn('CASSANDRA: connection failed')
+
+    def pool_at_max(self, dic):
+        self.log.warn('CASSANDRA: pool at maximum connections')
+
 class Globals(object):
 
     int_props = ['db_pool_size',
@@ -307,6 +317,9 @@ class Globals(object):
             self.log.setLevel(logging.DEBUG)
         else:
             self.log.setLevel(logging.INFO)
+
+        # add pycassa pool logger
+        self.new_cassandra.add_listener(CassandraPoolListener(self.log))
 
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
