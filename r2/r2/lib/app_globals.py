@@ -42,7 +42,7 @@ class CassandraPoolListener(object):
         self.log = log
 
     def connection_failed(self, dic):
-        self.log.warn('CASSANDRA: connection failed')
+        self.log.warn('CASSANDRA: connection to %s failed' % dic['connection'].server)
 
     def pool_at_max(self, dic):
         self.log.warn('CASSANDRA: pool at maximum connections')
