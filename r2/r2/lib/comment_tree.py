@@ -133,7 +133,7 @@ def add_comments_nolock(link_id, comments):
     g.permacache.set(comments_key(link_id),
                      (cids, comment_tree, depth, num_children))
 
-def update_comment_votes(comments):
+def update_comment_votes(comments, write_consistency_level = None):
     from r2.models import CommentSortsCache
 
     comments = tup(comments)
@@ -149,7 +149,8 @@ def update_comment_votes(comments):
             c_key = sort_comments_key(link_id, sort)
             c_r = dict((cm._id36, _get_sort_value(cm, sort))
                        for cm in coms)
-            CommentSortsCache._set_values(c_key, c_r)
+            CommentSortsCache._set_values(c_key, c_r,
+                                          write_consistency_level = write_consistency_level)
 
 def delete_comment(comment):
     with g.make_lock(lock_key(comment.link_id)):
@@ -569,4 +570,4 @@ def _populate(after_id = None, estimate=54301242):
 
     for chunk in utils.in_chunks(q, chunk_size):
         chunk = filter(lambda x: hasattr(x, 'link_id'), chunk)
-        update_comment_votes(chunk)
+        update_comment_votes(chunk, write_consistency_level = tdb_cassandra.CL.ONE)
