@@ -168,13 +168,11 @@ class Link(Thing, Printable):
     def _save(self, user):
         # dual-write CassandraSaves
         CassandraSave._save(user, self)
-        OldCassandraSave._save(user, self)
         return self._something(SaveHide, user, self._saved, 'save')
 
     def _unsave(self, user):
         # dual-write CassandraSaves
         CassandraSave._unsave(user, self)
-        OldCassandraSave._unsave(user, self)
         return self._unsomething(user, self._saved, 'save')
 
     @classmethod
@@ -336,7 +334,7 @@ class Link(Thing, Printable):
                 if not SaveHide._can_skip_lookup(user, item):
                     saved_lu.append(item._id36)
 
-            saved  = OldCassandraSave._fast_query(user._id36, saved_lu)
+            saved  = CassandraSave._fast_query(user._id36, saved_lu)
             hidden = CassandraHide._fast_query(user._id36, saved_lu)
 
             clicked = {}
@@ -1177,17 +1175,6 @@ class SimpleRelation(tdb_cassandra.Relation):
         except tdb_cassandra.NotFound:
             pass
 
-class OldCassandraSave(SimpleRelation):
-    _use_db = True
-    _cf_name = 'Save'
-
-    @classmethod
-    def _save(cls, *a, **kw):
-        return cls._create(*a, **kw)
-
-    @classmethod
-    def _unsave(cls, *a, **kw):
-        return cls._uncreate(*a, **kw)
 
 class CassandraSave(SimpleRelation):
     _use_db = True
