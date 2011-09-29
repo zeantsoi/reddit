@@ -892,7 +892,7 @@ class VUrl(VRequired):
         self.lookup = lookup
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
-    def run(self, url, sr = None):
+    def run(self, url, sr = None, resubmit=False):
         if sr is None and not isinstance(c.site, FakeSubreddit):
             sr = c.site
         elif sr:
@@ -913,7 +913,7 @@ class VUrl(VRequired):
         if url == 'self':
             if self.allow_self:
                 return url
-        elif not self.lookup:
+        elif not self.lookup or resubmit:
             return url
         elif url:
             try:
