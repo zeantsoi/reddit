@@ -173,7 +173,8 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
             if (this.successCallback) {
                 this.successCallback(result)
             } else {
-                var defaultDest = window.location.pathname.match(/^\/login/) ? '/' : window.location,
+                var base = r.config.extension ? '/.'+r.config.extension : '/',
+                    defaultDest = window.location.pathname.match(/^\/login/) ? base : window.location,
                     destParam = $.url().param('dest')
                 destParam = destParam && decodeURIComponent(destParam)
                 window.location = destParam || defaultDest

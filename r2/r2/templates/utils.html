@@ -385,6 +385,7 @@ ${unsafe(txt)}
                                 no_www = True)}",
       /* where do ajax request go? */
       ajax_domain: "${get_domain(cname=c.authorized_cname, subreddit = False)}",
+      extension: '${c.extension}',
       https_endpoint: "${g.https_endpoint}",
       /* debugging? */
       debug: ${"true" if g.debug else "false"}, 
