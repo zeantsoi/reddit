@@ -174,7 +174,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
                 this.successCallback(result)
             } else {
                 var base = r.config.extension ? '/.'+r.config.extension : '/',
-                    defaultDest = window.location.pathname.match(/^\/login/) ? base : window.location,
+                    defaultDest = /\/login\/?$/.test($.url().attr('path')) ? base : window.location,
                     destParam = $.url().param('dest')
                 destParam = destParam && decodeURIComponent(destParam)
                 window.location = destParam || defaultDest
