@@ -66,7 +66,8 @@ r.analytics = {
         var pixel = new Image()
         pixel.src = reddit.adtracker_url + '?' + $.param({
             'id': fullname,
-            'hash': hash
+            'hash': hash,
+            'r': Math.round(Math.random() * 2147483647) // cachebuster
         })
 
         // If IE7/8 thinks the text of a link looks like an email address
@@ -75,17 +76,23 @@ r.analytics = {
         // hack around this. Distilled reproduction in: http://jsfiddle.net/JU2Vj/1/
         var link = thing.find('a.title'),
             old_html = link.html(),
-            dest = link.attr('href')
-
-        save_href(link)
-        link.attr('href', reddit.clicktracker_url + '?' + $.param({
+            dest = link.attr('href'),
+            click_url = reddit.clicktracker_url + '?' + $.param({
             'id': fullname,
             'hash': hash,
             'url': dest
-        }))
+        })
+
+        save_href(link)
+        link.attr('href', click_url)
 
         if (link.html() != old_html)
             link.html(old_html)
+
+        // also do the thumbnail
+        var thumb = thing.find('a.thumbnail')
+        save_href(thumb)
+        thumb.attr('href', click_url)
 
         thing.data('trackerFired', true)
     }
