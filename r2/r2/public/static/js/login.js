@@ -1,5 +1,11 @@
 r.login = {
     post: function(form, action, callback) {
+        if (r.config.cnameframe) {
+            form.$el.unbind()
+            form.$el.submit()
+            return
+        }
+
         var username = $('input[name="user"]', form.$el).val(),
             endpoint = r.config.https_endpoint || ('http://'+r.config.cur_domain)
             sameOrigin = location.protocol+'//'+location.host == endpoint,
@@ -177,7 +183,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
                     defaultDest = /\/login\/?$/.test($.url().attr('path')) ? base : window.location,
                     destParam = $.url().param('dest')
                 destParam = destParam && decodeURIComponent(destParam)
-                window.location = destParam || defaultDest
+                window.location = destParam || document.referrer || defaultDest
             }
         } else {
             r.ui.Form.prototype._handleResult.call(this, result)
