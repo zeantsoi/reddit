@@ -7,7 +7,7 @@ r.login = {
         }
 
         var username = $('input[name="user"]', form.$el).val(),
-            endpoint = r.config.https_endpoint || ('http://'+r.config.cur_domain)
+            endpoint = r.config.https_endpoint || ('http://'+r.config.ajax_domain),
             sameOrigin = location.protocol+'//'+location.host == endpoint,
             apiTarget = endpoint+'/api/'+action+'/'+username
 
