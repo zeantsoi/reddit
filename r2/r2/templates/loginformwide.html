@@ -34,10 +34,12 @@
 <form method="post"
       action="${add_sr(base + '/post/login', nocname=not thing.auth_cname)}"
       id="login_${op}"
+      target="_top"
       class="login-form login-form-side">
   %if thing.cname:
     <input type="hidden" name="${UrlParser.cname_get}" 
            value="${random.random()}" />
+    <input type="hidden" name="dest" value="${add_sr('/')}" />
   %endif
   <input type="hidden" name="op" value="${op}" />
   <input name="user" placeholder="username" type="text" maxlength="20" tabindex="1"/>
