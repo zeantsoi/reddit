@@ -369,7 +369,7 @@ class ApiController(RedditController):
         return self._handle_login(*args, **kwargs)
 
     @cross_domain(g.trusted_origins, allow_credentials=True)
-    def POST_register(self, *arg, **kwargs):
+    def POST_register(self, *args, **kwargs):
         return self._handle_register(*args, **kwargs)
 
     @validatedForm(VDelay("login"),
