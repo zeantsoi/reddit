@@ -259,7 +259,7 @@ rate_limit = function() {
 
 $.fn.vote = function(vh, callback, event, ui_only) {
     /* for vote to work, $(this) should be the clicked arrow */
-    if (r.login.ui.loginRequiredAction(event) && $(this).hasClass("arrow")) {
+    if (reddit.logged && $(this).hasClass("arrow")) {
         var dir = ( $(this).hasClass(up_cls) ? 1 :
                     ( $(this).hasClass(down_cls) ? -1 : 0) );
         var things = $(this).all_things_by_id();
@@ -299,9 +299,6 @@ $.fn.vote = function(vh, callback, event, ui_only) {
         /* execute any callbacks passed in.  */
         if(callback) 
             callback(things, dir);
-    }
-    if(event) {
-        event.stopPropagation();
     }
 };
 
