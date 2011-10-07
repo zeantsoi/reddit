@@ -1,6 +1,6 @@
 r.login = {
     post: function(form, action, callback) {
-        if (r.config.cnameframe) {
+        if (r.config.cnameframe && !r.config.https_endpoint) {
             form.$el.unbind()
             form.$el.submit()
             return
