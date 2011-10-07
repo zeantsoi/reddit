@@ -181,9 +181,8 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
             } else {
                 var base = r.config.extension ? '/.'+r.config.extension : '/',
                     defaultDest = /\/login\/?$/.test($.url().attr('path')) ? base : window.location,
-                    destParam = $.url().param('dest')
-                destParam = destParam && decodeURIComponent(destParam)
-                window.location = destParam || document.referrer || defaultDest
+                    destParam = this.$el.find('input[name="dest"]').val()
+                window.location = destParam || defaultDest
             }
         } else {
             r.ui.Form.prototype._handleResult.call(this, result)
