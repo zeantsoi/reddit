@@ -27,6 +27,7 @@ from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser, set_last_visit, last_visit
 from r2.lib.utils        import constant_time_compare
 from r2.lib.cache        import sgm
+from r2.lib import filters
 from r2.lib.log import log_text
 
 from pylons import g
@@ -602,12 +603,12 @@ def valid_login(name, password):
     return valid_password(a, password)
 
 def valid_password(a, password):
-    # bail out early if the account's invalid
-    if not hasattr(a, 'name') or not hasattr(a, 'password'):
+    # bail out early if the account or password's invalid
+    if not hasattr(a, 'name') or not hasattr(a, 'password') or not password:
         return False
 
     # standardize on utf-8 encoding
-    password = password.encode('utf-8')
+    password = filters._force_utf8(password)
 
     # this is really easy if it's a sexy bcrypt password
     if a.password.startswith('$2a$'):
