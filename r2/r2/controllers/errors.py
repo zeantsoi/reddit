@@ -85,6 +85,7 @@ error_list = dict((
         ('TOO_OLD', _("that's a piece of history now; it's too late to reply to it")),
         ('BAD_CSS_NAME', _('invalid css name')),
         ('TOO_MUCH_FLAIR_CSS', _('too many flair css classes')),
+        ('OAUTH2_INVALID_CLIENT', _('invalid client id')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
