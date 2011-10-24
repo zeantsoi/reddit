@@ -128,11 +128,13 @@ class AdSR(Relation(Ad, Subreddit)):
 
     @classmethod
     def by_sr_merged(cls, sr, _update=False):
+        g.log.error('oh shit, bitches. doing the stuff now!')
+
         if sr.name == g.default_sr:
             return cls.by_sr(sr)
 
         my_adsrs =     cls.by_sr(sr)
-        global_adsrs = cls.by_sr(Subreddit._by_name(g.default_sr))
+        global_adsrs = cls.by_sr(Subreddit._by_name(g.default_sr, stale=True))
 
         seen = {}
         for adsr in my_adsrs:
