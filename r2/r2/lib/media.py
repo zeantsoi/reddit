@@ -154,11 +154,11 @@ def set_media(link, force = False):
         if not res:
             print "%s made a bad media obj for link %s" % (scraper, link._id36)
             media_object = None
+    
+    thumbnail_url = upload_media(thumbnail) if thumbnail else None
+    thumbnail_size = thumbnail.size if thumbnail else None
 
-    if thumbnail:
-        thumbnail_url = upload_media(thumbnail)
-
-    update_link(link, thumbnail_url, media_object, thumbnail_size=thumbnail.size)
+    update_link(link, thumbnail_url, media_object, thumbnail_size=thumbnail_size)
 
 def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
     image = str_to_image(image_data)
