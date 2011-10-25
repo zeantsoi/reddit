@@ -218,7 +218,7 @@ def valid_url(prop,value,report):
                 if g.s3_media_direct:
                     baseurl = "http://%s/%s" % (s3_direct_url, bucket)
                 url = "%s/%s_%d.png"\
-                                  % (baseurl, c.site._fullname, num)
+                                  % (baseurl, c.site._fullname, url)
             url = s3_https_if_secure(url)
             value._setCssText("url(%s)"%url)
         else:
