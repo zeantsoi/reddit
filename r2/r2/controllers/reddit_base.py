@@ -675,7 +675,7 @@ class MinimalController(BaseController):
 
         action = request.environ["pylons.routes_dict"]["action_name"]
 
-        handler = self._get_action_handler(method, action)
+        handler = self._get_action_handler(action, method)
         cors = handler and getattr(handler, "cors_perms", None)
 
         if cors and cors["origin_check"](origin):
