@@ -24,6 +24,9 @@ from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.jsontemplates import IdentityJsonTemplate
 
 class APIv1Controller(OAuth2ResourceController):
+   def try_pagecache(self):
+      pass
+
    @require_oauth2_scope("identity")
    def GET_me(self):
       resp = IdentityJsonTemplate().data(c.oauth_user)
