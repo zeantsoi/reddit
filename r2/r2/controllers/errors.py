@@ -86,6 +86,7 @@ error_list = dict((
         ('BAD_CSS_NAME', _('invalid css name')),
         ('TOO_MUCH_FLAIR_CSS', _('too many flair css classes')),
         ('OAUTH2_INVALID_CLIENT', _('invalid client id')),
+        ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

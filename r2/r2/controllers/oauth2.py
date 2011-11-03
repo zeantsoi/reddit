@@ -71,6 +71,8 @@ class OAuth2FrontendController(RedditController):
     def _error_response(self, resp):
         if (errors.OAUTH2_INVALID_CLIENT, "client_id") in c.errors:
             resp["error"] = "unauthorized_client"
+        elif (errors.OAUTH2_ACCESS_DENIED, "authorize") in c.errors:
+            resp["error"] = "access_denied"
         elif (errors.INVALID_OPTION, "response_type") in c.errors:
             resp["error"] = "unsupported_response_type"
         elif (errors.INVALID_OPTION, "scope") in c.errors:
@@ -100,7 +102,7 @@ class OAuth2FrontendController(RedditController):
               redirect_uri = VUrl("redirect_uri", allow_self=False, lookup=False),
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT),
-              authorize = VOneOf("authorize", ("allow", "deny")))
+              authorize = VRequired("authorize", errors.OAUTH2_ACCESS_DENIED))
     def POST_authorize(self, authorize, client, redirect_uri, scope, state):
         self._check_redirect_uri(client, redirect_uri)
 
@@ -109,11 +111,8 @@ class OAuth2FrontendController(RedditController):
             resp["state"] = state
 
         if not c.errors:
-            if authorize == "allow":
-                code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id, scope)
-                resp["code"] = code._id
-            else:
-                resp["error"] = "access_denied"
+            code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id, scope)
+            resp["code"] = code._id
         else:
             self._error_response(resp)
 
