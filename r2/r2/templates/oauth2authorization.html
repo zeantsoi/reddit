@@ -38,6 +38,7 @@
       <input type="hidden" name="redirect_uri" value="${thing.redirect_uri}" />
       <input type="hidden" name="scope" value="${thing.scope['id']}" />
       <input type="hidden" name="state" value="${thing.state}" />
+      <input type="hidden" name="uh" value="${c.modhash}"/>
       <div>
         <input type="submit" class="fancybutton allow" name="authorize" value="${_("Allow")}" />
         <input type="submit" class="fancybutton decline" value="${_("Decline")}" />

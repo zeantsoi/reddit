@@ -32,7 +32,7 @@ from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.oauth2 import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
 from r2.controllers.errors import errors
-from validator import validate, VRequired, VOneOf, VUrl, VUser
+from validator import validate, VRequired, VOneOf, VUrl, VUser, VModhash
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 
@@ -73,6 +73,8 @@ class OAuth2FrontendController(RedditController):
             resp["error"] = "unauthorized_client"
         elif (errors.OAUTH2_ACCESS_DENIED, "authorize") in c.errors:
             resp["error"] = "access_denied"
+        elif (errors.BAD_HASH, None) in c.errors:
+            resp["error"] = "access_denied"
         elif (errors.INVALID_OPTION, "response_type") in c.errors:
             resp["error"] = "unsupported_response_type"
         elif (errors.INVALID_OPTION, "scope") in c.errors:
@@ -98,6 +100,7 @@ class OAuth2FrontendController(RedditController):
             return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
 
     @validate(VUser(),
+              VModhash(fatal=False),
               client = VClientID(),
               redirect_uri = VUrl("redirect_uri", allow_self=False, lookup=False),
               scope = VOneOf("scope", scope_info.keys()),
