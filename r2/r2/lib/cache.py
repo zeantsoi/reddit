@@ -353,7 +353,7 @@ class CacheChain(CacheUtils, local):
     flush_all = make_set_fn('flush_all')
     cache_negative_results = False
 
-    def get(self, key, default = None, allow_local = True):
+    def get(self, key, default = None, allow_local = True, stale=None):
         for c in self.caches:
             if not allow_local and isinstance(c,LocalCache):
                 continue
