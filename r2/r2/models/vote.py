@@ -292,12 +292,7 @@ class Vote(MultiRelation('vote',
         rels = {}
         for obj in objs:
             try:
-                # hack to start reading comment votes from new ring
-                # without affecting dual-writes
-                if obj.__class__ == Comment:
-                    types = CassandraVote._rel(sub.__class__, obj.__class__)
-                else:
-                    types = OldCassandraVote._rel(sub.__class__, obj.__class__)
+                types = OldCassandraVote._rel(sub.__class__, obj.__class__)
             except TdbException:
                 # for types for which we don't have a vote rel, we'll
                 # skip them
