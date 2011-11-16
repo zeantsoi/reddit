@@ -4901,3 +4901,16 @@ tr.gold-accent + tr > td {
     background: #e4e4e4;
     box-shadow: inset 0px -1px 0px white;
 }
+
+/* November 16 -- http://americancensorship.org */
+#censorshipbar {
+    position: absolute;
+    top: 32px;
+    left: 0px;
+    width: 120px;
+    height: 16px;
+    vertical-align: middle;
+    text-align: center;
+    z-index: 5555;
+    background: #000 url(../stop-censorship-small.png) no-repeat center center;
+}
