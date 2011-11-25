@@ -45,7 +45,7 @@ def score_changes(amount, old_amount):
 
 class CassandraVote(tdb_cassandra.Relation):
     _use_db = False
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     _bool_props = ('valid_user', 'valid_thing', 'organic')
     _str_props  = ('name', # one of '-1', '0', '1'
@@ -82,7 +82,8 @@ class CassandraVote(tdb_cassandra.Relation):
         cv._commit()
 
 class OldCassandraVote(CassandraVote):
-    _use_new_ring = False
+    # DO NOT LET THIS LINE GO OUT TO OPEN SOURCE
+    _connection_pool = 'old'
 
     @classmethod
     def _rel(cls, thing1_cls, thing2_cls):
@@ -97,7 +98,7 @@ class OldCassandraVote(CassandraVote):
 class VotesByLink(tdb_cassandra.View):
     _use_db = True
     _type_prefix = 'VotesByLink'
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     # _view_of = CassandraLinkVote
 
@@ -113,7 +114,7 @@ class VotesByLink(tdb_cassandra.View):
 class VotesByDay(tdb_cassandra.View):
     _use_db = True
     _type_prefix = 'VotesByDay'
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     # _view_of = CassandraLinkVote
 

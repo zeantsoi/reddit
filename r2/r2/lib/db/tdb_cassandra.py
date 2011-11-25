@@ -35,10 +35,8 @@ from uuid import uuid1
 from itertools import chain
 import cPickle as pickle
 
-old_cassandra = g.cassandra
-old_seeds = g.cassandra_seeds
-new_cassandra = g.new_cassandra
-new_seeds = g.new_cassandra_seeds
+connection_pools = g.cassandra_pools
+default_connection_pool = g.cassandra_default_pool
 
 keyspace = 'reddit'
 thing_cache = g.thing_cache
@@ -128,13 +126,9 @@ class ThingMeta(type):
             if not getattr(cls, "_write_consistency_level", None):
                 cls._write_consistency_level = write_consistency_level
 
-            # classes with "_use_new_ring = True" get mapped to CFs on the new ring
-            if not getattr(cls, '_use_new_ring', False):
-                connection_pool = old_cassandra
-                cassandra_seeds = old_seeds
-            else:
-                connection_pool = new_cassandra
-                cassandra_seeds = new_seeds
+            pool_name = getattr(cls, "_connection_pool", default_connection_pool)
+            connection_pool = connection_pools[pool_name]
+            cassandra_seeds = connection_pool.server_list
 
             try:
                 cls._cf = ColumnFamily(connection_pool,

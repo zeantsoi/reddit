@@ -107,7 +107,7 @@ class Globals(object):
                    'rendercaches',
                    'servicecaches',
                    'cassandra_seeds',
-                   'new_cassandra_seeds',
+                   'old_cassandra_seeds',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -218,23 +218,38 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
-        self.cassandra = PycassaConnectionPool('reddit',
-                                               server_list = self.cassandra_seeds,
-                                               pool_size = len(self.cassandra_seeds),
-                                               # TODO: .ini setting
-                                               timeout=15, max_retries=3,
-                                               prefill=False)
-        self.new_cassandra = PycassaConnectionPool('reddit',
-                                                   server_list=self.new_cassandra_seeds,
-                                                   pool_size=len(self.new_cassandra_seeds),
-                                                   timeout=2, max_retries=3,
-                                                   prefill=False)
+
+
+        keyspace = "reddit"
+        self.cassandra_pools = {
+            "old":
+                PycassaConnectionPool(
+                    keyspace,
+                    logging_name="old",
+                    server_list=self.old_cassandra_seeds,
+                    pool_size=len(self.old_cassandra_seeds),
+                    timeout=15,
+                    max_retries=3,
+                    prefill=False
+                ),
+            "main":
+                PycassaConnectionPool(
+                    keyspace,
+                    logging_name="main",
+                    server_list=self.cassandra_seeds,
+                    pool_size=len(self.cassandra_seeds),
+                    timeout=2,
+                    max_retries=3,
+                    prefill=False
+                ),
+        }
+
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
         self.permacache = CassandraCacheChain(localcache_cls(),
                                               CassandraCache('permacache',
-                                                             self.cassandra,
+                                                             self.cassandra_pools[self.cassandra_default_pool],
                                                              read_consistency_level = self.cassandra_rcl,
                                                              write_consistency_level = self.cassandra_wcl),
                                               memcache = perma_memcache,

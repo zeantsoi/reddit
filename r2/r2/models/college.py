@@ -17,7 +17,7 @@ class CollegeCounts(tdb_cassandra.Thing):
     '''
 
     _use_db = True
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     @staticmethod
     def _get_rowkey(dt):
