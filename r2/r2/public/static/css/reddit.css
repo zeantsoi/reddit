@@ -459,7 +459,7 @@ ul.flat-vert {text-align: left;}
 }
 
 .disabled .morelink .nub, .disabled .morelink:hover .nub {
-    background-image: url(../gradient-nub-gray.png);  /* SPRITE stretch-x */
+    background-image: url(../gradient-nub-gray.png);  /* SPRITE */
 }
 
 .sidebox.submit.disabled .spacer a {
