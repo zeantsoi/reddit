@@ -26,7 +26,6 @@ import signal
 from datetime import timedelta, datetime
 from urlparse import urlparse
 import json
-from pycassa.pool import ConnectionPool as PycassaConnectionPool
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
@@ -36,7 +35,7 @@ from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
-from r2.lib.stats import Stats, CacheStats
+from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 
 class Globals(object):
 
@@ -216,6 +215,9 @@ class Globals(object):
         self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
         self.make_lock = make_lock_factory(self.memcache)
 
+        self.stats = Stats(global_conf.get('statsd_addr'),
+                           global_conf.get('statsd_sample_rate'))
+
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
 
@@ -223,8 +225,9 @@ class Globals(object):
         keyspace = "reddit"
         self.cassandra_pools = {
             "old":
-                PycassaConnectionPool(
+                StatsCollectingConnectionPool(
                     keyspace,
+                    stats=self.stats,
                     logging_name="old",
                     server_list=self.old_cassandra_seeds,
                     pool_size=len(self.old_cassandra_seeds),
@@ -233,8 +236,9 @@ class Globals(object):
                     prefill=False
                 ),
             "main":
-                PycassaConnectionPool(
+                StatsCollectingConnectionPool(
                     keyspace,
+                    stats=self.stats,
                     logging_name="main",
                     server_list=self.cassandra_seeds,
                     pool_size=len(self.cassandra_seeds),
@@ -243,8 +247,9 @@ class Globals(object):
                     prefill=False
                 ),
             "noretries":
-                PycassaConnectionPool(
+                StatsCollectingConnectionPool(
                     keyspace,
+                    stats=self.stats,
                     logging_name="noretries",
                     server_list=self.cassandra_seeds,
                     pool_size=len(self.cassandra_seeds),
@@ -301,9 +306,6 @@ class Globals(object):
                                          HardCache(self)),
                                         cache_negative_results = True)
         self.cache_chains.update(hardcache=self.hardcache)
-
-        self.stats = Stats(global_conf.get('statsd_addr'),
-                           global_conf.get('statsd_sample_rate'))
 
         # I know this sucks, but we need non-request-threads to be
         # able to reset the caches, so we need them be able to close
