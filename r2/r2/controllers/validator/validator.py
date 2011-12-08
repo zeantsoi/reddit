@@ -868,6 +868,7 @@ class VThrottledLogin(VLogin):
         self.vlength = VLength("user", max_length=100)
         
     def run(self, username, password):
+        username = username.strip()
         username = self.vlength.run(username)
 
         self.vdelay.run()
