@@ -287,7 +287,8 @@ class Reddit(Templated):
                 (c.site.is_moderator(c.user) or c.user_is_admin)):
                 ps.append(SideContentBox(_('admin box'), self.sr_admin_menu()))
 
-        ps.append(SOPABox())
+        if not c.cname:
+            ps.append(SOPABox())
 
         if no_ads_yet and not g.disable_ads:
             if c.user.pref_show_adbox or not c.user.gold:
