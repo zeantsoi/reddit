@@ -27,7 +27,7 @@ r.ui.SOPABox.prototype = {
     },
 
     hide: function() {
-        $.cookie('hidesopabox', '1', {path:'/', expires:7})
+        $.cookie('hidesopabox', '1', {domain:r.config.cur_domain, path:'/', expires:7})
         this.$el.hide()
     }
 }
