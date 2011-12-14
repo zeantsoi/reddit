@@ -4934,7 +4934,8 @@ tr.gold-accent + tr > td {
 }
 
 #sopabox .to {
-    margin: 0 .5em;
+    margin-left: .6em;
+    margin-right: .3em;
 }
 
 #sopabox .duration, #sopabox em {
@@ -4943,7 +4944,7 @@ tr.gold-accent + tr > td {
 
 #sopabox button.hide {
     position: absolute;
-    top: 10px;
+    top: 12px;
     right: 10px;
     border: none;
     margin: 0;
@@ -4957,6 +4958,10 @@ tr.gold-accent + tr > td {
     display: none;
 }
 
+#sopabox .duration {
+    color: #dd0000;
+}
+
 #sopabox .description {
     border-top: 1px dotted #aaa;
     margin-top: 2px;
@@ -4968,7 +4973,6 @@ tr.gold-accent + tr > td {
 }
 
 #sopabox li {
-    display: inline;
     margin-right: 10px;
 }
 

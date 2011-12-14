@@ -19,9 +19,7 @@ r.ui.SOPABox.prototype = {
             var hours = Math.floor(remaining / (60*60))
                 minutes = Math.floor(remaining % (60*60) / 60)
                 seconds = Math.floor(remaining % 60)
-            this.$el.find('.duration')
-                .text(pad(hours)+'h '+pad(minutes)+'m '+pad(seconds)+'s')
-                .css('color', '#'+(Math.floor(255*(hours/24)).toString(16))+'0000')
+            this.$el.find('.duration').text(pad(hours)+'h '+pad(minutes)+'m '+pad(seconds)+'s')
             this.$el.find('.countdown').show()
         }
     },
