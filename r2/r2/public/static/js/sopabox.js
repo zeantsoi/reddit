@@ -13,7 +13,7 @@ r.ui.SOPABox.prototype = {
             // via MDN: https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date#Example:_ISO_8601_formatted_dates
             return n < 10 ? '0'+n : n
         }
-        var remaining = (new Date(2011, 11, 15, 10) - new Date)/1000
+        var remaining = (Date.UTC(2011, 11, 15, 15) - new Date)/1000
 
         if (remaining > 0) {
             var hours = Math.floor(remaining / (60*60))
