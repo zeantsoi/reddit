@@ -53,6 +53,8 @@ import re, socket
 import time as time_module
 from urllib import quote_plus
 
+from r2.lib.db.tdb_sql import CreationError
+
 class FrontController(RedditController):
 
     allow_stylesheets = True
@@ -839,7 +841,12 @@ class FormsController(RedditController):
             cache_evt.clear()
             c.user.email_verified = True
             c.user._commit()
-            Award.give_if_needed("verified_email", c.user)
+            try:
+                Award.give_if_needed("verified_email", c.user)
+            except CreationError:
+                g.log.info('VERIFY: verified_email trophy owed to %s' % c.user._id)
+                Trophy.by_account_cache(c.user._id, _update=True)
+
             return self.redirect(dest)
 
     @validate(cache_evt = VHardCacheKey('email-reset', ('key',)),
