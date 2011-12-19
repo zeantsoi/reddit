@@ -29,6 +29,8 @@ from pylons import g
 from datetime import datetime, timedelta
 from copy import copy
 
+from r2.lib.db.tdb_sql import CreationError
+
 class AdminTools(object):
 
     def spam(self, things, auto=True, moderator_banned=False,
@@ -184,12 +186,17 @@ class AdminTools(object):
         account.gold_expiration = existing_expiration + timedelta(days)
 
         description = "Since " + now.strftime("%B %Y")
-        trophy = Award.give_if_needed("reddit_gold", account,
-                                     description=description,
-                                     url="/help/gold")
-        if trophy and trophy.description.endswith("Member Emeritus"):
-            trophy.description = description
-            trophy._commit()
+        try:
+            trophy = Award.give_if_needed("reddit_gold", account,
+                                         description=description,
+                                         url="/help/gold")
+            if trophy and trophy.description.endswith("Member Emeritus"):
+                trophy.description = description
+                trophy._commit()
+        except CreationError:
+            Trophy.by_account_cache(account._id, _update=True)
+            g.log.info('REDDITGOLD: Trophy owed to %s' % account._id)
+
         account._commit()
 
         account.friend_rels_cache(_update=True)
