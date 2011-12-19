@@ -1390,10 +1390,15 @@ class ApiController(RedditController):
             end_trial(thing, why + "-removed")
             admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
+            if isinstance(c.site, FakeSubreddit):
+                sr = Subreddit._byID(thing.sr_id)
+            else:
+                sr = c.site
+
             if isinstance(thing, Link):
-                ModAction.create(c.site, c.user, 'removelink', target=thing)
+                ModAction.create(sr, c.user, 'removelink', target=thing)
             elif isinstance(thing, Comment):
-                ModAction.create(c.site, c.user, 'removecomment', target=thing)
+                ModAction.create(sr, c.user, 'removecomment', target=thing)
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
@@ -1405,10 +1410,15 @@ class ApiController(RedditController):
         end_trial(thing, why + "-approved")
         admintools.unspam(thing, c.user.name)
 
+        if isinstance(c.site, FakeSubreddit):
+            sr = Subreddit._byID(thing.sr_id)
+        else:
+            sr = c.site
+
         if isinstance(thing, Link):
-            ModAction.create(c.site, c.user, 'approvelink', target=thing)
+            ModAction.create(sr, c.user, 'approvelink', target=thing)
         elif isinstance(thing, Comment):
-            ModAction.create(c.site, c.user, 'approvecomment', target=thing)
+            ModAction.create(sr, c.user, 'approvecomment', target=thing)
 
     @validatedForm(VUser(), VModhash(),
                    VCanDistinguish(('id', 'how')),
