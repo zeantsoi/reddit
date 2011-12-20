@@ -1,10 +1,10 @@
 r.ui.SOPABox = function(el) {
     r.ui.Base.apply(this, arguments)
     this.$el.find('.hide').click($.proxy(this, 'hide'))
-    this.interval = setInterval($.proxy(this, 'update'), 1000)
-    this.update()
-    if (!$.cookie('hidesopabox')) {
-        this.$el.show()
+    if (this.update()) {
+        if (!$.cookie('hidesopabox')) {
+            this.$el.show()
+        }
     }
 }
 r.ui.SOPABox.prototype = {
@@ -14,16 +14,7 @@ r.ui.SOPABox.prototype = {
             return n < 10 ? '0'+n : n
         }
         var remaining = (Date.UTC(2011, 11, 21, 14) - new Date)/1000
-
-        if (remaining > 0) {
-            var hours = Math.floor(remaining / (60*60))
-                minutes = Math.floor(remaining % (60*60) / 60)
-                seconds = Math.floor(remaining % 60)
-            this.$el.find('.duration').text(pad(hours)+'h '+pad(minutes)+'m '+pad(seconds)+'s')
-        } else {
-            this.$el.addClass("live")
-            clearInterval(this.interval)
-        }
+        return remaining > 0
     },
 
     hide: function() {
