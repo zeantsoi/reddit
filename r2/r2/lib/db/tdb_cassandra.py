@@ -936,6 +936,8 @@ class ColumnQuery(object):
 
             retrieved += self._chunk_size
             columns = [{col_name: r[col_name]} for col_name in r if col_name != column_start]
+            if not columns:
+                return
             column_start = columns[-1].keys()[0]
             objs = self.column_to_obj(columns)
 
