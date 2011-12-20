@@ -870,7 +870,7 @@ class ColumnQuery(object):
         self.rowkey = rowkey
         self.column_start = column_start
         self.column_finish = column_finish
-        self.column_count = column_count
+        self._limit = column_count
         self.column_reversed = column_reversed
         self.column_to_obj = column_to_obj or self.default_column_to_obj
         self.obj_to_column = obj_to_column or self.default_obj_to_column
@@ -913,15 +913,12 @@ class ColumnQuery(object):
         # Logic of standard reddit query is opposite of cassandra
         self.column_reversed = False
 
-    def _limit(self, l):
-        self.column_count = l
-
     def __iter__(self):
         # Get the max number of columns we could grab in this query
         total_columns = self.cls._cf.get_count(self.rowkey, 
-                                                   column_start=self.column_start, 
-                                                   column_finish=self.column_finish)
-        retrievable_columns = min(total_columns, self.column_count)
+                                               column_start=self.column_start, 
+                                               column_finish=self.column_finish)
+        retrievable_columns = min(total_columns, self._limit)
 
         retrieved = 0
         column_start = self.column_start
