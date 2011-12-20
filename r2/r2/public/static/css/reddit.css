@@ -4918,3 +4918,65 @@ tr.gold-accent + tr > td {
     background: #e4e4e4;
     box-shadow: inset 0px -1px 0px white;
 }
+
+#sopabox {
+    position: relative;
+    display: none;
+    border: 1px solid gray;
+    padding: 8px;
+    font-size: 13px;
+    background: white;
+    color: black;
+}
+
+#sopabox em {
+    font-style: italic;
+}
+
+#sopabox .to {
+    margin-left: .6em;
+    margin-right: .3em;
+}
+
+#sopabox .duration, #sopabox em {
+    font-size: 16px;
+}
+
+#sopabox button.hide {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+    border: none;
+    margin: 0;
+    background: url(../kill.png) no-repeat;
+    width: 11px;
+    height: 11px;
+    cursor: pointer;
+}
+
+#sopabox .countdown {
+    display: none;
+}
+
+#sopabox .duration {
+    color: #dd0000;
+}
+
+#sopabox .description {
+    border-top: 1px dotted #aaa;
+    margin-top: 2px;
+    color: #333;
+}
+
+#sopabox p, #sopabox ul {
+    margin-top: 5px;
+}
+
+#sopabox li {
+    margin-right: 10px;
+}
+
+#sopabox li:before {
+    content: '> ';
+    color: #777;
+}
