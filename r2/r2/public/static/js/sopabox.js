@@ -1,7 +1,7 @@
 r.ui.SOPABox = function(el) {
     r.ui.Base.apply(this, arguments)
     this.$el.find('.hide').click($.proxy(this, 'hide'))
-    setInterval($.proxy(this, 'update'), 1000)
+    this.interval = setInterval($.proxy(this, 'update'), 1000)
     this.update()
     if (!$.cookie('hidesopabox')) {
         this.$el.show()
@@ -13,14 +13,16 @@ r.ui.SOPABox.prototype = {
             // via MDN: https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date#Example:_ISO_8601_formatted_dates
             return n < 10 ? '0'+n : n
         }
-        var remaining = (Date.UTC(2011, 11, 15, 15) - new Date)/1000
+        var remaining = (Date.UTC(2011, 11, 21, 14) - new Date)/1000
 
         if (remaining > 0) {
             var hours = Math.floor(remaining / (60*60))
                 minutes = Math.floor(remaining % (60*60) / 60)
                 seconds = Math.floor(remaining % 60)
             this.$el.find('.duration').text(pad(hours)+'h '+pad(minutes)+'m '+pad(seconds)+'s')
-            this.$el.find('.countdown').show()
+        } else {
+            this.$el.addClass("live")
+            clearInterval(this.interval)
         }
     },
 

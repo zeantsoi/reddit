@@ -4933,13 +4933,12 @@ tr.gold-accent + tr > td {
     font-style: italic;
 }
 
-#sopabox .to {
-    margin-left: .6em;
-    margin-right: .3em;
+#sopabox .sopatitle {
+    font-size: 16px;
 }
 
-#sopabox .duration, #sopabox em {
-    font-size: 16px;
+#sopabox .countdown {
+    display: block;
 }
 
 #sopabox button.hide {
@@ -4954,12 +4953,8 @@ tr.gold-accent + tr > td {
     cursor: pointer;
 }
 
-#sopabox .countdown {
-    display: none;
-}
-
 #sopabox .duration {
-    color: #dd0000;
+    color: #d00;
 }
 
 #sopabox .description {
@@ -4979,4 +4974,13 @@ tr.gold-accent + tr > td {
 #sopabox li:before {
     content: '> ';
     color: #777;
+}
+
+#sopabox.live a.watch {
+    font-weight: bold;
+    color: #a00;
+}
+
+#sopabox.live .not-live {
+    display: none;
 }
