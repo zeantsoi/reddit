@@ -177,11 +177,7 @@ class Account(Thing):
 
         karmas.sort(key = lambda x: abs(x[1] + x[2]), reverse=True)
 
-        karmas.insert(0, ('total',
-                          self.karma('link'),
-                          self.karma('comment')))
-
-        karmas.append(('old',
+        karmas.append(('pre-subreddits',
                        self._t.get('link_karma', 0),
                        self._t.get('comment_karma', 0)))
 
