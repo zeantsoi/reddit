@@ -4642,6 +4642,12 @@ tr.gold-accent + tr > td {
     color: #666;
 }
 
+#per-sr-karma th.helpful span {
+    border-bottom: 1px dotted #666;
+    cursor: help;
+    display: inline-block;
+}
+
 .more-karmas {
     display: none;
 }

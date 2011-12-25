@@ -84,13 +84,17 @@
        karmas = thing.user.all_karmas()
      %>
      <tbody>
-     %for i, (label, lc, cc) in enumerate(karmas):
+     %for i, (label, title, lc, cc) in enumerate(karmas):
         <tr
         % if c.user_is_admin and i >= 5:
           class="more-karmas"
         % endif
         >
+        % if title:
+          <th class="helpful" title="${title}"><span>${label}</span></th>
+        % else:
           <th>${label}</th>
+        % endif
           <td>${lc}</td>
           <td>${cc}</td>
         </tr>
