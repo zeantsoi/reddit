@@ -101,12 +101,14 @@
       %endfor
       </tbody>
     </table>
+    % if not c.user_is_admin or len(karmas) > 5:
     <div class="giftgold karma-breakdown">
       <a href="javascript:void(0)"
          onclick="$('.more-karmas').show();$(this).hide();return false">
          show karma breakdown by subreddit
       </a>
     </div>
+    % endif
   %endif
 
   %if thing.gold_remaining:
