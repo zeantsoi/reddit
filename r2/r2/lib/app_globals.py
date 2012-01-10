@@ -67,6 +67,7 @@ class Globals(object):
                  'comment_visits_period',
                   'min_membership_create_community',
                  'bcrypt_work_factor',
+                 'bestof_magic_userid',
                  ]
 
     float_props = ['min_promote_bid',
