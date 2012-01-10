@@ -81,19 +81,6 @@ class CassandraVote(tdb_cassandra.Relation):
             cv.organic = getattr(v, 'organic', False)
         cv._commit()
 
-class OldCassandraVote(CassandraVote):
-    # DO NOT LET THIS LINE GO OUT TO OPEN SOURCE
-    _connection_pool = 'old'
-
-    @classmethod
-    def _rel(cls, thing1_cls, thing2_cls):
-        if (thing1_cls, thing2_cls) == (Account, Link):
-            return OldCassandraLinkVote
-        elif (thing1_cls, thing2_cls) == (Account, Comment):
-            return OldCassandraCommentVote
-
-        raise TdbException("Can't find relation for %r(%r,%r)"
-                           % (cls, thing1_cls, thing2_cls))
 
 class VotesByLink(tdb_cassandra.View):
     _use_db = True
@@ -167,30 +154,9 @@ class CassandraLinkVote(CassandraVote):
 
         return CassandraVote._on_create(self)
 
-class OldCassandraLinkVote(OldCassandraVote):
-    _use_db = True
-    _type_prefix = 'r6'
-    _cf_name = 'LinkVote'
-
-    # these parameters aren't actually meaningful, they just help
-    # keep track
-    # _views = [VotesByLink, VotesByDay]
-    _thing1_cls = Account
-    _thing2_cls = Link
-
 class CassandraCommentVote(CassandraVote):
     _use_db = True
     _type_prefix = 'CommentVote'
-    _cf_name = 'CommentVote'
-
-    # these parameters aren't actually meaningful, they just help
-    # keep track
-    _thing1_cls = Account
-    _thing2_cls = Comment
-
-class OldCassandraCommentVote(OldCassandraVote):
-    _use_db = True
-    _type_prefix = 'r5'
     _cf_name = 'CommentVote'
 
     # these parameters aren't actually meaningful, they just help
@@ -273,7 +239,6 @@ class Vote(MultiRelation('vote',
         # now write it out to Cassandra. We'll write it out to both
         # this way for a while
         CassandraVote._copy_from(v)
-        OldCassandraVote._copy_from(v)
 
         queries.changed(v._thing2, True)
 
