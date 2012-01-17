@@ -5055,3 +5055,60 @@ tr.gold-accent + tr > td {
 .modactions.editflair {
     background-image: url(../modactions_editflair.png); /* SPRITE */
 }
+
+#sopabox {
+    position: relative;
+    display: none;
+    border: 1px solid gray;
+    padding: 8px;
+    font-size: 13px;
+    background: white;
+    color: black;
+}
+
+#sopabox em {
+    font-style: italic;
+}
+
+#sopabox .countdown {
+    display: block;
+    font-size: 14px;
+}
+
+#sopabox .duration {
+    white-space: nowrap;
+    color: #d00;
+}
+
+#sopabox button.hide {
+    float: right;
+    margin: 3px;
+    border: none;
+    background: url(../kill.png) no-repeat;
+    width: 11px;
+    height: 11px;
+    cursor: pointer;
+}
+
+#sopabox .description {
+    border-top: 1px dotted #aaa;
+    margin-top: 2px;
+    color: #333;
+}
+
+#sopabox p, #sopabox ul {
+    margin-top: 5px;
+}
+
+#sopabox li {
+    margin-right: 10px;
+}
+
+#sopabox li:before {
+    content: '> ';
+    color: #777;
+}
+
+#sopabox.live .not-live {
+    display: none;
+}
