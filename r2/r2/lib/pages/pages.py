@@ -226,6 +226,8 @@ class Reddit(Templated):
 
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
+        
+        ps.append(SOPABox())
 
         if c.user.pref_show_sponsorships or not c.user.gold:
             ps.append(SponsorshipBox())
@@ -548,6 +550,11 @@ class SideBox(CachedTemplate):
                            show_cover = show_cover, nocname=nocname,
                            disabled=disabled)
 
+class SOPABox(CachedTemplate):
+    """
+    SOPA soap box
+    """
+    pass
 
 class PrefsPage(Reddit):
     """container for pages accessible via /prefs.  No extension handling."""
