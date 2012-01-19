@@ -82,11 +82,11 @@ setup(
         "pylibmc==1.2.1-dev",
         "py-bcrypt",
         "python-statsd",
-        "snudown==1.0.2",
+        "snudown",
     ],
     dependency_links=[
         "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",
-        "https://nodeload.github.com/reddit/snudown/tarball/v1.0.2#egg=snudown-1.0.2",
+        "https://nodeload.github.com/reddit/snudown/tarball/v1.0.2#egg=snudown-1.0.3",
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,
