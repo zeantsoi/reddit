@@ -154,13 +154,9 @@ def get_all_links(author_id = None):
 # subreddit roadblocking functions
 
 roadblock_prefix = "promotion_roadblock"
-blackout_prefix = "promotion_blackout"
 def roadblock_key(sr_name, d):
-    if sr_name:
-        return "%s-%s_%s" % (roadblock_prefix,
-                             sr_name, d.strftime("%Y_%m_%d"))
-    else:
-        return "%s-all_%s" % (blackout_prefix, d.strftime("%Y_%m_%d"))
+    return "%s-%s_%s" % (roadblock_prefix,
+                         sr_name, d.strftime("%Y_%m_%d"))
 
 def roadblock_reddit(sr_name, start_date, end_date):
     d = start_date
@@ -190,22 +186,11 @@ def is_roadblocked(sr_name, start_date, end_date):
             end_date = datetime.strptime(end_date, "%Y_%m_%d").date()
             return (start_date, end_date)
         d += timedelta(1)
-    return None
-
-def is_blacked_out(start_date, end_date):
-    return is_roadblocked(None, start_date, end_date)
-
-def blackout_reddit(start_date, end_date):
-    return roadblock_reddit(None, start_date, end_date)
-
-def unblackout_reddit(start_date, end_date):
-    return unroadblock_reddit(None, start_date, end_date)
 
 def get_roadblocks():
     rbs = g.hardcache.backend.ids_by_category(roadblock_prefix)
-    blackouts = g.hardcache.backend.ids_by_category(blackout_prefix)
     by_sr = {}
-    for rb in itertools.chain(rbs, blackouts):
+    for rb in rbs:
         rb = rb.split('_')
         date = datetime.strptime('_'.join(rb[1:]), "%Y_%m_%d").date()
         by_sr.setdefault(rb[0], []).append((date, date + timedelta(1)))

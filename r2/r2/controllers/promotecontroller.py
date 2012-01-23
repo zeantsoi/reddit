@@ -244,7 +244,7 @@ class PromoteController(ListingController):
                                       reference_date = promote.promo_datetime_now,
                                       business_days = False, 
                                       admin_override = True),
-                   sr = VSubmitSR('sr', admin_any=True))
+                   sr = VSubmitSR('sr'))
     def POST_add_roadblock(self, form, jquery, dates, sr):
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.BAD_FUTURE_DATE) or
@@ -255,15 +255,9 @@ class PromoteController(ListingController):
                            errors.SUBREDDIT_NOTALLOWED,
                            errors.SUBREDDIT_REQUIRED):
             return
-        if dates:
+        if dates and sr:
             sd, ed = dates
-            if isinstance(sr, AllSR):
-                if not c.user_is_admin:
-                    abort(403, 'forbidden')
-                else:
-                    promote.blackout_reddit(sd.date(), ed.date())
-            else:
-                promote.roadblock_reddit(sr.name, sd.date(), ed.date())
+            promote.roadblock_reddit(sr.name, sd.date(), ed.date())
             jquery.refresh()
 
     @validatedForm(VSponsorAdmin(),
@@ -273,17 +267,11 @@ class PromoteController(ListingController):
                                       reference_date = promote.promo_datetime_now,
                                       business_days = False, 
                                       admin_override = True),
-                   sr = VSubmitSR('sr', admin_any=True))
+                   sr = VSubmitSR('sr'))
     def POST_rm_roadblock(self, form, jquery, dates, sr):
-        if dates:
+        if dates and sr:
             sd, ed = dates
-            if not isinstance(sr, AllSR):
-                promote.unroadblock_reddit(sr.name, sd.date(), ed.date())
-            else:
-                if c.user_is_admin:
-                    promote.unblackout_reddit(sd.date(), ed.date())
-                else:
-                    abort(403, 'forbidden')
+            promote.unroadblock_reddit(sr.name, sd.date(), ed.date())
             jquery.refresh()
 
     @validatedForm(VSponsor('link_id'),
@@ -351,15 +339,6 @@ class PromoteController(ListingController):
                 return
         if targeting == 'none':
             sr = None
-        
-        blacked_out = promote.is_blacked_out(start, end)
-        if blacked_out:
-            msg_params = {"start": blacked_out[0].strftime('%m/%d/%Y'),
-                          "end": blacked_out[1].strftime('%m/%d/%Y')}
-            c.errors.add(errors.BLACKED_OUT, field='startdate',
-                         msg_params=msg_params)
-            form.has_errors("startdate", errors.BLACKED_OUT)
-            return
 
         if indx is not None:
             promote.edit_campaign(l, indx, dates, bid, sr)
