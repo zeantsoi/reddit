@@ -174,6 +174,7 @@ class Globals(object):
         ],
 
         ConfigValue.tuple: [
+            'plugins',
             'stalecaches',
             'memcaches',
             'lockcaches',
