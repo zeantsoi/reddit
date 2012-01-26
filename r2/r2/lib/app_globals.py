@@ -82,6 +82,7 @@ class Globals(object):
                   'log_start',
                   'sqlprinting',
                   'template_debug',
+                  'reload_templates',
                   'uncompressedJS',
                   'enable_doquery',
                   'use_query_cache',
