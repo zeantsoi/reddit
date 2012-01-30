@@ -202,6 +202,7 @@ ul.flat-vert {text-align: left;}
 
 #header-bottom-left {
     font-size: larger;
+    padding-top: 19px;
 }
 
 #header-bottom-right {
@@ -2948,7 +2949,12 @@ ul#image-preview-list .description pre {
 }
 
 #sr-header-area {
-    padding: 3px 0px 3px 5px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 18px;
+    line-height: 18px;
+    padding-left: 5px;
     background-color: #f0f0f0;
     white-space: nowrap;
     overflow: hidden;
@@ -2995,8 +3001,8 @@ ul#image-preview-list .description pre {
     color: black;
     background-color: #f0f0f0;
     position: absolute;
-    right: 0px;
-    top: 3px;
+    top: 0;
+    right: 0;
     padding: 0 5px 0 15px;
     font-weight: bold;
     margin: 0;
