@@ -31,7 +31,7 @@ from r2.models import *
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
-from r2.lib.utils import timeago, tup, filter_links, levenshtein
+from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, ClickGadget, \
     UrlParser, WrappedUser
@@ -793,13 +793,11 @@ class ApiController(RedditController):
 
             if isinstance(item, Comment):
                 kind = 'comment'
-                old = item.body
                 item.body = text
             elif isinstance(item, Link):
                 kind = 'link'
                 if not getattr(item, "is_self", False):
                     return abort(403, "forbidden")
-                old = item.selftext
                 item.selftext = text
 
             if item._deleted:
@@ -811,12 +809,6 @@ class ApiController(RedditController):
 
             if hasattr(item, "bestof_magic") and item.bestof_magic():
                 item.editted = False
-
-            #try:
-            #    lv = levenshtein(old, text)
-            #    item.levenshtein = getattr(item, 'levenshtein', 0) + lv
-            #except:
-            #    pass
 
             item._commit()
 
