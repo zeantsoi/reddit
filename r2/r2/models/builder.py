@@ -345,9 +345,6 @@ class QueryBuilder(Builder):
         last_item = None
         have_next = True
 
-        #for prewrap
-        orig_items = {}
-
         #logloop
         self.loopcount = 0
         
@@ -372,10 +369,16 @@ class QueryBuilder(Builder):
             if not first_item and self.start_count > 0:
                 first_item = new_items[0]
 
-            orig_items.update((i._id, i) for i in new_items)
-
             if self.prewrap_fn:
-                new_items = [self.prewrap_fn(i) for i in new_items]
+                orig_items = {}
+                new_items2 = []
+                for i in new_items:
+                    new = self.prewrap_fn(i)
+                    orig_items[new._id] = i
+                    new_items2.append(new)
+                new_items = new_items2
+            else:
+                orig_items = dict((i._id, i) for i in new_items)
 
             if self.wrap:
                 new_items = self.wrap_items(new_items)
