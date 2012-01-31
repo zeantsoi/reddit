@@ -64,11 +64,12 @@ class CachedQueryBase(object):
 
 
 class CachedQuery(CachedQueryBase):
-    def __init__(self, cf, key, query, filter_fn):
-        self.cf = cf
+    def __init__(self, model, key, query, filter_fn):
+        self.model = model
         self.key = key
         self.query = query
         self.filter = filter_fn
+        self.timestamps = None  # column timestamps, for safe pruning
         super(CachedQuery, self).__init__(query._sort)
 
     def _make_item_tuple(self, item):
@@ -92,13 +93,13 @@ class CachedQuery(CachedQueryBase):
 
     @classmethod
     def _fetch_multi(self, queries):
-        by_cf = collections.defaultdict(list)
+        by_model = collections.defaultdict(list)
         for q in queries:
-            by_cf[q.cf].append(q)
+            by_model[q.model].append(q)
 
         cached_queries = {}
-        for cf, queries in by_cf.iteritems():
-            fetched = cf.get([q.key for q in queries])
+        for model, queries in by_model.iteritems():
+            fetched = model.get([q.key for q in queries])
             cached_queries.update(fetched)
 
         for q in queries:
@@ -115,20 +116,20 @@ class CachedQuery(CachedQueryBase):
             t = self._make_item_tuple(thing)
             values[t[0]] = tuple(t[1:])
 
-        self.cf.insert(mutator, self.key, values)
+        self.model.insert(mutator, self.key, values)
 
     def _delete(self, mutator, things):
         if not things:
             return
 
         fullnames = [self.filter(x)._fullname for x in things]
-        self.cf.remove(mutator, self.key, fullnames)
+        self.model.remove(mutator, self.key, fullnames)
 
     def _prune(self, mutator):
         extraneous_ids = [t[0] for t in self.data[MAX_CACHED_ITEMS:]]
 
         if extraneous_ids:
-            self.cf.remove_if_unchanged(mutator, self.key,
+            self.model.remove_if_unchanged(mutator, self.key,
                                         extraneous_ids, self.timestamps)
 
             cf_name = self.model.__name__
@@ -141,7 +142,7 @@ class CachedQuery(CachedQueryBase):
         things = list(self.query)
 
         with Mutator(CONNECTION_POOL) as m:
-            self.cf.remove(m, self.key, None)  # empty the whole row
+            self.model.remove(m, self.key, None)  # empty the whole row
             self._insert(m, things)
 
     @classmethod
@@ -221,7 +222,7 @@ def filter_thing2(x):
     return x._thing2
 
 
-def cached_query(cf, filter_fn=filter_identity):
+def cached_query(model, filter_fn=filter_identity):
     def cached_query_decorator(fn):
         def cached_query_wrapper(*args):
             # build the row key from the function name and arguments
@@ -244,7 +245,7 @@ def cached_query(cf, filter_fn=filter_identity):
             query = fn(*args)
 
             # cached results for everyone!
-            return CachedQuery(cf, row_key, query, filter_fn)
+            return CachedQuery(model, row_key, query, filter_fn)
         return cached_query_wrapper
     return cached_query_decorator
 
