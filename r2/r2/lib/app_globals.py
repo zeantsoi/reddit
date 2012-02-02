@@ -70,6 +70,7 @@ class Globals(object):
                   'min_membership_create_community',
                  'bcrypt_work_factor',
                  'bestof_magic_userid',
+                 'cassandra_pool_size',
                  ]
 
     float_props = ['min_promote_bid',
@@ -238,7 +239,7 @@ class Globals(object):
                     stats=self.stats,
                     logging_name="old",
                     server_list=self.old_cassandra_seeds,
-                    pool_size=len(self.old_cassandra_seeds),
+                    pool_size=self.cassandra_pool_size,
                     timeout=15,
                     max_retries=3,
                     prefill=False
@@ -249,7 +250,7 @@ class Globals(object):
                     stats=self.stats,
                     logging_name="main",
                     server_list=self.cassandra_seeds,
-                    pool_size=len(self.cassandra_seeds),
+                    pool_size=self.cassandra_pool_size,
                     timeout=2,
                     max_retries=3,
                     prefill=False
