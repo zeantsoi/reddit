@@ -425,6 +425,9 @@ appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengi
 def ratelimit_agents():
     user_agent = request.user_agent
 
+    if not user_agent:
+        return
+
     # parse out the appid for appengine apps
     appengine_match = appengine_re.match(user_agent)
     if appengine_match:
