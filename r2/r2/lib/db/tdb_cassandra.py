@@ -34,7 +34,7 @@ from r2.lib import cache
 from uuid import uuid1, UUID
 from itertools import chain
 import cPickle as pickle
-from collections import OrderedDict
+from pycassa.util import OrderedDict
 
 connection_pools = g.cassandra_pools
 default_connection_pool = g.cassandra_default_pool
