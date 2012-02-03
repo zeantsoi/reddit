@@ -20,5 +20,4 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from pages import *
-from collegepages import CollegeRanking
 from admin_pages import *
