@@ -815,9 +815,6 @@ class ApiController(RedditController):
                 or (item._ups + item._downs > 2)):
                 item.editted = True
 
-            if hasattr(item, "bestof_magic") and item.bestof_magic():
-                item.editted = False
-
             item._commit()
 
             changed(item)
@@ -851,9 +848,6 @@ class ApiController(RedditController):
             if isinstance(parent, Link):
                 link = parent
                 parent_comment = None
-                if (hasattr(link, "bestof_magic") and link.bestof_magic()
-                    and c.user._id != g.bestof_magic_userid):
-                    abort(403, 'forbidden')
             else:
                 link = Link._byID(parent.link_id, data = True)
                 parent_comment = parent
@@ -1040,10 +1034,6 @@ class ApiController(RedditController):
 
         if getattr(c.user, "suspicious", False):
             g.log.info("%s cast a %d vote on %s", c.user.name, dir, thing._fullname)
-
-        if (hasattr(thing, "bestof_magic") and
-            thing.bestof_magic() == "comment" and dir < 0):
-            dir = 0
 
         dir = (True if dir > 0
                else False if dir < 0
