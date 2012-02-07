@@ -559,6 +559,9 @@ def valid_cookie(cookie):
     if g.read_only_mode:
         return (False, False)
 
+    if uid <= 209:
+        return (False, False)
+
     try:
         account = Account._byID(uid, True)
         if account._deleted:
