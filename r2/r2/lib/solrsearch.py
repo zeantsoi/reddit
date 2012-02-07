@@ -673,6 +673,12 @@ def run_changed(drain=False):
         msgs = [strordict_fullname(msg.body)
                 for msg in msgs]
         fullnames = set(msg['fullname'] for msg in msgs)
+        
+        bad = set()
+        for name in fullnames:
+            if name.startswith('t3') and int(name[3:], 36) > 1000:
+                bad.add(name)
+        fullnames -= bad
 
         things = Thing._by_fullname(fullnames, data=True, return_dict=False)
         things = [x for x in things if isinstance(x, indexed_types)]

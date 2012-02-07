@@ -273,6 +273,8 @@ def run_changed(drain=False, limit=1000):
 
         for item in changed:
             fname = item['fullname']
+            if fname.startswith('t3') and int(fname[3:], 36) < 1000:
+                continue
             boost_only = item.get('boost_only', False)
 
             if fname in add:
