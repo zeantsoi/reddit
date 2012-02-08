@@ -676,7 +676,7 @@ def run_changed(drain=False):
         
         bad = set()
         for name in fullnames:
-            if name.startswith('t3') and int(name[3:], 36) > 1000:
+            if name.startswith('t3') and int(name[3:], 36) < 1000:
                 bad.add(name)
         fullnames -= bad
 
