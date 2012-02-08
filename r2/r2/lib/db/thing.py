@@ -361,7 +361,8 @@ class DataThing(object):
             raise NotFound('huge thing_id in %r' % ids)
 
         def count_found(ret, still_need):
-            cache.stats.cache_report(hits=len(ret), misses=len(still_need))
+            cache.stats.cache_report(hits=len(ret), misses=len(still_need),
+                                     sample_rate=1.0)
 
         if not cache.stats:
             count_found = None
