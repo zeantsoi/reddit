@@ -8,8 +8,8 @@ import json
 from r2.lib.translation import iter_langs
 
 if __name__ != "__main__":
-    from pylons import g, c
-    STATIC_ROOT = g.paths["static_files"]
+    from pylons import g, c, config
+    STATIC_ROOT = config["pylons.paths"]["static_files"]
 else:
     REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     STATIC_ROOT = os.path.join(REDDIT_ROOT, "public")
