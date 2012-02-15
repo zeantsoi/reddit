@@ -275,6 +275,9 @@ class FrontController(RedditController):
                 age = c.start_time - article._date
                 if age.days < g.REPLY_AGE_LIMIT:
                     display = True
+            if (hasattr(article, "bestof_magic") and article.bestof_magic()
+                and c.user._id != g.bestof_magic_userid):
+                display = False
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
                                         display = display,
