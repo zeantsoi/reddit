@@ -180,13 +180,6 @@ class Builder(object):
             # update vote tallies
             compute_votes(w, item)
 
-            if (hasattr(item, "bestof_magic") and item.bestof_magic() == 'comment'
-                and not (c.user_is_admin or
-                         c.user_is_loggedin and c.user._id == g.bestof_magic_userid)):
-                w.upvotes = 1
-                w.downvotes = 0
-
-
             w.score = w.upvotes - w.downvotes
 
             if w.likes:

@@ -69,7 +69,6 @@ class Globals(object):
                  'comment_visits_period',
                   'min_membership_create_community',
                  'bcrypt_work_factor',
-                 'bestof_magic_userid',
                  'cassandra_pool_size',
                  ]
 
