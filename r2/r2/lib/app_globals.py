@@ -125,7 +125,7 @@ class Globals(object):
             'num_serendipity',
             'sr_dropdown_threshold',
             'comment_visits_period',
-             'min_membership_create_community',
+            'min_membership_create_community',
             'bcrypt_work_factor',
             'cassandra_pool_size',
         ],
