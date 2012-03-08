@@ -903,7 +903,7 @@ class RedditController(MinimalController):
 
     def search_fail(self, exception):
         from r2.lib.contrib.pysolr import SolrError
-        from r2.lib.indextank import IndextankException
+        from r2.lib.search import SearchException
         if isinstance(exception, SolrError):
             errmsg = "SolrError: %r" % exception
 
@@ -912,8 +912,8 @@ class RedditController(MinimalController):
                 g.log.debug(errmsg)
             else:
                 g.log.error(errmsg)
-        elif isinstance(exception, (IndextankException, socket.error)):
-            g.log.error("IndexTank Error: %s" % repr(exception))
+        elif isinstance(exception, (SearchException, socket.error)):
+            g.log.error("Search Error: %s" % repr(exception))
 
         sf = pages.SearchFail()
 

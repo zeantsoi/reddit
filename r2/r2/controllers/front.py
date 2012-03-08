@@ -38,8 +38,8 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
+from r2.lib.search import SearchQuery, SearchException, InvalidQuery
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
-from r2.lib.indextank import IndextankQuery, IndextankException, InvalidIndextankQuery
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -715,10 +715,10 @@ class FrontController(RedditController):
         try:
             cleanup_message = None
             try:
-                q = IndextankQuery(query, site, sort)
+                q = SearchQuery(query, site, sort)
                 num, t, spane = self._search(q, num=num, after=after, 
                                              reverse = reverse, count = count)
-            except InvalidIndextankQuery:
+            except InvalidQuery:
                 # strip the query down to a whitelist
                 cleaned = re.sub("[^\w\s]+", "", query)
                 cleaned = cleaned.lower()
@@ -728,13 +728,13 @@ class FrontController(RedditController):
                     num, t, spane = 0, 0, []
                     cleanup_message = strings.completely_invalid_search_query
                 else:
-                    q = IndextankQuery(cleaned, site, sort)
+                    q = SearchQuery(cleaned, site, sort)
                     num, t, spane = self._search(q, num=num, after=after, 
                                                  reverse=reverse, count=count)
                     cleanup_message = strings.invalid_search_query % {
                                           "clean_query": cleaned
                                       }
-		
+            
             res = SearchPage(_('search results'), query, t, num, content=spane,
                              nav_menus = [SearchSortMenu(default=sort)],
                              search_params = dict(sort = sort), 
@@ -743,7 +743,7 @@ class FrontController(RedditController):
                              restrict_sr=restrict_sr).render()
 
             return res
-        except (IndextankException, socket.error), e:
+        except (SearchException, socket.error), e:
             return self.search_fail(e)
 
     def _search(self, query_obj, num, after, reverse, count=0):
@@ -761,7 +761,7 @@ class FrontController(RedditController):
         # computed after fetch_more
         try:
             res = listing.listing()
-        except (IndextankException, SolrError, socket.error), e:
+        except (SearchException, SolrError, socket.error), e:
             return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 

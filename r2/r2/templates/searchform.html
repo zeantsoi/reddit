@@ -66,6 +66,7 @@
       % if not isinstance(c.site, DefaultSR):
       <label><input type="checkbox" name="restrict_sr" />${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
       % endif
+      <button class="searchbutton" type="submit">${_("search")}</button>
 
       ${search_faq()}
 
