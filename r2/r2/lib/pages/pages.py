@@ -751,11 +751,10 @@ class AdminModeInterstitial(BoringPage):
         BoringPage.__init__(self, _("turn admin on"), *args, **kwargs)
 
     def content(self):
-        return PasswordVerificationForm("adminon", dest=self.dest)
+        return PasswordVerificationForm(dest=self.dest)
 
 class PasswordVerificationForm(Templated):
-    def __init__(self, api, dest):
-        self.api = api
+    def __init__(self, dest):
         self.dest = dest
         Templated.__init__(self)
 

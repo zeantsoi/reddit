@@ -40,9 +40,6 @@ import hmac
 import hashlib
 
 
-ADMIN_COOKIE_MAX_AGE = 60 * 30
-
-
 class AccountExists(Exception): pass
 
 class Account(Thing):
