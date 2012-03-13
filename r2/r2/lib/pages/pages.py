@@ -748,7 +748,9 @@ class RegisterPage(LoginPage):
 class AdminModeInterstitial(BoringPage):
     def __init__(self, dest, *args, **kwargs):
         self.dest = dest
-        BoringPage.__init__(self, _("turn admin on"), *args, **kwargs)
+        BoringPage.__init__(self, _("turn admin on"),
+                            show_sidebar=False,
+                            *args, **kwargs)
 
     def content(self):
         return PasswordVerificationForm(dest=self.dest)
