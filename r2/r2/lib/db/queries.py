@@ -444,13 +444,13 @@ def get_modqueue(sr):
         for sr in srs:
             results.append(get_reported_links(sr))
             results.append(get_reported_comments(sr))
-            results.append(get_spam_links(sr))
-            results.append(get_spam_comments(sr))
+            results.append(get_spam_filtered_links(sr))
+            results.append(get_spam_filtered_comments(sr))
     else:
         results.append(get_reported_links(sr))
         results.append(get_reported_comments(sr))
-        results.append(get_spam_links(sr))
-        results.append(get_spam_comments(sr))
+        results.append(get_spam_filtered_links(sr))
+        results.append(get_spam_filtered_comments(sr))
 
     return merge_results(*results)
 
