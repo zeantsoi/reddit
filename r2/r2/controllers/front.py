@@ -619,7 +619,7 @@ class FrontController(RedditController):
         """Return information about the subreddit.
 
         Data includes the subscriber count, description, and header image."""
-        if not is_api():
+        if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
         return Reddit(content = Wrapped(c.site)).render()
 
