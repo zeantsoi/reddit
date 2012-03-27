@@ -799,7 +799,8 @@ class SearchPage(BoringPage):
                                    num_results = num_results,
                                    search_params = search_params,
                                    show_feedback = True, site=site,
-                                   simple=simple, restrict_sr=restrict_sr)
+                                   simple=simple, restrict_sr=restrict_sr,
+                                   fallback_reason=kw.get("fallback_reason"))
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -1711,8 +1712,8 @@ class SearchBar(Templated):
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
                  search_params = {}, show_feedback=False,
-                 simple=False, restrict_sr=False, site=None, 
-                 subreddit_search=False,
+                 simple=False, restrict_sr=False, site=None,
+                 subreddit_search=False, fallback_reason=None,
                  **kw):
 
         # not listed explicitly in args to ensure it translates properly
@@ -1730,7 +1731,8 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params,
                            simple=simple, restrict_sr=restrict_sr,
-                           site=site, subreddit_search=subreddit_search)
+                           site=site, subreddit_search=subreddit_search,
+                           fallback_reason=fallback_reason)
 
 class SearchFail(Templated):
     """Search failure page."""

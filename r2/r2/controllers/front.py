@@ -739,8 +739,11 @@ class FrontController(RedditController):
                              nav_menus = [SearchSortMenu(default=sort)],
                              search_params = dict(sort = sort), 
                              infotext=cleanup_message,
-                             simple=False, site=c.site, 
-                             restrict_sr=restrict_sr).render()
+                             simple=False, site=c.site,
+                             restrict_sr=restrict_sr,
+                             fallback_reason=getattr(q, "fallback_reason",
+                                                     False)
+                             ).render()
 
             return res
         except (SearchException, socket.error), e:
