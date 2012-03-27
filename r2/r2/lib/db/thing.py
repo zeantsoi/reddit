@@ -271,7 +271,7 @@ class DataThing(object):
             self._cache_myself()
 
     @classmethod
-    def _load_multi(cls, need, check_essentials=True):
+    def _load_multi(cls, need):
         need = tup(need)
         need_ids = [n._id for n in need]
         datas = cls._get_data(cls._type_id, need_ids)
@@ -286,13 +286,9 @@ class DataThing(object):
             i._t.update(datas.get(i._id, i._t))
             i._loaded = True
 
-            for essential in essentials:
-                if essential not in i._t:
-                    if check_essentials:
-                        raise AttributeError("Refusing to cache %s; it's missing %s"
-                                             % (i._fullname, essential))
-                    else:
-                        print "Warning: %s is missing %s" % (i._fullname, essential)
+            for attr in essentials:
+                if attr not in i._t:
+                    print "Warning: %s is missing %s" % (i._fullname, attr)
             i._asked_for_data = True
             to_save[i._id] = i
 
@@ -301,8 +297,8 @@ class DataThing(object):
         #write the data to the cache
         cache.set_multi(to_save, prefix=prefix)
 
-    def _load(self, check_essentials=True):
-        self._load_multi(self, check_essentials)
+    def _load(self):
+        self._load_multi(self)
 
     def _safe_load(self):
         if not self._loaded:
@@ -353,7 +349,7 @@ class DataThing(object):
     #TODO error when something isn't found?
     @classmethod
     def _byID(cls, ids, data=False, return_dict=True, extra_props=None,
-              stale=False, check_essentials=True):
+              stale=False):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
 
@@ -397,7 +393,7 @@ class DataThing(object):
                 if not v._loaded:
                     need.append(v)
             if need:
-                cls._load_multi(need, check_essentials)
+                cls._load_multi(need)
 ### The following is really handy for debugging who's forgetting data=True:
 #       else:
 #           for v in bases.itervalues():
