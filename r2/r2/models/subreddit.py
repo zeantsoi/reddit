@@ -40,6 +40,7 @@ from r2.lib.cache import CL_ONE
 
 import os.path
 import random
+import datetime
 
 class SubredditExists(Exception): pass
 
@@ -1009,3 +1010,29 @@ class SubredditPopularityByLanguage(tdb_cassandra.View):
     _value_type = 'pickle'
     _connection_pool = 'main'
     _read_consistency_level = CL_ONE
+
+def apply_timereddit_day_override(fullname, day):
+    thing = Thing._by_fullname(fullname)
+    timeline_day = timeline_day_from_string(day)
+    thing.timeline_day_override = timeline_day
+    thing._commit()
+
+def timeline_day_from_string(day):
+    timeline_epoch = datetime.datetime.fromtimestamp(0, g.tz)
+    day_parts = day.split('/')
+    assert 0 < len(day_parts) < 4
+    year = int(day_parts[-1])
+    month = day = 1
+    if len(day_parts) > 1:
+        month = int(day_parts[0])
+        if len(day_parts) > 2:
+            day = int(day_parts[1])
+    try:
+        dt = datetime.datetime(year, month, day, tzinfo=g.tz)
+        delta = dt - timeline_epoch
+        timeline_day = delta.days
+    except (ValueError, OverflowError):
+        timeline_day = int(365.25 * (year - 1970))
+
+    return timeline_day
+
