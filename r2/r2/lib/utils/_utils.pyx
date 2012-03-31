@@ -208,7 +208,7 @@ def geologic_timesince(actual_d, timeline_day_offset):
     try:
         offset_d = actual_d + timedelta(days=timeline_day_offset)
         if now < offset_d:
-            return timeuntil(offset_d)
+            return '-' + timeuntil(offset_d)
         else:
             return timesince(offset_d)
     except OverflowError:
