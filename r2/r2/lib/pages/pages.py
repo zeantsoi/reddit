@@ -25,6 +25,7 @@ from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
+from r2.models import TimeredditIndex
 from r2.models.oauth2 import OAuth2Client
 from r2.models import ModAction
 from r2.models import Thing
@@ -187,6 +188,14 @@ class Reddit(Templated):
 
         self.toolbars = self.build_toolbars()
 
+        self.timeline, self.timeline_mode = TimeredditIndex.get_timeline(
+                include_present=True)
+
+        self.timeline_on = (self.timeline_mode == TimeredditIndex.MODE_ON
+                            or (self.timeline_mode == TimeredditIndex.MODE_ADMIN_ONLY
+                                and c.user_is_admin))
+        self.show_timeline = self.timeline_on and (c.default_sr or c.site.is_timereddit)
+
     def sr_admin_menu(self):
         buttons = [NavButton(menu.community_settings, css_class = 'reddit-edit',
                              dest = "edit"),
@@ -267,7 +276,7 @@ class Reddit(Templated):
                     kwargs["subtitles"] = [strings.submit_box_restricted_text]
             ps.append(SideBox(**kwargs))
 
-        if self.create_reddit_box and c.user_is_loggedin:
+        if self.create_reddit_box and c.user_is_loggedin and not c.site.is_timereddit:
             delta = datetime.datetime.now(g.tz) - c.user._date
             if delta.days >= g.min_membership_create_community:
                 ps.append(SideBox(_('Create your own community'),
@@ -284,7 +293,7 @@ class Reddit(Templated):
                     more_text = "...and %d more" % (total - len(moderators))
                     mod_href = "http://%s/about/moderators" % get_domain()
                 helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
-                            "message the moderators")
+                            _("message the moderators"))
                 ps.append(SideContentBox(_('moderators'), moderators,
                                          helplink = helplink, 
                                          more_href = mod_href,
@@ -306,6 +315,9 @@ class Reddit(Templated):
         if c.user_is_loggedin:
             activity_link = AccountActivityBox()
             ps.append(activity_link)
+
+        if self.show_timeline:
+            ps.append(TimelineWidget(self.timeline))
 
         return ps
 
@@ -414,6 +426,9 @@ class Reddit(Templated):
             classes.update(self.extra_page_classes)
         if self.supplied_page_classes:
             classes.update(self.supplied_page_classes)
+
+        if self.show_timeline:
+            classes.add('with-timeline')
 
         return classes
 
@@ -3791,3 +3806,18 @@ class ApiHelp(Templated):
     def __init__(self, api_docs, *a, **kw):
         self.api_docs = api_docs
         super(ApiHelp, self).__init__(*a, **kw)
+
+class TimelineWidget(Templated):
+    def __init__(self, timeline):
+        Templated.__init__(self)
+
+        self.timereddits = []
+        for day, _id, path, title, _class in timeline:
+            tr_info = {'name': title, 'url': path}
+            classes = []
+            if c.default_sr and _id == 'present' or not c.default_sr and _id == c.site._id:
+                classes.append('current')
+            if _class:
+                classes.append(_class)
+            tr_info['class'] = ' '.join(classes)
+            self.timereddits.append(tr_info)

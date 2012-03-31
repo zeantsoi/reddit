@@ -218,7 +218,6 @@ def geologic_timesince(actual_d, timeline_day_offset):
         offset_day = actual_day + timeline_day_offset
         now_day = (now - timeline_epoch).days
         years = int((now_day - offset_day) / 365.25)
-        abs_years = abs(years)
         s = strings.time_label % dict(num=years, time=timechunks[0][1](years))
         return s
 

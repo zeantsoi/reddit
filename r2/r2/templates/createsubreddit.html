@@ -98,6 +98,7 @@
     </div>
   </%utils:line_field>
 
+  %if c.user_is_admin or not thing.site or not thing.site.is_timereddit:
   <%utils:line_field title="${_('type')}">
     <div class="delete-field">
       <table>
@@ -120,6 +121,7 @@
       </table>
     </div>
   </%utils:line_field>
+  %endif
 
   <%utils:line_field title="${_('content options')}">
     <div class="delete-field">

@@ -491,6 +491,7 @@ class UrlParser(object):
         subreddit specifier (namely /r/ or /reddits/).
         """
         return (self.path.startswith('/r/') or
+                self.path.startswith('/t/') or
                 self.path.startswith('/reddits/'))
 
     def get_subreddit(self):
@@ -510,6 +511,10 @@ class UrlParser(object):
             if not self.hostname or self.hostname.startswith(g.domain):
                 if self.path.startswith('/r/'):
                     return Subreddit._by_name(self.path.split('/')[2])
+                elif self.path.startswith('/t/'):
+                    real_name = (
+                        Subreddit.TIMELINE_PREFIX + self.path.split('/')[2])
+                    return Subreddit._by_name(real_name)
                 elif self.path.startswith('/reddits/'):
                     return Sub
                 else:

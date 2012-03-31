@@ -1,0 +1,139 @@
+# Translations template for r2.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the r2 project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: r2 0.0.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2011-11-09 15:06-0800\n"
+"PO-Revision-Date: 2008-02-23 02:04-0500\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"Display-Name: English (timeline)\n"
+"Display-Name-en: English (timeline)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.1\n"
+
+msgid "no comments (yet)"
+msgstr "no comments (yet?)"
+
+msgid "what's hot"
+msgstr "prominent"
+
+msgid "what's new"
+msgstr "current"
+
+msgid "hot"
+msgstr "prominent"
+
+msgid "new"
+msgstr "current"
+
+msgid "delete"
+msgstr "erase"
+
+msgid "edit moderators"
+msgstr "edit engineers"
+
+msgid "moderator mail"
+msgstr "engineer mail"
+
+msgid "submitting..."
+msgstr "wibbly wobbly timey wimey stuff..."
+
+msgid "to anything interesting: news article, blog entry, video, picture..."
+msgstr "to anytime interesting: cave painting, phonograph, hologram, supernova..."
+
+msgid ""
+"You are submitting a link. The key to a successful submission is interesting "
+"content and a descriptive title."
+msgstr ""
+"You are submitting a link. Warning: posting temporal paradoxes may result in undefined behavior."
+
+msgid "reader"
+msgid_plural "readers"
+msgstr[0] "traveller"
+msgstr[1] "travellers"
+
+msgid "moderator"
+msgid_plural "moderators"
+msgstr[0] "engineer"
+msgstr[1] "engineers"
+
+msgid "Submit a link"
+msgstr "Submit an occurrence"
+
+msgid "moderators"
+msgstr "engineers"
+
+msgid "Recently viewed links"
+msgstr "Recently viewed occurrences"
+
+msgid "add moderator"
+msgstr "add engineer"
+
+msgid "moderators of %(reddit)s"
+msgstr "engineers of %(reddit)s"
+
+msgid "moderator of /r/%(reddit)s, speaking officially"
+msgstr "engineer of /r/%(reddit)s, speaking officially"
+
+msgid "approved by a moderator"
+msgstr "approved by an engineer"
+
+msgid "%(score)s submitted %(when)s ago"
+msgstr "%(score)s occurred %(when)s ago"
+
+msgid "submitted %(when)s ago by %(author)s to %(reddit)s"
+msgstr "occurred %(when)s ago by %(author)s to %(reddit)s"
+
+msgid "submitted %(when)s ago by %(author)s"
+msgstr "occurred %(when)s ago by %(author)s"
+
+msgid "this post was submitted on"
+msgstr "this post occurred on"
+
+msgid "there doesn't seem to be anything here"
+msgstr "there doesn't seem to be anything now"
+
+msgid "choose a subreddit"
+msgstr "choose a timereddit"
+
+msgid "edit"
+msgstr "alter"
+
+msgid ""
+"Use of this site constitutes acceptance of our %(user_agreement)s and "
+"%(privacy_policy)s"
+msgstr ""
+"Use of this site constitutes acceptance of our %(user_agreement)s, "
+"%(privacy_policy)s, and adherence to the %(prime_directive)s"
+
+msgid "a community for %(time)s"
+msgstr "a causal sequence for %(time)s"
+
+msgid "a community for"
+msgstr "a causal sequence for"
+
+msgid "you are a moderator of this reddit. (%(leave)s)"
+msgstr "you are an engineer of this reddit. (%(leave)s)"
+
+msgid "stop being a moderator?"
+msgstr "stop being an engineer?"
+
+msgid "you are no longer a moderator"
+msgstr "you are no longer an engineer"
+
+#: r2/templates/subredditinfobar.html:75
+msgid "a causal sequence for"
+msgstr ""
+
+msgid "message the moderators"
+msgstr "message the engineers"
+

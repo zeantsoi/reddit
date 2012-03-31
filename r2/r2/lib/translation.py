@@ -38,10 +38,16 @@ _domain = 'r2'
 def _get_translator(lang, graceful_fail=False, **kwargs):
     from pylons import config as conf
     """Utility method to get a valid translator object from a language name"""
+
+    path = I18N_PATH
+    if lang == 'en-timeline':
+        import r2.i18n
+        path = os.path.dirname(r2.i18n.__file__)
+
     if not isinstance(lang, list):
         lang = [lang]
     try:
-        translator = translation(conf['pylons.package'], I18N_PATH,
+        translator = translation(conf['pylons.package'], path,
                                  languages=lang, **kwargs)
     except IOError, ioe:
         if graceful_fail:
