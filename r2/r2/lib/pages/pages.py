@@ -194,7 +194,9 @@ class Reddit(Templated):
         self.timeline_on = (self.timeline_mode == TimeredditIndex.MODE_ON
                             or (self.timeline_mode == TimeredditIndex.MODE_ADMIN_ONLY
                                 and c.user_is_admin))
-        self.show_timeline = self.timeline_on and (c.default_sr or c.site.is_timereddit)
+        self.show_timeline = self.timeline_on and ((c.default_sr and not isinstance(self, ProfilePage))
+                                                   or c.site.name == 'timereddits'
+                                                   or c.site.is_timereddit)
 
     def sr_admin_menu(self):
         buttons = [NavButton(menu.community_settings, css_class = 'reddit-edit',
