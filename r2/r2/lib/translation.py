@@ -93,6 +93,10 @@ def iter_langs(base_path=I18N_PATH):
         if os.path.isdir(full_path):
             yield lang, full_path
 
+    import r2.i18n
+    path = os.path.dirname(r2.i18n.__file__)
+    yield 'en-timeline', os.path.join(path, 'en-timeline', 'LC_MESSAGES')
+
 
 def get_active_langs(path=I18N_PATH, default_lang='en'):
     trans = []
