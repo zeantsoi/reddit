@@ -1,9 +1,16 @@
 #!/bin/bash
 
-if [ $# -ne 5 ]; then
-  echo "usage: $0 INIPATH NAME TITLE DATE CREATOR"
+if [ $# -lt 5 ]; then
+  echo "usage: $0 INIPATH NAME TITLE DATE CREATOR [MODS...]"
   exit 1
 fi
 
-paster run "$1" -c "from r2.models import *; create_timereddit('$2', '$3', '$4', '$5')"
+ini=$1; shift
+name=$1; shift
+title=$1; shift
+date=$1; shift
+creator=$1; shift
+mods=$*;
+
+paster run "$ini" -c "from r2.models import *; create_timereddit('$name', '$title', '$date', '$creator', '$mods')"
 

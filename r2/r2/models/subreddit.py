@@ -1149,7 +1149,7 @@ def timeline_day_from_string(day):
 
     return timeline_day
 
-def create_timereddit(name, title, day, creator_name):
+def create_timereddit(name, title, day, creator_name, additional_mods):
     from r2.lib.db import queries
     from r2.lib.db.queries import changed
     timeline_day = timeline_day_from_string(day)
@@ -1163,5 +1163,12 @@ def create_timereddit(name, title, day, creator_name):
         sr._incr('_ups', 1)
     sr.add_moderator(creator)
     sr.add_contributor(creator)
+    for additional_mod in additional_mods.split():
+        try:
+            mod = Account._by_name(additional_mod)
+        except:
+            g.log.exception('mod lookup failed: %r', additional_mod)
+            continue
+        sr.add_moderator(mod)
     queries.new_subreddit(sr)
     changed(sr)
