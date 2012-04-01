@@ -5334,6 +5334,10 @@ tr.gold-accent + tr > td {
     padding-left: 157px;
 }
 
+.with-timeline .sheets {
+    margin-right: 470px;
+}
+
 #timeline {
     position: absolute;
     left: 0;
