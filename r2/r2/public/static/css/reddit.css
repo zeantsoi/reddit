@@ -5349,6 +5349,7 @@ tr.gold-accent + tr > td {
 #timeline h2 {
     font-size: 1.75em;
     margin: 10px 0;
+    margin-bottom: 5px;
 }
 
 #timeline .container {
@@ -5357,6 +5358,12 @@ tr.gold-accent + tr > td {
     overflow: hidden;
     background: #f7f7f7;
     box-shadow: inset 0 0 5px #ccc;
+}
+
+#timeline .srlink {
+    display: block;
+    margin-bottom: 7px;
+    opacity: .65;
 }
 
 #timeline button, #timeline .button {
@@ -5468,7 +5475,7 @@ tr.gold-accent + tr > td {
     margin-top: 4px;
 }
 
-#timeline .era:hover span {
+#timeline .era:hover span, #timeline .srlink:hover {
     text-decoration: underline;
 }
 
