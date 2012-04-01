@@ -1112,6 +1112,7 @@ class TimeredditIndex:
         timereddits = [(sr.timeline_day, sr._id, sr.path, sr.title, '')
                        for sr in Subreddit._query(Subreddit.c._date > threshold, data=True)
                        if sr.is_timereddit]
+        timereddits.sort()
         with g.make_lock(cls.LOCK_KEY):
             _, timeline_mode = cls.get_timeline(stale=False)
             cls._save_timeline_data_under_lock(
