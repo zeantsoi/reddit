@@ -371,9 +371,6 @@ def set_iface_lang():
     if getattr(g, "lang_override") and lang[0] == "en":
         lang.insert(0, g.lang_override)
 
-    if c.site.is_timereddit and lang[0].startswith('en'):
-        lang.insert(0, "en-timeline")
-
     #choose the first language
     c.lang = lang[0]
 
@@ -856,10 +853,7 @@ class RedditController(MinimalController):
         elif c.site == RandomNSFW:
             c.site = Subreddit.random_reddit(over18 = True)
             redirect_to("/" + c.site.path.strip('/') + request.path)
-        elif c.site == RandomTime:
-            c.site = RandomTime.random_choice()
-            redirect_to("/" + c.site.path.strip('/') + request.path)
-
+        
         if not request.path.startswith("/api/login/"):
             # check that the site is available:
             if c.site.spammy() and not c.user_is_admin and not c.error_page:

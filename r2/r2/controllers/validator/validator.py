@@ -506,8 +506,7 @@ class VSelfText(VMarkdown):
     max_length = property(get_max_length, set_max_length)
 
 class VSubredditName(VRequired):
-    def __init__(self, item, timeline=False, *a, **kw):
-        self.timeline = timeline
+    def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_SR_NAME, *a, **kw)
 
     def run(self, name):
@@ -515,10 +514,8 @@ class VSubredditName(VRequired):
         if not name:
             return self.error()
         else:
-            lookup_name = (
-                Subreddit.TIMELINE_PREFIX + name if self.timeline else name)
             try:
-                a = Subreddit._by_name(lookup_name)
+                a = Subreddit._by_name(name)
                 return self.error(errors.SUBREDDIT_EXISTS)
             except NotFound:
                 return name

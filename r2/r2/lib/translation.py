@@ -38,16 +38,10 @@ _domain = 'r2'
 def _get_translator(lang, graceful_fail=False, **kwargs):
     from pylons import config as conf
     """Utility method to get a valid translator object from a language name"""
-
-    path = I18N_PATH
-    if lang == 'en-timeline':
-        import r2.i18n
-        path = os.path.dirname(r2.i18n.__file__)
-
     if not isinstance(lang, list):
         lang = [lang]
     try:
-        translator = translation(conf['pylons.package'], path,
+        translator = translation(conf['pylons.package'], I18N_PATH,
                                  languages=lang, **kwargs)
     except IOError, ioe:
         if graceful_fail:
@@ -92,10 +86,6 @@ def iter_langs(base_path=I18N_PATH):
         full_path = os.path.join(base_path, lang, 'LC_MESSAGES')
         if os.path.isdir(full_path):
             yield lang, full_path
-
-    import r2.i18n
-    path = os.path.dirname(r2.i18n.__file__)
-    yield 'en-timeline', os.path.join(path, 'en-timeline', 'LC_MESSAGES')
 
 
 def get_active_langs(path=I18N_PATH, default_lang='en'):

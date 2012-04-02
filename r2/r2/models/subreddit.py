@@ -38,11 +38,8 @@ from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.lib.cache import CL_ONE
 
-import bisect
-import datetime
 import os.path
 import random
-import datetime
 
 class SubredditExists(Exception): pass
 
@@ -79,7 +76,6 @@ class Subreddit(Thing, Printable):
                      flair_enabled = True,
                      flair_position = 'right', # one of ('left', 'right')
                      flair_self_assign_enabled = False,
-                     timeline_day = None, # long indicates timereddit
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
@@ -88,13 +84,10 @@ class Subreddit(Thing, Printable):
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
-    # subreddit names with this prefix are timereddits, with special features
-    TIMELINE_PREFIX = 't:'
-
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
-             over_18 = False, timeline_day = None, **kw):
+             over_18 = False, **kw):
         with g.make_lock('create_sr_' + name.lower()):
             try:
                 sr = Subreddit._by_name(name)
@@ -109,16 +102,11 @@ class Subreddit(Thing, Printable):
                                over_18 = over_18,
                                author_id = author_id,
                                ip = ip,
-                               timeline_day = timeline_day,
                                **kw)
                 sr._commit()
 
                 #clear cache
                 Subreddit._by_name(name, _update = True)
-
-                if sr.is_timereddit:
-                    TimeredditIndex.insert(sr)
-
                 return sr
 
 
@@ -559,8 +547,6 @@ class Subreddit(Thing, Printable):
 
     @property
     def path(self):
-        if self.is_timereddit:
-            return '/t/%s/' % self.name[len(self.TIMELINE_PREFIX):]
         return "/r/%s/" % self.name
 
 
@@ -658,10 +644,6 @@ class Subreddit(Thing, Printable):
         # query = SRMember._query(SRMember.c._thing1_id == sr_ids, ...)
         # is really slow
         return [rel._thing2_id for rel in list(merged)]
-
-    @property
-    def is_timereddit(self):
-        return self.timeline_day is not None
 
 class FakeSubreddit(Subreddit):
     over_18 = False
@@ -934,15 +916,6 @@ class RandomNSFWReddit(FakeSubreddit):
     name = 'randnsfw'
     header = ""
 
-class RandomTimereddit(FakeSubreddit):
-    name = Subreddit.TIMELINE_PREFIX+'random'
-    header = ""
-
-    @classmethod
-    def random_choice(cls):
-        timeline, _ = TimeredditIndex.get_timeline(include_present=False)
-        return Subreddit._byID(random.choice(timeline)[1])
-
 class ModContribSR(_DefaultSR):
     name  = None
     title = None
@@ -1017,7 +990,6 @@ Contrib = ContribSR()
 All = AllSR()
 Random = RandomReddit()
 RandomNSFW = RandomNSFWReddit()
-RandomTime = RandomTimereddit()
 
 Subreddit._specials.update(dict(friends = Friends,
                                 randnsfw = RandomNSFW,
@@ -1025,7 +997,6 @@ Subreddit._specials.update(dict(friends = Friends,
                                 mod = Mod,
                                 contrib = Contrib,
                                 all = All))
-Subreddit._specials[RandomTime.name] = RandomTime
 
 class SRMember(Relation(Subreddit, Account)): pass
 Subreddit.__bases__ += (UserRel('moderator', SRMember),
@@ -1038,138 +1009,3 @@ class SubredditPopularityByLanguage(tdb_cassandra.View):
     _value_type = 'pickle'
     _connection_pool = 'main'
     _read_consistency_level = CL_ONE
-
-class TimeredditIndex:
-    KEY = 'timeline_index'
-    LOCK_KEY = 'lock_' + KEY
-
-    MODE_OFF = 0
-    MODE_ADMIN_ONLY = 1
-    MODE_ON = 2
-
-    # timeline periods are measured in days relative to the unix epoch
-    TIMELINE_EPOCH = datetime.datetime.fromtimestamp(0, g.tz)
-    PRESENT_DAY = (
-        datetime.datetime(2012, 4, 1, tzinfo=g.tz) - TIMELINE_EPOCH).days
-
-    @classmethod
-    def insert(cls, sr):
-        with g.make_lock(cls.LOCK_KEY):
-            return cls._insert_under_lock(sr)
-
-    @classmethod
-    def _insert_under_lock(cls, sr):
-        timeline, timeline_mode = cls.get_timeline(stale=False)
-        bisect.insort(timeline,
-                      (sr.timeline_day, sr._id, sr.path, sr.title, ''))
-        cls._save_timeline_data_under_lock(
-            timeline=timeline, timeline_mode=timeline_mode)
-        return timeline
-
-    @classmethod
-    def set_timeline_mode(cls, timeline_mode):
-        with g.make_lock(cls.LOCK_KEY):
-            timeline, old_timeline_mode = cls.get_timeline(stale=False)
-            if timeline_mode != old_timeline_mode:
-                cls._save_timeline_data_under_lock(
-                    timeline=timeline,
-                    timeline_mode=timeline_mode)
-
-    @classmethod
-    def _save_timeline_data_under_lock(cls, **kwargs):
-        g.cache.set(cls.KEY, kwargs)
-
-    @classmethod
-    def add_class(cls, sr, add_class):
-        with g.make_lock(cls.LOCK_KEY):
-            timeline, timeline_mode = cls.get_timeline(stale=False)
-            for i, (day, _id, path, title, _class) in enumerate(timeline):
-                if _id == sr._id:
-                    new_class = (_class + ' ' + add_class).strip()
-                    timeline[i] = (day, _id, path, title, new_class)
-            cls._save_timeline_data_under_lock(
-                timeline=timeline, timeline_mode=timeline_mode)
-
-    @classmethod
-    def get_timeline(cls, include_present=False, stale=True):
-        timeline_data = g.cache.get(cls.KEY, stale=stale)
-        if not timeline_data or isinstance(timeline_data, list):
-            timeline = timeline_data
-            timeline_mode = cls.MODE_OFF
-        else:
-            timeline = timeline_data['timeline']
-            timeline_mode = timeline_data['timeline_mode']
-
-        if timeline and include_present:
-            bisect.insort(
-                timeline,
-                (cls.PRESENT_DAY, 'present', '/', _('the present'), 'present'))
-        return (timeline or [], timeline_mode)
-
-    @classmethod
-    def regen_timeline(cls):
-        threshold = datetime.datetime.today() - datetime.timedelta(7)
-        timereddits = [(sr.timeline_day, sr._id, sr.path, sr.title, '')
-                       for sr in Subreddit._query(Subreddit.c._date > threshold, data=True)
-                       if sr.is_timereddit]
-        timereddits.sort()
-        with g.make_lock(cls.LOCK_KEY):
-            _, timeline_mode = cls.get_timeline(stale=False)
-            cls._save_timeline_data_under_lock(
-                timeline=timereddits, timeline_mode=timeline_mode)
-
-    @classmethod
-    def get_timereddits(cls, stale=True):
-        timeline = cls.get_timeline(stale=stale)
-        subreddit_dict = Subreddit._byID([t[1] for t in timeline], data=True)
-        subreddits = [subreddit_dict[t[1]] for t in timeline]
-        return subreddits
-
-def apply_timereddit_day_override(fullname, day):
-    thing = Thing._by_fullname(fullname)
-    timeline_day = timeline_day_from_string(day)
-    thing.timeline_day_override = timeline_day
-    thing._commit()
-
-def timeline_day_from_string(day):
-    timeline_epoch = datetime.datetime.fromtimestamp(0, g.tz)
-    day_parts = day.split('/')
-    assert 0 < len(day_parts) < 4
-    year = int(day_parts[-1])
-    month = day = 1
-    if len(day_parts) > 1:
-        month = int(day_parts[0])
-        if len(day_parts) > 2:
-            day = int(day_parts[1])
-    try:
-        dt = datetime.datetime(year, month, day, tzinfo=g.tz)
-        delta = dt - timeline_epoch
-        timeline_day = delta.days
-    except (ValueError, OverflowError):
-        timeline_day = int(365.25 * (year - 1970))
-
-    return timeline_day
-
-def create_timereddit(name, title, day, creator_name, additional_mods):
-    from r2.lib.db import queries
-    from r2.lib.db.queries import changed
-    timeline_day = timeline_day_from_string(day)
-    creator = Account._by_name(creator_name)
-    real_name = Subreddit.TIMELINE_PREFIX + name
-    sr = Subreddit._new(real_name, title, creator._id, '127.0.0.1',
-                        timeline_day=timeline_day)
-    print 'Created timereddit %s (%s)' % (sr.name, sr.path)
-    Subreddit.subscribe_defaults(creator)
-    if sr.add_subscriber(creator):
-        sr._incr('_ups', 1)
-    sr.add_moderator(creator)
-    sr.add_contributor(creator)
-    for additional_mod in additional_mods.split():
-        try:
-            mod = Account._by_name(additional_mod)
-        except:
-            g.log.exception('mod lookup failed: %r', additional_mod)
-            continue
-        sr.add_moderator(mod)
-    queries.new_subreddit(sr)
-    changed(sr)

@@ -22,7 +22,6 @@
 from r2.models import *
 from filters import unsafe, websafe, _force_unicode
 from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
-from r2.lib.utils import geologic_timesince
 
 from r2.lib.media import s3_direct_url
 
@@ -260,11 +259,7 @@ def replace_render(listing, item, render_func):
                 replacements['timesince'] = timesince(item._date -
                                                       promote.timezone_offset)
             else:
-                if c.site.is_timereddit:
-                    ts = geologic_timesince(item._date, c.site.timeline_day)
-                else:
-                    ts = timesince(item._date)
-                replacements['timesince'] = ts
+                replacements['timesince'] = timesince(item._date)
 
             replacements['time_period'] = calc_time_period(item._date)
 

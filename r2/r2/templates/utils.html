@@ -25,7 +25,7 @@
    from r2.models import FakeSubreddit
    from r2.lib.filters import spaceCompress, unsafe
    from r2.lib.template_helpers import add_sr, js_config, static
-   from r2.lib.utils import cols, long_datetime, timesince, geologic_timesince
+   from r2.lib.utils import cols, long_datetime, timesince
    from r2.lib.tracking import UserInfo
 %>
 <%def name="tags(**kw)">
@@ -519,25 +519,17 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="timestamp(date, since=None)">
-  %if c.site.is_timereddit:
-    ${unsafe(since or geologic_timesince(date, c.site.timeline_day))}
-  %else:
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
   <time title="${long_datetime(date)}" datetime="${date.isoformat()}">
     ${unsafe(since or timesince(date))}
   </time>
-  %endif
 </%def>
 
 <%def name="thing_timestamp(thing, since=None)">
-  %if getattr(thing, 'timeline_day_override', None) is not None:
-    ${unsafe(geologic_timesince(thing._date, thing.timeline_day_override))}
-  %else:
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
   ${timestamp(thing._date, since=since)}
-  %endif
 </%def>
 
 <%def name="percentage(slice, total)">

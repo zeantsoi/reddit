@@ -199,28 +199,6 @@ def timeuntil(d, precision=None):
     from pylons import g
     return timetext(d - datetime.now(g.tz), precision)
 
-def geologic_timesince(actual_d, timeline_day_offset):
-    from pylons import g
-    now = datetime.now(g.tz)
-    timeline_epoch = datetime.fromtimestamp(0, g.tz)
-    days_since_timeline_epoch = (now - timeline_epoch).days
-    timeline_day_offset -= days_since_timeline_epoch
-    try:
-        offset_d = actual_d + timedelta(days=timeline_day_offset)
-        if now < offset_d:
-            return '-' + timeuntil(offset_d)
-        else:
-            return timesince(offset_d)
-    except OverflowError:
-        from r2.lib.strings import strings
-
-        actual_day = (actual_d - timeline_epoch).days
-        offset_day = actual_day + timeline_day_offset
-        now_day = (now - timeline_epoch).days
-        years = int((now_day - offset_day) / 365.25)
-        s = strings.time_label % dict(num=years, time=timechunks[0][1](years))
-        return s
-
 cpdef dict keymap(keys, callfn, mapfn = None, str prefix=''):
     """map a set of keys before a get_multi to return a dict using the
        original unmapped keys"""

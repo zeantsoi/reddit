@@ -9,5 +9,4 @@ r.setup = function(config) {
 $(function() {
     r.login.ui.init()
     r.analytics.init()
-    r.timeline.init()
 })

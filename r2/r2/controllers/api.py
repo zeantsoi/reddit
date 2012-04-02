@@ -1344,6 +1344,7 @@ class ApiController(RedditController):
             return UploadedImage(_('saved'), new_url, name, 
                                  errors=errors, form_id=form_id).render()
 
+
     @validatedForm(VUser(),
                    VModhash(),
                    VRatelimit(rate_user = True,
@@ -1404,11 +1405,8 @@ class ApiController(RedditController):
             form.find('#example_title').hide()
         elif form.has_errors('domain', errors.BAD_CNAME, errors.USED_CNAME):
             form.find('#example_domain').hide()
-        elif (
-            not sr.is_timereddit
-            and form.has_errors(('type', 'link_type'), errors.INVALID_OPTION)):
-            pass
-        elif form.has_errors('description', errors.TOO_LONG):
+        elif (form.has_errors(('type', 'link_type'), errors.INVALID_OPTION) or
+              form.has_errors('description', errors.TOO_LONG)):
             pass
 
         #creating a new reddit
@@ -1445,9 +1443,6 @@ class ApiController(RedditController):
 
             if not sr.domain:
                 del kw['css_on_cname']
-            if not c.user_is_admin and sr.is_timereddit and 'type' in kw:
-                # timereddits are always public
-                del kw['type']
             for k, v in kw.iteritems():
                 if getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 

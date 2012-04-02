@@ -352,7 +352,6 @@ class DomainMiddleware(object):
 
 class SubredditMiddleware(object):
     sr_pattern = re.compile(r'^/r/([^/]{2,})')
-    tl_pattern = re.compile(r'^/t/([^/]{2,})')
 
     def __init__(self, app):
         self.app = app
@@ -360,14 +359,9 @@ class SubredditMiddleware(object):
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
         sr = self.sr_pattern.match(path)
-        tl = self.tl_pattern.match(path)
         if sr:
             environ['subreddit'] = sr.groups()[0]
             environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
-        elif tl:
-            # prefix must match Subreddit.TIMELINE_PREFIX
-            environ['subreddit'] = 't:' + tl.groups()[0]
-            environ['PATH_INFO'] = self.tl_pattern.sub('', path) or '/'
         elif path.startswith("/reddits"):
             environ['subreddit'] = 'r'
         return self.app(environ, start_response)
