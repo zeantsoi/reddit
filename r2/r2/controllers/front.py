@@ -746,7 +746,7 @@ class FrontController(RedditController):
                              ).render()
 
             return res
-        except (SearchException, socket.error), e:
+        except SearchException + (socket.error,) as e:
             return self.search_fail(e)
 
     def _search(self, query_obj, num, after, reverse, count=0):
@@ -764,7 +764,7 @@ class FrontController(RedditController):
         # computed after fetch_more
         try:
             res = listing.listing()
-        except (SearchException, SolrError, socket.error), e:
+        except SearchException + (SolrError, socket.error) as e:
             return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 

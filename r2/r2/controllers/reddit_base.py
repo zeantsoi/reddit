@@ -912,7 +912,7 @@ class RedditController(MinimalController):
                 g.log.debug(errmsg)
             else:
                 g.log.error(errmsg)
-        elif isinstance(exception, (SearchException, socket.error)):
+        elif isinstance(exception, SearchException + (socket.error,)):
             g.log.error("Search Error: %s" % repr(exception))
 
         sf = pages.SearchFail()

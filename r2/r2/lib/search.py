@@ -22,6 +22,8 @@
 try:
     from r2admin.lib.search import SearchQuery, SearchException, InvalidQuery
 except ImportError:
-    from r2.lib.indextank import IndextankQuery as SearchQuery, \
-            IndextankException as SearchException, \
-            InvalidIndextankQuery as InvalidQuery
+    import r2.lib.indextank
+    SearchQuery = r2.lib.indextank.IndextankQuery
+    InvalidQuery = (r2.lib.indextank.InvalidIndextankQuery,)
+    SearchException = (r2.lib.indextank.IndextankException,)
+
