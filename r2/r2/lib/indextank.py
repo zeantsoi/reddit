@@ -124,9 +124,12 @@ class IndextankQuery(object):
 
         if g.sqlprinting:
             g.log.info('%s: %r %r' % (cls.__name__, query, sort))
-
+        
+        timer = g.stats.get_timer("indextank_timer")
+        timer.start()
         resp = index.search(query.encode('utf-8'), start=start, len=num,
                             scoring_function=sort)
+        timer.stop()
 
         docs = [t['docid'] for t in resp['results']]
         hits = resp['matches']
