@@ -76,9 +76,7 @@ class RedditQueueMap(QueueMap):
         self._q('usage_q', self_refer=True, durable=False)
 
         self._q('solrsearch_changes')
-        self._q('indextank_changes', self_refer=True)
         self._bind('search_changes', 'solrsearch_changes')
-        self._bind('search_changes', 'indextank_changes')
 
     def bindings(self):
         self.newlink_bindings()
