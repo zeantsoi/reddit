@@ -1819,8 +1819,8 @@ class FrameToolbar(Wrapped):
 
 class NewLink(Templated):
     """Render the link submission form"""
-    def __init__(self, captcha = None, url = '', title= '', subreddits = (),
-                 then = 'comments', resubmit=False):
+    def __init__(self, captcha = None, url = '', title= '', text = '',
+                 subreddits = (), then = 'comments', resubmit=False):
 
         self.show_link = self.show_self = False
 
@@ -1835,7 +1835,12 @@ class NewLink(Templated):
         if self.show_self and self.show_link:
             all_fields = set(chain(*(parts for (tab, parts) in tabs)))
             buttons = []
-            self.default_tab = tabs[0][0]
+            
+            if text != '':
+                self.default_tab = tabs[1][0]
+            else:
+                self.default_tab = tabs[0][0]
+
             for tab_name, parts in tabs:
                 to_show = ','.join('#' + p for p in parts)
                 to_hide = ','.join('#' + p for p in all_fields if p not in parts)
@@ -1858,7 +1863,7 @@ class NewLink(Templated):
             self.default_sr = c.site
 
         Templated.__init__(self, captcha = captcha, url = url,
-                         title = title, subreddits = subreddits,
+                         title = title, text = text, subreddits = subreddits,
                          then = then)
 
 class ShareLink(CachedTemplate):
