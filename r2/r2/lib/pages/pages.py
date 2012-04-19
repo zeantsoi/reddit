@@ -1760,7 +1760,7 @@ class Frame(Wrapped):
                             domain     = g.domain))
         else:
             title = g.domain
-        Templated.__init__(self, url = url, title = title,
+        Wrapped.__init__(self, url = url, title = title,
                            fullname = fullname, thumbnail = thumbnail)
 
 class FrameToolbar(Wrapped):
