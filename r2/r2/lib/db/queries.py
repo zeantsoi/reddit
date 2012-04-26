@@ -526,6 +526,8 @@ def rel_query(rel, thing_id, name, filters = []):
 
 vote_rel = Vote.rel(Account, Link)
 
+cached_userrel_query = cached_query(UserQueryCache, filter_thing2)
+cached_srrel_query = cached_query(SubredditQueryCache, filter_thing2)
 migrating_cached_userrel_query = migrating_cached_query(UserQueryCache, filter_thing2)
 migrating_cached_srrel_query = migrating_cached_query(SubredditQueryCache, filter_thing2)
 
@@ -537,11 +539,11 @@ def get_liked(user):
 def get_disliked(user):
     return rel_query(vote_rel, user, '-1')
 
-@migrating_cached_userrel_query
+@cached_userrel_query
 def get_hidden(user):
     return rel_query(SaveHide, user, 'hide')
 
-@migrating_cached_userrel_query
+@cached_userrel_query
 def get_saved(user):
     return rel_query(SaveHide, user, 'save')
 
