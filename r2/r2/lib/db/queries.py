@@ -822,14 +822,15 @@ def set_unread(messages, to, unread):
 def new_savehide(rel):
     user = rel._thing1
     name = rel._name
-    if name == 'save':
-        add_queries([get_saved(user)], insert_items = rel)
-    elif name == 'unsave':
-        add_queries([get_saved(user)], delete_items = rel)
-    elif name == 'hide':
-        add_queries([get_hidden(user)], insert_items = rel)
-    elif name == 'unhide':
-        add_queries([get_hidden(user)], delete_items = rel)
+    with CachedQueryMutator() as m:
+        if name == 'save':
+            m.insert(get_saved(user), [rel])
+        elif name == 'unsave':
+            m.delete(get_saved(user), [rel])
+        elif name == 'hide':
+            m.insert(get_hidden(user), [rel])
+        elif name == 'unhide':
+            m.delete(get_hidden(user), [rel])
 
 def changed(things, boost_only=False):
     """Indicate to search that a given item should be updated in the index"""
