@@ -230,7 +230,8 @@ class Reddit(Templated):
                                        type="flat_vert",
                                        base_path="/about/",
                                        css_class="icon-menu",
-                                       separator="")])
+                                       separator="")],
+                              collapsible=True)
 
     def sr_moderators(self, limit = 10):
         accounts = Account._byID([uid
@@ -581,11 +582,11 @@ class SponsorshipBox(Templated):
 
 class SideContentBox(Templated):
     def __init__(self, title, content, helplink=None, extra_class=None,
-                 more_href = None, more_text = "more"):
+                 more_href = None, more_text = "more", collapsible=False):
         Templated.__init__(self, title=title, helplink = helplink,
                            content=content, extra_class=extra_class,
-                           more_href = more_href,
-                           more_text = more_text)
+                           more_href = more_href, more_text = more_text,
+                           collapsible=collapsible)
 
 class SideBox(CachedTemplate):
     """

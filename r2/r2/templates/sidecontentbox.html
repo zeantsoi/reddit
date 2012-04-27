@@ -20,13 +20,18 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<div class="sidecontentbox ${thing.extra_class or ''}">
+<div class="sidecontentbox ${thing.extra_class or ''} ${'collapsible' if thing.collapsible else ''}">
   %if thing.helplink:
      <a class="helplink" href="${thing.helplink[0]}">
        ${thing.helplink[1]}
      </a>
   %endif
-  <h1>${thing.title.upper()}</h1>
+  <div class="title">
+    <h1>${thing.title.upper()}</h1>
+    %if thing.collapsible:
+      <span class="collapse-button">-</span>
+    %endif
+  </div>
   <ul class="content">
     %for c in thing.content:
       <li>${c}</li>

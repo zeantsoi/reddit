@@ -1,7 +1,52 @@
-r.ui = {}
+r.ui = {
+    init: function() {
+        this.initSideCollapse()
+    },
+
+    initSideCollapse: function() {
+        $('.sidecontentbox.collapsible').each(function(idx, el) {
+            var $el = $(el)
+            var key = $el.find('.title h1').text().toLowerCase().replace(' ', '_')
+            new r.ui.Collapse($el.find('.title'), $el.find('.content'), key)
+        })
+    }
+}
 
 r.ui.Base = function(el) {
     this.$el = $(el)
+}
+
+r.ui.Collapse = function(el, target, key) {
+    r.ui.Base.call(this, el)
+    this.target = target
+    this.key = 'ui.collapse.' + key
+    this.isCollapsed = store.get(this.key) == true
+    this.$el.click($.proxy(this, 'toggle', null, false))
+    this.toggle(this.isCollapsed, true)
+}
+r.ui.Collapse.prototype = {
+    animDuration: 200,
+
+    toggle: function(collapsed, immediate) {
+        if (collapsed == null) {
+            collapsed = !this.isCollapsed
+        }
+
+        var duration = immediate ? 0 : this.animDuration
+        if (collapsed) {
+            $(this.target).slideUp(duration)
+        } else {
+            $(this.target).slideDown(duration)
+        }
+
+        this.isCollapsed = collapsed
+        store.set(this.key, collapsed)
+        this.update()
+    },
+
+    update: function() {
+        this.$el.find('.collapse-button').text(this.isCollapsed ? '+' : '-')
+    }
 }
 
 r.ui.Form = function(el) {
