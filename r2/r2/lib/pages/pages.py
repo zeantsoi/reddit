@@ -2918,11 +2918,11 @@ class DetailsPage(LinkInfoPage):
     def __init__(self, thing, *args, **kwargs):
         from admin_pages import Details
 
-        if type(thing) is Link:
+        if isinstance(thing, Link):
             link = thing
             comment = None
             content = Details(thing=thing)
-        elif type(thing) is Comment:
+        elif isinstance(thing, Comment):
             comment = thing
             link = Link._byID(comment.link_id)
             content = PaneStack()
