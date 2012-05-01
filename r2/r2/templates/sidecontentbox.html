@@ -19,8 +19,8 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
-<div class="sidecontentbox ${thing.extra_class or ''} ${'collapsible' if thing.collapsible else ''}">
+<%namespace file="utils.html" import="tags"/>
+<div class="sidecontentbox ${thing.extra_class or ''} ${'collapsible' if thing.collapsible else ''}" ${tags(_id=thing._id)}>
   %if thing.helplink:
      <a class="helplink" href="${thing.helplink[0]}">
        ${thing.helplink[1]}
@@ -45,4 +45,8 @@
       </li>
     %endif
   </ul>
+
+  %if thing.collapsible:
+    <script>r.ui.collapsibleSideBox("${thing._id}")</script>
+  %endif
 </div>

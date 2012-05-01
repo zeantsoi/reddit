@@ -7,7 +7,6 @@ r.setup = function(config) {
 }
 
 $(function() {
-    r.ui.init()
     r.login.ui.init()
     r.analytics.init()
 })

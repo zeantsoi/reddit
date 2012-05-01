@@ -1,19 +1,12 @@
-r.ui = {
-    init: function() {
-        this.initSideCollapse()
-    },
-
-    initSideCollapse: function() {
-        $('.sidecontentbox.collapsible').each(function(idx, el) {
-            var $el = $(el)
-            var key = $el.find('.title h1').text().toLowerCase().replace(' ', '_')
-            new r.ui.Collapse($el.find('.title'), $el.find('.content'), key)
-        })
-    }
-}
+r.ui = {}
 
 r.ui.Base = function(el) {
     this.$el = $(el)
+}
+
+r.ui.collapsibleSideBox = function(id) {
+    var $el = $('#'+id)
+    return new r.ui.Collapse($el.find('.title'), $el.find('.content'), id)
 }
 
 r.ui.Collapse = function(el, target, key) {
