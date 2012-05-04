@@ -543,7 +543,7 @@ class UserController(ListingController):
                                   item.fullname,
                                   self.vuser.name)
                     return False
-                if not item.saved and self.where == 'saved':
+                if self.where == 'saved' and not item.saved:
                     g.log.warning("unsaved thing %s on saved page for %s",
                                   item.fullname,
                                   self.vuser.name)
