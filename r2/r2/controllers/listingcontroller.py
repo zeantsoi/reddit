@@ -639,7 +639,13 @@ class UserController(ListingController):
     def GET_saved_redirect(self):
         if not c.user_is_loggedin:
             abort(404)
-        return redirect_to("/user/" + c.user.name + "/saved")
+
+        dest = "/".join(("/user", c.user.name, "saved"))
+        dest = add_sr(dest, sr_path=False)
+        query_string = request.environ.get('QUERY_STRING')
+        if query_string:
+            dest += "?" + query_string
+        return redirect_to(dest)
 
 class MessageController(ListingController):
     show_nums = False
