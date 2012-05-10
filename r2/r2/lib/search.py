@@ -19,11 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-try:
-    from r2admin.lib.search import SearchQuery, SearchException, InvalidQuery
-except ImportError:
-    import r2.lib.indextank
-    SearchQuery = r2.lib.indextank.IndextankQuery
-    InvalidQuery = (r2.lib.indextank.InvalidIndextankQuery,)
-    SearchException = (r2.lib.indextank.IndextankException,)
+import r2.lib.cloudsearch as cloudsearch
+import r2.lib.indextank as indextank
 
+
+InvalidQuery = (cloudsearch.InvalidQuery, indextank.InvalidIndextankQuery)
+SearchException = (cloudsearch.CloudSearchHTTPError, indextank.IndextankException)
+
+SearchQuery = cloudsearch.CloudSearchQuery
