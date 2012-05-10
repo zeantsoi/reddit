@@ -20,10 +20,11 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import r2.lib.cloudsearch as cloudsearch
-import r2.lib.indextank as indextank
 
 
-InvalidQuery = (cloudsearch.InvalidQuery, indextank.InvalidIndextankQuery)
-SearchException = (cloudsearch.CloudSearchHTTPError, indextank.IndextankException)
+InvalidQuery = (cloudsearch.InvalidQuery,)
+SearchException = (cloudsearch.CloudSearchHTTPError,)
 
 SearchQuery = cloudsearch.CloudSearchQuery
+
+sorts = cloudsearch.CloudSearchQuery.sorts_menu_mapping

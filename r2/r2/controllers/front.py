@@ -754,8 +754,6 @@ class FrontController(RedditController):
                              infotext=cleanup_message,
                              simple=False, site=c.site,
                              restrict_sr=restrict_sr,
-                             fallback_reason=getattr(q, "fallback_reason",
-                                                     False)
                              ).render()
 
             return res

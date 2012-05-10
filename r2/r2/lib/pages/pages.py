@@ -825,8 +825,7 @@ class SearchPage(BoringPage):
                                    num_results = num_results,
                                    search_params = search_params,
                                    show_feedback = True, site=site,
-                                   simple=simple, restrict_sr=restrict_sr,
-                                   fallback_reason=kw.get("fallback_reason"))
+                                   simple=simple, restrict_sr=restrict_sr)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -1742,8 +1741,7 @@ class SearchBar(Templated):
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
                  search_params = {}, show_feedback=False,
                  simple=False, restrict_sr=False, site=None,
-                 subreddit_search=False, fallback_reason=None,
-                 **kw):
+                 subreddit_search=False, **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))
@@ -1760,8 +1758,7 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params,
                            simple=simple, restrict_sr=restrict_sr,
-                           site=site, subreddit_search=subreddit_search,
-                           fallback_reason=fallback_reason)
+                           site=site, subreddit_search=subreddit_search)
 
 class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The

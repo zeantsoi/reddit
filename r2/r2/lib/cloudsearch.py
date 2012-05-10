@@ -20,7 +20,6 @@ from r2.models import Account, Link, Subreddit, Thing, \
 _CHUNK_SIZE = 4000000 # Approx. 4 MB, to stay under the 5MB limit
 _VERSION_OFFSET = 13257906857
 ILLEGAL_XML = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
-FALLBACK_RATIO = float(g.CLOUDSEARCH_RATIO)
 USE_SAFE_GET = False
 
 
@@ -450,11 +449,10 @@ class CloudSearchQuery(object):
              'top': '-top',
              'new': '-timestamp',
              }
-    fallback = None
-    
-    @classmethod
-    def set_fallback(cls, fallback_cls):
-        cls.fallback = fallback_cls
+    sorts_menu_mapping = {'relevance': 1,
+                          'new': 2,
+                          'top': 3,
+                          }
     
     def __init__(self, query, sr, sort):
         self.query = query.encode("utf-8") if query else ''
@@ -463,40 +461,12 @@ class CloudSearchQuery(object):
         self.sort = self.sorts[sort]
         self.bq = ''
         self.results = None
-        self.fallback_reason = None
-    
-    def force_fallback(self):
-        if not self.fallback:
-            return False
-        if random.random() > FALLBACK_RATIO:
-            self.fallback_reason = "random"
-            return True
-        return False
-    
-    def run_fallback(self, after=None, reverse=False, num=1000, _update=False):
-        fallback = self.fallback(unicode(self.query, "utf-8"),
-                                 self.sr, self._sort)
-        return fallback.run(after=after, reverse=reverse, num=num,
-                            _update=_update)
     
     def run(self, after=None, reverse=False, num=1000, _update=False):
         if not self.query:
             return Results([], 0, {})
         
-        if self.force_fallback():
-            return self.run_fallback(after, reverse, num, _update)
-        
-        try:
-            results = self._run(_update=_update)
-        except (InvalidQuery, CloudSearchHTTPError) as err:
-            if self.fallback:
-                if isinstance(err, InvalidQuery):
-                    self.fallback_reason = "invalidquery"
-                else:
-                    self.fallback_reason = "httperror"
-                return self.run_fallback(after, reverse, num, _update)
-            else:
-                raise
+        results = self._run(_update=_update)
         
         docs, hits, facets = results.docs, results.hits, results.facets
         
