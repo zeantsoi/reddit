@@ -12,7 +12,7 @@ if __name__ != "__main__":
     STATIC_ROOT = config["pylons.paths"]["static_files"]
 else:
     REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    STATIC_ROOT = os.path.join(REDDIT_ROOT, "public")
+    STATIC_ROOT = os.path.join(os.path.dirname(REDDIT_ROOT), "build/public")
 
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>\n'
