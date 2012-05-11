@@ -641,7 +641,9 @@ class UserController(ListingController):
             abort(404)
 
         dest = "/".join(("/user", c.user.name, "saved"))
-        dest = add_sr(dest, sr_path=False)
+        extension = request.environ.get('extension')
+        if extension:
+            dest = ".".join((dest, extension))
         query_string = request.environ.get('QUERY_STRING')
         if query_string:
             dest += "?" + query_string
