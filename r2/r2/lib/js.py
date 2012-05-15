@@ -7,10 +7,15 @@ import json
 
 from r2.lib.translation import iter_langs
 
-if __name__ != "__main__":
+try:
     from pylons import g, c, config
-    STATIC_ROOT = config["pylons.paths"]["static_files"]
+except ImportError:
+    STATIC_ROOT = None
 else:
+    STATIC_ROOT = config["pylons.paths"]["static_files"]
+
+# STATIC_ROOT will be None if pylons is uninitialized
+if not STATIC_ROOT:
     REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     STATIC_ROOT = os.path.join(os.path.dirname(REDDIT_ROOT), "build/public")
 
