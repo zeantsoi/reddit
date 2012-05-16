@@ -98,6 +98,10 @@ def add_xml(thing, version, srs, accounts):
             # UrlParser couldn't handle thing.url, oh well
             pass
     
+    if thing.flair_css_class or thing.flair_text:
+        fields['flair_css_class'] = thing.flair_css_class or ''
+        fields['flair_text'] = thing.flair_text or ''
+    
     for field_name, value in fields.iteritems():
         field = etree.SubElement(add, "field", name=field_name)
         field.text = _safe_xml_str(value)
