@@ -519,18 +519,16 @@ class CleanupMiddleware(object):
 
 #god this shit is disorganized and confusing
 class RedditApp(PylonsBaseWSGIApp):
-    def find_controller(self, controller):
-        if controller in self.controller_classes:
-            return self.controller_classes[controller]
+    def find_controller(self, controller_name):
+        if controller_name in self.controller_classes:
+            return self.controller_classes[controller_name]
 
-        full_module_name = self.package_name + '.controllers'
-        class_name = controller.capitalize() + 'Controller'
-
-        __import__(self.package_name + '.controllers')
+        controllers_module = __import__(self.package_name + '.controllers').controllers
         config['r2.plugins'].load_controllers()
-        mycontroller = getattr(sys.modules[full_module_name], class_name)
-        self.controller_classes[controller] = mycontroller
-        return mycontroller
+
+        controller_cls = controllers_module.get_controller(controller_name)
+        self.controller_classes[controller_name] = controller_cls
+        return controller_cls
 
 def make_app(global_conf, full_stack=True, **app_conf):
     """Create a Pylons WSGI application and return it

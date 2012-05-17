@@ -67,7 +67,21 @@ from admin import AdminController
 from redirect import RedirectController
 from ipn import IpnController
 
+_reddit_controllers = dict((name.lower(), obj) for name, obj in globals().iteritems())
+
+_plugin_controllers = {}
 def add_controller(controller):
-    assert controller.__name__ not in globals()
-    globals()[controller.__name__] = controller
+    name = controller.__name__.lower()
+    assert name not in _plugin_controllers
+    _plugin_controllers[name] = controller
     return controller
+
+def get_controller(name):
+    name = name.lower() + 'controller'
+    if name in _reddit_controllers:
+        return _reddit_controllers[name]
+    elif name in _plugin_controllers:
+        return _plugin_controllers[name]
+    else:
+        raise KeyError
+
