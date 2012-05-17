@@ -25,7 +25,7 @@ from listingcontroller import NewController
 from listingcontroller import BrowseController
 from listingcontroller import MessageController
 from listingcontroller import RedditsController
-from listingcontroller import ByIDController as ByidController
+from listingcontroller import ByIDController
 from listingcontroller import RandomrisingController
 from listingcontroller import UserController
 from listingcontroller import CommentsController
@@ -60,9 +60,9 @@ except ImportError:
 
 from api import ApiminimalController
 from api_docs import ApidocsController
-from apiv1 import APIv1Controller as Apiv1Controller
-from oauth2 import OAuth2FrontendController as Oauth2frontendController
-from oauth2 import OAuth2AccessController as Oauth2accessController
+from apiv1 import APIv1Controller
+from oauth2 import OAuth2FrontendController
+from oauth2 import OAuth2AccessController
 from admin import AdminController
 from redirect import RedirectController
 from ipn import IpnController
