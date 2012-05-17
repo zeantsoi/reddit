@@ -389,7 +389,10 @@ def set_iface_lang():
             #we don't have a translation for that language
             h.set_lang(g.lang, graceful_fail = True)
 
-    c.locale = babel.core.Locale.parse(c.lang, sep='-')
+    try:
+        c.locale = babel.core.Locale.parse(c.lang, sep='-')
+    except babel.core.UnknownLocaleError:
+        c.locale = babel.core.Locale.parse(g.lang, sep='-')
 
     #TODO: add exceptions here for rtl languages
     if c.lang in ('ar', 'he', 'fa'):
