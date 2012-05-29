@@ -99,11 +99,10 @@ STATIC_BUILDSTAMP := $(BUILD_DIR)/static-buildstamp
 static: plugin_static pyx css js names
 
 clean_static:
-	rm -rf $(STATIC_BUILD_DIR)
-	rm $(STATIC_BUILDSTAMP)
+	rm -rf $(STATIC_BUILDSTAMP) $(STATIC_BUILD_DIR)
 
 $(STATIC_BUILDSTAMP): $(STATIC_FILES)
-	cp -ruT $(STATIC_ROOT) $(STATIC_BUILD_ROOT)
+	cp -ruTL $(STATIC_ROOT) $(STATIC_BUILD_ROOT)
 	touch $@
 
 #################### Plugin static files
