@@ -22,6 +22,7 @@
 
 _reddit_controllers = {}
 _plugin_controllers = {}
+load_calls = 0
 
 def get_controller(name):
     name = name.lower() + 'controller'
@@ -30,7 +31,7 @@ def get_controller(name):
     elif name in _plugin_controllers:
         return _plugin_controllers[name]
     else:
-        raise KeyError(name)
+        raise KeyError(name, load_calls, _reddit_controllers.keys())
 
 def add_controller(controller):
     name = controller.__name__.lower()
@@ -39,6 +40,8 @@ def add_controller(controller):
     return controller
 
 def load_controllers():
+    global load_calls
+    load_calls += 1
     if _reddit_controllers:
         # already loaded.
         return
