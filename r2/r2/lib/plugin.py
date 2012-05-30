@@ -53,7 +53,7 @@ class PluginLoader(object):
     def __iter__(self):
         return self.plugins.itervalues()
 
-    def __getitem___(self, key):
+    def __getitem__(self, key):
         return self.plugins[key]
 
     @staticmethod
