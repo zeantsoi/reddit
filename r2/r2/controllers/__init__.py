@@ -39,10 +39,6 @@ def add_controller(controller):
     return controller
 
 def load_controllers():
-    if _reddit_controllers:
-        # already loaded.
-        return
-
     from listingcontroller import ListingController
     from listingcontroller import HotController
     from listingcontroller import NewController

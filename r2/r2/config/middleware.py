@@ -41,6 +41,7 @@ from r2.lib.html_source import HTMLValidationParser
 from cStringIO import StringIO
 import sys, tempfile, urllib, re, os, sha, subprocess
 from httplib import HTTPConnection
+from threading import Lock
 
 # hack in Paste support for HTTP 429 "Too Many Requests"
 from paste import httpexceptions, wsgiwrappers
@@ -519,15 +520,27 @@ class CleanupMiddleware(object):
 
 #god this shit is disorganized and confusing
 class RedditApp(PylonsBaseWSGIApp):
+    def __init__(self, *args, **kwargs):
+        super(RedditApp, self).__init__(*args, **kwargs)
+        self._loading_lock = Lock()
+        self._controllers = None
+
+    def load_controllers(self):
+        with self._loading_lock:
+            if not self._controllers:
+                controllers = __import__(self.package_name + '.controllers').controllers
+                controllers.load_controllers()
+                config['r2.plugins'].load_controllers()
+                self._controllers = controllers
+
+        return self._controllers
+
     def find_controller(self, controller_name):
         if controller_name in self.controller_classes:
             return self.controller_classes[controller_name]
 
-        controllers_module = __import__(self.package_name + '.controllers').controllers
-        controllers_module.load_controllers()
-        config['r2.plugins'].load_controllers()
-
-        controller_cls = controllers_module.get_controller(controller_name)
+        controllers = self.load_controllers()
+        controller_cls = controllers.get_controller(controller_name)
         self.controller_classes[controller_name] = controller_cls
         return controller_cls
 
