@@ -19,62 +19,9 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from listingcontroller import ListingController
-from listingcontroller import HotController
-from listingcontroller import NewController
-from listingcontroller import BrowseController
-from listingcontroller import MessageController
-from listingcontroller import RedditsController
-from listingcontroller import ByIDController
-from listingcontroller import RandomrisingController
-from listingcontroller import UserController
-from listingcontroller import CommentsController
 
-from listingcontroller import MyredditsController
-
-from feedback import FeedbackController
-from front import FormsController
-from front import FrontController
-from health import HealthController
-from buttons import ButtonsController
-from buttons import ButtonjsController
-from captcha import CaptchaController
-from embed import EmbedController
-from error import ErrorController
-from post import PostController
-from toolbar import ToolbarController
-from awards import AwardsController
-from ads import AdsController
-from usage import UsageController
-from errorlog import ErrorlogController
-from promotecontroller import PromoteController
-from mediaembed import MediaembedController
-from mediaembed import AdController
-
-from querycontroller import QueryController
-
-try:
-    from r2admin.controllers.adminapi import ApiController
-except ImportError:
-    from api import ApiController
-
-from api import ApiminimalController
-from api_docs import ApidocsController
-from apiv1 import APIv1Controller
-from oauth2 import OAuth2FrontendController
-from oauth2 import OAuth2AccessController
-from admin import AdminController
-from redirect import RedirectController
-from ipn import IpnController
-
-_reddit_controllers = dict((name.lower(), obj) for name, obj in globals().iteritems())
-
+_reddit_controllers = {}
 _plugin_controllers = {}
-def add_controller(controller):
-    name = controller.__name__.lower()
-    assert name not in _plugin_controllers
-    _plugin_controllers[name] = controller
-    return controller
 
 def get_controller(name):
     name = name.lower() + 'controller'
@@ -85,3 +32,63 @@ def get_controller(name):
     else:
         raise KeyError
 
+def add_controller(controller):
+    name = controller.__name__.lower()
+    assert name not in _plugin_controllers
+    _plugin_controllers[name] = controller
+    return controller
+
+def load_controllers():
+    if _reddit_controllers:
+        # already loaded.
+        return
+
+    from listingcontroller import ListingController
+    from listingcontroller import HotController
+    from listingcontroller import NewController
+    from listingcontroller import BrowseController
+    from listingcontroller import MessageController
+    from listingcontroller import RedditsController
+    from listingcontroller import ByIDController
+    from listingcontroller import RandomrisingController
+    from listingcontroller import UserController
+    from listingcontroller import CommentsController
+
+    from listingcontroller import MyredditsController
+
+    from feedback import FeedbackController
+    from front import FormsController
+    from front import FrontController
+    from health import HealthController
+    from buttons import ButtonsController
+    from buttons import ButtonjsController
+    from captcha import CaptchaController
+    from embed import EmbedController
+    from error import ErrorController
+    from post import PostController
+    from toolbar import ToolbarController
+    from awards import AwardsController
+    from ads import AdsController
+    from usage import UsageController
+    from errorlog import ErrorlogController
+    from promotecontroller import PromoteController
+    from mediaembed import MediaembedController
+    from mediaembed import AdController
+
+    from querycontroller import QueryController
+
+    try:
+        from r2admin.controllers.adminapi import ApiController
+    except ImportError:
+        from api import ApiController
+
+    from api import ApiminimalController
+    from api_docs import ApidocsController
+    from apiv1 import APIv1Controller
+    from oauth2 import OAuth2FrontendController
+    from oauth2 import OAuth2AccessController
+    from admin import AdminController
+    from redirect import RedirectController
+    from ipn import IpnController
+
+    _reddit_controllers.update((name.lower(), obj) for name, obj in locals().iteritems())

@@ -524,6 +524,7 @@ class RedditApp(PylonsBaseWSGIApp):
             return self.controller_classes[controller_name]
 
         controllers_module = __import__(self.package_name + '.controllers').controllers
+        controllers_module.load_controllers()
         config['r2.plugins'].load_controllers()
 
         controller_cls = controllers_module.get_controller(controller_name)
