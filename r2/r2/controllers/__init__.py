@@ -30,7 +30,7 @@ def get_controller(name):
     elif name in _plugin_controllers:
         return _plugin_controllers[name]
     else:
-        raise KeyError
+        raise KeyError(name)
 
 def add_controller(controller):
     name = controller.__name__.lower()
