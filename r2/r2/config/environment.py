@@ -47,7 +47,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
              'templates': tmpl_dirs,
              }
 
-    if ConfigValue.bool(app_conf.get('uncompressedJS')):
+    if ConfigValue.bool(global_conf.get('uncompressedJS')):
         paths['static_files'] = os.path.join(root_path, 'public')
     else:
         paths['static_files'] = os.path.join(os.path.dirname(root_path), 'build/public')
