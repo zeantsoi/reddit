@@ -482,7 +482,7 @@ class SearchBuilder(IDBuilder):
         # TODO: Consider a flag to disable this (and see listingcontroller.py)
         if item._spam or item._deleted:
             return False
-        elif hasattr(item, "author") and item.author._deleted:
+        elif getattr(item, "author", None) and item.author._deleted:
             return False
         else:
             return True
