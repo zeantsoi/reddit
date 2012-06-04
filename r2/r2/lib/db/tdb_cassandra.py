@@ -501,7 +501,7 @@ class ThingBase(object):
             date = date_serializer.unpack(val)
         else: # it's probably the old-style stringified seconds since epoch
             as_float = float(val)
-            return datetime.utcfromtimestamp(as_float)
+            date = datetime.utcfromtimestamp(as_float)
 
         return date.replace(tzinfo=pytz.utc)
 
