@@ -122,7 +122,7 @@ $(eval PLUGIN_MAKE_$(1) := $(shell \
 	fi))
 
 $(BUILD_DIR)/plugin-$(1)-buildstamp: $(STATIC_BUILDSTAMP) $(shell find $(PLUGIN_PATH_$(1))/public)
-	$(PLUGIN_MAKE_$(1))
+	$(PLUGIN_MAKE_$(1)) static
 	cp -r $(PLUGIN_PATH_$(1))/public/* $(STATIC_BUILD_ROOT)/
 	touch $$@
 
