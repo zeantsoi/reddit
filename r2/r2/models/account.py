@@ -219,7 +219,6 @@ class Account(Thing):
 
         g.log.debug ("Updating last visit for %s from %s to %s" %
                     (self.name, prev_visit, current_time))
-        set_last_visit(self)
 
         LastModified.touch(self._fullname, "Visit")
 
