@@ -72,7 +72,7 @@ class CloudSearchUploader(object):
     def desired_fullnames(cls, items):
         '''Pull fullnames that represent instances of 'types' out of items'''
         fullnames = set()
-        type_ids = [r2utils.to36(type_._type_id) for type_ in cls.types]
+        type_ids = [type_._type_id for type_ in cls.types]
         for item in items:
             item_type = r2utils.decompose_fullname(item['fullname'])[1]
             if item_type in type_ids:
