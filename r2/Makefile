@@ -123,7 +123,7 @@ $(eval PLUGIN_MAKE_$(1) := $(shell \
 
 $(BUILD_DIR)/plugin-$(1)-buildstamp: $(STATIC_BUILDSTAMP) $(shell find $(PLUGIN_PATH_$(1))/public)
 	$(PLUGIN_MAKE_$(1)) static
-	cp -r $(PLUGIN_PATH_$(1))/public/* $(STATIC_BUILD_ROOT)/
+	cp -r --preserve=timestamps $(PLUGIN_PATH_$(1))/public/* $(STATIC_BUILD_ROOT)/
 	touch $$@
 
 $(info [+] adding make rules from plugin "$(1)")
