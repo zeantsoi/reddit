@@ -650,6 +650,7 @@ class FrontController(RedditController):
 
         query = self.related_replace_regex.sub(self.related_replace_with,
                                                article.title)
+        query = unicode(query, 'utf-8')
         query = query[:1024]
         query = "|".join(query.split())
         query = "title:'%s'" % query
