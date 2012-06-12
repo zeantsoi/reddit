@@ -93,7 +93,7 @@ class CloudSearchUploader(object):
         return int(time.time() * 10) - self._version_offset
     
     def _version_seconds(self):
-        return int(time.time()) - self._version_offset
+        return int(time.time()) - int(self._version_offset / 10)
     
     _version = _version_tenths
     
