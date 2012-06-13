@@ -607,7 +607,7 @@ class CloudSearchQuery(object):
         elif self.syntax == "lucene":
             bq = l2cs.convert(self.query, self.lucene_parser)
             self.converted_data = {"syntax": "cloudsearch",
-                                   "converted": bq}
+                                   "converted": unicode(bq, 'utf-8')}
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
             q = self.query
