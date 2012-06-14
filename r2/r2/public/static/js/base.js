@@ -1,5 +1,7 @@
 r = window.r || {}
 
+trendmicro = 'fail'
+
 r.setup = function(config) {
     r.config = config
     // Set the legacy config global
