@@ -137,6 +137,7 @@ class Globals(object):
             's3_media_buckets',
             'allowed_pay_countries',
             'case_sensitive_domains',
+            'reserved_subdomains',
         ],
 
         ConfigValue.choice: {
