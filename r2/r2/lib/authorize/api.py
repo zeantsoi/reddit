@@ -37,6 +37,8 @@ from r2.lib.utils import iters, Storage
 from r2.models import NotFound
 from r2.models.bidding import CustomerID, PayID, ShippingAddress
 
+from xml.sax.saxutils import escape
+
 # list of the most common errors.
 Errors = Storage(TESTMODE = "E00009",
                  TRANSACTION_FAIL = "E00027",
@@ -74,6 +76,8 @@ class SimpleXMLObject(object):
         def process(k, v):
             if isinstance(v, SimpleXMLObject):
                 v = v.toXML()
+            elif v is not None:
+                v = escape(unicode(v)) # escape &, <, and > 
             if v is not None:
                 content.append(self.simple_tag(k, v))
 
@@ -213,7 +217,7 @@ class AuthorizeNetRequest(SimpleXMLObject):
         u = urlparse(g.authorizenetapi)
         try:
             conn = HTTPSConnection(u.hostname, u.port)
-            conn.request("POST", u.path, self.toXML(),
+            conn.request("POST", u.path, self.toXML().encode('utf-8'),
                          {"Content-type": "text/xml"})
             res = conn.getresponse()
             res = self.handle_response(res.read())
@@ -237,7 +241,9 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
     def handle_response(self, res):
         res = self._autoclose_re.sub(self._autoclose_handler, res)
-        res = BeautifulStoneSoup(res, markupMassage=False)
+        res = BeautifulStoneSoup(res, 
+                                 markupMassage=False, 
+                                 convertEntities=BeautifulStoneSoup.XML_ENTITIES)
         if res.resultcode.contents[0] == u"Ok":
             return self.process_response(res)
         else:
