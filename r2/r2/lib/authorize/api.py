@@ -51,6 +51,9 @@ class AuthorizeNetException(Exception):
     pass
 
 
+# xml tags whose content shouldn't be escaped 
+_no_escape_list = ["extraOptions"]
+
 class SimpleXMLObject(object):
     """
     All API transactions are done with authorize.net using XML, so
@@ -77,7 +80,9 @@ class SimpleXMLObject(object):
             if isinstance(v, SimpleXMLObject):
                 v = v.toXML()
             elif v is not None:
-                v = escape(unicode(v)) # escape &, <, and > 
+                v = unicode(v)
+                if k not in _no_escape_list:
+                    v = escape(v) # escape &, <, and >
             if v is not None:
                 content.append(self.simple_tag(k, v))
 
