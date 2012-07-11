@@ -481,7 +481,7 @@ class Results(object):
         self.docs = docs
         self.hits = hits
         self._facets = facets
-        self._subreddits = None
+        self._subreddits = []
     
     def __repr__(self):
         return '%s(%r, %r, %r)' % (self.__class__.__name__,
@@ -492,7 +492,7 @@ class Results(object):
     @property
     def subreddit_facets(self):
         '''Filter out subreddits that the user isn't allowed to see'''
-        if not self._subreddits:
+        if not self._subreddits and 'reddit' in self._facets:
             sr_facets = [(sr['value'], sr['count']) for sr in
                          self._facets['reddit']]
             srs_by_name = Subreddit._by_name([sr[0] for sr in sr_facets])
