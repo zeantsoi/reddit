@@ -477,29 +477,18 @@ def test_run_srs(*sr_names):
 
 ### Query Code ###
 class Results(object):
+    __slots__ = ["docs", "hits", "facets"]
+    
     def __init__(self, docs, hits, facets):
         self.docs = docs
         self.hits = hits
-        self._facets = facets
-        self._subreddits = None
+        self.facets = facets
     
     def __repr__(self):
         return '%s(%r, %r, %r)' % (self.__class__.__name__,
                                    self.docs,
                                    self.hits,
-                                   self._facets)
-    
-    @property
-    def subreddit_facets(self):
-        '''Filter out subreddits that the user isn't allowed to see'''
-        if not self._subreddits:
-            sr_facets = [(sr['value'], sr['count']) for sr in
-                         self._facets['reddit']]
-            srs_by_name = Subreddit._by_name([sr[0] for sr in sr_facets])
-            self._subreddits = [sr for sr in sr_facets
-                                if srs_by_name[sr[0]].can_view(c.user)]
-        
-        return self._subreddits
+                                   self.facets)
 
 
 def _to_fn(cls, id_):
@@ -516,7 +505,7 @@ INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-InvalidMatchSetExpression',
                        'CS-IncorrectFieldTypeInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
-def basic_query(query=None, bq=None, facets=("reddit",), facet_count=20,
+def basic_query(query=None, bq=None, facets=("reddit",), facet_count=10,
                 size=1000, start=0, rank="hot", return_fields=None,
                 record_stats=False, search_api=None):
     if search_api is None:
@@ -630,7 +619,7 @@ class CloudSearchQuery(object):
         
         results = self._run(_update=_update)
         
-        docs, hits, facets = results.docs, results.hits, results._facets
+        docs, hits, facets = results.docs, results.hits, results.facets
         
         after_docs = r2utils.get_after(docs, after, num, reverse=reverse)
         
