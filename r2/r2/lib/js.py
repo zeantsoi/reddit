@@ -352,6 +352,10 @@ module["reddit"] = LocalizedModule("reddit.js",
     "gold.js",
 )
 
+module["admin"] = Module("admin.js",
+    "lib/backbone-0.9.10.js",
+    "adminbar.js",
+)
 
 module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
