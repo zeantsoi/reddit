@@ -115,6 +115,9 @@ class AdminTools(object):
 
         queries.unban(things, insert)
         queries.mark_moderated(things)
+    
+    def report(self, thing):
+        pass
 
     def author_spammer(self, things, spam):
         """incr/decr the 'spammer' field for the author of every

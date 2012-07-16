@@ -868,6 +868,7 @@ class ApiController(RedditController):
         if c.user._spam or c.user.ignorereports:
             return
         Report.new(c.user, thing)
+        admintools.report(thing)
 
     @noresponse(VUser(), VModhash(),
                 thing=VByName('id'))
