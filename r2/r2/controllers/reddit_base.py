@@ -684,8 +684,8 @@ class MinimalController(BaseController):
                                     value   = quote(v.value),
                                     domain  = v.domain,
                                     expires = v.expires,
-                                    secure  = v.secure,
-                                    httponly = v.httponly)
+                                    secure  = getattr(v, 'secure', False),
+                                    httponly = getattr(v, 'httponly', False))
 
         end_time = datetime.now(g.tz)
 
