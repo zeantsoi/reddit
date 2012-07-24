@@ -1002,7 +1002,7 @@ class FormsController(RedditController):
             # they've already verified. consume and ignore this token.
             token.consume()
             return self.redirect(dest)
-        elif token and token.valid_for_user(user):
+        elif token and token.valid_for_user(c.user):
             # successful verification!
             token.consume()
             c.user.email_verified = True
