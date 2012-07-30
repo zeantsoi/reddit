@@ -46,7 +46,7 @@ def score_changes(amount, old_amount):
 
 class CassandraVote(tdb_cassandra.Relation):
     _use_db = False
-    _connection_pool = 'main'
+    _connection_pool = 'vote'
 
     _bool_props = ('valid_user', 'valid_thing', 'organic')
     _str_props  = ('name', # one of '-1', '0', '1'
