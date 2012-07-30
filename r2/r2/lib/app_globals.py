@@ -129,6 +129,7 @@ class Globals(object):
             'rendercaches',
             'cassandra_seeds',
             'old_cassandra_seeds',
+            'vote_cassandra_seeds',
             'admins',
             'sponsors',
             'automatic_reddits',
@@ -259,6 +260,17 @@ class Globals(object):
                     server_list=self.old_cassandra_seeds,
                     pool_size=self.cassandra_pool_size,
                     timeout=15,
+                    max_retries=3,
+                    prefill=False
+                ),
+            "vote":
+                StatsCollectingConnectionPool(
+                    keyspace,
+                    stats=self.stats,
+                    logging_name="vote",
+                    server_list=self.vote_cassandra_seeds,
+                    pool_size=self.cassandra_pool_size,
+                    timeout=2,
                     max_retries=3,
                     prefill=False
                 ),
