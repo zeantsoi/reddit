@@ -23,7 +23,7 @@
 import json
 import functools
 
-from kazoo.client import KazooClient, KazooState
+from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 
 
@@ -40,14 +40,11 @@ def connect_to_zookeeper(hostlist, credentials):
                          timeout=5,
                          max_retries=3)
 
-    # make sure to provide credentials any time we connect
+    # convenient helper function for making credentials
     client.make_acl = functools.partial(make_digest_acl, *credentials)
-    def connection_state_listener(state):
-        if state == KazooState.CONNECTED:
-            client.add_auth("digest", ":".join(credentials))
-    client.add_listener(connection_state_listener)
 
     client.connect()
+    client.add_auth("digest", ":".join(credentials))
     return client
 
 
