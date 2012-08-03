@@ -150,7 +150,6 @@ class Globals(object):
             'permacache_memcaches',
             'rendercaches',
             'cassandra_seeds',
-            'old_cassandra_seeds',
             'vote_cassandra_seeds',
             'admins',
             'sponsors',
@@ -297,17 +296,6 @@ class Globals(object):
 
         keyspace = "reddit"
         self.cassandra_pools = {
-            "old":
-                StatsCollectingConnectionPool(
-                    keyspace,
-                    stats=self.stats,
-                    logging_name="old",
-                    server_list=self.old_cassandra_seeds,
-                    pool_size=self.cassandra_pool_size,
-                    timeout=15,
-                    max_retries=3,
-                    prefill=False
-                ),
             "vote":
                 StatsCollectingConnectionPool(
                     keyspace,
