@@ -38,6 +38,7 @@ from validator import *
 from r2.lib.template_helpers import add_sr
 from r2.config.extensions import is_api
 from r2.lib.translation import set_lang
+from r2.lib.contrib import ipaddress
 
 from Cookie import CookieError
 from copy import copy
@@ -464,8 +465,12 @@ def ratelimit_agents():
         if s and user_agent and s in user_agent:
             ratelimit_agent(s)
 
-def throttled(key):
-    return g.cache.get("throttle_" + key)
+def throttled(address):
+    addr = ipaddress.ip_address(address)
+    for network in g.throttles:
+        if addr in network:
+            return True
+    return False
 
 def ratelimit_throttled():
     ip = request.ip.strip()
