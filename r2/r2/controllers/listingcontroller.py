@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from reddit_base import RedditController, base_listing, organic_pos
 from validator import *
 
@@ -929,8 +930,12 @@ class RedditsController(ListingController):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
-class MyredditsController(ListingController):
+class MyredditsController(ListingController, OAuth2ResourceController):
     render_cls = MySubredditsPage
+
+    def pre(self):
+        ListingController.pre(self)
+        self.check_for_bearer_token()
 
     @property
     def menus(self):
@@ -981,6 +986,7 @@ class MyredditsController(ListingController):
 
         return ListingController.build_listing(self, after=after, **kwargs)
 
+    @require_oauth2_scope("myreddits")
     @validate(VUser())
     @listing_api_doc(section=api_section.subreddits,
                      uri='/reddits/mine/{where}',
