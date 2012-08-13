@@ -56,8 +56,6 @@ debug = g.debug
 make_lock = g.make_lock
 db_create_tables = g.db_create_tables
 
-import json
-
 thing_types = {}
 
 TRANSIENT_EXCEPTIONS = (MaximumRetryException,)
