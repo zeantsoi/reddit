@@ -225,7 +225,7 @@ class Account(Thing):
 
         LastModified.touch(self._fullname, "Visit")
 
-        self.last_visit = int(current_time.strftime("%s"))
+        self.last_visit = int(time.time())
         self._commit()
 
     def make_cookie(self, timestr=None):
