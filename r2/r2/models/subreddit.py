@@ -81,6 +81,7 @@ class Subreddit(Thing, Printable):
                      flair_self_assign_enabled = False,
                      link_flair_self_assign_enabled = False,
                      use_quotas = True,
+                     active_accounts = 0,
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
@@ -404,6 +405,10 @@ class Subreddit(Thing, Printable):
                                                             target=target)
             else:
                 item.public_description_usertext = None
+
+            # Obscure active_accounts for low values
+            if (item.active_accounts < 100):
+                item.active_accounts = 0
 
 
         Printable.add_props(user, wrapped)
