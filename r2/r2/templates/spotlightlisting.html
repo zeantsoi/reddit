@@ -33,7 +33,7 @@
   %for name in thing.spotlight_items:
     %if name in seen:
       <% pass %>
-    %elif thing.lookup.has_key(name):
+    %elif name in thing.lookup:
       <% seen.add(name) %>
       ${unsafe(thing.lookup[name].render(display = (thing.visible_item == name)))}
     %else:
