@@ -1177,6 +1177,7 @@ class CommentPane(Templated):
             dislikes = []
             is_friend = set()
             gildings = {}
+            saves = set()
             for t in self.listing_iter(my_listing):
                 if not hasattr(t, "likes"):
                     # this is for MoreComments and MoreRecursion
@@ -1189,10 +1190,13 @@ class CommentPane(Templated):
                     dislikes.append(t._fullname)
                 if t.user_gilded:
                     gildings[t._fullname] = t.gilded_message
+                if t.saved:
+                    saves.add(t._fullname)
             self.rendered += ThingUpdater(likes = likes,
                                           dislikes = dislikes,
                                           is_friend = is_friend,
-                                          gildings = gildings).render()
+                                          gildings = gildings,
+                                          saves = saves).render()
             g.log.debug("using comment page cache")
         else:
             self.rendered = my_listing.render()

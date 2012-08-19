@@ -757,6 +757,12 @@ class Comment(Thing, Printable):
 
         return (c, inbox_rel)
 
+    def _save(self, user):
+        CommentSavesByAccount._save(user, self)
+
+    def _unsave(self, user):
+        CommentSavesByAccount._unsave(user, self)
+
     @property
     def subreddit_slow(self):
         from subreddit import Subreddit
@@ -886,8 +892,15 @@ class Comment(Thing, Printable):
             except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
                 g.log.warning("Cassandra gilding lookup failed: %r", e)
                 user_gildings = {}
+
+            try:
+                saved = CommentSavesByAccount.fast_query(user, wrapped)
+            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+                g.log.warning("Cassandra comment save lookup failed: %r", e)
+                saved = {}
         else:
             user_gildings = {}
+            saved = {}
 
         for item in wrapped:
             # for caching:
@@ -924,8 +937,10 @@ class Comment(Thing, Printable):
 
             if user_is_loggedin:
                 item.user_gilded = (user, item) in user_gildings
+                item.saved = (user, item) in saved
             else:
                 item.user_gilded = False
+                item.saved = False
             item.gilded_message = make_comment_gold_message(item,
                                                             item.user_gilded)
 

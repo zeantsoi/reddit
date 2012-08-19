@@ -6350,3 +6350,8 @@ span.gilded-comment-icon {
     width: 24px;
     margin-bottom: -8px;
 }
+
+.buttons li.comment-save-button { display: none; }
+.buttons li.comment-unsave-button { display: inline; }
+
+body.gold .buttons li.comment-save-button { display: inline; }

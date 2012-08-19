@@ -40,4 +40,7 @@
     r.gold.gildComment(gilded_comment, gildings[gilded_comment]);
   }
 
+  var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};
+  $.map(saves, show_saved);
+
 </script>
