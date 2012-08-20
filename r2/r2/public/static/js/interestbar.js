@@ -73,7 +73,7 @@ r.ui.InterestBar.prototype = {
         this.$el
             .removeClass('working')
             .addClass('error')
-            .find('.caption')
+            .find('.error-caption')
                 .text(r.strings.an_error_occurred_friendly + ' (' + xhr.status + ')')
 
         this.hideResults()

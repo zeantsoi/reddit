@@ -5783,6 +5783,14 @@ tr.gold-accent + tr > td {
     border-color: #cf5e5e;
 }
 
+.sr-interest-bar .error-caption, .sr-interest-bar.error .caption {
+    display: none;
+}
+
+.sr-interest-bar.error .error-caption {
+    display: block;
+}
+
 .sr-interest-bar .query {
     width: 100%;
     font-size: 20px;
