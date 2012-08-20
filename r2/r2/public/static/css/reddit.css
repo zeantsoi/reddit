@@ -1834,7 +1834,7 @@ label + #moresearchinfo {
 .searchpane {
     margin: 5px 305px 5px 0px;
     padding-left: 96px;
-    background: #E0E0E0 url(/static/search-large.png) 26px center no-repeat;
+    background: #E0E0E0 url(../search-large.png) 26px center no-repeat;
 } 
 
 .searchpane #search input[type=text] { }
