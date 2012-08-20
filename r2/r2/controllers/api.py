@@ -2808,7 +2808,7 @@ class ApiController(RedditController):
         results = []
         for sr_name in sr_facets:
             sr = srs.get(sr_name)
-            if (sr._id in exclude or sr.over_18
+            if (sr._id in exclude or (sr.over_18 and not c.over18)
                   or not sr.can_view(c.user)
                   or sr.type == "archived"):
                 continue
