@@ -260,6 +260,8 @@ class DataThing(object):
                 useless_updates = self._set_data(self._type_id,
                                                  self._id,
                                                  **data_props)
+            else:
+                useless_updates = 0
 
             if thing_props:
                 self._set_props(self._type_id, self._id, **thing_props)
