@@ -2791,6 +2791,9 @@ class ApiController(RedditController):
         if not g.CLOUDSEARCH_SEARCH_API:
             return []
 
+        if not query or not query.strip():
+            return []
+
         exclude = Subreddit.default_subreddits()
 
         q = basic_query(query,

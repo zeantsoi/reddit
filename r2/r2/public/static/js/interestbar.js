@@ -21,20 +21,20 @@ r.ui.InterestBar = function() {
 r.ui.InterestBar.prototype = {
     keyPressed: function() {
         var query = this.$query.val()
-        if (query.length) {
-            if (query != this._lastQuery) {
-                this._lastQuery = query
-                this.$el.addClass('working')
-                this.queryChangedDebounced.apply(this, arguments)
-            }
-        } else {
+        query = $.trim(query)
+        if (query != this._lastQuery) {
+            this._lastQuery = query
+            this.$el.addClass('working')
+            this.queryChangedDebounced(query)
+        }
+
+        if (!query) {
             this.$el.removeClass('working error')
             this.hideResults()
         }
     },
 
-    queryChanged: function() {
-        var query = this.$query.val()
+    queryChanged: function(query) {
         if (query) {
             $.ajax({
                 url: '/api/subreddits_by_topic.json',
