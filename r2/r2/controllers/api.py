@@ -2793,7 +2793,9 @@ class ApiController(RedditController):
 
         exclude = Subreddit.default_subreddits()
 
-        q = basic_query(query, facets={"reddit":{"sort":"-sum(text_relevance)", "count":20}})
+        q = basic_query(query,
+                        facets={"reddit":{"sort":"-sum(text_relevance)", "count":20}},
+                        record_stats=True)
         if not q["facets"]:
             return []
 
