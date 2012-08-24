@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 import os
+
 from r2.lib.translation import I18N_PATH
 from r2.lib.plugin import PluginLoader
 from r2.lib import js
