@@ -27,7 +27,7 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
 from r2.models.link import Link
 
-MAX_ITERATIONS = 100000
+MAX_ITERATIONS = 50000
 
 def comments_key(link_id):
     return 'comments_' + str(link_id)
