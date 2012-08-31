@@ -566,7 +566,10 @@ class ApiController(RedditController, OAuth2ResourceController):
         if (not c.user_is_admin
             and (type in sr_types and not container.is_moderator(c.user))):
             abort(403,'forbidden')
-        
+
+        if type == 'moderator' and getattr(friend, 'unmoddable', False):
+            abort(403)
+
         if type in sr_types and not c.user_is_admin:
             quota_key = "sr%squota-%s" % (str(type), container._id36)
             g.cache.add(quota_key, 0, time=g.sr_quota_time)
