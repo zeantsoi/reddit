@@ -1069,12 +1069,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_share_"),
                    share_from = VLength('share_from', max_length = 100),
-                   emails = ValidEmails("share_to"),
+                   emails = ValidEmailsOrExistingUnames("share_to"),
                    reply_to = ValidEmails("replyto", num = 1), 
                    message = VLength("message", max_length = 1000), 
-                   thing = VByName('parent'))
+                   thing = VByName('parent'),
+                   ip = ValidIP())
     def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
-                   message):
+                   message,ip):
 
         # remove the ratelimit error if the user's karma is high
         sr = thing.subreddit_slow
@@ -1102,6 +1103,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             pass
         else:
+            emails, users = emails
             c.user.add_share_emails(emails)
             c.user._commit()
             link = jquery.things(thing._fullname)
@@ -1109,9 +1111,22 @@ class ApiController(RedditController, OAuth2ResourceController):
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
                            _("your link has been shared."))
-
+            # E-mail everyone
             emailer.share(thing, emails, from_name = share_from or "",
                           body = message or "", reply_to = reply_to or "")
+
+            # Send the PMs
+            subject = "%s has shared a link with you!" % c.user.name
+            # The link itself isn't included in the message, so prepend it:
+            message = "%s\n\n%s" % (message, thing.url)
+            for target in users:
+                
+                m, inbox_rel = Message._new(c.user, target, subject,
+                                            message,ip)
+                # Queue up this PM for spam review
+                amqp.add_item('new_message', m._fullname)
+
+                queries.new_message(m,inbox_rel)
 
             #set the ratelimiter
             if should_ratelimit:

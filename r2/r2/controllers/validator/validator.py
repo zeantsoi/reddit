@@ -1492,6 +1492,53 @@ class ValidEmails(Validator):
             # return single email if one is expected, list otherwise
             return list(emails)[0] if self.num == 1 else emails
 
+class ValidEmailsOrExistingUnames(Validator):
+    """Validates a list of mixed email addresses and usernames passed in
+    as a string, delineated by whitespace, ',' or ';'.  Validates total
+    quantity too while we're at it.  TODO: Figure out what we return
+    and put it here"""
+    
+    def __init__(self, param, num=20,**kw):
+        self.num = num
+        Validator.__init__(self, param=param,**kw)
+        
+    def run(self, items):
+        # Duplicating some of the ValidEmails code because there's not really
+        # a good way of re-using it.  At least I can use the regexes!
+        all = set(ValidEmails.separator.findall(items) if items else [])
+        
+        if self.num > 0 and len(all) > self.num:
+            if self.num == 1:
+                # If we only wanted one, just echo back the whole thing
+                self.set_error(errors.BAD_EMAILS,
+                               {"emails":'"%s"' % items})
+                
+            else:
+                # otherwise complain we got too many
+                self.set_error(errors.TOO_MANY_EMAILS, {"num":self.num})
+        
+        failures = set(e for e in all if not ValidEmails.email_re.match(e))
+        emails = all - failures
+        users = set() # set of accounts
+        validusers = set() # set of usernames to subtract from failures
+        
+        # VExistingUname's easy to re-use, though
+        for uname in failures:
+            veu = VExistingUname(uname)
+            account = veu.run(uname)
+            if account:
+                validusers.add(uname)
+                users.add(account)
+                
+        # We're fine if all our failures turned out to be valid users
+        if(len(users) == len(failures)):
+            return (emails,users)
+        else:
+            failures = failures - validusers
+            self.set_error(errors.BAD_EMAILS,
+                           {'emails': ', '.join(failures)})
+
+
 
 class VCnameDomain(Validator):
     domain_re  = re.compile(r'\A([\w\-_]+\.)+[\w]+\Z')
