@@ -1503,42 +1503,53 @@ class ValidEmailsOrExistingUnames(Validator):
         Validator.__init__(self, param=param,**kw)
         
     def run(self, items):
-        # Duplicating some of the ValidEmails code because there's not really
-        # a good way of re-using it.  At least I can use the regexes!
+        # Use ValidEmails separator to break the list up
         all = set(ValidEmails.separator.findall(items) if items else [])
         
-        if self.num > 0 and len(all) > self.num:
-            if self.num == 1:
-                # If we only wanted one, just echo back the whole thing
-                self.set_error(errors.BAD_EMAILS,
-                               {"emails":'"%s"' % items})
-                
+        # Use ValidEmails regex to divide the list into e-mail and other
+        emails = set(e for e in all if ValidEmails.email_re.match(e))
+        failures = all - emails
+        
+        # Run the rest of the validator against the e-mails list
+        ve = ValidEmails(self.param, self.num)
+        if(len(emails) > 0):
+            ve.run(", ".join(emails))
+        
+        # ValidEmails will add to c.errors for us, so do nothing if that fails
+        # Elsewise, on with the users
+        if not ve.has_errors:
+            users = set() # set of accounts
+            validusers = set() # set of usernames to subtract from failures
+            
+            # Now steal from VExistingUname:
+            for uname in failures:
+                veu = VExistingUname(uname)
+                account = veu.run(uname)
+                if account:
+                    validusers.add(uname)
+                    users.add(account)
+            
+            # We're fine if all our failures turned out to be valid users
+            if(len(users) == len(failures)):
+                # ValidEmails checked to see if there were too many addresses,
+                # check to see if there's enough left-over space for users
+                remaining = self.num - len(emails)
+                if len(users) > remaining:
+                    if self.num == 1:
+                        # We only wanted one, and we got it as an e-mail,
+                        # so complain.
+                        self.set_error(errors.BAD_EMAILS, 
+                                       {"emails",'"%s"' % items})
+                    else:
+                        # Too many total
+                        self.set_error(errors.TOO_MANY_EMAILS, {"num":self.num}) 
+                else:
+                    # It's all good!
+                    return (emails,users)                       
             else:
-                # otherwise complain we got too many
-                self.set_error(errors.TOO_MANY_EMAILS, {"num":self.num})
-        
-        failures = set(e for e in all if not ValidEmails.email_re.match(e))
-        emails = all - failures
-        users = set() # set of accounts
-        validusers = set() # set of usernames to subtract from failures
-        
-        # VExistingUname's easy to re-use, though
-        for uname in failures:
-            veu = VExistingUname(uname)
-            account = veu.run(uname)
-            if account:
-                validusers.add(uname)
-                users.add(account)
-                
-        # We're fine if all our failures turned out to be valid users
-        if(len(users) == len(failures)):
-            return (emails,users)
-        else:
-            failures = failures - validusers
-            self.set_error(errors.BAD_EMAILS,
-                           {'emails': ', '.join(failures)})
-
-
+                failures = failures - validusers
+                self.set_error(errors.BAD_EMAILS,
+                               {'emails': ', '.join(failures)})
 
 class VCnameDomain(Validator):
     domain_re  = re.compile(r'\A([\w\-_]+\.)+[\w]+\Z')

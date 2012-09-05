@@ -1123,7 +1123,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 
                 m, inbox_rel = Message._new(c.user, target, subject,
                                             message,ip)
-                # Queue up this PM for spam review
+                # Queue up this PM
                 amqp.add_item('new_message', m._fullname)
 
                 queries.new_message(m,inbox_rel)
