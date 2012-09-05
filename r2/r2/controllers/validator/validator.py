@@ -1498,9 +1498,9 @@ class ValidEmailsOrExistingUnames(Validator):
     quantity too while we're at it.  Returns a tuple of the form 
     (e-mail addresses, user account objects)"""
     
-    def __init__(self, param, num=20,**kw):
+    def __init__(self, param, num=20, **kw):
         self.num = num
-        Validator.__init__(self, param=param,**kw)
+        Validator.__init__(self, param=param, **kw)
         
     def run(self, items):
         # Use ValidEmails separator to break the list up
@@ -1512,7 +1512,7 @@ class ValidEmailsOrExistingUnames(Validator):
         
         # Run the rest of the validator against the e-mails list
         ve = ValidEmails(self.param, self.num)
-        if(len(emails) > 0):
+        if len(emails) > 0:
             ve.run(", ".join(emails))
         
         # ValidEmails will add to c.errors for us, so do nothing if that fails
@@ -1530,7 +1530,7 @@ class ValidEmailsOrExistingUnames(Validator):
                     users.add(account)
             
             # We're fine if all our failures turned out to be valid users
-            if(len(users) == len(failures)):
+            if len(users) == len(failures):
                 # ValidEmails checked to see if there were too many addresses,
                 # check to see if there's enough left-over space for users
                 remaining = self.num - len(emails)
@@ -1539,13 +1539,16 @@ class ValidEmailsOrExistingUnames(Validator):
                         # We only wanted one, and we got it as an e-mail,
                         # so complain.
                         self.set_error(errors.BAD_EMAILS, 
-                                       {"emails",'"%s"' % items})
+                                       {"emails": '"%s"' % items})
                     else:
                         # Too many total
-                        self.set_error(errors.TOO_MANY_EMAILS, {"num":self.num}) 
+                        self.set_error(errors.TOO_MANY_EMAILS, 
+                                       {"num": self.num}) 
+                elif len(users) + len(emails) == 0:
+                    self.set_error(errors.NO_EMAILS)
                 else:
                     # It's all good!
-                    return (emails,users)                       
+                    return (emails, users)                       
             else:
                 failures = failures - validusers
                 self.set_error(errors.BAD_EMAILS,

@@ -1075,7 +1075,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    thing = VByName('parent'),
                    ip = ValidIP())
     def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
-                   message,ip):
+                   message, ip):
 
         # remove the ratelimit error if the user's karma is high
         sr = thing.subreddit_slow
@@ -1122,11 +1122,11 @@ class ApiController(RedditController, OAuth2ResourceController):
             for target in users:
                 
                 m, inbox_rel = Message._new(c.user, target, subject,
-                                            message,ip)
+                                            message, ip)
                 # Queue up this PM
                 amqp.add_item('new_message', m._fullname)
 
-                queries.new_message(m,inbox_rel)
+                queries.new_message(m, inbox_rel)
 
             #set the ratelimiter
             if should_ratelimit:
