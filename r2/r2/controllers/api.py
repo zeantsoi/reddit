@@ -1117,7 +1117,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             # Send the PMs
             subject = "%s has shared a link with you!" % c.user.name
-            # The link itself isn't included in the message, so prepend it:
+            # The link itself isn't included in the message, so append it:
             message = "%s\n\n%s" % (message, thing.url)
             for target in users:
                 

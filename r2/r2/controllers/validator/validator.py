@@ -1495,8 +1495,8 @@ class ValidEmails(Validator):
 class ValidEmailsOrExistingUnames(Validator):
     """Validates a list of mixed email addresses and usernames passed in
     as a string, delineated by whitespace, ',' or ';'.  Validates total
-    quantity too while we're at it.  TODO: Figure out what we return
-    and put it here"""
+    quantity too while we're at it.  Returns a tuple of the form 
+    (e-mail addresses, user account objects)"""
     
     def __init__(self, param, num=20,**kw):
         self.num = num
