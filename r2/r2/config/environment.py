@@ -82,7 +82,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     # doesn't check that the original template path matches the current path.
     # in the event that a new plugin defines a template overriding a reddit
     # template, unless the mtime newer, mako doesn't update the compiled
-    # template. as a workaround, this makes make store compiled templates with
+    # template. as a workaround, this makes mako store compiled templates with
     # the original path in the filename, forcing it to update with the path.
     def mako_module_path(filename, uri):
         module_directory = tmpl_options['mako.module_directory']
