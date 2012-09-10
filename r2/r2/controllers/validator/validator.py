@@ -1506,11 +1506,11 @@ class ValidEmailsOrExistingUnames(Validator):
         
     def run(self, items):
         # Use ValidEmails separator to break the list up
-        all = set(ValidEmails.separator.findall(items) if items else [])
+        everything = set(ValidEmails.separator.findall(items) if items else [])
         
         # Use ValidEmails regex to divide the list into e-mail and other
-        emails = set(e for e in all if ValidEmails.email_re.match(e))
-        failures = all - emails
+        emails = set(e for e in everything if ValidEmails.email_re.match(e))
+        failures = everything - emails
         
         # Run the rest of the validator against the e-mails list
         ve = ValidEmails(self.param, self.num)
@@ -1520,13 +1520,16 @@ class ValidEmailsOrExistingUnames(Validator):
         # ValidEmails will add to c.errors for us, so do nothing if that fails
         # Elsewise, on with the users
         if not ve.has_errors:
-            users = set() # set of accounts
-            validusers = set() # set of usernames to subtract from failures
+            users = set()  # set of accounts
+            validusers = set()  # set of usernames to subtract from failures
             
             # Now steal from VExistingUname:
             for uname in failures:
-                veu = VExistingUname(uname)
-                account = veu.run(uname)
+                check = uname
+                if re.match('/u/', uname):
+                    check = check[3:]
+                veu = VExistingUname(check)
+                account = veu.run(check)
                 if account:
                     validusers.add(uname)
                     users.add(account)

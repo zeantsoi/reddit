@@ -64,6 +64,7 @@ from r2.lib.scraper import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
+from r2.lib.template_helpers import add_sr, get_domain
 
 from r2.models import wiki
 from r2.lib.merge import ConflictException
@@ -1121,14 +1122,44 @@ class ApiController(RedditController, OAuth2ResourceController):
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
                            _("your link has been shared."))
+            
+            # Set up the parts that are common between e-mail and PMs
+            urlparts = (get_domain(cname=c.cname, subreddit=False),
+                        thing._id36)
+            url = "http://%s/tb/%s" % urlparts
+            
+            if message:
+                message = message + "\n\n"
+            else:
+                message = ""
+            message = message + "\n\"%s\"\n\n%s\n\n" % (thing.title,url)
+            
+            if thing.num_comments:
+                # We don't actually expect this to get translated (it's in an
+                # e-mail, we don't know the language of the receiver) but
+                # calling ungettext anyway to handle the plural case
+                singular = ("There is currently %(num_comments)s comment " +
+                            "on this link.  You can view it here:")
+                plural = ("There are currently %(num_comments)s comments on " +
+                          "this link.  You can view them here:")
+                numcom = ungettext(singular,plural,thing.num_comments)
+                numcom = numcom % {'num_comments':thing.num_comments}
+                message = message + "%s\n\n" % numcom
+            else:
+                message = message + "You can leave a comment here:\n\n"
+                
+            url = add_sr(thing.make_permalink_slow(), force_hostname=True)
+            message = message + url
+            
             # E-mail everyone
             emailer.share(thing, emails, from_name = share_from or "",
                           body = message or "", reply_to = reply_to or "")
 
             # Send the PMs
             subject = "%s has shared a link with you!" % c.user.name
-            # The link itself isn't included in the message, so append it:
-            message = "%s\n\n%s" % (message, thing.url)
+            # Prepend this subject to the message
+            message = "%s\n\n%s" % (subject,message)
+            
             for target in users:
                 
                 m, inbox_rel = Message._new(c.user, target, subject,
