@@ -1039,8 +1039,11 @@ class DenormalizedRelation(object):
             from r2.models.last_modified import LastModified
             timestamp = LastModified.get(thing1._fullname,
                                          cls._last_modified_name)
-            thing2s = [thing2 for thing2 in thing2s
-                       if thing2._date <= timestamp]
+            if timestamp:
+                thing2s = [thing2 for thing2 in thing2s
+                           if thing2._date <= timestamp]
+            else:
+                thing2s = []
 
         if not thing2s:
             return {}
