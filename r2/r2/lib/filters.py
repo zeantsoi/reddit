@@ -191,7 +191,7 @@ for bt in markdown_boring_tags:
     markdown_ok_tags[bt] = ()
 
 for bt in markdown_user_tags:
-    markdown_ok_tags[bt] = ('colspan', 'rowspan', 'cellspacing', 'cellpadding', 'scope')
+    markdown_ok_tags[bt] = ('colspan', 'rowspan', 'cellspacing', 'cellpadding', 'align', 'scope')
 
 markdown_xhtml_dtd_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
