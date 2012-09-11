@@ -1457,9 +1457,9 @@ class ApiController(RedditController, OAuth2ResourceController):
         
         def apply_wikid_field(sr, form, pagename, value, prev, field, error):
             try:
-                wikipage = wiki.WikiPage.get(sr.name, pagename)
+                wikipage = wiki.WikiPage.get(sr, pagename)
             except tdb_cassandra.NotFound:
-                wikipage = wiki.WikiPage.create(sr.name, pagename)
+                wikipage = wiki.WikiPage.create(sr, pagename)
             try:
                 if wikipage.revise(value, previous=prev, author=c.user.name):
                     ModAction.create(c.site, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
