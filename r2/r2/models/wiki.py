@@ -173,6 +173,9 @@ class WikiPage(tdb_cassandra.Thing):
     
     @classmethod
     def get(cls, sr, name):
+        id = getattr(sr, '_id36', None)
+        if not id:
+            raise tdb_cassandra.NotFound
         return cls._byID(wiki_id(sr._id36, name))
     
     @classmethod
