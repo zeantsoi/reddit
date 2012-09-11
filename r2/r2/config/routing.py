@@ -184,6 +184,7 @@ def make_map():
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog|faq"))
+    mc('/help/*anything', controller='embed', action='help')
     
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')
