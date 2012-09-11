@@ -25,4 +25,5 @@ ${thing.username} from http://${get_domain(cname = c.cname, subreddit = False)}/
 
 ${thing.body}
 
+___
 If you would not like to receive emails from reddit.com in the future, visit http://${g.domain}/mail/optout?x=${thing.msg_hash}

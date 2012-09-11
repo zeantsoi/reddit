@@ -1132,18 +1132,18 @@ class ApiController(RedditController, OAuth2ResourceController):
                 message = message + "\n\n"
             else:
                 message = ""
-            message = message + "\n\"%s\"\n\n%s\n\n" % (thing.title,url)
+            message = message + '\n"%s"\n\n%s\n\n' % (thing.title,url)
             
+            # Deliberately not translating this, as it'd be in the
+            # sender's language
             if thing.num_comments:
-                # We don't actually expect this to get translated (it's in an
-                # e-mail, we don't know the language of the receiver) but
-                # calling ungettext anyway to handle the plural case
-                singular = ("There is currently %(num_comments)s comment " +
-                            "on this link.  You can view it here:")
-                plural = ("There are currently %(num_comments)s comments on " +
-                          "this link.  You can view them here:")
-                numcom = ungettext(singular,plural,thing.num_comments)
-                numcom = numcom % {'num_comments':thing.num_comments}
+                count = ("There are currently %(num_comments)s comments on " +
+                         "this link.  You can view them here:")
+                if thing.num_comments == 1:
+                    count = ("There is currently %(num_comments)s comment " +
+                             "on this link.  You can view it here:")
+                
+                numcom = count % {'num_comments':thing.num_comments}
                 message = message + "%s\n\n" % numcom
             else:
                 message = message + "You can leave a comment here:\n\n"
@@ -1157,7 +1157,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             # Send the PMs
             subject = "%s has shared a link with you!" % c.user.name
-            # Prepend this subject to the message
+            # Prepend this subject to the message - we're repeating ourselves
+            # because it looks very abrupt without it.
             message = "%s\n\n%s" % (subject,message)
             
             for target in users:
