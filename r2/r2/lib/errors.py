@@ -41,6 +41,7 @@ error_list = dict((
         ('TOO_MANY_THING_IDS', _('you provided too many ids')),
         ('NOT_AUTHOR', _("you can't do that")),
         ('NOT_USER', _("you are not logged in as that user")),
+        ('LOGGED_IN', _("you are already logged in")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),
@@ -198,6 +199,15 @@ class BadRequestError(HTTPBadRequest):
             'reason': error,
             'explanation': error_list[error],
         }
+
+class RedditHTTPError(HTTPError):
+    def __init__(self, code, error):
+        self.code = code
+        self.error_data = {
+            'reason': error,
+            'explanation': error_list[error],
+        }
+        HTTPError.__init__(self)
 
 class UserRequiredException(Exception): pass
 class VerifiedUserRequiredException(Exception): pass
