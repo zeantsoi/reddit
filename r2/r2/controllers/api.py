@@ -1219,6 +1219,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_vote(self, dir, thing, ip, vote_type):
+        g.stats.transact('request_setup.POST_vote',
+                         (datetime.now(g.tz) - c.start_time).total_seconds())
+
         ip = request.ip
         user = c.user
         store = True
