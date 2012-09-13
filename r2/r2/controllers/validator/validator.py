@@ -34,7 +34,7 @@ from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.log import log_text
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard
-from r2.lib.utils import constant_time_compare, SimpleSillyStub
+from r2.lib.utils import constant_time_compare
 
 from r2.controllers.errors import errors, UserRequiredException
 from r2.controllers.errors import VerifiedUserRequiredException
@@ -147,18 +147,11 @@ def build_arg_list(fn, env):
     return kw
 
 def _make_validated_kw(fn, simple_vals, param_vals, env):
-    if fn.__name__ == "POST_vote":
-        timer = g.stats.get_timer("service_time.validators.%s" % fn.__name__)
-    else:
-        timer = SimpleSillyStub()
-    timer.start()
     for validator in simple_vals:
         validator(env)
-        timer.intermediate(validator.__class__.__name__)
     kw = build_arg_list(fn, env)
     for var, validator in param_vals.iteritems():
         kw[var] = validator(env)
-        timer.intermediate(validator.__class__.__name__)
     return kw
 
 def set_api_docs(fn, simple_vals, param_vals):
