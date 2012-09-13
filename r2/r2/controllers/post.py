@@ -21,7 +21,7 @@
 ###############################################################################
 
 from r2.lib.pages import *
-from reddit_base import cross_domain
+from reddit_base import restrict_origin
 from api import ApiController
 from r2.lib.utils import Storage, query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
@@ -175,7 +175,7 @@ class PostController(ApiController):
                                            sent = True,
                                            msg_hash = msg_hash)).render()
 
-
+    @restrict_origin()
     @validate(dest = VDestination(default = "/"))
     def POST_login(self, dest, *a, **kw):
         ApiController._handle_login(self, *a, **kw)
@@ -188,6 +188,7 @@ class PostController(ApiController):
 
         return self.redirect(dest)
 
+    @restrict_origin()
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
         ApiController._handle_register(self, *a, **kw)
