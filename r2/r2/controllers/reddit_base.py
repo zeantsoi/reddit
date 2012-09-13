@@ -591,7 +591,6 @@ class MinimalController(BaseController):
     def pre(self):
 
         c.start_time = datetime.now(g.tz)
-        c.randomizer = rand.random()
         g.reset_caches()
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix",
@@ -703,7 +702,7 @@ class MinimalController(BaseController):
             action = "unknown"
             log_text("unknown action", "no action for %r" % path_info,
                      "warning")
-        if g.usage_sampling >= 1.0 or c.randomizer < g.usage_sampling:
+        if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
 
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
