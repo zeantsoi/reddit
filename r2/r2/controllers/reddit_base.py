@@ -26,7 +26,8 @@ from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib import pages, utils, filters, amqp, stats
-from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, is_throttled
+from r2.lib.utils import (http_utils, is_subdomain, UniqueIterator,
+                          is_throttled, SimpleSillyStub)
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import FakeAccount, valid_feed, valid_admin_cookie
@@ -592,6 +593,15 @@ class MinimalController(BaseController):
 
         c.start_time = datetime.now(g.tz)
         c.randomizer = rand.random()
+        if c.randomizer < 0.01:
+            handler = self._get_action_handler()
+            if handler:
+                c.request_timer = g.stats.get_timer("service_time.web2.%s" %
+                                                    handler.__name__)
+                c.request_timer.start()
+        if not c.request_timer:
+            c.request_timer = SimpleSillyStub()
+
         g.reset_caches()
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix",
@@ -614,6 +624,7 @@ class MinimalController(BaseController):
         # if an rss feed, this will also log the user in if a feed=
         # GET param is included
         set_content_type()
+        c.request_timer.intermediate("minimal")
 
     def try_pagecache(self):
         #check content cache
@@ -646,6 +657,8 @@ class MinimalController(BaseController):
 
 
     def post(self):
+        c.request_timer.intermediate("action")
+
         response = c.response
         content = filter(None, response.content)
         if isinstance(content, (list, tuple)):
@@ -720,6 +733,7 @@ class MinimalController(BaseController):
         g.reset_caches()
 
         # push data to statsd
+        c.request_timer.intermediate("post")
         if 'pylons.action_method' in request.environ:
             # only report web timing data if an action handler was called
             g.stats.transact('web.%s' % action,
@@ -840,6 +854,8 @@ class RedditController(MinimalController):
         maybe_admin = False
         is_otpcookie_valid = False
 
+        c.request_timer.intermediate("cookies")
+
         # no logins for RSS feed unless valid_feed has already been called
         if not c.user:
             if c.extension != "rss":
@@ -883,6 +899,8 @@ class RedditController(MinimalController):
             c.otp_cached = is_otpcookie_valid
             if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
                 c.user.update_sr_activity(c.site)
+
+        c.request_timer.intermediate("authentication")
 
         c.over18 = over18()
         set_obey_over18()
@@ -954,6 +972,8 @@ class RedditController(MinimalController):
         #if the site has a cname, but we're not using it
         elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.can_apply_styles = False
+
+        c.request_timer.intermediate("settings")
 
     def check_modified(self, thing, action,
                        private=True, max_age=0, must_revalidate=True):
