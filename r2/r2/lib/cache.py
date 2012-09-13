@@ -20,7 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import contextlib
 from threading import local
 from hashlib import md5
 import cPickle as pickle
@@ -332,24 +331,12 @@ class CacheChain(CacheUtils, local):
         self.cache_negative_results = cache_negative_results
         self.stats = None
 
-    def _call_timer(self, op):
-        if self.stats:
-            return self.stats.call_timer(op)
-        else:
-            return self._dummy_call_timer()
-
-    @staticmethod
-    @contextlib.contextmanager
-    def _dummy_call_timer():
-        yield
-
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):
-            with self._call_timer(fn_name):
-                ret = None
-                for c in self.caches:
-                    ret = getattr(c, fn_name)(*a, **kw)
-                return ret
+            ret = None
+            for c in self.caches:
+                ret = getattr(c, fn_name)(*a, **kw)
+            return ret
         return fn
 
     # note that because of the naive nature of `add' when used on a
@@ -373,12 +360,7 @@ class CacheChain(CacheUtils, local):
     flush_all = make_set_fn('flush_all')
     cache_negative_results = False
 
-    def get(self, key, default=None, allow_local=True, stale=None):
-        with self._call_timer('get'):
-            return self._get(
-                key, default=default, allow_local=allow_local, stale=stale)
-
-    def _get(self, key, default = None, allow_local = True, stale=None):
+    def get(self, key, default = None, allow_local = True, stale=None):
         stat_outcome = False  # assume a miss until a result is found
         try:
             for c in self.caches:
@@ -415,16 +397,10 @@ class CacheChain(CacheUtils, local):
                     self.stats.cache_miss()
 
     def get_multi(self, keys, prefix='', allow_local = True, **kw):
-        with self._call_timer('get_multi'):
-            l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local, **kw)
-            return prefix_keys(keys, prefix, l)
+        l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local, **kw)
+        return prefix_keys(keys, prefix, l)
 
-    def simple_get_multi(self, keys, allow_local=True, stale=None):
-        with self._call_timer('simple_get_multi'):
-            return self._simple_get_multi(
-                keys, allow_local=allow_local, stale=stale)
-
-    def _simple_get_multi(self, keys, allow_local=True, stale=None):
+    def simple_get_multi(self, keys, allow_local = True, stale=None):
         out = {}
         need = set(keys)
         hits = 0

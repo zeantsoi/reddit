@@ -21,7 +21,6 @@
 ###############################################################################
 
 import collections
-import contextlib
 import random
 import time
 
@@ -188,7 +187,7 @@ class Stats:
             return
         key = '.'.join(['pg', db_server.replace('.', '-'), db_name])
         self.timing_stats.record(key, service_time)
-
+    
 class CacheStats:
     def __init__(self, parent, cache_name):
         self.parent = parent
@@ -221,13 +220,6 @@ class CacheStats:
             }
             self.parent.cache_count_multi(data, cache_name=cache_name,
                                           sample_rate=sample_rate)
-
-    @contextlib.contextmanager
-    def call_timer(self, op):
-        start = time.time()
-        yield
-        self.parent.timing_stats.record('%s.%s' % (self.cache_name, op),
-                                        time.time() - start)
 
 class StatsCollectingConnectionPool(pool.ConnectionPool):
     def __init__(self, keyspace, stats=None, *args, **kwargs):
