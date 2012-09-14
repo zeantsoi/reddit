@@ -229,6 +229,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                     save, sr, ip, then, extension):
         from r2.models.admintools import is_banned_domain
 
+        # TEMPORARY: count invalid or missing modhash before adding VModhash
+        uh = request.post.get("uh")
+        if not uh:
+            g.stats.action_event_count("modhash", False, false_name="missing")
+        else:
+            g.stats.action_event_count("modhash", c.user.valid_hash(uh))
+
         if isinstance(url, (unicode, str)):
             #backwards compatability
             if url.lower() == 'self':
