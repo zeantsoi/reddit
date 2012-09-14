@@ -212,6 +212,20 @@ class Subreddit(Thing, Printable):
         return self.moderator_ids()
 
     @property
+    def stylesheet_contents_user(self):
+        try:
+            return WikiPage.get(self, 'config/stylesheet')._get('content','')
+        except tdb_cassandra.NotFound:
+           return  self._t.get('stylesheet_contents_user')
+
+    @property
+    def prev_stylesheet(self):
+        try:
+            return WikiPage.get(self, 'config/stylesheet')._get('revision','')
+        except tdb_cassandra.NotFound:
+            return ''
+
+    @property
     def contributors(self):
         return self.contributor_ids()
 
