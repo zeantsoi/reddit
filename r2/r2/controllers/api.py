@@ -233,8 +233,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         uh = request.post.get("uh")
         if not uh:
             g.stats.action_event_count("modhash", False, false_name="missing")
-            g.log.warning('[uh] missing modhash from useragent %r',
-                          getattr(request, "user_agent", ""))
         else:
             g.stats.action_event_count("modhash", c.user.valid_hash(uh))
 
