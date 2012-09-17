@@ -1645,7 +1645,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             changed(sr)
             form.parent().set_html('.status', _("saved"))
 
-        if redir:
+        if form.has_error():
+            return
+        elif redir:
             form.redirect(redir)
         else:
             jquery.refresh()
