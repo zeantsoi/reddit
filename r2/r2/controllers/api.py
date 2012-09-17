@@ -1142,7 +1142,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 message = message + "\n\n"
             else:
                 message = ""
-            message = message + '\n"%s"\n\n%s\n\n' % (thing.title,url)
+            message = message + '\n%s\n\n%s\n\n' % (thing.title,url)
             
             # Deliberately not translating this, as it'd be in the
             # sender's language
