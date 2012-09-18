@@ -2486,7 +2486,6 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         return BoringPage(_("API"), content = results).render()
 
-    @require_oauth2_scope("modflair")
     @validatedForm(VUser(),
                    VModhash(),
                    flair_enabled = VBoolean("flair_enabled"))
