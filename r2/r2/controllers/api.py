@@ -849,6 +849,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             queries.delete(thing)
 
+    @require_oauth2_scope("modposts")
     @noresponse(VUser(),
                 VModhash(),
                 VSrCanAlter('id'),
@@ -865,6 +866,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # flag search indexer that something has changed
         changed(thing)
 
+    @require_oauth2_scope("modposts")
     @noresponse(VUser(),
                 VModhash(),
                 VSrCanAlter('id'),
@@ -1683,6 +1685,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         d['approval'] = approval
         g.hardcache.set(key, d, time=86400 * 7)
 
+    @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'),
@@ -1723,6 +1726,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             action = 'remove' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
 
+    @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
@@ -1749,6 +1753,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             action = 'approve' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
 
+    @require_oauth2_scope("modposts")
     @validatedForm(VUser(), VModhash(),
                    VCanDistinguish(('id', 'how')),
                    thing = VByName('id'),
