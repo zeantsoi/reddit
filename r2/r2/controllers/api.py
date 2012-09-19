@@ -183,7 +183,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     POST_ad_inq = POST_feedback
 
-
+    @require_oauth2_scope("privatemessages")
     @validatedForm(VCaptcha(),
                    VUser(),
                    VModhash(),
@@ -911,6 +911,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         Report.new(c.user, thing)
         admintools.report(thing)
 
+    @require_oauth2_scope("privatemessages")
     @noresponse(VUser(), VModhash(),
                 thing=VByName('id'))
     @api_doc(api_section.messages)
@@ -1875,6 +1876,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             queries.set_unread(messages, c.user, unread)
 
 
+    @require_oauth2_scope("privatemessages")
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple=True, limit=25))
@@ -1882,6 +1884,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     def POST_unread_message(self, things):
         self.unread_handler(things, True)
 
+    @require_oauth2_scope("privatemessages")
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple=True, limit=25))
