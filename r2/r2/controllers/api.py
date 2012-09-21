@@ -1231,6 +1231,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         j._date = c.start_time
         j._commit()
 
+    @require_oauth2_scope("vote")
     @noresponse(VUser(),
                 VModhash(),
                 vote_type = VVotehash(('vh', 'id')),
