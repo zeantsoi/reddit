@@ -157,6 +157,7 @@ class Globals(object):
             'lockcaches',
             'permacache_memcaches',
             'rendercaches',
+            'pagecaches',
             'cassandra_seeds',
             'admins',
             'sponsors',
@@ -358,6 +359,13 @@ class Globals(object):
                                                     noreply=True, no_block=True,
                                                     num_clients = num_mc_clients)))
         self.cache_chains.update(rendercache=self.rendercache)
+
+        self.pagecache = MemcacheChain((localcache_cls(),
+                                        CMemcache(self.pagecaches,
+                                                  noreply=True,
+                                                  no_block=True,
+                                                  num_clients=num_mc_clients)))
+        self.cache_chains.update(pagecache=self.pagecache)
 
         self.thing_cache = CacheChain((localcache_cls(),))
         self.cache_chains.update(thing_cache=self.thing_cache)
