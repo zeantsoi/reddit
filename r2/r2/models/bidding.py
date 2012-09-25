@@ -637,7 +637,7 @@ class SponsorBoxWeightings(object):
     _cf_name = None
     _SCALE = 2**32
     
-    # TTL for the timestamped rows. Set to 1 day so that we can examine
+    # TTL is set to 1 day so that we can examine
     # the data if something goes wrong.
     _ttl = datetime.timedelta(days=1)
     
