@@ -1376,17 +1376,18 @@ class CommentSavesByAccount(_ThingSavesByAccount):
 
 class _ThingHidesByAccount(_SaveHideByAccount):
     @classmethod
-    def _save(cls, user, things):
+    def _hide(cls, user, things):
         cls._savehide(user, things)
 
     @classmethod
-    def _unsave(cls, user, things):
+    def _unhide(cls, user, things):
         cls._unsavehide(user, things)
 
 
 class LinkHidesByAccount(_ThingHidesByAccount):
     _use_db = True
     _last_modified_name = 'Hide'
+    _views = []
 
     @classmethod
     def _cached_queries(cls, user, thing):
