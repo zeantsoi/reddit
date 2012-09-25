@@ -1612,24 +1612,6 @@ class ApiController(RedditController, OAuth2ResourceController):
                 sr.sponsorship_url = sponsor_url or None
                 sr.sponsorship_name = sponsor_name or None
 
-            if not apply_wikid_field(sr,
-                                     form,
-                                     'config/sidebar',
-                                     description,
-                                     prev_desc,
-                                     'description',
-                                     _("Sidebar was not saved")):
-                return
-
-            if not apply_wikid_field(sr,
-                                     form,
-                                     'config/description',
-                                     public_description,
-                                     prev_pubdesc,
-                                     'public_description',
-                                     _("Description was not saved")):
-                return
-
             #assume sr existed, or was just built
             old_domain = sr.domain
 
@@ -1653,7 +1635,26 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         if form.has_error():
             return
-        elif redir:
+
+        if not apply_wikid_field(sr,
+                                 form,
+                                 'config/sidebar',
+                                 description,
+                                 prev_desc,
+                                 'description',
+                                 _("Sidebar was not saved")):
+            return
+
+        if not apply_wikid_field(sr,
+                                 form,
+                                 'config/description',
+                                 public_description,
+                                 prev_pubdesc,
+                                 'public_description',
+                                 _("Description was not saved")):
+            return
+
+        if redir:
             form.redirect(redir)
         else:
             jquery.refresh()
