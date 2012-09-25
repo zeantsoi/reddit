@@ -1325,7 +1325,10 @@ class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
         now = datetime.now(g.tz)
         with CachedQueryMutator() as m:
             for thing in things:
-                thing.action_date = now
+                # action_date is only used by the cached queries as the sort
+                # value, we don't want to write it. Report.new(link) needs to
+                # incr link.reported but will fail if the link is dirty.
+                thing.__setattr__('action_date', now, make_dirty=False)
                 for q in cls._cached_queries(user, thing):
                     m.insert(q, [thing])
         cls.create(user, things)
