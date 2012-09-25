@@ -737,6 +737,8 @@ def promotion_key():
 
 def get_live_promotions(srids, _use_cass=False):
     if _use_cass:
+        timer = g.stats.get_timer("promote.get_live.cass")
+        timer.start()
         links = set()
         weights = {}
         find_srids = set(srids)
@@ -753,16 +755,26 @@ def get_live_promotions(srids, _use_cass=False):
                 srid = 'all'
             weights[srid] = promos
             links.update([ad.data['link'] for ad in ads])
+        timer.stop()
     else:
+        timer = g.stats.get_timer("promote.get_live.permacache")
+        timer.start()
         links, weights = g.permacache.get(promotion_key()) or (set(), {})
+        timer.stop()
     return links, weights
 
 
 def set_live_promotions(links, weights, which=("cass", "permacache")):
     if "cass" in which:
+        timer = g.stats.get_timer("promote.set_live.cass")
+        timer.start()
         SponsorBoxWeightings.set_from_weights(weights)
+        timer.stop()
     if "permacache" in which:
+        timer = g.stats.get_timer("promote.set_live.permacache")
+        timer.start()
         g.permacache.set(promotion_key(), (links, weights))
+        timer.stop()
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
 # current promotions until they're actually charged, so make sure to call
