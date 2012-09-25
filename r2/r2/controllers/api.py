@@ -1552,7 +1552,24 @@ class ApiController(RedditController, OAuth2ResourceController):
         
         public_description = kw.pop('public_description')
         prev_pubdesc = kw.pop('prev_public_description_id')
-        
+
+        def update_wiki_text(sr):
+            apply_wikid_field(sr,
+                              form,
+                              'config/sidebar',
+                              description,
+                              prev_desc,
+                              'description',
+                              _("Sidebar was not saved"))
+
+            apply_wikid_field(sr,
+                              form,
+                              'config/description',
+                              public_description,
+                              prev_pubdesc,
+                              'public_description',
+                              _("Description was not saved"))
+
         
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -1589,6 +1606,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             sr = Subreddit._new(name = name, author_id = c.user._id, ip = ip,
                                 **kw)
 
+            update_wiki_text(sr)
+            sr._commit()
+
             Subreddit.subscribe_defaults(c.user)
             # make sure this user is on the admin list of that site!
             if sr.add_subscriber(c.user):
@@ -1615,6 +1635,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             #assume sr existed, or was just built
             old_domain = sr.domain
 
+            update_wiki_text(sr)
+
             if not sr.domain:
                 del kw['css_on_cname']
             for k, v in kw.iteritems():
@@ -1634,24 +1656,6 @@ class ApiController(RedditController, OAuth2ResourceController):
             form.parent().set_html('.status', _("saved"))
 
         if form.has_error():
-            return
-
-        if not apply_wikid_field(sr,
-                                 form,
-                                 'config/sidebar',
-                                 description,
-                                 prev_desc,
-                                 'description',
-                                 _("Sidebar was not saved")):
-            return
-
-        if not apply_wikid_field(sr,
-                                 form,
-                                 'config/description',
-                                 public_description,
-                                 prev_pubdesc,
-                                 'public_description',
-                                 _("Description was not saved")):
             return
 
         if redir:
