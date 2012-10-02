@@ -5501,7 +5501,7 @@ tr.gold-accent + tr > td {
 .oauth2-authorize {
     position: relative;
     background: url(../snoo-tray.png) no-repeat;
-    width: 442px;
+    width: 542px;
     height: 235px;
     margin: 40px auto 0;
     padding-left: 268px;
@@ -5543,7 +5543,7 @@ tr.gold-accent + tr > td {
 .oauth2-authorize .access {
     position: relative;
     float: right;
-    width: 410px;
+    width: 510px;
     padding: 10px 15px;
     font-size: 1.5em;
     line-height: 1.5em;
@@ -5569,6 +5569,8 @@ tr.gold-accent + tr > td {
     left: -18px;
     top: 13px;
 }
+
+.oauth2-authorize .access .notice { line-height: normal; }
 
 .oauth2-authorize h2 {
     font-size: 1em;
@@ -6201,7 +6203,7 @@ tr.gold-accent + tr > td {
 }
 
 .app-permissions li { position: relative; }
-.app-permissions-subreddits { display:block; margin-top: 1em; }
+.app-permissions-details { margin-top: 1em; }
 
 .app-scope {
     display: none;
