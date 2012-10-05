@@ -487,7 +487,7 @@ class Reddit(Templated):
                     classes.add('cname')
             if c.site.is_moderator(c.user):
                 classes.add('moderator')
-            if c.user.gold:
+            if c.user.gold and c.user_is_admin:
                 classes.add('gold')
 
         if isinstance(c.site, MultiReddit):
