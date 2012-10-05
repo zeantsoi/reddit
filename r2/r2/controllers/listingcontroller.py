@@ -552,7 +552,7 @@ class UserController(ListingController):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
                 res.append(TimeMenu(default = self.time))
-        if self.where == 'saved' and c.user.gold:
+        if self.where == 'saved' and c.user_is_admin:
             srnames = LinkSavesBySubreddit.get_saved_subreddits(self.vuser)
             srnames += CommentSavesBySubreddit.get_saved_subreddits(self.vuser)
             srnames = sorted(list(set(srnames)))
@@ -636,7 +636,7 @@ class UserController(ListingController):
 
         elif self.where == 'saved':
             srname = request.get.get('sr')
-            if srname and c.user.gold:
+            if srname and c.user_is_admin:
                 try:
                     sr_id = Subreddit._by_name(srname)._id
                 except NotFound:
