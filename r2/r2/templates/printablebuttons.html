@@ -307,6 +307,18 @@
     %endif
     ${self.banbuttons()}
     ${self.distinguish()}
+    ## the strange logged-in check is that this template is used both within
+    ## CommentPane instances and without. the comment page cache explicitly sets
+    ## user_is_loggedin = False but will correctly set can_reply. user pages need
+    ## the logged in check because you can't reply in the default sr.
+    % if (c.user_is_loggedin or thing.can_reply) and not thing.is_author and not thing.thing.user_gilded and not thing.thing.author._deleted:
+      <li>
+      <a href="/gold?goldtype=gift&months=1&comment=${thing.thing._fullname}"
+          title="${_("give reddit gold in appreciation of this comment.")}"
+          class="give-gold login-required"
+          >${_("give gold")}</a>
+      </li>
+    % endif
     %if not thing.profilepage and thing.can_reply:
       <li>
         ${self.simple_button(_("reply {verb}"), "reply")}
