@@ -112,8 +112,10 @@ ${parent.collapsed()}
     ${edited(thing, thing.lastedited)}
   %endif
 
+  % if c.user_is_admin:
   % if thing.gilded_message:
   <span class="gilded-comment-icon" title="${thing.gilded_message}"></span>
+  % endif
   % endif
 
   %if collapse:
