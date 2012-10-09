@@ -68,6 +68,10 @@ user_added_messages = {
 
 
 def notify_user_added(rel_type, author, user, target):
+    msgs = user_added_messages.get(rel_type)
+    if not msgs:
+        return
+
     srname = target.path.rstrip("/")
     d = {
         "url": srname,
@@ -75,10 +79,6 @@ def notify_user_added(rel_type, author, user, target):
         "author": "/u/" + author.name,
         "user": "/u/" + user.name,
     }
-
-    msgs = user_added_messages.get(rel_type)
-    if not msgs:
-        return
 
     if "pm" in msgs and author != user:
         subject = msgs["pm"]["subject"] % d
