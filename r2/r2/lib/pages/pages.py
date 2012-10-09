@@ -2864,13 +2864,13 @@ class FriendList(UserList):
     def user_ids(self):
         return c.user.friends
 
-    def user_row(self, user):
+    def user_row(self, row_type, user, editable=True):
         if not getattr(self, "friend_rels", None):
-            return UserList.user_row(self, user)
+            return UserList.user_row(self, row_type, user, editable)
         else:
             rel = self.friend_rels[user._id]
-            return UserTableItem(user, self.type, self.cells, self.container_name,
-                                 True, self.remove_action, rel)
+            return UserTableItem(user, row_type, self.cells, self.container_name,
+                                 editable, self.remove_action, rel)
 
     @property
     def container_name(self):
