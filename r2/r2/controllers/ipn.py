@@ -342,8 +342,10 @@ class IpnController(RedditController):
         form.set_html(".status", _("the gold has been delivered!"))
         form.find("button").hide()
 
-        gilding_message = make_comment_gold_message(comment, user_gilded=True)
-        jquery.gild_comment(comment_id, gilding_message)
+        if comment:
+            gilding_message = make_comment_gold_message(comment,
+                                                        user_gilded=True)
+            jquery.gild_comment(comment_id, gilding_message)
 
     @textresponse(full_sn = VLength('serial-number', 100))
     def POST_gcheckout(self, full_sn):
