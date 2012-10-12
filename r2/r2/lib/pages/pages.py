@@ -3759,3 +3759,6 @@ class InterestBar(Templated):
     def __init__(self, has_subscribed):
         self.has_subscribed = has_subscribed
         Templated.__init__(self)
+
+class GoldInfoPage(BoringPage):
+    pass
