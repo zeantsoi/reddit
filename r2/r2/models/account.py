@@ -186,12 +186,6 @@ class Account(Thing):
         if self.wiki_override is None:
             return self.link_karma() > 100 or self.comment_karma() > 100
         return self.wiki_override
-    
-    def jury_betatester(self):
-        if g.cache.get("jury-killswitch"):
-            return False
-        else:
-            return True
 
     def all_karmas(self):
         """returns a list of tuples in the form (name, hover-text, link_karma,

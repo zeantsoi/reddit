@@ -24,7 +24,6 @@ from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
-from r2.lib.utils.trial_utils import trial_info
 from account import Account, DeletedUser
 from subreddit import Subreddit, DomainSR
 from printable import Printable
@@ -367,8 +366,6 @@ class Link(Thing, Printable):
         else:
             saved = hidden = clicked = {}
 
-        trials = trial_info(wrapped)
-
         for item in wrapped:
             show_media = False
             if not hasattr(item, "score_fmt"):
@@ -523,8 +520,6 @@ class Link(Thing, Printable):
                 item.author = DeletedUser()
                 item.as_deleted = True
 
-            item.trial_info = trials.get(item._fullname, None)
-
             item.approval_checkmark = None
 
             item_age = datetime.now(g.tz) - item._date
@@ -544,10 +539,6 @@ class Link(Thing, Printable):
                         item.approval_checkmark = _("approved by %s") % approver
                     else:
                         item.approval_checkmark = _("approved by a moderator")
-
-                if item.trial_info is not None:
-                    item.reveal_trial_info = True
-                    item.use_big_modbuttons = True
 
             item.expunged = False
             if item.is_self:
@@ -1602,14 +1593,6 @@ class Inbox(MultiRelation('inbox',
                 res.append(i)
         return res
 
-class LinkOnTrial(Printable):
-    @classmethod
-    def add_props(cls, user, wrapped):
-        Link.add_props(user, wrapped)
-        for item in wrapped:
-            item.rowstyle = "link ontrial"
-        # Run this last
-        Printable.add_props(user, wrapped)
 
 class ModeratorInbox(Relation(Subreddit, Message)):
     #TODO: shouldn't dupe this
