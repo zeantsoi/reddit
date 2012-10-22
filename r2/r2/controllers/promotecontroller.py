@@ -253,7 +253,7 @@ class PromoteController(ListingController):
                                       future = 1, 
                                       reference_date = promote.promo_datetime_now,
                                       business_days = False, 
-                                      admin_override = True),
+                                      sponsor_override = True),
                    sr = VSubmitSR('sr', promotion=True))
     def POST_add_roadblock(self, form, jquery, dates, sr):
         if (form.has_errors('startdate', errors.BAD_DATE,
@@ -276,7 +276,7 @@ class PromoteController(ListingController):
                                       future = 1, 
                                       reference_date = promote.promo_datetime_now,
                                       business_days = False, 
-                                      admin_override = True),
+                                      sponsor_override = True),
                    sr = VSubmitSR('sr', promotion=True))
     def POST_rm_roadblock(self, form, jquery, dates, sr):
         if dates and sr:
@@ -290,7 +290,7 @@ class PromoteController(ListingController):
                                   future = 1, 
                                   reference_date = promote.promo_datetime_now,
                                   business_days = False, 
-                                  admin_override = True),
+                                  sponsor_override = True),
                    l     = VLink('link_id'),
                    bid   = VFloat('bid', min=0, max=g.max_promote_bid, 
                                   coerce=False, error=errors.BAD_BID),
