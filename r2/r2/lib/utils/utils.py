@@ -672,7 +672,8 @@ class TransSet(local):
             self.set.add(engine)
 
     def clear(self):
-        return self.set.clear()
+        self.set.clear()
+        self.trans = False
 
     def __iter__(self):
         return self.set.__iter__()
