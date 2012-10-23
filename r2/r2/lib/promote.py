@@ -990,7 +990,8 @@ class PromotionLog(tdb_cassandra.View):
             row = cls._byID(rowkey)
         except tdb_cassandra.NotFound:
             return []
-        return row._values().values()
+        tuples = sorted(row._values().items(), key=lambda t: t[0].time)
+        return [t[1] for t in tuples]
 
 
 def Run(offset = 0):
