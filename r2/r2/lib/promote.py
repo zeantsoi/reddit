@@ -758,15 +758,15 @@ def get_live_promotions(srids, from_permacache=True):
 
 
 def set_live_promotions(links, weights, which=("cass", "permacache")):
-    if "cass" in which:
-        timer = g.stats.get_timer("promote.set_live.cass")
-        timer.start()
-        SponsorBoxWeightings.set_from_weights(weights)
-        timer.stop()
     if "permacache" in which:
         timer = g.stats.get_timer("promote.set_live.permacache")
         timer.start()
         g.permacache.set(promotion_key(), (links, weights))
+        timer.stop()
+    if "cass" in which:
+        timer = g.stats.get_timer("promote.set_live.cass")
+        timer.start()
+        SponsorBoxWeightings.set_from_weights(weights)
         timer.stop()
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
