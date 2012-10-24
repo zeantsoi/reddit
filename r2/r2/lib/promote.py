@@ -1042,7 +1042,7 @@ def Run(offset = 0):
                   delivery_mode=amqp.DELIVERY_TRANSIENT)
 
 
-def run_changed(drain=False, limit=100, sleep_time=10, verbose=False):
+def run_changed(drain=False, limit=100, sleep_time=10, verbose=True):
     """reddit-consumer-update_promos: amqp consumer of update_promos_q
     
     Handles asynch accepting/rejecting of ads that are scheduled to be live
@@ -1055,6 +1055,7 @@ def run_changed(drain=False, limit=100, sleep_time=10, verbose=False):
         if QUEUE_ALL in items:
             # QUEUE_ALL is just an indicator to run make_daily_promotions.
             # There's no promotion log to update in this case.
+            print "Received QUEUE_ALL message"
             items.remove(QUEUE_ALL)
         make_daily_promotions()
         links = Link._by_fullname([i["link"] for i in items])
