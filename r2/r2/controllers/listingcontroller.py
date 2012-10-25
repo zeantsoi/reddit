@@ -624,7 +624,7 @@ class UserController(ListingController):
             q = queries.get_saved(self.vuser)
 
         elif c.user_is_sponsor and self.where == 'promoted':
-            q = promote.get_all_links(self.vuser._id)
+            q = queries.get_all_promoted_links(self.vuser._id)
 
         if q is None:
             return self.abort404()
