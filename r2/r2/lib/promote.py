@@ -1031,15 +1031,21 @@ class PromotionLog(tdb_cassandra.View):
         return [t[1] for t in tuples]
 
 
-def Run(offset = 0):
+def Run(offset=0, verbose=True):
     """reddit-job-update_promos: Intended to be run hourly to pull in
     scheduled changes to ads
     
     """
+    if verbose:
+        print "promote.py:Run() - charge_pending()"
     charge_pending(offset = offset + 1)
     charge_pending(offset = offset)
+    if verbose:
+        print "promote.py:Run() - amqp.add_item()"
     amqp.add_item(UPDATE_QUEUE, json.dumps(QUEUE_ALL),
                   delivery_mode=amqp.DELIVERY_TRANSIENT)
+    if verbose:
+        print "promote.py:Run() - finished"
 
 
 def run_changed(drain=False, limit=100, sleep_time=10, verbose=True):
