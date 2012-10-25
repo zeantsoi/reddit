@@ -1044,6 +1044,7 @@ def Run(offset=0, verbose=True):
         print "promote.py:Run() - amqp.add_item()"
     amqp.add_item(UPDATE_QUEUE, json.dumps(QUEUE_ALL),
                   delivery_mode=amqp.DELIVERY_TRANSIENT)
+    amqp.join()
     if verbose:
         print "promote.py:Run() - finished"
 
