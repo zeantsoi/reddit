@@ -769,7 +769,7 @@ def get_live_promotions(srids, from_permacache=True):
     return links, weights
 
 
-def set_live_promotions(links, weights, which=("permacache",)):
+def set_live_promotions(links, weights, which=("cass", "permacache")):
     if "permacache" in which:
         timer = g.stats.get_timer("promote.set_live.permacache")
         timer.start()
