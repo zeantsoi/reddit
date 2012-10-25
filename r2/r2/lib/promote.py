@@ -1067,10 +1067,9 @@ def run_changed(drain=False, limit=100, sleep_time=10, verbose=True):
         make_daily_promotions()
         links = Link._by_fullname([i["link"] for i in items])
         for item in items:
-            PromotionLog.add(links[c.link_id],
+            PromotionLog.add(links[item['link']],
                              "Finished remaking current promotions (this link "
-                             " was: %(message)s" % item,
-                             commit=True)
+                             "was: %(message)s" % item)
     amqp.handle_items(UPDATE_QUEUE, _run, limit=limit, drain=drain,
                       sleep_time=sleep_time, verbose=verbose)
 
