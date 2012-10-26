@@ -583,7 +583,7 @@ def reject_promotion(link, reason = None):
     # while we're doing work here, it will correctly exclude it
     set_status(link, STATUS.rejected)
     
-    links, = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
+    links = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
     if link._fullname in links:
         PromotionLog.add(link, 'Marked promotion for rejection')
         queue_changed_promo(link, "rejected")
