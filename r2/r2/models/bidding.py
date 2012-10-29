@@ -407,7 +407,7 @@ class PromotionWeights(Sessionized, Base):
             end = to_date(end)
             q = q.filter(and_(cls.date >= start, cls.date < end))
         else:
-            q = q.filter(date=start)
+            q = q.filter(cls.date == start)
         
         if author_id:
             q = q.filter(cls.account_id == author_id)
