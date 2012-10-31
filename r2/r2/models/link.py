@@ -39,6 +39,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import NotFoundException, view_of
 from r2.models.subreddit import MultiReddit
 from r2.models.query_cache import CachedQueryMutator
+from r2.models.promo import PROMOTE_STATUS
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
@@ -626,19 +627,17 @@ class PromotedLink(Link):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        # prevents cyclic dependencies
-        from r2.lib import promote
         Link.add_props(user, wrapped)
         user_is_sponsor = c.user_is_sponsor
 
-        status_dict = dict((v, k) for k, v in promote.STATUS.iteritems())
+        status_dict = dict((v, k) for k, v in PROMOTE_STATUS.iteritems())
         for item in wrapped:
             # these are potentially paid for placement
             item.nofollow = True
             item.user_is_sponsor = user_is_sponsor
             status = getattr(item, "promote_status", -1)
             if item.is_author or c.user_is_sponsor:
-                item.rowstyle = "link " + promote.STATUS.name[status].lower()
+                item.rowstyle = "link " + PROMOTE_STATUS.name[status].lower()
             else:
                 item.rowstyle = "link promoted"
         # Run this last
