@@ -567,7 +567,7 @@ def charge_pending(offset=1):
                 emailer.queue_promo(l, camp.bid, camp.trans_id)
             else:
                 set_promote_status(l, STATUS.pending)
-                emailer.queue_promo(l, camp.bid, camp.trans_id))
+                emailer.queue_promo(l, camp.bid, camp.trans_id)
             text = ('auth charge for campaign %s, trans_id: %d' % 
                     (camp._id, camp.trans_id))
             PromotionLog.add(l, text)
@@ -729,7 +729,7 @@ def make_daily_promotions(offset = 0, test = False):
             else:
                 # update the query queue
                 set_promote_status(links[l], STATUS.finished)
-                emailer.finished_promo(links[l]))
+                emailer.finished_promo(links[l])
 
     for l in new_links:
         if is_accepted(links[l]):
@@ -738,7 +738,7 @@ def make_daily_promotions(offset = 0, test = False):
             else:
                 # update the query queue
                 set_promote_status(links[l], STATUS.promoted)
-                emailer.live_promo(links[l]))
+                emailer.live_promo(links[l])
 
     # convert the weighted dict to use sr_ids which are more useful
     srs = {"":""}
