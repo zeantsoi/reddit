@@ -30,7 +30,7 @@ from r2.models.bidding import SponsorBoxWeightings, WeightingRef
 from r2.models.keyvalue import NamedGlobals
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
-from r2.lib import emailer, filters
+from r2.lib import emailer
 from r2.lib.template_helpers import get_domain
 from r2.lib.utils import Enum, UniqueIterator, tup
 from r2.lib.organic import keep_fresh_links
@@ -41,7 +41,6 @@ from r2.lib.db.queries import set_promote_status
 import itertools
 
 import random
-from uuid import uuid1
 
 
 UPDATE_QUEUE = 'update_promos_q'
@@ -895,36 +894,6 @@ def get_total_run(link):
     latest = latest.replace(tzinfo=None) - timezone_offset
 
     return earliest, latest
-
-
-class PromotionLog(tdb_cassandra.View):
-    _use_db = True
-    _connection_pool = 'main'
-    _compare_with = TIME_UUID_TYPE
-
-    @classmethod
-    def _rowkey(cls, link):
-        return link._fullname
-
-    @classmethod
-    def add(cls, link, text):
-        name = c.user.name if c.user_is_loggedin else "<AUTOMATED>"
-        now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
-        text = "[%s: %s] %s" % (name, now, text)
-        rowkey = cls._rowkey(link)
-        column = {uuid1(): filters._force_utf8(text)}
-        cls._set_values(rowkey, column)
-        return text
-
-    @classmethod
-    def get(cls, link):
-        rowkey = cls._rowkey(link)
-        try:
-            row = cls._byID(rowkey)
-        except tdb_cassandra.NotFound:
-            return []
-        tuples = sorted(row._values().items(), key=lambda t: t[0].time)
-        return [t[1] for t in tuples]
 
 
 def Run(offset=0, verbose=True):
