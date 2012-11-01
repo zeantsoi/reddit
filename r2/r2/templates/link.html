@@ -42,7 +42,7 @@
 
 <%def name="make_link(name, css_class)">
   <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}"
-     %if not thing.is_self:
+     %if thing.is_self:
        href="${thing.href_url}"
      %endif
      %if thing.nofollow:
