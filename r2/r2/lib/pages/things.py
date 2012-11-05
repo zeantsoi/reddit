@@ -156,6 +156,8 @@ class CommentButtons(PrintableButtons):
             and (c.user_is_loggedin or thing.can_reply)
             # ick, if the author deleted their account we shouldn't waste gold
             and not thing.author._deleted
+            # some subreddits can have gilding disabled
+            and thing.subreddit.allow_comment_gilding
         )
 
         show_distinguish = is_author and (thing.can_ban or c.user_special_distinguish)

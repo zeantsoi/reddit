@@ -3122,6 +3122,10 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not comment:
             abort(400, "Bad Request")
 
+        comment_sr = Subreddit._byID(comment.sr_id, data=True)
+        if not comment_sr.allow_comment_gilding:
+            abort(403, "Forbidden")
+
         try:
             recipient = Account._byID(comment.author_id, data=True)
         except NotFound:

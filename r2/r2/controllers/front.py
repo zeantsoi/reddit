@@ -1275,8 +1275,10 @@ class FormsController(RedditController):
     def GET_gold(self, goldtype, period, months,
                  signed, recipient_name, giftmessage, comment):
 
-        if comment and comment._deleted:
-            comment = None
+        if comment:
+            comment_sr = Subreddit._byID(comment.sr_id, data=True)
+            if comment._deleted or not comment_sr.allow_comment_gilding:
+                comment = None
 
         start_over = False
         recipient = None
