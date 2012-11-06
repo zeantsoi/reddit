@@ -1727,9 +1727,9 @@ class GoldPayment(Templated):
         pay_from_creddits = False
 
         if period == "monthly" or 1 <= months < 12:
-            price = 3.99
+            price = g.gold_month_price.decimal
         else:
-            price = 29.99
+            price = g.gold_year_price.decimal
 
         if c.user_is_admin:
             user_creddits = 50
@@ -3761,4 +3761,9 @@ class InterestBar(Templated):
         Templated.__init__(self)
 
 class GoldInfoPage(BoringPage):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.prices = {
+            "gold_month_price": g.gold_month_price,
+            "gold_year_price": g.gold_year_price,
+        }
+        BoringPage.__init__(self, *args, **kwargs)

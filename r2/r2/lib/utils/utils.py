@@ -33,6 +33,7 @@ from copy import deepcopy
 import cPickle as pickle
 import re, math, random
 import boto
+from decimal import Decimal
 
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 
@@ -1406,6 +1407,7 @@ def simple_traceback():
                      for filename, line_number, function_name, text
                      in stack_trace)
 
+
 def weighted_lottery(weights, _random=random.random):
     """Randomly choose a key from a dict where values are weights.
 
@@ -1446,3 +1448,34 @@ def read_static_file_config(config_file):
     bucket = s3.get_bucket(config["bucket"])
 
     return bucket, config
+
+
+class GoldPrice(object):
+    """Simple price math / formatting type.
+
+    Prices are assumed to be USD at the moment.
+
+    """
+    def __init__(self, decimal):
+        self.decimal = Decimal(decimal)
+
+    def __mul__(self, other):
+        return type(self)(self.decimal * other)
+
+    def __div__(self, other):
+        return type(self)(self.decimal / other)
+
+    def __str__(self):
+        return "$%s" % self.decimal.quantize(Decimal("1.00"))
+
+    def __repr__(self):
+        return "%s(%s)" % (type(self).__name__, self)
+
+    @property
+    def pennies(self):
+        return int(self.decimal * 100)
+
+
+def config_gold_price(v, key=None, data=None):
+    return GoldPrice(v)
+
