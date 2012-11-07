@@ -765,7 +765,7 @@ def get_promotion_list(user, site):
 
 
 def get_promotions_cached(sites):
-    p = get_live_promotions(sites, from_permacache=False)
+    p = get_live_promotions(sites, from_permacache=True)
     if p:
         links, promo_dict = p
         available = {}
