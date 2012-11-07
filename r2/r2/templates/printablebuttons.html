@@ -295,7 +295,6 @@
     %endif
     ${self.banbuttons()}
     ${self.distinguish()}
-    % if c.user_is_admin:
     % if thing.can_gild:
       <li>
       <a href="/gold?goldtype=gift&months=1&comment=${thing.thing._fullname}"
@@ -303,7 +302,6 @@
           class="give-gold login-required"
           >${_("give gold")}</a>
       </li>
-    % endif
     % endif
     %if not thing.profilepage and thing.can_reply:
       <li>
