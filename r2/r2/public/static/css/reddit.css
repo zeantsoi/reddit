@@ -6274,17 +6274,15 @@ table.diff {font-size: small;}
 
 span.gilded-comment-icon {
     display: inline-block;
-    background-image: url(../gold-coin.png); /* SPRITE */
+    background-image: url(../gold-coin.png);  /* SPRITE */
+    background-repeat: no-repeat;
     height: 14px;
     width: 14px;
     margin: 0 0 -3px 8px;
 }
 
 .user-gilded > .entry span.gilded-comment-icon {
-    background-image: url(../gold-coin-yours.png); /* SPRITE */
-    height: 24px;
     width: 24px;
-    margin-bottom: -8px;
 }
 
 .buttons li.comment-save-button { display: none; }
