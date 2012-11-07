@@ -1051,6 +1051,8 @@ class FrontController(RedditController, OAuth2ResourceController):
 
 
     def GET_gold_info(self):
+        if not c.user_is_admin:
+            abort(404)
         return GoldInfoPage(_("gold"), show_sidebar=False).render()
 
 
