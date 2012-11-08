@@ -535,15 +535,13 @@ def restrict_origin(origin_check=is_trusted_origin,
         def restrict_origin_handler(self, *args, **kwargs):
             origin = request.headers.get("Origin")
             if origin:
-                # TEMPORARY: log blocked origins instead of blocking for
-                # diagnostic purposes.
                 try:
                     from_web = urlparse(origin).scheme in check_protocols
                 except ValueError:
-                    g.log.warning("[origin] error parsing origin %r", origin)
+                    abort(403)
 
                 if from_web and not origin_check(origin):
-                    g.log.warning("[origin] unacceptable origin %r", origin)
+                    abort(403)
 
             return fn(self, *args, **kwargs)
         return restrict_origin_handler
