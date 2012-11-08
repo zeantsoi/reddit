@@ -21,7 +21,7 @@
 ###############################################################################
 
 from reddit_base import RedditController, MinimalController, set_user_cookie
-from reddit_base import cross_domain, restrict_origin, paginated_listing
+from reddit_base import cross_domain, paginated_listing
 
 from pylons.i18n import _
 from pylons import c, request, response
@@ -423,7 +423,6 @@ class ApiController(RedditController, OAuth2ResourceController):
                 responder.has_errors("passwd", errors.WRONG_PASSWORD)):
             self._login(responder, user, rem)
 
-    @restrict_origin()
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_login)
     def POST_login(self, *args, **kwargs):
@@ -470,7 +469,6 @@ class ApiController(RedditController, OAuth2ResourceController):
             c.user = user
             self._login(responder, user, rem)
 
-    @restrict_origin()
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_register)
     def POST_register(self, *args, **kwargs):

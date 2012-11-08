@@ -517,36 +517,6 @@ def is_trusted_origin(origin):
     
     return any(is_subdomain(origin.hostname, domain) for domain in g.trusted_domains)
 
-def restrict_origin(origin_check=is_trusted_origin,
-                    check_protocols=("http", "https")):
-    """Check the Origin header before processing the decorated function.
-
-    If an Origin header is set and from a URI protocol in `check_protocols`, it
-    is checked using the provided function. If the check fails, the request is
-    aborted with a 403 status. The `check_protocols` parameter defaults to HTTP
-    protocols to constrain the effect to web site origins.
-
-    Note: this is not a comprehensive check; it can only reject user agents
-    that choose to provide an Origin header. Use it to limit (not prevent)
-    cross-domain requests where better alternatives are unfeasible.
-    """
-    def restrict_origin_wrap(fn):
-        @wraps(fn)
-        def restrict_origin_handler(self, *args, **kwargs):
-            origin = request.headers.get("Origin")
-            if origin:
-                try:
-                    from_web = urlparse(origin).scheme in check_protocols
-                except ValueError:
-                    abort(403)
-
-                if from_web and not origin_check(origin):
-                    abort(403)
-
-            return fn(self, *args, **kwargs)
-        return restrict_origin_handler
-    return restrict_origin_wrap
-
 def cross_domain(origin_check=is_trusted_origin, **options):
     """Set up cross domain validation and hoisting for a request handler."""
     def cross_domain_wrap(fn):
