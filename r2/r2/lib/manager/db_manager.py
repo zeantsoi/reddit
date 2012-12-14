@@ -21,7 +21,9 @@
 ###############################################################################
 
 import logging
+import os
 import random
+import socket
 import sqlalchemy
 import time
 import traceback
@@ -29,6 +31,7 @@ import traceback
 
 logger = logging.getLogger('dm_manager')
 logger.addHandler(logging.StreamHandler())
+APPLICATION_NAME = "reddit:%s:%d" % (socket.gethostname(), os.getpid())
 
 
 def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
@@ -42,9 +45,10 @@ def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
         else:
             host = "%s@%s:%s" % (db_user, db_host, db_port)
     return sqlalchemy.create_engine(
-        'postgres://%s/%s' % (
+        'postgres://%s/%s?application_name=%s' % (
             host,
             name,
+            APPLICATION_NAME,
         ),
         strategy='threadlocal',
         pool_size=int(pool_size),
