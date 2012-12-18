@@ -454,7 +454,7 @@ def ratelimit_agent(agent):
     SLICE_SIZE = 10
     slice, remainder = map(int, divmod(time.time(), SLICE_SIZE))
     time_slice = time.gmtime(slice * SLICE_SIZE)
-    key = "rate_agent_" + agent + time.strftime("_%H:%S", time_slice)
+    key = "rate_agent_" + agent + time.strftime("_%S", time_slice)
 
     g.cache.add(key, 0, time=SLICE_SIZE)
     if g.cache.incr(key) > SLICE_SIZE:
