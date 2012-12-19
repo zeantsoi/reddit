@@ -3583,7 +3583,7 @@ class Dart_Ad(CachedTemplate):
     def __init__(self, dartsite, tag, custom_keyword=None):
         tag = tag or "homepage"
         keyword = custom_keyword or tag
-        tracker_url = tracking.make_impression_pixel_url("dart_" + tag)
+        tracker_url = tracking.get_impression_pixel_url("dart_" + tag)
         Templated.__init__(self, tag = tag, dartsite = dartsite,
                            tracker_url = tracker_url, keyword=keyword)
 
