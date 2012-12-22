@@ -414,6 +414,7 @@ class SimplePostMenu(NavMenu):
     of NavButtons contained in this Menu instance.  The goal here is
     to have a menu object which 'out of the box' is self validating."""
     options   = []
+    hidden_options = []
     name      = ''
     title     = ''
     default = None
