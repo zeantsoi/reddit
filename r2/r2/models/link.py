@@ -783,7 +783,7 @@ class Comment(Thing, Printable):
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
         s.extend([wrapped.body])
-        s.extend([wrapped.link.contest_mode])
+        s.extend([hasattr(wrapped, "link") and wrapped.link.contest_mode])
         return s
 
     def make_permalink(self, link, sr=None, context=None, anchor=False):
