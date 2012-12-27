@@ -418,6 +418,9 @@ class DataThing(object):
                 bases[i] = items_db([i]).values()[0]
                 bases[i]._cache_myself()
 
+            if bases[i] and bases[i]._dirties:
+                g.log.error("Got _dirties back from the cache for %r. Cleaning up.", bases[i])
+                bases[i]._dirties.clear()
 
         if data:
             need = []
