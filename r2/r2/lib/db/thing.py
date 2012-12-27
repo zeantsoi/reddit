@@ -258,6 +258,7 @@ class DataThing(object):
 
             to_set = self._dirties.copy()
             if keys:
+                keys = tup(keys)
                 for key in to_set.keys():
                     if key not in keys:
                         del to_set[key]
