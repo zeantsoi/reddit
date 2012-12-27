@@ -256,19 +256,20 @@ class DataThing(object):
             # (including the return in the above branch)
             begin()
 
-            to_set = self._dirties.copy()
             if keys:
-                for key in to_set.keys():
-                    if key not in keys:
-                        del to_set[key]
+                keys = tup(keys)
+                to_set = dict((k, self._dirties[k][1])
+                              for k in keys if self._dirties.has_key(k))
+            else:
+                to_set = dict((k, v[1]) for k, v in self._dirties.iteritems())
 
             data_props = {}
             thing_props = {}
-            for k, (old_value, new_value) in to_set.iteritems():
+            for k, v in to_set.iteritems():
                 if k.startswith('_'):
-                    thing_props[k[1:]] = new_value
+                    thing_props[k[1:]] = v
                 else:
-                    data_props[k] = new_value
+                    data_props[k] = v
 
             if data_props:
                 self._set_data(self._type_id,
@@ -295,8 +296,6 @@ class DataThing(object):
         finally:
             if lock:
                 lock.release()
-
-        g.plugins.on_thing_commit(self, to_set)
 
     @classmethod
     def _load_multi(cls, need):
