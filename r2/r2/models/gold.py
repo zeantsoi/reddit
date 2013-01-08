@@ -362,3 +362,9 @@ def process_uncharged():
         if trans_id.startswith('g'):
             trans_id = trans_id[1:]
             process_google_transaction(trans_id)
+
+
+def retrieve_gold_transaction(transaction_id):
+    s = sa.select([gold_table], gold_table.c.trans_id == transaction_id)
+    res = s.execute().fetchall()
+    return res
