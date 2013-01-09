@@ -104,8 +104,8 @@ from r2.models import (
 )
 
 
-NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
-DELETE = 'Thu, 01-Jan-1970 00:00:01 GMT'
+NEVER = datetime(2037, 12, 31, 23, 59, 59)
+DELETE = datetime(1970, 01, 01, 0, 0, 1)
 
 cache_affecting_cookies = ('reddit_first', 'over18', '_options')
 
@@ -696,7 +696,7 @@ class MinimalController(BaseController):
         except CookieError:
             cookies_key = ''
 
-        return make_key('request_',
+        return make_key('request',
                         c.lang,
                         c.content_langs,
                         request.host,
@@ -751,25 +751,12 @@ class MinimalController(BaseController):
             if r:
                 r, c.cookies = r
                 response.headers = r.headers
-                response.content = r.content
+                response.body = r.body
+                response.status_int = r.status_int
 
-                for x in r.cookies.keys():
-                    if x in cache_affecting_cookies:
-                        cookie = r.cookies[x]
-                        response.set_cookie(key=x,
-                                            value=cookie.value,
-                                            domain=cookie.get('domain', None),
-                                            expires=cookie.get('expires', None),
-                                            path=cookie.get('path', None),
-                                            secure=cookie.get('secure', False),
-                                            httponly=cookie.get('httponly', False))
-
-                response.status_code = r.status_code
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
                 c.request_timer.name = request_timer_name("cached_response")
 
-                # make sure to carry over the content type
-                response.content_type = r.headers['content-type']
                 c.used_cache = True
                 # response wrappers have already been applied before cache write
                 c.response_wrapper = None
@@ -777,7 +764,8 @@ class MinimalController(BaseController):
     def post(self):
         c.request_timer.intermediate("action")
 
-        if c.response_wrapper:
+        # check if response hasattr "content" because e.g. HTTPNotFound doesn't
+        if c.response_wrapper and hasattr(response, "content"):
             content = "".join(_force_utf8(x)
                               for x in tup(response.content) if x)
             wrapped_content = c.response_wrapper(content)
@@ -795,7 +783,8 @@ class MinimalController(BaseController):
             and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and response.status_code == 200):
+            and response.status_int not in (429, 503)
+            and hasattr(response, "content")):
             try:
                 g.pagecache.set(self.request_key(),
                                 (response._current_obj(), c.cookies),
@@ -899,7 +888,6 @@ class RedditController(MinimalController):
     def remember_otp(user):
         cookie = user.make_otp_cookie()
         expiration = datetime.utcnow() + timedelta(seconds=g.OTP_COOKIE_TTL)
-        expiration = expiration.strftime("%a, %d %b %Y %H:%M:%S GMT")
         set_user_cookie(g.otp_cookie,
                         cookie,
                         secure=True,
