@@ -132,11 +132,13 @@ class ErrorController(RedditController):
         retry_after = request.environ.get("retry_after")
         if retry_after:
             response.headers["Retry-After"] = str(retry_after)
-            page = pages.Ratelimit_TooFast()
+            template_name = '/ratelimit_toofast.html'
         else:
-            page = pages.Ratelimit_Throttled()
+            template_name = '/ratelimit_throttled.html'
 
-        return page.render()
+        loader = pylons.buffet.engines['mako']['engine']
+        template = loader.load_template(template_name)
+        return template.render(logo_url=static(g.default_header_url))
 
     def send503(self):
         response.headers["Retry-After"] = str(request.environ["retry_after"])

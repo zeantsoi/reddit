@@ -51,7 +51,7 @@ from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
-from r2.lib.template_helpers import add_sr, get_domain, format_number, static
+from r2.lib.template_helpers import add_sr, get_domain, format_number
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
@@ -3777,15 +3777,3 @@ class LinkCommentsSettings(Templated):
         self.can_edit = (c.user_is_loggedin
                            and (c.user_is_admin or
                                 link.subreddit_slow.is_moderator(c.user)))
-
-class Ratelimit_Base(Templated):
-    def __init__(self):
-        Templated.__init__(self, logo_url=static(g.default_header_url))
-
-
-class Ratelimit_TooFast(Ratelimit_Base):
-    pass
-
-
-class Ratelimit_Throttled(Ratelimit_Base):
-    pass
