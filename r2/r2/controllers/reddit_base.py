@@ -738,7 +738,7 @@ class MinimalController(BaseController):
             and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and response.status_code != 200):
+            and response.status_code == 200):
             try:
                 g.pagecache.set(self.request_key(),
                                 (response._current_obj(), c.cookies),
