@@ -157,7 +157,11 @@ class ErrorController(RedditController):
                 code = 404
             srname = request.GET.get('srname', '')
             takedown = request.GET.get('takedown', "")
-            
+
+            # StatusBasedRedirect will override this anyway, but we need this
+            # here for pagecache to see.
+            response.status_code = code
+
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
