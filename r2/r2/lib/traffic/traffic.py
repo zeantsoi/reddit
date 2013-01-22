@@ -390,9 +390,6 @@ def verify_month_inputs(month_date):
         print d
 
 
-LOG_HOSTS = ('pixel-02', 'pixel-03')
-
-
 def process_hour(hour_date):
     """Process hour_date's traffic.
 
@@ -405,7 +402,8 @@ def process_hour(hour_date):
     SLEEPTIME = 180
 
     log_dir = os.path.join(RAW_LOG_DIR, hour_date)
-    files_missing = [os.path.join(log_dir, '%s.log.bz2' % h) for h in LOG_HOSTS]
+    files_missing = [os.path.join(log_dir, '%s.log.bz2' % h)
+                     for h in g.TRAFFIC_LOG_HOSTS]
     files_missing = [f for f in files_missing
                        if not s3_key_exists(s3_connection, f)]
 
