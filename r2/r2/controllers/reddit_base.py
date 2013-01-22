@@ -135,6 +135,8 @@ class Cookie(object):
             return "admin"
         elif cookie_name == "reddit_first":
             return "first"
+        elif cookie_name == "over18":
+            return "over18"
         elif cookie_name.endswith("_last_thing"):
             return "last_thing"
         elif cookie_name.endswith("_options"):
