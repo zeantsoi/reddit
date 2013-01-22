@@ -259,6 +259,12 @@ class WikiController(RedditController):
             else:
                 c.wikidisabled = True
 
+    # Redirects from the old wiki
+    def GET_faq(self):
+        return self.GET_wiki_redirect(rest='faq')
+
+    GET_help = GET_wiki_redirect
+
 class WikiApiController(WikiController):
     @wiki_validate(VModhash(),
                    pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
