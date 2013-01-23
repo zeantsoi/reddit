@@ -200,7 +200,7 @@ class WikiController(RedditController):
         pages, linear_pages = WikiPage.get_listing(c.site, filter_check=check_hidden)
         return WikiListing(pages, linear_pages).render()
 
-    def GET_wiki_redirect(self, page):
+    def GET_wiki_redirect(self, page='index'):
         return redirect_to(str("%s/%s" % (c.wiki_base_url, page)), _code=301)
 
     @base_listing
