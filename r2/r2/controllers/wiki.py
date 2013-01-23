@@ -266,7 +266,7 @@ class WikiController(RedditController):
 
     # Redirects from the old wiki
     def GET_faq(self):
-        return self.GET_wiki_redirect(rest='faq')
+        return self.GET_wiki_redirect(page='faq')
 
     GET_help = GET_wiki_redirect
 
