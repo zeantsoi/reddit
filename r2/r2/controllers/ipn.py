@@ -568,6 +568,93 @@ class IpnController(RedditController):
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
 
 
+class GoldPaymentController(RedditController):
+    name = ''
+    webhook_secret = ''
+    event_type_mappings = {}
+
+    @textresponse(secret=VPrintable('secret', 50))
+    def POST_goldwebhook(self, secret):
+        self.validate_secret(secret)
+        status, passthrough, transaction_id, pennies = self.process_response()
+
+        try:
+            event_type = self.event_type_mappings[status]
+        except KeyError:
+            g.log.error('%s %s: unknown status %s' % (self.name,
+                                                      transaction_id,
+                                                      status))
+            self.abort403()
+        self.process_webhook(event_type, passthrough, transaction_id, pennies)
+
+    def validate_secret(self, secret):
+        if secret != self.webhook_secret:
+            g.log.error('%s: invalid webhook secret from %s' % (self.name,
+                                                                request.ip))
+            self.abort403() 
+
+    @classmethod
+    def process_response(cls):
+        """Extract status, passthrough, transaction_id, pennies."""
+        raise NotImplementedError
+
+    def process_webhook(self, event_type, passthrough, transaction_id, pennies):
+        if event_type == 'noop':
+            return
+
+        try:
+            payment_blob = validate_blob(passthrough)
+        except GoldError as e:
+            g.log.error('%s %s: bad payment_blob %s' % (self.name,
+                                                        transaction_id,
+                                                        e))
+            self.abort403()
+
+        goldtype = payment_blob['goldtype']
+        buyer = payment_blob['buyer']
+        recipient = payment_blob.get('recipient', None)
+        signed = payment_blob.get('signed', False)
+        giftmessage = payment_blob.get('giftmessage', None)
+        comment = payment_blob.get('comment', None)
+        comment = comment._fullname if comment else None
+
+        if event_type == 'cancelled':
+            subject = 'gold payment cancelled'
+            msg = ('your gold payment has been cancelled, contact '
+                   '%(gold_email)s for details' % {'gold_email':
+                                                   g.goldthanks_email})
+            send_system_message(buyer, subject, msg)
+            existing = retrieve_gold_transaction(transaction_id)
+            if existing:
+                # note that we don't check status on existing, probably
+                # should update gold_table when a cancellation happens
+                reverse_gold_purchase(goldtype, buyer, pennies, recipient,
+                                      signed, giftmessage, comment)
+        elif event_type == 'succeeded':
+            payer_email = ''
+            payer_id = ''
+            subscription_id = None
+            complete_gold_purchase(passthrough, transaction_id, payer_email,
+                                   payer_id, subscription_id, pennies, goldtype,
+                                   buyer, recipient, signed, giftmessage,
+                                   comment)
+        elif event_type == 'failed':
+            subject = 'gold payment failed'
+            msg = ('your gold payment has failed, contact %(gold_email)s for '
+                   'details' % {'gold_email': g.goldthanks_email})
+            send_system_message(buyer, subject, msg)
+            # probably want to update gold_table here
+        elif event_type == 'refunded':
+            subject = 'gold refund'
+            msg = ('your gold payment has been refunded, contact '
+                   '%(gold_email)s for details' % {'gold_email':
+                                                   g.goldthanks_email})
+            send_system_message(buyer, subject, msg)
+            reverse_gold_purchase(goldtype, buyer, pennies, recipient, signed,
+                                  giftmessage, comment)
+            # probably want to update gold_table here
+
+
 class GoldException(Exception): pass
 
 
