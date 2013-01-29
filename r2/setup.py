@@ -74,6 +74,7 @@ setup(
     install_requires=[
         "webob==1.0.8",
         "Pylons==0.9.7",
+        "Routes==1.11",
         "mako>=0.5",
         "boto >= 2.0",
         "pytz",
