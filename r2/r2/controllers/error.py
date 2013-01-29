@@ -142,7 +142,7 @@ class ErrorController(RedditController):
         else:
             template_name = '/ratelimit_throttled.html'
 
-        template = g.mako_lookup.load_template(template_name)
+        template = g.mako_lookup.get_template(template_name)
         return template.render(logo_url=static(g.default_header_url))
 
     def send503(self):
