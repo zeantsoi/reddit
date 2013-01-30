@@ -62,7 +62,8 @@ def is_local_address(ip):
     # TODO: support the /20 and /24 private networks? make this configurable?
     return ip.startswith('10.')
 
-def abort(code_or_exception=None, detail="", headers=None, comment=None):
+def abort(code_or_exception=None, detail="", headers=None, comment=None,
+          **kwargs):
     """Raise an HTTPException and save it in environ for use by error pages."""
     # Pylons 0.9.6 makes it really hard to get your raised HTTPException,
     # so this helper implements it manually using a familiar syntax.
@@ -77,7 +78,7 @@ def abort(code_or_exception=None, detail="", headers=None, comment=None):
             exc_cls = code_or_exception
         else:
             exc_cls = status_map[code_or_exception]
-        exc = exc_cls(detail, headers, comment)
+        exc = exc_cls(detail, headers, comment, **kwargs)
     request.environ['r2.controller.exception'] = exc
     raise exc
 
@@ -211,7 +212,7 @@ class BaseController(WSGIController):
 
         path = add_sr(cls.format_output_url(form_path) +
                       query_string(params))
-        abort(302, path)
+        abort(302, location=path)
 
     @classmethod
     def redirect(cls, dest, code = 302):
