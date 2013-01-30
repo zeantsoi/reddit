@@ -80,11 +80,17 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     # template, unless the mtime newer, mako doesn't update the compiled
     # template. as a workaround, this makes mako store compiled templates with
     # the original path in the filename, forcing it to update with the path.
-    module_directory = os.path.join(app_conf['cache_dir'], 'templates')
-    def mako_module_path(filename, uri):
-        filename = filename.lstrip('/').replace('/', '-')
-        path = os.path.join(module_directory, filename + ".py")
-        return os.path.abspath(path)
+    if "cache_dir" in app_conf:
+        module_directory = os.path.join(app_conf['cache_dir'], 'templates')
+
+        def mako_module_path(filename, uri):
+            filename = filename.lstrip('/').replace('/', '-')
+            path = os.path.join(module_directory, filename + ".py")
+            return os.path.abspath(path)
+    else:
+        # we're probably in "paster run standalone" mode. we'll just avoid
+        # caching templates since we don't know where they should go.
+        module_directory = mako_module_path = None
 
     # set up the templating system
     config["pylons.g"].mako_lookup = TemplateLookup(
