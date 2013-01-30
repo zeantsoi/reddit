@@ -302,7 +302,8 @@ class LimitUploadSize(object):
 
     def __call__(self, environ, start_response):
         cl_key = 'CONTENT_LENGTH'
-        if environ['REQUEST_METHOD'] == 'POST':
+        is_exception = "r2.controller.exception" in environ
+        if environ['REQUEST_METHOD'] == 'POST' and not is_exception:
             if cl_key not in environ:
                 start_response("411 Length Required", [])
                 return ['<html><body>length required</body></html>']
