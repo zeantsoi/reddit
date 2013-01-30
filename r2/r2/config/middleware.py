@@ -289,7 +289,7 @@ class StaticTestMiddleware(object):
         if environ['HTTP_HOST'] == self.domain:
             environ['PATH_INFO'] = self.static_path.rstrip('/') + environ['PATH_INFO']
             return self.app(environ, start_response)
-        raise httpexceptions.HTTPNotFound()
+        raise webob.exc.HTTPNotFound()
 
 class LimitUploadSize(object):
     """
