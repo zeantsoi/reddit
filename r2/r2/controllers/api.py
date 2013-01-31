@@ -1434,7 +1434,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # In order to avoid breaking functionality, this was done instead.
         prevstyle = request.post.get('prevstyle')
         if not report:
-            return self.abort(403,'forbidden')
+            return abort(403, 'forbidden')
         
         if report.errors:
             error_items = [ CssError(x).render(style='html')
@@ -1507,7 +1507,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                     cssfilter.rendered_comment(comments))
 
     @require_oauth2_scope("modconfig")
-    @validatedForm(VSrModerator(),
+    @validatedForm(VSrModerator(perms='config'),
                    VModhash(),
                    name = VCssName('img_name'))
     @api_doc(api_section.subreddits)
@@ -1526,7 +1526,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                          details='del_image', description=name)
 
     @require_oauth2_scope("modconfig")
-    @validatedForm(VSrModerator(),
+    @validatedForm(VSrModerator(perms='config'),
                    VModhash(),
                    sponsor = VInt("sponsor", min = 0, max = 1))
     @api_doc(api_section.subreddits)
@@ -1568,7 +1568,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         return "nothing to see here."
 
     @require_oauth2_scope("modconfig")
-    @validate(VSrModerator(),
+    @validate(VSrModerator(perms='config'),
               VModhash(),
               file = VLength('file', max_length=1024*500),
               name = VCssName("name"),
@@ -1803,7 +1803,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             changed(sr)
 
         #editting an existing reddit
-        elif sr.is_moderator(c.user) or c.user_is_admin:
+        elif sr.is_moderator_with_perms(c.user, 'config') or c.user_is_admin:
 
             if c.user_is_admin:
                 sr.sponsorship_text = sponsor_text or ""
