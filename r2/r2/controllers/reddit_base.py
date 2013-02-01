@@ -764,8 +764,11 @@ class MinimalController(BaseController):
     def post(self):
         c.request_timer.intermediate("action")
 
-        # check if response hasattr "content" because e.g. HTTPNotFound doesn't
-        if c.response_wrapper and hasattr(response, "content"):
+        # if the action raised an HTTPException (i.e. it aborted) then pylons
+        # will have replaced response with the exception itself.
+        is_exception_response = getattr(response, "_exception", False)
+
+        if c.response_wrapper and not is_exception_response:
             content = "".join(_force_utf8(x)
                               for x in tup(response.content) if x)
             wrapped_content = c.response_wrapper(content)
@@ -784,7 +787,7 @@ class MinimalController(BaseController):
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
             and response.status_int not in (429, 503)
-            and hasattr(response, "content")):
+            and not is_exception_response):
             try:
                 g.pagecache.set(self.request_key(),
                                 (response._current_obj(), c.cookies),
