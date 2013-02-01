@@ -537,10 +537,6 @@ def set_cnameframe():
         or not request.host.split(":")[0].endswith(g.domain)):
         c.cname = True
         request.environ['REDDIT_CNAME'] = 1
-        if request.params.has_key(utils.UrlParser.cname_get):
-            del request.params[utils.UrlParser.cname_get]
-        if request.get.has_key(utils.UrlParser.cname_get):
-            del request.get[utils.UrlParser.cname_get]
     c.frameless_cname = request.environ.get('frameless_cname', False)
     if hasattr(c.site, 'domain'):
         c.authorized_cname = request.environ.get('authorized_cname', False)
