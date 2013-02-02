@@ -516,19 +516,19 @@ function updateEventHandlers(thing) {
            .click(function() {
                    var a = $(this).get(0);
                    change_state(a, 'hide', 
-                                function() { r.spotlight.shuffle() });
+                                function() { r.spotlight.next() });
                 });
         thing.find(".del-button a.yes")
             .click(function() {
                     var a = $(this).get(0);
                     change_state(a, 'del',
-                                 function() { r.spotlight.shuffle() });
+                                 function() { r.spotlight.next() });
                 });
         thing.find(".report-button a.yes")
             .click(function() {
                     var a = $(this).get(0);
                     change_state(a, 'report', 
-                                 function() { r.spotlight.shuffle() });
+                                 function() { r.spotlight.next() });
                     }); 
     }
 };
@@ -1146,8 +1146,6 @@ $(function() {
         $("#shortlink-text").click(function() {
             $(this).select();
         });
-
-        r.spotlight.shuffle();
 
         /* ajax ynbutton */
         function toggleThis() { return toggle(this); }
