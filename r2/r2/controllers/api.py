@@ -460,8 +460,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                 c.errors.remove((errors.LOGGED_IN, None))
             else:
                 from r2.lib.base import abort
-                from r2.lib.errors import RedditHTTPError
-                abort(RedditHTTPError(409, errors.LOGGED_IN))
+                from r2.lib.errors import reddit_http_error
+                abort(reddit_http_error(409, errors.LOGGED_IN))
 
         if not (responder.has_errors("vdelay", errors.RATELIMIT) or
                 responder.has_errors("passwd", errors.WRONG_PASSWORD)):
