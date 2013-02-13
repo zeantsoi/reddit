@@ -63,6 +63,7 @@ from r2.models import (
     retrieve_gold_transaction,
     send_system_message,
     Thing,
+    update_gold_transaction,
 )
 
 
@@ -622,6 +623,7 @@ class GoldPaymentController(RedditController):
         giftmessage = payment_blob.get('giftmessage', None)
         comment = payment_blob.get('comment', None)
         comment = comment._fullname if comment else None
+        existing = retrieve_gold_transaction(transaction_id)
 
         if event_type == 'cancelled':
             subject = 'gold payment cancelled'
@@ -629,13 +631,16 @@ class GoldPaymentController(RedditController):
                    '%(gold_email)s for details' % {'gold_email':
                                                    g.goldthanks_email})
             send_system_message(buyer, subject, msg)
-            existing = retrieve_gold_transaction(transaction_id)
             if existing:
                 # note that we don't check status on existing, probably
                 # should update gold_table when a cancellation happens
-                reverse_gold_purchase(goldtype, buyer, pennies, recipient,
-                                      signed, giftmessage, comment)
+                reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
+                                      recipient)
         elif event_type == 'succeeded':
+            if existing and existing.status == 'processed':
+                g.log.info('POST_goldwebhook skipping %s' % transaction_id)
+                return
+
             payer_email = ''
             payer_id = ''
             subscription_id = None
@@ -650,14 +655,16 @@ class GoldPaymentController(RedditController):
             send_system_message(buyer, subject, msg)
             # probably want to update gold_table here
         elif event_type == 'refunded':
+            if not (existing and existing.status == 'processed'):
+                return
+
             subject = 'gold refund'
             msg = ('your gold payment has been refunded, contact '
                    '%(gold_email)s for details' % {'gold_email':
                                                    g.goldthanks_email})
             send_system_message(buyer, subject, msg)
-            reverse_gold_purchase(goldtype, buyer, pennies, recipient, signed,
-                                  giftmessage, comment)
-            # probably want to update gold_table here
+            reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
+                                  recipient)
 
 
 class StripeController(GoldPaymentController):
@@ -906,8 +913,8 @@ def subtract_gold_creddits(user, num):
     user._incr('gold_creddits', -num)
 
 
-def reverse_gold_purchase(goldtype, buyer, pennies, recipient=None,
-                          signed=False, giftmessage='', comment=None):
+def reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
+                          recipient=None):
     gold_recipient = recipient or buyer
     with gold_lock(gold_recipient):
         gold_recipient._sync_latest()
@@ -924,3 +931,4 @@ def reverse_gold_purchase(goldtype, buyer, pennies, recipient=None,
             subject = 'your gifted gold has been reversed'
             message = 'sorry, but the payment was reversed'
             send_system_message(recipient, subject, message)
+    update_gold_transaction(transaction_id, 'reversed')
