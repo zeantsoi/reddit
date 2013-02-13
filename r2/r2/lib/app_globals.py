@@ -32,6 +32,8 @@ import subprocess
 import sys
 
 from sqlalchemy import engine, event
+
+import cssutils
 import pytz
 
 from r2.config import queues
@@ -356,6 +358,10 @@ class Globals(object):
 
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
+
+        # make cssutils use the real logging system
+        csslog = logging.getLogger("cssutils")
+        cssutils.log.setLog(csslog)
 
         if not self.media_domain:
             self.media_domain = self.domain
