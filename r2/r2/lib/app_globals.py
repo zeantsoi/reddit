@@ -345,6 +345,8 @@ class Globals(object):
         try:
             with open("/etc/ec2_asg", "r") as f:
                 pool = f.read().strip()
+            # clean up the pool name since we're putting stuff after "-"
+            pool = pool.partition("-")[0]
         except IOError:
             pool = "reddit-app"
         self.log = logging.LoggerAdapter(log, {"pool": pool})
