@@ -356,9 +356,6 @@ class Globals(object):
             pool = "reddit-app"
         self.log = logging.LoggerAdapter(log, {"pool": pool})
 
-        # set log level for pycountry which is chatty
-        logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
-
         # make cssutils use the real logging system
         csslog = logging.getLogger("cssutils")
         cssutils.log.setLog(csslog)
