@@ -329,6 +329,9 @@ class Globals(object):
         if not self.running_as_script and self.old_uwsgi_load_logging_config:
             logging.config.fileConfig(self.config["__file__"])
 
+        # make python warnings go through the logging system
+        logging.captureWarnings(capture=True)
+
         log = logging.getLogger('reddit')
 
         # when we're a script (paster run) just set up super simple logging
