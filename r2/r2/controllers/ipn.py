@@ -60,6 +60,7 @@ from r2.models import (
     create_gift_gold,
     make_comment_gold_message,
     NotFound,
+    retrieve_gold_transaction,
     send_system_message,
     Thing,
 )
