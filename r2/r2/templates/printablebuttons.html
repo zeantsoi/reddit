@@ -251,7 +251,7 @@
 
   %if getattr(thing.thing, "use_big_modbuttons", False):
      ${big_modbuttons(thing.thing, "link")}
-  %elif thing.ignore_reports:
+  %elif thing.ignore_reports and thing.can_ban:
     ${ignore_reports_toggle(pressed=True)}
   %endif
 </%def>
@@ -324,7 +324,7 @@
     %endif
     %if getattr(thing.thing, "use_big_modbuttons", False):
        ${big_modbuttons(thing.thing, "comment")}
-    %elif thing.ignore_reports:
+    %elif thing.ignore_reports and thing.can_ban:
       ${ignore_reports_toggle(pressed=True)}
     %endif
   %endif
