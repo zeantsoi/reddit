@@ -1905,9 +1905,6 @@ class GoldPayment(Templated):
             google_id = g.GOOGLE_ID
             stripe_key = g.STRIPE_PUBLIC_KEY
 
-        if not c.user_is_admin:
-            stripe_key = coinbase_button_id = None
-
         Templated.__init__(self, goldtype=goldtype, period=period,
                            months=months, quantity=quantity,
                            unit_price=unit_price, price=price,
