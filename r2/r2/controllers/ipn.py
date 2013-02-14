@@ -781,6 +781,7 @@ class CoinbaseController(GoldPaymentController):
         transaction_id = 'C%s' % order['id']
         status = order['status']    # new/completed/cancelled
         pennies = int(order['total_native']['cents'])
+        pennies += 10
         passthrough = order['custom']
         return status, passthrough, transaction_id, pennies
 
