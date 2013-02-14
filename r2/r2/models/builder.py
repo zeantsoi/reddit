@@ -251,7 +251,7 @@ class Builder(object):
                         w.use_big_modbuttons = False
 
                 elif (getattr(item, 'reported', 0) > 0
-                      and (not item.ignore_reports or c.user_is_admin)):
+                      and (not getattr(item, 'ignore_reports', False) or c.user_is_admin)):
                     w.show_reports = True
                     w.use_big_modbuttons = True
 
