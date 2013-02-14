@@ -1838,7 +1838,7 @@ class GoldPayment(Templated):
             quantity = None
             google_id = None
             stripe_key = None
-            coinbase_buttonid = None
+            coinbase_button_id = None
 
         elif goldtype == "onetime":
             if months < 12:
