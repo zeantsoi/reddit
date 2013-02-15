@@ -69,7 +69,7 @@
         ${self.stripe_button()}
       %endif
 
-      %if thing.stripe_key:
+      %if thing.stripe_key and not thing.clone_template:
         ${self.stripe_form()}
       %endif
 
