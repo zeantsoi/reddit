@@ -26,6 +26,7 @@ from pylons import request
 from pylons.i18n import _
 from copy import copy
 
+
 error_list = dict((
         ('USER_REQUIRED', _("please login to do that")),
         ('HTTPS_REQUIRED', _("this page must be accessed using https")),
@@ -121,7 +122,9 @@ error_list = dict((
         ('INVALID_PERMISSION_TYPE', _("permissions don't apply to that type of user")),
         ('INVALID_PERMISSIONS', _('invalid permissions string')),
     ))
+
 errors = Storage([(e, e) for e in error_list.keys()])
+
 
 class RedditError(Exception):
     name = None
@@ -149,7 +152,6 @@ class RedditError(Exception):
         return _(self.i18n_message) % self.msg_params
 
     def __iter__(self):
-         #yield ('num', self.num)
         yield ('name', self.name)
         yield ('message', _(self.message))
 
@@ -165,7 +167,7 @@ class ErrorSet(object):
         self.errors = {}
 
     def __contains__(self, pair):
-        """Expectes an (error_name, field_name) tuple and checks to
+        """Expects an (error_name, field_name) tuple and checks to
         see if it's in the errors list."""
         return self.errors.has_key(pair)
 
@@ -196,15 +198,17 @@ class ErrorSet(object):
             self.errors[(error.name, field_name)] = error
 
     def remove(self, pair):
-        """Expectes an (error_name, field_name) tuple and removes it
+        """Expects an (error_name, field_name) tuple and removes it
         from the errors list."""
         if self.errors.has_key(pair):
             del self.errors[pair]
+
 
 class ForbiddenError(HTTPForbidden):
     def __init__(self, error):
         HTTPForbidden.__init__(self)
         self.explanation = error_list[error]
+
 
 class BadRequestError(HTTPBadRequest):
     def __init__(self, error):
