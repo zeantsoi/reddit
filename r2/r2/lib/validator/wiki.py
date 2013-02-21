@@ -58,7 +58,7 @@ def this_may_view(page):
     return may_view(c.site, user, page)
 
 def may_revise(sr, user, page=None):    
-    if sr.is_moderator(user):
+    if sr.is_moderator_with_perms(user, 'wiki'):
         # Mods may always contribute
         return True
     
@@ -129,7 +129,7 @@ def may_revise(sr, user, page=None):
 
 def may_view(sr, user, page):
     # User being None means not logged in
-    mod = sr.is_moderator(user) if user else False
+    mod = sr.is_moderator_with_perms(user, 'wiki') if user else False
     
     if mod:
         # Mods may always view
