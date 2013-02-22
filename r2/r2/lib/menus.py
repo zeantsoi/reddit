@@ -46,7 +46,6 @@ class MenuHandler(StringHandler):
 # selected menu styles, primarily used on the main nav bar
 menu_selected=StringHandler(hot          = _("what's hot"),
                             new          = _("what's new"),
-                            rising       = _("what's rising"),
                             top          = _("top scoring"),
                             controversial= _("most controversial"),
                             saved        = _("saved"),
@@ -495,6 +494,23 @@ class RecSortMenu(SortMenu):
     """Sort menu for recommendation page"""
     default   = 'new'
     options   = ('hot', 'new', 'top', 'controversial', 'relevance')
+
+class NewMenu(SimplePostMenu):
+    name      = 'sort'
+    default   = 'rising'
+    options   = ('new', 'rising')
+    type = 'flatlist'
+    use_post  = True
+
+    def __init__(self, **kw):
+        kw['title'] = ""
+        SimplePostMenu.__init__(self, **kw)
+
+    @classmethod
+    def operator(self, sort):
+        if sort == 'new':
+            return operators.desc('_date')
+        
 
 class KindMenu(SimplePostMenu):
     name    = 'kind'

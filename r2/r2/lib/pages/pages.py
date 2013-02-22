@@ -478,7 +478,6 @@ class Reddit(Templated):
         else:
             main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
                             NamedButton('new'), 
-                            NamedButton('rising'),
                             NamedButton('controversial'),
                             NamedButton('top'),
                             ]
