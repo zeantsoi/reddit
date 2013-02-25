@@ -1996,17 +1996,18 @@ class ApiController(RedditController, OAuth2ResourceController):
         # Send a message if this is a top-level comment on a link,
         # if it's the first distinguish for this comment,
         # and if the user isn't banned or blocked by the link author
-        link = Link._byID(thing.link_id, data=True)
-        to = Account._byID(link.author_id, data=True)
-        if (send_message and
-                thing.parent_id is None and
-                not link.is_self and
-                not hasattr(thing, 'distinguished') and
-                not c.user._spam and
-                c.user._id not in to.enemies and
-                to.name != c.user.name):
-            inbox_rel = Inbox._add(to, thing, 'selfreply')
-            queries.new_comment(thing, inbox_rel)
+        if isinstance(thing, Comment):
+            link = Link._byID(thing.link_id, data=True)
+            to = Account._byID(link.author_id, data=True)
+            if (send_message and
+                    thing.parent_id is None and
+                    not link.is_self and
+                    not hasattr(thing, 'distinguished') and
+                    not c.user._spam and
+                    c.user._id not in to.enemies and
+                    to.name != c.user.name):
+                inbox_rel = Inbox._add(to, thing, 'selfreply')
+                queries.new_comment(thing, inbox_rel)
 
         thing.distinguished = how
         thing._commit()
