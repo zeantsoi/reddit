@@ -20,7 +20,7 @@ r.ui.init = function() {
                     url: location + '.compact'
                 })
             ))
-        $('.content > :not(.infobar):first').before(infobar)
+        $('body > .content > :not(.infobar):first').before(infobar)
     }
 
     r.ui.HelpBubble.init()
