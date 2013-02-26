@@ -12,8 +12,9 @@ r.ui.init = function() {
     // mobile suggest infobar
     var smallScreen = window.matchMedia
                       ? matchMedia('(max-device-width: 700px)').matches
-                      : $(window).width() < 700
-    if (smallScreen && r.config.renderstyle != 'compact') {
+                      : $(window).width() < 700,
+        onFrontPage = $.url().attr('path') == '/'
+    if (smallScreen && onFrontPage && r.config.renderstyle != 'compact') {
         var infobar = $('<div class="infobar mellow">')
             .html(r.utils.formatMarkdownLinks(
                 r.strings('compact_suggest', {
