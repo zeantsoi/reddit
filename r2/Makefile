@@ -247,3 +247,14 @@ clean_gzip:
 	rm -f $(GZIPPED)
 
 $(shell rm -f $(DEFS_FILE))
+
+#################### country list
+COUNTRY_FILE := $(STATIC_BUILD_DIR)/countries.json
+
+countries: $(COUNTRY_FILE)
+
+$(COUNTRY_FILE):
+	$(PYTHON) r2/lib/countries.py > $(COUNTRY_FILE)
+
+clean_countries:
+	rm -f $(COUNTRY_FILE)
