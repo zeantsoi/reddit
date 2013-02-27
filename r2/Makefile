@@ -253,7 +253,10 @@ COUNTRY_FILE := $(STATIC_BUILD_DIR)/countries.json
 
 countries: $(COUNTRY_FILE)
 
-$(COUNTRY_FILE):
+$(STATIC_BUILD_DIR):
+	mkdir -p $(STATIC_BUILD_DIR)
+
+$(COUNTRY_FILE): $(STATIC_BUILD_DIR)
 	$(PYTHON) r2/lib/countries.py > $(COUNTRY_FILE)
 
 clean_countries:
