@@ -732,12 +732,12 @@ class StripeController(GoldPaymentController):
                 customer['active_card']['address_zip_check'] == 'fail'):
                 form.set_html('.status',
                               _('error: address verification failed'))
-                form.find('.stripe-submit').removeClass("disabled").end()
+                form.find('.stripe-submit').removeAttr('disabled').end()
                 return
 
             if customer['active_card']['cvc_check'] == 'fail':
                 form.set_html('.status', _('error: cvc check failed'))
-                form.find('.stripe-submit').removeClass("disabled").end()
+                form.find('.stripe-submit').removeAttr('disabled').end()
                 return
 
             charge = stripe.Charge.create(
@@ -748,6 +748,7 @@ class StripeController(GoldPaymentController):
             )
         except stripe.CardError as e:
             form.set_html('.status', 'error: %s' % e.message)
+            form.find('.stripe-submit').removeAttr('disabled').end()
         except stripe.InvalidRequestError as e:
             form.set_html('.status', _('invalid request'))
         except stripe.APIConnectionError as e:
