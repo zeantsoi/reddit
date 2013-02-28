@@ -374,8 +374,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.set_error(errors.QUOTA_FILLED, None)
                 return
 
-        if not c.user.gold or not hasattr(request.post, 'sendreplies'):
-            sendreplies = kind == 'self'
+        sendreplies = kind == 'self'
 
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
