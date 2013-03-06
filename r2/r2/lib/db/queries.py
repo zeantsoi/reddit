@@ -1377,8 +1377,10 @@ def run_commentstree(qname="commentstree_q", limit=100):
         # missed messages.
         if qname == "commentstree_q":
             fastlaned_links = g.live_config["fastlane_links"]
+            links = Link._byID([com.link_id for com in comments], data=True)
             comments = [com for com in comments
-                        if utils.to36(com.link_id) not in fastlaned_links]
+                        if utils.to36(com.link_id) not in fastlaned_links and
+                           links[com.link_id].skip_commentstree_q != qname]
 
         if comments:
             add_comments(comments)

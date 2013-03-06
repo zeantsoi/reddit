@@ -74,6 +74,7 @@ class Link(Thing, Printable):
                      comment_tree_version=1,
                      comment_tree_id=0,
                      contest_mode=False,
+                     skip_commentstree_q="",
                      ignore_reports=False,
                      )
     _essentials = ('sr_id', 'author_id')
