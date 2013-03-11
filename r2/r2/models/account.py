@@ -234,8 +234,8 @@ class Account(Thing):
 
         LastModified.touch(self._fullname, "Visit")
 
-        self.last_visit = int(time.time())
-        self._commit()
+        #self.last_visit = int(time.time())
+        #self._commit()
 
     def make_cookie(self, timestr=None):
         if not self._loaded:
