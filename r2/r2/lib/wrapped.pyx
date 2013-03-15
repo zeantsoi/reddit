@@ -259,8 +259,12 @@ class Templated(object):
         and will substituted last.
         """
         from pylons import c, g
-        timer = g.stats.get_timer('render.%s.cached' % self.render_class_name)
-        timer.start()
+        if self.render_class_name in g.timed_templates:
+            timer = g.stats.get_timer(
+                'render.%s.cached' % self.render_class_name)
+            timer.start()
+        else:
+            timer = None
 
         style = style or c.render_style or 'html'
         # prepare (and store) the list of cachable items. 
@@ -283,7 +287,7 @@ class Templated(object):
         else:
             # either a primary template or not cachable, so render it
             res = self.render_nocache(attr, style)
-        timer.intermediate('self-render')
+        if timer: timer.intermediate('self-render')
 
         # if this is the primary template, let the caching games begin
         if primary:
@@ -305,7 +309,7 @@ class Templated(object):
                 # This dict cast will generate a new dict of cache_key
                 # to value
                 cached = self._read_cache(dict(current.values()))
-                timer.intermediate('fetch-cache')
+                if timer: timer.intermediate('fetch-cache')
                 # replacements will be a map of key -> rendered content
                 # for updateing the current set of updates
                 replacements = {}
@@ -326,7 +330,7 @@ class Templated(object):
                     # cached for caching
                     replacements[key] = r.finalize(kw)
                     new_updates[key] = (cache_key, (r, kw))
-                timer.intermediate('sub-render')
+                if timer: timer.intermediate('sub-render')
 
                 # update the updates so that when we can do the
                 # replacement in one pass.
@@ -352,12 +356,12 @@ class Templated(object):
                 if k in to_cache:
                     _to_cache[k] = v
             self._write_cache(_to_cache)
-            timer.intermediate('write-cache')
+            if timer: timer.intermediate('write-cache')
 
             # edge case: this may be the primary tempalte and cachable
             if isinstance(res, CacheStub):
                 res = updates[res.name][1][0]
-            timer.intermediate('replace')
+            if timer: timer.intermediate('replace')
 
             # now we can update the updates to make use of their kw args.
             _updates = {}
@@ -379,7 +383,7 @@ class Templated(object):
 
             # wipe out the render tracker object
             c.render_tracker = None
-            timer.stop()
+            if timer: timer.stop()
         elif not isinstance(res, CacheStub):
             # we're done.  Update the template based on the args passed in
             res = res.finalize(kwargs)
