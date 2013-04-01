@@ -98,7 +98,7 @@
 
   ${adminbar_stylesheet()}
 
-  %for extra_stylesheet in thing.extra_stylesheets:
+  %for extra_stylesheet in getattr(thing, 'extra_stylesheets', ()):
     ${less_stylesheet(extra_stylesheet)}
   %endfor
 </%def>
