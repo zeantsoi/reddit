@@ -75,7 +75,7 @@
       ${separator("|")}
       %endif
     %else:
-      <span class="user" data-fullname="${c.user._fullname}">
+      <span class="user">
          ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
          &nbsp;(<span class="userkarma" title="${_("link karma")}">${c.user.safe_karma}</span>)
       </span>
