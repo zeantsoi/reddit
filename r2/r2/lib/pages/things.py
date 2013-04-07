@@ -72,6 +72,7 @@ class LinkButtons(PrintableButtons):
         # do we show the report button?
         show_report = (not is_author and
                        report and
+                       thing.subreddit.can_comment(c.user) and
                        getattr(thing, "promoted", None) is None)
 
         if c.user_is_admin and thing.promoted is None:
