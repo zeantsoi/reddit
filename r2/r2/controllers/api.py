@@ -1081,9 +1081,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         elif isinstance(thing, Comment):
             pass
 
-        if (c.user._spam or
-                c.user.ignorereports or
-                thing.subreddit_slow.is_banned(c.user)):
+        if c.user._spam or c.user.ignorereports:
             return
         Report.new(c.user, thing)
         admintools.report(thing)
