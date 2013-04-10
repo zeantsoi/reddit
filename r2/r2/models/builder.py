@@ -583,6 +583,8 @@ class SearchBuilder(IDBuilder):
         # TODO: Consider a flag to disable this (and see listingcontroller.py)
         if item._spam or item._deleted:
             return False
+        elif item.subreddit.spammy():
+            return False
         elif (self.skip_deleted_authors and
               getattr(item, "author", None) and item.author._deleted):
             return False
