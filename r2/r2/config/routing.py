@@ -314,9 +314,6 @@ def make_map():
 
     mc('/doquery', controller='query', action='doquery')
 
-    mc('/store', controller='redirect', action='redirect',
-       dest='http://store.reddit.com/index.html')
-
     mc('/code', controller='redirect', action='redirect',
        dest='http://github.com/reddit/')
 
