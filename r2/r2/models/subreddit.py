@@ -1445,7 +1445,6 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
         for attr, val in sr_columns.iteritems():
             self.__setattr__(attr, val)
-        self._commit()
 
     def del_srs(self, sr_ids):
         """Delete subreddit(s)."""
@@ -1453,7 +1452,6 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         keys = self.sr_props_to_columns(dict.fromkeys(sr_ids, '')).keys()
         for key in keys:
             self.__delitem__(key)
-        self._commit()
 
     def delete(self):
         # Do we want to actually delete objects?
