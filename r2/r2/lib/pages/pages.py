@@ -1821,6 +1821,7 @@ class MultiInfoBar(Templated):
         Templated.__init__(self)
         self.multi = wrap_things(multi)[0]
         self.can_edit = multi.can_edit(user)
+        self.can_copy = c.user_is_loggedin
         srs.sort(key=lambda sr: sr.name.lower())
         self.srs = srs
 
