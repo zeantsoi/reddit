@@ -402,12 +402,20 @@ ul.flat-vert {text-align: left;}
 
 .side .side-message {
     background: lighten(@info-bg, 10%) no-repeat 10px 10px;
-    background-image: url(../icon-info.png);  /* SPRITE */
     border: 1px solid darken(@info-bg, 20%);
     border-radius: 2px;
     padding: 10px;
-    padding-left: 34px;
     line-height: 1.75em;
+
+    &:before {
+        content: '';
+        display: inline-block;
+        float: left;
+        background-image: url(../icon-info.png);  /* SPRITE */
+        width: 16px;
+        height: 16px;
+        margin-right: 7px;
+    }
 
     p {
         font-size: .9em;
