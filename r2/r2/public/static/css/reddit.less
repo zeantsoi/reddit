@@ -7147,6 +7147,7 @@ body.with-listing-chooser.listing-chooser-collapsed {
     padding-right: @listing-chooser-grippy-width;
     background: #f7f7f7;
     overflow: hidden;
+    .transition(width, .25s);
 
     &:after {
         content: '';
@@ -7265,6 +7266,7 @@ body.with-listing-chooser.listing-chooser-collapsed {
                 color: gray;
                 font-size: .8em;
                 font-weight: normal;
+                white-space: nowrap;
             }
         }
 
