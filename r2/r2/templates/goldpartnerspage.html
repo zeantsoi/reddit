@@ -35,9 +35,11 @@
 
 <%def name="partner_item(name, how_to_use, img_src, description_md, extra_class='')">
   <%call expr="feature_item(img_src, description_md, extra_class)">
-    <div class="how-to-use">
-      ${_md(how_to_use)}
-    </div>
+    %if c.user.gold:
+      <div class="how-to-use">
+        ${_md(how_to_use)}
+      </div>
+    %endif
     %if name in thing.existing_codes:
       <input class="code" type="text" value="${thing.existing_codes[name]}">
     %elif c.user.gold:
