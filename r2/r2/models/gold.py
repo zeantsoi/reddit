@@ -97,6 +97,8 @@ class GoldPartnerDealCode(Base):
     def get_codes_for_user(cls, user):
         results = Session.query(cls).filter(cls.user == user._id)
         codes = {r.deal: r.code for r in results}
+        Session.remove()
+
         return codes
     
     @classmethod
@@ -107,6 +109,8 @@ class GoldPartnerDealCode(Base):
                       .filter(and_(cls.user == user._id,
                                    cls.deal == deal))
                       .one())
+            Session.remove()
+
             return result.code
         except NoResultFound:
             pass
@@ -120,6 +124,7 @@ class GoldPartnerDealCode(Base):
                         .limit(1)
                         .one())
         except NoResultFound:
+            Session.remove()
             raise GoldPartnerCodesExhaustedError
 
         claiming.user = user._id
@@ -128,6 +133,7 @@ class GoldPartnerDealCode(Base):
 
         # release the lock
         Session.query(func.pg_advisory_unlock_all()).all()
+        Session.remove()
 
         return claiming.code 
 
