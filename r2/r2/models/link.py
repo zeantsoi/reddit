@@ -26,6 +26,7 @@ from r2.lib.db.operators import desc
 from r2.lib.utils import (
     base_url,
     domain,
+    strip_www,
     timesince,
     title_to_url,
     tup,
@@ -472,6 +473,35 @@ class Link(Thing, Printable):
 
             if g.shortdomain:
                 item.shortlink = g.shortdomain + '/' + item._id36
+
+            item.domain_str = None
+            if c.user.pref_domain_details:
+                urlparser = UrlParser(item.url)
+                if not item.is_self and urlparser.is_reddit_url():
+                    item.domain_str = ('{0}/r/{1}'
+                                       .format(item.domain,
+                                               urlparser.get_subreddit().name))
+                elif item.media_object:
+                    try:
+                        author_url = item.media_object['oembed']['author_url']
+                        if domain(author_url) == item.domain:
+                            urlparser = UrlParser(author_url)
+                            item.domain_str = strip_www(urlparser.hostname)
+                            item.domain_str += urlparser.path
+                    except KeyError:
+                        pass
+
+                    if not item.domain_str:
+                        try:
+                            author = item.media_object['oembed']['author_name']
+                            author = _force_unicode(author)
+                            item.domain_str = (_force_unicode('{0}: {1}')
+                                               .format(item.domain, author))
+                        except KeyError:
+                            pass
+
+            if not item.domain_str:
+                item.domain_str = item.domain
 
             # do we hide the score?
             if user_is_admin:
