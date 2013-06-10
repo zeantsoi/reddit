@@ -1,4 +1,6 @@
-console.log('want to be a frontend developer at reddit? job.apply() for details.')
+if (window.console && console.log) {
+    console.log('want to be a frontend developer at reddit? job.apply() for details.')
+}
 
 function job() {
     function frob(s, n) {
