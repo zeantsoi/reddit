@@ -867,8 +867,7 @@ def new_comment(comment, inbox_rels):
                     not (sr.exclude_banned_modqueue and author._spam)):
                 m.insert(get_spam_filtered_comments(sr), [comment])
 
-            amqp.add_item('new_comment', comment._fullname,
-                          headers={"allow_commentstree": False})
+            amqp.add_item('new_comment', comment._fullname)
 
             if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
                 amqp.add_item('commentstree_fastlane_q', comment._fullname)
@@ -1383,11 +1382,6 @@ def run_commentstree(qname="commentstree_q", limit=100):
 
     @g.stats.amqp_processor(qname)
     def _run_commentstree(msgs, chan):
-        if qname == "commentstree_q":
-            msgs = [msg for msg in msgs
-                    if (msg.properties.get("application_headers", {})
-                                      .get("allow_commentstree", True))]
-
         comments = Comment._by_fullname([msg.body for msg in msgs],
                                         data = True, return_dict = False)
         print 'Processing %r' % (comments,)
