@@ -448,7 +448,10 @@ class Subreddit(Thing, Printable):
         return self.is_special(user)
 
     def should_ratelimit(self, user, kind):
-        if c.user_is_admin or self.is_special(user):
+        from r2.models.admintools import admin_ratelimit
+        if (c.user_is_admin or
+            self.is_special(user) or
+            not admin_ratelimit(user)):
             return False
 
         if kind == 'comment':
