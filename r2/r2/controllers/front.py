@@ -940,8 +940,6 @@ class FrontController(RedditController, OAuth2ResourceController):
             abort(403, "forbidden")
 
         captcha = Captcha() if c.user.needs_captcha() else None
-        sr_names = (Subreddit.submit_sr_names(c.user) or
-                    Subreddit.submit_sr_names(None))
 
         never_show_self = request.get.get('no_self')
 
@@ -952,7 +950,6 @@ class FrontController(RedditController, OAuth2ResourceController):
                                         title=title or '',
                                         text=text or '',
                                         selftext=selftext or '',
-                                        subreddits=sr_names,
                                         captcha=captcha,
                                         resubmit=resubmit,
                                         never_show_self=never_show_self,

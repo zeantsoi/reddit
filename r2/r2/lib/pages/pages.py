@@ -2289,7 +2289,7 @@ class FrameToolbar(Wrapped):
 class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha = None, url = '', title= '', text = '', selftext = '',
-                 subreddits = (), then = 'comments', resubmit=False, never_show_self=False):
+                 then = 'comments', resubmit=False, never_show_self=False):
 
         self.show_link = self.show_self = False
 
@@ -2323,8 +2323,6 @@ class NewLink(Templated):
 
             self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
 
-        self.sr_searches = simplejson.dumps(popular_searches(include_over_18=c.over18))
-
         self.resubmit = resubmit
         if c.default_sr:
             self.default_sr = None
@@ -2332,8 +2330,7 @@ class NewLink(Templated):
             self.default_sr = c.site
 
         Templated.__init__(self, captcha = captcha, url = url,
-                         title = title, text = text, subreddits = subreddits,
-                         then = then)
+                         title = title, text = text, then = then)
 
 class ShareLink(CachedTemplate):
     def __init__(self, link_name = "", emails = None):
@@ -3322,11 +3319,6 @@ class PromoteLinkForm(Templated):
 
         self.link = None
         if link:
-            self.sr_searches = simplejson.dumps(popular_searches())
-            self.subreddits = (Subreddit.submit_sr_names(c.user) or
-                               Subreddit.submit_sr_names(None))
-            self.default_sr = (self.subreddits[0] if self.subreddits
-                               else g.default_sr)
             self.link = promote.wrap_promoted(link)
             campaigns = PromoCampaign._by_link(link._id)
             self.campaigns = promote.get_renderable_campaigns(link, campaigns)
@@ -3423,11 +3415,7 @@ class Roadblocks(Templated):
 
         self.startdate = startdate.strftime("%m/%d/%Y")
         self.enddate   = enddate  .strftime("%m/%d/%Y")
-        self.sr_searches = simplejson.dumps(popular_searches())
-        self.subreddits = (Subreddit.submit_sr_names(c.user) or
-                           Subreddit.submit_sr_names(None))
-        self.default_sr = self.subreddits[0] if self.subreddits \
-                          else g.default_sr
+
 
 class TabbedPane(Templated):
     def __init__(self, tabs, linkable=False):
@@ -4207,3 +4195,26 @@ class SubscribeButton(Templated):
     def __init__(self, sr):
         Templated.__init__(self)
         self.sr = sr
+
+
+class SubredditSelector(Templated):
+    def __init__(self, subreddits=None, default_sr=None, required=False):
+        Templated.__init__(self)
+
+        if subreddits:
+            self.subreddits = subreddits
+        else:
+            self.subreddits = (Subreddit.submit_sr_names(c.user) or
+                               Subreddit.submit_sr_names(None))
+
+        if default_sr:
+            self.default_sr = default_sr
+        elif subreddits:
+            self.default_sr = subreddits[0]
+        else:
+            self.default_sr = None
+
+        self.required = required
+        self.sr_searches = simplejson.dumps(
+            popular_searches(include_over_18=c.over18)
+        )
