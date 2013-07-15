@@ -155,12 +155,16 @@ class ThingJsonTemplate(JsonTemplate):
         which has to be gotten from the author_id attribute on most
         things).
         """
+        hide_author_info = (thing.author._deleted or
+                            thing._deleted or
+                            (thing._spam and
+                             not thing.subreddit.is_moderator(c.user)))
         if attr == "author":
             if thing.author._deleted:
                 return "[deleted]"
             return thing.author.name
         if attr == "author_flair_text":
-            if thing.author._deleted:
+            if hide_author_info:
                 return None
             if thing.author.flair_enabled_in_sr(thing.subreddit._id):
                 return getattr(thing.author,
@@ -169,7 +173,7 @@ class ThingJsonTemplate(JsonTemplate):
             else:
                 return None
         if attr == "author_flair_css_class":
-            if thing.author._deleted:
+            if hide_author_info:
                 return None
             if thing.author.flair_enabled_in_sr(thing.subreddit._id):
                 return getattr(thing.author,
@@ -187,7 +191,7 @@ class ThingJsonTemplate(JsonTemplate):
 
         if attr == 'distinguished':
             distinguished = getattr(thing, attr, 'no')
-            if distinguished == 'no':
+            if distinguished == 'no' or hide_author_info:
                 return None
             return distinguished
         
