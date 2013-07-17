@@ -91,7 +91,7 @@ def run():
     cache_lists()
 
 # this relies on c.content_langs being sorted to increase cache hit rate
-@memoize('sr_pops.pop_reddits', time=3600, stale=True)
+@memoize('sr_pops.pop_reddits2', time=3600, stale=True)
 def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
     if not over18:
         over18_state = 'no_over18'
