@@ -2195,7 +2195,7 @@ class VValidatedJSON(VJSON):
 
         def run(self, data):
             if not isinstance(data, list):
-                raise ValueError
+                raise RedditError('JSON_INVALID', code=400)
 
             validated_data = []
             for item in data:
@@ -2220,11 +2220,15 @@ class VValidatedJSON(VJSON):
 
         def run(self, data):
             if not isinstance(data, dict):
-                raise ValueError
+                raise RedditError('JSON_INVALID', code=400)
 
             validated_data = {}
             for key, validator in self.spec.iteritems():
-                validated_data[key] = validator.run(data[key])
+                try:
+                    validated_data[key] = validator.run(data[key])
+                except KeyError:
+                    raise RedditError('JSON_MISSING_KEY', code=400,
+                                      msg_params={'key': key})
             return validated_data
 
         def spec_docs(self):
