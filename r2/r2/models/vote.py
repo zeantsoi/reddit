@@ -110,7 +110,7 @@ class VoteDetailsByThing(tdb_cassandra.View):
             valid_thing=pgvote.valid_thing,
             ip=getattr(pgvote, "ip", ""),
         )
-        if vote_info:
+        if vote_info and isinstance(vote_info, basestring):
             details['vote_info'] = vote_info
         cls._set_values(votee._id36, {voter._id36: json.dumps(details)})
 
