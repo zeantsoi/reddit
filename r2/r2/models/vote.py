@@ -108,7 +108,6 @@ class VoteDetailsByThing(tdb_cassandra.View):
             valid_user=pgvote.valid_user,
             valid_thing=pgvote.valid_thing,
             ip=getattr(pgvote, "ip", ""),
-            organic=getattr(pgvote, "organic", False),
         )
 
         cls._set_values(votee._id36, {voter._id36: json.dumps(details)})
@@ -200,8 +199,6 @@ class Vote(MultiRelation('vote',
             old_valid_thing = v.valid_thing = valid_thing(v, karma, cheater = cheater)
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
                             and not is_self_link)
-            if organic:
-                v.organic = organic
 
         v._commit()
 
