@@ -371,8 +371,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 subreddit_id = "subreddit_id",
                                                 is_self      = "is_self", 
                                                 permalink    = "permalink",
-                                                edited       = "editted",
-                                                stickied     = "stickied",
+                                                edited       = "editted"
                                                 )
 
     def thing_attr(self, thing, attr):

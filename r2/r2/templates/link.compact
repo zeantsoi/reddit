@@ -39,16 +39,9 @@
   %endif
 </%def>
 
-<%
-    div_class = "thing link id-%s" % thing._fullname
-    if thing.stickied:
-        div_class += " stickied"
-%>
-<div class="${div_class}">
+<div class="thing link id-${thing._fullname}">
   <span class="rank" style="width:${thing.numcolmargin};">
-    %if thing.num > 0:
-      ${thing.num}
-    %endif
+    ${thing.num}
   </span>
   <% 
      like_cls = "unvoted"
