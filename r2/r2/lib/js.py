@@ -488,6 +488,13 @@ module["sponsored"] = Module("sponsored.js",
 )
 
 
+module["sponsoredlegacy"] = Module("sponsoredlegacy.js",
+    "lib/ui.core.js",
+    "lib/ui.datepicker.js",
+    "sponsoredlegacy.js"
+)
+
+
 module["timeseries"] = Module("timeseries.js",
     "lib/jquery.flot.js",
     "lib/jquery.flot.time.js",

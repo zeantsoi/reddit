@@ -394,6 +394,19 @@ def new_campaign(link, dates, bid, cpm, sr):
         free_campaign(link, campaign, c.user)
     return campaign
 
+
+def new_legacy_campaign(link, dates, bid, sr):
+    # empty string for sr_name means target to all
+    sr_name = sr.name if sr else ""
+    campaign = PromoCampaign._new_legacy(link, sr_name, bid, dates[0], dates[1])
+    PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
+    PromotionLog.add(link, 'campaign %s created' % campaign._id)
+    author = Account._byID(link.author_id, True)
+    if getattr(author, "complimentary_promos", False):
+        free_campaign(link, campaign, c.user)
+    return campaign
+
+
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
@@ -411,6 +424,42 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr):
         # update values in the db
         campaign.update(dates[0], dates[1], bid, cpm, sr_name,
                         campaign.trans_id, commit=True)
+
+        # record the transaction
+        text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
+        PromotionLog.add(link, text)
+
+        # make it a freebie, if applicable
+        author = Account._byID(link.author_id, True)
+        if getattr(author, "complimentary_promos", False):
+            free_campaign(link, campaign, c.user)
+
+    except Exception, e: # record error and rethrow 
+        g.log.error("Failed to update PromoCampaign %s on link %d. Error was: %r" %
+                    (campaign._id, link._id, e))
+        try: # wrapped in try/except so orig error won't be lost if commit fails
+            text = 'update FAILED. (campaign: %s, bid: %.2f)' % (campaign._id,
+                                                                 bid)
+            PromotionLog.add(link, text)
+        except:
+            pass
+        raise e
+
+
+def edit_legacy_campaign(link, campaign, dates, bid, sr):
+    sr_name = sr.name if sr else '' # empty string means target to all
+    try:
+        # if the bid amount changed, cancel any pending transactions
+        if campaign.bid != bid:
+            void_campaign(link, campaign)
+
+        # update the schedule
+        PromotionWeights.reschedule(link, campaign._id, sr_name,
+                                    dates[0], dates[1], bid)
+
+        # update values in the db
+        campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id,
+                        commit=True)
 
         # record the transaction
         text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
@@ -864,6 +913,8 @@ PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 def get_promotion_list(user, site):
     srids = srids_from_site(user, site)
+    exclude_ids = get_cpm_beta_srids()
+    srids -= exclude_ids
     tuples = get_promotion_list_cached(srids)
     return [PromoTuple(*t) for t in tuples]
 
@@ -884,6 +935,12 @@ def get_promotion_list_cached(sites):
 
     return [(link, weight / total, campaign)
             for link, weight, campaign in promos]
+
+
+@memoize('cpm_beta_srids')
+def get_cpm_beta_srids():
+    srs_by_name = Subreddit._by_name(g.cpm_beta_srs)
+    return {sr._id for sr in srs_by_name.itervalues()}
 
 
 def lottery_promoted_links(user, site, n=10):

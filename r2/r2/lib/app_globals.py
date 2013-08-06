@@ -187,6 +187,8 @@ class Globals(object):
             'exempt_login_user_agents',
             'timed_templates',
             'sample_multis',
+            'cpm_beta_users',
+            'cpm_beta_srs',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
