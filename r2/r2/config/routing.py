@@ -203,6 +203,8 @@ def make_map():
        action='edit_promo_campaign')
     mc('/promoted/pay/:link/:campaign',
        controller='promote', action='pay')
+    mc('/promoted/refund/:link/:campaign', controller='promote',
+       action='refund')
     mc('/promoted/graph',
        controller='promote', action='graph')
     mc('/promoted/admin/graph', controller='promote', action='admingraph')
@@ -330,7 +332,7 @@ def make_map():
                                  "traffic_viewer|rm_traffic_viewer|"
                                  "edit_campaign|delete_campaign|meta_promo|"
                                  "add_roadblock|rm_roadblock|check_inventory|"
-                                 "edit_legacy_campaign")))
+                                 "edit_legacy_campaign|refund_campaign")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',
