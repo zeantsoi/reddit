@@ -33,7 +33,7 @@ from r2.lib.utils import (
     UrlParser,
 )
 from account import Account, DeletedUser
-from subreddit import Subreddit, DomainSR
+from subreddit import DefaultSR, DomainSR, Subreddit
 from printable import Printable
 from r2.config import cache, extensions
 from r2.lib.memoize import memoize
@@ -478,9 +478,12 @@ class Link(Thing, Printable):
             if c.user.pref_domain_details:
                 urlparser = UrlParser(item.url)
                 if not item.is_self and urlparser.is_reddit_url():
-                    item.domain_str = ('{0}/r/{1}'
-                                       .format(item.domain,
-                                               urlparser.get_subreddit().name))
+                    url_subreddit = urlparser.get_subreddit()
+                    if (url_subreddit and
+                            not isinstance(url_subreddit, DefaultSR)):
+                        item.domain_str = ('{0}/r/{1}'
+                                           .format(item.domain,
+                                                   url_subreddit.name))
                 elif item.media_object:
                     try:
                         author_url = item.media_object['oembed']['author_url']
