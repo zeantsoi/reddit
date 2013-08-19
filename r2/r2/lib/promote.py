@@ -458,8 +458,8 @@ def edit_legacy_campaign(link, campaign, dates, bid, sr):
                                     dates[0], dates[1], bid)
 
         # update values in the db
-        campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id,
-                        commit=True)
+        campaign.update_legacy(dates[0], dates[1], bid, sr_name, campaign.trans_id,
+                               commit=True)
 
         # record the transaction
         text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
