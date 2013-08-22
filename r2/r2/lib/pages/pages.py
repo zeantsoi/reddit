@@ -3349,7 +3349,7 @@ class PromoteLinkForm(Templated):
         self.campaigns = promote.get_renderable_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
 
-        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+        self.min_bid = 0 if c.user_is_sponsor else g.min_cpm_bid
 
         # preload some inventory
         srnames = []

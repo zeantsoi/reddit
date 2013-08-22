@@ -563,7 +563,7 @@ class PromoteController(ListingController):
             except NotFound:
                 pass
 
-        min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+        min_bid = 0 if c.user_is_sponsor else g.min_cpm_bid
         if bid is None or bid < min_bid:
             c.errors.add(errors.BAD_BID, field='bid',
                          msg_params={'min': min_bid,
