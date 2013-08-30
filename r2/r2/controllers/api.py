@@ -3492,3 +3492,13 @@ class ApiController(RedditController, OAuth2ResourceController):
         if listing.things:
             w = listing.things[0]
             return spaceCompress(w.render())
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        collapsed=VBoolean('collapsed'),
+    )
+    def POST_set_left_bar_collapsed(self, responder, collapsed):
+        c.user.pref_collapse_left_bar = collapsed
+        c.user._commit()
+
