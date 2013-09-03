@@ -187,7 +187,6 @@ class Globals(object):
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'timed_templates',
-            'sample_multis',
             'cpm_beta_users',
             'cpm_beta_srs',
         ],
@@ -232,6 +231,7 @@ class Globals(object):
         ConfigValue.tuple: [
             'sr_discovery_links',
             'fastlane_links',
+            'listing_chooser_sample_multis',
         ],
         ConfigValue.dict(ConfigValue.int, ConfigValue.float): [
             'comment_tree_version_weights',

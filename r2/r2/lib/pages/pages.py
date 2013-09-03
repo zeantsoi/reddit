@@ -4245,7 +4245,7 @@ class ListingChooser(Templated):
         })
 
     def add_samples(self):
-        for path in g.sample_multis:
+        for path in g.live_config["listing_chooser_sample_multis"]:
             self.add_item(
                 section="sample",
                 name=path.rpartition('/')[2],
