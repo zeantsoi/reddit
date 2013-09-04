@@ -80,6 +80,7 @@ QUEUE_ALL = 'all'
 
 PROMO_HEALTH_KEY = 'promotions_last_updated'
 
+LEGACY_CAMPAIGN_CUTOFF = datetime(2013, 9, 17, 0, 0, tzinfo=g.tz)
 
 def _mark_promos_updated():
     NamedGlobals.set(PROMO_HEALTH_KEY, time.time())

@@ -722,6 +722,13 @@ class PromoteController(ListingController):
         if targeting == 'none':
             sr = None
 
+        if dates[1] > promote.LEGACY_CAMPAIGN_CUTOFF:
+            msg = _('reddit is about to unveil something big. Campaigns after '
+                    '%(date)s will be available on a CPM basis')
+            msg %= {'date': promote.LEGACY_CAMPAIGN_CUTOFF.strftime('%B %d %Y')}
+            form.set_html('.status', msg)
+            return
+
         if campaign_id36 is not None:
             campaign = PromoCampaign._byID36(campaign_id36)
 
