@@ -34,6 +34,7 @@ from r2.lib import cssfilter, inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.db import queries
 from r2.lib.errors import errors
+from r2.lib.filters import safemarkdown
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu
@@ -242,13 +243,17 @@ class PromoteController(ListingController):
 
     @validate(VSponsor('link'),
               link=VLink('link'),
-              disable_cpm=VBoolean('disable_cpm'))
-    def GET_edit_promo(self, link, disable_cpm):
+              disable_cpm=VBoolean('disable_cpm'),
+              enable_cpm=VBoolean('enable_cpm'))
+    def GET_edit_promo(self, link, disable_cpm, enable_cpm):
         if not link or link.promoted is None:
             return self.abort404()
         rendered = wrap_links(link, wrapper=promote.sponsor_wrapper, skip=False)
-        cpm_enabled = c.user.name in g.cpm_beta_users or c.user_is_admin
-        if cpm_enabled and not disable_cpm:
+        cpm_enabled = (((c.user.name in g.cpm_beta_users or c.user_is_admin) and
+                        not disable_cpm) or
+                       enable_cpm)
+
+        if cpm_enabled:
             form = PromoteLinkForm(link, rendered)
         else:
             form = PromoteLinkFormLegacy(link, rendered)
@@ -499,16 +504,31 @@ class PromoteController(ListingController):
                    targeting=VLength("targeting", 10))
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
                           dates, bid, sr, targeting):
-        cpm_enabled = c.user.name in g.cpm_beta_users or c.user_is_admin
-        if not cpm_enabled:
-            return self.abort404()
+        beta = c.user.name in g.cpm_beta_users or c.user_is_admin
 
-        if not sr or sr.name not in g.cpm_beta_srs:
-            action = 'edit' if campaign_id36 else 'create'
-            target = 'without targeting' if not sr else 'targeting %s' % sr.name
-            msg = 'please disable cpm mode to %(action)s a campaign %(target)s'
-            msg %= {'action': action, 'target': target}
-            form.set_html('.status', msg)
+        # non-beta users can only create CPM campaigns after cutoff
+        if not beta and dates[0] < promote.LEGACY_CAMPAIGN_CUTOFF:
+            action = _('edit') if campaign_id36 else _('create')
+            msg = _('please [disable cpm mode](%(url)s) to %(action)s a '
+                    'campaign running before %(date)s')
+            date = promote.LEGACY_CAMPAIGN_CUTOFF.strftime('%B %d %Y')
+            url = promote.promo_edit_url(link)
+            msg %= {'action': action, 'date': date, 'url': url}
+            form.set_html('.status', safemarkdown(msg))
+            return
+
+        # beta users can only edit/create campaigns in beta srs before cutoff
+        if (beta and
+            dates[1] <= promote.LEGACY_CAMPAIGN_CUTOFF and
+            (not sr or sr.name not in g.cpm_beta_srs)):
+            action = _('edit') if campaign_id36 else _('create')
+            targeting = (_('without targeting') if not sr
+                         else _('targeting %(sr)s') % {'sr': sr.name})
+            url = promote.promo_edit_url(link) + '?disable_cpm=true'
+            msg = _('please [disable cpm mode](%(url)s) to %(action)s a '
+                   'campaign %(targeting)s')
+            msg %= {'action': action, 'targeting': targeting, 'url': url}
+            form.set_html('.status', safemarkdown(msg))
             return
 
         if not link:
@@ -579,6 +599,18 @@ class PromoteController(ListingController):
                 # checking to get the error set in the form, but we can't
                 # check for rate-limiting if there's no subreddit
                 return
+
+            # check roadblocks for non-beta and post-beta campaigns
+            if not beta or dates[1] > promote.LEGACY_CAMPAIGN_CUTOFF:
+                roadblock = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
+                if roadblock and not c.user_is_sponsor:
+                    msg_params = {"start": roadblock[0].strftime('%m/%d/%Y'),
+                                  "end": roadblock[1].strftime('%m/%d/%Y')}
+                    c.errors.add(errors.OVERSOLD, field='sr',
+                                 msg_params=msg_params)
+                    form.has_errors('sr', errors.OVERSOLD)
+                    return
+
         elif targeting == 'none':
             sr = None
 
@@ -723,18 +755,23 @@ class PromoteController(ListingController):
             sr = None
 
         if dates[1] > promote.LEGACY_CAMPAIGN_CUTOFF:
-            msg = _('reddit is about to unveil something big. Campaigns after '
-                    '%(date)s will be available on a CPM basis')
-            msg %= {'date': promote.LEGACY_CAMPAIGN_CUTOFF.strftime('%B %d %Y')}
-            form.set_html('.status', msg)
+            msg = _('campaigns after %(date)s are available on a cpm basis. '
+                    '[enable cpm mode](%(url)s) to create a cpm campaign.')
+            date = promote.LEGACY_CAMPAIGN_CUTOFF.strftime('%B %d %Y')
+            url = promote.promo_edit_url(l) + '?enable_cpm=true'
+            msg %= {'date': date, 'url': url}
+            form.set_html('.status', safemarkdown(msg))
             return
 
         if campaign_id36 is not None:
             campaign = PromoCampaign._byID36(campaign_id36)
 
             if hasattr(campaign, 'cpm'):
-                msg = 'please enable cpm mode to edit that campaign'
-                form.set_html('.status', msg)
+                msg = _('please [enable cpm mode to edit that campaign]'
+                        '(%(url)s)')
+                url = promote.promo_edit_url(l) + '?enable_cpm=true'
+                msg %= {'url': url}
+                form.set_html('.status', safemarkdown(msg))
                 return
 
             promote.edit_legacy_campaign(l, campaign, dates, bid, sr)
