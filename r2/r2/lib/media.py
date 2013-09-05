@@ -335,6 +335,8 @@ def _make_thumbnail_from_url(thumbnail_url, referer):
     if not thumbnail_url:
         return
     content_type, content = _fetch_url(thumbnail_url, referer=referer)
+    if not content:
+        return
     image = str_to_image(content)
     return _prepare_image(image)
 
