@@ -141,6 +141,7 @@ def _fetch_image_size(url, referer):
         return None
 
     parser = ImageFile.Parser()
+    response = None
     try:
         response = urllib2.urlopen(request)
 
@@ -155,7 +156,8 @@ def _fetch_image_size(url, referer):
     except urllib2.URLError:
         return None
     finally:
-        response.close()
+        if response:
+            response.close()
 
 
 def optimize_jpeg(filename, optimizer):
