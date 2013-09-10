@@ -132,7 +132,6 @@ class Globals(object):
         ConfigValue.float: [
             'min_promote_bid',
             'max_promote_bid',
-            'min_cpm_bid',
             'statsd_sample_rate',
             'querycache_prune_chance',
         ],
@@ -187,8 +186,6 @@ class Globals(object):
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'timed_templates',
-            'cpm_beta_users',
-            'cpm_beta_srs',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [

@@ -3343,9 +3343,7 @@ class PromoteLinkForm(Templated):
 
         self.mindate = mindate.strftime("%m/%d/%Y")
 
-        self.subreddit_selector = SubredditSelector(include_searches=False)
-        beta_srs = Subreddit._by_name(g.cpm_beta_srs).values()
-        self.subreddit_selector.subreddits = [(_('popular choices'), beta_srs)]
+        self.subreddit_selector = SubredditSelector()
 
         self.link = promote.wrap_promoted(link)
         self.listing = listing
@@ -3353,7 +3351,7 @@ class PromoteLinkForm(Templated):
         self.campaigns = promote.get_renderable_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
 
-        self.min_bid = 0 if c.user_is_sponsor else g.min_cpm_bid
+        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
 
         # preload some inventory
         srnames = set()
@@ -3373,63 +3371,6 @@ class PromoteLinkForm(Templated):
                     "[Here's how it works](%(link)s)")
         message %= {'link': 'http://www.slideshare.net/reddit/how-to-use-reddits-selfserve-advertising-platform'}
         self.infobar = InfoBar(message=message)
-
-class PromoteLinkFormLegacy(Templated):
-    def __init__(self, link, listing, *a, **kw):
-        self.setup(link, listing)
-        Templated.__init__(self, *a, **kw)
-
-    def setup(self, link, listing):
-        self.bids = []
-        if c.user_is_sponsor:
-            self.author = Account._byID(link.author_id)
-            try:
-                bids = bidding.Bid.lookup(thing_id=link._id)
-            except NotFound:
-                pass
-            else:
-                bids.sort(key=lambda x: x.date, reverse=True)
-                bidders = Account._byID(set(bid.account_id for bid in bids),
-                                        data=True, return_dict=True)
-                for bid in bids:
-                    status = bidding.Bid.STATUS.name[bid.status].lower()
-                    bidder = bidders[bid.account_id]
-                    row = Storage(
-                        status=status,
-                        bidder=bidder.name,
-                        date=bid.date,
-                        transaction=bid.transaction,
-                        campaign=bid.campaign,
-                        pay_id=bid.pay_id,
-                        amount_str=format_currency(bid.bid, 'USD',
-                                                   locale=c.locale),
-                    )
-                    self.bids.append(row)
-
-        # reference "now" to what we use for promtions
-        now = promote.promo_datetime_now()
-
-        # min date is the day before the first possible start date.
-        self.promote_date_today = now
-        mindate = make_offset_date(now, g.min_promote_future,
-                                  business_days=True)
-        mindate -= datetime.timedelta(1)
-
-        startdate = mindate + datetime.timedelta(1)
-        enddate = startdate + datetime.timedelta(3)
-
-        self.startdate = startdate.strftime("%m/%d/%Y")
-        self.enddate = enddate.strftime("%m/%d/%Y")
-
-        self.mindate = mindate.strftime("%m/%d/%Y")
-
-        self.link = promote.wrap_promoted(link)
-        self.listing = listing
-        campaigns = PromoCampaign._by_link(link._id)
-        self.campaigns = promote.get_renderable_campaigns(link, campaigns)
-        self.promotion_log = PromotionLog.get(link)
-
-        self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
 
 class PromoAdminTool(Reddit):
     def __init__(self, query_type=None, launchdate=None, start=None, end=None, *a, **kw):

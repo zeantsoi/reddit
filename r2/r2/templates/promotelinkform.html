@@ -350,15 +350,15 @@ ${self.javascript_setup()}
               <label>
                 <input id="no_targeting" class="nomargin" 
                        type="radio"  value="none" name="targeting"
-                       onclick="r.sponsored.targeting_off()"/> 
+                       onclick="r.sponsored.targeting_off()"
+                       checked="checked">
                 ${_("frontpage (displayed on the home page to anyone)")}
               </label>
               <br />
               <label>
                 <input id="targeting" class="nomargin" 
                        type="radio"  value="one" name="targeting"
-                       onclick="r.sponsored.targeting_on()"
-                       checked="checked" /> 
+                       onclick="r.sponsored.targeting_on()">
                 ${_("targeted (targets a subreddit and its subscribers)")}
               </label>
 

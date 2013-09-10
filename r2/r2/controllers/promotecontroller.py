@@ -34,7 +34,6 @@ from r2.lib import cssfilter, inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.db import queries
 from r2.lib.errors import errors
-from r2.lib.filters import safemarkdown
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu
@@ -45,7 +44,6 @@ from r2.lib.pages import (
     Promote_Graph,
     PromotePage,
     PromoteLinkForm,
-    PromoteLinkFormLegacy,
     PromoteLinkNew,
     PromoteReport,
     Reddit,
@@ -273,21 +271,12 @@ class PromoteController(ListingController):
         return PromotePage('content', content=PromoteLinkNew()).render()
 
     @validate(VSponsor('link'),
-              link=VLink('link'),
-              disable_cpm=VBoolean('disable_cpm'),
-              enable_cpm=VBoolean('enable_cpm'))
-    def GET_edit_promo(self, link, disable_cpm, enable_cpm):
+              link=VLink('link'))
+    def GET_edit_promo(self, link):
         if not link or link.promoted is None:
             return self.abort404()
         rendered = wrap_links(link, wrapper=promote.sponsor_wrapper, skip=False)
-        cpm_enabled = (((c.user.name in g.cpm_beta_users or c.user_is_admin) and
-                        not disable_cpm) or
-                       enable_cpm)
-
-        if cpm_enabled:
-            form = PromoteLinkForm(link, rendered)
-        else:
-            form = PromoteLinkFormLegacy(link, rendered)
+        form = PromoteLinkForm(link, rendered)
         page = PromotePage('new_promo', content=form)
         return page.render()
 
@@ -539,33 +528,6 @@ class PromoteController(ListingController):
                    targeting=VLength("targeting", 10))
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
                           dates, bid, sr, targeting):
-        beta = c.user.name in g.cpm_beta_users or c.user_is_admin
-
-        # non-beta users can only create CPM campaigns after cutoff
-        if not beta and dates[0] < promote.LEGACY_CAMPAIGN_CUTOFF:
-            action = _('edit') if campaign_id36 else _('create')
-            msg = _('please [disable cpm mode](%(url)s) to %(action)s a '
-                    'campaign running before %(date)s')
-            date = promote.LEGACY_CAMPAIGN_CUTOFF.strftime('%B %d %Y')
-            url = promote.promo_edit_url(link)
-            msg %= {'action': action, 'date': date, 'url': url}
-            form.set_html('.status', safemarkdown(msg))
-            return
-
-        # beta users can only edit/create campaigns in beta srs before cutoff
-        if (beta and
-            dates[1] <= promote.LEGACY_CAMPAIGN_CUTOFF and
-            (not sr or sr.name not in g.cpm_beta_srs)):
-            action = _('edit') if campaign_id36 else _('create')
-            targeting = (_('without targeting') if not sr
-                         else _('targeting %(sr)s') % {'sr': sr.name})
-            url = promote.promo_edit_url(link) + '?disable_cpm=true'
-            msg = _('please [disable cpm mode](%(url)s) to %(action)s a '
-                   'campaign %(targeting)s')
-            msg %= {'action': action, 'targeting': targeting, 'url': url}
-            form.set_html('.status', safemarkdown(msg))
-            return
-
         if not link:
             return
 
@@ -619,7 +581,7 @@ class PromoteController(ListingController):
             except NotFound:
                 pass
 
-        min_bid = 0 if c.user_is_sponsor else g.min_cpm_bid
+        min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
         if bid is None or bid < min_bid:
             c.errors.add(errors.BAD_BID, field='bid',
                          msg_params={'min': min_bid,
@@ -635,16 +597,14 @@ class PromoteController(ListingController):
                 # check for rate-limiting if there's no subreddit
                 return
 
-            # check roadblocks for non-beta and post-beta campaigns
-            if not beta or dates[1] > promote.LEGACY_CAMPAIGN_CUTOFF:
-                roadblock = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
-                if roadblock and not c.user_is_sponsor:
-                    msg_params = {"start": roadblock[0].strftime('%m/%d/%Y'),
-                                  "end": roadblock[1].strftime('%m/%d/%Y')}
-                    c.errors.add(errors.OVERSOLD, field='sr',
-                                 msg_params=msg_params)
-                    form.has_errors('sr', errors.OVERSOLD)
-                    return
+            roadblock = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
+            if roadblock and not c.user_is_sponsor:
+                msg_params = {"start": roadblock[0].strftime('%m/%d/%Y'),
+                              "end": roadblock[1].strftime('%m/%d/%Y')}
+                c.errors.add(errors.OVERSOLD, field='sr',
+                             msg_params=msg_params)
+                form.has_errors('sr', errors.OVERSOLD)
+                return
 
         elif targeting == 'none':
             sr = None
@@ -667,141 +627,6 @@ class PromoteController(ListingController):
             jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
                                 r.duration, r.bid, r.spent, r.cpm,
                                 r.sr, r.status)
-
-
-    @validatedForm(VSponsor('link_id'),
-                   VModhash(),
-                   dates=VDateRange(['startdate', 'enddate'],
-                                  future=1,
-                                  reference_date=promote.promo_datetime_now,
-                                  business_days=False,
-                                  sponsor_override=True),
-                   l=VLink('link_id'),
-                   bid=VFloat('bid', min=0, max=g.max_promote_bid,
-                                  coerce=False, error=errors.BAD_BID),
-                   sr=VSubmitSR('sr', promotion=True),
-                   campaign_id36=nop("campaign_id36"),
-                   targeting=VLength("targeting", 10))
-    def POST_edit_legacy_campaign(self, form, jquery, l, campaign_id36,
-                          dates, bid, sr, targeting):
-        if not l:
-            return
-
-        start, end = dates or (None, None)
-
-        if (start and end and not promote.is_accepted(l) and
-            not c.user_is_sponsor):
-            # if the ad is not approved already, ensure the start date
-            # is at least 2 days in the future
-            start = start.date()
-            end = end.date()
-            now = promote.promo_datetime_now()
-            future = make_offset_date(now, g.min_promote_future,
-                                      business_days=True)
-            if start < future.date():
-                c.errors.add(errors.BAD_FUTURE_DATE,
-                             msg_params=dict(day=g.min_promote_future),
-                             field="startdate")
-
-
-        if (form.has_errors('startdate', errors.BAD_DATE,
-                            errors.BAD_FUTURE_DATE) or
-            form.has_errors('enddate', errors.BAD_DATE,
-                            errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
-            return
-
-        # Limit the number of PromoCampaigns a Link can have
-        # Note that the front end should prevent the user from getting
-        # this far
-        existing_campaigns = list(PromoCampaign._by_link(l._id))
-        if len(existing_campaigns) > g.MAX_CAMPAIGNS_PER_LINK:
-            c.errors.add(errors.TOO_MANY_CAMPAIGNS,
-                         msg_params={'count': g.MAX_CAMPAIGNS_PER_LINK},
-                         field='title')
-            form.has_errors('title', errors.TOO_MANY_CAMPAIGNS)
-            return
-
-        duration = max((end - start).days, 1)
-
-        if form.has_errors('bid', errors.BAD_BID):
-            return
-
-        # minimum bid depends on user privilege and targeting, checked here
-        # instead of in the validator b/c current duration is needed
-        if c.user_is_sponsor:
-            min_daily_bid = 0
-        elif targeting == 'one':
-            min_daily_bid = g.min_promote_bid * 1.5
-        else:
-            min_daily_bid = g.min_promote_bid
-
-        if campaign_id36:
-            # you cannot edit the bid of a live ad unless it's a freebie
-            try:
-                campaign = PromoCampaign._byID36(campaign_id36)
-                if (bid != campaign.bid and
-                    campaign.start_date < datetime.now(g.tz)
-                    and not campaign.is_freebie()):
-                    c.errors.add(errors.BID_LIVE, field='bid')
-                    form.has_errors('bid', errors.BID_LIVE)
-                    return
-            except NotFound:
-                pass
-
-        if bid is None or bid / duration < min_daily_bid:
-            c.errors.add(errors.BAD_BID, field='bid',
-                         msg_params={'min': min_daily_bid,
-                                       'max': g.max_promote_bid})
-            form.has_errors('bid', errors.BAD_BID)
-            return
-
-        if targeting == 'one':
-            if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                               errors.SUBREDDIT_NOTALLOWED,
-                               errors.SUBREDDIT_REQUIRED):
-                # checking to get the error set in the form, but we can't
-                # check for rate-limiting if there's no subreddit
-                return
-            oversold = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
-            if oversold and not c.user_is_sponsor:
-                msg_params = {"start": oversold[0].strftime('%m/%d/%Y'),
-                              "end": oversold[1].strftime('%m/%d/%Y')}
-                c.errors.add(errors.OVERSOLD, field='sr',
-                             msg_params=msg_params)
-                form.has_errors('sr', errors.OVERSOLD)
-                return
-        if targeting == 'none':
-            sr = None
-
-        if dates[1] > promote.LEGACY_CAMPAIGN_CUTOFF:
-            msg = _('campaigns after %(date)s are available on a cpm basis. '
-                    '[enable cpm mode](%(url)s) to create a cpm campaign.')
-            date = promote.LEGACY_CAMPAIGN_CUTOFF.strftime('%B %d %Y')
-            url = promote.promo_edit_url(l) + '?enable_cpm=true'
-            msg %= {'date': date, 'url': url}
-            form.set_html('.status', safemarkdown(msg))
-            return
-
-        if campaign_id36 is not None:
-            campaign = PromoCampaign._byID36(campaign_id36)
-
-            if hasattr(campaign, 'cpm'):
-                msg = _('please [enable cpm mode to edit that campaign]'
-                        '(%(url)s)')
-                url = promote.promo_edit_url(l) + '?enable_cpm=true'
-                msg %= {'url': url}
-                form.set_html('.status', safemarkdown(msg))
-                return
-
-            promote.edit_legacy_campaign(l, campaign, dates, bid, sr)
-            r = promote.get_renderable_campaigns(l, campaign)
-            jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                   r.duration, r.bid, r.sr, r.status)
-        else:
-            campaign = promote.new_legacy_campaign(l, dates, bid, sr)
-            r = promote.get_renderable_campaigns(l, campaign)
-            jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                r.duration, r.bid, r.sr, r.status)
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

@@ -592,7 +592,9 @@ function create_campaign() {
                 .find('button[name="edit"]').hide().end()
                 .find('button[name="create"]').show().end()
                 .find('input[name="campaign_id36"]').val('').end()
-                .find('input[name="sr"]').val('').end()
+                .find('input[name="sr"]').val('').prop("disabled", "disabled").end()
+                .find('input[name="targeting"][value="none"]').prop("checked", "checked").end()
+                .find(".targeting").hide().end()
                 .find('input[name="cpm"]').val(base_cpm).end()
                 .fadeIn();
             r.sponsored.fill_campaign_editor();

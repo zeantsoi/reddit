@@ -86,19 +86,6 @@ class PromoCampaign(Thing):
         return pc
 
     @classmethod
-    def _new_legacy(cls, link, sr_name, bid, start_date,  end_date):
-        pc = PromoCampaign(link_id=link._id,
-                           sr_name=sr_name,
-                           bid=bid,
-                           start_date=start_date,
-                           end_date=end_date,
-                           trans_id=NO_TRANSACTION,
-                           owner_id=link.author_id)
-        pc._commit()
-        return pc
-    
-
-    @classmethod
     def _by_link(cls, link_id):
         '''
         Returns an iterable of campaigns associated with link_id or an empty
@@ -139,16 +126,6 @@ class PromoCampaign(Thing):
         self.end_date = end_date
         self.bid = bid
         self.cpm = cpm
-        self.sr_name = sr_name
-        self.trans_id = trans_id
-        if commit:
-            self._commit()
-
-    def update_legacy(self, start_date, end_date, bid, sr_name, trans_id,
-               commit=True):
-        self.start_date = start_date
-        self.end_date = end_date
-        self.bid = bid
         self.sr_name = sr_name
         self.trans_id = trans_id
         if commit:
