@@ -177,6 +177,8 @@ class Cookie(object):
             return "ga"
         elif cookie_name.startswith("beta_"):
             return "beta"
+        elif cookie_name.startswith("landlubber"):
+            return "landlubber"
         else:
             return "other"
 
