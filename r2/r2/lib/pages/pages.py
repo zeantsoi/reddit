@@ -599,6 +599,8 @@ class Reddit(Templated):
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
+        elif getattr(g, 'lang_override', None) == 'pir':
+            toolbar.append(PirateBar())
 
         return toolbar
 
@@ -4311,3 +4313,8 @@ class SubredditSelector(Templated):
             names.sort(key=str.lower)
             groups.append((title, names))
         return groups
+
+class PirateBar(Templated):
+    def __init__(self):
+        Templated.__init__(self)
+        self.enabled = not c.landlubber
