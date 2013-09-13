@@ -3369,7 +3369,10 @@ class PromoteLinkForm(Templated):
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
         self.inventory = sr_inventory
-
+        message = _("reddit ads are now sold on a CPM basis. "
+                    "[Here's how it works](%(link)s)")
+        message %= {'link': 'http://www.slideshare.net/reddit/how-to-use-reddits-selfserve-advertising-platform'}
+        self.infobar = InfoBar(message=message)
 
 class PromoteLinkFormLegacy(Templated):
     def __init__(self, link, listing, *a, **kw):
