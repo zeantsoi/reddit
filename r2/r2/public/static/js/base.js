@@ -83,8 +83,10 @@ $(function() {
         setTimeout(function() {
             if (window.Backbone) {
                 r.sendError('Backbone loaded slow')
+            } else {
+                r.sendError('Still no Backbone :(')
             }
-        }, 3000)
+        }, 5000)
     }
 
     try {
