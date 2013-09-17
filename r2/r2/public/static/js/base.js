@@ -79,6 +79,14 @@ r.setupBackbone = function() {
 }
 
 $(function() {
+    if (!window.Backbone) {
+        setTimeout(function() {
+            if (window.Backbone) {
+                r.sendError('Backbone loaded slow')
+            }
+        }, 3000)
+    }
+
     try {
         r.setupBackbone()
 
