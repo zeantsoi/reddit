@@ -361,7 +361,7 @@ class HotController(FixListing, ListingController):
                 spotlight = self.make_requested_ad()
             elif on_frontpage and show_organic:
                 spotlight = self.make_spotlight()
-            elif show_sponsors:
+            elif show_sponsors and not isinstance(c.site, FakeSubreddit):
                 spotlight = self.make_single_ad()
 
             if spotlight:
