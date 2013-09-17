@@ -3484,8 +3484,25 @@ class ApiController(RedditController, OAuth2ResourceController):
             comment=comment._fullname,
         ))
 
-    def POST_request_promo(self):
-        promo_tuples = promote.lottery_promoted_links(c.user, c.site, n=10)
+    @validate(srnames=VPrintable("srnames", max_length=2100))
+    def POST_request_promo(self, srnames):
+        if not srnames:
+            return
+
+        srnames = srnames.split('+')
+        if Frontpage.name in srnames:
+            srids = ['']
+            srnames.remove(Frontpage.name)
+        else:
+            srids = []
+
+        srs = Subreddit._by_name(srnames).values()
+        srids.extend([sr._id for sr in srs])
+
+        if not srids:
+            return
+
+        promo_tuples = promote.lottery_promoted_links(srids, n=10)
         builder = CampaignBuilder(promo_tuples,
                                   wrap=default_thing_wrapper(),
                                   keep_fn=promote.is_promoted,
