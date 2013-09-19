@@ -107,7 +107,7 @@ class OAuth2Scope:
         },
         "history": {
             "id": "history",
-            "name:": _("History"),
+            "name": _("History"),
             "description": _(
                 "Access my voting history and comments or submissions I've"
                 " saved or hidden."),
