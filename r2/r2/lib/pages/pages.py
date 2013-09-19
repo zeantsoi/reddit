@@ -599,7 +599,7 @@ class Reddit(Templated):
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
-        elif getattr(g, 'lang_override', None) == 'pir':
+        elif getattr(g, 'lang_override', None) == 'pir' and c.render_style == "html":
             toolbar.append(PirateBar())
 
         return toolbar
