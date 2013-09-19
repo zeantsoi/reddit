@@ -113,6 +113,7 @@ class Account(Thing):
                      gold_charter = False,
                      gold_creddits = 0,
                      gold_creddit_escrow = 0,
+                     cake_expiration=None,
                      otp_secret=None,
                      state=0,
                      )
