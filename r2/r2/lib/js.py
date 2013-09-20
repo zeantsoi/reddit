@@ -455,7 +455,6 @@ module["reddit"] = LocalizedModule("reddit.js",
     "gold.js",
     "multi.js",
     "recommender.js",
-    "pirate.js",
     PermissionsDataSource(),
 )
 

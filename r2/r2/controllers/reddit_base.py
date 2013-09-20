@@ -512,8 +512,7 @@ def set_iface_lang():
     else:
         lang = [c.user.pref_lang]
 
-    c.landlubber = 'landlubber' in c.cookies
-    if getattr(g, "lang_override") and lang[0] == "en" and not c.landlubber:
+    if getattr(g, "lang_override") and lang[0] == "en":
         lang.insert(0, g.lang_override)
 
     #choose the first language
