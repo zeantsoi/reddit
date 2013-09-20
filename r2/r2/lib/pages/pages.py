@@ -692,7 +692,7 @@ class RedditFooter(CachedTemplate):
                     OffsiteButton(_("FAQ"), dest = "/wiki/faq", nocname=True),
                     OffsiteButton(_("reddiquette"), nocname=True, dest = "/wiki/reddiquette"),
                     NamedButton("rules", False, nocname=True),
-                    NamedButton("feedback", False),
+                    NamedButton("contact", False),
                 ],
                 title = _("help"),
                 type = "flat_vert",
@@ -2539,6 +2539,9 @@ class ButtonDemoPanel(Templated):
     pass
 
 class SelfServeBlurb(Templated):
+    pass
+
+class ContactUs(Templated):
     pass
 
 class FeedbackBlurb(Templated):
