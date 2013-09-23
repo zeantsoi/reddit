@@ -369,8 +369,6 @@ def make_map():
 
     mc('/mediaembed/:link', controller="mediaembed", action="mediaembed")
 
-    mc('/doquery', controller='query', action='doquery')
-
     mc('/code', controller='redirect', action='redirect',
        dest='http://github.com/reddit/')
 
