@@ -3395,9 +3395,6 @@ class Cnameframe(Templated):
 class FrameBuster(Templated):
     pass
 
-class SelfServiceOatmeal(Templated):
-    pass
-
 class PromotePage(Reddit):
     create_reddit_box  = False
     submit_box         = False
