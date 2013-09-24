@@ -107,13 +107,6 @@ class BaseController(WSGIController):
 
         request.get = storify(request.GET)
         request.post = storify(request.POST)
-
-        get_compare = sorted(request.get.items()), sorted(request.GET.items())
-        post_compare = sorted(request.post.items()), sorted(request.POST.items())
-        if get_compare[0] != get_compare[1] or post_compare[0] != post_compare[1]:
-            g.log.warning('Storify check failed: get: %r post: %r',
-                          get_compare, post_compare)
-
         request.referer = environ.get('HTTP_REFERER')
         request.user_agent = environ.get('HTTP_USER_AGENT')
         request.fullpath = environ.get('FULLPATH', request.path)
