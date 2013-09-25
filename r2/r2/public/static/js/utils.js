@@ -113,14 +113,14 @@ r.utils = {
             }
         }
 
-        this.delete = function(key) {
+        this.remove = function(key) {
             _deleteFromIndex(key)
             delete _cache[key]
         }
 
         this.set = function(key, data) {
             if (_.isUndefined(data)) {
-                this.delete(key)
+                this.remove(key)
             } else {
                 _cache[key] = data
                 _updateIndex(key)
