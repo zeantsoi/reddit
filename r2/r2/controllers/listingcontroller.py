@@ -168,7 +168,8 @@ class ListingController(RedditController, OAuth2ResourceController):
         if (getattr(c.site, "_id", -1) == get_promote_srid() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
-        pane = LinkListing(self.builder_obj, show_nums = self.show_nums).listing()
+        model = LinkListing(self.builder_obj, show_nums=self.show_nums)
+        pane = model.listing(next_suggestions=ListingSuggestions())
         # Indicate that the comment tree wasn't built for comments
         for i in pane:
             if hasattr(i, 'full_comment_path'):
