@@ -1867,9 +1867,11 @@ class MultiInfoBar(Templated):
 
         explore_sr = g.live_config["listing_chooser_explore_sr"]
         if explore_sr:
+            u = UrlParser(self.multi.path)
+            u.hostname = get_domain(subreddit=False)
             self.share_url = "/r/%(sr)s/submit?url=%(url)s" % {
                 "sr": explore_sr,
-                "url": add_sr(self.multi.path, sr_path=False),
+                "url": u.unparse(),
             }
         else:
             self.share_url = None
