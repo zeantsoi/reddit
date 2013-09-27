@@ -45,9 +45,6 @@
     %if thing.next:
       ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}
     %endif
-    %if thing.next_suggestions:
-      ${thing.next_suggestions}
-    %endif
     </p>
   %endif
   %if not thing.things:

@@ -68,10 +68,9 @@ class Listing(object):
                 item.render_replaced = True
         return builder_items
 
-    def listing(self, next_suggestions=None):
+    def listing(self):
         self.things, prev, next, bcount, acount = self.get_items()
 
-        self.next_suggestions = next_suggestions
         self._max_num = max(acount, bcount)
         self.after = None
         self.before = None
