@@ -497,6 +497,8 @@ def accept_promotion(link):
     # update the query queue
 
     set_promote_status(link, PROMOTE_STATUS.accepted)
+
+    # campaigns that should be live now must be updated
     now = promo_datetime_now(0)
     promotion_weights = PromotionWeights.get_campaigns(now)
     live_campaigns = {pw.promo_idx for pw in promotion_weights
@@ -509,6 +511,17 @@ def accept_promotion(link):
         for campaign in campaigns:
             hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
         queue_changed_promo(link, "accepted")
+
+    # campaigns that were charged and will go live in the future must be updated
+    future_campaigns = [camp for camp in PromoCampaign._by_link(link._id)
+                        if camp.start_date > now]
+    transactions = get_transactions(link, future_campaigns)
+    charged_campaigns = [camp for camp in future_campaigns
+                         if (transactions.get(camp._id) and
+                             transactions.get(camp._id).is_charged())]
+    for campaign in charged_campaigns:
+        hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
+
     if link._spam:
         link._spam = False
         link._commit()
