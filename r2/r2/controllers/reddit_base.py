@@ -526,7 +526,6 @@ def set_iface_lang():
         except LanguageError:
             #we don't have a translation for that language
             set_lang(g.lang, graceful_fail=True)
-            c.lang = g.lang
 
     try:
         c.locale = babel.core.Locale.parse(c.lang, sep='-')
