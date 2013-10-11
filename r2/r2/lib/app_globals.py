@@ -28,6 +28,7 @@ import json
 import logging
 import os
 import signal
+import site
 import socket
 import subprocess
 import sys
@@ -35,6 +36,7 @@ import sys
 from sqlalchemy import engine, event
 
 import cssutils
+import pkg_resources
 import pytz
 
 from r2.config import queues
@@ -57,6 +59,7 @@ from r2.lib.contrib import ipaddress
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.plugin import PluginLoader
+from r2.lib.providers import select_provider
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.utils import config_gold_price, thread_dump
@@ -153,7 +156,6 @@ class Globals(object):
             'read_only_mode',
             'disable_wiki',
             'heavy_load_mode',
-            's3_media_direct',
             'disable_captcha',
             'disable_ads',
             'disable_require_admin_otp',
@@ -182,7 +184,6 @@ class Globals(object):
             'allowed_css_linked_domains',
             'authorized_cnames',
             'hardcache_categories',
-            's3_media_buckets',
             'case_sensitive_domains',
             'reserved_subdomains',
             'TRAFFIC_LOG_HOSTS',
@@ -281,9 +282,18 @@ class Globals(object):
 
         global_conf.setdefault("debug", False)
 
+        # reloading site ensures that we have a fresh sys.path to build our
+        # working set off of. this means that forked worker processes won't get
+        # the sys.path that was current when the master process was spawned
+        # meaning that new plugins will be picked up on regular app reload
+        # rather than having to restart the master process as well.
+        reload(site)
+        self.pkg_resources_working_set = pkg_resources.WorkingSet()
+
         self.config = ConfigValueParser(global_conf)
         self.config.add_spec(self.spec)
-        self.plugins = PluginLoader(self.config.get("plugins", []))
+        self.plugins = PluginLoader(self.pkg_resources_working_set,
+                                    self.config.get("plugins", []))
 
         self.stats = Stats(self.config.get('statsd_addr'),
                            self.config.get('statsd_sample_rate'))
@@ -320,6 +330,15 @@ class Globals(object):
 
     def setup(self):
         self.queues = queues.declare_queues(self)
+
+        ################# PROVIDERS
+        self.media_provider = select_provider(
+            self.config,
+            self.pkg_resources_working_set,
+            "r2.provider.media",
+            self.media_provider,
+        )
+        self.startup_timer.intermediate("providers")
 
         ################# CONFIGURATION
         # AMQP is required
