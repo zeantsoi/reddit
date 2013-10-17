@@ -494,9 +494,7 @@ def accept_promotion(link):
 
     If a campagn is able to run, this also requeues it.
     """
-    PromotionLog.add(link, 'status update: accepted')
     # update the query queue
-
     set_promote_status(link, PROMOTE_STATUS.accepted)
 
     # campaigns that should be live now must be updated
@@ -507,7 +505,7 @@ def accept_promotion(link):
     if live_campaigns:
         campaigns = PromoCampaign._byID(live_campaigns, data=True,
                                         return_dict=False)
-        PromotionLog.add(link, 'Marked promotion for acceptance')
+        PromotionLog.add(link, 'has live campaigns, forcing live')
         charge_pending(0) # campaign must be charged before it will go live
         for campaign in campaigns:
             hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
@@ -529,7 +527,6 @@ def accept_promotion(link):
     emailer.accept_promo(link)
 
 def reject_promotion(link, reason=None):
-    PromotionLog.add(link, 'status update: rejected')
     # update the query queue
     # Since status is updated first,
     # if make_daily_promotions happens to run
@@ -539,7 +536,7 @@ def reject_promotion(link, reason=None):
     all_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
     links = set(x.link for x in all_ads[LiveAdWeights.ALL_ADS])
     if link._fullname in links:
-        PromotionLog.add(link, 'Marked promotion for rejection')
+        PromotionLog.add(link, 'has live campaigns, terminating')
         queue_changed_promo(link, "rejected")
 
     # Send a rejection email (unless the advertiser requested the reject)
@@ -550,7 +547,6 @@ def reject_promotion(link, reason=None):
 
 
 def unapprove_promotion(link):
-    PromotionLog.add(link, 'status update: unapproved')
     # update the query queue
     set_promote_status(link, PROMOTE_STATUS.unseen)
     hooks.get_hook('promotion.void').call(link=link)
