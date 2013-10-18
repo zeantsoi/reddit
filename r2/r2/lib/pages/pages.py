@@ -4207,7 +4207,7 @@ class AccountActivityPage(BoringPage):
 class UserIPHistory(Templated):
     def __init__(self):
         self.my_apps = OAuth2Client._by_user(c.user)
-        self.ips = ips_by_account_id(c.user._id)
+        self.ips = [ip[:3] for ip in ips_by_account_id(c.user._id)]
         super(UserIPHistory, self).__init__()
 
 class ApiHelp(Templated):
