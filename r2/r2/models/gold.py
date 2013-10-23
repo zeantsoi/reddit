@@ -452,6 +452,6 @@ def gold_revenue_on(date):
     NON_REVENUE_STATUSES = ("declined", "chargeback", "fudge")
     query = (select([sa_sum(gold_table.c.pennies)])
                 .where(~ gold_table.c.status.in_(NON_REVENUE_STATUSES))
-                .where(func.date_trunc('day', gold_table.c.date) == date))
+                .where(sa.func.date_trunc('day', gold_table.c.date) == date))
     rows = ENGINE.execute(query)
     return rows.fetchone()[0] or 0
