@@ -23,6 +23,15 @@
 <%namespace file="utils.html" import="plain_link, _md"/>
 
 <%def name="subreddit()">
+  <span class="hover pagename redditname">
+    ${plain_link(c.site.name, c.site.path, _sr_path=False)}
+    % if hasattr(thing, "title"):
+      : ${thing.title}
+    % endif
+  </span>
+</%def>
+
+<%def name="domain()">
   <div id="sr-name-box">
     <span class="hover pagename redditname">
       ${plain_link(getattr(c.site, "idn", c.site.name), c.site.path, _sr_path=False)}
