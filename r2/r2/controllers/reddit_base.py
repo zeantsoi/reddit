@@ -331,7 +331,7 @@ def set_obey_over18():
     "querystring parameter for API to obey over18 filtering rules"
     c.obey_over18 = request.GET.get("obey_over18") == "true"
 
-valid_ascii_domain = re.compile(r'\A(\w[-\w]+\.)+[\w]+\Z')
+valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
 def set_subreddit():
     #the r parameter gets added by javascript for POST requests so we
     #can reference c.site in api.py
