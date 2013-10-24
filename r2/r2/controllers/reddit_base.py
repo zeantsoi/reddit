@@ -395,7 +395,7 @@ def set_subreddit():
         idna = _force_unicode(domain).encode("idna")
         if idna != domain:
             redirect_to("/domain/%s%s" % (idna, request.environ["PATH_INFO"]))
-        if not valid_ascii_domain.match(domain):
+        if not c.error_page and not valid_ascii_domain.match(domain):
             abort(404)
         c.site = DomainSR(domain)
 
