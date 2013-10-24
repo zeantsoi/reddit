@@ -3623,6 +3623,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user._commit()
 
     @noresponse(VGold(),
+                VModhash(),
                 links = VByName('links', thing_cls=Link, multiple=True,
                                 limit=100))
     def POST_store_visits(self, links):
