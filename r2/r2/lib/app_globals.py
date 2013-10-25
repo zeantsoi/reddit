@@ -211,6 +211,7 @@ class Globals(object):
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'timed_templates',
+            'discovery_srs',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
