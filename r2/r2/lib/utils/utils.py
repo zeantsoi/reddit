@@ -1428,7 +1428,8 @@ def weighted_lottery(weights, _random=random.random):
 
 
 def read_static_file_config(config_file):
-    config = parse_ini_file(config_file)
+    with open(config_file) as f:
+        parser = parse_ini_file(f)
     config = dict(parser.items("static_files"))
 
     s3 = boto.connect_s3(config["aws_access_key_id"],
