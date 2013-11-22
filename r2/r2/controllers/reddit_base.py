@@ -753,6 +753,7 @@ class MinimalController(BaseController):
             ratelimit_agents()
 
         c.allow_loggedin_cache = False
+        c.allow_framing = False
 
         # the domain has to be set before Cookies get initialized
         set_subreddit()
@@ -816,7 +817,8 @@ class MinimalController(BaseController):
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
-        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        if not c.allow_framing:
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         # save the result of this page to the pagecache if possible.  we
         # mustn't cache things that rely on state not tracked by request_key
