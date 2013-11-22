@@ -817,7 +817,9 @@ class MinimalController(BaseController):
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
-        if not c.allow_framing:
+        # pagecache stores headers. we need to not add X-Frame-Options to
+        # cached requests (such as media embeds) that intend to allow framing.
+        if not c.allow_framing and not c.used_cache:
             response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         # save the result of this page to the pagecache if possible.  we
