@@ -211,7 +211,6 @@ class Globals(object):
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'timed_templates',
-            'discovery_srs',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
@@ -257,6 +256,7 @@ class Globals(object):
         ConfigValue.tuple: [
             'fastlane_links',
             'listing_chooser_sample_multis',
+            'discovery_srs',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',
