@@ -233,7 +233,7 @@ def get_comment_items(srs, src, count=4):
 @memoize('discovery_srid36s', time=3600)
 def get_discovery_srid36s():
     """Get list of srs that help people discover other srs."""
-    srs = Subreddit._by_name(g.discovery_srs)
+    srs = Subreddit._by_name(g.live_config['discovery_srs'])
     return [sr._id36 for sr in srs.itervalues()]
 
 
