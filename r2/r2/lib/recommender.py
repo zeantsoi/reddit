@@ -29,7 +29,6 @@ from operator import itemgetter
 
 from r2.lib import rising
 from r2.lib.db import operators, tdb_cassandra
-from r2.lib.memoize import memoize
 from r2.lib.pages import ExploreItem
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib.utils import roundrobin, tup, to36
@@ -230,7 +229,6 @@ def get_comment_items(srs, src, count=4):
     return comment_items
 
 
-@memoize('discovery_srid36s', time=3600)
 def get_discovery_srid36s():
     """Get list of srs that help people discover other srs."""
     srs = Subreddit._by_name(g.live_config['discovery_srs'])
