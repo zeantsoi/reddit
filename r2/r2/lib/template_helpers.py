@@ -33,10 +33,13 @@ import simplejson
 import os.path
 from copy import copy
 import random
+import urllib
 import urlparse
 import calendar
 import math
 import time
+import hashlib
+import hmac
 from pylons import g, c, request
 from pylons.i18n import _, ungettext
 
@@ -115,9 +118,30 @@ def media_https_if_secure(url):
     return g.media_provider.convert_to_https(url)
 
 
+def make_websocket_url(namespace):
+    now = int(time.time())
+    mac = hmac.new(g.secrets["websocket"], str(now) + namespace,
+                   hashlib.sha1).hexdigest()
+
+    query_string = urllib.urlencode({
+        "h": mac,
+        "t": str(now),
+    })
+
+    return urlparse.urlunparse(("wss", g.websocket_host, namespace, None,
+                               query_string, None))
+
+
 def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     gold = bool(logged and c.user.gold)
+
+    insanity = None
+    if logged and (c.user.employee or
+                   c.user.name.lower() in ("davean", "kkress", "konayashi", "esepherence") or
+                   getattr(c.user, "special_distinguish_name", "") == "alum" or
+                   random.random() < g.live_config["chance_of_insanity"]):
+        insanity = make_websocket_url("/insanity")
 
     config = {
         # is the user logged in?
@@ -128,6 +152,8 @@ def js_config(extra_config=None):
         "modhash": c.modhash or False,
         # the current rendering style
         "renderstyle": c.render_style,
+
+        "insanity": insanity,
 
         # they're welcome to try to override this in the DOM because we just
         # disable the features server-side if applicable
