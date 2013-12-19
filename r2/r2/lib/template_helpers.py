@@ -138,7 +138,7 @@ def js_config(extra_config=None):
 
     insanity = None
     if logged and (c.user.employee or
-                   c.user.name.lower() in ("davean", "kkress", "konayashi", "esepherence") or
+                   c.user.name.lower() in ("davean", "kkress", "konayashi", "esepherence", "slyf") or
                    getattr(c.user, "special_distinguish_name", "") == "alum" or
                    random.random() < g.live_config["chance_of_insanity"]):
         insanity = make_websocket_url("/insanity")
