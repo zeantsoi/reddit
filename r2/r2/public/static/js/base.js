@@ -123,6 +123,7 @@ $(function() {
         r.recommend.init()
         r.saved.init()
         r.resAdvisory.init()
+        r.filter.init()
     } catch (err) {
         r.sendError('Error during base.js init', err)
     }
