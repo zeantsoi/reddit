@@ -253,7 +253,6 @@ class Globals(object):
             'spotlight_interest_sub_p',
             'spotlight_interest_nosub_p',
             'gold_revenue_goal',
-            'chance_of_insanity',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
