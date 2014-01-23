@@ -457,7 +457,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         queries.queue_vote(c.user, l, True, ip, cheater=c.cheater)
         if save:
-            r = l._save(c.user)
+            l._save(c.user)
 
         #set the ratelimiter
         if should_ratelimit:
@@ -1263,7 +1263,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             admintools.spam(thing, False, True, c.user.name)
         # auto-hide links that are reported
         elif isinstance(thing, Link):
-            r = thing._hide(c.user)
+            thing._hide(c.user)
         # TODO: be nice to be able to remove comments that are reported
         # from a user's inbox so they don't have to look at them.
         elif isinstance(thing, Comment):
@@ -2386,7 +2386,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         if not thing: return
         if isinstance(thing, Comment) and not c.user.gold: return
-        r = thing._save(c.user)
+        thing._save(c.user)
 
     @require_oauth2_scope("save")
     @noresponse(VUser(),
@@ -2402,7 +2402,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         """
         if not thing: return
-        r = thing._unsave(c.user)
+        thing._unsave(c.user)
 
     def collapse_handler(self, things, collapse):
         if not things:
@@ -2502,7 +2502,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         """
         if not thing: return
-        r = thing._hide(c.user)
+        thing._hide(c.user)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -2515,7 +2515,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         """
         if not thing: return
-        r = thing._unhide(c.user)
+        thing._unhide(c.user)
 
 
     @validatedForm(VUser(),
@@ -2669,7 +2669,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                                            cheater=c.cheater)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
-                    r = link._save(c.user)
+                    link._save(c.user)
                 return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 
