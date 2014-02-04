@@ -2217,13 +2217,13 @@ class GoldPayment(Templated):
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
                 quantity = months
-                coinbase_name = 'COINBASE_SALE_BUTTONID_ONETIME_%sMO' % quantity
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
             else:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYYEAR
                 quantity = months / 12
                 months = quantity * 12
-                coinbase_name = 'COINBASE_SALE_BUTTONID_ONETIME_%sYR' % quantity
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
 
             summary = strings.gold_summary_onetime % dict(user=c.user.name,
@@ -2238,7 +2238,7 @@ class GoldPayment(Templated):
                 else:
                     paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
                 quantity = months
-                coinbase_name = 'COINBASE_SALE_BUTTONID_ONETIME_%sMO' % quantity
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
             else:
                 if goldtype == "code":
@@ -2246,7 +2246,7 @@ class GoldPayment(Templated):
                 else:
                     paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
                 quantity = months / 12
-                coinbase_name = 'COINBASE_SALE_BUTTONID_ONETIME_%sYR' % quantity
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
 
             if goldtype in ("gift", "code"):
