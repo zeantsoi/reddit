@@ -2840,6 +2840,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
 
     @validatedForm(VAdmin(),
+                   VModhash(),
                    hexkey=VLength("hexkey", max_length=32),
                    nickname=VLength("nickname", max_length = 1000),
                    status = VOneOf("status",
@@ -2861,6 +2862,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         form.set_html(".status", _('saved'))
 
     @validatedForm(VAdmin(),
+                   VModhash(),
                    award=VByName("fullname"),
                    colliding_award=VAwardByCodename(("codename", "fullname")),
                    codename=VLength("codename", max_length = 100),
