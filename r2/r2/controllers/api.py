@@ -3053,6 +3053,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         return BoringPage(_("API"), content = results).render()
 
+    @require_oauth2_scope("flair")
     @validatedForm(VUser(),
                    VModhash(),
                    flair_enabled = VBoolean("flair_enabled"))
@@ -3206,6 +3207,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         ModAction.create(c.site, c.user, action='editflair',
                          details='flair_clear_template')
 
+    @require_oauth2_scope("flair")
     @validate(VUser(),
               user = VFlairAccount('name'),
               link = VFlairLink('link'))
@@ -3222,6 +3224,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             user = None
         return FlairSelector(user=user).render()
 
+    @require_oauth2_scope("flair")
     @validatedForm(VUser(),
                    VModhash(),
                    user = VFlairAccount('name'),
