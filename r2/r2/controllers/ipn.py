@@ -360,6 +360,8 @@ class IpnController(RedditController):
 
         if payment_blob["goldtype"] == "gift":
             thing_fullname = payment_blob.get("thing")
+            if not thing_fullname:
+                thing_fullname = payment_blob.get("comment")
             thing = send_gift(c.user, recipient, months, days, signed,
                               giftmessage, thing_fullname)
             form.set_html(".status", _("the gold has been delivered!"))
@@ -532,6 +534,8 @@ class IpnController(RedditController):
             signed = payment_blob.get("signed", False)
             giftmessage = _force_unicode(payment_blob.get("giftmessage", ""))
             thing_fullname = payment_blob.get("thing")
+            if not thing_fullname:
+                thing_fullname = payment_blob.get("comment")
             send_gift(buyer, recipient, months, days, signed, giftmessage,
                       thing_fullname)
             instagift = True
@@ -604,6 +608,8 @@ class Webhook(object):
         self.signed = payment_blob.get('signed', False)
         self.giftmessage = payment_blob.get('giftmessage')
         thing = payment_blob.get('thing')
+        if not thing:
+            thing = payment_blob.get('comment')
         self.thing = thing._fullname if thing else None
 
     def __repr__(self):
@@ -1189,6 +1195,8 @@ def validate_blob(custom):
         except NotFound:
             raise GoldException('bad recipient')
         thing_fullname = payment_blob.get('thing', None)
+        if not thing_fullname:
+            thing_fullname = payment_blob.get('comment')
         if thing_fullname:
             try:
                 ret['thing'] = Thing._by_fullname(thing_fullname)
