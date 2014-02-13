@@ -1237,7 +1237,8 @@ class LinkInfoPage(Reddit):
         # avoid doing this lookup twice
         if num_duplicates is None:
             builder = url_links_builder(self.link.url,
-                                        exclude=self.link._fullname)
+                                        exclude=self.link._fullname,
+                                        public_srs_only=True)
             self.num_duplicates = len(builder.get_items()[0])
         else:
             self.num_duplicates = num_duplicates
