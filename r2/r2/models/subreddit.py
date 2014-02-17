@@ -1639,7 +1639,7 @@ class SRMember(Relation(Subreddit, Account)):
     _cache = TransitionalCache(
         original_cache=g.cache,
         replacement_cache=g.srmembercache,
-        read_original=False,
+        read_original=True,
     )
 
     def has_permission(self, perm):
