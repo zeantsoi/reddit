@@ -1636,7 +1636,11 @@ Subreddit._specials.update(dict(friends = Friends,
 class SRMember(Relation(Subreddit, Account)):
     _defaults = dict(encoded_permissions=None)
     _permission_class = None
-    _cache = g.srmembercache
+    _cache = TransitionalCache(
+        original_cache=g.cache,
+        replacement_cache=g.srmembercache,
+        read_original=False,
+    )
 
     def has_permission(self, perm):
         """Returns whether this member has explicitly been granted a permission.
