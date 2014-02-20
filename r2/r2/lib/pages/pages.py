@@ -2913,7 +2913,7 @@ class WrappedUser(CachedTemplate):
 class UserTableItem(Templated):
     type = ''
     remove_action = 'unfriend'
-    cells = ('user', 'sendmessage', 'remove')
+    cells = ('user', 'age', 'sendmessage', 'remove')
 
     @property
     def executed_message(self):
@@ -2952,7 +2952,7 @@ class FriendTableItem(RelTableItem):
 
 class EnemyTableItem(RelTableItem):
     type = 'enemy'
-    cells = ('user', 'remove')
+    cells = ('user', 'age', 'remove')
 
     @property
     def container_name(self):
@@ -2960,7 +2960,7 @@ class EnemyTableItem(RelTableItem):
 
 class BannedTableItem(RelTableItem):
     type = 'banned'
-    cells = ('user', 'sendmessage', 'remove', 'note')
+    cells = ('user', 'age', 'sendmessage', 'remove', 'note')
 
     @property
     def executed_message(self):
@@ -2977,7 +2977,7 @@ class WikiMayContributeTableItem(RelTableItem):
 
 class InvitedModTableItem(RelTableItem):
     type = 'moderator_invite'
-    cells = ('user', 'permissions', 'permissionsctl')
+    cells = ('user', 'age', 'permissions', 'permissionsctl')
 
     @property
     def executed_message(self):
