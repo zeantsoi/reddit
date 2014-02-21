@@ -321,6 +321,7 @@ class Link(Thing, Printable):
         from r2.lib import media
         from r2.lib.utils import timeago
         from r2.lib.template_helpers import get_domain
+        from r2.models import Report
         from r2.models.subreddit import FakeSubreddit
         from r2.lib.wrapped import CachedVariable
 
@@ -350,6 +351,7 @@ class Link(Thing, Printable):
             try:
                 saved = LinkSavesByAccount.fast_query(user, wrapped)
                 hidden = LinkHidesByAccount.fast_query(user, wrapped)
+                user_reports = Report.get_user_reported(cls, user, wrapped)
 
                 if user.gold and user.pref_store_visits:
                     visited = LinkVisitsByAccount.fast_query(user, wrapped)
@@ -357,7 +359,8 @@ class Link(Thing, Printable):
             except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
                 # saved or hidden or may have been done properly, so go ahead
                 # with what we do have
-                g.log.warning("Cassandra save/hide/visited lookup failed: %r", e)
+                g.log.warning("Cassandra save/hide/visited/reports "
+                              "lookup failed: %r", e)
 
         for item in wrapped:
             show_media = False
@@ -937,6 +940,7 @@ class Comment(Thing, Printable):
         from r2.lib.utils import timeago
         from r2.lib.wrapped import CachedVariable
         from r2.lib.pages import WrappedUser
+        from r2.models import Report
 
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data=True,
@@ -989,6 +993,11 @@ class Comment(Thing, Printable):
             except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
                 g.log.warning("Cassandra comment save lookup failed: %r", e)
                 saved = {}
+            try:
+                user_reports = Report.get_user_reported(cls, user, wrapped)
+            except Exception as e:
+                g.log.warning("User report lookup failed: %r", e)
+                user_reports = {}
         else:
             user_gildings = {}
             saved = {}
