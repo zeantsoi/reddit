@@ -125,6 +125,7 @@ class Globals(object):
             'REPLY_AGE_LIMIT',
             'REPORT_AGE_LIMIT',
             'HOT_PAGE_AGE',
+            'RATELIMIT',
             'QUOTA_THRESHOLD',
             'ADMIN_COOKIE_TTL',
             'ADMIN_COOKIE_MAX_IDLE',
@@ -153,8 +154,6 @@ class Globals(object):
             'wiki_max_page_separators',
             'min_promote_future',
             'max_promote_future',
-            'RL_RESET_MINUTES',
-            'RL_OAUTH_RESET_MINUTES',
         ],
 
         ConfigValue.float: [
@@ -162,8 +161,6 @@ class Globals(object):
             'max_promote_bid',
             'statsd_sample_rate',
             'querycache_prune_chance',
-            'RL_AVG_REQ_PER_SEC',
-            'RL_OAUTH_AVG_REQ_PER_SEC',
         ],
 
         ConfigValue.bool: [
@@ -190,9 +187,6 @@ class Globals(object):
             'shard_link_vote_queues',
             'shard_commentstree_queues',
             'subreddit_stylesheets_static',
-            'ENFORCE_RATELIMIT',
-            'RL_SITEWIDE_ENABLED',
-            'RL_OAUTH_SITEWIDE_ENABLED',
         ],
 
         ConfigValue.tuple: [
@@ -205,7 +199,6 @@ class Globals(object):
             'pagecaches',
             'memoizecaches',
             'srmembercaches',
-            'ratelimitcaches',
             'cassandra_seeds',
             'admins',
             'sponsors',
@@ -450,15 +443,6 @@ class Globals(object):
 
         locale.setlocale(locale.LC_ALL, self.locale)
 
-        # Pre-calculate ratelimit values
-        self.RL_RESET_SECONDS = self.config["RL_RESET_MINUTES"] * 60
-        self.RL_MAX_REQS = int(self.config["RL_AVG_REQ_PER_SEC"] *
-                                      self.RL_RESET_SECONDS)
-
-        self.RL_OAUTH_RESET_SECONDS = self.config["RL_OAUTH_RESET_MINUTES"] * 60
-        self.RL_OAUTH_MAX_REQS = int(self.config["RL_OAUTH_AVG_REQ_PER_SEC"] *
-                                     self.RL_OAUTH_RESET_SECONDS)
-
         self.startup_timer.intermediate("configuration")
 
         ################# ZOOKEEPER
@@ -509,12 +493,6 @@ class Globals(object):
         # a pool just for srmember rels
         srmembercaches = CMemcache(
             self.srmembercaches,
-            min_compress_len=96,
-            num_clients=num_mc_clients,
-        )
-
-        ratelimitcaches = CMemcache(
-            self.ratelimitcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
         )
@@ -636,10 +614,6 @@ class Globals(object):
             self.srmembercache = MemcacheChain(
                 (localcache_cls(), srmembercaches))
         cache_chains.update(srmembercache=self.srmembercache)
-
-        self.ratelimitcache = MemcacheChain(
-                (localcache_cls(), ratelimitcaches))
-        cache_chains.update(ratelimitcaches=self.ratelimitcache)
 
         self.rendercache = MemcacheChain((
             localcache_cls(),
