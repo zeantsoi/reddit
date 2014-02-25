@@ -43,7 +43,9 @@ class Report(MultiRelation('report',
         from r2.lib.db import queries
 
         # check if this report exists already!
-        q = cls.get_user_reported(thing.__class__, user, thing)
+        rel = cls.rel(user, thing)
+        q = rel._fast_query(user, thing, ['-1', '0', '1'])
+        q = [ report for (tupl, report) in q.iteritems() if report ]
         if q:
             # stop if we've seen this before, so that we never get the
             # same report from the same user twice
@@ -119,20 +121,4 @@ class Report(MultiRelation('report',
                     to_clear.append(thing)
 
         queries.clear_reports(to_clear, rels)
-
-    @classmethod
-    def get_user_reported(cls, rel_class, user, things):
-        """Gets all of a user's reports from a list of items."""
-        timer = g.stats.get_timer("get_user_reported_timer")
-        timer.start()
-
-        rel = cls.rel(user, rel_class)
-        user_reports = rel._fast_query(user, things, ['-1', '0', '1'])
-        user_reports = [tupl[:2]
-                        for (tupl, report) in user_reports.iteritems()
-                        if report]
-
-        timer.stop()
-
-        return user_reports
 
