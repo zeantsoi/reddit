@@ -1007,7 +1007,7 @@ class FriendsSR(FakeSubreddit):
         return queries.MergedCachedResults(crs)
 
     def get_gilded(self):
-        from r2.lib.db.queries import get_gilded_user
+        from r2.lib.db.queries import get_gilded_users
         if not c.user_is_loggedin:
             raise UserRequiredException
 
@@ -1015,7 +1015,7 @@ class FriendsSR(FakeSubreddit):
         if not friends:
             return []
 
-        return get_gilded_user(friends)
+        return get_gilded_users(friends)
 
 
 class AllSR(FakeSubreddit):
