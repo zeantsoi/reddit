@@ -90,11 +90,21 @@ class BaseController(WSGIController):
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
         remote_addr = environ.get('REMOTE_ADDR')
 
+        true_ip_secret = g.secrets["true_ip"]
+        cloudflare_ip = environ.get('HTTP_CF_CONNECTING_IP')
+
+        hashfunc = hashlib.md5
+        if cloudflare_ip:
+            true_client_ip = cloudflare_ip
+            ip_hash = environ.get('HTTP_CF_CIP_TAG')
+            true_ip_secret = g.secrets["true_cf_ip"]
+            hashfunc = hashlib.sha1
+
         request.via_cdn = False
-        if (g.secrets["true_ip"]
+        if (true_ip_secret
             and true_client_ip
             and ip_hash
-            and hashlib.md5(true_client_ip + g.secrets["true_ip"]).hexdigest() \
+            and hashfunc(true_client_ip + true_ip_secret).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
             request.via_cdn = True
