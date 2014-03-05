@@ -851,7 +851,7 @@ def get_gilded_user_links(user_id):
 def get_gilded_users(user_ids):
     queries = [get_gilded_user_links, get_gilded_user_comments]
     return [query(user_id)
-            for user_id in itertools.product(tup(user_ids), queries)]
+            for user_id, query in itertools.product(tup(user_ids), queries)]
 
 
 @cached_query(UserQueryCache, sort=[desc("date")], filter_fn=filter_thing)
