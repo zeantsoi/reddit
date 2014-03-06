@@ -4190,7 +4190,7 @@ class LinkCommentsSettings(Templated):
         Templated.__init__(self)
         sr = link.subreddit_slow
         self.link = link
-        self.is_author = (c.user._id == link.author_id)
+        self.is_author = c.user_is_loggedin and c.user._id == link.author_id
         self.contest_mode = link.contest_mode
         self.stickied = link._fullname == sr.sticky_fullname
         self.sendreplies = link.sendreplies
