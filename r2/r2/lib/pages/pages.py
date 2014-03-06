@@ -4192,6 +4192,7 @@ class LinkCommentsSettings(Templated):
         self.link = link
         self.contest_mode = link.contest_mode
         self.stickied = link._fullname == sr.sticky_fullname
+        self.sendreplies = link.sendreplies
         self.can_edit = (c.user_is_loggedin
                            and (c.user_is_admin or
                                 sr.is_moderator(c.user)))
