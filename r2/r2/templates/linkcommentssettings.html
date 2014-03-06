@@ -22,7 +22,7 @@
 
 <%namespace file="printablebuttons.html" import="ynbutton" />
 
-%if thing.can_edit:
+%if thing.is_author:
   %if thing.sendreplies:
     ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",
       hidden_data=dict(id=thing.link._fullname, state=False))}
