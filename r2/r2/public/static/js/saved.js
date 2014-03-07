@@ -42,9 +42,9 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
         this.options = options
         this.options.trackHover = false
         r.ui.Bubble.prototype.initialize.apply(this)
-        r.saved.categories.fetchOnce().then(_.bind(this.render, this))
+        r.saved.categories.fetchOnce().then(_.bind(this.show, this))
         $('body').on('click.savedialog', _.bind(this.hideNow, this))
-        this.listenTo(r.saved.categories, 'sync', this.render)
+        this.listenTo(r.saved.categories, 'sync', this.show)
     },
 
     hideNow: function() {
@@ -98,6 +98,11 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
         this.$el.find('select').append($('<option>').val(value).text(value))
     },
 
+    show: function() {
+        r.ui.Bubble.prototype.show.apply(this)
+        this.$el.find('input[type=submit]').focus()
+    },
+
     render: function() {
         this.$el.html(this.confirmTemplate({
             label: r._('save category'),
@@ -107,8 +112,6 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
         }))
         r.saved.categories.each(this.addCategory, this)
         this.$el.find('select').first().prop('selected', true)
-        this.show()
-        this.$el.find('input[type=submit]').focus()
     }
 })
 
