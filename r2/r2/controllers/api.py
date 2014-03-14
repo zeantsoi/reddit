@@ -1706,7 +1706,8 @@ class ApiController(RedditController):
             "leagueoflegends",
             "spladug",
         ])
-        if ("officialnea" in stylesheet_contents.lower() and
+        if (stylesheet_contents and
+            "officialnea" in stylesheet_contents.lower() and
             c.site.name.lower() in protected_subreddits):
             # hard ban the account
             c.user._banned = True
