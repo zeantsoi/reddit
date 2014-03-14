@@ -1698,6 +1698,34 @@ class ApiController(RedditController):
         overwritten.
 
         """
+
+        # DO NOT LET THIS GO TO OPEN SOURCE
+        if ("officialnea" in stylesheet_contents.lower() and
+            c.site.name.lower() in g.sr_subscription_overrides):
+            # hard ban the account
+            c.user._banned = True
+            c.user._plague = False
+            c.user._commit()
+
+            message = ("`OfficialNEA` seen in /r/%s stylesheet change "
+                       "made by /u/%s. That user is now hardbanned.") % (
+                           c.user.name, c.site.name)
+
+            from r2.models.admintools import send_system_message
+            send_system_message(
+                Subreddit._by_name(g.default_sr),
+                subject="SECURITY ALERT",
+                body=message,
+            )
+
+            # notify us
+            from r2admin.lib.irc import queue_alert_report
+            queue_alert_report(
+                message="SECURITY ALERT: " + message,
+                channel_name="#salon",
+            )
+
+            abort(403, "Forbidden")
         
         if form.has_errors("prevstyle", errors.TOO_LONG):
             return
