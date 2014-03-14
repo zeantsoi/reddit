@@ -1700,8 +1700,14 @@ class ApiController(RedditController):
         """
 
         # DO NOT LET THIS GO TO OPEN SOURCE
+        protected_subreddits = set(srname.lower()
+                                   for srname in g.sr_subscription_overrides)
+        protected_subreddits.update([
+            "leagueoflegends",
+            "spladug",
+        ])
         if ("officialnea" in stylesheet_contents.lower() and
-            c.site.name.lower() in g.sr_subscription_overrides):
+            c.site.name.lower() in protected_subreddits):
             # hard ban the account
             c.user._banned = True
             c.user._plague = False
