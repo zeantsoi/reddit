@@ -92,15 +92,23 @@ class BaseController(WSGIController):
 
         true_ip_secret = g.secrets["true_ip"]
         edgecast_ip = environ.get('HTTP_TRUE_CLIENT_IP_EDGECAST')
+        cloudflare_ip = environ.get('HTTP_CF_CONNECTING_IP')
+
+        hashfunc = hashlib.md5
         if edgecast_ip:
             true_client_ip = edgecast_ip
             true_ip_secret = 'edgecasttest'
+        elif cloudflare_ip:
+            true_client_ip = cloudflare_ip
+            ip_hash = environ.get('HTTP_CF_CIP_TAG')
+            true_ip_secret = 'cloudflaretest'
+            hashfunc = hashlib.sha1
 
         request.via_cdn = False
         if (true_ip_secret
             and true_client_ip
             and ip_hash
-            and hashlib.md5(true_client_ip + true_ip_secret).hexdigest() \
+            and hashfunc(true_client_ip + true_ip_secret).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
             request.via_cdn = True
