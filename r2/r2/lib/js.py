@@ -535,11 +535,22 @@ module["less"] = Module('less.js',
 )
 
 module["headdit-core"] = Module("headdit-core.js",
-
+    'headdit/core.js',
 )
 
 module["headdit-embed"] = Module("headdit-embed.js",
+    "lib/underscore-1.4.4.js",
+    'headdit/clmtrackr.js',
+    'headdit/model_pca_20_svm.js',
+    'headdit/kittydar-0.1.6.js',
+    'headdit/utils.js',
+    'headdit/embed.js',
+    "utils.js",
+)
 
+module["headdit-kittyworker"] = Module("headdit-kittyworker.js",
+    'headdit/kittydar-0.1.6.js',
+    'headdit/kittyworker.js',
 )
 
 def use(*names):

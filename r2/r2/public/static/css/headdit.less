@@ -1,0 +1,63 @@
+body {
+    margin: 0;
+}
+
+#overlay, #videoel, #snoo-head {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    -o-transform : scaleX(-1);
+    -webkit-transform : scaleX(-1);
+    transform : scaleX(-1);
+    -ms-filter : fliph;
+    filter : fliph;
+
+    width : 300px;
+    height : 225px;
+}
+
+#snoo-head {
+    opacity: 0;
+    transition: opacity .25s;
+}
+
+#snoo-head.located {
+    opacity: .8;
+}
+
+.team-badge {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 20;
+    display: inline-block;
+    padding: 2px 8px;
+    border-top-left-radius: 3px;
+    background: rgba(255, 255, 255, .8);
+    font-size: 12px;
+    -webkit-transform: translateY(30px);
+    transition: all .5s;
+}
+
+.team-badge.showing {
+    -webkit-transform: none;
+}
+
+.team-badge:before {
+    content: '';
+    display: inline-block;
+    margin-right: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 20px;
+    vertical-align: middle;
+}
+
+.team-badge.team-orangered:before {
+    background: orangered;
+}
+
+.team-badge.team-periwinkle:before {
+    background: #9494ff;
+}
