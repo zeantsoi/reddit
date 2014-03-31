@@ -27,7 +27,7 @@ from pylons import request, g, c
 from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import MinimalController
-from r2.lib.pages import MediaEmbedBody
+from r2.lib.pages import MediaEmbedBody, HeadditEmbed
 from r2.lib.media import get_media_embed
 from r2.lib.utils import constant_time_compare
 from r2.lib.validator import validate, VLink, nop
@@ -65,6 +65,18 @@ class MediaembedController(MinimalController):
         c.allow_framing = True
 
         return MediaEmbedBody(body = content).render()
+
+    def GET_headdit(self):
+        if request.host != g.media_domain:
+            # don't serve up untrusted content except on our
+            # specifically untrusted domain
+            abort(404)
+
+        if g.live_config["headdit_mode"] == "off":
+            abort(404)
+
+        return HeadditEmbed().render()
+
 
 
 class AdController(MinimalController):

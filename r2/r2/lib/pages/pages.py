@@ -4361,3 +4361,7 @@ class ExploreItemListing(Templated):
                     rec.sr = wrapped_srs[rec.sr._id]
                     self.things.append(rec)
         Templated.__init__(self)
+
+
+class HeadditEmbed(Templated):
+    pass

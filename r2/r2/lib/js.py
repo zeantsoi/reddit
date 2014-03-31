@@ -534,6 +534,14 @@ module["less"] = Module('less.js',
     should_compile=False,
 )
 
+module["headdit-core"] = Module("headdit-core.js",
+
+)
+
+module["headdit-embed"] = Module("headdit-embed.js",
+
+)
+
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
