@@ -75,6 +75,7 @@ class MediaembedController(MinimalController):
         if g.live_config["headdit_mode"] == "off":
             abort(404)
 
+        c.allow_framing = True
         return HeadditEmbed().render()
 
 
