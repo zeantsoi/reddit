@@ -3,7 +3,6 @@ r.headdit = {}
 r.headdit.init = function() {
     this.box = new r.headdit.FrameView()
     this.box.render().$el.appendTo('body')
-    r.headdit.commands.init()
 }
 
 r.headdit.FrameView = Backbone.View.extend({
@@ -37,6 +36,7 @@ r.headdit.FrameView = Backbone.View.extend({
     },
 
     openFrame: function() {
+        r.headdit.commands.init()
         this.open = true
         this.render()
     },
@@ -62,10 +62,16 @@ r.headdit.FrameView = Backbone.View.extend({
 
 r.headdit.commands = {
     cooldownTimeout: 200,
-    holdTimeout: 1000
+    holdTimeout: 1000,
+    initialized: false
 }
 
 r.headdit.commands.init = function() {
+    if (this.initialized) {
+        return
+    }
+    this.initialized = true
+
     this.$links = $('.linklisting .link')
     this.curLinkIdx = 0
     this.selectLink(0)
