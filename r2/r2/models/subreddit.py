@@ -1464,6 +1464,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             return self._get_headdit_sr().stylesheet_url_https
         return ""
 
+    @property
+    def header(self):
+        if self._id == self.HEADDIT_MR:
+            return self._get_headdit_sr().header
+        return ""
+
     def _on_create(self):
         for view in self._views:
             view.add_object(self)
