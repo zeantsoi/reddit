@@ -178,7 +178,7 @@ r.headdit.CommandOverlay = Backbone.View.extend({
         this.$el
             .empty()
             .addClass(this.kind)
-            .append('<img class="action" src="' + r.utils.staticURL('/headdit/' + this.kind + '.svg') + '">')
+            .append('<img class="action" src="' + r.utils.staticURL('headdit/' + this.kind + '.svg') + '">')
         return this
     },
 
