@@ -9,19 +9,50 @@ r.headdit.init = function() {
 r.headdit.FrameView = Backbone.View.extend({
     id: 'headdit-box',
     events: {
-        'click .show-frame': 'showFrame'
+        'click .open-frame': 'openFrame',
+        'click .close-frame': 'closeFrame'
+    },
+
+    initialize: function() {
+        this.open = false
+        this.teamBadge = null
     },
 
     render: function() {
         this.$el.empty()
-            .append('<button class="show-frame">show frame</button>')
+        if (this.open) {
+            $('<iframe>')
+                .attr('src', '//' + r.config.media_domain + '/mediaembed/headdit')
+                .appendTo(this.$el)
+            this.$el.append('<button class="close-frame"></button>')
+        } else {
+            this.teamBadge = null
+            this.$el.append('<button class="open-frame">headdit</button>')
+        }
         return this
     },
 
-    showFrame: function() {
-        $('<iframe>')
-            .attr('src', '//' + r.config.media_domain + '/mediaembed/headdit')
-            .appendTo(this.$el)
+    openFrame: function() {
+        this.open = true
+        this.render()
+    },
+
+    closeFrame: function() {
+        this.open = false
+        this.render()
+    },
+
+    setTeam: function(team) {
+        if (this.teamBadge && this.teamBadge.team != team) {
+            this.teamBadge.hide()
+            this.teamBadge = null
+        }
+
+        if (!this.teamBadge) {
+            this.teamBadge = new r.headdit.TeamBadge({team: team})
+            this.teamBadge.render().$el.appendTo(this.$el)
+            this.teamBadge.show()
+        }
     }
 })
 
@@ -39,7 +70,6 @@ r.headdit.commands.init = function() {
     this._resetTimeout = null
     this.lastCmd = {}
 
-    this.teamBadge = null
     this.kittyMode = false
 
     window.addEventListener('message', _.bind(function(ev) {
@@ -87,16 +117,7 @@ r.headdit.commands.run = function(cmd) {
     }
 
     if (cmd == 'orangered' || cmd == 'periwinkle') {
-        if (this.teamBadge && this.teamBadge.team != cmd) {
-            this.teamBadge.hide()
-            this.teamBadge = null
-        }
-
-        if (!this.teamBadge) {
-            this.teamBadge = new r.headdit.TeamBadge({team: cmd})
-            this.teamBadge.render().$el.appendTo('body')
-            this.teamBadge.show()
-        }
+        r.headdit.box.setTeam(cmd)
         return
     }
 

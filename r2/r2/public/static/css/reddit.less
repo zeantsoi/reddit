@@ -8339,10 +8339,59 @@ body.with-listing-chooser {
 
     iframe {
         border: none;
+        background: white;
+        box-shadow: 0 0 5px black;
     }
 
-    .show-frame {
+    .open-frame, .close-frame {
         position: absolute;
+        opacity: .75;
+        .transition(all, .25s);
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .open-frame {
+        right: 0;
+        bottom: 0;
+        margin: 5px;
+        border: 2px solid #5F99CF;
+        border-radius: 5px;
+        padding: 10px;
+        background: white;
+        color: white;
+        font-size: 0;
+
+        &:before {
+            content: '';
+            display: inline-block;
+            width: 139px;
+            height: 36px;
+            background-image: url(../headdit/headdit.png);  /* SPRITE */
+        }
+    }
+
+    .close-frame {
+        left: 0;
+        top: 0;
+        width: 26px;
+        height: 26px;
+        line-height: 0;
+        margin: -7px;
+        font-size: 20px;
+        border: 2px solid #777;
+        border-radius: 50px;
+        background: white;
+
+        &:before {
+            content: '';
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            background-image: url(../close-small.png);  /* SPRITE */
+        }
     }
 }
 
@@ -8465,7 +8514,7 @@ body.with-listing-chooser {
 }
 
 .team-badge {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     right: 0;
     z-index: 10000;
