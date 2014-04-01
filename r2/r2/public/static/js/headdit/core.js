@@ -155,11 +155,15 @@ r.headdit.commands.run = function(cmd) {
         this.selectLink(-1)
     }
 
-    if (cmd == 'kitty' && !this.kittyMode) {
+    var kittyURL = '/user/lieutenantmeowmeow/m/meow'
+    if (cmd == 'kitty' && !this.kittyMode && location.pathname != kittyURL) {
         this.kittyMode = true
         this.kittyAlert = new r.headdit.KittyAlert()
         this.kittyAlert.render().$el.appendTo('body')
         this.kittyAlert.startBlinking()
+        setTimeout(function() {
+            window.location = kittyURL
+        }, 2000)
     }
 }
 
