@@ -89,6 +89,12 @@ r.headdit.commands.selectLink = function(delta) {
     this.curLinkIdx = idx
     var $curLink = $(this.$links[idx])
     $curLink.addClass('head-focus')
+    var $midcol = $curLink.find('.midcol')
+    if ($midcol.is('.likes')) {
+        $curLink.addClass('upvoted')
+    } else if ($midcol.is('.dislikes')) {
+        $curLink.addClass('downvoted')
+    }
 
     $('html, body').animate({
         scrollTop: $curLink.position().top - 500
