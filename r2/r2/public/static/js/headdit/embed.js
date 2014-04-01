@@ -44,11 +44,11 @@ r.headditEmbed.init = function() {
             ctrack.start(vid)
             setInterval(_.bind(this.processSingleFrame, this), 1000)
         }, this), function() {
-            alert("There was some problem trying to fetch video from your webcam. If you have a webcam, please make sure to accept when the browser asks for access to your webcam.")
+            alert("there was some problem trying to fetch video from your webcam. if you have a webcam, please make sure to accept when the browser asks for access to your webcam.")
             return
         })
     } else {
-        alert("This demo depends on getUserMedia, which your browser does not seem to support. :(")
+        alert("headdit requires getUserMedia, which your browser does not seem to support. bummer! :(")
         return
     }
 
