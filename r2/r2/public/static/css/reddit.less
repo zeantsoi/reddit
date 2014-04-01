@@ -8326,6 +8326,14 @@ body.with-listing-chooser {
 
 // --- headdit additions ---
 
+.transform (...) {
+    -webkit-transform: @arguments;
+    -moz-transform: @arguments;
+    -o-transform: @arguments;
+    -ms-transform: @arguments;
+    transform: @arguments;
+}
+
 #headdit-box {
     position: fixed;
     right: 0;
@@ -8446,15 +8454,15 @@ body.with-listing-chooser {
 }
 
 .command-overlay.upvote .action {
-    -webkit-transform: translateY(150%);
+    .transform(translateY(150%));
 }
 
 .command-overlay.upvote.showing .action {
-    -webkit-transform: translateY(0);
+    .transform(translateY(0));
 }
 
 .command-overlay.upvote.ran .action {
-    -webkit-transform: translateY(-150%);
+    .transform(translateY(-150%));
 }
 
 
@@ -8463,15 +8471,15 @@ body.with-listing-chooser {
 }
 
 .command-overlay.downvote .action {
-    -webkit-transform: translateY(-150%);
+    .transform(translateY(-150%));
 }
 
 .command-overlay.downvote.showing .action {
-    -webkit-transform: translateY(0);
+    .transform(translateY(0));
 }
 
 .command-overlay.downvote.ran .action {
-    -webkit-transform: translateY(150%);
+    .transform(translateY(150%));
 }
 
 
@@ -8480,15 +8488,15 @@ body.with-listing-chooser {
 }
 
 .command-overlay.open .action {
-    -webkit-transform: scale(0);
+    .transform(scale(0));
 }
 
 .command-overlay.open.showing .action {
-    -webkit-transform: scale(1);
+    .transform(scale(1));
 }
 
 .command-overlay.open.ran .action {
-    -webkit-transform: scale(2);
+    .transform(scale(2));
 }
 
 
