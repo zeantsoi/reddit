@@ -42,7 +42,7 @@ r.headditEmbed.init = function() {
         return
     }
 
-    this.kittyWorker = new Worker(r.config.kittyworker_js)
+    this.kittyWorker = new Worker('/mediaembed/headdit_kittyworker.js')
     this.kittyWorker.addEventListener('message', _.bind(this.handleKittyStatus, this), false)
     this.kittyWorking = false
     this.kittyFoundCount = 0

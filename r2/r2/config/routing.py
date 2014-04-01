@@ -385,6 +385,7 @@ def make_map():
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
     mc('/mediaembed/headdit', controller="mediaembed", action="headdit")
+    mc('/mediaembed/headdit_kittyworker', controller="mediaembed", action="headdit_kittyworker")
     mc('/mediaembed/:link/:credentials',
        controller="mediaembed", action="mediaembed", credentials=None)
 
