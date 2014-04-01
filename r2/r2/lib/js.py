@@ -546,6 +546,9 @@ module["headdit-embed"] = Module("headdit-embed.js",
     'headdit/utils.js',
     'headdit/embed.js',
     "utils.js",
+    TemplateFileSource('../headdit/snoo-head.svg', wrap='r.svgs.set({content})'),
+    TemplateFileSource('../headdit/snoo-head-gold.svg', wrap='r.svgs.set({content})'),
+
 )
 
 module["headdit-kittyworker"] = Module("headdit-kittyworker.js",

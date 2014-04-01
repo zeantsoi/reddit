@@ -1,3 +1,13 @@
+r.svgs = {
+    index: {},
+    set: function(data) {
+        this.index[data[0].name] = data[0].template
+    },
+    make: function(name) {
+        return $(r.svgs.index[name]).filter('svg')
+    }
+}
+
 r.headditEmbed = {}
 
 r.headditEmbed.init = function() {
@@ -5,8 +15,8 @@ r.headditEmbed.init = function() {
     this.overlay = $('<canvas id="overlay" width="300" height="225">').appendTo('body')[0]
 
     // FIXME
-    var snoo = $('body').is('.gold') ? 'snoo-head-gold.svg' : 'snoo-head.svg'
-    this.snooOverlay = $('<object id="snoo-head" data="' + r.utils.staticURL('/headdit/' + snoo) + '">').appendTo('body')[0]
+    var snoo = $('body').is('.gold') ? '../headdit/snoo-head-gold' : '../headit/snoo-head'
+    this.snooOverlay = r.svgs.make(snoo).attr('id', 'snoo-head').appendTo('body')[0]
     this.overlayCC = overlay.getContext('2d')
 
     var ctrack = this.ctrack = new clm.tracker({useWebGL: true})
@@ -61,7 +71,7 @@ r.headditEmbed.runCommand = function(cmd) {
 }
 
 r.headditEmbed.drawSnoo = function(pos, cp) {
-    var svgdoc = this.snooOverlay.getSVGDocument()
+    var svgdoc = this.snooOverlay
     $('#head', svgdoc).attr('transform', 'translate(' + pos[33][0] + ',' + pos[33][1] + ') scale(' + (pos[14][0] - pos[0][0])/67 + ')')
     $('#leyebrow, #reyebrow', svgdoc).attr('transform', 'translate(0,' + Math.min(5, Math.max(0, 2 - cp[8])) + ')')
     if (cp[6] < -6) {
@@ -82,7 +92,7 @@ r.headditEmbed.handleFrame = function() {
         this.ctrack.draw(overlay)
         r.headditEmbed.drawSnoo(pos, cp)
     }
-    $(this.snooOverlay).toggleClass('located', !!pos)
+    $(this.snooOverlay).attr('class', !!pos ? 'located': '')
 
     var cmd
     if (pos && pos[41]) {
