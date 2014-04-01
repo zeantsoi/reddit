@@ -21,8 +21,12 @@ r.headdit.FrameView = Backbone.View.extend({
     render: function() {
         this.$el.empty()
         if (this.open) {
+            var frameURL = '//' + r.config.media_domain + '/mediaembed/headdit'
+            if ($('body').is('.gold')) {
+                frameURL += '#gold'
+            }
             $('<iframe>')
-                .attr('src', '//' + r.config.media_domain + '/mediaembed/headdit')
+                .attr('src', frameURL)
                 .appendTo(this.$el)
             this.$el.append('<button class="close-frame"></button>')
         } else {

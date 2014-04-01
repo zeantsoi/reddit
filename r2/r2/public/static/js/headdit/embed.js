@@ -15,7 +15,7 @@ r.headditEmbed.init = function() {
     this.overlay = $('<canvas id="overlay" width="300" height="225">').appendTo('body')[0]
 
     // FIXME
-    var snoo = $('body').is('.gold') ? '../headdit/snoo-head-gold' : '../headdit/snoo-head'
+    var snoo = location.hash == '#gold' ? '../headdit/snoo-head-gold' : '../headdit/snoo-head'
     this.snooOverlay = r.svgs.make(snoo).attr('id', 'snoo-head').appendTo('body')[0]
     this.overlayCC = overlay.getContext('2d')
 
