@@ -57,7 +57,7 @@ r.headditEmbed.init = function() {
 }
 
 r.headditEmbed.runCommand = function(cmd) {
-    window.parent.postMessage(cmd, location.protocol + '//' + r.config.cur_domain)
+    window.parent.postMessage(cmd, '*')
 }
 
 r.headditEmbed.drawSnoo = function(pos, cp) {
