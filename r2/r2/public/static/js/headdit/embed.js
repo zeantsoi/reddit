@@ -203,7 +203,7 @@ r.headditEmbed.handleKittyStatus = function(ev) {
     }
 
     if (this.kittyFoundCount > 2) {
-        r.headditEmbed.commands.run('kitty')
+        r.headditEmbed.runCommand('kitty')
     }
 
     this._kittyWorking = false
