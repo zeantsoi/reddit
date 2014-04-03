@@ -144,7 +144,6 @@ def js_config(extra_config=None):
         "cur_domain": get_domain(cname=c.frameless_cname, subreddit=False, no_www=True),
         # where do ajax requests go?
         "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
-        "media_domain": g.media_domain,
         "extension": c.extension,
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
         # debugging?

@@ -124,10 +124,6 @@
   <% from r2.lib import js %>
   ${unsafe(js.use('reddit'))}
   ${unsafe(c.js_preload.use())}
-
-  % if g.live_config["headdit_mode"] == "on" or (g.live_config["headdit_mode"] == "employee" and c.user_is_loggedin and c.user.employee):
-    ${unsafe(js.use('headdit-core'))}
-  % endif
 </%def>
 
 <%def name="javascript_run()">

@@ -1468,29 +1468,6 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             ret[sr_id] = sr_props
         return ret
 
-    HEADDIT_MR = "/user/lieutenantmeowmeow/m/meow"
-
-    def _get_headdit_sr(self):
-        return Subreddit._by_name("stylishcat", stale=True)
-
-    @property
-    def stylesheet_url_http(self):
-        if self._id == self.HEADDIT_MR:
-            return self._get_headdit_sr().stylesheet_url_http
-        return ""
-
-    @property
-    def stylesheet_url_https(self):
-        if self._id == self.HEADDIT_MR:
-            return self._get_headdit_sr().stylesheet_url_https
-        return ""
-
-    @property
-    def header(self):
-        if self._id == self.HEADDIT_MR:
-            return self._get_headdit_sr().header
-        return ""
-
     def _on_create(self):
         for view in self._views:
             view.add_object(self)
