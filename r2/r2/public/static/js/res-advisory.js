@@ -7,7 +7,7 @@ r.resAdvisory.checkRESClick = function(e) {
         if (!r.resAdvisory.checkRESVersion()) {
             e.preventDefault()
             e.stopPropagation()
-            alert("The version of Reddit Enhancement Suite you are using has a bug which makes expanding posts insecure to use. Please update Reddit Enhancement Suite to continue using post expandos.")
+            alert("The version of Reddit Enhancement Suite you are using has a bug which makes expanding posts insecure to use. Please update Reddit Enhancement Suite to continue using post expandos.  Please visit /r/Enhancement for more information.")
         } else {
             document.body.removeEventListener('click', r.resAdvisory.checkRESClick, true)
         }
