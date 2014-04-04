@@ -33,6 +33,7 @@ from r2.controllers.reddit_base import (
 from pylons.i18n import _
 from pylons import c, request, response
 
+from r2.lib import events
 from r2.lib.validator import *
 
 from r2.models import *
@@ -479,6 +480,12 @@ class ApiController(RedditController):
         #update the queries
         queries.new_link(l)
         changed(l)
+
+        # do temporary event logging
+        events.record_engagement(c.user,
+                                 events.SUBMIT,
+                                 l._id36,
+                                 sr_id=sr._id36)
 
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
@@ -1489,7 +1496,10 @@ class ApiController(RedditController):
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                                comment, ip)
                 queries.queue_vote(c.user, item, True, ip, cheater=c.cheater)
-
+                events.record_engagement(c.user,
+                                         events.COMMENT,
+                                         item._id36,
+                                         sr._id36)
                 # adding to comments-tree is done as part of
                 # newcomments_q, so if they refresh immediately they
                 # won't see their comment
@@ -1679,6 +1689,9 @@ class ApiController(RedditController):
         queries.queue_vote(user, thing, dir, ip, vote_info=vote_info,
                            store=store,
                            cheater=c.cheater)
+        event_type = events.LINK_VOTE if isinstance(thing, Link) else events.COMMENT_VOTE
+        events.record_engagement(user, event_type, thing._id36)
+
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VUser(),
