@@ -14,6 +14,8 @@ r.analytics = {
 
         $('.promotedlink.promoted:visible').trigger('onshow')
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
+
+        $(window).on('neverEndingLoad', this.fireNeverEndingLoadTrack)
     },
 
     fetchTrackingHash: function(el) {
@@ -164,6 +166,12 @@ r.analytics = {
         if (_gat && _gat._getTracker){
           // GA is loaded; form will submit via the _gaq.push'ed function
           event.preventDefault()
+        }
+    },
+
+    fireNeverEndingLoadTrack: function(event) {
+        if (window._gaq) {
+            _gaq.push(['_trackEvent', 'RES', 'neverEndingLoad', '', 0, true]);
         }
     }
 }
