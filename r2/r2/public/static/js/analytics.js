@@ -133,7 +133,7 @@ r.analytics = {
         $el.data('trackerFired', true)
     },
 
-    fireUITrackingPixel: function(action, srname) {
+    fireUITrackingPixel: function(action, srname, extraParams) {
         var pixel = new Image()
         pixel.src = r.config.uitracker_url + '?' + $.param(
             _.extend(
@@ -142,7 +142,8 @@ r.analytics = {
                     'sr': srname,
                     'r': Math.round(Math.random() * 2147483647) // cachebuster
                 },
-                r.analytics.breadcrumbs.toParams()
+                r.analytics.breadcrumbs.toParams(),
+                extraParams
             )
         )
     },
