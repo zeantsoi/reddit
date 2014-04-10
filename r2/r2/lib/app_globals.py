@@ -35,7 +35,6 @@ import socket
 import subprocess
 import sys
 
-from pycassa.pool import ConnectionPool
 from sqlalchemy import engine, event
 
 import cssutils
@@ -259,10 +258,6 @@ class Globals(object):
             'spotlight_interest_sub_p',
             'spotlight_interest_nosub_p',
             'gold_revenue_goal',
-            'sample_rate_comment',
-            'sample_rate_comment_vote',
-            'sample_rate_link_vote',
-            'sample_rate_submit',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
@@ -581,17 +576,6 @@ class Globals(object):
                     timeout=4,
                     max_retries=3,
                     prefill=False
-                ),
-            "stats":
-                ConnectionPool(
-                    "reddit_stats",
-                    pool_size=self.cassandra_pool_size,
-                    prefill=False,
-                    server_list=[
-                        'stats-cass-01',
-                        'stats-cass-02',
-                        'stats-cass-03',
-                    ], 
                 ),
         }
 
