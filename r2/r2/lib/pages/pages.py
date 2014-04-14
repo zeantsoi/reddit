@@ -2403,6 +2403,11 @@ class GiftGold(Templated):
             gold_creddits = c.user.gold_creddits
         Templated.__init__(self, recipient=recipient, gold_creddits=gold_creddits)
 
+class GoldGiftCodeEmail(Templated):
+    """Email sent to a logged-out person that purchases a reddit
+    gold gift code."""
+    pass
+
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
     def __init__(self, success=False):
