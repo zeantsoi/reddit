@@ -913,6 +913,7 @@ class FrontController(RedditController):
                 else:
                     cleanup_message = strings.completely_invalid_search_query
 
+            check_cheating("search")
             res = SearchPage(_('search results'), query, etime,
                              content=spane,
                              nav_menus=[SearchSortMenu(default=sort),
