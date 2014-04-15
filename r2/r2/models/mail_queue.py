@@ -232,7 +232,7 @@ class EmailHandler(object):
         return hashes
 
 
-    def from_queue(self, max_date, batch_limit = 50, kind = None):
+    def from_queue(self, max_date, batch_limit = 500, kind = None):
         from r2.models import is_banned_IP, Account, Thing
         keep_trying = True
         min_id = None
