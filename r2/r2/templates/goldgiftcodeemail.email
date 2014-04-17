@@ -20,10 +20,6 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-    from r2.lib.filters import unsafe, safemarkdown
-%>
-
-${unsafe(safemarkdown(thing.message, wrap=False))}
+${thing.message}
 
 ${_("Thank you again for your support, and have fun spreading gold!")}

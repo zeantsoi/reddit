@@ -308,7 +308,7 @@ def send_gold_code(buyer, months, days,
 
     subject = _('Your gold gift code has been generated!')
     message = _('Here is your gift code for %(amount)s of reddit gold:\n\n'
-                '**%(code)s**\n\nThe recipient (or you!) can enter it at '
+                '%(code)s\n\nThe recipient (or you!) can enter it at '
                 'http://www.reddit.com/gold or go directly to '
                 'http://www.reddit.com/thanks/%(code)s to claim it.'
               ) % {'amount': amount, 'code': code}
