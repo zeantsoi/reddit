@@ -4228,6 +4228,12 @@ class Goldvertisement(Templated):
         if c.user.employee:
             self.goal_today = revenue_goal / 100.0
             self.goal_yesterday = revenue_goal_yesterday / 100.0
+
+        if c.user_is_loggedin:
+            self.default_type = "autorenew"
+        else:
+            self.default_type = "code"
+
         Templated.__init__(self)
 
 class LinkCommentsSettings(Templated):

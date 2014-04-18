@@ -1518,6 +1518,9 @@ class FormsController(RedditController):
         if start_over:
             can_subscribe = (c.user_is_loggedin and
                              not c.user.has_gold_subscription)
+            if not can_subscribe and goldtype == "autorenew":
+                goldtype = "creddits"
+                
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,
