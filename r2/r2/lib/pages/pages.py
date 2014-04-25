@@ -4348,8 +4348,14 @@ class SubredditSelector(Templated):
 
 class ListingSuggestions(Templated):
     def __init__(self):
+        Templated.__init__(self)
+
         self.suggestion_type = None
         if c.default_sr:
+            if c.user_is_loggedin and random.randint(0, 1) == 1:
+                self.suggestion_type = "explore"
+                return
+
             multis = c.user_is_loggedin and LabeledMulti.by_owner(c.user)
 
             if multis and c.site in multis:
@@ -4363,8 +4369,6 @@ class ListingSuggestions(Templated):
                     self.suggestions = random.sample(multis, 3)
             else:
                 self.suggestion_type = "random"
-
-        Templated.__init__(self)
 
 
 class ExploreItem(Templated):
