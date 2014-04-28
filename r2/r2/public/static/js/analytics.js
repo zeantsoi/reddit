@@ -16,6 +16,7 @@ r.analytics = {
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
 
         $(window).on('neverEndingLoad', this.fireNeverEndingLoadTrack)
+        $(window).on('adBlockEnabled', this.fireAdBlockEnabled)
     },
 
     fetchTrackingHash: function(el) {
@@ -173,6 +174,14 @@ r.analytics = {
     fireNeverEndingLoadTrack: function(event) {
         if (window._gaq) {
             _gaq.push(['_trackEvent', 'RES', 'neverEndingLoad', '', 0, true]);
+        }
+    },
+
+    fireAdBlockEnabled: function(event, enabled) {
+        enabled = enabled.toString()
+
+        if (window._gaq) {
+            _gaq.push(['_trackEvent', 'AdBlock', 'enabled', enabled, 0, true]);
         }
     }
 }
