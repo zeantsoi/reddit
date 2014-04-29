@@ -1219,7 +1219,7 @@ def validate_blob(custom):
         if not buyer.name.lower() == payment_blob['account_name'].lower():
             raise GoldException('buyer mismatch')
     elif 'email' in payment_blob:
-        pass
+        ret['email'] = payment_blob['email']
     else:
         raise GoldException('no account_id or email')
 
