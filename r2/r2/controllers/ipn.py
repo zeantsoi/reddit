@@ -1024,8 +1024,7 @@ class StripeController(GoldPaymentController):
         send_system_message(user, subject, message)
         return customer
 
-    @validatedForm(VUser(),
-                   token=nop('stripeToken'),
+    @validatedForm(token=nop('stripeToken'),
                    passthrough=VPrintable("passthrough", max_length=50),
                    pennies=VInt('pennies'),
                    months=VInt("months"),
@@ -1067,7 +1066,7 @@ class StripeController(GoldPaymentController):
         if c.user_is_loggedin:
             description = c.user.name
         else:
-            description = payment_blob["buyer_email"]
+            description = payment_blob["email"]
         customer = self.create_customer(form, token, description)
         if not customer:
             return
