@@ -255,6 +255,7 @@ class Globals(object):
     live_config_spec = {
         ConfigValue.bool: [
             'frontend_logging',
+            'stand_enabled',
         ],
         ConfigValue.float: [
             'spotlight_interest_sub_p',
