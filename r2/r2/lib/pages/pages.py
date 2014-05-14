@@ -412,7 +412,7 @@ class Reddit(Templated):
             ps.append(SidebarMessage(sidebar_message[0]))
 
         stand_enabled = g.live_config.get("stand_enabled")
-        if stand_enabled and c.lang == "en" and isinstance(c.site, DefaultSR):
+        if stand_enabled and c.lang.startswith("en") and isinstance(c.site, DefaultSR):
             ps.append(StandMessage())
 
         gold_sidebar_message = g.live_config.get("gold_sidebar_message")
