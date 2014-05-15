@@ -1836,9 +1836,6 @@ class CommentSavesByCategory(_ThingSavesByCategory):
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
                           Relation(Account, Message))):
-
-    _defaults = dict(new=False)
-
     @classmethod
     def _add(cls, to, obj, *a, **kw):
         orangered = kw.pop("orangered", True)
