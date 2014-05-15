@@ -1869,7 +1869,7 @@ class Inbox(MultiRelation('inbox',
                                      data=True)
         res = []
         for i in inbox:
-            if i.new != unread:
+            if getattr(i, "new", False) != unread:
                 i.new = unread
                 i._commit()
             res.append(i)
@@ -1905,7 +1905,7 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         inbox = cls._query(cls.c._thing2_id == thing_ids, data=True)
         res = []
         for i in inbox:
-            if i.new != unread:
+            if getattr(i, "new", False) != unread:
                 i.new = unread
                 i._commit()
             res.append(i)
