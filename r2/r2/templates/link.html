@@ -165,6 +165,10 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.vis
 %endif
 </%def>
 
+<%def name="thing_data_attributes(what)" buffered="True">
+${parent.thing_data_attributes(what)} data-ups="?" data-downs="?"
+</%def>
+
 <%def name="subreddit()" buffered="True">
   ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, sr_path = False,
                cname = False, _class = "subreddit hover may-blank")}
