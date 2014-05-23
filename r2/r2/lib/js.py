@@ -401,8 +401,8 @@ class LocalizedModule(Module):
 
 class JQuery(Module):
     versions = {
-        1: "1.11.0",
-        2: "2.1.0",
+        1: "1.11.1",
+        2: "2.1.1",
     }
 
     def __init__(self, cdn_url="http://ajax.googleapis.com/ajax/libs/jquery/{version}/jquery", major_version=1):
