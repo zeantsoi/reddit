@@ -310,6 +310,17 @@ class Builder(object):
 
         return items
 
+    def valid_after(self, after):
+        """
+        Return whether `after` could ever be shown to the user.
+
+        Necessary because an attacker could use info about the presence
+        and position of `after` within a listing to leak info about `after`s
+        that the attacker could not normally access.
+        """
+        w = self.convert_items((after,))[0]
+        return not self.must_skip(w)
+
     def item_iter(self, a):
         """Iterates over the items returned by get_items"""
         raise NotImplementedError
@@ -583,6 +594,17 @@ class CampaignBuilder(IDBuilder):
             ret.append(w)
 
         return ret
+
+    def valid_after(self, after):
+        # CampaignBuilder's wrapping logic only applies to Campaigns, so it
+        # needs its own version of valid_after to just use the base class'
+        # wrapping logic for security checks.
+        if self.prewrap_fn:
+            after = self.prewrap_fn(after)
+        if self.wrap:
+            after = Builder.wrap_items(self, (after,))[0]
+
+        return not self.must_skip(after)
 
 
 class SimpleBuilder(IDBuilder):
@@ -950,6 +972,10 @@ class MessageBuilder(Builder):
 
     def get_tree(self):
         raise NotImplementedError, "get_tree"
+
+    def valid_after(self, after):
+        w = self.convert_items((after,))[0]
+        return self._viewable_message(w)
 
     def _tree_filter_reverse(self, x):
         return tree_sort_fn(x) >= self.after._id
