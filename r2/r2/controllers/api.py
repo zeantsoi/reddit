@@ -3971,6 +3971,9 @@ class ApiController(RedditController):
         c.user.pref_public_server_seconds = seconds_visibility == "public"
         c.user._commit()
 
+        hook = hooks.get_hook("server_seconds_visibility.change")
+        hook.call(user=c.user, value=c.user.pref_public_server_seconds)
+
     @require_oauth2_scope("save")
     @noresponse(VGold(),
                 VModhash(),
