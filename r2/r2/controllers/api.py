@@ -1750,11 +1750,6 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        # TEMPORARY STATS TRACKING (don't release)
-        if c.cheater:
-            event_name = "yes" if vote_info is not None else "no"
-            g.stats.event_count("vote.cheater-has-votehash", event_name)
-
         if thing._age > thing.subreddit_slow.archive_age:
             store = False
 
