@@ -469,6 +469,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "lib/jquery.cookie.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
+    "timings.js",
     "templates.js",
     "scrollupdater.js",
     "timetext.js",
@@ -492,8 +493,9 @@ module["reddit"] = LocalizedModule("reddit.js",
 )
 
 module["admin"] = Module("admin.js",
-    # include Backbone so it is available early to render admin bar fast.
+    # include Backbone and timings so they are available early to render admin bar fast.
     "lib/backbone-1.0.0.js",
+    "timings.js",
     "adminbar.js",
 )
 
