@@ -29,7 +29,7 @@ import hashlib
 import itertools
 import json
 
-from pylons import c, g
+from pylons import c, g, request
 from pylons.i18n import _
 
 from r2.lib.db.thing import Thing, Relation, NotFound
@@ -38,6 +38,7 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.errors import UserRequiredException
+from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, last_modified_multi, fuzz_activity
@@ -71,6 +72,22 @@ def get_links_sr_ids(sr_ids, sort, time):
     results = [queries.get_links(sr, sort, time)
                for sr in srs]
     return queries.merge_results(*results)
+
+
+def get_request_location():
+    if c.location != '':
+        # unset c attributes have the value ''
+        return c.location
+
+    c.location = None
+
+    if request.via_cdn:
+        c.location = None
+    else:
+        location = location_by_ips(request.ip)
+        c.location = location.get('country_code', None)
+
+    return c.location
 
 
 class BaseSite(object):
@@ -738,6 +755,9 @@ class Subreddit(Thing, Printable, BaseSite):
         Return the subreddits a user with no subscriptions would see.
         """
         langs = c.content_langs if c.content_langs else g.site_lang
+
+        # look up location for load testing
+        location = get_request_location()
 
         if g.automatic_reddits:
             auto_srs = cls._by_name(g.automatic_reddits, stale=stale).values()
