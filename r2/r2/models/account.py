@@ -123,6 +123,7 @@ class Account(Thing):
                      otp_secret=None,
                      state=0,
                      modmsgtime=None,
+                     banned_profile_visible=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
