@@ -90,17 +90,11 @@ class BaseController(WSGIController):
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
         remote_addr = environ.get('REMOTE_ADDR')
 
-        true_ip_secret = g.secrets["true_ip"]
-        edgecast_ip = environ.get('HTTP_TRUE_CLIENT_IP_EDGECAST')
-        if edgecast_ip:
-            true_client_ip = edgecast_ip
-            true_ip_secret = 'edgecasttest'
-
         request.via_cdn = False
-        if (true_ip_secret
+        if (g.secrets["true_ip"]
             and true_client_ip
             and ip_hash
-            and hashlib.md5(true_client_ip + true_ip_secret).hexdigest() \
+            and hashlib.md5(true_client_ip + g.secrets["true_ip"]).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
             request.via_cdn = True
