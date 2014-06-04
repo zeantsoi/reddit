@@ -1138,7 +1138,7 @@ class FrontController(RedditController):
                           ).render()
 
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
-                                  "paypal", "coinbase"),
+                                  "paypal", "coinbase", "stripe"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
@@ -1157,7 +1157,7 @@ class FrontController(RedditController):
                           "check the details by logging into your account "
                           "at:")
             vendor_url = "https://www.paypal.com/us"
-        elif vendor == "coinbase":
+        elif vendor in {"coinbase", "stripe"}:  # Pending vendors
             claim_msg = _("thanks for buying reddit gold! your transaction is "
                           "being processed. if you have any questions please "
                           "email us at %(gold_email)s")

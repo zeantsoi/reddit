@@ -1113,6 +1113,7 @@ class StripeController(GoldPaymentController):
         if c.user_is_loggedin:
             body = append_random_bottlecap_phrase(body)
             send_system_message(c.user, subject, body, distinguished='gold-auto')
+            form.redirect("/gold/thanks?v=stripe")
 
     @validatedForm(VUser(),
                    VModhash(),
