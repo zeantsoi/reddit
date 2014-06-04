@@ -82,10 +82,16 @@ def get_request_location():
     c.location = None
 
     if request.via_cdn:
+        g.stats.simple_event('geoip.cdn_request')
         c.location = None
     else:
+        g.stats.simple_event('geoip.non_cdn_request')
+        timer = g.stats.get_timer("geoip_service_timer")
+        timer.start()
         location = location_by_ips(request.ip)
-        c.location = location.get('country_code', None)
+        if location:
+            c.location = location.get('country_code', None)
+        timer.stop()
 
     return c.location
 
