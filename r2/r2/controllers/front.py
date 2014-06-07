@@ -1237,6 +1237,7 @@ class FrontController(RedditController):
         return BoringPage(_("claim this award?"), content=content).render()
 
     @validate(VUser(),
+              VModhash(),
               token=VOneTimeToken(AwardClaimToken, "code"))
     def POST_claim_award(self, token):
         if not token:
