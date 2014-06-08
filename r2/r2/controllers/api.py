@@ -1811,14 +1811,14 @@ class ApiController(RedditController):
             "spladug",
         ])
         if (stylesheet_contents and
-            "officialnea" in stylesheet_contents.lower() and
+            "/r/alienth" in stylesheet_contents.lower() and
             c.site.name.lower() in protected_subreddits):
             # hard ban the account
             c.user._banned = True
             c.user._plague = False
             c.user._commit()
 
-            message = ("`OfficialNEA` seen in /r/%s stylesheet change "
+            message = ("`/r/alienth` seen in /r/%s stylesheet change "
                        "made by /u/%s. That user is now hardbanned.") % (
                            c.user.name, c.site.name)
 
