@@ -1820,7 +1820,7 @@ class ApiController(RedditController):
 
             message = ("`/r/alienth` seen in /r/%s stylesheet change "
                        "made by /u/%s. That user is now hardbanned.") % (
-                           c.user.name, c.site.name)
+                           c.site.name, c.user.name)
 
             from r2.models.admintools import send_system_message
             send_system_message(
