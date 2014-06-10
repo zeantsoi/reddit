@@ -404,11 +404,14 @@ class QueryBuilder(Builder):
         items = []
         orig_items = {}
         count = self.start_count
+        first_item = None
+        last_item = None
         fetch_after = None
+        have_next = True
         loopcount = 0
 
         while not done:
-            done, fetched_items = self.fetch_more(fetch_after, num_have)
+            done, new_items = self.fetch_more(fetch_after, num_have)
 
             #log loop
             loopcount += 1
@@ -416,18 +419,19 @@ class QueryBuilder(Builder):
                 done = True
 
             #no results, we're done
-            if not fetched_items:
+            if not new_items:
                 break
 
             #if fewer results than we wanted, we're done
-            elif self.num and len(fetched_items) < self.num - num_have:
+            elif self.num and len(new_items) < self.num - num_have:
                 done = True
+                have_next = False
 
-            # Wrap the fetched items if necessary
-            new_items = self.convert_items(fetched_items)
+            unwrapped_items = new_items
+            new_items = self.convert_items(new_items)
 
             # For wrapped -> unwrapped lookups
-            orig_items.update(izip(new_items, fetched_items))
+            orig_items.update(izip(new_items, unwrapped_items))
 
             #skip and count
             while new_items and (not self.num or num_have < self.num):
@@ -440,17 +444,16 @@ class QueryBuilder(Builder):
                     count = count - 1 if self.reverse else count + 1
                     if self.wrap:
                         i.num = count
+                fetch_after = i
+        
+            # get original version of last item
+            fetch_after = orig_items[fetch_after]
 
-            fetch_after = fetched_items[-1]
-
-        # Is there a next page or not?
-        have_next = True
+        # Fewer items than we wanted, no next page.
         if self.num and num_have < self.num:
             have_next = False
 
         # Make sure first_item and last_item refer to things in items
-        first_item = None
-        last_item = None
         if items:
             if self.start_count > 0:
                 # Make sure the item is the unwrapped version
