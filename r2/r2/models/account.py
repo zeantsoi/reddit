@@ -124,6 +124,8 @@ class Account(Thing):
                      state=0,
                      modmsgtime=None,
                      banned_profile_visible=False,
+                     pref_use_global_defaults=False,
+                     pref_hide_locationbar=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
