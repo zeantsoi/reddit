@@ -3844,6 +3844,8 @@ class SelfTextChild(LinkChild):
         return u.render()
 
 class UserText(CachedTemplate):
+    cachable = False
+
     def __init__(self,
                  item,
                  text = '',
