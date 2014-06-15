@@ -2979,6 +2979,7 @@ def wrapped_flair(user, subreddit, force_show_flair):
             get_flair_attr('text'), get_flair_attr('css_class'))
 
 class WrappedUser(CachedTemplate):
+    cachable = False
     FLAIR_CSS_PREFIX = 'flair-'
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
