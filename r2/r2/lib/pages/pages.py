@@ -97,6 +97,7 @@ from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage, tup
 from r2.lib.utils import precise_format_timedelta
+from r2.lib.cache import make_key
 
 from babel.numbers import format_currency
 from babel.dates import format_date
@@ -1429,15 +1430,23 @@ class CommentPane(Templated):
             num = (num / 100) * 100
         elif num > 100:
             num = (num / 10) * 10
-        return "_".join(map(str, ["commentpane", self.article._fullname,
-                                  self.article.contest_mode,
-                                  num, self.sort, self.num, c.lang,
-                                  self.can_reply, c.render_style,
-                                  c.domain_prefix, c.secure,
-                                  c.user.pref_show_flair,
-                                  c.user.pref_show_link_flair,
-                                  c.can_save,
-                                  self.max_depth]))
+        return make_key(
+            "commentpane",
+            self.article._fullname,
+            self.article.contest_mode,
+            num,
+            self.sort,
+            self.num,
+            c.lang,
+            self.can_reply,
+            c.render_style,
+            c.domain_prefix,
+            c.secure,
+            c.user.pref_show_flair,
+            c.user.pref_show_link_flair,
+            c.can_save,
+            self.max_depth,
+        )
 
     def __init__(self, article, sort, comment, context, num, **kw):
         # keys: lang, num, can_reply, render_style
