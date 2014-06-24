@@ -51,7 +51,8 @@
         </li>
       %endif
     %endif
-  %elif thing.show_report:
+  %endif
+  %if thing.show_report:
     <li>
       ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
     </li>
