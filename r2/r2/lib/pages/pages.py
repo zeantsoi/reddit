@@ -330,8 +330,9 @@ class Reddit(Templated):
                                        clone_template=True,
                                        thing_type="comment",
                                       )
+            report_form = ReportForm()
             self._content = PaneStack([ShareLink(), content,
-                                       gold_comment, gold_link])
+                                       gold_comment, gold_link, report_form])
         else:
             self._content = content
 
@@ -2614,6 +2615,10 @@ class GoldGiftCodeEmail(Templated):
 
 
 class Gilding(Templated):
+    pass
+
+
+class ReportForm(Templated):
     pass
 
 
