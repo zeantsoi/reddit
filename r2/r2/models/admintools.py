@@ -30,7 +30,7 @@ from r2.models.gold import append_random_bottlecap_phrase
 from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
-from pylons import g, config
+from pylons import g, c, config
 from pylons.i18n import _
 
 from datetime import datetime, timedelta
