@@ -31,7 +31,7 @@ from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
-from r2.lib.menus import ControversyTimeMenu, menu
+from r2.lib.menus import ControversyTimeMenu, menu, QueryButton
 from r2.lib.rising import get_rising, normalized_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot
