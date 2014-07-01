@@ -1194,6 +1194,8 @@ class AllMinus(AllSR):
 
 
 class Filtered(object):
+    unfiltered_path = None
+
     @property
     def path(self):
         return '/me/f/%s' % self.filtername
