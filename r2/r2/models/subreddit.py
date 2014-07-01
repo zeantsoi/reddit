@@ -1164,6 +1164,7 @@ class AllSR(FakeSubreddit):
 
 
 class AllMinus(AllSR):
+    analytics_name = "all"
     name = _("%s (filtered)") % "all"
 
     def __init__(self, srs):
@@ -1753,6 +1754,8 @@ class ModSR(ModContribSR):
 
 
 class ModMinus(ModSR):
+    analytics_name = "mod"
+
     def __init__(self, exclude_srs):
         ModSR.__init__(self)
         self.exclude_srs = exclude_srs
