@@ -359,6 +359,7 @@ class Link(Thing, Printable):
         from r2.lib.template_helpers import get_domain
         from r2.models.subreddit import FakeSubreddit
         from r2.lib.wrapped import CachedVariable
+        from r2.lib.pages import WrappedUser
 
         # referencing c's getattr is cheap, but not as cheap when it
         # is in a loop that calls it 30 times on 25-200 things.
@@ -688,6 +689,9 @@ class Link(Thing, Printable):
                                     for y in xrange(len(parts))}
                         if subparts.intersection(banned_domains):
                             item.link_notes.append('banned domain')
+
+            item.wrapped_author = WrappedUser(item.author, attribs=item.attribs,
+                                              context_thing=item)
 
         if user_is_loggedin:
             incr_counts(wrapped)
@@ -1225,6 +1229,9 @@ class Comment(Thing, Printable):
 
             item.lastedited = CachedVariable("lastedited")
 
+            item.wrapped_author = WrappedUser(item.author, attribs=item.attribs,
+                                              context_thing=item)
+
         # Run this last
         Printable.add_props(user, wrapped)
 
@@ -1473,6 +1480,7 @@ class Message(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.db import queries
+        from r2.lib.pages import WrappedUser
         #TODO global-ish functions that shouldn't be here?
         #reset msgtime after this request
         msgtime = c.have_messages
@@ -1608,6 +1616,12 @@ class Message(Thing, Printable):
                     item.updated_author = _("%(author)s via %(subreddit)s")
             else:
                 item.updated_author = ''
+
+            item.wrapped_author = WrappedUser(item.author, attribs=item.attribs,
+                                              context_thing=item)
+            if not item.sr_id:
+                correspondent = item.author if item.recipient else item.to
+                item.wrapped_correspondent = WrappedUser(correspondent)
 
 
         # Run this last

@@ -23,7 +23,6 @@
 <%!
    from r2.lib.filters import safemarkdown
    from r2.lib.pages.things import MessageButtons
-   from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static
 %>
 <%inherit file="comment_skeleton.html"/>
@@ -49,7 +48,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 
   <span class="head">
   <%
-   author = WrappedUser(thing.author, thing.attribs, thing).render()
+   author = thing.wrapped_author.render()
    if thing.sr_id:
      subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path,
                                           thing.subreddit.path)
@@ -82,10 +81,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
          </span>
        %else:
          <span class="correspondent rounded">
-           <%
-              corr = thing.author if thing.recipient else thing.to
-            %>
-           ${WrappedUser(corr)}
+           ${thing.wrapped_correspondent}
          </span>
        %endif
     %endif

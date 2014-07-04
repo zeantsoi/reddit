@@ -21,7 +21,6 @@
 ###############################################################################
 
 <%!
-    from r2.lib.pages import WrappedUser 
     from r2.lib.filters import safemarkdown
 %>
 <%namespace file="printable.html" import="arrow, score"/>
@@ -40,10 +39,7 @@
          </span>
        %else:
          <span class="correspondent rounded">
-           <%
-              corr = thing.author if thing.recipient else thing.to
-            %>
-           ${WrappedUser(corr)}
+           ${thing.wrapped_correspondent}
          </span>
        %endif
     %endif
@@ -55,7 +51,7 @@
 
   <div class="entry">
   <%
-   author = WrappedUser(thing.author, thing.attribs, thing).render()
+   author = thing.wrapped_author.render()
    if thing.sr_id:
      subreddit = '&nbsp;<a href="%s.compact">%s</a>&nbsp;' % \
                    (thing.subreddit.path, thing.subreddit.path)

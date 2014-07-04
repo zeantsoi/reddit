@@ -23,7 +23,6 @@
 <%!
    from pylons.i18n import _, ungettext
    from r2.lib.filters import safemarkdown
-   from r2.lib.pages import WrappedUser
 %>
 <%inherit file="printable.mobile" />
 
@@ -48,7 +47,7 @@
 %else:
 
 <p class="byline">
-  ${WrappedUser(thing.author, thing.attribs, thing, gray=collapse)}
+  ${thing.wrapped_author}
   &nbsp;|<span class="score">
   %if thing.score_hidden:
     [${_("score hidden")}]
