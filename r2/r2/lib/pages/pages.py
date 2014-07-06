@@ -3085,7 +3085,7 @@ class WrappedUser(CachedTemplate):
     cachable = False
     FLAIR_CSS_PREFIX = 'flair-'
 
-    def __init__(self, user, attribs = [], context_thing = None, gray = False,
+    def __init__(self, user, attribs = [], context_thing = None,
                  subreddit = None, force_show_flair = None,
                  flair_template = None, flair_text_editable = False,
                  include_flair_selector = False):
@@ -3094,10 +3094,7 @@ class WrappedUser(CachedTemplate):
 
         attribs.sort()
         author_cls = 'author'
-
         author_title = ''
-        if gray:
-            author_cls += ' gray'
         for tup in attribs:
             author_cls += " " + tup[2]
             # Hack: '(' should be in tup[3] iff this friend has a note
