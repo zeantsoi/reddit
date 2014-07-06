@@ -1182,8 +1182,6 @@ class PromotedLink(Link):
                 item.rowstyle_cls = "link " + PROMOTE_STATUS.name[status].lower()
             else:
                 item.rowstyle_cls = "link promoted"
-        # Run this last
-        Printable.add_props(user, wrapped)
 
 
 class ReadNextLink(Link):
