@@ -417,6 +417,13 @@ r.gold.signupForm = (function() {
       _updateGoldType()
     })
 
+    // Workaround for our form cloning to maintain back buttons. When we clone the form
+    // the selected attribute is respected more than the current state unless we explicitly alter it
+    $('.gold-dropdown').on('change', function() {
+      $(this).find('[selected]').removeAttr('selected')
+      $(this).find(':selected').get(0).setAttribute('selected', 'selected')
+    })
+
     var hasPlaceholder = ('placeholder' in document.createElement('input'))
     $('input[name="gifttype"]').change(function() {
       $('#gifttype-details-gift').toggleClass('hidden', this.value !== 'gift')
