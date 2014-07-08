@@ -681,6 +681,8 @@ class ApiController(RedditController):
         will be the current user, otherwise the subreddit must be set.
         """
         if type in self._sr_friend_types:
+            if isinstance(c.site, FakeSubreddit):
+                abort(403, 'forbidden')
             container = c.site
             if c.user._spam:
                 return
@@ -792,6 +794,8 @@ class ApiController(RedditController):
         privilege changes on subreddits.
         """
         if type in self._sr_friend_types:
+            if isinstance(c.site, FakeSubreddit):
+                abort(403, 'forbidden')
             container = c.site
         else:
             container = VByName('container').run(container)
