@@ -1509,7 +1509,7 @@ class FormsController(RedditController):
               period=VOneOf("period", ("monthly", "yearly")),
               months=VInt("months"),
               # variables below are just for gifts
-              signed=VBoolean("signed"),
+              signed=VBoolean("signed", default=True),
               recipient=VExistingUname("recipient", default=None),
               thing=VByName("thing"),
               giftmessage=VLength("giftmessage", 10000),

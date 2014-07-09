@@ -237,8 +237,6 @@ r.gold = {
             showError('.card-address_line1', r._('missing address'))
         } else if (!cardCity) {
             showError('.card-address_city', r._('missing city'))
-        } else if (!cardState) {
-            showError('.card-address_state', r._('missing state or province'))
         } else if (!cardCountry) {
             showError('.card-address_country', r._('missing country'))
         } else if (!cardZip) {
@@ -273,7 +271,7 @@ r.gold.signupForm = (function() {
   // This helps us keep a clean URL state.
   function _getRelevantFields() {
     var goldtype = $('#goldtype').val()
-    var fields = ['goldtype', 'edit']
+    var fields = ['goldtype']
 
     switch (goldtype) {
       case 'autorenew':
@@ -335,6 +333,8 @@ r.gold.signupForm = (function() {
       }
     })
 
+    params['edit'] = true
+
     a.href = window.location.href
     a.search = $.param(params)
     window.history.replaceState({}, "", a.href)
@@ -370,36 +370,29 @@ r.gold.signupForm = (function() {
     _updateGoldType()
   }
 
-  // On submit, create a copy of our form and disable elements that should not be submitted.
-  // This makes for a clean GET submission that is also back-button friendly.
+  // On submit, pass only the relevant fields to the payment page, for clean URLs and proper
+  // display of the payment summary.
   function _handleSubmit(e) {
     e.stopPropagation()
     e.preventDefault()
 
-    var relevantFields = _getRelevantFields()
-    var $submission = $('form.gold-form').clone()
-
-    $submission.find('#edit').remove()
-
     /* Our IE placeholder handling is miserable, clear out placeholder text before submission if we have it. */
-    $submission.find('#giftmessage, #recipient').each(function() {
+    $('#giftmessage, #recipient').each(function() {
       var $this = $(this)
       if ($this.val() === $this.attr('placeholder')) {
         $this.val('')
       }
     })
 
-    $submission.find(':input').each(function() {
-      if (this.name && !_.contains(relevantFields, this.name)) {
-        $(this).attr('disabled', 'disabled')
-      }
-    })
+    // serializeArray returns an array of objects, turn it into key/value pairs
+    // since we're not worried about multi-value keys and it's what $.param expects
+    var fields = $('form.gold-form').serializeArray()
+    var fieldsAsDict = _.object(_.pluck(fields, 'name'), _.pluck(fields, 'value'))
 
-    // Append to our DOM so that submission works properly cross-browser
-    $submission.css('display', 'none')
-    $submission.appendTo($('body'))
-    $submission.submit()
-    $submission.detach() // avoid clobbering global namespaces on click of back
+    // Only submit fields that are relevant to this goldtype
+    var submission = _.pick(fieldsAsDict, _getRelevantFields())
+
+    window.location = "/gold/payment?" + $.param(submission)
   }
 
   function init() {
