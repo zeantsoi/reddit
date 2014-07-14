@@ -6827,10 +6827,27 @@ body:not(.gold) .allminus-link {
 
   .gold-button {
     padding-left: 35px;
-    background-image: url(../gold/snoo-head.png);
-    background-repeat: no-repeat;
-    background-position: 8px 7px;
-    background-size: 23px;
+    position: relative;
+
+    .snoo-head {
+      background-image: url(../gold/snoo-head.png);
+      background-repeat: no-repeat;
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      right: 0;
+      bottom: 0;
+      background-size: 23px;
+      width: 23px;
+      opacity: 0.5;
+      .transition(opacity, 0.2s);
+    }
+  }
+
+  .gold-button:hover{
+    .snoo-head {
+      opacity: 1;
+    }
   }
 }
 
@@ -8750,7 +8767,7 @@ body.with-listing-chooser {
     }
 
     .fancy-inner {
-      background-size: contain;
+      background-position: bottom center;
     }
 
     .gold-snoo {
@@ -9097,6 +9114,22 @@ body.with-listing-chooser {
       padding: 10px 25px;
     }
   }
+
+  .creddits-prompt {
+    text-align: center;
+    font-size: 0.8em;
+    margin-top: 20px;
+
+    p {
+        display: inline;
+    }
+
+    a {
+        text-decoration: underline;
+        color: @dark;
+    }
+  }
+
 
   @media screen and (max-width: 1024px) {
     .buttons {

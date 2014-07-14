@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="error_field, radio_type"/>
+<%namespace file="utils.html" import="error_field, radio_type, _md"/>
 <%namespace file="utils/gold.html" import="gold_dropdown"/>
 
 <div class="gold-wrap">
@@ -47,6 +47,12 @@
       </div>
     </div>
   </div>
+  %if c.user_is_loggedin:
+    <div class="creddits-prompt">
+      <div class="gilded-icon"></div>
+      ${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}
+    </div>
+  %endif
 </div>
 
 <%def name="gold_loggedout_content()">

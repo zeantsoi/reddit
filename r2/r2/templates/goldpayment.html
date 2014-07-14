@@ -100,7 +100,7 @@
         class="gold-checkout creddits-gold">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-    <button class="btn gold-button">${_("creddits")}</button>
+    <button class="btn gold-button"><span class="snoo-head"></span>${_("creddits")}</button>
     <span class="status">
       <span class="remaining" data-current="${thing.months}" data-total="${thing.user_creddits}" data-template="${_('(%(current)s of %(total)s remaining)') % dict(current='<%= current %>', total='<%= total %>')}">
       </span>
