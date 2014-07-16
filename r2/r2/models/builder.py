@@ -1162,6 +1162,11 @@ class UserMessageBuilder(MessageBuilder):
             return conversation(self.user, self.parent)
         return user_messages(self.user)
 
+    def valid_after(self, after):
+        # Messages that have been spammed are still valid afters
+        w = self.convert_items((after,))[0]
+        return MessageBuilder._viewable_message(self, w)
+
 class UserListBuilder(QueryBuilder):
     def thing_lookup(self, rels):
         accounts = Account._byID([rel._thing2_id for rel in rels], data=True)
@@ -1171,6 +1176,10 @@ class UserListBuilder(QueryBuilder):
 
     def must_skip(self, item):
         return item.user._deleted
+
+    def valid_after(self, after):
+        # Users that have been deleted are still valid afters
+        return True
 
     def wrap_items(self, rels):
         return [self.wrap(rel) for rel in rels]
