@@ -35,10 +35,10 @@
   <!-- SC_ON -->
 </%def>
 <%
-  icon_url = thing.client.icon_url or static('defaultapp.png')
+  icon_url = make_url_protocol_relative(thing.client.icon_url) or static('defaultapp.png')
 %>
 <div class="infobar ${thing.extra_class}">
-  ${img_link(thing.client.name, make_url_protocol_relative(icon_url),
+  ${img_link(thing.client.name, icon_url,
              thing.client.about_url, _class="icon")}
   <div>
     <p>
