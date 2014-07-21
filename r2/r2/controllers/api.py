@@ -1813,23 +1813,27 @@ class ApiController(RedditController):
         """
 
         # DO NOT LET THIS GO TO OPEN SOURCE
-        protected_subreddits = set(srname.lower()
-                                   for srname in g.sr_subscription_overrides)
-        protected_subreddits.update([
-            "leagueoflegends",
-            "spladug",
-        ])
-        if (stylesheet_contents and
-            "/r/alienth" in stylesheet_contents.lower() and
-            c.site.name.lower() in protected_subreddits):
+        evil_phrase_found = False
+        evil_phrases = [
+            "/r/alienth",
+            "officialnea",
+        ]
+        stylesheet_text = stylesheet_contents or ""
+        stylesheet_text = stylesheet_text.lower()
+        for evil_phrase in evil_phrases:
+            if evil_phrase in stylesheet_text:
+                evil_phrase_found = True
+                break
+
+        if evil_phrase_found:
             # hard ban the account
             c.user._banned = True
             c.user._plague = False
             c.user._commit()
 
-            message = ("`/r/alienth` seen in /r/%s stylesheet change "
+            message = ("`%s` seen in /r/%s stylesheet change "
                        "made by /u/%s. That user is now hardbanned.") % (
-                           c.site.name, c.user.name)
+                           evil_phrase, c.site.name, c.user.name)
 
             from r2.models.admintools import send_system_message
             send_system_message(
