@@ -1438,7 +1438,7 @@ class LinkInfoPage(Reddit):
                 "score": self.link.score,
                 "num_comments": self.link.num_comments,
                 "comment_body": _truncate(
-                    best_comment.body,
+                    _force_unicode(best_comment.body),
                     MAX_DESCRIPTION_LENGTH,
                 ),
                 "comment_author": best_comment.author.name,
