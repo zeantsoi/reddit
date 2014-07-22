@@ -210,9 +210,7 @@ ${parent.thing_data_attributes(what)} data-ups="?" data-downs="?"
                               author=WrappedUser(thing.author, thing.attribs, thing).render(),
                               lastedited=capture(edited, thing, thing.lastedited)
                               ))}
-  %if c.permalink_page or c.profilepage:
-    ${self.gildings()}
-  %endif
+  ${self.gildings()}
   %if thing.stickied:
     &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">stickied post</span>
   %endif
