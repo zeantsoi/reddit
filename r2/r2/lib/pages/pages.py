@@ -1400,7 +1400,7 @@ class LinkInfoPage(Reddit):
     def _build_og_image(self):
         if self.link.media_object:
             media_embed = media.get_media_embed(self.link.media_object)
-            if media_embed.public_thumbnail_url:
+            if media_embed and media_embed.public_thumbnail_url:
                 return media_embed.public_thumbnail_url
 
         if self.link.url and url_is_embeddable_image(self.link.url):
