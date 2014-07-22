@@ -1418,36 +1418,10 @@ class LinkInfoPage(Reddit):
         if self.link.selftext:
             return meta_description
 
-        best_comment = None
-        if self.link.num_comments > 0:
-            with g.stats.quick_time("service_time.og_data.fetch_top_comment"):
-                from r2.models import TopCommentBuilder
-                from r2.lib.db import operators
-                builder = TopCommentBuilder(
-                    self.link,
-                    operators.desc('_confidence'),
-                    num=1,
-                )
-                try:
-                    best_comment = builder.get_items()[0]
-                except IndexError:
-                    pass
-
-        if best_comment:
-            return strings.link_info_og_description_with_comment % {
-                "score": self.link.score,
-                "num_comments": self.link.num_comments,
-                "comment_body": _truncate(
-                    _force_unicode(best_comment.body),
-                    MAX_DESCRIPTION_LENGTH,
-                ),
-                "comment_author": best_comment.author.name,
-            }
-        else:
-            return strings.link_info_og_description % {
-                "score": self.link.score,
-                "num_comments": self.link.num_comments,
-            }
+        return strings.link_info_og_description % {
+            "score": self.link.score,
+            "num_comments": self.link.num_comments,
+        }
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
