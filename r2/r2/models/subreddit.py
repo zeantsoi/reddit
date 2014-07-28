@@ -96,6 +96,9 @@ def get_request_location():
                 c.location = location_dict.get('country_code', None)
             except:
                 pass
+        cdn_geoinfo = request.environ.get('HTTP_CF_IPCOUNTRY')
+        if cdn_geoinfo:
+            c.location = cdn_geoinfo
     elif getattr(request, 'ip', None):
         g.stats.simple_event('geoip.non_cdn_request')
         timer = g.stats.get_timer("geoip_service_timer")

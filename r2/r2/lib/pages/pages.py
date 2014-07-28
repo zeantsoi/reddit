@@ -801,6 +801,9 @@ class DebugFooter(Templated):
                     c.location_info = "country code: %s" % country_code
                 except:
                     c.location_info = "parse error"
+            cdn_geoinfo = request.environ.get('HTTP_CF_IPCOUNTRY')
+            if cdn_geoinfo:
+                c.location_info = "country code: %s" % cdn_geoinfo
         Templated.__init__(self)
 
 
