@@ -269,6 +269,7 @@ class Globals(object):
             'cpm_selfserve',
             'cpm_selfserve_geotarget_country',
             'cpm_selfserve_geotarget_metro',
+            'cpm_selfserve_collection',
         ],
     }
 
