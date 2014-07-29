@@ -1875,12 +1875,15 @@ Subreddit._specials.update({
         RandomNSFW,
         RandomSubscription,
         Random,
-        Mod,
         Contrib,
         All,
         Frontpage,
     )
 })
+
+# some subreddits have unfortunate names
+Subreddit._specials['mod'] = Mod
+
 
 class SRMember(Relation(Subreddit, Account)):
     _defaults = dict(encoded_permissions=None)
