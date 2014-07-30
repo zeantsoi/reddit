@@ -744,7 +744,8 @@ def _get_live_promotions(sr_names):
             pt = PromoTuple(link=link._fullname, weight=weight,
                             campaign=camp._fullname)
             for sr_name in camp.target.subreddit_names:
-                ret[sr_name].append(pt)
+                if sr_name in sr_names:
+                    ret[sr_name].append(pt)
     return ret
 
 
