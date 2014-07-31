@@ -117,15 +117,15 @@ def campaign_has_oversold_error(form, campaign):
 
     return has_oversold_error(
         form, campaign, campaign.start_date, campaign.end_date, campaign.bid,
-        campaign.cpm, campaign.target.subreddits_slow, campaign.location,
+        campaign.cpm, campaign.target, campaign.location,
     )
 
 
-def has_oversold_error(form, campaign, start, end, bid, cpm, srs, location):
+def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
     ndays = (to_date(end) - to_date(start)).days
     total_request = calc_impressions(bid, cpm)
     daily_request = int(total_request / ndays)
-    oversold = inventory.get_oversold(srs, start, end,
+    oversold = inventory.get_oversold(target.subreddits_slow, start, end,
                                       daily_request, ignore=campaign,
                                       location=location)
 
@@ -134,7 +134,7 @@ def has_oversold_error(form, campaign, start, end, bid, cpm, srs, location):
         available = min_daily * ndays
         msg_params = {
             'available': format_number(available, locale=c.locale),
-            'target': target.name if target else 'the frontpage',
+            'target': target.pretty_name,
             'start': start.strftime('%m/%d/%Y'),
             'end': end.strftime('%m/%d/%Y'),
         }
@@ -787,7 +787,7 @@ class PromoteApiController(ApiController):
         campaign = campaign if campaign_id36 else None
         if not priority.inventory_override:
             oversold = has_oversold_error(form, campaign, start, end, bid, cpm,
-                                          target.subreddits_slow, location)
+                                          target, location)
             if oversold:
                 return
 
