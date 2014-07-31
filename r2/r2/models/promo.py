@@ -250,7 +250,7 @@ class PromoCampaign(Thing):
         if attr in self._derived_attrs:
             object.__setattr__(self, attr, val)
         else:
-            Thing.__setattr__(self, attr, val, make_dirty=True)
+            Thing.__setattr__(self, attr, val, make_dirty=make_dirty)
 
     def __getstate__(self):
         """
