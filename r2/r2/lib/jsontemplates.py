@@ -320,7 +320,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         has_verified_email="email_verified",
         is_gold="gold",
         is_mod="is_mod",
-        link_karma="safe_karma",
+        link_karma="link_karma",
         name="name",
     )
     _private_data_attrs = dict(
@@ -349,6 +349,8 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             data['has_mod_mail'] = self.thing_attr(thing, 'has_mod_mail')
 
     def thing_attr(self, thing, attr):
+        from r2.lib.template_helpers import (
+            display_comment_karma, display_link_karma)
         if attr == "is_mod":
             t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
             return t.is_moderator_somewhere
@@ -360,6 +362,11 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             if not thing.gold:
                 return None
             return calendar.timegm(thing.gold_expiration.utctimetuple())
+        elif attr == "comment_karma":
+            return display_comment_karma(thing.comment_karma)
+        elif attr == "link_karma":
+            return display_link_karma(thing.link_karma)
+
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 
@@ -1064,11 +1071,13 @@ class PolicyViewJsonTemplate(ThingJsonTemplate):
 
 class KarmaListJsonTemplate(ThingJsonTemplate):
     def data(self, karmas):
+        from r2.lib.template_helpers import (
+            display_comment_karma, display_link_karma)
         karmas = [{
-            'sr': label,
-            'link_karma': lc,
-            'comment_karma': cc,
-        } for label, (lc, cc) in karmas.iteritems()]
+            'sr': sr,
+            'link_karma': display_link_karma(link_karma),
+            'comment_karma': display_comment_karma(comment_karma),
+        } for sr, (link_karma, comment_karma) in karmas.iteritems()]
         return karmas
 
     def kind(self, wrapped):
