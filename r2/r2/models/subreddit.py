@@ -830,8 +830,8 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def random_reddit(cls, limit=2500, over18=False, user=None):
         offset = random.randint(0, limit)
-        q = cls._query(cls.c.over_18 == over18, sort=desc('_downs'),
-                       offset=offset, limit=1, data=True)
+        q = cls._query(cls.c.over_18 == over18, cls.c.type == "public",
+                       sort=desc('_downs'), offset=offset, limit=1, data=True)
 
         if user:
             excludes = cls.user_subreddits(user, limit=None)
