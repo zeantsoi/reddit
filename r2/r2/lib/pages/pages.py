@@ -1009,10 +1009,8 @@ class PrefsPage(Reddit):
 
         buttons.extend([NamedButton('friends'),
                         NamedButton('blocked'),
-                        NamedButton('update')])
-
-        if c.user_is_loggedin and c.user.name in g.admins:
-            buttons += [NamedButton('otp')]
+                        NamedButton('update'),
+                        NamedButton('security')])
 
         #if CustomerID.get_id(user):
         #    buttons += [NamedButton('payment')]
@@ -1028,7 +1026,7 @@ class PrefOptions(Templated):
 class PrefFeeds(Templated):
     pass
 
-class PrefOTP(Templated):
+class PrefSecurity(Templated):
     pass
 
 class PrefUpdate(Templated):
