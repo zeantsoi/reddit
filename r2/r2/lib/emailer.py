@@ -78,12 +78,12 @@ def password_email(user):
 
     reset_count_key = "email-reset_count_%s" % user._id
     g.cache.add(reset_count_key, 0, time=3600 * 12)
-    if g.cache.incr(reset_count_key) > 10:
+    if g.cache.incr(reset_count_key) > 3:
         return False
 
     reset_count_global = "email-reset_count_global"
     g.cache.add(reset_count_global, 0, time=3600)
-    if g.cache.incr(reset_count_global) > 10000:
+    if g.cache.incr(reset_count_global) > 1000:
         raise ValueError("Somebody's beating the hell out of the password reset box")
 
     token = PasswordResetToken._new(user)
