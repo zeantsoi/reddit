@@ -139,20 +139,17 @@ class System(object):
 
             changed = True
             for campaign_name in campaign_names:
-                old_campaign = campaigns_by_name[campaign_name]
+                campaign = campaigns_by_name[campaign_name]
                 if fully_satisfied:
                     # the target has enough impressions to cover all campaigns
                     impressions = 0
                 else:
                     # assign all of target's inventory to its single campaign
-                    impressions = old_campaign.impressions - target.impressions
+                    impressions = campaign.impressions - target.impressions
                 target_names = campaign.target_names[:]
+                target_names.remove(target_name)
 
-                try:
-                    target_names.remove(target_name)
-                except ValueError:
-                    pass
-
+                # update (rewrite) the SimpleCampaign object in the lookup dict
                 campaigns_by_name[campaign_name] = SimpleCampaign(
                     campaign_name, target_names, impressions)
 
