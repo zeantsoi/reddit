@@ -147,7 +147,12 @@ class System(object):
                     # assign all of target's inventory to its single campaign
                     impressions = old_campaign.impressions - target.impressions
                 target_names = campaign.target_names[:]
-                target_names.remove(target_name)
+
+                try:
+                    target_names.remove(target_name)
+                except ValueError:
+                    pass
+
                 campaigns_by_name[campaign_name] = SimpleCampaign(
                     campaign_name, target_names, impressions)
 
