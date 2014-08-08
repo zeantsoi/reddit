@@ -269,7 +269,7 @@ class System(object):
         penalty = 0
         for campaign in self.campaigns:
             unassigned = unassigned_by_campaign[campaign.name]
-            if unassigned > 0:
+            if unassigned > 0 and campaign.target_names:
                 # allocate inventory from the lowest level target
                 target_name = min(campaign.target_names,
                                   key=lambda name: level_by_target_name[name])
