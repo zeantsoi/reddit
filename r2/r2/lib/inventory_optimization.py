@@ -145,7 +145,8 @@ class System(object):
                     impressions = 0
                 else:
                     # assign all of target's inventory to its single campaign
-                    impressions = campaign.impressions - target.impressions
+                    target_impressions = max(0, target.impressions)
+                    impressions = campaign_impressions - target_impressions
                 target_names = campaign.target_names[:]
                 target_names.remove(target_name)
 
@@ -259,7 +260,7 @@ class System(object):
                     unassigned = unassigned_by_campaign[campaign.name]
 
                     if unassigned > 0:
-                        available = impressions_by_target[target_name]
+                        available = max(0, impressions_by_target[target_name])
                         assigned = min(unassigned, available)
                         unassigned_by_campaign[campaign.name] -= assigned
                         impressions_by_target[target_name] -= assigned
@@ -269,7 +270,7 @@ class System(object):
         penalty = 0
         for campaign in self.campaigns:
             unassigned = unassigned_by_campaign[campaign.name]
-            if unassigned > 0 and campaign.target_names:
+            if unassigned > 0:
                 # allocate inventory from the lowest level target
                 target_name = min(campaign.target_names,
                                   key=lambda name: level_by_target_name[name])
