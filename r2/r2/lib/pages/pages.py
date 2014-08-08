@@ -3525,7 +3525,7 @@ class DetailsPage(LinkInfoPage):
             content = details
         elif isinstance(thing, Comment):
             comment = thing
-            link = Link._byID(comment.link_id)
+            link = Link._byID(comment.link_id, data=True)
             content = PaneStack()
             content.append(PermalinkMessage(link.make_permalink_slow()))
             content.append(LinkCommentSep())
