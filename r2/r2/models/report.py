@@ -98,9 +98,8 @@ class Report(MultiRelation('report',
         for thing in things:
             things_by_cls.setdefault(thing.__class__, []).append(thing)
 
-        to_clear = []
-
         for thing_cls, cls_things in things_by_cls.iteritems():
+            to_clear = []
             # look up all of the reports for each thing
             rel_cls = cls.rel(Account, thing_cls)
             thing_ids = [t._id for t in cls_things]
@@ -116,5 +115,5 @@ class Report(MultiRelation('report',
                     thing._commit()
                     to_clear.append(thing)
 
-        queries.clear_reports(to_clear, rels)
+            queries.clear_reports(to_clear, rels)
 
