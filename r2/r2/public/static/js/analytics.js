@@ -19,6 +19,16 @@ r.analytics = {
         $(window).on('adBlockEnabled', this.fireAdBlockEnabled)
     },
 
+    fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction) {
+      opt_label = opt_label || '';
+      opt_value = opt_value || 0;
+      opt_noninteraction = !!opt_noninteraction;
+
+      if (window._gaq) {
+        _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
+      }
+    },
+
     fetchTrackingHash: function(el) {
         /*------------------------------------------* 
            Generates a trackingName like:
@@ -178,17 +188,12 @@ r.analytics = {
     },
 
     fireNeverEndingLoadTrack: function(event) {
-        if (window._gaq) {
-            _gaq.push(['_trackEvent', 'RES', 'neverEndingLoad', '', 0, true]);
-        }
+      r.analytics.fireGAEvent('RES', 'neverEndingLoad', '', 0, true);
     },
 
     fireAdBlockEnabled: function(event, enabled) {
-        enabled = enabled.toString()
-
-        if (window._gaq) {
-            _gaq.push(['_trackEvent', 'AdBlock', 'enabled', enabled, 0, true]);
-        }
+      enabled = enabled.toString();
+      r.analytics.fireGAEvent('AdBlock', 'enabled', enabled, 0, true);
     }
 }
 
