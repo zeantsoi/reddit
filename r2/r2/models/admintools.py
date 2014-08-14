@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.config import feature
 from r2.lib.db import tdb_cassandra
 from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
@@ -425,6 +426,9 @@ def wiki_template(template_slug, sr=None):
 
 @admintools_hooks.on("account.registered")
 def send_welcome_message(user):
+    if not feature.is_enabled('send_welcome_message'):
+        return
+
     welcome_title = wiki_template("welcome_title").format(
         username=user.name,
     )
