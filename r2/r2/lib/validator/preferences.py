@@ -19,12 +19,13 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import g
+from pylons import c, g
 from r2.lib.validator.validator import (
     VBoolean,
     VInt,
     VLang,
     VOneOf,
+    VSRByName,
 )
 
 # Validators that map directly to Account._preference_attrs
@@ -53,6 +54,7 @@ PREFS_VALIDATORS = dict(
                            default=g.num_comments),
     pref_highlight_controversial=VBoolean('highlight_controversial'),
     pref_show_stylesheets=VBoolean('show_stylesheets'),
+    pref_stylesheet_override=VSRByName('stylesheet_override'),
     pref_show_flair=VBoolean('show_flair'),
     pref_show_link_flair=VBoolean('show_link_flair'),
     pref_no_profanity=VBoolean('no_profanity'),
@@ -111,3 +113,16 @@ def filter_prefs(prefs, user):
 
     if not (user.gold or user.is_moderator_somewhere):
         prefs['pref_highlight_new_comments'] = True
+
+    # check stylesheet override
+    override_sr = prefs.get('pref_stylesheet_override')
+    if override_sr:
+        if override_sr.can_view(user):
+            # convert back to name
+            prefs['pref_stylesheet_override'] = override_sr.name
+        else:
+            # don't update if they can't view the chosen subreddit
+            del prefs['pref_stylesheet_override']
+    else:
+        # if it was blank, unset the error from VSRByName
+        c.errors.remove(('BAD_SR_NAME', 'stylesheet_override'))
