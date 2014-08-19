@@ -22,6 +22,8 @@
 
 <%inherit file="comment_skeleton.html"/>
 
+<%def name="collapsed()">
+</%def>
 
 <%def name="commentBody()">
 <span class="deepthread"><a href="${thing.parent_permalink}">${_("continue this thread")}</a></span>
@@ -33,7 +35,7 @@
 <%def name="buttons()">
 </%def>
 
-<%def name="tagline()">
+<%def name="tagline(collapse=False)">
 </%def>
 
 <%def name="midcol(cls='')">

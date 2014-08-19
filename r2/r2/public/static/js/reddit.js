@@ -407,33 +407,31 @@ function hide_all_messages(elem) {
     return false; 
 }
 
-function togglecomment(elem) {
-  var comment = $(elem).thing()
-  var expander = comment.find(".expand:first")
-  var isCollapsed = comment.hasClass("collapsed")
-  comment.toggleClass("collapsed noncollapsed")
+function hidecomment(elem) {
+    var t = $(elem).thing();
+    t.hide()
+        .find(".noncollapsed:first, .midcol:first").hide().end()
+        .show().find(".entry:first .collapsed").show();
+    if(t.hasClass("message")) {
+        $.request("collapse_message", {"id": $(t).thing_id()});
+    } else {
+        t.find(".child:first").hide();
+    }
+    return false;
+};
 
-  if (!isCollapsed) {
-    expander.text("[+]")
-  } else {
-    expander.text("[–]")
-  }
-}
-
-function togglemessage(elem) {
-  var message = $(elem).thing()
-  var expander = message.find(".expand:first")
-  var isCollapsed = message.hasClass("collapsed")
-  message.toggleClass("collapsed noncollapsed")
-
-  if (!isCollapsed) {
-    expander.text("[+]")
-    $.request("collapse_message", { "id": $(message).thing_id() })
-  } else {
-    expander.text("[–]")
-    $.request("uncollapse_message", { "id": $(message).thing_id() })
-  }
-}
+function showcomment(elem) {
+    var t = $(elem).thing();
+    t.find(".entry:first .collapsed").hide().end()
+        .find(".noncollapsed:first, .midcol:first").show().end()
+        .show();
+    if(t.hasClass("message")) {
+        $.request("uncollapse_message", {"id": $(t).thing_id()});
+    } else {
+        t.find(".child:first").show();
+    }
+    return false;
+};
 
 function morechildren(form, link_id, children, depth, pv_hex) {
     $(form).html(reddit.status_msg.loading)

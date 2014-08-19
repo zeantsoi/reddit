@@ -25,6 +25,8 @@
  %>
 <%inherit file="comment_skeleton.html"/>
 
+<%def name="collapsed()">
+</%def>
 
 <%def name="commentBody()">
 <%
@@ -46,7 +48,7 @@ ${_("load more comments")}
 <%def name="buttons()">
 </%def>
 
-<%def name="tagline()">
+<%def name="tagline(collapse=False)">
 </%def>
 
 <%def name="midcol(cls = '')">
