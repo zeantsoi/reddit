@@ -124,7 +124,7 @@ def make_map():
     mc('/admin/awards/:awardcn/:action', controller='awards',
        requirements=dict(action="give|winners"))
 
-    mc('/admin/creddits', controller='admin', action='creddits')
+    mc('/admin/creddits', controller='admintool', action='creddits')
 
     mc('/admin/errors', controller='errorlog')
 

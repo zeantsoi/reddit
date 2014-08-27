@@ -24,7 +24,7 @@ from reddit_base import RedditController
 from r2.lib.pages import AdminPage, AdminCreddits
 from r2.lib.validator import nop, validate, VAdmin
 
-class AdminController(RedditController):
+class AdminToolController(RedditController):
     @validate(
         VAdmin(),
         recipient=nop('recipient'),
