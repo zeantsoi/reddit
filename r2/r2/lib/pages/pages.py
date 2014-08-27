@@ -3596,8 +3596,6 @@ class PromotePage(Reddit):
         kw['show_sidebar'] = False
         Reddit.__init__(self, nav_menus=nav_menus, *a, **kw)
 
-class PromoteLinkNew(Templated):
-    pass
 
 class PromoteLinkBase(Templated):
     min_start = None
@@ -3644,6 +3642,10 @@ class PromoteLinkBase(Templated):
 
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
+
+
+class PromoteLinkNew(PromoteLinkBase):
+    pass
 
 
 class PromoteLinkEdit(PromoteLinkBase):
