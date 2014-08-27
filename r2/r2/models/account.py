@@ -106,7 +106,6 @@ class Account(Thing):
                      pref_public_server_seconds=False,
                      mobile_compress = False,
                      mobile_thumbnail = True,
-                     trusted_sponsor = False,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,
