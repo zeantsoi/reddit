@@ -1930,11 +1930,11 @@ class Inbox(MultiRelation('inbox',
             to._load()
 
         if orangered:
-            to._incr('inbox_count', 1)
             # Double-commit is temporary, this will be removed post-backfill
             if not getattr(to, 'msgtime', None):
                 to.msgtime = obj._date
                 to._commit()
+            to._incr('inbox_count', 1)
 
         return i
 
