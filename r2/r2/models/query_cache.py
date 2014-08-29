@@ -565,6 +565,20 @@ class UserQueryCache(_BaseQueryCache):
     """A query cache column family for user-keyed queries."""
     _use_db = True
 
+    @classmethod
+    def get(cls, keys):
+        import time
+        from pylons import c, request
+
+        start = time.time()
+        ret = super(cls, cls).get(keys)
+        finish = time.time()
+        if finish - start > 3:
+            user = c.user._id if c.user_is_loggedin else "unlogged"
+            path = request.path
+            g.log.error("UQC.multiget took too long. %s - %s", user, path)
+        return ret
+
 
 class SubredditQueryCache(_BaseQueryCache):
     """A query cache column family for subreddit-keyed queries."""
