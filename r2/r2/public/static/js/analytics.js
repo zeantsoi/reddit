@@ -16,9 +16,6 @@ r.analytics = {
 
         $('.promotedlink.promoted:visible').trigger('onshow')
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
-
-        $(window).on('neverEndingLoad', this.fireNeverEndingLoadTrack)
-        $(window).on('adBlockEnabled', this.fireAdBlockEnabled)
     },
 
     fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction) {
@@ -187,15 +184,6 @@ r.analytics = {
           // GA is loaded; form will submit via the _gaq.push'ed function
           event.preventDefault()
         }
-    },
-
-    fireNeverEndingLoadTrack: function(event) {
-      r.analytics.fireGAEvent('RES', 'neverEndingLoad', '', 0, true);
-    },
-
-    fireAdBlockEnabled: function(event, enabled) {
-      enabled = enabled.toString();
-      r.analytics.fireGAEvent('AdBlock', 'enabled', enabled, 0, true);
     }
 }
 
