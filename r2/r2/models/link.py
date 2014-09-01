@@ -1503,13 +1503,13 @@ class Message(Thing, Printable):
                                 data=True, return_dict=True)
 
         # load the unread list to determine message newness
-        unread = set()
+        unread = set(queries.get_unread_inbox(user))
 
         msg_srs = set(m_subreddits[x.sr_id]
                       for x in wrapped if x.sr_id is not None
                       and isinstance(x.lookups[0], Message))
         # load the unread mod list for the same reason
-        mod_unread = set()
+        mod_unread = set(queries.get_unread_subreddit_messages_multi(msg_srs))
 
         for item in wrapped:
             item.to = tos.get(item.to_id)
