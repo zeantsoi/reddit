@@ -290,7 +290,8 @@ class ListingWithPromos(SubredditListingController):
         show_promo = False
         srnames = []
         can_show_promo = c.user.pref_show_sponsors or not c.user.gold
-        try_show_promo = random.random() > 0.6
+        try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
+                          not c.user_is_loggedin)
 
         if can_show_promo and try_show_promo:
             srnames = promote.srnames_with_live_promos(c.user, c.site)
