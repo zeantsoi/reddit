@@ -923,7 +923,6 @@ class AccountsActiveBySR(tdb_cassandra.View):
 
     @classmethod
     def touch(cls, account, sr):
-        pass
         cls._set_values(sr._id36,
                         {account._id36: ''})
 
@@ -934,7 +933,6 @@ class AccountsActiveBySR(tdb_cassandra.View):
     @classmethod
     @memoize('accounts_active', time=60)
     def get_count_cached(cls, sr_id):
-        return 0
         return cls._cf.get_count(sr_id)
 
 
