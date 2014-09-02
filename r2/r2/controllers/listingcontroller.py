@@ -767,6 +767,9 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
+        if c.user_is_admin:
+            c.referrer_policy = "always"
+
         if self.sort in  ('hot', 'new'):
             self.time = 'all'
 
@@ -1066,6 +1069,8 @@ class MessageController(ListingController):
             self.mark = 'false'
         else:
             self.mark = 'true'
+        if c.user_is_admin:
+            c.referrer_policy = "always"
         return ListingController.GET_listing(self, **env)
 
     @validate(VUser(),
