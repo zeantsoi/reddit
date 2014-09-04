@@ -1404,6 +1404,7 @@ class LinkInfoPage(Reddit):
             "title": u"%s • %s" % (link_title, sr_fragment),
             "image": self._build_og_image(),
             "description": self._build_og_description(meta_description),
+            "ttl": "600",  # re-fetch frequently to update vote/comment count
         }
 
     def _build_og_image(self):
