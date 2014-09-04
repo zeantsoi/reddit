@@ -3661,6 +3661,7 @@ class ApiController(RedditController):
 
     @validatedForm(
         VAdmin(),
+        VModhash(),
         recipient=VExistingUname("recipient"),
         num_creddits=VInt('num_creddits', num_default=0),
     )
