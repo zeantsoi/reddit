@@ -1069,6 +1069,7 @@ function terminate_campaign($campaign_row) {
 }
 
 function edit_promotion() {
+    $("button.new-campaign").prop("disabled", false);
     cancel_edit(function() {
         $('.promotelink-editor')
             .find('.collapsed-display').slideUp().end()
