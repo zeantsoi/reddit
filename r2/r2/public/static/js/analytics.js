@@ -16,6 +16,10 @@ r.analytics = {
 
         $('.promotedlink.promoted:visible').trigger('onshow')
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
+
+        if (Math.random() <= 0.05) {
+          r.analytics.fireTrackPixelRatio();
+        }
     },
 
     fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction) {
@@ -184,7 +188,24 @@ r.analytics = {
           // GA is loaded; form will submit via the _gaq.push'ed function
           event.preventDefault()
         }
-    }
+    },
+
+    // Props: https://github.com/tysonmatanich/GetDevicePixelRatio
+    fireTrackPixelRatio: function () {
+      var ratio = 1;
+      // To account for zoom, change to use deviceXDPI instead of systemXDPI
+      if (window.screen.systemXDPI !== undefined &&
+          window.screen.logicalXDPI !== undefined &&
+          window.screen.systemXDPI > window.screen.logicalXDPI) {
+        // Only allow for values > 1
+        ratio = window.screen.systemXDPI / window.screen.logicalXDPI;
+      }
+      else if (window.devicePixelRatio !== undefined) {
+        ratio = window.devicePixelRatio;
+      }
+
+      r.analytics.fireGAEvent('pixelratio', 'triggered', ratio, null, true);
+    },
 }
 
 r.analytics.breadcrumbs = {
