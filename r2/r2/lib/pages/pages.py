@@ -467,9 +467,6 @@ class Reddit(Templated):
         if sidebar_message and isinstance(c.site, DefaultSR):
             ps.append(SidebarMessage(sidebar_message[0]))
 
-        if feature.is_enabled('stand_sidebar') and c.lang.startswith("en") and isinstance(c.site, DefaultSR):
-            ps.append(StandMessage())
-
         gold_sidebar_message = g.live_config.get("gold_sidebar_message")
         if (c.user_is_loggedin and c.user.gold and
                 gold_sidebar_message and isinstance(c.site, DefaultSR)):
@@ -2080,11 +2077,6 @@ class SidebarMessage(Templated):
     """An info message box on the sidebar."""
     def __init__(self, message, extra_class=None):
         Templated.__init__(self, message=message, extra_class=extra_class)
-
-
-class StandMessage(Templated):
-    """A message to save net neutrality."""
-    pass
 
 class RedditError(BoringPage):
     site_tracking = False
