@@ -3138,11 +3138,8 @@ class WrappedUser(CachedTemplate):
             context_deleted = context_thing.deleted
 
         karma = ''
-        context_thing_fullname = ''
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
-            if context_thing:
-                context_thing_fullname = context_thing._fullname
             if user._spam:
                 author_cls += " banned-user"
 
@@ -3160,7 +3157,7 @@ class WrappedUser(CachedTemplate):
                                 author_cls = author_cls,
                                 author_title = author_title,
                                 attribs = attribs,
-                                context_thing_fullname = context_thing_fullname,
+                                context_thing = context_thing,
                                 karma = karma,
                                 ip_span = ip_span,
                                 context_deleted = context_deleted,
