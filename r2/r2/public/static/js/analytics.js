@@ -204,7 +204,7 @@ r.analytics = {
         ratio = window.devicePixelRatio;
       }
 
-      r.analytics.fireGAEvent('pixelratio', 'triggered', ratio, null, true);
+      r.analytics.fireGAEvent('pixelratio', 'triggered', ratio.toString(), null, true);
     },
 }
 
