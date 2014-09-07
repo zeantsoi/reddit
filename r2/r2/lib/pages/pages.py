@@ -3129,9 +3129,11 @@ class WrappedUser(CachedTemplate):
                          or c.site.is_moderator_with_perms(c.user, 'flair'))):
                 include_flair_selector = False
 
+        target = None
         ip_span = None
         context_deleted = None
         if context_thing:
+            target = getattr(context_thing, 'target', None)
             ip_span = getattr(context_thing, 'ip_span', None)
             context_deleted = context_thing.deleted
 

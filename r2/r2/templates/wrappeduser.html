@@ -49,7 +49,7 @@
     %>
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
                  _class = ' '.join(classes),
-                 _sr_path = False, title=thing.author_title)}
+                 _sr_path = False, target=target, title=thing.author_title)}
     %if thing.flair_position == 'right':
       ${flair(thing, enabled=thing.force_show_flair)}
     %endif
@@ -63,6 +63,9 @@
       %for priority, abbv, css_class, label, attr_link in thing.attribs:
         %if attr_link:
           <a class="${css_class}" title="${label}"
+          %if target:
+             target="${target}"
+          %endif
              href="${attr_link}">
             ${unsafe(abbv)}
           </a>
