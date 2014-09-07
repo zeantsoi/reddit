@@ -3825,7 +3825,6 @@ def wrapped_flair(user, subreddit, force_show_flair):
 
 class WrappedUser(CachedTemplate):
     cachable = False
-    FLAIR_CSS_PREFIX = 'flair-'
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
                  subreddit = None, force_show_flair = None,
@@ -3858,12 +3857,6 @@ class WrappedUser(CachedTemplate):
             has_flair = True
         else:
             flair_template_id = None
-
-        if flair_css_class:
-            # This is actually a list of CSS class *suffixes*. E.g., "a b c"
-            # should expand to "flair-a flair-b flair-c".
-            flair_css_class = ' '.join(self.FLAIR_CSS_PREFIX + c
-                                       for c in flair_css_class.split())
 
         if include_flair_selector:
             if (not getattr(c.site, 'flair_self_assign_enabled', True)
