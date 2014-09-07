@@ -136,13 +136,23 @@ class ThingJsonTemplate(JsonTemplate):
                 return "[deleted]"
             return thing.author.name
         if attr == "author_flair_text":
-            if thing.author._deleted or not thing.wrapped_author.flair_enabled:
+            if thing.author._deleted:
                 return None
-            return thing.wrapped_author.flair_text
+            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
+                return getattr(thing.author,
+                               'flair_%s_text' % (thing.subreddit._id),
+                               None)
+            else:
+                return None
         if attr == "author_flair_css_class":
-            if thing.author._deleted or not thing.wrapped_author.flair_enabled:
+            if thing.author._deleted:
                 return None
-            return thing.wrapped_author.flair_css_class
+            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
+                return getattr(thing.author,
+                               'flair_%s_css_class' % (thing.subreddit._id),
+                               None)
+            else:
+                return None
         elif attr == "created":
             return time.mktime(thing._date.timetuple())
         elif attr == "created_utc":
