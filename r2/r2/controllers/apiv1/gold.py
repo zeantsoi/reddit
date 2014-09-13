@@ -60,7 +60,7 @@ class APIv1GoldController(OAuth2ResourceController):
                 self.on_validation_error(err)
 
             note = None
-            if c.user.name.lower() in g.proxy_gilding_accounts:
+            if c.user.name.lower() in g.live_config["proxy_gilding_accounts"]:
                 note = "proxy"
 
             send_gift(
