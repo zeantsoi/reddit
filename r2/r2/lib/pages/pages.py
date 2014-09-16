@@ -1391,11 +1391,10 @@ class LinkInfoPage(Reddit):
         if hasattr(self.link, "shortlink"):
             self.shortlink = self.link.shortlink
 
-        if feature.is_enabled('link_og_data'):
-            self.og_data = self._build_og_data(
-                _force_unicode(link_title),
-                short_description,
-            )
+        self.og_data = self._build_og_data(
+            _force_unicode(link_title),
+            short_description,
+        )
 
         if hasattr(self.link, "dart_keyword"):
             c.custom_dart_keyword = self.link.dart_keyword
