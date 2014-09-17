@@ -754,6 +754,8 @@ class Reddit(Templated):
             if isinstance(c.site, DomainSR):
                 func = 'domain'
             toolbar.insert(0, PageNameNav(func))
+        elif getattr(g, 'lang_override', None) == 'pir' and c.user_is_loggedin:
+            toolbar.append(PirateBar())
 
         return toolbar
 
@@ -4739,3 +4741,8 @@ class GeotargetNotice(Templated):
         more_link = "/wiki/targetingbycountrycity"
         self.text = text % {"link": more_link}
         Templated.__init__(self)
+
+class PirateBar(Templated):
+    def __init__(self):
+        Templated.__init__(self)
+        self.enabled = not c.landlubber
