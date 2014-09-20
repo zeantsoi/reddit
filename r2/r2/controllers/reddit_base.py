@@ -193,8 +193,6 @@ class Cookie(object):
             return "ga"
         elif cookie_name.startswith("beta_"):
             return "beta"
-        elif cookie_name.startswith("landlubber"):
-            return "landlubber"
         else:
             return "other"
 
@@ -547,8 +545,7 @@ def set_iface_lang():
     host_lang = request.environ.get('reddit-prefer-lang')
     lang = host_lang or c.user.pref_lang
 
-    c.landlubber = 'landlubber' in c.cookies
-    if getattr(g, "lang_override") and lang == "en" and not c.landlubber:
+    if getattr(g, "lang_override") and lang == "en":
         lang = g.lang_override
 
     c.lang = lang
