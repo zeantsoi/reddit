@@ -1421,13 +1421,16 @@ class LinkInfoPage(Reddit):
 
     def _build_og_data(self, link_title, meta_description):
         sr_fragment = "/r/" + c.site.name if not c.default_sr else get_domain()
-        return {
+        data = {
             "site_name": "reddit",
             "title": u"%s • %s" % (link_title, sr_fragment),
-            "image": self._build_og_image(),
             "description": self._build_og_description(meta_description),
             "ttl": "600",  # re-fetch frequently to update vote/comment count
         }
+        if not self.link.nsfw:
+            data["image"] = self._build_og_image()
+
+        return data
 
     def _build_og_image(self):
         if self.link.media_object:
