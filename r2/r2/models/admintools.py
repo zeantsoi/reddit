@@ -453,7 +453,8 @@ def send_welcome_message(user):
 
 
 def send_system_message(user, subject, body, system_user=None,
-                        distinguished='admin', repliable=False):
+                        distinguished='admin', repliable=False,
+                        add_to_sent=True):
     from r2.lib.db import queries
 
     if system_user is None:
@@ -470,7 +471,7 @@ def send_system_message(user, subject, body, system_user=None,
     item._commit()
 
     try:
-        queries.new_message(item, inbox_rel)
+        queries.new_message(item, inbox_rel, add_to_sent=add_to_sent)
     except MemcachedError:
         raise MessageError('reddit_inbox')
 
