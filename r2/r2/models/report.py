@@ -29,7 +29,7 @@ from r2.models import Link, Comment, Message, Subreddit, Account
 from r2.models.vote import score_changes
 from datetime import datetime
 
-from pylons import g, c
+from pylons import g
 
 class Report(MultiRelation('report',
                            Relation(Account, Link),
@@ -126,9 +126,7 @@ class Report(MultiRelation('report',
     @classmethod
     def get_reports(cls, wrapped, max_user_reasons=20):
         """Get two lists of mod and user reports on the item."""
-        if (wrapped.reported > 0 and
-                (wrapped.can_ban or
-                 wrapped.promoted and c.user_is_sponsor)):
+        if wrapped.can_ban and wrapped.reported > 0:
             from r2.models import SRMember
 
             reports = cls.for_thing(wrapped.lookups[0])
