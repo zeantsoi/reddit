@@ -1090,7 +1090,8 @@ def new_vote(vote, foreground=False, timer=None):
                 m.delete(get_liked(user), [vote])
                 m.delete(get_disliked(user), [vote])
 
-def new_message(message, inbox_rels, add_to_sent=True):
+
+def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
     from r2.lib.comment_tree import add_message
 
     from_user = Account._byID(message.author_id)
@@ -1100,7 +1101,6 @@ def new_message(message, inbox_rels, add_to_sent=True):
         add_to_sent = False
 
     update_recipient = False
-    update_modmail = False
 
     with CachedQueryMutator() as m:
         if add_to_sent:
@@ -1111,7 +1111,8 @@ def new_message(message, inbox_rels, add_to_sent=True):
             # moderator message
             if isinstance(inbox_rel, ModeratorInbox):
                 m.insert(get_subreddit_messages(to), [inbox_rel])
-                update_modmail = True
+                update_modmail &= True
+ 
             # personal message
             else:
                 m.insert(get_inbox_messages(to), [inbox_rel])
