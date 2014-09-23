@@ -240,7 +240,7 @@ def months_and_days_from_pennies(pennies, discount=False):
 
 def send_gift(buyer, recipient, months, days, signed, giftmessage,
               thing_fullname, note=None):
-    admintools.engolden(recipient, days)
+    admintools.adjust_gold_expiration(recipient, days=days)
 
     if thing_fullname:
         thing = Thing._by_fullname(thing_fullname, data=True)
@@ -400,7 +400,7 @@ class IpnController(RedditController):
                 form.set_html(".status",
                               _("the gift code has been messaged to you!"))
             elif payment_blob["goldtype"] == "onetime":
-                admintools.engolden(c.user, days)
+                admintools.adjust_gold_expiration(c.user, days=days)
                 form.set_html(".status", _("the gold has been delivered!"))
 
             redirect_to_spent = True
@@ -486,7 +486,7 @@ class IpnController(RedditController):
                                          c.start_time, subscr_id)
                 except IntegrityError:
                     return "Ok"
-                admintools.engolden(existing, days)
+                admintools.adjust_gold_expiration(existing, days=days)
 
                 g.log.info("Just applied IPN renewal for %s, %d days" %
                            (existing.name, days))
@@ -535,7 +535,7 @@ class IpnController(RedditController):
 
         instagift = False
         if payment_blob['goldtype'] in ('autorenew', 'onetime'):
-            admintools.engolden(buyer, days)
+            admintools.adjust_gold_expiration(buyer, days=days)
 
             subject = _("Eureka! Thank you for investing in reddit gold!")
             
@@ -797,7 +797,7 @@ class GoldPaymentController(RedditController):
             gold_recipient._sync_latest()
 
             if goldtype in ('onetime', 'autorenew'):
-                admintools.engolden(buyer, days)
+                admintools.adjust_gold_expiration(buyer, days=days)
                 if goldtype == 'onetime':
                     subject = "thanks for buying reddit gold!"
                     if g.lounge_reddit:
