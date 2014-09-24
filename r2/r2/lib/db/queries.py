@@ -1715,8 +1715,6 @@ def handle_vote(user, thing, dir, ip, vote_info,
 def process_votes(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
     stats_qname = qname
-    if stats_qname.startswith("vote_link"):
-        stats_qname = "vote_link_q"
 
     @g.stats.amqp_processor(stats_qname)
     def _handle_vote(msg):
