@@ -274,6 +274,8 @@ class Subreddit(Thing, Printable, BaseSite):
     DEFAULT_LIMIT = object()
 
     MAX_SRNAME_LENGTH = 200 # must be less than max memcached key length
+    BASE_SELFTEXT_LENGTH = 15000
+    ONLY_SELFTEXT_LENGTH = 40000
 
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
@@ -385,6 +387,13 @@ class Subreddit(Thing, Printable, BaseSite):
         if self.link_type == "any":
             return set(("link", "self"))
         return set((self.link_type,))
+
+    @property
+    def selftext_max_length(self):
+        if self.link_type == "self":
+            return self.ONLY_SELFTEXT_LENGTH
+        else:
+            return self.BASE_SELFTEXT_LENGTH
 
     @property
     def allows_referrers(self):
