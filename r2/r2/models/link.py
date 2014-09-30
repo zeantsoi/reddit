@@ -1458,7 +1458,9 @@ class Message(Thing, Printable):
                 first_recipient = Account._byID(first_message.to_id, data=True)
                 first_recipient_modmail = sr.is_moderator_with_perms(
                     first_recipient, 'mail')
-                if first_recipient != author and not first_recipient_modmail:
+                if (first_recipient != author and
+                        first_recipient != to and
+                        not first_recipient_modmail):
                     inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
 
         hooks.get_hook('message.new').call(message=m)
