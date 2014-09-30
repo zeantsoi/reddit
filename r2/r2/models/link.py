@@ -1449,7 +1449,9 @@ class Message(Thing, Printable):
             first_sender_modmail = sr.is_moderator_with_perms(
                 first_sender, 'mail')
 
-            if first_sender != author and not first_sender_modmail:
+            if (first_sender != author and
+                    first_sender != to and
+                    not first_sender_modmail):
                 inbox_rel.append(Inbox._add(first_sender, m, 'inbox'))
 
             if first_message.to_id:
