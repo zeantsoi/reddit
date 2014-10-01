@@ -215,7 +215,7 @@ def consume_items(queue, callback, verbose=True):
         # size in bytes of prefetch window. zero indicates no preference.
         prefetch_size=0,
         # maximum number of prefetched messages.
-        prefetch_count=100,
+        prefetch_count=10,
         # if global, applies to the whole connection, else just this channel.
         a_global=False
     )
