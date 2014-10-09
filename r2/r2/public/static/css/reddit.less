@@ -2828,6 +2828,20 @@ li.searchfacet {
     background-image: url(../search-mouseover.png); /* SPRITE */
 }
 
+@media
+(-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    #search input[type=submit] {
+        background-image: data-uri('../search-x2.png');
+        background-size: 13px 13px;
+    }
+
+    #search input[type=submit]:hover {
+        background-image: data-uri('../search-mouseover-x2.png');
+        background-size: 13px 13px;
+    }
+}
+
 /* login, register */
 
 
