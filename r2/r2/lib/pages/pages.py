@@ -651,7 +651,7 @@ class Reddit(Templated):
                 ps.append(SideBox(
                     title=_("Join our Secret Santa tradition"),
                     css_class="hohoho",
-                    link="http://redditgifts.com/page/secret-santa/?source=red-ss14-side-1132014",
+                    link="https://ssl.redditgifts.com/page/secretsanta/?source=red-ss14-side-1132014",
                     target="_blank",
                 ))
             ps.append(Ads())
