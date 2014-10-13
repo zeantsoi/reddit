@@ -351,10 +351,10 @@ r.gold.signupForm = (function() {
 
     if ($tab.prop('id') == 'autorenew') {
       goldtype = 'autorenew'
-    } else if (isGift && $gifttype.length > 0) {
-      goldtype = $gifttype.val()
     } else if ($tab.prop('id') == 'creddits') {
       goldtype = 'creddits'
+    } else if (isGift && $gifttype.length > 0) {
+      goldtype = $gifttype.val()
     } else {
       goldtype = 'onetime'
     }
