@@ -241,6 +241,49 @@ class ApiController(RedditController):
         if not (responder.has_errors("user", errors.BAD_USERNAME)):
             return bool(user)
 
+    @csrf_exempt
+    @json_validate(user=VUname(("user",)))
+    def POST_check_username(self, responder, user):
+        """
+        Check whether a username is valid.
+        """
+
+        if not (responder.has_errors("user",
+                    errors.USERNAME_TOO_SHORT,
+                    errors.USERNAME_INVALID_CHARACTERS,
+                    errors.USERNAME_TAKEN_DEL,
+                    errors.USERNAME_TAKEN)):
+            # Pylons does not handle 204s correctly.
+            return {}
+
+    @csrf_exempt
+    @json_validate(password=VPasswordChange(("passwd","passwd2")))
+    def POST_check_password_match(self, responder, password):
+        """
+        Check whether a confirmation password is valid.
+        """
+
+        if (responder.has_errors("passwd",
+                errors.SHORT_PASSWORD,
+                errors.BAD_PASSWORD)):
+            from r2.lib.base import abort
+            from r2.lib.errors import reddit_http_error
+            abort(reddit_http_error(409, errors.BAD_PASSWORD))
+        elif not (responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH)):
+            # Pylons does not handle 204s correctly.
+            return {}
+
+    @csrf_exempt
+    @json_validate(email=ValidEmail("email"))
+    def POST_check_email(self, responder, email):
+        """
+        Check whether an email is valid.
+        """
+
+        if not (responder.has_errors("email", errors.BAD_EMAIL)):
+            # Pylons does not handle 204s correctly.
+            return {}
+
     @allow_oauth2_access
     @json_validate()
     @api_doc(api_section.captcha, extensions=["json"])
@@ -594,7 +637,7 @@ class ApiController(RedditController):
                            "email": "(optional) the user's email address",
                        },
                    ),
-                   password = VPassword(['passwd', 'passwd2']),
+                   password = VPasswordChange(['passwd', 'passwd2']),
                    rem = VBoolean('rem'))
     def _handle_register(self, form, responder, name, email,
                       password, rem):
@@ -1029,7 +1072,7 @@ class ApiController(RedditController):
 
     @validatedForm(VUser('curpass', default=''),
                    VModhash(),
-                   password=VPassword(
+                   password=VPasswordChange(
                         ['curpass', 'curpass'],
                         docs=dict(curpass="the user's current password")
                    ),
@@ -1062,7 +1105,7 @@ class ApiController(RedditController):
     @validatedForm(VUser("curpass", default=""),
                    VModhash(),
                    force_https=VBoolean("force_https"),
-                   password=VPassword(
+                   password=VPasswordChange(
                        ["curpass", "curpass"],
                        docs=dict(curpass="the user's current password"),
                    ))
@@ -1152,7 +1195,7 @@ class ApiController(RedditController):
     @validatedForm(
         VUser('curpass', default=''),
         VModhash(),
-        password=VPassword(['newpass', 'verpass']),
+        password=VPasswordChange(['newpass', 'verpass']),
     )
     @api_doc(api_section.account)
     def POST_update_password(self, form, jquery, password):
@@ -1185,7 +1228,7 @@ class ApiController(RedditController):
     @validatedForm(VUser('curpass', default = ''),
                    VModhash(),
                    email = ValidEmails("email", num = 1),
-                   password = VPassword(['newpass', 'verpass']),
+                   password = VPasswordChange(['newpass', 'verpass']),
                    verify = VBoolean("verify"),
                    dest=VDestination())
     @api_doc(api_section.account)
@@ -3058,7 +3101,7 @@ class ApiController(RedditController):
 
     @csrf_exempt
     @validatedForm(token=VOneTimeToken(PasswordResetToken, "key"),
-                   password=VPassword(["passwd", "passwd2"]))
+                   password=VPasswordChange(["passwd", "passwd2"]))
     def POST_resetpassword(self, form, jquery, token, password):
         # was the token invalid or has it expired?
         if not token:

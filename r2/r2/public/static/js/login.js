@@ -92,11 +92,11 @@ r.login.hoist = {
 r.login.ui = {
     init: function() {
         if (!r.config.logged) {
-            $('.content form.login-form, .side form.login-form').each(function(i, el) {
+            $('.content form.login-form, .side form.login-form, #login-form').each(function(i, el) {
                 new r.ui.LoginForm(el)
             })
 
-            $('.content form.register-form').each(function(i, el) {
+            $('.content form.register-form, #register-form').each(function(i, el) {
                 new r.ui.RegisterForm(el)
             })
 
@@ -247,10 +247,17 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
 
 r.ui.RegisterForm = function() {
     r.ui.Form.apply(this, arguments)
-    this.checkUsernameDebounced = _.debounce($.proxy(this, 'checkUsername'), 500)
-    this.$user = this.$el.find('[name="user"]')
-    this.$user.on('keyup', $.proxy(this, 'usernameChanged'))
-    this.$submit = this.$el.find('.submit button')
+
+    this.$user = this.$el.find('[name="user"]');
+
+    if (!this.$user.is('[data-validate-url]')) {
+        this.checkUsernameDebounced = _.debounce($.proxy(this, 'checkUsername'), 500);
+        this.$user.on('keyup', $.proxy(this, 'usernameChanged'));
+    }
+
+    this.$el.find('[name="passwd2"]').on('keyup', $.proxy(this, 'checkPasswordMatch'));
+
+    this.$submit = this.$el.find('.submit button');
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     maxName: 0,
@@ -273,6 +280,25 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
 
         this.$submit.attr('disabled', false)
     },
+
+    checkPasswordMatch: _.debounce(function() {
+        var $confirm = this.$el.find('[name="passwd2"]');
+        var $password = this.$el.find('[name="passwd"]');
+        var confirm = $confirm.val();
+        var password = $password.val();
+
+        if (!confirm || $password.stateify('getCurrentState') !== 'success') {
+            $confirm.stateify('clear');
+            return;
+        }
+
+        if (confirm === password) {
+            $confirm.stateify('set', 'success');
+        } else {
+            $confirm.stateify('set', 'error', r._('passwords do not match'));
+        }
+
+    }, $.fn.validator.Constructor.DEFAULTS.delay),
 
     checkUsername: function() {
         var name = this.$user.val()

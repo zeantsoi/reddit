@@ -246,7 +246,7 @@ class Reddit(Templated):
         self.infotext = infotext
         self.extra_js_config = extra_js_config
         self.show_wiki_actions = show_wiki_actions
-        self.loginbox = True
+        self.loginbox = loginbox
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
         # instantiate a footer
@@ -1213,11 +1213,12 @@ class LoginPage(BoringPage):
     def __init__(self, **context):
         self.dest = context.get('dest', '')
         context['loginbox'] = False
-        context['show_sidebar'] = False
+        context['show_sidebar'] = True if feature.is_enabled('new_login_flow') else False
         if c.render_style == "compact":
             title = self.short_title
         else:
             title = _("login or register")
+
         BoringPage.__init__(self,  title, **context)
 
         if self.dest:
