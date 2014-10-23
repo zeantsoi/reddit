@@ -1487,8 +1487,14 @@ class VExistingUname(VRequired):
         name = chkuser(name)
         if name:
             try:
-                return Account._by_name(name, allow_deleted=self.allow_deleted)
+                return Account._by_name(name)
             except NotFound:
+                if self.allow_deleted and c.user_is_admin:
+                    try:
+                        return Account._by_name(name, allow_deleted=True)
+                    except NotFound:
+                        pass
+
                 self.error(errors.USER_DOESNT_EXIST)
         else:
             self.error()
