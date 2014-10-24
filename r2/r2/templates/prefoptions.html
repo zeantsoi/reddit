@@ -237,6 +237,8 @@
       &#32;<span class="little gray">
         ${_("(otherwise, they will be marked as read when you click them)")}
       </span>
+      <br>
+      ${checkbox(_("send messages as emails"), "email_messages", disabled=(not c.user.email_verified), disabled_text=_("requires a verified email"))}
     </td>
   </tr>
   <tr>

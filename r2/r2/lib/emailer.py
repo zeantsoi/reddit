@@ -110,6 +110,14 @@ def password_email(user):
                   Email.Kind.RESET_PASSWORD)
     return True
 
+def message_notification_email(user, comment):
+    """Queues a system email for a new message notification."""
+    from r2.lib.pages import MessageNotificationEmail
+
+    return _system_email(user.email,
+                         MessageNotificationEmail(comment=comment).render(style='email'),
+                         Email.Kind.MESSAGE_NOTIFICATION)
+
 def password_change_email(user):
     """Queues a system email for a password change notification."""
     from r2.lib.pages import PasswordChangeEmail

@@ -826,6 +826,7 @@ class Comment(Thing, Printable):
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.db.queries import changed
+        from r2.lib.emailer import message_notification_email
 
         kw = {}
         if link.comment_tree_version > 1:
@@ -888,6 +889,9 @@ class Comment(Thing, Printable):
             # relation, but don't give yourself an orangered
             orangered = (to.name != author.name)
             inbox_rel = Inbox._add(to, c, name, orangered=orangered)
+
+            if orangered and to.pref_email_messages:
+                message_notification_email(to, c)
 
         hooks.get_hook('comment.new').call(comment=c)
 
@@ -1391,6 +1395,8 @@ class Message(Thing, Printable):
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
              from_sr=False):
+        from r2.lib.emailer import message_notification_email
+
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
                     ip=ip, from_sr=from_sr)
         m._spam = author._spam
@@ -1470,6 +1476,9 @@ class Message(Thing, Printable):
                              author._id not in to.enemies)
                 inbox_rel.append(Inbox._add(to, m, 'inbox',
                                             orangered=orangered))
+
+                if orangered and to.pref_email_messages:
+                    message_notification_email(to, m)
 
         # update user inboxes for non-mods involved in a modmail conversation
         if not skip_inbox and sr_id and m.first_message:
