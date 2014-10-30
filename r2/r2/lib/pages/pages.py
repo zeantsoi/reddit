@@ -3722,6 +3722,7 @@ class PromotePage(Reddit):
                 NavButton('underdelivered', '/sponsor/promoted/underdelivered'),
                 NavButton('house ads', '/sponsor/promoted/house'),
                 NavButton('reported links', '/sponsor/promoted/reported'),
+                NavButton('lookup user', '/sponsor/lookup_user'),
             ]
             return NavMenu(buttons, type='flatlist')
         else:
@@ -3984,6 +3985,11 @@ class Roadblocks(PromoteLinkBase):
 
         self.default_start = startdate.strftime('%m/%d/%Y')
         self.default_end = enddate.strftime('%m/%d/%Y')
+
+
+class SponsorLookupUser(PromoteLinkBase):
+    def __init__(self, user=None):
+        PromoteLinkBase.__init__(self, user=user)
 
 
 class TabbedPane(Templated):
