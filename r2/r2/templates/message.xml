@@ -43,7 +43,7 @@
      subreddit = thing.subreddit.name
      author_name = websafe(thing.updated_author) % dict(author=author_name,
                                                         subreddit=subreddit)
-     taglinetext = mako_websafe(thing.taglinetext)
+   taglinetext = mako_websafe(thing.taglinetext)
   %>
   ${thing.subject} : ${unsafe(taglinetext % dict(when=thing.timesince,
                                                  author=u"%s" % author_name,
