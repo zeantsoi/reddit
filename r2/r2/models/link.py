@@ -1538,14 +1538,16 @@ class Message(Thing, Printable):
                     (c.user_is_admin or item.subreddit.is_moderator(user)))
         ]
         if mod_messages:
-            parent_ids = [item.parent_id for item in mod_messages]
-            parents = Message._byID(parent_ids, data=True, return_dict=True)
-            author_ids = {item.author_id for item in parents.itervalues()}
-            authors = Account._byID(author_ids, data=True, return_dict=True)
+            mod_parent_ids = [item.parent_id for item in mod_messages]
+            mod_parents = Message._byID(
+                mod_parent_ids, data=True, return_dict=True)
+            mod_author_ids = {item.author_id for item in mod_parents.itervalues()}
+            mod_authors = Account._byID(
+                mod_author_ids, data=True, return_dict=True)
 
             for item in mod_messages:
-                parent = parents[item.parent_id]
-                author = authors[parent.author_id]
+                parent = mod_parents[item.parent_id]
+                author = mod_authors[parent.author_id]
                 mod_message_authors[item._id] = author
 
         # load the unread list to determine message newness
