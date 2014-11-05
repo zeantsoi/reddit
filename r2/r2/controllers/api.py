@@ -257,19 +257,14 @@ class ApiController(RedditController):
             return {}
 
     @csrf_exempt
-    @json_validate(password=VPasswordChange(("passwd","passwd2")))
-    def POST_check_password_match(self, responder, password):
+    @json_validate(password=VPassword(("passwd")))
+    def POST_check_password(self, responder, password):
         """
-        Check whether a confirmation password is valid.
+        Check whether a password is valid.
         """
-
-        if (responder.has_errors("passwd",
-                errors.SHORT_PASSWORD,
-                errors.BAD_PASSWORD)):
-            from r2.lib.base import abort
-            from r2.lib.errors import reddit_http_error
-            abort(reddit_http_error(409, errors.BAD_PASSWORD))
-        elif not (responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH)):
+    
+        if not (responder.has_errors("passwd", errors.SHORT_PASSWORD) or
+                responder.has_errors("passwd", errors.BAD_PASSWORD)):
             # Pylons does not handle 204s correctly.
             return {}
 
