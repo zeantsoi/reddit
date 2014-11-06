@@ -3103,8 +3103,8 @@ li.searchfacet {
         left: 50%;
         margin: 0;
         margin-left: -364px;
-        padding-top: 105px;
-        padding-bottom: 105px;
+        padding-bottom: 60px;
+        padding-top: 60px;
         top: 40px;
 
         .csstransforms & {
@@ -3120,6 +3120,8 @@ li.searchfacet {
     @media (min-width: @screen-sm-max) {
         width: 784px;
         margin-left: -392px;
+        padding-bottom: 105px;
+        padding-top: 105px;
 
         .popup-v2-body {
             padding: 0 90px;
@@ -3151,10 +3153,24 @@ li.searchfacet {
     }
 }
 
-// hack to deal with floated right sidebar.
-// for more context see: https://github.com/reddit/reddit-public/blame/67972c3b202a1e09c891b6630f1b15ebd048e0c8/r2/r2/public/static/css/reddit.less#L480-L481
-.content[role=main] #login-v2 {
-    margin-right: 300px;
+.login-page {
+    #login-v2 {
+        margin-right: 300px;
+
+        h3 {
+            margin-top: 0;
+        }
+    }
+
+    @media (max-width: @screen-sm-min) {
+        #login-v2 {
+            margin-right: 0;
+        }
+
+        .side {
+            display: none;
+        }
+    }
 }
 
 #login-v2 {
@@ -3188,27 +3204,35 @@ li.searchfacet {
     .clearfix();
     margin-bottom: 30px;
 
-    .split-panel-section {
-        .box-sizing(border-box);
+    .split-panel-section-responsive(@panel-break-point: @screen-sm-min;) {
+        float: none;
+        width: 100%;
 
-        @media (max-width: @screen-xs-max) {
+        &:first-child {
+            padding-right: 0;
+        }
 
-            &.split-panel-divider {
-                &:first-child {
-                    border-bottom: 1px solid #e0e0e0;
-                    padding-bottom: 60px;
-                    margin-bottom: 60px;
-                }
+        &:last-child {
+            padding-left: 0;
+        }
 
-                &:last-child {
-                    border-top: 1px solid #e0e0e0;
-                    padding-top: 60px;
-                    margin-top: 60px;
-                }
+        &.split-panel-divider {
+            &:first-child {
+                border: 0;
+                border-bottom: 1px solid #e0e0e0;
+                padding-bottom: 60px;
+                margin-bottom: 60px;
+            }
+
+            &:last-child {
+                border: 0;
+                border-top: 1px solid #e0e0e0;
+                padding-top: 60px;
+                margin-top: 60px;
             }
         }
 
-        @media (min-width: @screen-sm-min) {
+        @media (min-width: @panel-break-point) {
             float: left;
             width: 50%;
 
@@ -3222,15 +3246,29 @@ li.searchfacet {
 
             &.split-panel-divider {
                 &:first-child {
+                    border: 0;
                     border-right: 1px solid #e0e0e0;
+                    margin-bottom: 0;
+                    padding-bottom: 0;
                 }
 
                 &:last-child {
+                    border: 0;
                     border-left: 1px solid #e0e0e0;
+                    margin-top: 0;
+                    padding-top: 0;
                 }
             }
         }
+    }
 
+    .split-panel-section {
+        .box-sizing(border-box);
+        .split-panel-section-responsive();
+
+        .login-page & {
+            .split-panel-section-responsive(@screen-md-min);
+        }
     }
 }
 
@@ -3243,6 +3281,7 @@ li.searchfacet {
 
     > p {
         margin-left: 60px;
+        margin-right: 60px;
     }
 }
 

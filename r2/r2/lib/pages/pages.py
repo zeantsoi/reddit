@@ -1214,6 +1214,7 @@ class LoginPage(BoringPage):
         self.dest = context.get('dest', '')
         context['loginbox'] = False
         context['show_sidebar'] = True if feature.is_enabled('new_login_flow') else False
+        context['page_classes'] = ['login-page']
         if c.render_style == "compact":
             title = self.short_title
         else:
