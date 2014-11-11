@@ -48,7 +48,7 @@
 
 .c-form-control-feedback-throbber,
 .c-form-throbber:after {
-    .hdpi-bg-image(@1x: '../throbber_v2.png'; @2x: '../throbber_v2_2x.png');
+    .hdpi-bg-image(@1x: data-uri('../throbber_v2.gif'); @2x: data-uri('../throbber_v2_2x.gif'));
 
     .cssanimations & {
         background: none;
@@ -62,14 +62,14 @@
 }
 
 .c-form-control-feedback-success {
-    .hdpi-bg-image(@1x: '../check.png'; @2x: '../check_2x.png');
+    .hdpi-bg-image(@1x: data-uri('../check.png'); @2x: data-uri('../check_2x.png'));
 }
 
 .c-form-control-feedback-error {
-    .hdpi-bg-image(@1x: '../alert.png'; @2x: '../alert_2x.png');
+    .hdpi-bg-image(@1x: data-uri('../alert.png'); @2x: data-uri('../alert_2x.png'));
 
     &:hover {
-        .hdpi-bg-image(@1x: '../alert_mouseover.png'; @2x: '../alert_mouseover_2x.png');
+        .hdpi-bg-image(@1x: data-uri('../alert_mouseover.png'); @2x: data-uri('../alert_mouseover_2x.png'));
 
         + .c-tooltip {
             .tooltip-inner {

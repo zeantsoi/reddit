@@ -28,8 +28,14 @@
     },
 
     _validate: function(e) {
-      // Don't validate on tab key
-      if (e.keyCode === 9) {
+      // Don't validate on enter/tab key
+      if (e.keyCode === 9 || e.keyCode === 13) {
+        return;
+      }
+
+      // Don't validate individual field on blur when submit is pressed.
+      if (e.type === 'blur' &&
+          e.relatedTarget && $(e.relatedTarget).is('[type=submit]')) {
         return;
       }
 

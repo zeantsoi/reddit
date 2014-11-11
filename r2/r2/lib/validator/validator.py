@@ -912,6 +912,13 @@ class VCaptcha(Validator):
             self.param[1]: "the user's response to the CAPTCHA challenge",
         }
 
+
+class VRegistrationCaptcha(VCaptcha):
+    def run(self, iden, solution):
+        if not feature.is_enabled('new_login_flow'):
+            return VCaptcha.run(self, iden, solution)
+
+
 class VUser(Validator):
     def run(self, password = None):
         if not c.user_is_loggedin:

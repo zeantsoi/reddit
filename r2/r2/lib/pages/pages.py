@@ -1213,14 +1213,15 @@ class LoginPage(BoringPage):
     def __init__(self, **context):
         self.dest = context.get('dest', '')
         context['loginbox'] = False
-        context['show_sidebar'] = True if feature.is_enabled('new_login_flow') else False
+        context['show_sidebar'] = False
         context['page_classes'] = ['login-page']
+
         if c.render_style == "compact":
             title = self.short_title
         else:
             title = _("login or register")
 
-        BoringPage.__init__(self,  title, **context)
+        BoringPage.__init__(self, "" if feature.is_enabled('new_login_flow') else title, **context)
 
         if self.dest:
             u = UrlParser(self.dest)

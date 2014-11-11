@@ -3084,10 +3084,14 @@ li.searchfacet {
     .hidecover {
         height: 18px;
         width: 18px;
-        .hdpi-bg-image(@1x: '../close_x.png'; @2x: '../close_x_2x.png');
+        .hdpi-bg-image(@1x: data-uri('../close_x.png'); @2x: data-uri('../close_x_2x.png'));
         position: absolute;
         top: 20px;
         right: 16px;
+
+        &:hover {
+            .hdpi-bg-image(@1x: data-uri('../close_x_hover.png'); @2x: data-uri('../close_x_hover_2x.png'));
+        }
     }
 
     .popup-v2-body {

@@ -106,29 +106,58 @@ r.login.ui = {
         }
     },
 
-    _determinePopupEventName: function(el) {
+    _getActionDetails: function(el) {
       var $el = $(el);
 
       if ($el.hasClass('up')) {
-        return 'upvote';
+        return {
+            eventName: 'upvote',
+            description: r._('you need to be signed in to upvote stuff')
+        };
       } else if ($el.hasClass('down')) {
-        return 'downvote';
+        return {
+            eventName: 'downvote',
+            description: r._('you need to be signed in to downvote stuff')
+        };
       } else if ($el.hasClass('arrow')) {
-        return 'arrow';
+        return {
+            eventName: 'arrow',
+            description: r._('you need to be signed in to vote on stuff')
+        };
       } else if ($el.hasClass('give-gold')) {
-        return 'give-gold';
+        return {
+            eventName: 'give-gold',
+            description: r._('you need to be signed in to give gold')
+        };
       } else if ($el.parents("#header").length && $el.attr('href').indexOf('login') !== -1) {
-        return 'login-or-register';
+        return {
+            eventName: 'login-or-register'
+        };
       } else if ($el.parents('.subscribe-button').length) {
-        return 'subscribe-button';
+        return {
+            eventName: 'subscribe-button',
+            description: r._('you need to be signed in to subscribe to stuff')
+        };
       } else if ($el.parents('.submit-link').length) {
-        return 'submit-link';
+        return {
+            eventName: 'submit-link',
+            description: r._('you need to be signed in to submit stuff')
+        };
       } else if ($el.parents('.submit-text').length) {
-        return 'submit-text';
+        return {
+            eventName: 'submit-text',
+            description: r._('you need to be signed in to submit stuff')
+        };
       } else if ($el.parents('.share-button').length) {
-        return 'share-button';
+        return {
+            eventName: 'share-button',
+            description: r._('you need to be signed in to share stuff')
+        };
       } else {
-        return $el.attr('class');
+        return {
+            eventName: $el.attr('class'),
+            description: r._('you need to be signed in to do that')
+        };
       }
     },
 
@@ -136,9 +165,11 @@ r.login.ui = {
         if (r.config.logged) {
             return true
         } else {
-            var el = $(e.target),
-                href = el.attr('href'),
-                dest
+            var el = $(e.target);
+            var href = el.attr('href');
+            var actionDetails = this._getActionDetails(el);
+            var dest;
+
             if (href && href != '#' && !/\/login\/?$/.test(href)) {
                 // User clicked on a link that requires login to continue
                 dest = href
@@ -150,7 +181,7 @@ r.login.ui = {
                 }
             }
 
-            this.popup.showLogin(true, dest && $.proxy(function(result) {
+            this.popup.showLogin(actionDetails.description, dest && $.proxy(function(result) {
                 this.popup.loginForm.$el.addClass('working')
                 var hsts_redir = result.json.data.hsts_redir
                 if(hsts_redir) {
@@ -159,7 +190,7 @@ r.login.ui = {
                 window.location = dest
             }, this))
 
-            r.analytics.fireGAEvent('login-required-popup', 'opened', this._determinePopupEventName(el));
+            r.analytics.fireGAEvent('login-required-popup', 'opened', actionDetails.eventName);
 
             return false
         }
@@ -345,7 +376,7 @@ r.ui.LoginPopup.prototype = $.extend(new r.ui.Base(), {
         this.registerForm.successCallback = callback
         $.request("new_captcha", {id: this.$el.attr('id')})
         this.$el
-            .find(".cover-msg").toggle(!!notice).end()
+            .find(".cover-msg").text(notice).toggle(!!notice).end()
             .find('.popup').css('top', $(document).scrollTop()).end()
             .show()
     },

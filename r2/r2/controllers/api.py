@@ -622,25 +622,22 @@ class ApiController(RedditController):
         """
         return self._handle_login(*args, **kwargs)
 
-    @validatedForm(VCaptcha(),
+    @validatedForm(VRegistrationCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
                    name = VUname(['user']),
-                   email=ValidEmails(
-                       "email",
-                       num=1,
-                       docs={
-                           "email": "(optional) the user's email address",
-                       },
-                   ),
+                   email=ValidEmail("email"),
                    password = VPasswordChange(['passwd', 'passwd2']),
                    rem = VBoolean('rem'))
     def _handle_register(self, form, responder, name, email,
                       password, rem):
         bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
-        if not (responder.has_errors("user", errors.BAD_USERNAME,
+        if not (responder.has_errors("user",
+                                errors.USERNAME_TOO_SHORT,
+                                errors.USERNAME_INVALID_CHARACTERS,
                                 errors.USERNAME_TAKEN_DEL,
                                 errors.USERNAME_TAKEN) or
-                responder.has_errors("email", errors.BAD_EMAILS) or
+                responder.has_errors("email", errors.BAD_EMAIL) or
+                responder.has_errors("passwd", errors.SHORT_PASSWORD) or
                 responder.has_errors("passwd", errors.BAD_PASSWORD) or
                 responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
                 responder.has_errors('ratelimit', errors.RATELIMIT) or
