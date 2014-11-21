@@ -121,6 +121,8 @@ def message_notification_email(user, comment):
     if not feature.is_enabled_for('orangereds_as_emails', user):
         continue
 
+    g.stats.simple_event('email.message_notification.queued')
+
     return _system_email(user.email,
                          MessageNotificationEmail(comment=comment).render(style='email'),
                          Email.Kind.MESSAGE_NOTIFICATION)
