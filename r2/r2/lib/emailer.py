@@ -27,6 +27,7 @@ import traceback, sys, smtplib
 
 from pylons import c, g
 
+from r2.config import feature
 from r2.lib.utils import timeago
 from r2.models import Email, DefaultSR, Account, Award
 from r2.models.token import EmailVerificationToken, PasswordResetToken
@@ -113,6 +114,12 @@ def password_email(user):
 def message_notification_email(user, comment):
     """Queues a system email for a new message notification."""
     from r2.lib.pages import MessageNotificationEmail
+
+    # In case a user has enabled the preference while it was enabled for
+    # them, but we've since turned it off.  We need to explicitly state the
+    # user because we're not in the context of an HTTP request from them.
+    if not feature.is_enabled_for('orangereds_as_emails', user):
+        continue
 
     return _system_email(user.email,
                          MessageNotificationEmail(comment=comment).render(style='email'),
