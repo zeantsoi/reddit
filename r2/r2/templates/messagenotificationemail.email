@@ -20,6 +20,6 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-You've received a new message!
+${_("You've received a new message!")}
 
 ${thing.comment.body}
