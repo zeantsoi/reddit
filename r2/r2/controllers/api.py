@@ -2371,6 +2371,7 @@ class ApiController(RedditController):
             time = timeuntil(c.user._date + timedelta(days=1))
             form.set_error(errors.RATELIMIT, None)
             c.errors.add(errors.RATELIMIT, {'time': time})
+            return
 
         domain = kw['domain']
         cname_sr = domain and Subreddit._by_domain(domain)
