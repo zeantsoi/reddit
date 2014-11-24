@@ -20,6 +20,16 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+  from r2.lib.template_helpers import get_domain
+%>
+
 ${_("You've received a new message!")}
 
 ${thing.comment.body}
+
+%if hasattr(thing.comment, 'permalink'):
+${_("View on the web")}: http://${get_domain()}${thing.comment.permalink}
+%else:
+${_("View on the web")}: ${thing.comment.make_permalink_slow(force_domain=True)}
+%endif

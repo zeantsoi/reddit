@@ -937,18 +937,21 @@ class Comment(Thing, Printable):
         s.extend([hasattr(wrapped, "link") and wrapped.link.contest_mode])
         return s
 
-    def make_permalink(self, link, sr=None, context=None, anchor=False):
-        url = link.make_permalink(sr) + self._id36
+    def make_permalink(self, link, sr=None, context=None, anchor=False,
+                       force_domain=False):
+        url = link.make_permalink(sr, force_domain=force_domain) + self._id36
         if context:
             url += "?context=%d" % context
         if anchor:
             url += "#%s" % self._id36
         return url
 
-    def make_permalink_slow(self, context=None, anchor=False):
+    def make_permalink_slow(self, context=None, anchor=False,
+                            force_domain=False):
         l = Link._byID(self.link_id, data=True)
         return self.make_permalink(l, l.subreddit_slow,
-                                   context=context, anchor=anchor)
+                                   context=context, anchor=anchor,
+                                   force_domain=force_domain)
 
     def _gild(self, user):
         now = datetime.now(g.tz)
