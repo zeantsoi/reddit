@@ -664,7 +664,7 @@ class Reddit(Templated):
                     secret_santa_title = _("LAST DAY to join Secret Santa!")
                 else:
                     secret_santa_title = _("Shop the official reddit store")
-                    secret_santa_link = "http://redditgifts.com/marketplace/feed/#/?merchant=redditgifts&sort=-popularity&source=red-hol14-side-1212014"
+                    secret_santa_link = "http://redditgifts.com/marketplace/feed/?merchant=redditgifts&sort=-popularity&source=red-hol14-side-1212014"
                     secret_santa_class = "holiday_shopping"
 
                 ps.append(SideBox(
