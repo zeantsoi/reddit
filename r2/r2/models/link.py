@@ -51,6 +51,7 @@ from r2.models.gold import (
     make_gold_message,
 )
 from r2.models.subreddit import MultiReddit
+from r2.models.trylater import TryLater
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.promo import PROMOTE_STATUS
 
@@ -58,9 +59,12 @@ from pylons import c, g, request
 from pylons.i18n import _
 from datetime import datetime, timedelta
 from hashlib import md5
+import simplejson as json
 
 import random, re
 from collections import defaultdict
+
+NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
 
 class LinkExists(Exception): pass
 
@@ -891,7 +895,13 @@ class Comment(Thing, Printable):
             inbox_rel = Inbox._add(to, c, name, orangered=orangered)
 
             if orangered and to.pref_email_messages:
-                message_notification_email(to, c)
+                data = {
+                    'to': to._id36,
+                    'comment': c._fullname,
+                }
+                data = json.dumps(data)
+                TryLater.schedule('message_notification_email', data,
+                                  NOTIFICATION_EMAIL_DELAY)
 
         hooks.get_hook('comment.new').call(comment=c)
 
@@ -1481,7 +1491,13 @@ class Message(Thing, Printable):
                                             orangered=orangered))
 
                 if orangered and to.pref_email_messages:
-                    message_notification_email(to, m)
+                    data = {
+                        'to': to._id36,
+                        'comment': m._fullname,
+                    }
+                    data = json.dumps(data)
+                    TryLater.schedule('message_notification_email', data,
+                                      NOTIFICATION_EMAIL_DELAY)
 
         # update user inboxes for non-mods involved in a modmail conversation
         if not skip_inbox and sr_id and m.first_message:

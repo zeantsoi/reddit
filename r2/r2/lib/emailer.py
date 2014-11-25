@@ -26,12 +26,16 @@ import datetime
 import traceback, sys, smtplib
 
 from pylons import c, g
+import simplejson as json
 
 from r2.config import feature
+from r2.lib import hooks
 from r2.lib.utils import timeago
-from r2.models import Email, DefaultSR, Account, Award
+from r2.models import Comment, Email, DefaultSR, Account, Award
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
+
+trylater_hooks = hooks.HookRegistrar()
 
 def _system_email(email, body, kind, reply_to = "", thing = None):
     """
@@ -111,21 +115,27 @@ def password_email(user):
                   Email.Kind.RESET_PASSWORD)
     return True
 
-def message_notification_email(user, comment):
+@trylater_hooks.on('trylater.message_notification_email')
+def message_notification_email(data):
     """Queues a system email for a new message notification."""
     from r2.lib.pages import MessageNotificationEmail
 
-    # In case a user has enabled the preference while it was enabled for
-    # them, but we've since turned it off.  We need to explicitly state the
-    # user because we're not in the context of an HTTP request from them.
-    if not feature.is_enabled_for('orangereds_as_emails', user):
-        continue
+    for datum in data.itervalues():
+        datum = json.loads(datum)
+        user = Account._byID36(datum['to'], data=True)
+        comment = Comment._by_fullname(datum['comment'], data=True)
 
-    g.stats.simple_event('email.message_notification.queued')
+        # In case a user has enabled the preference while it was enabled for
+        # them, but we've since turned it off.  We need to explicitly state the
+        # user because we're not in the context of an HTTP request from them.
+        if not feature.is_enabled_for('orangereds_as_emails', user):
+            continue
 
-    return _system_email(user.email,
-                         MessageNotificationEmail(comment=comment).render(style='email'),
-                         Email.Kind.MESSAGE_NOTIFICATION)
+        g.stats.simple_event('email.message_notification.queued')
+
+        _system_email(user.email,
+                      MessageNotificationEmail(comment=comment).render(style='email'),
+                      Email.Kind.MESSAGE_NOTIFICATION)
 
 def password_change_email(user):
     """Queues a system email for a password change notification."""
@@ -314,3 +324,5 @@ def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     session = smtplib.SMTP(g.smtp_server)
     session.sendmail(from_addr, to_addr, msg.as_string())
     session.quit()
+
+trylater_hooks.register_all()
