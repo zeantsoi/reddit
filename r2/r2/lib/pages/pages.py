@@ -651,10 +651,26 @@ class Reddit(Templated):
 
         if no_ads_yet and show_adbox:
             if c.default_sr and feature.is_enabled('show_secret_santa'):
+                signup_expiration_date = datetime.datetime(2014, 12, 1, 0, 0, 0, tzinfo=g.tz)
+                secret_santa_link = "https://ssl.redditgifts.com/page/secretsanta/?source=red-ss14-side-1132014"
+                secret_santa_class = "hohoho"
+
+                delta = signup_expiration_date - datetime.datetime.now(g.tz)
+
+                # get date difference between now and 11/30
+                if delta.days > 0:
+                    secret_santa_title = _("%d days left to join Secret Santa!") % delta.days
+                elif delta.days == 0:
+                    secret_santa_title = _("LAST DAY to join Secret Santa!")
+                else:
+                    secret_santa_title = _("Shop the official reddit store")
+                    secret_santa_link = "http://redditgifts.com/marketplace/feed/#/?merchant=redditgifts&sort=-popularity&source=red-hol14-side-1212014"
+                    secret_santa_class = "holiday_shopping"
+
                 ps.append(SideBox(
-                    title=_("Join our Secret Santa tradition"),
-                    css_class="hohoho",
-                    link="https://ssl.redditgifts.com/page/secretsanta/?source=red-ss14-side-1132014",
+                    title=secret_santa_title,
+                    css_class=secret_santa_class,
+                    link=secret_santa_link,
                     target="_blank",
                 ))
             ps.append(Ads())

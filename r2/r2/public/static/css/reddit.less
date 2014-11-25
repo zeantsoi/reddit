@@ -687,7 +687,7 @@ ul.flat-vert {text-align: left;}
     font-size: 110%;
 }
 
-.sidebox.hohoho {
+.sidebox.hohoho, .sidebox.holiday_shopping {
     .morelink {
         .linear-gradient(#fffbfb, #e5fbd8);
         border-color: #9eae9e;
@@ -705,16 +705,16 @@ ul.flat-vert {text-align: left;}
             &:before {
                 content: '';
                 display: inline-block;
-                background-image: url(../rg-santa.png);
+                background-image: url(../rg-santa-and-elves.png);
                 background-repeat: no-repeat;
-                background-size: 26px;
+                background-size: 46px;
                 background-position: center left;
-                width: 34px;
+                width: 46px;
                 height: 42px;
                 vertical-align: top;
                 margin-top: -7px;
                 margin-left: -8px;
-                margin-right: 3px;
+                margin-right: 0px;
             }
         }
     }
@@ -722,6 +722,11 @@ ul.flat-vert {text-align: left;}
     .nub {
         display: none;
     }
+}
+
+.sidebox.holiday_shopping .morelink a:before {
+  background-image: url(../rg-elf.png);
+  background-size: 36px;
 }
 
 .account-activity-box {
