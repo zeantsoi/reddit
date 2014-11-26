@@ -22,6 +22,7 @@
 
 <%!
 from r2.lib.strings import Score
+from r2.models.gold import get_discounted_price
 %>
 
 <%def name="gold_dropdown(what, chosen_months, somethings=None)">
@@ -36,12 +37,12 @@ from r2.lib.strings import Score
   <select id=${what} name=${what} class="gold-dropdown">
     %for i in month_options:
        <option value="${i}" ${"selected" if chosen_months == i else ""}>
-         ${Score.somethings(i, somethings)}: ${g.gold_month_price * i}
+         ${Score.somethings(i, somethings)}: ${g.gold_month_price * i} (${get_discounted_price(g.gold_month_price) * i} by bitcoin)
        </option>
     %endfor
     %for i in year_options:
        <option value="${i * 12}" ${"selected" if (chosen_months == (i * 12) or (not chosen_months and i == 1)) else ""}>
-         ${Score.somethings(i * 12, somethings)} &#32; (special price!): ${g.gold_year_price * i}
+         ${Score.somethings(i * 12, somethings)} ${g.gold_year_price * i} (${get_discounted_price(g.gold_year_price) * i} by bitcoin)
        </option>
     %endfor
   </select>

@@ -22,6 +22,7 @@
 <%!
    from r2.lib.filters import websafe
    from r2.lib.template_helpers import _ws
+   from r2.models.gold import get_discounted_price
  %>
 <%namespace file="utils.html" import="md,_md"/>
 <%
@@ -47,7 +48,7 @@
             <h2 class="sidelines"><span>${_('In Summation')}</span></h2>
 
             <div class="transaction-summary">
-              ${md(thing.summary)}
+              ${md(thing.summary + " (%(btc_price)s by bitcoin)" % dict(btc_price=get_discounted_price(thing.price)))}
 
               %if thing.thing and not thing.clone_template:
                 <div class="gift-message">
