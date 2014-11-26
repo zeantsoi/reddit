@@ -54,7 +54,7 @@ def _fraud_email(body, kind):
     For sending email to the fraud mailbox
     """
     Email.handler.add_to_queue(None, g.fraud_email, g.domain, g.fraud_email,
-                               kind)
+                               kind, body=body)
 
 def verify_email(user, dest=None):
     """
