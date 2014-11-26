@@ -597,6 +597,15 @@ class Reddit(Templated):
         no_ads_yet = True
         show_adbox = (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads
 
+        # secret santa link
+        if show_adbox and c.default_sr and feature.is_enabled('show_secret_santa'):
+            ps.append(SideBox(
+                title=_("Shop the reddit Marketplace"),
+                css_class="holiday_shopping",
+                link="http://redditgifts.com/?source=red-hol14-side-14121",
+                target="_blank",
+            ))
+
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
             ps.append(SubredditInfoBar())
@@ -650,29 +659,6 @@ class Reddit(Templated):
                                          more_text = more_text))
 
         if no_ads_yet and show_adbox:
-            if c.default_sr and feature.is_enabled('show_secret_santa'):
-                signup_expiration_date = datetime.datetime(2014, 12, 1, 0, 0, 0, tzinfo=g.tz)
-                secret_santa_link = "https://ssl.redditgifts.com/page/secretsanta/?source=red-ss14-side-1132014"
-                secret_santa_class = "hohoho"
-
-                delta = signup_expiration_date - datetime.datetime.now(g.tz)
-
-                # get date difference between now and 11/30
-                if delta.days > 0:
-                    secret_santa_title = _("%d days left to join Secret Santa!") % delta.days
-                elif delta.days == 0:
-                    secret_santa_title = _("LAST DAY to join Secret Santa!")
-                else:
-                    secret_santa_title = _("Shop the official reddit store")
-                    secret_santa_link = "http://redditgifts.com/marketplace/feed/?merchant=redditgifts&sort=-popularity&source=red-hol14-side-1212014"
-                    secret_santa_class = "holiday_shopping"
-
-                ps.append(SideBox(
-                    title=secret_santa_title,
-                    css_class=secret_santa_class,
-                    link=secret_santa_link,
-                    target="_blank",
-                ))
             ps.append(Ads())
 
             if g.live_config["gold_revenue_goal"]:
