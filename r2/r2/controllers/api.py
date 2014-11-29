@@ -2054,11 +2054,7 @@ class ApiController(RedditController):
                 description = wiki.modactions.get('config/stylesheet')
                 ModAction.create(c.site, c.user, 'wikirevise', description)
 
-        parsed_http, parsed_https = parsed
-        if c.secure:
-            jquery.apply_stylesheet(parsed_https)
-        else:
-            jquery.apply_stylesheet(parsed_http)
+        jquery.apply_stylesheet(parsed)
 
         if op == 'preview':
             # try to find a link to use, otherwise give up and
