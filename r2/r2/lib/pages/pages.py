@@ -339,6 +339,10 @@ class Reddit(Templated):
             panes = [ShareLink(), content, report_form]
             if self.show_sidebar:
                 panes.extend([gold_comment, gold_link])
+
+            if c.user_is_sponsor:
+                panes.append(FraudForm())
+
             self._content = PaneStack(panes)
         else:
             self._content = content
@@ -2755,6 +2759,10 @@ class ReportForm(Templated):
     pass
 
 
+class FraudForm(Templated):
+    pass
+
+
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
     def __init__(self, success=False):
@@ -3752,6 +3760,7 @@ class PromotePage(Reddit):
                 NavButton('underdelivered', '/sponsor/promoted/underdelivered'),
                 NavButton('house ads', '/sponsor/promoted/house'),
                 NavButton('reported links', '/sponsor/promoted/reported'),
+                NavButton('fraud', '/sponsor/promoted/fraud'),
                 NavButton('lookup user', '/sponsor/lookup_user'),
             ]
             return NavMenu(buttons, type='flatlist')

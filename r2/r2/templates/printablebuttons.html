@@ -292,6 +292,13 @@
           ${ynbutton(_("accept"), _("accepted"), "promote")}
         </li>
       %endif
+      %if thing.is_awaiting_fraud_review:
+        <li class="fraud-button">
+          <a href="javascript:void(0)" class="action-thing" data-action-form="#fraud-action-form">
+            ${_("fraud")}
+          </a>
+        </li>
+      %endif
     %endif
     %if thing.user_is_sponsor or thing.is_author:
       <li>
