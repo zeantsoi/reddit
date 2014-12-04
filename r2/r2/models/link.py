@@ -1518,11 +1518,6 @@ class Message(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.db import queries
 
-        # make sure there is a sr_id set:
-        for w in wrapped:
-            if not hasattr(w, "sr_id"):
-                w.sr_id = None
-
         # load the to fields if one exists
         to_ids = set(w.to_id for w in wrapped if w.to_id is not None)
         tos = Account._byID(to_ids, True) if to_ids else {}
