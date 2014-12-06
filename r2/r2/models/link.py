@@ -1543,6 +1543,10 @@ class Message(Thing, Printable):
             if item.parent_id and item.was_comment}
         parents = Comment._byID(parent_ids, data=True, return_dict=True)
 
+        # load full modlist for all subreddit messages
+        mods_by_srid = {
+            sr._id: sr.moderator_ids() for sr in m_subreddits.itervalues()}
+
         # special handling for mod replies to mod PMs
         mod_message_authors = {}
         mod_messages = [
@@ -1695,6 +1699,8 @@ class Message(Thing, Printable):
             else:
                 item.updated_author = ''
 
+            if item.sr_id and item.dest and item.to:
+                item.to_is_moderator = item.to._id in mods_by_srid[item.sr_id]
 
         # Run this last
         Printable.add_props(user, wrapped)
