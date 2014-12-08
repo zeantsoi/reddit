@@ -24,11 +24,14 @@ from threading import local
 from hashlib import md5
 import cPickle as pickle
 from copy import copy
+from time import sleep
 
 from pylons import g
 
 import pylibmc
 from _pylibmc import MemcachedError
+
+import random
 
 from pycassa import ColumnFamily
 from pycassa.cassandra.ttypes import ConsistencyLevel
@@ -112,6 +115,7 @@ class CMemcache(CacheUtils):
                 raise
             except MemcachedError as e:
                 ex = e
+            sleep(random.uniform(0, 0.1))
 
         raise MemcachedMaximumRetryException(ex)
 
