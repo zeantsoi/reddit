@@ -227,7 +227,7 @@ def make_map():
     mc('/sponsor/promoted/:sort', controller='sponsorlisting', action='listing',
        requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
                               "rejected_promos|live_promos|underdelivered|"
-                              "reported|house|fraud|all"))
+                              "reported|house|all"))
     mc('/sponsor', controller='sponsorlisting', action="listing",
        sort="all")
     mc('/sponsor/promoted/', controller='sponsorlisting', action="listing",
@@ -371,8 +371,7 @@ def make_map():
                                  "freebie|promote_note|update_pay|"
                                  "edit_campaign|delete_campaign|"
                                  "add_roadblock|rm_roadblock|check_inventory|"
-                                 "refund_campaign|terminate_campaign|"
-                                 "review_fraud")))
+                                 "refund_campaign|terminate_campaign")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',

@@ -41,7 +41,11 @@ from r2.lib import (
     hooks,
 )
 from r2.lib.db.operators import not_
-from r2.lib.db import queries
+from r2.lib.db.queries import (
+    set_promote_status,
+    set_underdelivered_campaigns,
+    unset_underdelivered_campaigns,
+)
 from r2.lib.cache import sgm
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
@@ -133,9 +137,6 @@ def refund_url(link, campaign):
 
 # booleans
 
-def is_awaiting_fraud_review(link):
-    return link.payment_flagged_reason and link.fraud == None
-
 def is_promo(link):
     return (link and not link._deleted and link.promoted is not None
             and hasattr(link, "promote_status"))
@@ -215,7 +216,7 @@ def add_trackers(items, sr):
 
 
 def update_promote_status(link, status):
-    queries.set_promote_status(link, status)
+    set_promote_status(link, status)
     hooks.get_hook('promote.edit_promotion').call(link=link)
 
 
@@ -486,25 +487,10 @@ def accept_promotion(link):
         all_live_promo_srnames(_update=True)
 
 
-def flag_payment(link, reason):
-    # already determined to be fraud.
-    if link.payment_flagged_reason and link.fraud:
-        return
-
-    link.payment_flagged_reason = reason
+def flag_payment(link, reason="Unknown reason."):
+    link.payment_flagged = reason
     link._commit()
     PromotionLog.add(link, "payment flagged: %s" % reason)
-    queries.set_payment_flagged_link(link)
-
-
-def review_fraud(link, is_fraud):
-    link.fraud = is_fraud
-    link._commit()
-    PromotionLog.add(link, "marked as fraud" if is_fraud else "resolved as not fraud")
-    queries.unset_payment_flagged_link(link)
-
-    if is_fraud:
-        hooks.get_hook("promote.fraud_identified").call(link=link, sponsor=c.user)
 
 
 def reject_promotion(link, reason=None):
@@ -738,7 +724,7 @@ def finalize_completed_campaigns(daysago=1):
             underdelivered_campaigns.append(camp)
 
         if underdelivered_campaigns:
-            queries.set_underdelivered_campaigns(underdelivered_campaigns)
+            set_underdelivered_campaigns(underdelivered_campaigns)
 
 
 def get_refund_amount(camp, billable):
@@ -772,7 +758,7 @@ def refund_campaign(link, camp, billable_amount, billable_impressions):
     PromotionLog.add(link, text)
     camp.refund_amount = refund_amount
     camp._commit()
-    queries.unset_underdelivered_campaigns(camp)
+    unset_underdelivered_campaigns(camp)
     emailer.refunded_promo(link)
 
 
