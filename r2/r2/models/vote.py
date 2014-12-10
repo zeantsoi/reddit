@@ -264,7 +264,7 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
             "direction": pgoldvote._name,
             "valid_thing": pgoldvote.valid_thing,
             "valid_user": pgoldvote.valid_user,
-            "ip": getattr(pgoldvote, "ip"),
+            "ip": getattr(pgoldvote, "ip", None),
         }
         vote.valid_thing = old_vote["valid_thing"]
         vote.valid_user = old_vote["valid_user"]
