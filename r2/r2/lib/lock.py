@@ -29,8 +29,6 @@ import os
 import socket
 import random
 
-from _pylibmc import MemcachedError
-
 from r2.lib.utils import simple_traceback
 
 # thread-local storage for detection of recursive locks
@@ -79,20 +77,8 @@ class MemcacheLock(object):
         timer.start()
 
         #try and fetch the lock, looping until it's available
-        lock = None
-        while not lock:
-            # catch all exceptions here because we can't trust the memcached
-            # protocol. The add for the lock may have actually succeeded.
-            try:
-                lock = self.cache.add(self.key, self.nonce, time = self.time)
-            except MemcachedError as e:
-                if self.cache.get(self.key) == self.nonce:
-                    g.log.error(
-                        'Memcached add succeeded, but threw an exception for key %r %s',
-                        self.key, e)
-                    break
-
-            if not lock and (datetime.now() - start).seconds > self.timeout:
+        while not self.cache.add(self.key, self.nonce, time = self.time):
+            if (datetime.now() - start).seconds > self.timeout:
                 if self.verbose:
                     info = self.cache.get(self.key)
                     if info:
