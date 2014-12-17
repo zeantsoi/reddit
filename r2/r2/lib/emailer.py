@@ -133,8 +133,12 @@ def message_notification_email(data):
 
         g.stats.simple_event('email.message_notification.queued')
 
+        templateData = {
+            'comment': comment,
+            'permalink': datum['permalink'],
+        }
         _system_email(user.email,
-                      MessageNotificationEmail(comment=comment).render(style='email'),
+                      MessageNotificationEmail(**templateData).render(style='email'),
                       Email.Kind.MESSAGE_NOTIFICATION)
 
 def password_change_email(user):

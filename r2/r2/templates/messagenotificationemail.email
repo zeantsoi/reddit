@@ -28,8 +28,4 @@ ${_("You've received a new message!")}
 
 ${thing.comment.body}
 
-%if hasattr(thing.comment, 'permalink'):
-${_("View on the web")}: http://${get_domain()}${thing.comment.permalink}
-%else:
-${_("View on the web")}: ${thing.comment.make_permalink_slow(force_domain=True)}
-%endif
+${_("View on the web")}: ${thing.permalink}

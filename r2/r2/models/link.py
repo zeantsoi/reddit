@@ -898,6 +898,7 @@ class Comment(Thing, Printable):
                 data = {
                     'to': to._id36,
                     'comment': c._fullname,
+                    'permalink': c.make_permalink_slow(force_domain=True),
                 }
                 data = json.dumps(data)
                 TryLater.schedule('message_notification_email', data,
@@ -1491,9 +1492,15 @@ class Message(Thing, Printable):
                                             orangered=orangered))
 
                 if orangered and to.pref_email_messages:
+                    from r2.lib.template_helpers import get_domain
+                    permalink = 'http://%(domain)s%(path)s' % {
+                        'domain': get_domain(),
+                        'path': m.permalink,
+                    }
                     data = {
                         'to': to._id36,
                         'comment': m._fullname,
+                        'permalink': permalink,
                     }
                     data = json.dumps(data)
                     TryLater.schedule('message_notification_email', data,
