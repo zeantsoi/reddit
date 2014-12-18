@@ -36,7 +36,7 @@ r.ui.init = function() {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
             if (!this.target) {
                 var proto = this.protocol;
-                if (proto === "http:" || proto === "https:") {
+                if (this.href && (proto === "http:" || proto === "https:")) {
                     // nullify `window.opener` so the new tab can't navigate us
                     var href = $(this).attr('href');
                     var w = window.open(null, '_blank');
