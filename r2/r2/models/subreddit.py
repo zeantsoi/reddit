@@ -1883,6 +1883,7 @@ class DomainSR(FakeSubreddit):
 
     def __init__(self, domain):
         FakeSubreddit.__init__(self)
+        domain = domain.lower()
         self.domain = domain
         self.name = domain 
         self.title = _("%(domain)s on %(reddit.com)s") % {
