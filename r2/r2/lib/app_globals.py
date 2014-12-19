@@ -54,6 +54,7 @@ from r2.lib.cache import (
     MemcacheChain,
     SelfEmptyingCache,
     StaleCacheChain,
+    TransitionalCache,
 )
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
@@ -234,6 +235,7 @@ class Globals(object):
             'plugins',
             'stalecaches',
             'memcaches',
+            'memcaches2',
             'lockcaches',
             'permacache_memcaches',
             'rendercaches',
@@ -556,8 +558,15 @@ class Globals(object):
         num_mc_clients = self.num_mc_clients
 
         # the main memcache pool. used for most everything.
-        memcache = CMemcache(
+        memcache_m1 = CMemcache(
             self.memcaches,
+            min_compress_len=50 * 1024,
+            num_clients=num_mc_clients,
+            binary=True,
+        )
+
+        memcache_m3 = CMemcache(
+            self.memcaches2,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
             binary=True,
@@ -677,10 +686,21 @@ class Globals(object):
                           else LocalCache)
 
         if stalecaches:
-            self.cache = StaleCacheChain(
+            stale_m1 = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
-                memcache,
+                memcache_m1,
+            )
+            stale_m3 = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                memcache_m3,
+            )
+            memcache = memcache_m1
+            self.cache = TransitionalCache(
+                    original_cache=stale_m1,
+                    replacement_cache=stale_m3,
+                    read_original=True,
             )
         else:
             self.cache = MemcacheChain((localcache_cls(), memcache))
