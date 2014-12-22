@@ -685,6 +685,7 @@ class Globals(object):
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
 
+        memcache = memcache_m1
         if stalecaches:
             stale_m1 = StaleCacheChain(
                 localcache_cls(),
@@ -696,7 +697,6 @@ class Globals(object):
                 stalecaches,
                 memcache_m3,
             )
-            memcache = memcache_m1
             self.cache = TransitionalCache(
                     original_cache=stale_m1,
                     replacement_cache=stale_m3,
