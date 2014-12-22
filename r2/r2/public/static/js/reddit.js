@@ -491,7 +491,7 @@ function morechildren(form, link_id, sort, children, depth, pv_hex) {
         pv_hex: pv_hex,
     };
     $.request('morechildren', child_params, undefined, undefined,
-              undefined, true);
+              undefined, false);
     return false;
 }
 
