@@ -622,8 +622,7 @@ class ApiController(RedditController):
         """
         return self._handle_login(*args, **kwargs)
 
-    @validatedForm(VRegistrationCaptcha(),
-                   VRatelimit(rate_ip = True, prefix = "rate_register_"),
+    @validatedForm(VRatelimit(rate_ip = True, prefix = "rate_register_"),
                    name = VUname(['user']),
                    email=ValidEmail("email"),
                    password = VPasswordChange(['passwd', 'passwd2']),
