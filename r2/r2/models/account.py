@@ -136,7 +136,6 @@ class Account(Thing):
                      update_sent_messages=True,
                      num_payment_methods=0,
                      num_failed_payments=0,
-                     pref_show_snoovatar=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
