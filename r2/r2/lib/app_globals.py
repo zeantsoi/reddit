@@ -636,7 +636,7 @@ class Globals(object):
                                              self.permacache_memcaches,
                                              min_compress_len=50 * 1024,
                                              num_clients=num_mc_clients,
-                                             validators=[validate_size_warn],)
+                                             validators=[],)
         else:
             permacache_memcaches = None
 
@@ -659,7 +659,7 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=480,
-            validators=[validate_size_warn],
+            validators=[],
         )
 
         # pagecaches hold fully rendered pages
@@ -670,7 +670,7 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=1400,
-            validators=[validate_size_warn],
+            validators=[],
         )
 
         self.startup_timer.intermediate("memcache")
