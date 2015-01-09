@@ -49,7 +49,7 @@ def send_broadcast(namespace, type, payload):
         "payload": payload,
     }
     amqp.add_item(routing_key=namespace, body=json.dumps(frame),
-                  exchange=_WEBSOCKET_EXCHANGE)
+                  exchange=_WEBSOCKET_EXCHANGE, send_stats=False)
 
 
 def make_url(namespace, max_age):

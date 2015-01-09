@@ -154,7 +154,7 @@ DELIVERY_DURABLE = 2
 
 def _add_item(routing_key, body, message_id = None,
               delivery_mode=DELIVERY_DURABLE, headers=None,
-              exchange=amqp_exchange):
+              exchange=amqp_exchange, send_stats=True):
     """adds an item onto a queue. If the connection to amqp is lost it
     will try to reconnect and then call itself again."""
     if not amqp_host:
@@ -177,23 +177,27 @@ def _add_item(routing_key, body, message_id = None,
                            exchange=exchange,
                            routing_key = routing_key)
     except Exception as e:
-        stats.event_count(event_name, 'enqueue_failed')
+        if send_stats:
+            stats.event_count(event_name, 'enqueue_failed')
+
         if e.errno == errno.EPIPE:
             connection_manager.get_channel(True)
             add_item(routing_key, body, message_id)
         else:
             raise
     else:
-        stats.event_count(event_name, 'enqueue')
+        if send_stats:
+            stats.event_count(event_name, 'enqueue')
 
 def add_item(routing_key, body, message_id=None,
              delivery_mode=DELIVERY_DURABLE, headers=None,
-             exchange=amqp_exchange):
+             exchange=amqp_exchange, send_stats=True):
     if amqp_host and amqp_logging:
         log.debug("amqp: adding item %r to %r" % (body, routing_key))
 
     worker.do(_add_item, routing_key, body, message_id = message_id,
-              delivery_mode=delivery_mode, headers=headers, exchange=exchange)
+              delivery_mode=delivery_mode, headers=headers, exchange=exchange,
+              send_stats=send_stats)
 
 def add_kw(routing_key, **kw):
     add_item(routing_key, pickle.dumps(kw))
