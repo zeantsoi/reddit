@@ -290,6 +290,9 @@ class FrontController(RedditController):
         #check for 304
         self.check_modified(article, 'comments')
 
+        # `CommentPane` needs this for caching
+        c.can_embed = feature.is_enabled("comment_embeds")
+
         embeds.setup_embed(thing=comment)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners

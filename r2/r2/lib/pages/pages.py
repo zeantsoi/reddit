@@ -1655,6 +1655,7 @@ class CommentPane(Templated):
             c.user.pref_show_flair,
             c.user.pref_show_link_flair,
             c.can_save,
+            c.can_embed,
             self.max_depth,
             self.edits_visible,
             c.user.pref_highlight_controversial,
