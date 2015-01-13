@@ -730,7 +730,13 @@ class Globals(object):
                     read_original=True,
             )
         else:
-            self.cache = MemcacheChain((localcache_cls(), memcache))
+            simple_m1 = CacheChain((localcache_cls(), memcache_m1))
+            simple_m3 = CacheChain((localcache_cls(), memcache_m3))
+            self.cache = TransitionalCache(
+                    original_cache=simple_m1,
+                    replacement_cache=simple_m3,
+                    read_original=True,
+            )
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
