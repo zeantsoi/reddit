@@ -293,6 +293,9 @@ class FrontController(RedditController):
         # `CommentPane` needs this for caching
         c.can_embed = feature.is_enabled("comment_embeds")
 
+        # only show embed button on permalinked comments
+        c.can_embed = c.can_embed and comment
+
         embeds.setup_embed(thing=comment)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
