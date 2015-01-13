@@ -727,7 +727,7 @@ class Globals(object):
             self.cache = TransitionalCache(
                     original_cache=stale_m1,
                     replacement_cache=stale_m3,
-                    read_original=False,
+                    read_original=True,
             )
         else:
             self.cache = MemcacheChain((localcache_cls(), memcache))
