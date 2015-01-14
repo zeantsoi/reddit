@@ -26,7 +26,6 @@ from datetime import datetime, timedelta
 
 from pylons import g
 
-from r2.lib.cache import sgm
 from r2.lib.db.queries import _get_links, CachedResults
 from r2.lib.db.sorts import epoch_seconds
 
@@ -65,8 +64,7 @@ def normalized_hot(sr_ids, obey_age_limit=True):
     if not sr_ids:
         return []
 
-    tuples_by_srid = sgm(g.cache, sr_ids, miss_fn=get_hot_tuples,
-                         prefix='normalized_hot', time=g.page_cache_time)
+    tuples_by_srid = get_hot_tuples(sr_ids)
 
     if obey_age_limit:
         cutoff = datetime.now(g.tz) - timedelta(days=g.HOT_PAGE_AGE)
