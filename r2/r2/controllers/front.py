@@ -290,7 +290,7 @@ class FrontController(RedditController):
         #check for 304
         self.check_modified(article, 'comments')
 
-        embeds.setup_embed()
+        embeds.setup_embed(thing=comment)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
         # Not to be open-sourced
