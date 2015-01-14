@@ -1356,7 +1356,7 @@ class SearchPage(BoringPage):
         self.searchbar = SearchBar(prev_search=prev_search,
                                    elapsed_time=elapsed_time,
                                    search_params=search_params,
-                                   show_feedback=True, site=site,
+                                   site=site,
                                    simple=simple, restrict_sr=restrict_sr,
                                    syntax=syntax, converted_data=converted_data,
                                    facets=facets, sort=sort, recent=recent)
@@ -2867,7 +2867,7 @@ class SearchBar(Templated):
 
     """
     def __init__(self, header=None, prev_search='',
-                 elapsed_time=0, search_params={}, show_feedback=False,
+                 elapsed_time=0, search_params={},
                  simple=False, restrict_sr=False, site=None, syntax=None,
                  subreddit_search=False, converted_data=None, facets={},
                  sort=None, recent=None, **kw):
@@ -2877,7 +2877,6 @@ class SearchBar(Templated):
 
         self.prev_search  = prev_search
         self.elapsed_time = elapsed_time
-        self.show_feedback = show_feedback
 
         Templated.__init__(self, search_params=search_params,
                            simple=simple, restrict_sr=restrict_sr,
