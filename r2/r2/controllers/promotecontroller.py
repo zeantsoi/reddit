@@ -39,7 +39,6 @@ from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
 from r2.lib.filters import websafe
-from r2.lib.template_helpers import format_html
 from r2.lib.media import force_thumbnail, thumbnail_url, _scrape_media
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu, QueryButton
@@ -561,7 +560,7 @@ class PromoteApiController(ApiController):
         if promote.is_promo(link):
             text = PromotionLog.add(link, note)
             form.find(".notes").children(":last").after(
-                format_html("<p>%s</p>", text))
+                "<p>" + websafe(text) + "</p>")
 
     @validatedForm(
         VSponsorAdmin(),

@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import format_html
+   from r2.lib.template_helpers import _ws
 %>
 <%namespace file="utils.html" import="plain_link"/>
 
@@ -41,7 +41,7 @@
       %>
     </div>
 
-    ${plain_link(format_html("%s &raquo;", _(editmore)),
+    ${plain_link(unsafe(_ws(editmore) + " &raquo;"),
                  "/subreddits/", id="sr-more-link")}
   </div>
 </div>
