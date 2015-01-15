@@ -26,6 +26,7 @@ from datetime import datetime, timedelta
 
 from pylons import g
 
+from r2.lib.cache import sgm
 from r2.lib.db.queries import _get_links, CachedResults
 from r2.lib.db.sorts import epoch_seconds
 
@@ -38,9 +39,7 @@ def get_hot_tuples(sr_ids):
     queries_by_sr_id = {sr_id: _get_links(sr_id, sort='hot', time='all')
                         for sr_id in sr_ids}
     CachedResults.fetch_multi(queries_by_sr_id.values())
-
-    # use keys from queries_by_sr_id in case sr_ids is a generator
-    tuples_by_srid = {sr_id: [] for sr_id in queries_by_sr_id.iterkeys()}
+    tuples_by_srid = {sr_id: [] for sr_id in sr_ids}
 
     for sr_id, q in queries_by_sr_id.iteritems():
         if not q.data:
@@ -66,7 +65,8 @@ def normalized_hot(sr_ids, obey_age_limit=True):
     if not sr_ids:
         return []
 
-    tuples_by_srid = get_hot_tuples(sr_ids)
+    tuples_by_srid = sgm(g.cache, sr_ids, miss_fn=get_hot_tuples,
+                         prefix='normalized_hot', time=g.page_cache_time)
 
     if obey_age_limit:
         cutoff = datetime.now(g.tz) - timedelta(days=g.HOT_PAGE_AGE)
