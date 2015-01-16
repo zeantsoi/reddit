@@ -1550,7 +1550,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         },
     }
     _float_props = (
-        "base_normalized_age_weight",
+        "normalized_age_weight",
     )
     _compare_with = tdb_cassandra.UTF8_TYPE
     _read_consistency_level = tdb_cassandra.CL.ONE
