@@ -26,7 +26,6 @@ from datetime import datetime, timedelta
 
 from pylons import g
 
-from r2.config import feature
 from r2.lib.cache import sgm
 from r2.lib.db.queries import _get_links, CachedResults
 from r2.lib.db.sorts import epoch_seconds
@@ -36,62 +35,38 @@ MAX_PER_SUBREDDIT = 150
 MAX_LINKS = 1000
 
 
-def get_hot_tuples(sr_ids, ageweight=None):
+def get_hot_tuples(sr_ids):
     queries_by_sr_id = {sr_id: _get_links(sr_id, sort='hot', time='all')
                         for sr_id in sr_ids}
     CachedResults.fetch_multi(queries_by_sr_id.values())
     tuples_by_srid = {sr_id: [] for sr_id in sr_ids}
 
-    now_seconds = epoch_seconds(datetime.now(g.tz))
-
     for sr_id, q in queries_by_sr_id.iteritems():
         if not q.data:
             continue
 
-        hot_factor = get_hot_factor(q.data[0], now_seconds, ageweight)
+        link_name, hot, timestamp = q.data[0]
+        thot = max(hot, 1.)
+        tuples_by_srid[sr_id].append((-1., -hot, link_name, timestamp))
 
-        for link_name, hot, timestamp in q.data:
-            effective_hot = hot / hot_factor
+        for link_name, hot, timestamp in q.data[1:MAX_PER_SUBREDDIT]:
+            ehot = hot / thot
             # heapq.merge sorts from smallest to largest so we need to flip
             # ehot and hot to get the hottest links first
-            tuples_by_srid[sr_id].append(
-                (-effective_hot, -hot, link_name, timestamp)
-            )
+            tuples_by_srid[sr_id].append((-ehot, -hot, link_name, timestamp))
 
     return tuples_by_srid
 
 
-def get_hot_factor(qdata, now, ageweight):
-    """Return a "hot factor" score for a link's hot tuple.
-
-    Recalculate the item's hot score as if it had been submitted
-    more recently than it was. This will cause the `effective_hot` value in
-    get_hot_tuples to move older first items back
-
-    ageweight should be a float from 0 - 100.0, which "scales" how far
-    between the original submission time and "now" to use as the base
-    for the new hot score. Smaller values will favor older #1 posts in
-    multireddits; larger values will drop older posts further in the ranking
-    (or possibly off the ranking entirely).
-
-    """
-    ageweight = ageweight or 0.0
-    link_name, hot, timestamp = qdata
-    return hot + ((now - timestamp) * ageweight) / 45000
-
-
-def normalized_hot(sr_ids, obey_age_limit=True, ageweight=None):
+def normalized_hot(sr_ids, obey_age_limit=True):
     timer = g.stats.get_timer("normalized_hot")
     timer.start()
 
     if not sr_ids:
         return []
 
-    if ageweight and feature.is_enabled("scaled_normalized_hot"):
-        tuples_by_srid = get_hot_tuples(sr_ids, ageweight=ageweight)
-    else:
-        tuples_by_srid = sgm(g.cache, sr_ids, miss_fn=get_hot_tuples,
-                             prefix='normalized_hot', time=g.page_cache_time)
+    tuples_by_srid = sgm(g.cache, sr_ids, miss_fn=get_hot_tuples,
+                         prefix='normalized_hot', time=g.page_cache_time)
 
     if obey_age_limit:
         cutoff = datetime.now(g.tz) - timedelta(days=g.HOT_PAGE_AGE)
