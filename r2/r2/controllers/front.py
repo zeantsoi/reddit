@@ -296,7 +296,7 @@ class FrontController(RedditController):
         # only show embed button on permalinked comments
         c.can_embed = c.can_embed and comment
 
-        embeds.setup_embed(thing=comment)
+        embeds.setup_embed(thing=comment, showedits=showedits)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
         # Not to be open-sourced
