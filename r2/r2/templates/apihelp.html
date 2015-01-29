@@ -28,6 +28,8 @@
     from r2.lib.db.thing import thing_types
 %>
 
+<%namespace file="utils.html" import="md" />
+
 <%def name="api_method_id(uri, method)">${method}_${uri.replace('/', '_').strip('_')}</%def>
 <%def name="api_uri(uri)">${unsafe(re.sub(r'{(\w+)}', r'<em class="placeholder">\1</em>', uri))}</%def>
 <%def name="api_uri_with_sr_maybe(uri, in_sr)">${api_uri(("[/r/{subreddit}]" if in_sr else "") + uri)}</%def>
@@ -88,7 +90,7 @@
   <h2 id="section_${section}">${section_info[section]['title']}</h2>
   %if 'description' in section_info[section]:
     <div class="description">
-      ${unsafe(safemarkdown(section_info[section]['description']))}
+      ${md(section_info[section]['description'], wrap=True)}
     </div>
   %endif
 </%def>
@@ -99,7 +101,7 @@
     <span class="scope-id">${scope}</span>
   </h2>
   <div class="description">
-    ${unsafe(safemarkdown(OAuth2Scope.scope_info[scope]['description']))}
+    ${md(OAuth2Scope.scope_info[scope]['description'], wrap=True)}
   </div>
 </%def>
 
@@ -260,7 +262,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
               </ul>
             %endif
             <div class="info">
-              ${unsafe(safemarkdown(docs.get('doc')))}
+              ${md(docs.get('doc'), wrap=True)}
               <%
                 json_model = docs.get('json_model')
                 if json_model:
@@ -276,7 +278,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
                   %for param in sorted(params):
                     <tr>
                       <th scope="row">${param}</th>
-                      <td>${unsafe(safemarkdown(params[param], wrap=False))}</td>
+                      <td>${md(params[param], wrap=False)}</td>
                     </tr>
                   %endfor
                 %endif
@@ -285,7 +287,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
                     %if param not in params:
                       <tr class="base-param">
                         <th scope="row">${param}</th>
-                        <td>${unsafe(safemarkdown(base_params[param], wrap=False))}</td>
+                        <td>${md(base_params[param], wrap=False)}</td>
                       </tr>
                     %endif
                   %endfor
@@ -293,7 +295,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
                 %if json_model:
                   <tr class="json-model">
                     <th>${_("This endpoint expects JSON data of this format")}</th>
-                    <td>${unsafe(safemarkdown(json_model.docs_model(), wrap=False))}</td>
+                    <td>${md(json_model.docs_model(), wrap=False)}</td>
                   </tr>
                 %endif
                 </table>

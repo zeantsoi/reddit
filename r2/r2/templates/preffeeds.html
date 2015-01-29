@@ -26,12 +26,13 @@
    from r2.lib.template_helpers import get_domain
    from r2.lib.filters import safemarkdown
 %>
+<%namespace file="utils.html" import="_md" />
 <div class="instructions private-feeds">
 <h1>${_("Private RSS feeds")}</h1>
 
-${unsafe(safemarkdown(_("On this page are links to private RSS feeds so that you can get listings of your content (personalized front page, message panel, saved listing, etc.) without having to deal with cookies or other auth.")))}
-${unsafe(safemarkdown(_("Keep in mind that these urls are intended to be private, so **share at your own risk.**")))}
-${unsafe(safemarkdown(_("All feeds are invalidated if you change your password, however.")))}
+${_md("On this page are links to private RSS feeds so that you can get listings of your content (personalized front page, message panel, saved listing, etc.) without having to deal with cookies or other auth.", wrap=True)}
+${_md("Keep in mind that these urls are intended to be private, so **share at your own risk.**", wrap=True)}
+${_md("All feeds are invalidated if you change your password, however.", wrap=True)}
 
 <%def name="feedbuttons(path)">
 <%

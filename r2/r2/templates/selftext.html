@@ -23,11 +23,11 @@
 <%!
     from r2.lib.filters import unsafe, safemarkdown, keep_space
 %>
-<%namespace file="utils.html" import="error_field"/>
+<%namespace file="utils.html" import="error_field, md"/>
 
 <div class="selftextcontainer">
   <div class="selftext rounded">
-    ${unsafe(safemarkdown(thing.link.selftext))}
+    ${md(thing.link.selftext, wrap=True)}
   </div>
 </div>
 

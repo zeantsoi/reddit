@@ -28,7 +28,7 @@
    from r2.lib.template_helpers import get_domain, add_sr
 %>
 <%inherit file="printable.iframe" />
-<%namespace file="utils.html" import="thing_timestamp" />
+<%namespace file="utils.html" import="thing_timestamp, md" />
 
 <%def name="parent()">
   %if c.profilepage:
@@ -101,7 +101,7 @@
         </a>
       %else:
         <blockquote class="reddit-embed-comment-body">
-          ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
+          ${md(thing.body, nofollow=thing.nofollow, wrap=True)}
         </blockquote>
         <a class="reddit-embed-comment-more" href="javascript:;" target="_self"
            data-track-action="read_more">

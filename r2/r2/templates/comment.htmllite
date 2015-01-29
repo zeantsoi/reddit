@@ -26,6 +26,7 @@
    from r2.lib.template_helpers import get_domain, add_sr
 %>
 <%inherit file="printable.htmllite" />
+<%namespace file="utils.html" import="md" />
 
 <%def name="parent()">
 %if c.profilepage:
@@ -61,7 +62,7 @@
   ${thing.timesince}
   &#32;<a href="${add_sr(thing.permalink)}">permalink</a>
 </small><br/>
-${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
+${md(thing.body, nofollow=thing.nofollow, wrap=True)}
 
 %endif
 

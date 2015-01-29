@@ -27,7 +27,7 @@
     from r2.lib.template_helpers import format_html
 %>
 <%namespace file="printable.html" import="arrow, score"/>
-<%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="plain_link, md" />
 <%namespace file="utils.compact" import="icon_button" />
 <%namespace file="printablebuttons.html" import="simple_button"/>
 
@@ -79,7 +79,7 @@
       ${taglinetext}
     </div>
     <a href="javascript:void(0)" class="options_link"></a>
-    ${unsafe(safemarkdown(thing.body))}
+    ${md(thing.body, wrap=True)}
     <div class="clear options_expando hidden">
         <%
             is_author = (c.user_is_loggedin and thing.author and c.user._fullname == thing.author._fullname)

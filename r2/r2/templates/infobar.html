@@ -20,10 +20,8 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-   from r2.lib.filters import safemarkdown
-%>
+<%namespace file="utils.html" import="md" />
 
 <div class="infobar ${thing.extra_class}">
-  ${unsafe(safemarkdown(thing.message))}
+  ${md(thing.message, wrap=True)}
 </div>

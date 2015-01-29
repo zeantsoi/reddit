@@ -20,11 +20,9 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%
-from r2.lib.filters import unsafe, safemarkdown
-%>
+<%namespace file="utils.html" import="md" />
 
 <div id="classy-error">
 <h1>${thing.title}</h1>
-${unsafe(safemarkdown(thing.message))}
+${md(thing.message, wrap=True)}
 </div>

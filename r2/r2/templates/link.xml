@@ -27,6 +27,7 @@
    from r2.lib.template_helpers import make_url_https
 %>
 <%namespace name="utils" file="utils.xml"/>
+<%namespace file="utils.html" import="md" />
 <%
     domain = get_domain(subreddit=False)
     permalink = add_sr(thing.permalink, force_hostname=True, retain_extension=False)
@@ -61,7 +62,7 @@
             %if thing.expunged:
                 ${_('[removed]')}
             %else:
-                ${unsafe(safemarkdown(thing.selftext))}
+                ${md(thing.selftext, wrap=True)}
             %endif
         %endif
 

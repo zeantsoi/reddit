@@ -24,6 +24,7 @@
     from r2.lib.filters import unsafe, safemarkdown, keep_space
     from r2.lib.template_helpers import static
 %>
+<%namespace file="utils.html" import="md" />
 
 <div class="infobar red">
 %if getattr(thing.link, "takedown_img", True):
@@ -31,6 +32,6 @@
 %else:
   <img src="${static('noimage.png')}"/>
 %endif
-${unsafe(safemarkdown(thing.explanation, nofollow=True))}
+${md(thing.explanation, nofollow=True, wrap=True)}
 <div class="clearleft"></div>
 </div>

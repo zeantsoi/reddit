@@ -22,15 +22,15 @@
 
 <%
 from r2.lib.template_helpers import static
-from r2.lib.filters import unsafe, safemarkdown
 %>
+<%namespace file="utils.html" import="md" />
 
 <div id="classy-error" class="content">
   <img src="${static(thing.image_url)}" alt="" />
 
   <h1>${thing.title}</h1>
   <div class="errorpage-message">
-  ${unsafe(safemarkdown(thing.message, wrap=False))}
+  ${md(thing.message, wrap=False)}
   %if thing.explanation:
     &mdash; ${thing.explanation}
   %endif
@@ -39,7 +39,7 @@ from r2.lib.filters import unsafe, safemarkdown
   % if thing.sr_description:
   <div class="errorpage-message sr-description">
       <h2>${_("a message from the moderators of /r/%s") % c.site.name}</h2>
-      ${unsafe(safemarkdown(thing.sr_description, wrap=False))}
+      ${md(thing.sr_description, wrap=False)}
   </div>
   % endif
 

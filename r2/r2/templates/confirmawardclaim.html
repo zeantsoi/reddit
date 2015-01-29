@@ -24,11 +24,12 @@
 %>
 
 <%namespace file="trophycase.html" import="trophy_info" />
+<%namespace file="utils.html" import="_mdf" />
 
 <form action="${thing.token.post_url()}" method="post"
     class="centered confirm-award-claim">
 
-${unsafe(safemarkdown(_("# Claim this award for /u/%s? #") % thing.user))}
+${_mdf("# Claim this award for /u/%(user)s? #", wrap=True, user=thing.user)}
 
 ${trophy_info(thing.trophy, False)}
 

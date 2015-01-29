@@ -51,8 +51,7 @@
   %if not thing.creating:
     % if not thing.expunged:
     <div class="usertext-body">
-      ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
-                                        target = thing.target))}
+      ${md(thing.text, nofollow=thing.nofollow, target=thing.target, wrap=True)}
     </div>
     % else:
     <em>${_("[removed]")}</em>&#32;

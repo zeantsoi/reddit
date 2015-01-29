@@ -20,15 +20,12 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-   from r2.lib.filters import safemarkdown
- %>
+<%namespace file="utils.html" import="md" />
 
 %if thing.text:
 %if not thing.expunged:
 <div class="usertext-body">
-    ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
-                          target = thing.target))}
+    ${md(thing.text, nofollow=thing.nofollow, target=thing.target, wrap=True)}
 </div>
 %else:
 <em>${_("[removed]")}</em>&#32;

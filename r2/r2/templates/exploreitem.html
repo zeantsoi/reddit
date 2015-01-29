@@ -22,9 +22,9 @@
 
 <%!
   from r2.lib.pages import SubscribeButton
-  from r2.lib.filters import unsafe, safemarkdown
   from r2.lib.strings import Score
 %>
+<%namespace file="utils.html" import="md" />
 
 <div class="explore-item explore-${thing.type}" data-sr_name="${thing.sr.name}" data-src="${thing.src}">
   <div class="explore-sr">
@@ -47,7 +47,7 @@
   ${thing.link}
   %if thing.comment:
   <div class="comment">
-    ${unsafe(safemarkdown(thing.comment.body))}
+    ${md(thing.comment.body, wrap=True)}
     <div class="comment-fade"></div>
   </div>
   <a class="comment-link" href="${thing.link.make_permalink(thing.sr)}" target="_blank">

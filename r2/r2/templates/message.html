@@ -33,7 +33,7 @@
 %>
 
 <%inherit file="comment_skeleton.html"/>
-<%namespace file="utils.html" import="thing_timestamp" />
+<%namespace file="utils.html" import="thing_timestamp, md" />
 <%namespace file="wrappeduser.html" import="make_distinguish" />
 
 ## disable voting arrows
@@ -192,7 +192,7 @@ ${self.subject()}
     </p>
  %endif
  <div class="md-container">
-   ${unsafe(safemarkdown(thing.body))}
+   ${md(thing.body, wrap=True)}
  </div>
 </%def>
 

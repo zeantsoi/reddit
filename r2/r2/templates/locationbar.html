@@ -20,14 +20,8 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-   from r2.lib.filters import safemarkdown
-%>
-
 <div class="locationbar">
-  ${unsafe(safemarkdown(
-    _('using the default subreddits for your location (%(location)s)') % dict(location=c.location)
-  ))}
+  ${_('using the default subreddits for your location (%(location)s)') % dict(location=c.location)}
 
   <span class="options">
     (<a class="use-global" href="javascript:void(0)">${_("use global defaults")}</a>

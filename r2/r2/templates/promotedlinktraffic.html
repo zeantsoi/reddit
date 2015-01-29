@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%namespace file="reddittraffic.html" import="load_timeseries_js, last_modified_message"/>
-<%namespace file="utils.html" import="plain_link, text_with_links" />
+<%namespace file="utils.html" import="plain_link, md, text_with_links" />
 
 <%!
     from babel.numbers import format_currency
@@ -182,7 +182,7 @@
 
 ${load_timeseries_js()}
 
-${unsafe(safemarkdown(strings.traffic_promoted_link_explanation % dict(interval=thing.interval)))}
+${md(strings.traffic_promoted_link_explanation % dict(interval=thing.interval))}
 
 %if thing.has_live_campaign:
     ${last_modified_message()}
@@ -201,7 +201,7 @@ ${unsafe(safemarkdown(strings.traffic_promoted_link_explanation % dict(interval=
   </div>
 %endif
 
-${unsafe(safemarkdown(strings.traffic_help_email % dict(email=g.selfserve_support_email)))}
+${md(strings.traffic_help_email % dict(email=g.selfserve_support_email), wrap=True)}
 
 ${make_campaign_table()}
 

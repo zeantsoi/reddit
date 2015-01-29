@@ -26,6 +26,7 @@
    from r2.lib.pages import WrappedUser
 %>
 <%inherit file="printable.mobile" />
+<%namespace file="utils.html" import="md" />
 
 <%def name="parent()">
 %if c.profilepage:
@@ -58,7 +59,7 @@
   </span> 
   ${_("written")} ${thing.timesince} ${_("ago")}
 </p>
-${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
+${md(thing.body, nofollow=thing.nofollow, wrap=True)}
 
 %endif
 </div>

@@ -27,6 +27,7 @@
     from r2.models.account import DeletedUser, Account
 %>
 <%namespace name="utils" file="utils.xml"/>
+<%namespace file="utils.html" import="md" />
 <%
     permalink = add_sr(thing.permalink, force_hostname = True)
 
@@ -74,7 +75,7 @@
             ${unsafe(taglinetext)}: ${thing.subject}
         </div>
 
-        ${unsafe(safemarkdown(thing.body))}
+        ${md(thing.body, wrap=True)}
 
         <div>
             <a href="${permalink}">${link_text}</a>
