@@ -28,8 +28,8 @@ from r2.lib.pages import WrappedUser
 
 <div id="flairrow_${thing.user._id36}" class="flairrow">
   <span class="tagline flaircell">
-    ${unsafe(WrappedUser(thing.user, force_show_flair=True,
-                         include_flair_selector=True).render())}
+    ${WrappedUser(thing.user, force_show_flair=True,
+                  include_flair_selector=True)}
   </span>
   <form action="/post/flair" id="flair-${thing.user._id36}" method="post"
         class="medium-text flair-entry">

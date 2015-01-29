@@ -20,9 +20,11 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+    from r2.lib.template_helpers import format_html
+%>
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
-
 
 %if thing.email:
 <form action="/post/update_email" method="post" 
@@ -58,8 +60,7 @@
        v_link = _("click to verify")
 
      if v_link and not thing.verify:
-       description = "(%s;&#32;<a href='/verify'>%s</a>)" % (description, v_link)
-       description = unsafe(description)
+       description = format_html("(%s;&#32;<a href='/verify'>%s</a>)", description, v_link)
      else:
        description = "(%s)" % description
   %>
