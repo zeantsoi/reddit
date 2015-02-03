@@ -277,15 +277,16 @@ class FrontController(RedditController):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
-        c.can_embed = feature.is_enabled("comment_embeds") and bool(comment)
-        if c.can_embed:
-            embed_key = embeds.prepare_embed_request(sr)
-
-        # check for 304
+        #check for 304
         self.check_modified(article, 'comments')
 
-        if c.can_embed and embed_key:
-            embeds.set_up_embed(embed_key, sr, comment, showedits=showedits)
+        # `CommentPane` needs this for caching
+        c.can_embed = feature.is_enabled("comment_embeds")
+
+        # only show embed button on permalinked comments
+        c.can_embed = c.can_embed and bool(comment)
+
+        embeds.setup_embed(thing=comment, showedits=showedits)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
         # Not to be open-sourced
