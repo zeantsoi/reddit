@@ -244,7 +244,6 @@ class Subreddit(Thing, Printable, BaseSite):
         public_description="",
         submit_text="",
         allow_gilding=True,
-        hide_subscribers=False,
         public_traffic=False,
         spam_links='high',
         spam_selfposts='high',
@@ -260,6 +259,7 @@ class Subreddit(Thing, Printable, BaseSite):
         community_rules='',
         related_subreddits='',
         key_color='',
+        hide_ads=False,
     )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
@@ -281,6 +281,7 @@ class Subreddit(Thing, Printable, BaseSite):
     valid_types = {
         'archived',
         'employees_only',
+        'gold_only',
         'gold_restricted',
         'private',
         'public',
@@ -291,6 +292,7 @@ class Subreddit(Thing, Printable, BaseSite):
     # unless you are a contributor or mod
     private_types = {
         'employees_only',
+        'gold_only',
         'private',
     }
 
@@ -520,6 +522,14 @@ class Subreddit(Thing, Printable, BaseSite):
     def wiki_use_subreddit_karma(self):
         return True
 
+    @property
+    def hide_subscribers(self):
+        return self.name.lower() in g.hide_subscribers_srs
+
+    @property
+    def hide_contributors(self):
+        return self.type in {'employees_only', 'gold_only'}
+
     def get_accounts_active(self):
         fuzzed = False
         count = AccountsActiveBySR.get_count(self)
@@ -565,6 +575,8 @@ class Subreddit(Thing, Printable, BaseSite):
         elif self.is_moderator(user) or self.is_contributor(user):
             #private requires contributorship
             return True
+        elif self.type == 'gold_only':
+            return user.gold or user.gold_charter
         else:
             return False
 
@@ -583,6 +595,8 @@ class Subreddit(Thing, Printable, BaseSite):
         elif self.is_moderator(user) or self.is_contributor(user):
             #restricted/private require contributorship
             return True
+        elif self.type == 'gold_only':
+            return user.gold or user.gold_charter
         elif self.type == 'gold_restricted' and user.gold:
             return True
         elif self.type == 'restricted' and promotion:
@@ -698,6 +712,12 @@ class Subreddit(Thing, Printable, BaseSite):
                            'gold_restricted', 'archived'):
             return True
         elif c.user_is_loggedin:
+            if self.type == 'gold_only':
+                return (user.gold or 
+                    user.gold_charter or 
+                    self.is_moderator(user) or 
+                    self.is_moderator_invite(user))
+
             return (self.is_contributor(user) or
                     self.is_moderator(user) or
                     self.is_moderator_invite(user))

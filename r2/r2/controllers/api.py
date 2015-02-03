@@ -2382,6 +2382,7 @@ class ApiController(RedditController):
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
                    css_on_cname = VBoolean("css_on_cname"),
+                   hide_ads = VBoolean("hide_ads"),
                    # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
@@ -2448,7 +2449,7 @@ class ApiController(RedditController):
                            'wiki_edit_age', 'allow_top', 'public_description',
                            'spam_links', 'spam_selfposts', 'spam_comments',
                            'submit_text', 'community_rules', 'related_subreddits',
-                           'key_color'))
+                           'key_color', 'hide_ads'))
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')
@@ -2497,6 +2498,17 @@ class ApiController(RedditController):
         if kw['type'] == 'gold_restricted' and not can_set_gold_restricted:
             c.errors.add(errors.INVALID_OPTION, field='type')
 
+        # can't create a gold only subreddit without having gold
+        can_set_gold_only = (c.user.gold or c.user.gold_charter or
+                (sr and sr.type == 'gold_only'))
+        if kw['type'] == 'gold_only' and not can_set_gold_only:
+            c.errors.add(errors.GOLD_REQUIRED, field='type')
+
+        can_set_hide_ads = can_set_gold_only and kw['type'] == 'gold_only'
+        if kw['hide_ads'] and not can_set_hide_ads:
+            form.set_error(errors.GOLD_ONLY_SR_REQUIRED, 'hide_ads')
+            c.errors.add(errors.GOLD_ONLY_SR_REQUIRED, field='hide_ads')
+
         can_set_employees_only = c.user.employee
         if kw['type'] == 'employees_only' and not can_set_employees_only:
             c.errors.add(errors.INVALID_OPTION, field='type')
@@ -2509,6 +2521,12 @@ class ApiController(RedditController):
                 not c.user_is_admin):
             form.set_error(errors.ADMIN_REQUIRED, 'type')
             c.errors.add(errors.ADMIN_REQUIRED, field='type')
+        # if the user wants to convert an existing subreddit to gold_only,
+        # let them know that they'll need to contact an admin to convert it.
+        elif (sr and sr.type != 'gold_only' and kw['type'] == 'gold_only' and
+                not c.user_is_admin):
+            form.set_error(errors.CANT_CONVERT_TO_GOLD_ONLY, 'type')
+            c.errors.add(errors.CANT_CONVERT_TO_GOLD_ONLY, field='type')
         elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
                                         errors.BAD_SR_NAME):
             form.find('#example_name').hide()
@@ -2530,6 +2548,8 @@ class ApiController(RedditController):
         elif form.has_errors('related_subreddits',
                              errors.BAD_SR_NAME, errors.TOO_MANY_SUBREDDITS):
             pass
+        elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
+            pass
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
@@ -2544,7 +2564,7 @@ class ApiController(RedditController):
             if sr.add_subscriber(c.user):
                 sr._incr('_ups', 1)
             sr.add_moderator(c.user)
-            if sr.type != 'employees_only':
+            if not sr.hide_contributors:
                 sr.add_contributor(c.user)
             redir = sr.path + "about/edit/?created=true"
             if not c.user_is_admin:
