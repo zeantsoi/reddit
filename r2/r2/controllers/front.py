@@ -35,6 +35,7 @@ from r2.controllers.reddit_base import (
 from r2 import config
 from r2.models import *
 from r2.models.recommend import ExploreSettings
+from r2.config import feature
 from r2.config.extensions import is_api
 from r2.lib import hooks, recommender, embeds, pages
 from r2.lib.pages import *
@@ -375,11 +376,17 @@ class FrontController(RedditController):
         if c.site.allows_referrers:
             c.referrer_policy = "always"
 
+        sort_suggested = False
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
                 sort = "top"
             else:
                 sort = "random"
+        elif (article.default_sort and
+                'sort' not in request.params and
+                feature.is_enabled('default_sort')):
+            sort = article.default_sort
+            sort_suggested = True
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
@@ -406,13 +413,20 @@ class FrontController(RedditController):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
 
+        sort_menu = CommentSortMenu(
+            default=sort,
+            title=_('suggested sort') if sort_suggested else '',
+            css_class='suggested' if sort_suggested else '',
+        )
+
+        link_settings = LinkCommentsSettings(article)
+
         res = LinkInfoPage(link=article, comment=comment,
                            content=displayPane,
                            page_classes=['comments-page'],
                            subtitle=subtitle,
                            subtitle_buttons=subtitle_buttons,
-                           nav_menus=[CommentSortMenu(default=sort),
-                                        LinkCommentsSettings(article)],
+                           nav_menus=[sort_menu, link_settings],
                            infotext=infotext).render()
         return res
 
