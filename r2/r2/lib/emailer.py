@@ -149,7 +149,6 @@ def message_notification_email(data):
         unsubscribe_link = base + '/mail/unsubscribe/%s/%s' % (datum['to'], mac)
 
         templateData = {
-            'sender_username': datum['from'],
             'comment': comment,
             'permalink': datum['permalink'],
             'unsubscribe_link': unsubscribe_link,
