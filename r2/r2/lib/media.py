@@ -471,8 +471,9 @@ class _ThumbnailOnlyScraper(Scraper):
         thumbnail_url = self._find_thumbnail_image()
         # When isolated from the context of a webpage, protocol-relative URLs
         # are ambiguous, so let's absolutify them now.
-        if thumbnail_url.startswith('//'):
+        if thumbnail_url and thumbnail_url.startswith('//'):
             thumbnail_url = coerce_url_to_protocol(thumbnail_url, self.protocol)
+
         thumbnail = _make_thumbnail_from_url(thumbnail_url, referer=self.url)
         return thumbnail, None, None
 
