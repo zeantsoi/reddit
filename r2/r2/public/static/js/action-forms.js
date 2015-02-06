@@ -95,7 +95,7 @@ r.fraud = {
     var $reason = $form.find('.fraud-reason');
     var reason = $el.attr('title');
 
-    $reason.text('"' + reason + '"');
+    $reason.text(reason);
   },
 
 };
