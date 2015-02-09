@@ -127,6 +127,7 @@ class LinkButtons(PrintableButtons):
             if c.user_is_sponsor:
                 kw["is_awaiting_fraud_review"] = is_awaiting_fraud_review(thing)
                 kw["payment_flagged_reason"] = thing.payment_flagged_reason
+                kw["hide_after_approval"] = thing.hide_after_approval
 
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
