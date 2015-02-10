@@ -56,6 +56,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      gilded       = _('gilded'),
                      confidence   = _('best'),
                      random       = _('random'),
+                     qa           = _('q & a'),
                      saved        = _('saved {toolbar}'),
                      recommended  = _('recommended'),
                      rising       = _('rising'), 
@@ -548,6 +549,7 @@ class SortMenu(NavMenu):
         "controversial": operators.desc('_controversy'),
         "confidence": operators.desc('_confidence'),
         "random": operators.shuffled('_confidence'),
+        "qa": operators.desc('_qa'),
     }
     _reverse_mapping = {v: k for k, v in _mapping.iteritems()}
 
@@ -569,8 +571,8 @@ class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
     _default = 'confidence'
     _options = ('confidence', 'top', 'new', 'hot', 'controversial', 'old',
-                 'random')
-    hidden_options = ('random',)
+                 'random', 'qa',)
+    hidden_options = ('random', 'qa',)
     button_cls = PostButton
 
 
