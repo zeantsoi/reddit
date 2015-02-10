@@ -465,11 +465,6 @@ class LinkJsonTemplate(ThingJsonTemplate):
         url="url",
     )
 
-    def __init__(self):
-        super(LinkJsonTemplate, self).__init__()
-        if feature.is_enabled('default_sort'):
-            self._data_attrs_['default_sort'] = 'default_sort'
-
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
         if attr in ("media_embed", "secure_media_embed"):
@@ -513,6 +508,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
         if c.permalink_page:
             d["upvote_ratio"] = thing.upvote_ratio
+
+        if feature.is_enabled('default_sort'):
+            d['default_sort'] = thing.default_sort
 
         return d
 
