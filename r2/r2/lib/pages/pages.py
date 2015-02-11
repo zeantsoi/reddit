@@ -4250,6 +4250,11 @@ class MediaEmbedBody(CachedTemplate):
 
 
 class PaymentForm(Templated):
+    countries = sorted(list(set(map(lambda c: c.get("name"),
+                                    g.locations.values()))))
+
+    default_country = g.locations.get("US").get("name")
+
     def __init__(self, link, campaign, **kw):
         self.link = link
         self.duration = strings.time_label
