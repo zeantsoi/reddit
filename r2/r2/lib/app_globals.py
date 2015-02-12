@@ -726,7 +726,7 @@ class Globals(object):
             self.cache = TransitionalCache(
                     original_cache=stale_m1,
                     replacement_cache=stale_m3,
-                    read_original=False,
+                    read_original=True,
             )
         else:
             simple_m1 = CacheChain((localcache_cls(), memcache_m1))
@@ -734,7 +734,7 @@ class Globals(object):
             self.cache = TransitionalCache(
                     original_cache=simple_m1,
                     replacement_cache=simple_m3,
-                    read_original=False,
+                    read_original=True,
             )
         cache_chains.update(cache=self.cache)
 
@@ -802,7 +802,7 @@ class Globals(object):
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
         self.hardcache = HardcacheChain(
-            (localcache_cls(), memcache_m3, memcache_m1, HardCache(self)),
+            (localcache_cls(), memcache_m1, memcache_m3, HardCache(self)),
             cache_negative_results=True,
         )
         cache_chains.update(hardcache=self.hardcache)
