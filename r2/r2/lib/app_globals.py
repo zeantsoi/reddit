@@ -237,7 +237,6 @@ class Globals(object):
             'plugins',
             'stalecaches',
             'memcaches',
-            'memcaches2',
             'lockcaches',
             'permacache_memcaches',
             'rendercaches',
@@ -563,18 +562,9 @@ class Globals(object):
         num_mc_clients = self.num_mc_clients
 
         # the main memcache pool. used for most everything.
-        memcache_m1 = CMemcache(
+        memcaches = CMemcache(
             "main",
             self.memcaches,
-            min_compress_len=50 * 1024,
-            num_clients=num_mc_clients,
-            binary=True,
-            validators=[validate_size_error],
-        )
-
-        memcache_m3 = CMemcache(
-            "main",
-            self.memcaches2,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
             binary=True,
@@ -713,29 +703,13 @@ class Globals(object):
                           else LocalCache)
 
         if stalecaches:
-            stale_m1 = StaleCacheChain(
+            self.cache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
-                memcache_m1,
-            )
-            stale_m3 = StaleCacheChain(
-                localcache_cls(),
-                stalecaches,
-                memcache_m3,
-            )
-            self.cache = TransitionalCache(
-                    original_cache=stale_m1,
-                    replacement_cache=stale_m3,
-                    read_original=False,
+                memcaches,
             )
         else:
-            simple_m1 = CacheChain((localcache_cls(), memcache_m1))
-            simple_m3 = CacheChain((localcache_cls(), memcache_m3))
-            self.cache = TransitionalCache(
-                    original_cache=simple_m1,
-                    replacement_cache=simple_m3,
-                    read_original=False,
-            )
+            self.cache = CacheChain((localcache_cls(), memcaches))
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
@@ -802,7 +776,7 @@ class Globals(object):
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
         self.hardcache = HardcacheChain(
-            (localcache_cls(), memcache_m3, memcache_m1, HardCache(self)),
+            (localcache_cls(), memcaches, HardCache(self)),
             cache_negative_results=True,
         )
         cache_chains.update(hardcache=self.hardcache)
