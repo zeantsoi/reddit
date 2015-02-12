@@ -866,7 +866,7 @@ class Comment(Thing, Printable):
         if author._spam:
             g.stats.simple_event('spam.autoremove.comment')
 
-        #these props aren't relations
+        # these props aren't relations
         if parent:
             c.parent_id = parent._id
 
@@ -876,7 +876,6 @@ class Comment(Thing, Printable):
         name = 'inbox'
         if parent and parent.sendreplies:
             to = Account._byID(parent.author_id, True)
-
         if not parent and link.sendreplies:
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
@@ -887,18 +886,25 @@ class Comment(Thing, Printable):
 
         CommentsByAccount.add_comment(author, c)
 
-        inbox_rel = None
-        # only global admins can be message spammed.
-        # Don't send the message if the recipient has blocked
-        # the author
-        if to and ((not c._spam and author._id not in to.enemies)
-            or to.name in g.admins):
-            # When replying to your own comment, record the inbox
-            # relation, but don't give yourself an orangered
-            orangered = (to.name != author.name)
-            inbox_rel = Inbox._add(to, c, name, orangered=orangered)
+        def should_send():
+            # don't send the message to author if replying to own comment
+            if author._id == to._id:
+                return False
+            # only global admins can be message spammed
+            if to.name in g.admins:
+                return True
+            # don't send the message if spam
+            # don't send the message if the recipient has blocked the author
+            if c._spam or author._id in to.enemies:
+                return False
+            return True
 
-            if orangered and to.pref_email_messages:
+        inbox_rel = None
+        if to and should_send():
+            # Record the inbox relation and give the user an orangered
+            inbox_rel = Inbox._add(to, c, name, orangered=True)
+
+            if to.pref_email_messages:
                 data = {
                     'to': to._id36,
                     'from': '/u/%s' % author.name,
