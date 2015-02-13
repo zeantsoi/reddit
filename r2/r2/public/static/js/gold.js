@@ -1,7 +1,4 @@
 r.gold = {
-
-    _inlineGilding: false,
-
     _googleCheckoutAnalyticsLoaded: false,
 
     init: function () {
@@ -87,10 +84,6 @@ r.gold = {
             return false
         }
 
-        this._inlineGilding = true;
-
-        r.analytics.fireFunnelEvent('gold', 'open-inline-form');
-
         if (!this._googleCheckoutAnalyticsLoaded) {
             // we're just gonna hope this loads fast enough since there's no
             // way to know if it failed and we'd rather the form is still
@@ -160,12 +153,6 @@ r.gold = {
 
         if (includeMsg) {
           giftmessage = ($goldwrap.find('[name="giftmessage"]')).val();
-        }
-
-        var vendor = $button.closest('[data-vendor]').data('vendor');
-
-        if (this._inlineGilding) {
-          r.analytics.fireFunnelEvent('gold', 'checkout', vendor);
         }
 
         $.request('modify_payment_blob.json', {code: code, signed: signed, message: giftmessage})
