@@ -517,6 +517,53 @@ class LinkJsonTemplate(ThingJsonTemplate):
         if feature.is_enabled('default_sort'):
             d['default_sort'] = thing.default_sort
 
+        # XXX: This is for mocking in the mobile app only and will be replaced
+        # with live code. Not to be open sourced! If you find this later than
+        # 2015-07-01, shame umbrae and he will remove it.
+        # More here: https://reddit.atlassian.net/wiki/pages/viewpage.action?pageId=10846400
+        if feature.is_enabled('link_preview_mocks'):
+            import hashlib
+
+            # ones and tens digits are seeds for our source quasirandom dimensions
+            # Just toss in junk seeds if we have a thing with an ID less than
+            # 2 digits. Mocking!
+            w_seed = 1 if thing._id < 10 else int(str(thing._id)[-1]) + 1
+            h_seed = 1 if thing._id < 100 else int(str(thing._id)[-2]) + 1
+
+            # Define dimensions within the tolerance of our spec
+            source_width = 1080 / w_seed
+            source_height = min(2160 / h_seed, source_width * 2)
+            source_ratio = float(source_height) / source_width
+
+            # Determine which previews would be feasible with our given dims
+            all_widths = [108, 216, 320, 640, 960, 1080]
+            preview_resolutions = []
+            for w in all_widths:
+                if w > source_width:
+                    continue
+
+                h = int(w * source_ratio)
+                preview_resolutions.append({
+                    "url": "https://placekitten.com/%d/%d" % (w, h),
+                    "width": w,
+                    "height": h,
+                })
+
+            d['post_hint'] = "article"
+            d['preview'] = {
+                "images": [
+                    {
+                        "id": hashlib.md5(thing._id36).hexdigest(),
+                        "source": {
+                            "url": "https://placekitten.com/%d/%d" % (source_width, source_height),
+                            "width": source_width,
+                            "height": source_height
+                        },
+                        "resolutions": preview_resolutions,
+                    },
+                ],
+            }
+
         return d
 
     def rendered_data(self, thing):
