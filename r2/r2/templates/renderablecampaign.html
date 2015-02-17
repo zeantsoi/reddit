@@ -144,4 +144,15 @@
       %endif
     %endif
   </td>
+  %if c.user_is_sponsor:
+    <td>
+      %if thing.campaign.trans_country_match is None:
+        N/A
+      %elif thing.campaign.trans_country_match:
+        yes
+      %else:
+        <span title="${thing.campaign.trans_country} vs. ${thing.campaign.trans_ip_country}">no</span>
+      %endif
+    </td>
+  %endif
 </tr>
