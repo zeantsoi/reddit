@@ -54,7 +54,6 @@ from r2.lib.cache import (
     MemcacheChain,
     SelfEmptyingCache,
     StaleCacheChain,
-    TransitionalCache,
     validate_size_error,
     validate_size_warn,
 )

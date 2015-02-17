@@ -44,7 +44,7 @@ from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, last_modified_multi, fuzz_activity
 from r2.lib.utils import timeago, summarize_markdown
-from r2.lib.cache import sgm, TransitionalCache
+from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
