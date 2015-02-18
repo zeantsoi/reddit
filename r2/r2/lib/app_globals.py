@@ -621,14 +621,11 @@ class Globals(object):
         # memcaches used in front of the permacache CF in cassandra.
         # XXX: this is a legacy thing; permacache was made when C* didn't have
         # a row cache.
-        if self.permacache_memcaches:
-            permacache_memcaches = CMemcache("perma",
-                                             self.permacache_memcaches,
-                                             min_compress_len=50 * 1024,
-                                             num_clients=num_mc_clients,
-                                             validators=[],)
-        else:
-            permacache_memcaches = None
+        permacache_memcaches = CMemcache("perma",
+                                         self.permacache_memcaches,
+                                         min_compress_len=50 * 1024,
+                                         num_clients=num_mc_clients,
+                                         validators=[],)
 
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
