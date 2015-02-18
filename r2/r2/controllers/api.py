@@ -2373,19 +2373,6 @@ class ApiController(RedditController):
                 public_description,
                 'public_description',
             )
-        
-        #if a user is banned, return rate-limit errors
-        if c.user._spam:
-            time = timeuntil(datetime.now(g.tz) + timedelta(seconds=600))
-            c.errors.add(errors.RATELIMIT, {'time': time})
-
-        # if a new user is creating a subreddit, return rate-limit error
-        user_age = datetime.now(g.tz) - c.user._date
-        if not sr and user_age.days < 1:
-            time = timeuntil(c.user._date + timedelta(days=1))
-            form.set_error(errors.RATELIMIT, None)
-            c.errors.add(errors.RATELIMIT, {'time': time})
-            return
 
         domain = kw['domain']
         cname_sr = domain and Subreddit._by_domain(domain)
