@@ -2382,6 +2382,9 @@ class ApiController(RedditController):
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
                    css_on_cname = VBoolean("css_on_cname"),
+                   # community_rules = VLength('community_rules', max_length=1024),
+                   # related_subreddits = VSubredditList('related_subreddits', limit=20),
+                   # key_color = VColor('key_color'),
                    )
     @api_doc(api_section.subreddits)
     def POST_site_admin(self, form, jquery, name, sr, **kw):
@@ -2416,6 +2419,20 @@ class ApiController(RedditController):
                 ModAction.create(sr, c.user, 'wikirevise',
                                  details=wiki.modactions.get(pagename))
 
+        # XXX: This should be moved to @validatedForm above when we remove
+        # the feature flag. Down here to avoid processing when flagged off
+        # and to hide from API docs.
+        if feature.is_enabled('mobile_settings'):
+            mobile_fields = {
+                'community_rules': VLength('community_rules', max_length=1024),
+                'related_subreddits': VSubredditList('related_subreddits',
+                                                     limit=20),
+                'key_color': VColor('key_color'),
+            }
+            for key, validator in mobile_fields.iteritems():
+                value = request.params.get(key)
+                kw[key] = validator.run(value)
+
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -2430,7 +2447,8 @@ class ApiController(RedditController):
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
                            'wiki_edit_age', 'allow_top', 'public_description',
                            'spam_links', 'spam_selfposts', 'spam_comments',
-                           'submit_text'))
+                           'submit_text', 'community_rules', 'related_subreddits',
+                           'key_color'))
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')
@@ -2509,6 +2527,9 @@ class ApiController(RedditController):
             pass
         elif form.has_errors('comment_score_hide_mins', errors.BAD_NUMBER):
             pass
+        elif form.has_errors('related_subreddits',
+                             errors.BAD_SR_NAME, errors.TOO_MANY_SUBREDDITS):
+            pass
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
@@ -2543,10 +2564,18 @@ class ApiController(RedditController):
 
             if not sr.domain:
                 del kw['css_on_cname']
+
+            # do not clobber these fields if absent in request
+            no_clobber = ('community_rules', 'key_color', 'related_subreddits')
+
             for k, v in kw.iteritems():
                 if getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 
                                      details=k)
+
+                if k in no_clobber and k not in request.params:
+                    continue
+
                 setattr(sr, k, v)
             sr._commit()
 
