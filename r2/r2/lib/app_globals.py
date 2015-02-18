@@ -239,6 +239,7 @@ class Globals(object):
             'memcaches',
             'lockcaches',
             'permacache_memcaches',
+            'permacache_memcaches2',
             'rendercaches',
             'pagecaches',
             'memoizecaches',
@@ -626,6 +627,18 @@ class Globals(object):
                                          min_compress_len=50 * 1024,
                                          num_clients=num_mc_clients,
                                          validators=[],)
+        try:
+            # cleanly fail on reddit installs without permacache_memcaches2
+            # set in the ini file
+            self.permacache_memcaches2
+        except AttributeError:
+            permacache_memcaches2 = None
+        else:
+            permacache_memcaches2 = CMemcache("perma",
+                                             self.permacache_memcaches2,
+                                             min_compress_len=50 * 1024,
+                                             num_clients=num_mc_clients,
+                                             validators=[],)
 
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
@@ -766,6 +779,7 @@ class Globals(object):
             localcache_cls(),
             permacache_cf,
             memcache=permacache_memcaches,
+            replacement_memcache=permacache_memcaches2,
             lock_factory=self.make_lock,
         )
         cache_chains.update(permacache=self.permacache)
