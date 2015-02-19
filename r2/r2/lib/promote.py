@@ -946,6 +946,8 @@ def successful_payment(link, campaign, ip, address):
             campaign.trans_ip_country.lower())
         campaign.trans_country_match = countries_match
 
+    campaign._commit()
+
 
 def new_payment_method(user, ip, address, link):
     user._incr('num_payment_methods')
