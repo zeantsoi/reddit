@@ -44,6 +44,8 @@ from r2.lib.hardcachebackend import HardCacheBackend
 from r2.lib.sgm import sgm # get this into our namespace so that it's
                            # importable from us
 
+import random
+                           
 # This is for use in the health controller
 _CACHE_SERVERS = set()
 
@@ -1020,7 +1022,6 @@ class CassandraCache(CacheUtils):
         return ret
 
     def _warm(self, keys):
-        import random
         if False and random.random() > 0.98:
             print 'Warming', keys
             self.cf.multiget(keys)
