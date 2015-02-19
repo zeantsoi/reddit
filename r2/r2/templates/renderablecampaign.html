@@ -120,9 +120,9 @@
       %if thing.campaign.trans_country_match is None:
         N/A
       %elif thing.campaign.trans_country_match:
-        yes
+        no
       %else:
-        <span title="${thing.campaign.trans_country} vs. ${thing.campaign.trans_ip_country}">no</span>
+        <span title="${thing.campaign.trans_country} vs. ${thing.campaign.trans_ip_country}">yes</span>
       %endif
     </td>
   %endif
