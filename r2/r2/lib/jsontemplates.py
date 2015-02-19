@@ -544,7 +544,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
                 h = int(w * source_ratio)
                 preview_resolutions.append({
-                    "url": "https://placekitten.com/%d/%d" % (w, h),
+                    "url": "https://placekitten.com/%d/%d?image=%d" % (w, h, w_seed),
                     "width": w,
                     "height": h,
                 })
@@ -555,7 +555,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                     {
                         "id": hashlib.md5(thing._id36).hexdigest(),
                         "source": {
-                            "url": "https://placekitten.com/%d/%d" % (source_width, source_height),
+                            "url": "https://placekitten.com/%d/%d?image=%d" % (source_width, source_height, w_seed),
                             "width": source_width,
                             "height": source_height
                         },
