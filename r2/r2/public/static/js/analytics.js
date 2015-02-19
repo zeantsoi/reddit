@@ -98,7 +98,7 @@ r.analytics = {
     var isGALoaded = this.isGALoaded();
 
     if (!isGALoaded) {
-      callback = _wrapCallback(callback);
+      callback = this._wrapCallback(callback);
     }
 
     // Virtual page views are needed for a funnel to work with GA.
@@ -127,7 +127,7 @@ r.analytics = {
     var isGALoaded = this.isGALoaded();
 
     if (!isGALoaded) {
-      callback = _wrapCallback(callback);
+      callback = this._wrapCallback(callback);
     }
 
     _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
