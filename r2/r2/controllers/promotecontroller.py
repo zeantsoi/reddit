@@ -728,6 +728,8 @@ class PromoteApiController(ApiController):
                     gifts_embed_url, media_url_type, domain_override,
                     is_managed, l=None, thumbnail_file=None):
         should_ratelimit = False
+        is_self = kind == "self"
+        is_link = not is_self
         if not c.user_is_sponsor:
             should_ratelimit = True
 
@@ -770,7 +772,7 @@ class PromoteApiController(ApiController):
                 # want the URL
                 url = url[0].url
 
-        if kind == 'link':
+        if is_link:
             if form.has_errors('url', errors.NO_URL, errors.BAD_URL):
                 return
 
@@ -780,13 +782,13 @@ class PromoteApiController(ApiController):
              jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
 
-        if kind == 'self' and form.has_errors('text', errors.TOO_LONG):
+        if is_self and form.has_errors('text', errors.TOO_LONG):
             return
 
         if not l:
             # creating a new promoted link
-            l = promote.new_promotion(title, url if kind == 'link' else 'self',
-                                      selftext if kind == 'self' else '',
+            l = promote.new_promotion(title, url if is_link else 'self',
+                                      selftext if is_self else '',
                                       user, request.ip)
             l.domain_override = domain_override or None
             if c.user_is_sponsor:
@@ -806,31 +808,36 @@ class PromoteApiController(ApiController):
         elif not promote.is_promo(l):
             return
 
-        # changing link type is not allowed
-        if ((l.is_self and kind == 'link') or
-            (not l.is_self and kind == 'self')):
-            c.errors.add(errors.NO_CHANGE_KIND, field="kind")
-            form.set_error(errors.NO_CHANGE_KIND, "kind")
-            return
-
         changed = False
         # live items can only be changed by a sponsor, and also
         # pay the cost of de-approving the link
         if not promote.is_promoted(l) or c.user_is_sponsor:
             if title and title != l.title:
                 l.title = title
-                changed = not c.user_is_sponsor
+                changed = True
 
-            if kind == 'link' and url and url != l.url:
+            # type changing
+            if is_self != l.is_self:
+                l.is_self = is_self
+
+                if is_self:
+                    l.url = "self"
+                    l.selftext = selftext
+                else:
+                    l.url = url
+                    l.selftext = Link._defaults.get("selftext", "")
+                changed = True
+
+            if is_link and url and url != l.url:
                 l.url = url
-                changed = not c.user_is_sponsor
+                changed = True
 
-        # only trips if the title and url are changed by a non-sponsor
-        if changed:
+        # only trips if changed by a non-sponsor
+        if changed and not c.user_is_sponsor:
             promote.unapprove_promotion(l)
 
         # selftext can be changed at any time
-        if kind == 'self':
+        if is_self:
             l.selftext = selftext
 
         # comment disabling and sendreplies is free to be changed any time.
