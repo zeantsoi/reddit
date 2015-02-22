@@ -376,16 +376,16 @@ class FrontController(RedditController):
         if c.site.allows_referrers:
             c.referrer_policy = "always"
 
-        suggested_sort = None
+        suggested_sort_active = False
+        suggested_sort = article.sort_if_suggested() if feature.is_enabled('default_sort') else None
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
                 sort = "top"
             else:
                 sort = "random"
-        elif feature.is_enabled('default_sort') and 'sort' not in request.params:
-            suggested_sort = article.sort_if_suggested()
-            if suggested_sort:
+        elif suggested_sort and 'sort' not in request.params:
                 sort = suggested_sort
+                suggested_sort_active = True
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
@@ -414,8 +414,8 @@ class FrontController(RedditController):
 
         sort_menu = CommentSortMenu(
             default=sort,
-            title=_('suggested sort') if suggested_sort else '',
-            css_class='suggested' if suggested_sort else '',
+            css_class='suggested' if suggested_sort_active else '',
+            suggested_sort=suggested_sort,
         )
 
         link_settings = LinkCommentsSettings(article)
