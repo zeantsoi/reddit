@@ -418,7 +418,11 @@ class FrontController(RedditController):
             suggested_sort=suggested_sort,
         )
 
-        link_settings = LinkCommentsSettings(article)
+        link_settings = LinkCommentsSettings(
+            article,
+            sort=sort,
+            suggested_sort=suggested_sort,
+        )
 
         res = LinkInfoPage(link=article, comment=comment,
                            content=displayPane,
