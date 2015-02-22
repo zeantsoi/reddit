@@ -2448,9 +2448,13 @@ class AllInfoBar(Templated):
 
 class CreateSubreddit(Templated):
     """reddit creation form."""
-    def __init__(self, site=None, name='', captcha=None):
-        Templated.__init__(self, site=site, name=name, captcha=captcha)
-
+    def __init__(self, site = None, name = '', captcha=None):
+        Templated.__init__(self,
+                           site=site,
+                           name=name,
+                           captcha=captcha,
+                           comment_sorts=CommentSortMenu.visible_options(),
+                           )
         self.color_options = Subreddit.KEY_COLORS
 
 
