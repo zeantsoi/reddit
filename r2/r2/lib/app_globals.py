@@ -257,7 +257,6 @@ class Globals(object):
             'exempt_login_user_agents',
             'timed_templates',
             'autoexpand_media_types',
-            'multi_icons',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [
