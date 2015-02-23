@@ -172,6 +172,7 @@ class Globals(object):
             'num_comments',
             'max_comments',
             'max_comments_gold',
+            'max_comment_parent_walk',
             'max_sr_images',
             'num_serendipity',
             'sr_dropdown_threshold',
