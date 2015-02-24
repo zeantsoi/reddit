@@ -105,7 +105,7 @@ ENTITY_DTD_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     'contrib/dtds/allowed_entities.dtd')
 
-SOUPTEST_DOCTYPE = '<!DOCTYPE div- SYSTEM "file://%s">' % ENTITY_DTD_PATH
+SOUPTEST_DOCTYPE_FMT = '<!DOCTYPE div- [\n %s \n]>'
 
 UNDEFINED_ENTITY_RE = re.compile(r"\AEntity '([^']*)' not defined,.*")
 
@@ -122,6 +122,16 @@ def souptest_fragment(fragment):
     and a whitelist of named character entities to deal with inconsistencies
     between how parsers handle lookup failures for them.
     """
+    # We lazily load this so processes that don't souptest don't have to load
+    # it every startup.
+    souptest_doctype = getattr(souptest_fragment, 'souptest_doctype', None)
+    if souptest_doctype is None:
+        # Slurp in all of the entity definitions so we can avoid a read every
+        # time we parse
+        with open(ENTITY_DTD_PATH, 'r') as ent_file:
+            souptest_doctype = SOUPTEST_DOCTYPE_FMT % ent_file.read()
+        souptest_fragment.souptest_doctype = souptest_doctype
+
     # lxml makes it *very* difficult to tell if there's a CDATA node in the
     # tree, even if you tell it not to fold them into adjacent text sections.
     # CDATA sections will be ignored and their innards parsed in most doctypes,
@@ -133,11 +143,11 @@ def souptest_fragment(fragment):
     # We also need to wrap everything in a div, as lxml throws out
     # comments outside the root tag. This also ensures that attempting an
     # entity declaration or similar shenanigans will cause a syntax error.
-    documentized_fragment = "%s<div>%s</div>" % (SOUPTEST_DOCTYPE, fragment)
+    documentized_fragment = "%s<div>%s</div>" % (souptest_doctype, fragment)
     s = StringIO(documentized_fragment)
 
     try:
-        parser = lxml.etree.XMLParser(load_dtd=True)
+        parser = lxml.etree.XMLParser()
         # Can't use a SAX interface because lxml's doesn't give you a handler
         # for comments or entities unless you use Python 3. Oh well.
         for node in lxml.etree.parse(s, parser).iter():
