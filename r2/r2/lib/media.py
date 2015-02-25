@@ -54,8 +54,9 @@ from r2.lib.utils import (
     UrlParser,
     coerce_url_to_protocol,
     domain,
+    extract_urls_from_markdown,
 )
-from r2.models.link import Link, LinksByImage
+from r2.models.link import Link
 from r2.models.media_cache import (
     ERROR_MEDIA,
     Media,
@@ -339,29 +340,55 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
     return media
 
 
+def _get_scrape_url(link):
+    if not link.is_self:
+        return link.url
+
+    urls = extract_urls_from_markdown(link.selftext)
+    for url in urls:
+        p = UrlParser(url)
+        if not p.is_reddit_url():
+            return url
+
+    return None
+
+
 def _set_media(link, force=False, **kwargs):
     if link.is_self:
-        return
+        if not feature.is_enabled('scrape_self_posts'):
+            return
+    else:
+        if not force and (link.has_thumbnail or link.media_object):
+            return
+
     if not force and link.promoted:
         return
-    elif not force and (link.has_thumbnail or link.media_object):
+
+    scrape_url = _get_scrape_url(link)
+
+    if not scrape_url:
+        if link.preview_object:
+            # If the user edited out an image from a self post, we need to make
+            # sure to remove its metadata.
+            link.set_preview_object(None)
+            link._commit()
         return
 
-    media = _scrape_media(link.url, force=force, **kwargs)
+    media = _scrape_media(scrape_url, force=force, **kwargs)
 
     if media and not link.promoted:
-        link.thumbnail_url = media.thumbnail_url
-        link.thumbnail_size = media.thumbnail_size
+        # While we want to add preview images to self posts for the new apps,
+        # let's not muck about with the old-style thumbnails in case that
+        # breaks assumptions.
+        if not link.is_self:
+            link.thumbnail_url = media.thumbnail_url
+            link.thumbnail_size = media.thumbnail_size
 
-        link.set_media_object(media.media_object)
-        link.set_secure_media_object(media.secure_media_object)
+            link.set_media_object(media.media_object)
+            link.set_secure_media_object(media.secure_media_object)
         link.set_preview_object(media.preview_object)
 
         link._commit()
-
-        if media.preview_object:
-            image_uid = media.preview_object['uid']
-            LinksByImage.add_link(image_uid, link)
 
         hooks.get_hook("scraper.set_media").call(link=link)
         amqp.add_item("new_media_embed", link._fullname)
@@ -703,7 +730,11 @@ def run():
     @g.stats.amqp_processor('scraper_q')
     def process_link(msg):
         fname = msg.body
-        link = Link._by_fullname(msg.body, data=True)
+        # We're only interested in self-post edits, not comment edits.
+        if not fname.startswith(Link._fullname_prefix):
+            return
+
+        link = Link._by_fullname(fname, data=True)
 
         try:
             TimeoutFunction(_set_media, 30)(link, use_cache=True)
