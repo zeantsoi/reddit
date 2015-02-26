@@ -898,7 +898,9 @@ class CassandraCacheChain(CacheChain):
             rcl = wcl = self.cassa.write_consistency_level
             if willread:
                 try:
-                    value = self.replacement_memcache.get(key)
+                    value = None
+                    if self.replacement_memcache:
+                        value = self.replacement_memcache.get(key)
                     if value is None:
                         value = self.memcache.get(key)
                     if value is None:
