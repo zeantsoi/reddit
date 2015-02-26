@@ -719,6 +719,46 @@ class Link(Thing, Printable):
         Printable.add_props(user, wrapped)
 
     @property
+    def post_hint(self):
+        """Returns a string that suggests the content of this link.
+
+        As a hint, this is lossy and may be inaccurate in some cases.
+
+        Currently one of:
+            * self
+            * video (a video file, like an mp4)
+            * image (an image file, like a gif or png)
+            * rich:video (a video embedded in HTML - like youtube or vimeo)
+            * link (catch-all)
+        """
+        if self.is_self:
+            return 'self'
+
+        try:
+            oembed_type = self.media_object['oembed']['type']
+        except (KeyError, TypeError):
+            oembed_type = None
+
+        if oembed_type == 'photo':
+            return 'image'
+
+        if oembed_type == 'video':
+            return 'rich:video'
+
+        if oembed_type in {'link', 'rich'}:
+            return 'link'
+
+        p = UrlParser(self.url)
+        extension = p.path_extension().lower()
+        if extension in {'gif', 'jpeg', 'jpg', 'png', 'tiff'}:
+            return 'image'
+
+        if extension in {'mp4', 'webm'}:
+            return 'video'
+
+        return 'link'
+
+    @property
     def subreddit_slow(self):
         """Returns the link's subreddit."""
         # The subreddit is often already on the wrapped link as .subreddit

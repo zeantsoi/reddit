@@ -610,7 +610,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                     "height": h,
                 })
 
-            d['post_hint'] = "article"
+            d['post_hint'] = thing.post_hint
             d['preview'] = {
                 "images": [
                     {
