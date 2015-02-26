@@ -403,7 +403,7 @@ class Email(object):
                                    t.c.msg_hash :  self.msg_hash,
                                    }).execute()
             except:
-                print "failed to send message"
+                print "failed to send message to %s from %s" % (self.to_addr, self.ip)
 
             self.sent = True
 
