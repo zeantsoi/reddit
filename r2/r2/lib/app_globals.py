@@ -76,6 +76,25 @@ from r2.lib.utils import config_gold_price, thread_dump
 
 
 LIVE_CONFIG_NODE = "/config/live"
+
+LINK_SEARCH_SORTS = {
+        'cloudsearch': {'relevance': '-relevance',
+                        'hot': '-hot2',
+                        'top': '-top',
+                        'new': '-timestamp',
+                        'comments': '-num_comments',},
+        'solr': {'relevance': 'score desc',
+                              'hot': 'max(hot/45000.0, 1.0) desc',
+                              'top': 'top desc',
+                              'new': 'timestamp desc',
+                              'comments': 'num_comments desc',},
+        }
+
+SEARCH_SYNTAXES = {
+        'cloudsearch': ('cloudsearch', 'lucene', 'plain'),
+        'solr': ('solr', 'plain'),
+        }
+
 SECRETS_NODE = "/config/secrets"
 
 
@@ -287,6 +306,7 @@ class Globals(object):
             'ads_email',
             'smtp_server',
             'events_collector_url',
+            'search_provider',
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [
@@ -1001,3 +1021,23 @@ class Globals(object):
         here.
         """
         pass
+
+    @property
+    def search(self):
+        if getattr(self, 'search_provider', None):
+            if type(self.search_provider) == str:
+                self.search_provider = select_provider(self.config,
+                                       self.pkg_resources_working_set,
+                                       "r2.provider.search",
+                                       self.search_provider,
+                                       )
+            return  self.search_provider
+        return None
+
+    @property
+    def search_sorts(self):
+        return  LINK_SEARCH_SORTS[self.config.get('search_provider')]
+
+    @property
+    def search_syntaxes(self):
+        return SEARCH_SYNTAXES[self.config.get('search_provider')]
