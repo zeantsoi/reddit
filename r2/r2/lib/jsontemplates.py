@@ -526,6 +526,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
         url="url",
     )
 
+    PREVIEW_RESOLUTIONS = (108, 216, 320, 640, 960, 1080)
+
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
         if attr in ("media_embed", "secure_media_embed"):
@@ -573,11 +575,46 @@ class LinkJsonTemplate(ThingJsonTemplate):
         if feature.is_enabled('default_sort'):
             d['suggested_sort'] = thing.sort_if_suggested()
 
+        preview_object = getattr(thing, 'preview_object', None)
+        if feature.is_enabled('link_preview') and preview_object:
+            source_width = preview_object['width']
+            source_height = preview_object['height']
+            source_ratio = float(source_height) / source_width
+
+            # Determine which previews would be feasible with our given dims
+            preview_resolutions = []
+            for w in self.PREVIEW_RESOLUTIONS:
+                if w > source_width:
+                    continue
+
+                url = g.image_resizing_provider.resize_image(preview_object, w)
+                h = int(w * source_ratio)
+                preview_resolutions.append({
+                    "url": url,
+                    "width": w,
+                    "height": h,
+                })
+
+            d['post_hint'] = thing.post_hint
+            url = g.image_resizing_provider.resize_image(preview_object)
+            d['preview'] = {
+                "images": [
+                    {
+                        "id": preview_object['uid'],
+                        "source": {
+                            "url": url,
+                            "width": source_width,
+                            "height": source_height,
+                        },
+                        "resolutions": preview_resolutions,
+                    },
+                ],
+            }
         # XXX: This is for mocking in the mobile app only and will be replaced
         # with live code. Not to be open sourced! If you find this later than
         # 2015-07-01, shame umbrae and he will remove it.
         # More here: https://reddit.atlassian.net/wiki/pages/viewpage.action?pageId=10846400
-        if feature.is_enabled('link_preview_mocks'):
+        elif feature.is_enabled('link_preview_mocks'):
             import hashlib
 
             # ones and tens digits are seeds for our source quasirandom dimensions

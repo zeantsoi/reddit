@@ -62,6 +62,7 @@ from hashlib import md5
 import simplejson as json
 
 import random, re
+import pycassa
 from collections import defaultdict
 from pycassa.cassandra.ttypes import NotFoundException
 import pytz
@@ -829,6 +830,9 @@ class Link(Thing, Printable):
 
     def set_secure_media_object(self, value):
         self.secure_media_object = Link._utf8_encode(value)
+
+    def set_preview_object(self, value):
+        self.preview_object = Link._utf8_encode(value)
 
 
 class LinksByUrl(tdb_cassandra.View):
@@ -2175,6 +2179,37 @@ class CommentSavesByCategory(_ThingSavesByCategory):
     def _get_query_fn(cls):
         from r2.lib.db import queries
         return queries.get_categorized_saved_comments
+
+class LinksByImage(tdb_cassandra.View):
+    _use_db = True
+
+    # If a popular site uses the same oembed image everywhere (*cough* reddit),
+    # we may have a shitton of links pointing to the same image.
+    _fetch_all_columns = True
+
+    _extra_schema_creation_args = {
+        'key_validation_class': tdb_cassandra.ASCII_TYPE,
+    }
+
+    @classmethod
+    def _rowkey(cls, image_uid):
+        return image_uid
+
+    @classmethod
+    def add_link(cls, image_uid, link):
+        rowkey = cls._rowkey(image_uid)
+        column = {link._id36: ''}
+        cls._set_values(rowkey, column)
+
+    @classmethod
+    def get_link_id36s(cls, image_uid):
+        rowkey = cls._rowkey(image_uid)
+        try:
+            columns = cls._byID(rowkey)._values()
+        except NotFoundException:
+            return []
+        return columns.iterkeys()
+
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
