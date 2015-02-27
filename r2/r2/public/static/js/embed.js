@@ -21,14 +21,14 @@
           '</div>' +
       '<% } %>' +
       '<div class="c-checkbox">' +
-          '<label>' +
-              '<input type="checkbox" name="live" <% if (!live) { %> checked <% } %> data-rerender="false">' +
+          '<input type="checkbox" name="live" <% if (!live) { %> checked <% } %> data-rerender="false" id="live-edits">' +
+          '<label for="live-edits">' +
               _.escape(r._('Do not show comment if edited.')) +
+              '&nbsp;' +
+              '<a href="javascript: void 0;" class="c-toggle" data-toggle="#live-help">' +
+                _.escape(r._('Learn more')) +
+              '</a>' +
           '</label>' +
-          '&nbsp;' +
-          '<a href="javascript: void 0;" class="c-toggle" data-toggle="#live-help">' +
-            _.escape(r._('Learn more')) +
-          '</a>' +
           '<div id="live-help" class="c-help-block c-toggle-content">' +
             '<p>' +
               _.escape(r._('When checked, if an embedded comment is later edited, the embedded comment text will be replaced by a link back to the current version of the comment on reddit.')) +
