@@ -627,7 +627,6 @@ class Reddit(Templated):
                 link="http://redditgifts.com/?source=red-hol14-side-14121",
                 target="_blank",
             ))
-
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
             ps.append(SubredditInfoBar())
@@ -654,6 +653,12 @@ class Reddit(Templated):
                            '/subreddits/create', 'create',
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
+
+        if c.default_sr:
+            hook = hooks.get_hook('home.add_sidebox')
+            extra_sidebox = hook.call_until_return()
+            if extra_sidebox:
+                ps.append(extra_sidebox)
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderator_ids = c.site.moderator_ids()
