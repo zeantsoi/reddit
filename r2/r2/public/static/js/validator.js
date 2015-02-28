@@ -97,6 +97,9 @@
 
           if (json && json.errors && json.errors.length) {
             $el.trigger('invalid.validator', json);
+            _.each(validateWith, function(name) {
+              $form.find('[name="' + name + '"]').trigger('invalid.validator', json);
+            });
           } else {
             $el.trigger('valid.validator');
           }
