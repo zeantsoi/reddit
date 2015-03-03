@@ -394,35 +394,6 @@ def query_string(dict):
     else:
         return ''
 
-# Characters that some parsers will throw out before parsing
-URL_IGNORED_RE = re.compile(
-    ur'[\x00-\x20\xA0\u1680\u180E\u2000-\u2029\u205f\u3000]',
-    re.UNICODE
-)
-
-
-def get_normalized_url_variants(url):
-    """
-    Get all of the different ways this URL can be interpreted by browsers
-    """
-    return (
-        url,
-        URL_IGNORED_RE.sub('', url),
-        url.replace('\\', '/'),
-        URL_IGNORED_RE.sub('', url).replace('\\', '/')
-    )
-
-
-def paranoid_urlparser_method(check):
-    """
-    Decorator for checks on `UrlParser` instances that need to be paranoid
-    """
-    def check_wrapper(parser, *args, **kwargs):
-        return UrlParser.perform_paranoid_check(parser, check, *args, **kwargs)
-
-    return check_wrapper
-
-
 class UrlParser(object):
     """
     Wrapper for urlparse and urlunparse for making changes to urls.
@@ -443,8 +414,8 @@ class UrlParser(object):
     """
 
     __slots__ = ['scheme', 'path', 'params', 'query',
-                 'fragment', 'username', 'password', 'hostname', 'port',
-                 '_url_updates', '_orig_url', '_orig_netloc', '_query_dict']
+                 'fragment', 'username', 'password', 'hostname',
+                 'port', '_url_updates', '_orig_url', '_query_dict']
 
     valid_schemes = ('http', 'https', 'ftp', 'mailto')
     cname_get = "cnameframe"
@@ -456,7 +427,6 @@ class UrlParser(object):
                 setattr(self, s, getattr(u, s))
         self._url_updates = {}
         self._orig_url    = url
-        self._orig_netloc = getattr(u, 'netloc', '')
         self._query_dict  = None
 
     def update_query(self, **updates):
@@ -573,40 +543,7 @@ class UrlParser(object):
             pass
         return None
 
-    def perform_paranoid_check(self, check, *args, **kwargs):
-        """
-        Perform a check on a URL that need to be true under *all* URL parsers
-
-        This beast of a method really needs 8 different passes:
-
-        normal URL
-        normal URL + whitespace removal
-        normal URL + backslash replacement
-        normal URL + whitespace removal + backslash replacement
-        unparse(parse(URL))
-        unparse(parse(URL)) + whitespace removal
-        unparse(parse(URL)) + backslash replacement
-        unparse(parse(URL)) + whitespace removal + backslash replacement
-
-        Seems excessive, but yes, it's necessary. If any parser misinterprets
-        a URL we ok'd, especially after we reconstructed it, we've got an
-        open redirect or worse.
-
-        Admittedly, it'd be difficult to be 100% faithful to how each of the
-        popular browsers parse URLs, but this is a good enough approximation
-        for now.
-        """
-        urls_to_check = (
-            get_normalized_url_variants(self._orig_url) +
-            get_normalized_url_variants(self.unparse())
-        )
-        # If the check doesn't pass on *every* variant, it's a fail.
-        return all(
-            check(UrlParser(url), *args, **kwargs) for url in urls_to_check
-        )
-
-    @paranoid_urlparser_method
-    def is_reddit_url(self, subreddit=None):
+    def is_reddit_url(self, subreddit = None):
         """utility method for seeing if the url is associated with
         reddit as we don't necessarily want to mangle non-reddit
         domains
@@ -614,37 +551,22 @@ class UrlParser(object):
         returns true only if hostname is nonexistant, a subdomain of
         g.domain, or a subdomain of the provided subreddit's cname.
         """
-
         from pylons import g
-        valid_subdomain = (
+        subdomain = (
             not self.hostname or
             is_subdomain(self.hostname, g.domain) or
             (subreddit and subreddit.domain and
                 is_subdomain(self.hostname, subreddit.domain))
         )
-
-        # There's no valid reason for this, and just serves to confuse UAs.
-        # and urllib2.
-        if self._orig_url.startswith("///"):
-            return False
-
-        # A host- relative link with a scheme like `https:/baz` or `https:?quux`
-        if self.scheme and not self.hostname:
-            return False
-
-        # Credentials in the netloc? Not on reddit!
-        if "@" in self._orig_netloc:
-            return False
-
-        # `javascript://www.reddit.com/%0D%Aalert(1)` is not safe, obviously
-        if self.scheme:
-            if self.scheme.lower() not in self.valid_schemes:
+        # Handle backslash trickery like /\example.com/ being treated as
+        # equal to //example.com/ by some browsers
+        if not self.hostname and not self.scheme and self.path:
+            if self.path.startswith("/\\"):
                 return False
-
-        if not valid_subdomain or not self.hostname or not g.offsite_subdomains:
-            return valid_subdomain
+        if not subdomain or not self.hostname or not g.offsite_subdomains:
+            return subdomain
         return not any(
-            is_subdomain(self.hostname, "%s.%s" % (subdomain, g.domain))
+            self.hostname.startswith(subdomain + '.')
             for subdomain in g.offsite_subdomains
         )
 
