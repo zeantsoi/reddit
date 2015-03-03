@@ -2474,6 +2474,12 @@ class CreateSubreddit(Templated):
                            comment_sorts=CommentSortMenu.visible_options(),
                            )
         self.color_options = Subreddit.KEY_COLORS
+        self.subreddit_selector = SubredditSelector(
+                placeholder=_("add subreddit"),
+                class_name="sr-name",
+                include_user_subscriptions=False,
+                show_add=True,
+            )
 
 
 class SubredditStylesheet(Templated):
