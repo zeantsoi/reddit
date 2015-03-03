@@ -33,7 +33,6 @@ class LastModified(tdb_cassandra.View):
     _use_db = True
     _value_type = "date"
     _connection_pool = "main"
-    _read_consistency_level = tdb_cassandra.CL.ONE
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=DATE_TYPE)
 
