@@ -94,6 +94,15 @@
     </form>
   %endif
 
+  %if thing.can_edit and feature.is_enabled('multireddit_customizations'):
+    <div class="display-name">
+      ${UserText(None, text=thing.multi.display_name, post_form=None, editable=True, include_errors=False)}
+      <div class="gray-buttons settings">
+        <button class="edit-display-name">${_('edit display name')}</button>
+      </div>
+    </div>
+  %endif
+
   <div class="description">
     ${UserText(None, text=thing.description_md, post_form=None, editable=True, include_errors=False)}
     %if thing.can_edit:

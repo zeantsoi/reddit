@@ -336,7 +336,9 @@ r.multi.MultiDetails = Backbone.View.extend({
         'click .show-copy': 'showCopyMulti',
         'click .show-rename': 'showRenameMulti',
         'click .edit-description': 'editDescription',
+        'click .edit-display-name': 'editDisplayName',
         'submit .description': 'saveDescription',
+        'submit .display-name': 'saveDisplayName',
         'confirm .delete': 'deleteMulti'
     },
 
@@ -469,7 +471,7 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     editDescription: function() {
-        show_edit_usertext(this.$el)
+        show_edit_usertext($(".description"))
     },
 
     saveDescription: function(ev) {
@@ -478,7 +480,22 @@ r.multi.MultiDetails = Backbone.View.extend({
             'description_md': this.$('.description textarea').val()
         }, {
             success: _.bind(function() {
-                hide_edit_usertext(this.$el)
+                hide_edit_usertext($(".description"))
+            }, this)
+        })
+    },
+
+    editDisplayName: function() {
+        show_edit_usertext($(".display-name"))
+    },
+
+    saveDisplayName: function(ev) {
+        ev.preventDefault()
+        this.model.save({
+            'display_name': this.$('.display-name textarea').val()
+        }, {
+            success: _.bind(function() {
+                hide_edit_usertext($(".display-name"))
             }, this)
         })
     },
