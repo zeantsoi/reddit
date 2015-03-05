@@ -897,6 +897,7 @@ class CommentBuilder(Builder):
             # skip deleted comments with no children
             if (comment.deleted and not cid_tree.has_key(comment._id)
                 and not self.show_deleted):
+                comment.hidden = True
                 continue
 
             comment.num_children = num_children[comment._id]
@@ -949,7 +950,7 @@ class CommentBuilder(Builder):
         for comment in wrapped:
             if getattr(comment, 'hidden', False):
                 # Remove it from the list of visible comments so it'll
-                # automatically get put into the "load more" links.
+                # automatically be a candidate for the "load more" links.
                 del wrapped_by_id[comment._id]
                 # And don't add it to the tree.
                 continue
