@@ -1724,3 +1724,7 @@ class FormsController(RedditController):
         content = GoldSubscription(user)
         return BoringPage(_("reddit gold subscription"), show_sidebar=False,
                           content=content).render()
+
+
+class FrontUnstyledController(FrontController):
+    allow_stylesheets = False

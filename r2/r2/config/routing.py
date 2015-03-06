@@ -66,7 +66,7 @@ def make_map():
 
     mc('/over18', controller='post', action='over18')
 
-    mc('/rules', controller='front', action='rules')
+    mc('/rules', controller='frontunstyled', action='rules')
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
     mc('/traffic/languages/:langcode', controller='front',
@@ -75,7 +75,7 @@ def make_map():
        action='advert_traffic', code='')
     mc('/traffic/subreddits/report', controller='front',
        action='subreddit_traffic_report')
-    mc('/account-activity', controller='front', action='account_activity')
+    mc('/account-activity', controller='frontunstyled', action='account_activity')
 
     mc('/subreddits/create', controller='front', action='newreddit')
     mc('/subreddits/search', controller='front', action='search_reddits')
@@ -120,7 +120,7 @@ def make_map():
        dest='http://www.reddit.com/r/i18n')
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
-    mc('/contact', controller='front', action='contact_us')
+    mc('/contact', controller='frontunstyled', action='contact_us')
     mc('/jobs', controller='redirect', action='redirect',
        dest='https://jobs.lever.co/reddit')
 
