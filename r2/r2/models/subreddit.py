@@ -1613,7 +1613,6 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         key_color="#cee3f8",  # A lovely shade of blue
         icon_id='',
         weighting_scheme="classic",
-        editors='',
     )
     _extra_schema_creation_args = {
         "key_validation_class": tdb_cassandra.UTF8_TYPE,
@@ -1761,14 +1760,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     def can_edit(self, user):
         if c.user_is_admin and self.owner == Account.system_user():
             return True
-        elif user._id36 in self.allowed_editor_id36s:
-            return True
 
         return user == self.owner
-
-    @property
-    def allowed_editor_id36s(self):
-        return self.editors.lower().split(",")
 
     @property
     def icon_url(self):
