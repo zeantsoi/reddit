@@ -841,6 +841,9 @@ class Globals(object):
         # 'g'
         def reset_caches():
             for name, chain in cache_chains.iteritems():
+                if isinstance(chain, TransitionalCache):
+                    chain = chain.read_chain
+
                 chain.reset()
                 if isinstance(chain, StaleCacheChain):
                     chain.stats = StaleCacheStats(self.stats, name)
