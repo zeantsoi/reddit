@@ -23,11 +23,12 @@
 from pylons import c, request
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
 from r2.lib.search import sorts as search_sorts
 from r2.lib.strings import StringHandler, plurals
-from r2.lib.utils import  query_string, timeago
+from r2.lib.utils import  class_property, query_string, timeago
 from r2.lib.wrapped import Styled
 
 
@@ -574,7 +575,6 @@ class CommentSortMenu(SortMenu):
     _default = 'confidence'
     _options = ('confidence', 'top', 'new', 'hot', 'controversial', 'old',
                  'random', 'qa',)
-    hidden_options = ('random', 'qa',)
     button_cls = PostButton
 
     # Links may have a suggested sort of 'blank', which is an explicit None -
@@ -588,6 +588,13 @@ class CommentSortMenu(SortMenu):
     @classmethod
     def visible_options(cls):
         return set(cls._options) - set(cls.hidden_options)
+
+    @class_property
+    def hidden_options(cls):
+        if feature.is_enabled('qa_sort'):
+            return ('random',)
+        else:
+            return ('random', 'qa',)
 
     def make_title(self, attr):
         title = super(CommentSortMenu, self).make_title(attr)
