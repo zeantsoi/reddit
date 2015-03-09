@@ -62,7 +62,6 @@ from hashlib import md5
 import simplejson as json
 
 import random, re
-import pycassa
 from collections import defaultdict
 from pycassa.cassandra.ttypes import NotFoundException
 import pytz
@@ -1345,33 +1344,6 @@ class Comment(Thing, Printable):
 
         # Run this last
         Printable.add_props(user, wrapped)
-
-class Image(tdb_cassandra.Thing):
-    _use_db = True
-
-    _int_props = (
-        'width',
-        'height',
-    )
-    _bool_props = (
-        'banned',
-    )
-    _str_props = (
-        'url',
-    )
-
-    _defaults = {
-        'banned': False,
-    }
-
-    _extra_schema_creation_args = {
-        'key_validation_class': tdb_cassandra.ASCII_TYPE,
-        'default_validation_class': tdb_cassandra.UTF8_TYPE,
-        'column_validation_classes': {
-            'date': pycassa.system_manager.DATE_TYPE,
-        },
-    }
-
 
 class CommentSortsCache(tdb_cassandra.View):
     """A cache of the sort-values of comments to avoid looking up all

@@ -42,10 +42,8 @@ import requests
 
 from pylons import g
 
-from r2 import models
 from r2.config import feature
 from r2.lib import amqp, hooks
-from r2.lib.db.tdb_cassandra import NotFound
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
 from r2.lib.utils import (
@@ -640,32 +638,6 @@ def _fetch_embedly_services():
             service["name"] in _SECURE_SERVICES,
         ))
     return services
-
-
-def store_image(url):
-    """Fetch an image from the web and store it for later access.
-
-    Returns a models.Image on success.
-    """
-    content_type, data = _fetch_url(url)
-    uid = _filename_from_content(data)
-
-    # If we've already fetched the image for someone else, don't bother doing
-    # it again.
-    try:
-        i = models.Image._byID(uid)
-        return i
-    except NotFound:
-        pass
-
-    image = str_to_image(data)
-    storage_url = upload_media(image)
-    width, height = image.size
-
-    i = models.Image(_id=uid, url=storage_url, width=width, height=height)
-    i._commit()
-
-    return i
 
 
 def run():

@@ -112,9 +112,5 @@ setup(
     [r2.provider.media]
     s3 = r2.lib.providers.media.s3:S3MediaProvider
     filesystem = r2.lib.providers.media.filesystem:FileSystemMediaProvider
-    [r2.provider.image_resizing]
-    imgix = r2.lib.providers.image_resizing.imgix:ImgixImageResizingProvider
-    no_op = r2.lib.providers.image_resizing.no_op:NoOpImageResizingProvider
-    unsplashit = r2.lib.providers.image_resizing.unsplashit:UnsplashitImageResizingProvider
     """,
 )
