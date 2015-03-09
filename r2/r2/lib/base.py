@@ -85,28 +85,13 @@ class BaseController(WSGIController):
         assert forwarded_proto in ("http", "https")
         request.environ["wsgi.url_scheme"] = forwarded_proto
 
-        true_client_ip = environ.get('HTTP_TRUE_CLIENT_IP')
-        ip_hash = environ.get('HTTP_TRUE_CLIENT_IP_HASH')
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
         remote_addr = environ.get('REMOTE_ADDR')
 
-        true_ip_secret = g.secrets["true_ip"]
-        cloudflare_ip = environ.get('HTTP_CF_CONNECTING_IP')
-
-        hashfunc = hashlib.md5
-        if cloudflare_ip:
-            true_client_ip = cloudflare_ip
-            ip_hash = environ.get('HTTP_CF_CIP_TAG')
-            true_ip_secret = g.secrets["true_cf_ip"]
-            hashfunc = hashlib.sha1
-
         request.via_cdn = False
-        if (true_ip_secret
-            and true_client_ip
-            and ip_hash
-            and hashfunc(true_client_ip + true_ip_secret).hexdigest() \
-            == ip_hash.lower()):
-            request.ip = true_client_ip
+        cdn_ip = g.cdn_provider.get_client_ip(environ)
+        if cdn_ip:
+            request.ip = cdn_ip
             request.via_cdn = True
         elif g.trust_local_proxies and forwarded_for and is_local_address(remote_addr):
             request.ip = forwarded_for.split(',')[-1]

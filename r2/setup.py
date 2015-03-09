@@ -122,5 +122,8 @@ setup(
     imgix = r2.lib.providers.image_resizing.imgix:ImgixImageResizingProvider
     no_op = r2.lib.providers.image_resizing.no_op:NoOpImageResizingProvider
     unsplashit = r2.lib.providers.image_resizing.unsplashit:UnsplashitImageResizingProvider
+    [r2.provider.cdn]
+    cloudflare = r2.lib.providers.cdn.cloudflare:CloudFlareCdnProvider
+    null = r2.lib.providers.cdn.null:NullCdnProvider
     """,
 )
