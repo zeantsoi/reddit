@@ -94,6 +94,7 @@ class MultiApiController(RedditController):
 
     def _format_multi_list(self, multis, viewer, expand_srs):
         templ = LabeledMultiJsonTemplate(expand_srs)
+        multis.sort(key=lambda x: x.name)
         resp = [templ.render(multi).finalize() for multi in multis
                 if multi.can_view(viewer)]
         return self.api_wrapper(resp)
