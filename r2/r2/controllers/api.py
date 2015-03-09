@@ -2652,6 +2652,18 @@ class ApiController(RedditController):
                 setattr(sr, k, v)
             sr._commit()
 
+            #notify sales if sr in a collection changes over_18 to true
+            if kw.get('over_18', False):
+                collections = []
+                for collection in Collection.get_all():
+                    if sr.name in collection.sr_names:
+                        collections.append(collection.name)
+
+                if collections:
+                    msg = "%s now NSFW, in collection(s) %s"
+                    msg %= (sr.name, ', '.join(collections))
+                    emailer.sales_email(msg)
+
             #update the domain cache if the domain changed
             if sr.domain != old_domain:
                 Subreddit._by_domain(old_domain, _update = True)

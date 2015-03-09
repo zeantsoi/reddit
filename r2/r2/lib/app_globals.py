@@ -282,6 +282,7 @@ class Globals(object):
             'share_reply',
             'nerds_email',
             'community_email',
+            'sales_email',
             'smtp_server',
         ],
 
