@@ -1834,6 +1834,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         obj.owner_fullname = owner._fullname
         obj._commit()
         obj._owner = owner
+        obj._srs = multi._srs
         return obj
 
     @classmethod
