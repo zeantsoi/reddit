@@ -286,7 +286,7 @@ class MultiApiController(RedditController):
     )
     @api_doc(
         api_section.multis,
-        uri="/api/multi/{multipath}/copy",
+        uri="/api/multi/copy",
     )
     def POST_multi_copy(self, from_multi, to_path_info, display_name):
         """Copy a multi.
@@ -333,7 +333,7 @@ class MultiApiController(RedditController):
     )
     @api_doc(
         api_section.multis,
-        uri="/api/multi/{multipath}/rename",
+        uri="/api/multi/rename",
     )
     def POST_multi_rename(self, from_multi, to_path_info, display_name):
         """Rename a multi."""
