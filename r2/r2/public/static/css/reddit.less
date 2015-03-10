@@ -9191,6 +9191,98 @@ body.post-under-6h-old .gilded-icon {
     }
 }
 
+.goldvertisement.st-patrick{
+    @main-color: #5c7d03;
+    @highlight-color: #a1ba62;
+    @shadow-color: #2d3f01;
+
+    @border-color: @main-color;
+    @background-shadow: @main-color;
+    @header-text: @main-color;
+    @inner-border: @highlight-color;
+    @button-bg: @highlight-color;
+    @bar-border: @highlight-color;
+    @text: @shadow-color;
+
+    @bar-bg: url(../gold/progress-bar-clovers.png);
+    box-shadow: 0 0 10px @background-shadow inset;
+    color: darken(@border-color, 40%);
+
+    .inner {
+        border: 1px solid @inner-border;
+    }
+
+    h2 {
+        color: @header-text;
+    }
+
+    a {
+        background: @button-bg;
+        border: 1px solid lighten(@border-color, 10%);
+        color: @text;
+
+        &:hover {
+            background: lighten(@button-bg, 20%);
+        }
+    }
+
+    .progress {
+        position: relative;
+
+        .bar {
+            border-color: @bar-border;
+            overflow: visible;
+            margin-right: 10px;
+            padding-right: 10px;
+            position: relative;
+
+            &:after {
+                display: inline-block;
+                position: absolute;
+                top: 0;
+                right: 0;
+                margin-top: -3px;
+                margin-right: -8px;
+                content: '';
+                background-image: url(../gold/gild-icon.png);
+                width: 22px;
+                height: 22px;
+            }
+
+            span {
+                background: @bar-bg;
+                position: relative;
+                border-top-right-radius: 0px;
+                border-bottom-right-radius: 0px;
+
+                &:after {
+                    display: inline-block;
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    margin-right: -22px;
+                    margin-top: -11px;
+                    content: '';
+                    background-image: url(../gold/snoo-leprechaun.png);
+                    width: 29px;
+                    height: 34px;
+                    z-index: 200;
+                }
+            }
+        }
+
+        p {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 9px;
+            color: @text;
+            z-index: 100;
+            text-shadow: 0 2px 1px rgba(255,255,255,0.5);
+        }
+    }
+}
+
 .gold-bubble {
     width: 290px;
     border-radius: 4px;
