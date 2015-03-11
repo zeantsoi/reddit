@@ -109,6 +109,7 @@ class Link(Thing, Printable):
                      skip_commentstree_q="",
                      ignore_reports=False,
                      gildings=0,
+                     mobile_ad_url="",
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)

@@ -265,6 +265,7 @@ class Globals(object):
 
         ConfigValue.tuple_of(ConfigValue.int): [
             'thumbnail_size',
+            'mobile_ad_image_size',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [

@@ -682,6 +682,7 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
         imp_pixel="imp_pixel",
         adserver_imp_pixel="adserver_imp_pixel",
         adserver_click_url="adserver_click_url",
+        mobile_ad_url="mobile_ad_url",
     )
     del _data_attrs_['subreddit']
     del _data_attrs_['subreddit_id']
