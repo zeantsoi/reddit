@@ -652,7 +652,7 @@ class Globals(object):
         # a row cache.
         permacache_memcaches = CMemcache("perma",
                                          self.permacache_memcaches,
-                                         min_compress_len=50 * 1024,
+                                         min_compress_len=1400,
                                          num_clients=num_mc_clients,
                                          validators=[],)
 
