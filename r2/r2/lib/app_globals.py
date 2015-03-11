@@ -240,7 +240,6 @@ class Globals(object):
             'plugins',
             'stalecaches',
             'memcaches',
-            'memcaches2',
             'lockcaches',
             'permacache_memcaches',
             'rendercaches',
@@ -586,21 +585,6 @@ class Globals(object):
             validators=[validate_size_error],
         )
 
-        try:
-            # cleanly fail on reddit installs without memcaches2 set in ini file
-            self.memcaches2
-        except AttributeError:
-            memcaches2 = None
-        else:
-            memcaches2 = CMemcache(
-                "main",
-                self.memcaches2,
-                min_compress_len=1400,
-                num_clients=num_mc_clients,
-                binary=True,
-                validators=[validate_size_error],
-            )
-
         # a pool just used for @memoize results
         memoizecaches = CMemcache(
             "memoize",
@@ -728,31 +712,13 @@ class Globals(object):
                           else LocalCache)
 
         if stalecaches:
-            original_cache = StaleCacheChain(
+            self.cache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 memcaches,
             )
         else:
-            original_cache = CacheChain((localcache_cls(), memcaches))
-
-        if memcaches2:
-            if stalecaches:
-                replacement_cache = StaleCacheChain(
-                    localcache_cls(),
-                    stalecaches,
-                    memcaches2,
-                )
-            else:
-                replacement_cache = CacheChain((localcache_cls(), memcaches2))
-            self.cache = TransitionalCache(
-                original_cache=original_cache,
-                replacement_cache=replacement_cache,
-                read_original=True,
-            )
-        else:
-            self.cache = original_cache
-
+            self.cache = CacheChain((localcache_cls(), memcaches))
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
