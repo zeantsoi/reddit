@@ -1233,7 +1233,9 @@ class FrontController(RedditController):
         return BoringPage(_("thanks"), show_sidebar=False,
                           content=GoldThanks(claim_msg=claim_msg,
                                              vendor_url=vendor_url,
-                                             lounge_md=lounge_md)).render()
+                                             lounge_md=lounge_md),
+                          page_classes=["gold-page-ga-tracking"]
+                         ).render()
 
     @validate(VUser(),
               token=VOneTimeToken(AwardClaimToken, "code"))
@@ -1581,7 +1583,9 @@ class FormsController(RedditController):
 
         return BoringPage(_("reddit gold"),
                           show_sidebar=False,
-                          content=content).render()
+                          content=content,
+                          page_classes=["gold-page-ga-tracking"]
+                         ).render()
 
     @validate(is_payment=VBoolean("is_payment"),
               goldtype=VOneOf("goldtype",
@@ -1670,7 +1674,7 @@ class FormsController(RedditController):
                                            giftmessage,
                                            can_subscribe=can_subscribe,
                                            edit=edit),
-                              page_classes=["gold-page", "gold-signup"],
+                              page_classes=["gold-page", "gold-signup", "gold-page-ga-tracking"],
                               ).render()
         else:
             # If we have a validating form, and we're not yet on the payment
@@ -1698,7 +1702,7 @@ class FormsController(RedditController):
 
             passthrough = generate_blob(payment_blob)
 
-            page_classes = ["gold-page", "gold-payment"]
+            page_classes = ["gold-page", "gold-payment", "gold-page-ga-tracking"]
             if goldtype == "creddits":
                 page_classes.append("creddits-payment")
 
@@ -1715,15 +1719,18 @@ class FormsController(RedditController):
         return BoringPage(_("purchase creddits"),
                           show_sidebar=False,
                           content=Creddits(),
-                          page_classes=["gold-page", "creddits-purchase"],
+                          page_classes=["gold-page", "creddits-purchase", "gold-page-ga-tracking"],
                           ).render()
 
     @validate(VUser())
     def GET_subscription(self):
         user = c.user
         content = GoldSubscription(user)
-        return BoringPage(_("reddit gold subscription"), show_sidebar=False,
-                          content=content).render()
+        return BoringPage(_("reddit gold subscription"),
+                          show_sidebar=False,
+                          content=content,
+                          page_classes=["gold-page-ga-tracking"]
+                         ).render()
 
 
 class FrontUnstyledController(FrontController):
