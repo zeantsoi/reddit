@@ -2653,7 +2653,7 @@ class ApiController(RedditController):
             sr._commit()
 
             #notify sales if sr in a collection changes over_18 to true
-            if kw.get('over_18', False):
+            if kw.get('over_18', False) and not sr.over_18:
                 collections = []
                 for collection in Collection.get_all():
                     if sr.name in collection.sr_names:
