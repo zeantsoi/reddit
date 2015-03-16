@@ -747,6 +747,7 @@ set_consumer_count newcomments_q 1
 set_consumer_count vote_link_q 1
 set_consumer_count vote_comment_q 1
 set_consumer_count automoderator_q 0
+set_consumer_count butler_q 1
 
 chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
