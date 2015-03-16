@@ -88,11 +88,11 @@ class APIv1UserController(OAuth2OnlyController):
 
     @require_oauth2_scope("read")
     @validate(
-        user=VAccountByName('username'),
+        user=VAccountByName('id'),
     )
     @api_doc(
         section=api_section.users,
-        uri='/api/v1/user/{username}/trophies',
+        uri='/api/v1/user/{id}/trophies',
     )
     def GET_usertrophies(self, user):
         """Return a list of trophies for the a given user."""
@@ -153,11 +153,11 @@ class APIv1UserController(OAuth2OnlyController):
     @require_oauth2_scope('subscribe')
     @validate(
         VUser(),
-        friend=VAccountByName('username'),
+        friend=VAccountByName('id'),
         notes_json=FRIEND_JSON_VALIDATOR,
     )
     @api_doc(api_section.users, json_model=FRIEND_JSON_VALIDATOR,
-             uri='/api/v1/me/friends/{username}')
+             uri='/api/v1/me/friends/{id}')
     def PUT_friends(self, friend, notes_json):
         """Create or update a "friend" relationship.
 
@@ -198,9 +198,9 @@ class APIv1UserController(OAuth2OnlyController):
     @require_oauth2_scope('mysubreddits')
     @validate(
         VUser(),
-        friend_rel=VFriendOfMine('username'),
+        friend_rel=VFriendOfMine('id'),
     )
-    @api_doc(api_section.users, uri='/api/v1/me/friends/{username}')
+    @api_doc(api_section.users, uri='/api/v1/me/friends/{id}')
     def GET_friends(self, friend_rel):
         """Get information about a specific 'friend', such as notes."""
         rel_view = FriendTableItem(friend_rel)
@@ -209,9 +209,9 @@ class APIv1UserController(OAuth2OnlyController):
     @require_oauth2_scope('subscribe')
     @validate(
         VUser(),
-        friend_rel=VFriendOfMine('username'),
+        friend_rel=VFriendOfMine('id'),
     )
-    @api_doc(api_section.users, uri='/api/v1/me/friends/{username}')
+    @api_doc(api_section.users, uri='/api/v1/me/friends/{id}')
     def DELETE_friends(self, friend_rel):
         """Stop being friends with a user."""
         c.user.remove_friend(friend_rel._thing2)
