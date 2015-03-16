@@ -4759,6 +4759,7 @@ class Goldvertisement(Templated):
         else:
             self.default_type = "code"
 
+        self.featured_class = g.live_config.get("goldvertisement_class", "")
         Templated.__init__(self)
 
 class LinkCommentsSettings(Templated):
