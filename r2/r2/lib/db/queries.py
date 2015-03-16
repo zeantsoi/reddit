@@ -20,9 +20,25 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Report, LinksByAccount
+from r2.models import (
+    Message,
+    Inbox,
+    Subreddit,
+    ModContribSR,
+    ModeratorInbox,
+    MultiReddit,
+    Account,
+    Link,
+    Comment,
+    Report,
+    LinksByAccount,
+    Notification,
+)
+from r2.models.notification import (
+    add_notifications,
+    generate_notifications,
+)
 from r2.models.vote import cast_vote, get_votes, VotesByAccount
-from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
@@ -1655,6 +1671,25 @@ def run_commentstree(qname="commentstree_q", limit=100):
             add_comments(comments)
 
     amqp.handle_items(qname, _run_commentstree, limit = limit)
+
+
+def run_notifications(limit=1000):
+    """Add new things meant for notifications to C* notifications"""
+
+    @g.stats.amqp_processor('notifications_q')
+    def _run_notifications(msgs, chan):
+        fnames = [msg.body for msg in msgs]
+
+        things = Thing._by_fullname(
+            fnames,
+            data=True,
+            return_dict=False,
+        )
+
+        add_notifications(generate_notifications(things))
+
+    amqp.handle_items('notifications_q', _run_notifications, limit=limit)
+
 
 vote_link_q = 'vote_link_q'
 vote_comment_q = 'vote_comment_q'

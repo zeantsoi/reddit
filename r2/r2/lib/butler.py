@@ -32,6 +32,7 @@ from r2.models import query_cache, Thing, Comment, Account, Inbox, NotFound
 def notify_mention(user, thing):
     try:
         inbox_rel = Inbox._add(user, thing, "mention")
+        amqp.add_item('new_mention', inbox_rel._fullname)
     except CreationError:
         # this mention was already inserted, ignore it
         g.log.error("duplicate mention for (%s, %s)", user, thing)

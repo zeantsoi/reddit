@@ -75,6 +75,7 @@ def declare_queues(g):
     queues = Queues({
         "scraper_q": MessageQueue(bind_to_self=True),
         "newcomments_q": MessageQueue(),
+        "notifications_q": MessageQueue(),
         "commentstree_q": MessageQueue(bind_to_self=True),
         "commentstree_fastlane_q": MessageQueue(bind_to_self=True),
         "vote_link_q": MessageQueue(bind_to_self=True),
@@ -103,6 +104,11 @@ def declare_queues(g):
     queues.cloudsearch_changes << "search_changes"
     queues.scraper_q << ("new_link", "usertext_edited")
     queues.newcomments_q << "new_comment"
+    queues.notifications_q << (
+        "new_comment",
+        "new_message",
+        "new_mention",
+    )
     queues.butler_q << ("new_comment",
                         "usertext_edited")
     queues.markread_q << "mark_all_read"
