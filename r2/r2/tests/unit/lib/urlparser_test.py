@@ -131,6 +131,15 @@ class TestIsRedditURL(unittest.TestCase):
         u.hostname = "example.com"
         self.assertFalse(u.is_reddit_url())
 
+    def test_nbsp_allowances(self):
+        # We have to allow nbsps in URLs, let's just allow them where they can't
+        # do any damage.
+        self.assertIsNotSafeRedditUrl("http://\xa0.%s/" % g.domain)
+        self.assertIsNotSafeRedditUrl("\xa0http://%s/" % g.domain)
+        self.assertIsSafeRedditUrl("http://%s/\xa0" % g.domain)
+        self.assertIsSafeRedditUrl("/foo/bar/\xa0baz")
+
+
 class TestSwitchSubdomainByExtension(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

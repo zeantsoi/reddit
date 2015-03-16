@@ -643,11 +643,22 @@ class UrlParser(object):
 
         # `javascript://www.reddit.com/%0D%Aalert(1)` is not safe, obviously
         if self.scheme and self.scheme.lower() not in self.valid_schemes:
-                return False
+            return False
 
         # Reject any URLs that contain characters known to cause parsing
         # differences between parser implementations
-        return not bool(URL_PROBLEMATIC_RE.search(self._orig_url))
+        for match in re.finditer(URL_PROBLEMATIC_RE, self._orig_url):
+            # XXX: Yuck. We have non-breaking spaces in title slugs! They
+            # should be safe enough to allow after three slashes. Opera 12's the
+            # only browser that trips over them, and it doesn't fall for
+            # `http:///foo.com/`.
+            if match.group(0) == '\xa0':
+                if match.string[0:match.start(0)].count('/') < 3:
+                    return False
+            else:
+                return False
+
+        return True
 
     def is_reddit_url(self, subreddit=None):
         """utility method for seeing if the url is associated with
