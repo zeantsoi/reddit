@@ -649,7 +649,7 @@ class UrlParser(object):
         # differences between parser implementations
         return not bool(URL_PROBLEMATIC_RE.search(self._orig_url))
 
-    def paranoid_is_reddit_url(self, subreddit=None):
+    def is_reddit_url(self, subreddit=None):
         """utility method for seeing if the url is associated with
         reddit as we don't necessarily want to mangle non-reddit
         domains
@@ -666,55 +666,12 @@ class UrlParser(object):
                 is_subdomain(self.hostname, subreddit.domain))
         )
 
-        if not self.is_web_safe_url():
-            return False
-
         if not valid_subdomain or not self.hostname or not g.offsite_subdomains:
             return valid_subdomain
         return not any(
             is_subdomain(self.hostname, "%s.%s" % (subdomain, g.domain))
             for subdomain in g.offsite_subdomains
         )
-
-    def old_is_reddit_url(self, subreddit=None):
-        """utility method for seeing if the url is associated with
-        reddit as we don't necessarily want to mangle non-reddit
-        domains
-
-        returns true only if hostname is nonexistant, a subdomain of
-        g.domain, or a subdomain of the provided subreddit's cname.
-        """
-        from pylons import g
-        subdomain = (
-            not self.hostname or
-            is_subdomain(self.hostname, g.domain) or
-            (subreddit and subreddit.domain and
-                is_subdomain(self.hostname, subreddit.domain))
-        )
-        # Handle backslash trickery like /\example.com/ being treated as
-        # equal to //example.com/ by some browsers
-        if not self.hostname and not self.scheme and self.path:
-            if self.path.startswith("/\\"):
-                return False
-        if not subdomain or not self.hostname or not g.offsite_subdomains:
-            return subdomain
-        return not any(
-            self.hostname.startswith(subdomain + '.')
-            for subdomain in g.offsite_subdomains
-        )
-
-    def is_reddit_url(self, subreddit=None):
-        old_result = self.old_is_reddit_url(subreddit)
-        paranoid_result = self.paranoid_is_reddit_url(subreddit)
-
-        if bool(old_result) != bool(paranoid_result):
-            g.log.warning(
-                "paranoid and old `is_reddit_url()` disagreed! (%r, %r)" %
-                (self._orig_url, self.unparse())
-            )
-
-        # Just return the result from the old implementation for now
-        return old_result
 
     def path_add_subreddit(self, subreddit):
         """
