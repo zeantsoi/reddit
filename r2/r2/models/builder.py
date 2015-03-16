@@ -897,7 +897,7 @@ class CommentBuilder(Builder):
             # skip deleted comments with no children
             if (comment.deleted and not cid_tree.has_key(comment._id)
                 and not self.show_deleted):
-                comment.hidden = True
+                comment.hidden_completely = True
                 continue
 
             comment.num_children = num_children[comment._id]
@@ -948,6 +948,11 @@ class CommentBuilder(Builder):
         # if a comment should be visible until after we've processed all its
         # children.
         for comment in wrapped:
+            if getattr(comment, 'hidden_completely', False):
+                # Don't add it to the tree, don't put it in "load more", don't
+                # acknowledge its existence at all.
+                continue
+
             if getattr(comment, 'hidden', False):
                 # Remove it from the list of visible comments so it'll
                 # automatically be a candidate for the "load more" links.
