@@ -137,6 +137,17 @@ def _comment_sorter_from_cids(comments, sort, link, cid_tree, by_36=False):
     # more efficient to gather it up here instead of in the guts of the comment
     # sort, but we don't want to do that for sort types that don't need it.
     if sort == '_qa':
+        # An OP response will change the sort value for its parent, so we need
+        # to process the parent, too.
+        parent_cids = []
+        responder_ids = link.responder_ids
+        for c in comments:
+            if c.author_id in responder_ids and c.parent_id:
+                parent_cids.append(c.parent_id)
+        parent_comments = Comment._byID(parent_cids, data=True,
+                return_dict=False)
+        comments.extend(parent_comments)
+
         # Fetch the comments in batch to avoid a bunch of separate calls down
         # the line.
         all_child_cids = []
