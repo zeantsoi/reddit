@@ -3544,7 +3544,8 @@ class ApiController(RedditController):
                 continue
 
             # all validation passed, enflair the user
-            user.set_flair(text, css_class, set_by=c.user, log_details="csv")
+            user.set_flair(
+                c.site, text, css_class, set_by=c.user, log_details="csv")
 
             if text or css_class:
                 mode = 'added'
