@@ -347,8 +347,9 @@ def _set_media(link, force=False, **kwargs):
 
         link._commit()
 
-        image_uid = media.preview_object['uid']
-        LinksByImage.add_link(image_uid, link)
+        if media.preview_object:
+            image_uid = media.preview_object['uid']
+            LinksByImage.add_link(image_uid, link)
 
         hooks.get_hook("scraper.set_media").call(link=link)
         amqp.add_item("new_media_embed", link._fullname)
@@ -467,9 +468,12 @@ class _ThumbnailOnlyScraper(Scraper):
 
     def scrape(self):
         thumbnail_url, image_data = self._find_thumbnail_image()
+        if not thumbnail_url:
+            return None, None, None, None
+
         # When isolated from the context of a webpage, protocol-relative URLs
         # are ambiguous, so let's absolutify them now.
-        if thumbnail_url and thumbnail_url.startswith('//'):
+        if thumbnail_url.startswith('//'):
             thumbnail_url = coerce_url_to_protocol(thumbnail_url, self.protocol)
 
         if not image_data:
