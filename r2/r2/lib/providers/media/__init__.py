@@ -28,7 +28,7 @@ class MediaProvider(object):
     users to be able to view those objects over HTTP.
 
     """
-    def put(self, name, contents):
+    def put(self, name, contents, return_direct_url=None):
         """Put a media object on the media server and return its HTTP URL.
 
         `name` must be a local filename including an extension.

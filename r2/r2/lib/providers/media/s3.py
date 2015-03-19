@@ -66,7 +66,10 @@ class S3MediaProvider(MediaProvider):
         ],
     }
 
-    def put(self, name, contents):
+    def put(self, name, contents, return_direct_url=None):
+        if return_direct_url is None:
+            return_direct_url = g.s3_media_direct
+
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
         index = ord(name_without_extension[-1]) % len(g.s3_media_buckets)
@@ -90,7 +93,7 @@ class S3MediaProvider(MediaProvider):
             replace=True,
         )
 
-        if g.s3_media_direct:
+        if return_direct_url:
             return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
         else:
             return "http://%s/%s" % (bucket_name, name)
