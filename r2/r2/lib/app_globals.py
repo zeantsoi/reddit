@@ -245,7 +245,6 @@ class Globals(object):
             'rendercaches',
             'pagecaches',
             'memoizecaches',
-            'memoizecaches2',
             'srmembercaches',
             'relcaches',
             'ratelimitcaches',
@@ -624,20 +623,6 @@ class Globals(object):
             validators=[validate_size_error],
         )
 
-        try:
-            self.memoizecaches2
-        except AttributeError:
-            memoizecaches2 = None
-        else:
-            memoizecaches2 = CMemcache(
-                "memoize",
-                self.memoizecaches2,
-                min_compress_len=50 * 1024,
-                num_clients=num_mc_clients,
-                binary=True,
-                validators=[validate_size_error],
-            )
-
         # a pool just for srmember rels
         srmembercaches = CMemcache(
             "srmember",
@@ -765,33 +750,14 @@ class Globals(object):
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
-            original_memoizecache = StaleCacheChain(
+            self.memoizecache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 memoizecaches,
             )
         else:
-            original_memoizecache = MemcacheChain(
+            self.memoizecache = MemcacheChain(
                 (localcache_cls(), memoizecaches))
-
-        if memoizecaches2:
-            if stalecaches:
-                replacement_memoizecache = StaleCacheChain(
-                    localcache_cls(),
-                    stalecaches,
-                    memoizecaches2,
-                )
-            else:
-                replacement_memoizecache = MemcacheChain(
-                    (localcache_cls(), memoizecaches2))
-
-            self.memoizecache = TransitionalCache(
-                original_cache=original_memoizecache,
-                replacement_cache=replacement_memoizecache,
-                read_original=False,
-            )
-        else:
-            self.memoizecache = original_memoizecache
         cache_chains.update(memoizecache=self.memoizecache)
 
         if stalecaches:
