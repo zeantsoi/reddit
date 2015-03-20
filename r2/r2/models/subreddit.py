@@ -1723,13 +1723,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         self._owner = None
 
     @classmethod
-    def _byID(cls, ids, return_dict=True, properties=None, load_subreddits=True):
+    def _byID(cls, ids, return_dict=True, properties=None):
         ret = super(cls, cls)._byID(ids, return_dict=False,
                                     properties=properties)
         if not ret:
             return
-
-        ret = cls._load(ret, load_subreddits=load_subreddits)
+        ret = cls._load(ret)
         if isinstance(ret, cls):
             return ret
         elif return_dict:
@@ -1738,45 +1737,23 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             return ret
 
     @classmethod
-    def _load(cls, things, load_subreddits=True):
+    def _load_no_lookup(cls, things, srs_dict, owners_dict):
         things, single = tup(things, ret_is_single=True)
-
-        # things might have come from cache, check whether we actually need to
-        # load them
-        needs_loading = []
         for thing in things:
-            # a not loaded object doesn't have _owner set
-            # a loaded object needs more loading if its subreddits weren't
-            # loaded but they've been requested
-            if not thing._owner or (not thing._srs_loaded and load_subreddits):
-                needs_loading.append(thing)
-
-        if needs_loading:
-            if load_subreddits:
-                sr_ids = set(
-                    itertools.chain(*[thing.sr_ids for thing in needs_loading]))
-                srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
-            else:
-                srs = {}
-
-            owner_fullnames = set(
-                (thing.owner_fullname for thing in needs_loading))
-            owners = Thing._by_fullname(
-                owner_fullnames, data=True, return_dict=True)
-
-            for thing in things:
-                if thing not in needs_loading:
-                    continue
-
-                if load_subreddits:
-                    thing._srs = [srs[sr_id] for sr_id in thing.sr_ids]
-                    thing._srs_loaded = True
-                else:
-                    thing._srs = []
-                    thing._srs_loaded = False
-                thing._owner = owners[thing.owner_fullname]
-
+            thing._srs = [srs_dict[sr_id] for sr_id in thing.sr_ids]
+            thing._owner = owners_dict[thing.owner_fullname]
         return things[0] if single else things
+
+    @classmethod
+    def _load(cls, things):
+        things, single = tup(things, ret_is_single=True)
+        sr_ids = set(itertools.chain(*[thing.sr_ids for thing in things]))
+        owner_fullnames = set((thing.owner_fullname for thing in things))
+
+        srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
+        owners = Thing._by_fullname(owner_fullnames, data=True, return_dict=True)
+        ret = cls._load_no_lookup(things, srs, owners)
+        return ret[0] if single else things
 
     @property
     def sr_ids(self):
@@ -1784,10 +1761,6 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     @property
     def srs(self):
-        if not self._srs_loaded:
-            g.log.error("%s: accessed subreddits without loading", self)
-            self._srs = Subreddit._byID(
-                self.sr_ids, data=True, return_dict=False)
         return self._srs
 
     @property
@@ -1923,11 +1896,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             raise ValueError("invalid multi icon name")
 
     @classmethod
-    def by_owner(cls, owner, kinds=None, load_subreddits=True):
+    def by_owner(cls, owner, kinds=None):
         kinds = ('m',) if not kinds else kinds
-        multi_ids = LabeledMultiByOwner._byID(owner._fullname)._values().keys()
-        multis = cls._byID(
-            multi_ids, return_dict=False, load_subreddits=load_subreddits)
+        multis = LabeledMultiByOwner.query([owner._fullname])
         return [multi for multi in multis if multi.kind in kinds]
 
     @classmethod
