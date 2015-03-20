@@ -326,9 +326,11 @@ class OAuth2AccessController(MinimalController):
         if refresh_token:
             if refresh_token.client_id == c.oauth2_client._id:
                 access_token = OAuth2AccessToken._new(
-                    refresh_token.client_id, refresh_token.user_id,
+                    refresh_token.client_id,
+                    refresh_token.user_id,
                     refresh_token.scope,
-                    refresh_token=refresh_token._id)
+                    refresh_token=refresh_token._id,
+                    device_id=refresh_token.device_id)
             else:
                 c.errors.add(errors.OAUTH2_INVALID_REFRESH_TOKEN)
         else:

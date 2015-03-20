@@ -591,6 +591,7 @@ class OAuth2AccessToken(Token):
                      token_type="bearer",
                      refresh_token="",
                      user_id="",
+                     device_id="",
                     )
     _use_db = True
     _connection_pool = "main"
