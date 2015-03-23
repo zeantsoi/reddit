@@ -23,9 +23,11 @@
 import subprocess
 import tempfile
 import difflib
+
 from pylons.i18n import _
 from pylons import app_globals as g
 
+from r2.lib.filters import conditional_websafe
 
 MAX_DIFF_LINE_LENGTH = 4000
 
@@ -46,10 +48,12 @@ def make_htmldiff(a, b, adesc, bdesc):
         if len(line) > MAX_DIFF_LINE_LENGTH:
             line = line[:MAX_DIFF_LINE_LENGTH] + "..."
         return line
+    # NB: It's completely non-obvious, but `fromdesc` and `todesc` are HTML
+    # sinks!
     return diffcontent.make_table([truncate(i) for i in a.splitlines()],
                                   [truncate(i) for i in b.splitlines()],
-                                  fromdesc=adesc,
-                                  todesc=bdesc,
+                                  fromdesc=conditional_websafe(adesc),
+                                  todesc=conditional_websafe(bdesc),
                                   context=3)
 
 def threewaymerge(original, a, b):
