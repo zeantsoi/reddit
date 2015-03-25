@@ -1680,6 +1680,7 @@ class RedditController(OAuth2ResourceController):
         if (not c.cors_checked and request.method.upper() == "GET" and
                 not c.user_is_loggedin and c.render_style == "api"):
             response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Expose-Headers"] = "X-Reddit-Tracking, X-Moose"
 
             request_origin = request.headers.get('Origin')
             if request_origin and request_origin != g.origin:
