@@ -158,18 +158,25 @@ r.analytics = {
       return;
     }
 
+    var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
     var pixel = new Image();
     var impPixel = $el.data('impPixel');
 
-    if (impPixel) {
+    if (impPixel && !adBlockIsEnabled) {
       pixel.src = impPixel;
+    }
+
+    var thirdPartyTrackingUrl = $el.data('thirdPartyTrackingUrl');
+    if (thirdPartyTrackingUrl && !adBlockIsEnabled) {
+      var thirdPartyTrackingImage = new Image();
+      thirdPartyTrackingImage.src = thirdPartyTrackingUrl;
     }
 
     var adServerPixel = new Image();
     var adServerImpPixel = $el.data('adserverImpPixel');
     var adServerClickUrl = $el.data('adserverClickUrl');
 
-    if (adServerImpPixel) {
+    if (adServerImpPixel && !adBlockIsEnabled) {
       adServerPixel.src = adServerImpPixel;
     }
 
