@@ -136,14 +136,17 @@ class Report(MultiRelation('report',
                                     SRMember.c._name == "moderator")
             mod_dates = {rel._thing2_id: rel._date for rel in query}
 
-            automoderator = Account._by_name(g.automoderator_account)
+            if g.automoderator_account:
+                automoderator = Account._by_name(g.automoderator_account)
+            else:
+                automoderator = None
 
             mod_reports = []
             user_reports = []
 
             for report in reports:
                 # always include AutoModerator reports
-                if report._thing1_id == automoderator._id:
+                if automoderator and report._thing1_id == automoderator._id:
                     mod_reports.append(report)
                 # include in mod reports if made after the user became a mod
                 elif (report._thing1_id in mod_dates and
