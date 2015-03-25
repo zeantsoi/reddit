@@ -554,6 +554,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
     )
 
     PREVIEW_RESOLUTIONS = (108, 216, 320, 640, 960, 1080)
+    PREVIEW_MAX_RATIO = 2
 
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
@@ -618,7 +619,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                         continue
 
                     url = g.image_resizing_provider.resize_image(
-                        preview_object, w, censor_nsfw)
+                        preview_object, w, censor_nsfw, self.PREVIEW_MAX_RATIO)
                     h = int(w * source_ratio)
                     preview_resolutions.append({
                         "url": url,
