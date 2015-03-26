@@ -158,11 +158,10 @@ r.analytics = {
       return;
     }
 
-    var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
     var pixel = new Image();
     var impPixel = $el.data('impPixel');
 
-    if (impPixel && !adBlockIsEnabled) {
+    if (impPixel) {
       pixel.src = impPixel;
     }
 
@@ -170,7 +169,7 @@ r.analytics = {
     var adServerImpPixel = $el.data('adserverImpPixel');
     var adServerClickUrl = $el.data('adserverClickUrl');
 
-    if (adServerImpPixel && !adBlockIsEnabled) {
+    if (adServerImpPixel) {
       adServerPixel.src = adServerImpPixel;
     }
 
