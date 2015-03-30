@@ -29,7 +29,6 @@ from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import MinimalController
 from r2.lib import promote, cache
-from r2.lib.filters import scriptsafe_dumps
 
 
 class HealthController(MinimalController):
@@ -48,11 +47,11 @@ class HealthController(MinimalController):
             abort(503)
 
         response.content_type = "application/json"
-        return scriptsafe_dumps(g.versions, sort_keys=True, indent=4)
+        return json.dumps(g.versions, sort_keys=True, indent=4)
 
     def GET_promohealth(self):
         response.content_type = "application/json"
-        return scriptsafe_dumps(promote.health_check())
+        return json.dumps(promote.health_check())
 
     def GET_cachehealth(self):
         results = {}
@@ -74,4 +73,4 @@ class HealthController(MinimalController):
             except pylibmc.Error as e:
                 g.log.warning("Health check for %s FAILED: %s", server, e)
                 results[server] = "FAILED %s" % e
-        return scriptsafe_dumps(results)
+        return json.dumps(results)

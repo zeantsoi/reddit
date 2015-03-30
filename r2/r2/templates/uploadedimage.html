@@ -21,13 +21,16 @@
 ###############################################################################
 
 <%! 
-from r2.lib.filters import scriptsafe_dumps
+   import simplejson
  %>
 <html>
   <head>
     <script type="text/javascript">
+      <%
+         errors = simplejson.dumps(thing.errors)
+       %>
       parent.completedUploadImage('${thing.status}','${thing.img_src or ""}',
-                                  '${thing.name or ""}', ${scriptsafe_dumps(thing.errors)},'${thing.form_id}');
+                                  '${thing.name or ""}', ${unsafe(errors)},'${thing.form_id}');    
     </script>
   </head>
   <body>

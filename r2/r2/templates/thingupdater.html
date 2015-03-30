@@ -21,13 +21,13 @@
 ###############################################################################
 
 <%
-    from r2.lib.filters import scriptsafe_dumps
+  import simplejson
  %>
 <script type="text/javascript">
   (function() {
-    var likes = ${scriptsafe_dumps(thing.likes)};
-    var dislikes = ${scriptsafe_dumps(thing.dislikes)};
-    var friends = ${scriptsafe_dumps(list(thing.is_friend))};
+    var likes = ${unsafe(simplejson.dumps(thing.likes))};
+    var dislikes = ${unsafe(simplejson.dumps(thing.dislikes))};
+    var friends = ${unsafe(simplejson.dumps(list(thing.is_friend)))};
     $.map(likes, function(l) {
               $(".id-" + l + " > .midcol").find(".arrow.up").vote("", null, null, true);
           });
@@ -38,14 +38,14 @@
 
     /* Delay until dom ready because this may be called before r.gold is defined otherwise. */
     $(function() {
-      var gildings = ${scriptsafe_dumps(thing.gildings)};
+      var gildings = ${unsafe(simplejson.dumps(thing.gildings))};
       for (var gilded_thing in gildings) {
         var gilding_data = gildings[gilded_thing];
         r.gold.gildThing(gilded_thing, gilding_data[0], gilding_data[1]);
       }
     });
 
-    var saves = ${scriptsafe_dumps(list(thing.saves))};
+    var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};
     $.map(saves, r.ui.setSavedFullname);
   })()
 </script>

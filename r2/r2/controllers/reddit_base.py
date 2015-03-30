@@ -55,7 +55,7 @@ from r2.lib.errors import (
     errors,
     reddit_http_error,
 )
-from r2.lib.filters import _force_utf8, _force_unicode, scriptsafe_dumps
+from r2.lib.filters import _force_utf8, _force_unicode
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr, JSPreload
@@ -1711,7 +1711,7 @@ class RedditController(OAuth2ResourceController):
             script = ('<script type="text/javascript">'
                       'window.r = window.r || {};'
                       'r.timings = %s'
-                      '</script>') % str(scriptsafe_dumps(timings))
+                      '</script>') % simplejson.dumps(timings)
             body_parts.insert(1, script)
             response.content = "".join(body_parts)
 

@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib import js
-   from r2.lib.filters import scriptsafe_dumps
+   import simplejson
 %>
 
 <%namespace name="pr" file="promotelinkbase.html" />
@@ -89,10 +89,10 @@ ${unsafe(js.use('sponsored'))}
 
 <script type="text/javascript">
     r.sponsored.set_form_render_fnc(r.sponsored.fill_inventory_form);
-    r.sponsored.setup_geotargeting(${scriptsafe_dumps(thing.regions)},
-                                   ${scriptsafe_dumps(thing.metros)});
-    r.sponsored.setup_collections(${scriptsafe_dumps(thing.collections)},
-                                  ${scriptsafe_dumps(thing.collection_input)});
+    r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
+                                   ${unsafe(simplejson.dumps(thing.metros))});
+    r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))},
+                                  ${unsafe(simplejson.dumps(thing.collection_input))});
 
     $(function() {
       init_startdate();

@@ -25,7 +25,6 @@
 <%
    import json
    from r2.lib.template_helpers import static, format_html
-   from r2.lib.filters import scriptsafe_dumps
    from r2.lib.wrapped import Templated
 %>
 
@@ -101,10 +100,10 @@
 </div>
 <script>
   r.spotlight.setup(
-    ${scriptsafe_dumps([link._fullname for link in thing.things])},
-    ${scriptsafe_dumps(thing.interestbar_prob)},
-    ${scriptsafe_dumps(thing.show_promo)},
-    ${scriptsafe_dumps(thing.srnames)}
+    ${unsafe(json.dumps([link._fullname for link in thing.things]))},
+    ${unsafe(json.dumps(thing.interestbar_prob))},
+    ${unsafe(json.dumps(thing.show_promo))},
+    ${unsafe(json.dumps(thing.srnames))}
   )
 </script>
 
