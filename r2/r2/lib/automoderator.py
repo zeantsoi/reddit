@@ -69,11 +69,7 @@ from r2.models.automoderator import PerformedRulesByThing
 from r2.models.wiki import wiki_id
 
 
-if g.automoderator_account:
-    ACCOUNT = Account._by_name(g.automoderator_account)
-else:
-    ACCOUNT = None
-
+ACCOUNT = Account._by_name(g.automoderator_account)
 DISCLAIMER = "I am a bot, and this action was performed automatically. Please [contact the moderators of this subreddit](/message/compose/?to=/r/{{subreddit}}) if you have any questions or concerns."
 
 rules_by_subreddit = {}
@@ -945,12 +941,12 @@ class Rule(object):
         "modmail": RuleComponent(valid_types=basestring, component_type="action"),
         "modmail_subject": RuleComponent(
             valid_types=basestring,
-            default="AutoModerator notification",
+            default="%s notification" % ACCOUNT.name,
         ),
         "message": RuleComponent(valid_types=basestring, component_type="action"),
         "message_subject": RuleComponent(
             valid_types=basestring,
-            default="AutoModerator notification",
+            default="%s notification" % ACCOUNT.name,
         ),
     }
 
@@ -1200,9 +1196,6 @@ class Rule(object):
 def run():
     @g.stats.amqp_processor("automoderator_q")
     def process_message(msg):
-        if not ACCOUNT:
-            return
-
         fullname = msg.body
         item = Thing._by_fullname(fullname, data=True)
         if not isinstance(item, (Link, Comment)):
