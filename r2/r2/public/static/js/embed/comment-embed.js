@@ -4,6 +4,13 @@
   var RE_COMMENT = /\/?r\/[\w_]+\/comments\/(?:[\w_]+\/){2,}[\w_]+\/?/i;
   var PROTOCOL = location.protocol === 'file:' ? 'https:' : '';
 
+  // ref: http://toddmotto.com/ditch-the-array-foreach-call-nodelist-hack/
+  function each(array, callback, scope) {
+    for (var i = 0; i < array.length; i++) {
+      callback.call(scope, i, array[i]);
+    }
+  }
+
   function isComment(anchor) {
     return RE_ABS.test(anchor.href) && RE_COMMENT.test(anchor.pathname);
   }
@@ -48,7 +55,7 @@
 
     var embeds = document.querySelectorAll('.reddit-embed');
 
-    [].forEach.call(embeds, function(embed) {
+    each(embeds, function(i, embed) {
       if (embed.getAttribute('data-initialized')) {
         return;
       }

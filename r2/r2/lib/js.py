@@ -412,7 +412,6 @@ module = {}
 catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err) }}"
 
 module["reddit-embed-base"] = Module("reddit-embed-base.js",
-    "lib/es5-shim.js",
     "lib/json2.js",
     "embed/custom-event.js",
     "embed/utils.js",
