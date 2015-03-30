@@ -145,9 +145,11 @@ def may_view(sr, user, page):
         return True
     
     if page.special:
-        level = WikiPage.get_special_view_permlevel(page.name)
-    else:
-        level = page.permlevel
+        # Special pages may always be viewed
+        # (Permission level ignored)
+        return True
+    
+    level = page.permlevel
     
     if level < 2:
         # Everyone may view in levels below 2
@@ -316,13 +318,8 @@ class VWikiPageRevise(VWikiPage):
         
         page = normalize_page(page)
         
-        if (c.is_wiki_mod and
-                WikiPage.is_automatically_created(page)):
+        if c.is_wiki_mod and WikiPage.is_special(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
-        elif WikiPage.is_special(page):
-            if not c.is_wiki_mod:
-                self.set_error('RESTRICTED_PAGE', code=403)
-                return
         elif (not c.user_is_admin) and WikiPage.is_restricted(page):
             self.set_error('RESTRICTED_PAGE', code=403)
             return
