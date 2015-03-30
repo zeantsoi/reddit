@@ -26,6 +26,7 @@
 <%!
    import simplejson
    from r2.lib.pages import UserText
+   from r2.lib.filters import scriptsafe_dumps
    from r2.lib.template_helpers import static
 %>
 
@@ -85,7 +86,7 @@ ${captcha_field()}
 <%def name="clippy_field()">
   <script type="text/javascript">
   function admincheck(elem) {
-    var admins = ${unsafe(simplejson.dumps(thing.admins))};
+    var admins = ${scriptsafe_dumps(thing.admins)};
 
     if ($.inArray(elem.value, admins) >= 0) {
       $(".admin-to")

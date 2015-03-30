@@ -110,6 +110,7 @@ from r2.lib.filters import (
     SC_OFF,
     websafe_json,
     wikimarkdown,
+    scriptsafe_dumps,
 )
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
@@ -4964,11 +4965,11 @@ class SubredditSelector(Templated):
         self.default_sr = default_sr
         self.required = required
         if include_searches:
-            self.sr_searches = simplejson.dumps(
+            self.sr_searches = scriptsafe_dumps(
                 popular_searches(include_over_18=c.over18)
             )
         else:
-            self.sr_searches = simplejson.dumps({})
+            self.sr_searches = scriptsafe_dumps({})
         self.include_searches = include_searches
 
     @property

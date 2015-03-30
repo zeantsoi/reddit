@@ -26,6 +26,7 @@
     from r2.lib.filters import unsafe
     from r2.lib import js
     from r2.lib.template_helpers import add_sr, get_domain, static
+    from r2.lib.filters import scriptsafe_dumps
 %>
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="text_with_links, plain_link"/>
@@ -61,7 +62,7 @@
           </footer>
         </div>
         <script>
-            window.REDDIT_EMBED_CONFIG = ${unsafe(json.dumps(c.embed_config))};
+            window.REDDIT_EMBED_CONFIG = ${scriptsafe_dumps(c.embed_config)};
         </script>
         ${unsafe(js.use('reddit-embed'))}
         ${less_js()}

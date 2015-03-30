@@ -34,6 +34,7 @@ from r2.lib.translation import (
     iter_langs,
     validate_plural_forms,
 )
+from r2.lib.filters import scriptsafe_dumps, jssafe
 from r2.lib.plugin import PluginLoader
 from r2.lib.permissions import ModeratorPermissionSet
 
@@ -209,6 +210,8 @@ class DataSource(Source):
 
     def get_source(self):
         content = self.get_content()
+        # TODO: make this scriptsafe_dumps(). Need to be sure that nobody is
+        # relying on the HTML escaping in `use()` for safety, though :<
         json_data = json.dumps(content)
         return self.wrap.format(content=json_data) + "\n"
 
@@ -244,7 +247,7 @@ class PermissionsDataSource(DataSource):
                 props.append("%s: %s" % (key, value_encoded))
             return "{%s}" % ",".join(props)
         elif isinstance(obj, basestring):
-            return "r.N_(%s)" % json.dumps(obj)
+            return "r.N_(%s)" % scriptsafe_dumps(obj).encode('utf8')
         else:
             raise ValueError, "unsupported type"
 
@@ -319,14 +322,15 @@ class StringsSource(LocaleSpecificSource):
             # so we'll just make it null
             strings = tup(msg.string)
             data[key] = [None] + list(strings)
-        return "r.i18n.addMessages(%s)" % json.dumps(data)
+        return "r.i18n.addMessages(%s)" % scriptsafe_dumps(data).encode('utf8')
 
 
 class PluralForms(LocaleSpecificSource):
     def get_localized_source(self, lang):
         catalog = get_catalog(lang)
         validate_plural_forms(catalog.plural_expr)
-        return "r.i18n.setPluralForms('%s')" % catalog.plural_expr
+        js_plural = jssafe(catalog.plural_expr).encode('utf8')
+        return "r.i18n.setPluralForms('%s')" % js_plural
 
 
 class LocalizedModule(Module):

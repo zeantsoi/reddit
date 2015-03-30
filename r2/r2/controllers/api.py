@@ -81,7 +81,14 @@ from r2.models.last_modified import LastModified
 from r2.lib.menus import CommentSortMenu
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
-from r2.lib.filters import _force_unicode, _force_utf8, websafe_json, websafe, spaceCompress
+from r2.lib.filters import (
+    _force_unicode,
+    _force_utf8,
+    scriptsafe_dumps,
+    spaceCompress,
+    websafe_json,
+    websafe,
+)
 from r2.lib.template_helpers import format_html
 from r2.lib.db import queries
 from r2.lib import media
@@ -4433,7 +4440,7 @@ class ApiController(RedditController):
         rec_srs = recommender.get_recommendations(srs.values(),
                                                   to_omit=omit_id36s)
         sr_data = [{'sr_name': sr.name} for sr in rec_srs]
-        return json.dumps(sr_data)
+        return scriptsafe_dumps(sr_data)
 
 
     @validatedForm(VUser(),
