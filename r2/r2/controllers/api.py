@@ -2681,7 +2681,7 @@ class ApiController(RedditController):
                 if collections:
                     msg = "%s now NSFW, in collection(s) %s"
                     msg %= (sr.name, ', '.join(collections))
-                    emailer.sales_email(msg)
+                    emailer.ads_email(msg)
 
             # do not clobber these fields if absent in request
             no_clobber = ('community_rules', 'key_color', 'related_subreddits')

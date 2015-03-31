@@ -196,7 +196,7 @@ class CollectionStorage(tdb_cassandra.View):
     def _from_columns(cls, name, columns):
         description = columns['description']
         sr_names = columns['sr_names'].split(cls.SR_NAMES_DELIM)
-        over_18 = bool(columns.get("over_18", "False"))
+        over_18 = columns.get("over_18") == "True"
         return Collection(name, sr_names, over_18=over_18, description=description)
 
     @classmethod
