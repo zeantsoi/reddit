@@ -739,13 +739,14 @@ INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
 DEFAULT_FACETS = {"reddit": {"count":20}}
 def basic_query(query=None, bq=None, faceting=None, size=1000,
-                start=0, rank="-relevance", return_fields=None, record_stats=False,
-                search_api=None):
+                start=0, rank="-relevance", rank_expressions=None,
+                return_fields=None, record_stats=False, search_api=None):
     if search_api is None:
         search_api = g.CLOUDSEARCH_SEARCH_API
     if faceting is None:
         faceting = DEFAULT_FACETS
-    path = _encode_query(query, bq, faceting, size, start, rank, return_fields)
+    path = _encode_query(query, bq, faceting, size, start, rank,
+                         rank_expressions, return_fields)
     timer = None
     if record_stats:
         timer = g.stats.get_timer("cloudsearch_timer")
@@ -796,7 +797,8 @@ basic_subreddit = functools.partial(basic_query,
                                     search_api=g.CLOUDSEARCH_SUBREDDIT_SEARCH_API)
 
 
-def _encode_query(query, bq, faceting, size, start, rank, return_fields):
+def _encode_query(query, bq, faceting, size, start, rank, rank_expressions,
+                  return_fields):
     if not (query or bq):
         raise ValueError("Need query or bq")
     params = {}
@@ -808,6 +810,9 @@ def _encode_query(query, bq, faceting, size, start, rank, return_fields):
     params["size"] = size
     params["start"] = start
     params["rank"] = rank
+    if rank_expressions:
+        for rank, expression in rank_expressions.iteritems():
+            params['rank-%s' % rank] = expression
     if faceting:
         params["facet"] = ",".join(faceting.iterkeys())
         for facet, options in faceting.iteritems():
@@ -832,7 +837,8 @@ class CloudSearchQuery(object):
     lucene_parser = None
 
     def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None,
-                 faceting=None, recent=None, include_over18=True):
+                 faceting=None, recent=None, include_over18=True,
+                 rank_expressions=None):
         if syntax is None:
             syntax = self.default_syntax
         elif syntax not in self.known_syntaxes:
@@ -846,6 +852,7 @@ class CloudSearchQuery(object):
             self.sort = raw_sort
         else:
             self.sort = self.sorts[sort]
+        self.rank_expressions = rank_expressions
         self._recent = recent
         self.recent = self.recents[recent]
         self.include_over18 = include_over18
@@ -879,8 +886,8 @@ class CloudSearchQuery(object):
         if g.sqlprinting:
             g.log.info("%s", self)
         return self._run_cached(q, self.bq.encode('utf-8'), self.sort,
-                                self.faceting, start=start, num=num,
-                                _update=_update)
+                                self.rank_expressions, self.faceting,
+                                start=start, num=num, _update=_update)
 
     def customize_query(self, bq=u''):
         return bq
@@ -907,8 +914,8 @@ class CloudSearchQuery(object):
         return ''.join(result)
 
     @classmethod
-    def _run_cached(cls, query, bq, sort="relevance", faceting=None, start=0,
-                    num=1000, _update=False):
+    def _run_cached(cls, query, bq, sort="relevance", rank_expressions=None,
+                    faceting=None, start=0, num=1000, _update=False):
         '''Query the cloudsearch API. _update parameter allows for supposed
         easy memoization at later date.
         
@@ -946,7 +953,8 @@ class CloudSearchQuery(object):
         if not query and not bq:
             return Results([], 0, {})
         response = basic_query(query=query, bq=bq, size=num, start=start,
-                               rank=sort, search_api=cls.search_api,
+                               rank=sort, rank_expressions=rank_expressions,
+                               search_api=cls.search_api,
                                faceting=faceting, record_stats=True)
 
         warnings = response['info'].get('messages', [])
