@@ -84,8 +84,9 @@ DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [
 rules_by_subreddit = {}
 
 match_placeholders_regex = re.compile(r"\{\{match-(?:(.+?)-)?(\d+)\}\}")
-def replace_placeholders(string, item, data, matches):
+def replace_placeholders(string, data, matches):
     """Replace placeholders in the string with appropriate values."""
+    item = data["item"]
     replacements = {
         "{{author}}": data["author"].name,
         "{{body}}": getattr(item, "body", ""),
@@ -263,6 +264,7 @@ class Ruleset(object):
     def apply_to_item(self, item):
         # fetch supplemental data to use throughout
         data = {}
+        data["item"] = item
         data["subreddit"] = item.subreddit_slow
 
         author = item.author_slow
@@ -907,7 +909,7 @@ class RuleTarget(object):
         if self.action == "report":
             if self.report_reason:
                 reason = replace_placeholders(
-                    self.report_reason, item, data, self.matches)
+                    self.report_reason, data, self.parent.matches)
             else:
                 reason = None
             Report.new(ACCOUNT, item, reason)
@@ -964,15 +966,14 @@ class RuleTarget(object):
                     can_update_flair = True
 
             if can_update_flair:
-                text = self.set_flair["text"]
-                cls = self.set_flair["class"]
+                text = replace_placeholders(
+                    self.set_flair["text"], data, self.parent.matches)
+                cls = replace_placeholders(
+                    self.set_flair["class"], data, self.parent.matches)
+                cls = re.sub(r"[^\w -]", "", cls)
                 if isinstance(item, Link):
-                    text = replace_placeholders(text, item, data, self.matches)
-                    cls = replace_placeholders(cls, item, data, self.matches)
-                    cls = re.sub(r"[^\w -]", "", cls)
                     item.set_flair(text, cls)
                 elif isinstance(item, Account):
-                    cls = re.sub(r"[^\w -]", "", cls)
                     item.set_flair(data["subreddit"], text, cls)
 
                 g.stats.simple_event("automoderator.set_flair")
@@ -1158,6 +1159,10 @@ class Rule(object):
 
         return False
 
+    @property
+    def matches(self):
+        return self.targets["base"].matches
+
     def has_any_checks(self, targets_only=False):
         for target in self.targets.values():
             if target.checks or target.match_fields:
@@ -1270,7 +1275,7 @@ class Rule(object):
         if self.modmail:
             message = self.build_message(self.modmail, item, data, permalink=True)
             subject = replace_placeholders(
-                self.modmail_subject, item, data, self.targets["base"].matches)
+                self.modmail_subject, data, self.matches)
             subject = subject[:100]
 
             new_message, inbox_rel = Message._new(ACCOUNT, data["subreddit"],
@@ -1285,7 +1290,7 @@ class Rule(object):
             message = self.build_message(self.message, item, data,
                 disclaimer=True, permalink=True)
             subject = replace_placeholders(
-                self.message_subject, item, data, self.targets["base"].matches)
+                self.message_subject, data, self.matches)
             subject = subject[:100]
 
             new_message, inbox_rel = Message._new(ACCOUNT, data["author"],
@@ -1303,8 +1308,7 @@ class Rule(object):
             message = "%s\n\n%s" % (message, DISCLAIMER)
         if permalink and "{{permalink}}" not in message:
             message = "{{permalink}}\n\n%s" % message
-        message = replace_placeholders(
-            message, item, data, self.targets["base"].matches)
+        message = replace_placeholders(message, data, self.matches)
 
         message = VMarkdown('').run(message)
 
