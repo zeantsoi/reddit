@@ -974,7 +974,14 @@ class RuleTarget(object):
                     self.set_flair["text"], data, self.parent.matches)
                 cls = replace_placeholders(
                     self.set_flair["class"], data, self.parent.matches)
+
+                # apply same limits as API to text and class
+                text = text[:64]
                 cls = re.sub(r"[^\w -]", "", cls)
+                classes = cls.split()[:10]
+                classes = [cls[:100] for cls in classes]
+                cls = " ".join(classes)
+
                 if isinstance(item, Link):
                     item.set_flair(text, cls)
                 elif isinstance(item, Account):
