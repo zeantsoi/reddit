@@ -127,8 +127,7 @@
     },
 
     chooseRandom: function() {
-      var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
-      if (this.showPromo && !adBlockIsEnabled) {
+      if (this.showPromo) {
         return this.requestPromo();
       } else if (Math.random() < this.interestProb) {
         return '.interestbar';

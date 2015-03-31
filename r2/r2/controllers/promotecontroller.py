@@ -672,7 +672,6 @@ class PromoteApiController(ApiController):
         media_autoplay=VBoolean("media_autoplay"),
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
-        third_party_tracking=VUrl("third_party_tracking"),
         is_managed=VBoolean("is_managed"),
         thumbnail_file=VUploadLength('file', 500*1024),
     )
@@ -680,13 +679,12 @@ class PromoteApiController(ApiController):
                           selftext, kind, disable_comments, sendreplies,
                           media_url, media_autoplay, media_override,
                           gifts_embed_url, media_url_type, domain_override,
-                          third_party_tracking, is_managed, thumbnail_file):
+                          is_managed, thumbnail_file):
         return self._edit_promo(form, jquery, username, title, url,
                                 selftext, kind, disable_comments, sendreplies,
                                 media_url, media_autoplay, media_override,
                                 gifts_embed_url, media_url_type, domain_override,
-                                third_party_tracking, is_managed,
-                                thumbnail_file=thumbnail_file)
+                                is_managed, thumbnail_file=thumbnail_file)
 
     @validatedForm(
         VSponsor('link_id36'),
@@ -710,7 +708,6 @@ class PromoteApiController(ApiController):
         media_autoplay=VBoolean("media_autoplay"),
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
-        third_party_tracking=VUrl("third_party_tracking"),
         is_managed=VBoolean("is_managed"),
         l=VLink('link_id36'),
     )
@@ -718,19 +715,18 @@ class PromoteApiController(ApiController):
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
                         gifts_embed_url, media_url_type, domain_override,
-                        third_party_tracking, is_managed, l):
+                        is_managed, l):
         return self._edit_promo(form, jquery, username, title, url,
                                 selftext, kind, disable_comments, sendreplies,
                                 media_url, media_autoplay, media_override,
                                 gifts_embed_url, media_url_type, domain_override,
-                                third_party_tracking, is_managed, l=l)
+                                is_managed, l=l)
 
     def _edit_promo(self, form, jquery, username, title, url,
                     selftext, kind, disable_comments, sendreplies,
                     media_url, media_autoplay, media_override,
                     gifts_embed_url, media_url_type, domain_override,
-                    third_party_tracking, is_managed, l=None, 
-                    thumbnail_file=None):
+                    is_managed, l=None, thumbnail_file=None):
         should_ratelimit = False
         is_self = kind == "self"
         is_link = not is_self
@@ -794,10 +790,9 @@ class PromoteApiController(ApiController):
             l = promote.new_promotion(title, url if is_link else 'self',
                                       selftext if is_self else '',
                                       user, request.ip)
+            l.domain_override = domain_override or None
             if c.user_is_sponsor:
                 l.managed_promo = is_managed
-                l.domain_override = domain_override or None
-                l.third_party_tracking = third_party_tracking or None
             l._commit()
 
             # only set the thumbnail when creating a link
@@ -924,7 +919,6 @@ class PromoteApiController(ApiController):
         if c.user_is_sponsor:
             l.media_override = media_override
             l.domain_override = domain_override or None
-            l.third_party_tracking = third_party_tracking or None
             l.managed_promo = is_managed
 
         l._commit()
