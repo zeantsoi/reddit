@@ -151,6 +151,18 @@ def replace_placeholders(string, item, data, matches):
     return string
 
 
+class AutoModeratorSyntaxError(ValueError):
+    def __init__(self, message, yaml):
+        yaml_lines = yaml.splitlines()
+        if len(yaml_lines) > 10:
+            yaml = "\n".join(yaml_lines[:10]) + "\n..."
+        self.message = "%s in rule:\n\n%s" % (message, yaml)
+
+
+class AutoModeratorRuleTypeError(AutoModeratorSyntaxError):
+    pass
+
+
 class Ruleset(object):
     """A subreddit's collection of Rules."""
     def __init__(self, yaml_text=""):
@@ -185,6 +197,7 @@ class Ruleset(object):
                 standard_rules = None
 
         for values in rule_defs:
+            orig_values = values.copy()
             # use standard rule as a base if they defined one
             standard_name = values.pop("standard", None)
             if standard_name:
@@ -194,7 +207,10 @@ class Ruleset(object):
 
                 standard_values = standard_rules.get(standard_name, None)
                 if not standard_values:
-                    raise ValueError("Invalid standard: %s" % standard_name)
+                    raise AutoModeratorSyntaxError(
+                        "Invalid standard: %s" % standard_name,
+                        yaml.dump(orig_values),
+                    )
 
                 new_values = standard_values.copy()
                 new_values.update(values)
@@ -205,7 +221,11 @@ class Ruleset(object):
                 # try to create two Rules for comments and links
                 for type_value in ("comment", "submission"):
                     values["type"] = type_value
-                    rule = Rule(values)
+                    try:
+                        rule = Rule(values)
+                    except AutoModeratorRuleTypeError:
+                        continue
+
                     # only keep the rule if it had any checks
                     if rule.has_any_checks(targets_only=True):
                         self.rules.append(Rule(values))
@@ -492,7 +512,7 @@ class RuleTarget(object):
         ),
     }
 
-    def __init__(self, target_type, values, approve_banned=True):
+    def __init__(self, target_type, values, parent, approve_banned=True):
         """Create a RuleTarget that applies to objects of type target_type.
 
         Keyword arguments:
@@ -502,6 +522,7 @@ class RuleTarget(object):
         
         """
         self.target_type = target_type
+        self.parent = parent
 
         if not values:
             values = {}
@@ -532,8 +553,11 @@ class RuleTarget(object):
                 if key in values:
                     value = values.pop(key)
                     if not component.validate(value):
-                        raise ValueError("invalid value for `%s`: `%s`"
-                            % (key, value))
+                        raise AutoModeratorSyntaxError(
+                            "invalid value for `%s`: `%s`" % (key, value),
+                            self.parent.yaml,
+                        )
+                            
                     setattr(self, key, value)
 
                     if component.component_type == "check":
@@ -566,7 +590,10 @@ class RuleTarget(object):
             for field in name.lstrip("~").partition("#")[0].split("+")]
         for field in fields:
             if field not in all_valid_fields:
-                raise ValueError("Unknown field: `%s`" % field)
+                raise AutoModeratorSyntaxError(
+                    "Unknown field: `%s`" % field,
+                    self.parent.yaml,
+                )
 
         valid_fields = self._match_fields_by_type[self.target_type]
         fields = {field for field in fields if field in valid_fields}
@@ -578,7 +605,10 @@ class RuleTarget(object):
             modifiers = []
         for mod in modifiers:
             if mod not in self._match_modifiers:
-                raise ValueError("Unknown modifier `%s` in `%s`" % (mod, key))
+                raise AutoModeratorSyntaxError(
+                    "Unknown modifier `%s` in `%s`" % (mod, key),
+                    self.parent.yaml,
+                )
 
         return {
             "name": name,
@@ -639,8 +669,10 @@ class RuleTarget(object):
             try:
                 match_patterns[key] = re.compile(pattern, flags)
             except Exception as e:
-                raise ValueError("Generated an invalid regex for `%s`: %s"
-                    % (key, e))
+                raise AutoModeratorSyntaxError(
+                    "Generated an invalid regex for `%s`: %s" % (key, e),
+                    self.parent.yaml,
+                )
 
         return match_patterns
 
@@ -1041,8 +1073,10 @@ class Rule(object):
             if key in values:
                 value = values.pop(key)
                 if not component.validate(value):
-                    raise ValueError("invalid value for `%s`: `%s`"
-                        % (key, value))
+                    raise AutoModeratorSyntaxError(
+                        "invalid value for `%s`: `%s`" % (key, value),
+                        self.yaml,
+                    )
                 setattr(self, key, value)
 
                 if component.component_type == "check":
@@ -1071,12 +1105,18 @@ class Rule(object):
             author["~name"] = not_author
 
         if author:
-            self.targets["author"] = RuleTarget(Account, author)
+            self.targets["author"] = RuleTarget(Account, author, self)
 
         parent_submission = values.pop("parent_submission", None)
-        if parent_submission and self.base_target_type == Comment:
-            target = RuleTarget(Link, parent_submission)
-            self.targets["parent_submission"] = target
+        if parent_submission:
+            if self.base_target_type == Comment:
+                target = RuleTarget(Link, parent_submission, self)
+                self.targets["parent_submission"] = target
+            else:
+                raise AutoModeratorRuleTypeError(
+                    "can't specify `parent_submission` on a submission",
+                    self.yaml,
+                )
 
         # TODO: in the future, "imported" rules can also exist here as targets
 
@@ -1084,6 +1124,7 @@ class Rule(object):
         self.targets["base"] = RuleTarget(
             self.base_target_type,
             values,
+            self,
             # only approve banned users' posts if an author name check is done
             approve_banned=("name" in author),
         )
