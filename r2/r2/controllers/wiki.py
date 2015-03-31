@@ -87,7 +87,7 @@ page_descriptions = {
     "config/submit_text": _("The contents of this page appear on the submit page"),
     "config/sidebar": _("The contents of this page appear on the subreddit sidebar"),
     "config/description": _("The contents of this page appear in the public subreddit description"),
-    "config/automoderator": _("This page is used to configure AutoModerator for this subreddit, please see <insert link here> for more information"),
+    "config/automoderator": _("This page is used to configure AutoModerator for the subreddit, please see [the full documentation](/wiki/automoderator/full-documentation) for information"),
 }
 
 ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
