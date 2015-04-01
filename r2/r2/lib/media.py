@@ -74,6 +74,7 @@ _SECURE_SERVICES = [
     "soundcloud",
     "wistia",
     "slideshare",
+    "vine",
 ]
 
 
