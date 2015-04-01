@@ -118,6 +118,10 @@ def make_url_https(url):
         return url
 
     scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+
+    if not netloc:
+        netloc = g.domain
+
     return urlparse.urlunsplit(("https", netloc, path, query, fragment))
 
 
