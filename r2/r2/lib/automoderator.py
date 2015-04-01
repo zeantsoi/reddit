@@ -1038,6 +1038,9 @@ class RuleTarget(object):
         else:
             value = getattr(item, field, "")
 
+        if value is None:
+            value = ""
+
         return value
 
 
