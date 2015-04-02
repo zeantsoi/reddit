@@ -32,9 +32,7 @@
    from babel.numbers import format_currency
 %>
 
-<div id="siteTable_organic" ${classes('organic-listing', 'loading',
-    'show-placeholder' if thing.show_placeholder else None,
-  )}>
+<div id="siteTable_organic" ${classes('organic-listing', 'loading')}>
   %if thing.things:
     %for link in thing.things:
       ${unsafe(link.render(display=False))}

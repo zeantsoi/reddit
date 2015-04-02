@@ -12,6 +12,11 @@
       this.prev = this._advance.bind(this, -1);
       this.$listing = $('.organic-listing');
 
+      var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
+      if (adBlockIsEnabled) {
+        this.showPromo = false;
+      }
+
       organicLinks.forEach(function(name) {
         this.organics.push(name);
         this.lineup.push({ fullname: name, });
@@ -54,12 +59,12 @@
         this.readyForNewPromo = !document.hidden;
 
         $(document).on('visibilitychange', function(e) {
-          if (!document.hidden) {
+          if (!document.hidden && this.showPromo) {
             this.requestNewPromo();
           }
         }.bind(this));
       } else {
-        this.readyForNewPromo = document.hasFocus();
+        this.readyForNewPromo = document.hasFocus() && this.showPromo;
 
         $(window).on('focus', this.requestNewPromo.bind(this));
       }
@@ -115,12 +120,22 @@
           r: r.config.post_site,
         },
       }).pipe(function(promo) {
+        var prevPromo = this.$listing.find('.promotedlink')
         if (promo) {
+          if (this.showPromo) {
+            $('#siteTable_organic').show('slow');
+          }
+
           this.lastPromoTimestamp = Date.now();
           var $item = $(promo);
           $item.hide().appendTo(this.$listing);
           return $item;
         } else {
+          if (!prevPromo.length && !this.organics.length) {
+            // spotlight box must be hidden when no ad is returned
+            // and there is no other content.
+            $('#siteTable_organic').hide();
+          }
           return false;
         }
       }.bind(this));
@@ -133,7 +148,7 @@
         return '.interestbar';
       } else {
         var name = this.organics[Math.floor(Math.random() * this.organics.length)];
-        return { fullname: name, };
+        return (name) ? { fullname: name, } : null;
       }
     },
 
