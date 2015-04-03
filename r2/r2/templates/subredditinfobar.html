@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.filters import websafe
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, SubscribeButton
@@ -40,6 +41,11 @@
   <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
   <p class="users-online ${'fuzzed' if thing.accounts_active_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
       ${unsafe(Score.users_here_now(thing.accounts_active, prepend='~' if thing.accounts_active_fuzzed else ''))}
+      %if feature.is_enabled('thebutton_flair_counts') and hasattr(thing.sr, 'flair_counts'):
+        %for flair_css, flair_count in getattr(thing.sr, 'flair_counts'):
+          <p><span class="flair flair-${flair_css}">.</span>~${flair_count} active users</p>
+        %endfor
+      %endif
   </p>
 
   %if thing.sr.moderator:
