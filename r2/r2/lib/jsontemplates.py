@@ -27,12 +27,12 @@ from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Template
 from mako.template import Template
 from r2.config import feature
 from r2.config.extensions import get_api_subtype
-from r2.lib.filters import spaceCompress, safemarkdown
+from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
 from r2.models import Account, Report
 from r2.models.subreddit import SubSR
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
-from pylons import c, g, response
+from pylons import c, g, request, response
 from pylons.i18n import _
 
 from r2.models.wiki import ImagesByWikiPage
@@ -52,7 +52,18 @@ class ObjectTemplate(StringTemplate):
     def update(self, kw):
         def _update(obj):
             if isinstance(obj, (str, unicode)):
-                return StringTemplate(obj).finalize(kw)
+                # DO NOT OPENSOURCE: testing if strings need to be treated
+                # as `StringTemplate`s here
+                raw_str = _force_unicode(obj)
+                templ_finalized = StringTemplate(obj).finalize(kw)
+                if raw_str != templ_finalized:
+                    g.log.warning(
+                        "HAX: `raw != templated` @ %r, %r != %r",
+                        request.environ.get('FULLPATH', '<unknown>'),
+                        raw_str,
+                        templ_finalized,
+                    )
+                return templ_finalized
             elif isinstance(obj, dict):
                 return dict((k, _update(v)) for k, v in obj.iteritems())
             elif isinstance(obj, (list, tuple)):
