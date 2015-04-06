@@ -11174,3 +11174,52 @@ body.banned.deleted div#header {
         }
     }
 }
+
+.full-context-info {
+    .md {
+        padding: 10px 5px 5px;
+        border: 1px solid @color-warning-red;
+        border-radius: 5px;
+        background: @color-pale-grey;
+    }
+
+    .parent {
+        padding: 0 (@margin-small - 1) * 1px;
+    }
+
+    td {
+        color: @color-text-grey;
+    }
+
+    .arrow {
+        width: auto;
+        background-position: left;
+        padding-left: 20px;
+    }
+
+    .arrow.unvoted {
+        padding-left: 0;
+
+        &:after {
+            display: inline-block;
+            content: "did not vote";
+        }
+    }
+
+    .arrow.vote-changed {
+        background: data-uri('../close.png') no-repeat;
+        background-size: 13px 13px;
+
+        &:after {
+            content: "changed vote";
+        }
+    }
+
+    .arrow.upmod:after {
+        content: "upvoted";
+    }
+
+    .arrow.downmod:after {
+        content: "downvoted";
+    }
+}

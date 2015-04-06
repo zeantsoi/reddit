@@ -172,6 +172,8 @@ class CommentButtons(PrintableButtons):
         show_givegold = thing.can_gild
 
         embed_button = False
+        
+        show_admin_context = c.user_is_admin
 
         from r2.lib import embeds
         if thing.can_embed and embeds.embeddable_sr(thing):
@@ -207,6 +209,7 @@ class CommentButtons(PrintableButtons):
                                   show_delete = show_delete,
                                   show_givegold=show_givegold,
                                   embed_button=embed_button,
+                                  show_admin_context=show_admin_context,
         )
 
 class MessageButtons(PrintableButtons):
