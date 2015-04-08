@@ -27,7 +27,7 @@ from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Template
 from mako.template import Template
 from r2.config import feature
 from r2.config.extensions import get_api_subtype
-from r2.lib.filters import spaceCompress, safemarkdown
+from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
 from r2.models import Account, Report
 from r2.models.subreddit import SubSR
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
@@ -52,7 +52,7 @@ class ObjectTemplate(StringTemplate):
     def update(self, kw):
         def _update(obj):
             if isinstance(obj, (str, unicode)):
-                return StringTemplate(obj).finalize(kw)
+                return _force_unicode(obj)
             elif isinstance(obj, dict):
                 return dict((k, _update(v)) for k, v in obj.iteritems())
             elif isinstance(obj, (list, tuple)):
