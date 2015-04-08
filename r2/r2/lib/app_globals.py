@@ -244,6 +244,7 @@ class Globals(object):
             'permacache_memcaches',
             'rendercaches',
             'pagecaches',
+            'pagecaches_vpc',
             'memoizecaches',
             'srmembercaches',
             'relcaches',
@@ -703,6 +704,21 @@ class Globals(object):
             validators=[],
         )
 
+        try:
+            self.pagecaches_vpc
+        except AttributeError:
+            pagecaches_vpc = None
+        else:
+            pagecaches_vpc = CMemcache(
+                "page",
+                self.pagecaches_vpc,
+                noreply=True,
+                no_block=True,
+                num_clients=num_mc_clients,
+                min_compress_len=1400,
+                validators=[],
+            )
+
         self.startup_timer.intermediate("memcache")
 
         ################# CASSANDRA
@@ -793,10 +809,23 @@ class Globals(object):
         ))
         cache_chains.update(rendercache=self.rendercache)
 
-        self.pagecache = MemcacheChain((
+        original_pagecache = MemcacheChain((
             localcache_cls(),
             pagecaches,
         ))
+
+        if pagecaches_vpc:
+            replacement_pagecache = MemcacheChain((
+                localcache_cls(),
+                pagecaches_vpc,
+            ))
+            self.pagecache = TransitionalCache(
+                original_cache=original_pagecache,
+                replacement_cache=replacement_pagecache,
+                read_original=True,
+            )
+        else:
+            self.pagecache = original_pagecache
         cache_chains.update(pagecache=self.pagecache)
 
         # the thing_cache is used in tdb_cassandra.
