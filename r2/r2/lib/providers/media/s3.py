@@ -63,23 +63,17 @@ class S3MediaProvider(MediaProvider):
         ],
         ConfigValue.tuple: [
             "s3_media_buckets",
-            "s3_image_buckets",
         ],
     }
 
-    buckets = {
-        'thumbs': 's3_media_buckets',
-        'stylesheets': 's3_media_buckets',
-        'icons': 's3_media_buckets',
-        'previews': 's3_image_buckets',
-    }
+    def put(self, name, contents, return_direct_url=None):
+        if return_direct_url is None:
+            return_direct_url = g.s3_media_direct
 
-    def put(self, category, name, contents):
-        buckets = getattr(g, self.buckets[category])
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
-        index = ord(name_without_extension[-1]) % len(buckets)
-        bucket_name = buckets[index]
+        index = ord(name_without_extension[-1]) % len(g.s3_media_buckets)
+        bucket_name = g.s3_media_buckets[index]
 
         # guess the mime type
         mime_type, encoding = mimetypes.guess_type(name)
@@ -99,7 +93,7 @@ class S3MediaProvider(MediaProvider):
             replace=True,
         )
 
-        if g.s3_media_direct:
+        if return_direct_url:
             return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
         else:
             return "http://%s/%s" % (bucket_name, name)
