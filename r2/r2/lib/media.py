@@ -235,7 +235,7 @@ def _filename_from_content(contents):
     return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
 
 
-def upload_media(image, file_type='.jpg', force_direct_url=False):
+def upload_media(image, file_type='.jpg', category='thumbs'):
     """Upload an image to the media provider."""
     f = tempfile.NamedTemporaryFile(suffix=file_type, delete=False)
     try:
@@ -266,18 +266,7 @@ def upload_media(image, file_type='.jpg', force_direct_url=False):
             optimize_jpeg(f.name)
         contents = open(f.name).read()
         file_name = _filename_from_content(contents) + file_type
-        # FIXME: This potentially opens us up to exploitation.  If in
-        # production we use direct urls (that is, those including the bucket
-        # name in the path) as sources to imgix, *and* we don't sign our urls,
-        # people can simply put their own bucket names in the imgix url to
-        # process their own images through our domain and account.
-        #
-        # This is a temporary method to deal with s3 bucket sharding.
-        if force_direct_url:
-            return g.media_provider.put(file_name, contents,
-                                        return_direct_url=True)
-        else:
-            return g.media_provider.put(file_name, contents)
+        return g.media_provider.put(category, file_name, contents)
     finally:
         os.unlink(f.name)
     return ""
@@ -285,7 +274,7 @@ def upload_media(image, file_type='.jpg', force_direct_url=False):
 
 def upload_stylesheet(content):
     file_name = _filename_from_content(content) + ".css"
-    return g.media_provider.put(file_name, content)
+    return g.media_provider.put('stylesheets', file_name, content)
 
 
 def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
@@ -433,7 +422,7 @@ def upload_icon(image_data, size):
     image.thumbnail(size, Image.ANTIALIAS)
     icon_data = _image_to_str(image)
     file_name = _filename_from_content(icon_data)
-    return g.media_provider.put(file_name + ".png", icon_data)
+    return g.media_provider.put('icons', file_name + ".png", icon_data)
 
 
 def _make_custom_media_embed(media_object):
@@ -546,7 +535,7 @@ class _ThumbnailOnlyScraper(Scraper):
 
         uid = _filename_from_content(image_data)
         image = str_to_image(image_data)
-        storage_url = upload_media(image, force_direct_url=True)
+        storage_url = upload_media(image, category='previews')
         width, height = image.size
         preview_object = {
             'uid': uid,
@@ -683,7 +672,7 @@ class _EmbedlyScraper(Scraper):
         content_type, content = _fetch_url(thumbnail_url, referer=self.url)
         uid = _filename_from_content(content)
         image = str_to_image(content)
-        storage_url = upload_media(image, force_direct_url=True)
+        storage_url = upload_media(image, category='previews')
         width, height = image.size
         preview_object = {
             'uid': uid,
