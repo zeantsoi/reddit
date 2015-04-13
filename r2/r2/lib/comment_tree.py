@@ -174,7 +174,7 @@ def _comment_sorter_from_cids(comments, sort, link, cid_tree, by_36=False):
 
     return comment_sorter
 
-def _get_comment_sorter(link, sort):
+def _get_comment_sorter(link_id, sort):
     """Retrieve cached sort values for all comments on a post.
 
     Arguments:
@@ -185,9 +185,14 @@ def _get_comment_sorter(link, sort):
 
     Returns a dictionary from cid to a numeric sort value.
     """
-    from r2.models import CommentScoresByLink
+    from r2.models import CommentSortsCache
+    from r2.lib.db.tdb_cassandra import NotFound
 
-    sorter = CommentScoresByLink.get_scores(link, sort)
+    key = sort_comments_key(link_id, sort)
+    try:
+        sorter = CommentSortsCache._byID(key)._values()
+    except NotFound:
+        return {}
 
     # we store these id36ed, but there are still bits of the code that
     # want to deal in integer IDs
@@ -234,6 +239,7 @@ def link_comments_and_sort(link, sort):
     timer = g.stats.get_timer('comment_tree.get.%s' % link.comment_tree_version)
     timer.start()
 
+    link_id = link._id
     cache = get_comment_tree(link, timer=timer)
     cids = cache.cids
     tree = cache.tree
@@ -241,20 +247,21 @@ def link_comments_and_sort(link, sort):
     parents = cache.parents
 
     # load the sorter
-    sorter = _get_comment_sorter(link, sort)
+    sorter = _get_comment_sorter(link_id, sort)
 
     # find comments for which the sort values weren't in the cache
     sorter_needed = []
     if cids and not sorter:
         sorter_needed = cids
-        g.log.debug("comment_tree.py: sorter %s cache miss for %s", sort, link)
+        g.log.debug("comment_tree.py: sorter (%s) cache miss for Link %s"
+                    % (sort, link_id))
         sorter = {}
 
     sorter_needed = [x for x in cids if x not in sorter]
     if cids and sorter_needed:
         g.log.debug(
-            "Error in comment_tree: sorter %s/%s inconsistent (missing %d e.g. %r)"
-            % (link, sort, len(sorter_needed), sorter_needed[:10]))
+            "Error in comment_tree: sorter %r inconsistent (missing %d e.g. %r)"
+            % (sort_comments_key(link_id, sort), len(sorter_needed), sorter_needed[:10]))
         if not g.disallow_db_writes:
             update_comment_votes(Comment._byID(sorter_needed, data=True, return_dict=False))
 
@@ -263,10 +270,12 @@ def link_comments_and_sort(link, sort):
         timer.intermediate('sort')
 
     if parents is None:
-        g.log.debug("comment_tree.py: parents cache miss for %s", link)
+        g.log.debug("comment_tree.py: parents cache miss for Link %s"
+                    % link_id)
         parents = {}
     elif cids and not all(x in parents for x in cids):
-        g.log.debug("Error in comment_tree: parents inconsistent for %s", link)
+        g.log.debug("Error in comment_tree: parents inconsistent for Link %s"
+                    % link_id)
         parents = {}
 
     if not parents and len(cids) > 0:
