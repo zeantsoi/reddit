@@ -244,7 +244,7 @@
     <div class="delete-field">
       <div class="radio-group">
         <%
-          scraper_checked = link.media_url or not link.gifts_embed_url
+          scraper_checked = link.media_url or not link.iframe_embed_url
         %>
         <label class="form-group checkbox">
           <input type="radio" id="scrape" value="scrape" name="media_url_type"
@@ -254,11 +254,11 @@
         <label class="form-group checkbox">
           <input type="radio" id="redditgifts" value="redditgifts" name="media_url_type"
                  ${"checked='checked'" if not scraper_checked else ''}>
-          <span class="label">redditgifts</span>
+          <span class="label">iframe</span>
         </label>
       </div>
       <p id="scraper_input" ${"" if scraper_checked else "style='display:none'"}>
-        <label for="media_url">source URL to scrape</label>
+        <label for="media_url">source URL to scrape</label><span>(youtube, vimeo, soundcloud, wistia, slideshare, vine)</span>
         <input id="media_url" name="media_url" type="text" class="rounded"
                value="${link.media_url or ""}"
                ${"" if scraper_checked else "disabled"}>
@@ -266,11 +266,11 @@
         ${error_field("SCRAPER_ERROR", "media_url", "div")}
       </p>
       <p id="rg_input" ${"style='display:none'" if scraper_checked else ""}>
-        <label for="gifts_embed_url">redditgifts embed URL</label>
-        <input id="gifts_embed_url" name="gifts_embed_url" type="text" class="rounded"
-               value="${link.gifts_embed_url or ''}"
+        <label for="iframe_embed_url">iframe embed URL</label>
+        <input id="iframe_embed_url" name="iframe_embed_url" type="text" class="rounded"
+               value="${link.iframe_embed_url or ''}"
                ${"disabled" if scraper_checked else ""}>
-        ${error_field("BAD_URL", "gifts_embed_url", "div")}
+        ${error_field("BAD_URL", "iframe_embed_url", "div")}
       </p>
       ${checkbox("media_autoplay",
                  _("autoplay"),

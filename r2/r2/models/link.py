@@ -91,7 +91,7 @@ class Link(Thing, Printable):
                      secure_media_object=None,
                      preview_object=None,
                      media_url=None,
-                     gifts_embed_url=None,
+                     iframe_embed_url=None,
                      media_autoplay=False,
                      domain_override=None,
                      third_party_tracking=None,

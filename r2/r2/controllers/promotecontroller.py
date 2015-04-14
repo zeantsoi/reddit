@@ -672,7 +672,7 @@ class PromoteApiController(ApiController):
         sendreplies=VBoolean("sendreplies"),
         media_url=VUrl("media_url", allow_self=False,
                        valid_schemes=('http', 'https')),
-        gifts_embed_url=VUrl("gifts_embed_url", allow_self=False,
+        iframe_embed_url=VUrl("iframe_embed_url", allow_self=False,
                              valid_schemes=('http', 'https')),
         media_url_type=VOneOf("media_url_type", ("redditgifts", "scrape")),
         media_autoplay=VBoolean("media_autoplay"),
@@ -685,12 +685,12 @@ class PromoteApiController(ApiController):
     def POST_create_promo(self, form, jquery, username, title, url,
                           selftext, kind, disable_comments, sendreplies,
                           media_url, media_autoplay, media_override,
-                          gifts_embed_url, media_url_type, domain_override,
+                          iframe_embed_url, media_url_type, domain_override,
                           third_party_tracking, is_managed, thumbnail_file):
         return self._edit_promo(form, jquery, username, title, url,
                                 selftext, kind, disable_comments, sendreplies,
                                 media_url, media_autoplay, media_override,
-                                gifts_embed_url, media_url_type, domain_override,
+                                iframe_embed_url, media_url_type, domain_override,
                                 third_party_tracking, is_managed,
                                 thumbnail_file=thumbnail_file)
 
@@ -710,7 +710,7 @@ class PromoteApiController(ApiController):
         sendreplies=VBoolean("sendreplies"),
         media_url=VUrl("media_url", allow_self=False,
                        valid_schemes=('http', 'https')),
-        gifts_embed_url=VUrl("gifts_embed_url", allow_self=False,
+        iframe_embed_url=VUrl("iframe_embed_url", allow_self=False,
                              valid_schemes=('http', 'https')),
         media_url_type=VOneOf("media_url_type", ("redditgifts", "scrape")),
         media_autoplay=VBoolean("media_autoplay"),
@@ -723,18 +723,18 @@ class PromoteApiController(ApiController):
     def POST_edit_promo(self, form, jquery, username, title, url,
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
-                        gifts_embed_url, media_url_type, domain_override,
+                        iframe_embed_url, media_url_type, domain_override,
                         third_party_tracking, is_managed, l):
         return self._edit_promo(form, jquery, username, title, url,
                                 selftext, kind, disable_comments, sendreplies,
                                 media_url, media_autoplay, media_override,
-                                gifts_embed_url, media_url_type, domain_override,
+                                iframe_embed_url, media_url_type, domain_override,
                                 third_party_tracking, is_managed, l=l)
 
     def _edit_promo(self, form, jquery, username, title, url,
                     selftext, kind, disable_comments, sendreplies,
                     media_url, media_autoplay, media_override,
-                    gifts_embed_url, media_url_type, domain_override,
+                    iframe_embed_url, media_url_type, domain_override,
                     third_party_tracking, is_managed, l=None,
                     thumbnail_file=None):
         should_ratelimit = False
@@ -857,12 +857,12 @@ class PromoteApiController(ApiController):
 
         if c.user_is_sponsor:
             if (form.has_errors("media_url", errors.BAD_URL) or
-                    form.has_errors("gifts_embed_url", errors.BAD_URL)):
+                    form.has_errors("iframe_embed_url", errors.BAD_URL)):
                 return
 
         scraper_embed = media_url_type == "scrape"
         media_url = media_url or None
-        gifts_embed_url = gifts_embed_url or None
+        iframe_embed_url = iframe_embed_url or None
 
         if c.user_is_sponsor and scraper_embed and media_url != l.media_url:
             if media_url:
@@ -874,7 +874,7 @@ class PromoteApiController(ApiController):
                     l.set_media_object(media.media_object)
                     l.set_secure_media_object(media.secure_media_object)
                     l.media_url = media_url
-                    l.gifts_embed_url = None
+                    l.iframe_embed_url = None
                     l.media_autoplay = media_autoplay
                 else:
                     c.errors.add(errors.SCRAPER_ERROR, field="media_url")
@@ -884,17 +884,12 @@ class PromoteApiController(ApiController):
                 l.set_media_object(None)
                 l.set_secure_media_object(None)
                 l.media_url = None
-                l.gifts_embed_url = None
+                l.iframe_embed_url = None
                 l.media_autoplay = False
 
         if (c.user_is_sponsor and not scraper_embed and
-                gifts_embed_url != l.gifts_embed_url):
-            if gifts_embed_url:
-                parsed = UrlParser(gifts_embed_url)
-                if not is_subdomain(parsed.hostname, "redditgifts.com"):
-                    c.errors.add(errors.BAD_URL, field="gifts_embed_url")
-                    form.set_error(errors.BAD_URL, "gifts_embed_url")
-                    return
+                iframe_embed_url != l.iframe_embed_url):
+            if iframe_embed_url:
 
                 iframe = """
                     <iframe class="redditgifts-embed"
@@ -902,29 +897,28 @@ class PromoteApiController(ApiController):
                             width="710" height="500" scrolling="no"
                             frameborder="0" allowfullscreen>
                     </iframe>
-                """ % {'embed_url': websafe(gifts_embed_url)}
+                """ % {'embed_url': websafe(iframe_embed_url)}
                 media_object = {
                     'oembed': {
                         'description': 'redditgifts embed',
                         'height': 500,
                         'html': iframe,
-                        'provider_name': 'redditgifts',
-                        'provider_url': 'http://www.redditgifts.com/',
-                        'title': 'redditgifts secret santa 2014',
+                        'provider_name': 'iframe embed',
+                        'provider_url': iframe_embed_url,
                         'type': 'rich',
                         'width': 710},
-                        'type': 'redditgifts'
+                        'type': 'iframe'
                 }
                 l.set_media_object(media_object)
                 l.set_secure_media_object(media_object)
                 l.media_url = None
-                l.gifts_embed_url = gifts_embed_url
+                l.iframe_embed_url = iframe_embed_url
                 l.media_autoplay = False
             else:
                 l.set_media_object(None)
                 l.set_secure_media_object(None)
                 l.media_url = None
-                l.gifts_embed_url = None
+                l.iframe_embed_url = None
                 l.media_autoplay = False
 
         if c.user_is_sponsor:
