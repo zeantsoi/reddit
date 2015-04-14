@@ -822,7 +822,7 @@ class Globals(object):
             self.pagecache = TransitionalCache(
                 original_cache=original_pagecache,
                 replacement_cache=replacement_pagecache,
-                read_original=True,
+                read_original=False,
             )
         else:
             self.pagecache = original_pagecache
