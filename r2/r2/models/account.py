@@ -64,6 +64,7 @@ class Account(Thing):
                                                'inbox_count',
                                                'num_payment_methods',
                                                'num_failed_payments',
+                                               'admin_takedown_strikes',
                                               )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
@@ -143,6 +144,7 @@ class Account(Thing):
                      gild_reveal_username=False,
                      selfserve_cpm_override_pennies=None,
                      pref_show_gold_expiration=False,
+                     admin_takedown_strikes=0,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
@@ -767,6 +769,9 @@ class Account(Thing):
     def gold_will_autorenew(self):
         return (self.has_gold_subscription or
                 (self.pref_creddit_autorenew and self.gold_creddits > 0))
+
+    def incr_admin_takedown_strikes(self, amt=1):
+        return self._incr('admin_takedown_strikes', amt)
 
     @property
     def default_comment_sort(self):
