@@ -924,6 +924,7 @@ class FrontController(RedditController):
         res = SubredditsPage(content=spane,
                              prev_search=query,
                              elapsed_time=etime,
+                             page_classes=['subreddits-page'],
                              # update if we ever add sorts
                              search_params={},
                              title=_("search results"),
