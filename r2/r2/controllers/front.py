@@ -1019,8 +1019,8 @@ class FrontController(RedditController):
 
         # combined results on first page only
         if not after and not restrict_sr and result_types == {'link', 'sr'}:
-            # hardcoded to 5 subreddits (or fewer)
-            sr_num = min(5, int(num / 5))
+            # hardcoded to 3 subreddits (or fewer)
+            sr_num = min(3, int(num / 3))
             num = num - sr_num
         elif result_types == {'sr'}:
             sr_num = num
@@ -1034,6 +1034,7 @@ class FrontController(RedditController):
         cleanup_message = None
         converted_data = None
         subreddit_facets = None
+        legacy_render_class = not feature.is_enabled('subreddit_search')
 
         if num > 0 and has_query:
             nav_menus = [SearchSortMenu(default=sort), TimeMenu(default=recent)]
@@ -1041,11 +1042,12 @@ class FrontController(RedditController):
                 q = SearchQuery(query, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
                                 recent=recent, syntax=syntax)
+                heading = _('posts') if sr_num > 0 else None
                 content = self._search(q, num=num, after=after, reverse=reverse,
-                                       count=count)
+                                       count=count, heading=heading,
+                                       legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
-
             except InvalidQuery:
                 g.stats.simple_event('cloudsearch.error.invalidquery')
 
@@ -1060,7 +1062,8 @@ class FrontController(RedditController):
                                 include_over18=include_over18,
                                 recent=recent)
                 content = self._search(q, num=num, after=after, reverse=reverse,
-                                       count=count)
+                                       count=count, heading=_('posts'),
+                                       legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
 
@@ -1079,9 +1082,11 @@ class FrontController(RedditController):
         if sr_num > 0 and has_query:
             sr_q = SubredditSearchQuery(query, sort='relevance', faceting={},
                                         include_over18=include_over18)
+            heading = _('subreddits') if num > 0 else None
             subreddits = self._search(sr_q, num=sr_num, reverse=reverse,
                                       after=after, count=count, type='sr',
-                                      skip_deleted_authors=False)
+                                      skip_deleted_authors=False, heading=heading,
+                                      legacy_render_class=legacy_render_class)
             if is_api() and not content:
                 content = subreddits
                 subreddits = None
@@ -1104,15 +1109,36 @@ class FrontController(RedditController):
 
         return res
 
+    def _search_builder_wrapper(self, q):
+        query = q.query
+        recent = q.recent
+        sort = q.sort
+        def wrapper_fn(thing):
+            thing.prev_search = query
+            thing.recent = recent
+            thing.sort = sort
+            w = Wrapped(thing)
+            if isinstance(thing, Link):
+                w.render_class = SearchResultLink
+            elif isinstance(thing, Subreddit):
+                w.render_class = SearchResultSubreddit
+            return w
+        return wrapper_fn
+
     def _search(self, query_obj, num, after, reverse, count=0, type=None,
-                skip_deleted_authors=True):
+                skip_deleted_authors=True, heading=None, legacy_render_class=True):
         """Helper function for interfacing with search.  Basically a
            thin wrapper for SearchBuilder."""
+
+        if legacy_render_class:
+            builder_wrapper = default_thing_wrapper()
+        else:
+            builder_wrapper = self._search_builder_wrapper(query_obj)
 
         builder = SearchBuilder(query_obj,
                                 after=after, num=num, reverse=reverse,
                                 count=count,
-                                wrap=ListingController.builder_wrapper,
+                                wrap=builder_wrapper,
                                 skip_deleted_authors=skip_deleted_authors)
         if after and not builder.valid_after(after):
             g.stats.event_count("listing.invalid_after", "search")
@@ -1122,10 +1148,10 @@ class FrontController(RedditController):
         if type:
             params['type'] = type
 
-        listing = SearchListing(builder, show_nums=True, params=params)
+        listing = SearchListing(builder, show_nums=True, params=params, heading=heading)
 
         try:
-            res = listing.listing()
+            res = listing.listing(legacy_render_class)
         except SearchException + (socket.error,) as e:
             return self.search_fail(e)
 

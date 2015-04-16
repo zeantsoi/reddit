@@ -1,6 +1,7 @@
 @import "components/variables.less";
 @import "components/components.less";
 @import "markdown.less";
+@import "search.less";
 
 .no-select {
     -webkit-user-select: none;
@@ -3100,39 +3101,6 @@ label + #moresearchinfo {
 .searchfail a {
     color: red;
     text-decoration: underline;
-}
-
-.searchfacets {
-  overflow: auto;
-  font-size: small;
-  white-space: pre-wrap;
-  border: 1px solid gray;
-  padding: 10px;
-  margin-top: -6px;
-  box-shadow: 0 4px 6px -1px #ccc inset;
-  background: #fefefe;
-}
-
-.searchfacets .title {
-  margin: 5px;
-}
-
-.searchfacets .facet:hover {
-  text-decoration: underline;
-}
-
-.searchfacets .list {
-  margin: 0px 0px 0px 10px;
-}
-
-li.searchfacet {
-  display: inline-block;
-  width: 15em;
-}
-
-.facet.count {
-  font-weight: bold;
-  color: #888888;
 }
 
 #search {
