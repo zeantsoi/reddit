@@ -776,7 +776,7 @@ class Link(Thing, Printable):
         if p.has_image_extension():
             return 'image'
 
-        if extension in {'mp4', 'webm'}:
+        if p.path_extension().lower() in {'mp4', 'webm'}:
             return 'video'
 
         return 'link'
