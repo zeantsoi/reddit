@@ -61,6 +61,7 @@ from r2.lib.pages import (
     CssError,
     FormPage,
     Reddit,
+    responsive,
     UploadedImage,
     UrlParser,
     WrappedUser,
@@ -4470,7 +4471,7 @@ class ApiController(RedditController):
         if listing.things:
             w = listing.things[0]
             w.num = ""
-            return spaceCompress(w.render())
+            return responsive(w.render(), space_compress=True)
 
     @json_validate(
         VUser(),
