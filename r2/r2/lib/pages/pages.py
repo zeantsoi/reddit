@@ -264,6 +264,8 @@ class Reddit(Templated):
         self.newsletterbar = None
         self.locationbar = None
         self.infobar = None
+        self.mobilewebredirectbar = None
+
         # generate a canonical link for google
         self.canonical_link = request.fullpath
         if c.render_style != "html":
@@ -305,6 +307,9 @@ class Reddit(Templated):
                 self.welcomebar = WelcomeBar()
                 if feature.is_enabled('newsletter') and getattr(self, "show_newsletterbar", True):
                     self.newsletterbar = NewsletterBar()
+
+            if c.render_style == "compact":
+                self.mobilewebredirectbar = MobileWebRedirectBar()
 
             show_locationbar &= not c.user.pref_hide_locationbar
             if (show_locationbar and c.used_localized_defaults and
@@ -841,6 +846,7 @@ class Reddit(Templated):
             self.newsletterbar,
             self.infobar,
             self.locationbar,
+            self.mobilewebredirectbar,
             self.nav_menu,
             self._content,
         ))
@@ -2279,6 +2285,8 @@ class ClientInfoBar(InfoBar):
 
 class LocationBar(Templated): pass
 
+class MobileWebRedirectBar(Templated):
+    pass
 
 class SidebarMessage(Templated):
     """An info message box on the sidebar."""
