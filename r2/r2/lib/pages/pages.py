@@ -1763,21 +1763,30 @@ class CommentPane(Templated):
             c.can_reply = False
             c.can_save = False
 
-        builder = CommentBuilder(
-            article, sort, comment=comment, context=context, num=num, **kw)
+        def build_listing():
+            builder = CommentBuilder(
+                article, sort, comment=comment, context=context, num=num, **kw)
+            listing = NestedListing(builder, parent_name=article._fullname)
+            return listing.listing()
 
+        if c.user_is_loggedin:
+            listing_for_user = build_listing()
+            timer.intermediate("build_listing")
+        else:
+            listing_for_user = None
+
+        # disable the cache if the user is the author of anything in the
+        # thread because of edit buttons etc.
         if try_cache and c.user_is_loggedin:
-            builder._get_comments()
-            timer.intermediate("build_comments")
-            for comment in builder.comments:
-                if comment.author_id == c.user._id:
+            for t in self.listing_iter(listing_for_user):
+                if getattr(t, "is_author", False):
                     try_cache = False
                     break
 
         if not try_cache:
-            listing = NestedListing(builder, parent_name=article._fullname)
-            listing_for_user = listing.listing()
-            timer.intermediate("build_listing")
+            if not listing_for_user:
+                listing_for_user = build_listing()
+                timer.intermediate("build_listing")
             self.rendered = listing_for_user.render()
             timer.intermediate("render_listing")
         else:
@@ -1787,11 +1796,6 @@ class CommentPane(Templated):
 
             if self.rendered:
                 cache_hit = True
-
-                if c.user_is_loggedin:
-                    # don't need the builder to make a listing so stop its timer
-                    builder.timer.stop("waiting")
-
             else:
                 cache_hit = False
 
@@ -1807,17 +1811,17 @@ class CommentPane(Templated):
 
                     c.user_is_loggedin = False
 
-                    # make the comment listing. if the user is loggedin we
-                    # already made the builder retrieve/build the comment tree
-                    # and lookup the comments.
-                    listing = NestedListing(
-                        builder, parent_name=article._fullname)
-                    generic_listing = listing.listing()
+                    # render as if not logged in (but possibly with reply buttons)
+                    # NOTE: might have already run build_listing for the
+                    # logged in user, but we need to run it again for the
+                    # spoofed user
+                    generic_listing = build_listing()
 
-                    if logged_in:
-                        timer.intermediate("build_listing")
+                    # log the possible duplicate retrieval
+                    if listing_for_user:
+                        timer.intermediate("build_listing_for_render")
                     else:
-                        timer.intermediate("build_comments_and_listing")
+                        timer.intermediate("build_listing")
 
                     self.rendered = generic_listing.render()
                     timer.intermediate("render_listing")
@@ -1838,13 +1842,7 @@ class CommentPane(Templated):
                 is_friend = set()
                 gildings = {}
                 saves = set()
-
-                # wrap the comments so the builder will customize them for
-                # the loggedin user
-                wrapped_for_user = builder.wrap_items(builder.comments)
-                timer.intermediate("wrap_comments_for_user")
-
-                for t in wrapped_for_user:
+                for t in self.listing_iter(listing_for_user):
                     if not hasattr(t, "likes"):
                         # this is for MoreComments and MoreRecursion
                         continue
