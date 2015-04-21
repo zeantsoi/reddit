@@ -73,3 +73,9 @@ class TestImgixResizer(unittest.TestCase):
         signed_url = self.provider._sign_url(u, 'abcdef')
         self.assertEqual(signed_url,
                 UrlParser('http://examples.imgix.net/frog.jpg?w=100&s=cd3bdf071108af73b15c21bdcee5e49c'))
+
+        u = UrlParser('http://examples.imgix.net/frog.jpg')
+        u.update_query(w=100)
+        signed_url = self.provider._sign_url(u, 'abcdef')
+        self.assertEqual(signed_url,
+                UrlParser('http://examples.imgix.net/frog.jpg?w=100&s=cd3bdf071108af73b15c21bdcee5e49c'))

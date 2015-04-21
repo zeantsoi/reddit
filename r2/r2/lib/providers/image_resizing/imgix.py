@@ -29,7 +29,7 @@ from r2.lib.providers.image_resizing import (
     ImageResizingProvider,
     NotLargeEnough,
 )
-from r2.lib.utils import UrlParser
+from r2.lib.utils import UrlParser, query_string
 
 class ImgixImageResizingProvider(ImageResizingProvider):
     """A provider that uses imgix to create on-the-fly resizings."""
@@ -71,8 +71,8 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         """
         # Build the signing value
         signvalue = token + url.path
-        if url.query:
-          signvalue += "?" + url.query
+        if url.query_dict:
+          signvalue += query_string(url.query_dict)
 
         # Calculate MD5 of the signing value.
         signature = hashlib.md5(signvalue).hexdigest()
