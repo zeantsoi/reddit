@@ -1718,8 +1718,8 @@ vote_fastlane_q = 'vote_fastlane_q'
 vote_names_by_dir = {True: "1", None: "0", False: "-1"}
 vote_dirs_by_name = {v: k for k, v in vote_names_by_dir.iteritems()}
 
-def queue_vote(user, thing, dir, ip, vote_info=None,
-               cheater = False, store = True):
+def queue_vote(user, thing, dir, ip, vote_info=None, cheater=False, store=True,
+               event_data=None):
     # set the vote in memcached so the UI gets updated immediately
     key = prequeued_vote_key(user, thing)
     grace_period = int(g.vote_queue_grace_period.total_seconds())
@@ -1757,7 +1757,7 @@ def queue_vote(user, thing, dir, ip, vote_info=None,
             "ip": ip,
             "info": vote_info,
             "cheater": cheater,
-            "event": None,
+            "event": event_data,
         }
         amqp.add_item(qname, json.dumps(vote))
 
