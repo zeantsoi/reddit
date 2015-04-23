@@ -1759,8 +1759,7 @@ def queue_vote(user, thing, dir, ip, vote_info=None,
             "cheater": cheater,
             "event": None,
         }
-        amqp.add_item(qname, json.dumps(vote),
-                      headers={"format": "json"})
+        amqp.add_item(qname, json.dumps(vote))
 
 def prequeued_vote_key(user, item):
     return 'registered_vote_%s_%s' % (user._id, item._fullname)
@@ -1894,24 +1893,7 @@ def process_votes(qname, limit=0):
         timer = stats.get_timer("service_time." + stats_qname)
         timer.start()
 
-        vote = None
-        if msg.body.startswith("{"):
-            try:
-                vote = json.loads(msg.body)
-            except (ValueError, TypeError):
-                vote = None
-        if vote is None:
-            uid, tid, dir, ip, info, cheater = pickle.loads(msg.body)
-            vote = {
-                "uid": uid,
-                "tid": tid,
-                "dir": dir,
-                "ip": ip,
-                "info": info,
-                "cheater": cheater,
-                "event": None,
-            }
-            del uid, tid, dir, ip, info, cheater
+        vote = json.loads(msg.body)
 
         voter = Account._byID(vote["uid"], data=True)
         votee = Thing._by_fullname(vote["tid"], data=True)
