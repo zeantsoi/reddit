@@ -135,16 +135,13 @@ def _square_image(img):
 def _prepare_image(image):
     image = _square_image(image)
 
-    if feature.is_enabled('hidpi_thumbnails'):
-        hidpi_dims = [int(d * g.thumbnail_hidpi_scaling) for d in g.thumbnail_size]
+    hidpi_dims = [int(d * g.thumbnail_hidpi_scaling) for d in g.thumbnail_size]
 
-        # If the image width is smaller than hidpi requires, set to non-hidpi
-        if image.size[0] < hidpi_dims[0]:
-            thumbnail_size = g.thumbnail_size
-        else:
-            thumbnail_size = hidpi_dims
-    else:
+    # If the image width is smaller than hidpi requires, set to non-hidpi
+    if image.size[0] < hidpi_dims[0]:
         thumbnail_size = g.thumbnail_size
+    else:
+        thumbnail_size = hidpi_dims
 
     image.thumbnail(thumbnail_size, Image.ANTIALIAS)
     return image
