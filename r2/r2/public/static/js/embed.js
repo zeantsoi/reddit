@@ -1,6 +1,6 @@
 ;(function($, undefined) {
-    /* Special interpolation to allow python-style format() substitution */
-    var INJECT_TEMPLATE = _.template(_.unescape(r.config.embed_inject_template), false, { "escape": /\{(.+?)\}/g});
+    /* Special interpolation to allow python %-style substitution. Only strings like %(blah)s are allowed. */
+    var INJECT_TEMPLATE = _.template(_.unescape(r.config.embed_inject_template), false, { "escape": /%\(([^\n\)]+)\)s/g});
 
     var embedBodyTemplate = _.template(
       '<h4  class="modal-title">' +
