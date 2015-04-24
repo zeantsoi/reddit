@@ -286,7 +286,7 @@ class Globals(object):
             'share_reply',
             'nerds_email',
             'community_email',
-            'sales_email',
+            'ads_email',
             'smtp_server',
             'events_collector_url',
         ],

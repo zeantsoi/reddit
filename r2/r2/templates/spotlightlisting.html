@@ -46,7 +46,7 @@
   %endif
 
   %if thing.navigable:
-    <div class="nextprev">
+    <div class="nextprev spot-nextprev">
       <div class="throbber"></div>
       <button class="arrow prev">${_("prev")}</button>
       <button class="arrow next">${_("next")}</button>
@@ -67,6 +67,14 @@
           ${text_with_links(
             _("Use of this tool is open to all members of reddit.com, and for as little as %(price)s you can advertise in this area. %%(get_started)s") % dict(price=format_currency(g.min_promote_bid, 'USD', locale=c.locale)),
               get_started=dict(link_text=format_html("%s &rsaquo;", _("Get started")), path="/advertising")
+          )}
+        </p>
+      </div>
+      <div class="help-section help-adserver">
+        <p>
+          ${text_with_links(
+            _("This is a new ad format that we are currently testing. We often try new types of ads in a limited capacity. If you have feedback, please let us know in the %(subreddit)s."),
+              subreddit=dict(link_text="ads subreddit", path="/r/ads")
           )}
         </p>
       </div>

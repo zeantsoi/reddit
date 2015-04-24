@@ -100,11 +100,13 @@
 
         var $link = $promo.eq(0);
         var fullname = $link.data('fullname');
-
         this.organics[this.lineup.pos] = fullname;
         this.lineup[this.lineup.pos] = newPromo;
-        $promotedLink.add($clearLeft).remove();
-        $promo.show();
+
+        if (!$link.hasClass('adsense-wrap')) {
+          $promotedLink.add($clearLeft).remove();
+          $promo.show();
+        }
         // force a redraw to prevent showing duplicate ads
         this.$listing.hide().show();
       }.bind(this));
@@ -128,7 +130,14 @@
 
           this.lastPromoTimestamp = Date.now();
           var $item = $(promo);
-          $item.hide().appendTo(this.$listing);
+          // adsense will throw error if inserted while hidden
+          if (!$item.hasClass('adsense-wrap')) {
+            $item.hide().appendTo(this.$listing);
+          } else {
+            var $promotedLink = this.$listing.find('.promotedlink');
+            $promotedLink.remove()
+            $item.appendTo(this.$listing);
+          }
           return $item;
         } else {
           if (!prevPromo.length && !this.organics.length) {
@@ -147,7 +156,7 @@
       } else if (Math.random() < this.interestProb) {
         return '.interestbar';
       } else {
-        var name = this.organics[Math.floor(Math.random() * this.organics.length)];
+        var name = this.organics[_.random(this.organics.length)];
         return (name) ? { fullname: name, } : null;
       }
     },
@@ -253,6 +262,8 @@
             $help.find('.help-promoted').show();
           } else if ($thing.hasClass('interestbar')) {
             $help.find('.help-interestbar').show();
+          } else if ($thing.hasClass('adsense-wrap')) {
+            $help.find('.help-adserver').show()
           } else {
             $help.find('.help-organic').show();
           }
