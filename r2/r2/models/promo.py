@@ -309,7 +309,7 @@ class PromoCampaign(Thing):
         trans_billing_country=None,
         trans_country_match=None,
         location_code=None,
-        platform=None,
+        platform='desktop',
         mobile_os_names=None,
     )
 
