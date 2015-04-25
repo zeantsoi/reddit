@@ -949,6 +949,8 @@ class VVerifyPassword(Validator):
             if self.fatal:
                 abort(403)
             self.set_error(errors.WRONG_PASSWORD)
+            return None
+        return password
 
     def param_docs(self):
         return {
