@@ -5,8 +5,16 @@ from pylons.controllers.util import abort
 import pytz
 
 from r2.controllers.reddit_base import UnloggedUser
+from r2.lib import js
 from r2.models import Account, NotFound
 from r2.models.subreddit import Subreddit
+
+COMMENT_EMBED_SOURCE = js.EmbedFileSource("templates/comment_embed.html",
+                                          js_module="comment-embed")
+
+
+def get_inject_template():
+    return COMMENT_EMBED_SOURCE.get_template()['template']
 
 
 def embeddable_sr(thing):
