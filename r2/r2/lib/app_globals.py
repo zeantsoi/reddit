@@ -251,6 +251,7 @@ class Globals(object):
             'memcaches',
             'lockcaches',
             'permacache_memcaches',
+            'permacache_memcaches_r3_2xl',
             'rendercaches',
             'pagecaches',
             'memoizecaches',
@@ -717,6 +718,19 @@ class Globals(object):
                                          num_clients=num_mc_clients,
                                          validators=[],)
 
+        try:
+            self.permacache_memcaches_r3_2xl
+        except AttributeError:
+            permacache_memcaches_r3_2xl = None
+        else:
+            permacache_memcaches_r3_2xl = CMemcache(
+                "perma",
+                self.permacache_memcaches_r3_2xl,
+                min_compress_len=1400,
+                num_clients=num_mc_clients,
+                validators=[],
+            )
+
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
         if self.stalecaches:
@@ -871,17 +885,40 @@ class Globals(object):
         cache_chains.update(thing_cache=self.thing_cache)
 
         if stalecaches:
-            permacache_cache = StaleCacheChain(
+            original_permacache_cache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 permacache_memcaches,
                 check_keys=False,
             )
         else:
-            permacache_cache = CacheChain(
+            original_permacache_cache = CacheChain(
                 (localcache_cls(), permacache_memcaches),
                 check_keys=False,
             )
+
+        if permacache_memcaches_r3_2xl:
+            if stalecaches:
+                replacement_permacache_cache = StaleCacheChain(
+                    localcache_cls(),
+                    stalecaches,
+                    permacache_memcaches_r3_2xl,
+                    check_keys=False,
+                )
+            else:
+                replacement_permacache_cache = CacheChain(
+                    (localcache_cls(), permacache_memcaches_r3_2xl),
+                    check_keys=False,
+                )
+
+            permacache_cache = TransitionalCache(
+                original_cache=original_permacache_cache,
+                replacement_cache=replacement_permacache_cache,
+                read_original=True,
+            )
+        else:
+            permacache_cache = original_permacache_cache
+
         cache_chains.update(permacache=permacache_cache)
 
         self.permacache = Permacache(
