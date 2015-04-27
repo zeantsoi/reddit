@@ -77,7 +77,6 @@ def load_controllers():
     from promotecontroller import SponsorListingController
     from mediaembed import MediaembedController
     from mediaembed import AdController
-    from oembed import OEmbedController
     from policies import PoliciesController
     from web import WebLogController
     
