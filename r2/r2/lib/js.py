@@ -52,7 +52,6 @@ if not STATIC_ROOT:
     STATIC_ROOT = os.path.join(os.path.dirname(REDDIT_ROOT), "build/public")
 
 
-async_script_tag = '<script type="text/javascript" async src="{src}"></script>\n'
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>'
 
@@ -270,38 +269,16 @@ class TemplateFileSource(DataSource, FileSource):
         FileSource.__init__(self, name)
         self.name = name
 
-    def get_template(self):
+    def get_content(self):
         from r2.lib.static import locate_static_file
         name, style = os.path.splitext(self.name)
         path = locate_static_file(os.path.join('static/js', self.name))
         with open(path) as f:
-            return {
+            return [{
                 "name": name,
                 "style": style.lstrip('.'),
-                "template": f.read(),
-            }
-
-    def get_content(self):
-        return [self.get_template()]
-
-
-class EmbedFileSource(TemplateFileSource):
-    """A template for an embed, including script tags for iframe injection"""
-    def __init__(self, name, js_module, *args, **kwargs):
-        super(EmbedFileSource, self).__init__(name, *args, **kwargs)
-        self.js_module = js_module
-
-    def get_template(self):
-        template = super(EmbedFileSource, self).get_template()
-
-        embed_urls = src(self.js_module, absolute=True, mangle_name=False)
-        if isinstance(embed_urls, basestring):
-            script_tags = [async_script_tag.format(src=embed_urls).strip()]
-        else:
-            script_tags = [script_tag.format(src=s).strip() for s in embed_urls]
-
-        template['template'] += "".join(script_tags)
-        return template
+                "template": f.read()
+            }]
 
 
 class LocaleSpecificSource(object):
