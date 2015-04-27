@@ -248,6 +248,7 @@ class Globals(object):
             'pagecaches',
             'memoizecaches',
             'srmembercaches',
+            'srmembercaches_vpc',
             'relcaches',
             'ratelimitcaches',
             'cassandra_seeds',
@@ -643,6 +644,20 @@ class Globals(object):
             validators=[validate_size_error],
         )
 
+        try:
+            self.srmembercaches_vpc
+        except AttributeError:
+            srmembercaches_vpc = None
+        else:
+            srmembercaches_vpc = CMemcache(
+                "srmember",
+                self.srmembercaches_vpc,
+                min_compress_len=96,
+                num_clients=num_mc_clients,
+                binary=True,
+                validators=[validate_size_error],
+            )
+
         # a pool just for rels
         relcaches = CMemcache(
             "rel",
@@ -771,14 +786,34 @@ class Globals(object):
         cache_chains.update(memoizecache=self.memoizecache)
 
         if stalecaches:
-            self.srmembercache = StaleCacheChain(
+            original_srmembercache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 srmembercaches,
             )
         else:
-            self.srmembercache = MemcacheChain(
+            original_srmembercache = MemcacheChain(
                 (localcache_cls(), srmembercaches))
+
+        if srmembercaches_vpc:
+            if stalecaches:
+                replacement_srmembercache = StaleCacheChain(
+                    localcache_cls(),
+                    stalecaches,
+                    srmembercaches_vpc,
+                )
+            else:
+                replacement_srmembercache = MemcacheChain(
+                    (localcache_cls(), srmembercaches_vpc))
+
+            self.srmembercache = TransitionalCache(
+                original_cache=original_srmembercache,
+                replacement_cache=replacement_srmembercache,
+                read_original=True,
+            )
+        else:
+            self.srmembercache = original_srmembercache
+
         cache_chains.update(srmembercache=self.srmembercache)
 
         if stalecaches:
