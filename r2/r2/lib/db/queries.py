@@ -1894,12 +1894,13 @@ def process_votes(qname, limit=0):
         timer = stats.get_timer("service_time." + stats_qname)
         timer.start()
 
-        # Temporary shim: During queue message format transition,
-        # JSON payloads will be explicitly marked as such.
-        msg_headers = msg.properties.get("application_headers", {})
-        if msg_headers.get("format", "pickle") == "json":
-            vote = json.loads(msg.body)
-        else:
+        vote = None
+        if msg.body.startswith("{"):
+            try:
+                vote = json.loads(msg.body)
+            except (ValueError, TypeError):
+                vote = None
+        if vote is None:
             uid, tid, dir, ip, info, cheater = pickle.loads(msg.body)
             vote = {
                 "uid": uid,
