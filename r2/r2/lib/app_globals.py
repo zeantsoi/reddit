@@ -317,6 +317,7 @@ class Globals(object):
             'create_sr_comment_karma',
             'create_sr_link_karma',
             'cflag_min_votes',
+            'ticket_contact_user_id',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',
@@ -343,6 +344,10 @@ class Globals(object):
             'welcomebar_messages',
             'sidebar_message',
             'gold_sidebar_message',
+        ],
+        ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
+            'ticket_groups',
+            'ticket_user_fields',
         ],
         ConfigValue.dict(ConfigValue.str, ConfigValue.float): [
             'pennies_per_server_second',
