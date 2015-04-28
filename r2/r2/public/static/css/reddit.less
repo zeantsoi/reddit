@@ -11185,17 +11185,20 @@ body.banned.deleted div#header {
     }
 
     .arrow {
-        width: auto;
-        background-position: left;
-        padding-left: 20px;
-    }
-
-    .arrow.unvoted {
-        padding-left: 0;
+        display: inline-block;
+        margin-right: 100px;
 
         &:after {
             display: inline-block;
+            margin-left: 20px;
+            width: 100px;
+        }
+    }
+
+    .arrow.unvoted {
+        &:after {
             content: "did not vote";
+            margin-left: 0;
         }
     }
 
