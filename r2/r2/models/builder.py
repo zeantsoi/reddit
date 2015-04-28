@@ -356,6 +356,7 @@ class QueryBuilder(Builder):
         self.query = query
         self.skip = skip
         self.num = kw.get('num')
+        self.sr_detail = kw.get('sr_detail')
         self.start_count = kw.get('count', 0) or 0
         self.after = kw.get('after')
         self.reverse = kw.get('reverse')
@@ -460,6 +461,11 @@ class QueryBuilder(Builder):
         have_next = True
         if self.num and num_have < self.num and not stopped_early:
             have_next = False
+
+        if self.sr_detail:
+            for item in items:
+                item.sr_detail = True
+
 
         # Make sure first_item and last_item refer to things in items
         # NOTE: could retrieve incorrect item if there were items with
