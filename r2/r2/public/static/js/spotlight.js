@@ -3,6 +3,7 @@
     setup: function(organicLinks, interestProb, showPromo, srnames) {
       this.organics = [];
       this.lineup = [];
+      this.adWasClicked = false;
       this.interestProb = interestProb;
       this.showPromo = showPromo;
       this.srnames = srnames;
@@ -11,6 +12,13 @@
       this.next = this._advance.bind(this, 1);
       this.prev = this._advance.bind(this, -1);
       this.$listing = $('.organic-listing');
+
+      this.$listing.on('click', function(e) {
+        var $target = $(e.target);
+        if ($target.is('.thumbnail, .title')) {
+          this.adWasClicked = true;
+        }
+      }.bind(this));
 
       var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
       if (adBlockIsEnabled) {
@@ -80,6 +88,11 @@
 
       // the ad will be stored as a promise
       if (!this.lineup[this.lineup.pos].promise) {
+        return;
+      }
+      // we don't want to fetch a new ad when the user has clicked so the 
+      // user can have a chance to vote or comment on the last ad.
+      if (this.adWasClicked) {
         return;
       }
 
