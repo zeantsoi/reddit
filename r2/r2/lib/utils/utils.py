@@ -901,7 +901,7 @@ def url_to_thing(url):
             return None
 
         try:
-            return Subreddit._by_name(sr_name, data=True)
+            return Subreddit._by_name(sr_name)
         except NotFound:
             return None
 
