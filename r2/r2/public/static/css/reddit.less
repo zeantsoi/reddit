@@ -11228,3 +11228,8 @@ body.banned.deleted div#header {
         content: "downvoted";
     }
 }
+
+body:not(.loggedin) .comment-save-button,
+body:not(.loggedin) .give-gold-button {
+    display: none;
+}
