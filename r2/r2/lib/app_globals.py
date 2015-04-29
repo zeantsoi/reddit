@@ -833,7 +833,7 @@ class Globals(object):
             self.relcache = TransitionalCache(
                 original_cache=original_relcache,
                 replacement_cache=replacement_relcache,
-                read_original=True,
+                read_original=False,
             )
         else:
             self.relcache = original_relcache
