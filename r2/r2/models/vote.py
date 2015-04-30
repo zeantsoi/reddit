@@ -320,7 +320,7 @@ def cast_vote(sub, obj, vote_info, timer, date):
     vote._thing2.update_search_index(boost_only=True)
     timer.intermediate("update_search_index")
 
-    if "event" in vote_info:
+    if "event" in vote_info and vote_info["event"]:
         g.events.vote_event(vote, old_vote, event_base=vote_info["event"])
 
     return vote
