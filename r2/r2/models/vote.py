@@ -314,7 +314,7 @@ def cast_vote(sub, obj, vote_info, timer, date):
             timer.intermediate("incr_sr_counts")
 
     # write the vote to cassandra
-    VotesByAccount.copy_from(vote, vote_info)
+    VotesByAccount.copy_from(vote, vote_info["info"])
     timer.intermediate("cassavotes")
 
     vote._thing2.update_search_index(boost_only=True)
