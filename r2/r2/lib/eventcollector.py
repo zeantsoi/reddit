@@ -128,11 +128,11 @@ class Event(dict):
     @classmethod
     def base(cls, event_name=None, timestamp=None, user_agent=None, ip=None,
               domain=None, user_id=None, loid=None, oauth2_client_id=None,
-              uuid=None, **kw):
+              event_uuid=None, **kw):
         ret = cls(kw)
 
-        if uuid is None:
-            ret["uuid"] = uuid.uuid4()
+        if event_uuid is None:
+            ret["uuid"] = str(uuid.uuid4())
 
         if event_name is not None:
             ret["event_name"] = event_name
