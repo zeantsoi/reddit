@@ -320,8 +320,8 @@ class VWikiPageRevise(VWikiPage):
         if not c.is_wiki_mod and WikiPage.is_automatically_created(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
         elif WikiPage.is_special(page):
-            if (not c.is_wiki_mod or
-                    not c.site.is_moderator_with_perms(c.user, 'config')):
+            if not (c.user_is_admin or
+                    c.site.is_moderator_with_perms(c.user, 'config')):
                 self.set_error('RESTRICTED_PAGE', code=403)
                 return
         elif (not c.user_is_admin) and WikiPage.is_restricted(page):
