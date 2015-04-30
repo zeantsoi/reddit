@@ -1014,10 +1014,9 @@ class FrontController(RedditController):
             # hardcoded to 5 subreddits (or fewer)
             sr_num = min(5, int(num / 5))
             num = num - sr_num
-        elif 'sr' in result_types:
+        elif result_types == {'sr'}:
             sr_num = num
             num = 0
-            restrict_sr = False
         else:
             sr_num = 0
 
