@@ -315,8 +315,9 @@ class VWikiPageRevise(VWikiPage):
             return
         
         page = normalize_page(page)
-        
-        if WikiPage.is_automatically_created(page):
+        # `is_automatically_created` just means it _may_ be automatically
+        # created.
+        if not c.is_wiki_mod and WikiPage.is_automatically_created(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
         elif WikiPage.is_special(page):
             if (not c.is_wiki_mod or
