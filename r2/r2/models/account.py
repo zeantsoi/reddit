@@ -34,7 +34,7 @@ from r2.lib import amqp, filters, hooks
 from r2.lib.log import log_text
 from r2.models.last_modified import LastModified
 from r2.models.modaction import ModAction
-from r2.models.trylater import TryLater
+from r2.models.trylater import TryLater, TryLaterBySubject
 
 from pylons import c, g, request
 from pylons.i18n import _
