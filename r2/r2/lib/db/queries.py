@@ -1936,8 +1936,6 @@ def consume_mark_all_read():
 
 
 def consume_deleted_accounts():
-    # This queue is being used to handle both the deletion AND undeletion
-    # of accounts in order to reindex their submitted links.
     @g.stats.amqp_processor('del_account_q')
     def process_deleted_accounts(msg):
         account = Thing._by_fullname(msg.body)

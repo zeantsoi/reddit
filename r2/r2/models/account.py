@@ -478,7 +478,7 @@ class Account(Thing):
             f._thing1.remove_enemy(f._thing2)
 
         # wipe out stored password data after a recovery period
-        TryLaterBySubject.schedule("account_deletion", self._id36,
+        TryLater.schedule("account_deletion", self._id36,
                           delay=timedelta(days=90))
 
         # Remove OAuth2Client developer permissions.  This will delete any
