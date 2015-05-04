@@ -856,7 +856,7 @@ class Globals(object):
             permacache_cache = TransitionalCache(
                 original_cache=original_permacache_cache,
                 replacement_cache=replacement_permacache_cache,
-                read_original=True,
+                read_original=False,
             )
         else:
             permacache_cache = original_permacache_cache
