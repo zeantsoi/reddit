@@ -40,7 +40,3 @@ class CdnProvider(object):
 
         """
         raise NotImplementedError
-
-    def purge_content(self, url):
-        """Purge content from the CDN by URL"""
-        raise NotImplementedError

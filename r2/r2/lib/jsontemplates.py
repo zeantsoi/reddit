@@ -194,11 +194,6 @@ class ThingJsonTemplate(JsonTemplate):
                 elif attr == "approved_by":
                     return ban_info.get("unbanner") if not thing._spam else None
 
-        if attr == 'admin_takedown':
-            if thing.admin_takedown:
-                return 'legal'
-            return None
-
         return getattr(thing, attr, None)
 
     def data(self, thing):
@@ -532,7 +527,6 @@ class LinkJsonTemplate(ThingJsonTemplate):
         user_reports="user_reports",
         over_18="over_18",
         permalink="permalink",
-        removal_reason="admin_takedown",
         saved="saved",
         score="score",
         secure_media="secure_media_object",
@@ -728,7 +722,6 @@ class CommentJsonTemplate(ThingJsonTemplate):
         mod_reports="mod_reports",
         user_reports="user_reports",
         parent_id="parent_id",
-        removal_reason="admin_takedown",
         replies="child",
         saved="saved",
         score="score",
