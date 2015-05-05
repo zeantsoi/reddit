@@ -813,7 +813,7 @@ class Globals(object):
             self.memoizecache = TransitionalCache(
                 original_cache=original_memoizecache,
                 replacement_cache=replacement_memoizecache,
-                read_original=True,
+                read_original=False,
             )
         else:
             self.memoizecache = original_memoizecache
