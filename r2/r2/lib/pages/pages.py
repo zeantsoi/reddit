@@ -1057,9 +1057,6 @@ class SubredditInfoBar(CachedTemplate):
             self.sr_style_toggle = True
             self.use_subreddit_style = c.user.use_subreddit_style(c.site)
 
-        if c.user_is_admin:
-            self.sr_ban_info = self.sr.ban_info
-
         CachedTemplate.__init__(self)
 
     @property

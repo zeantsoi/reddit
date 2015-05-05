@@ -264,7 +264,6 @@ class Subreddit(Thing, Printable, BaseSite):
         community_rules='',
         key_color='',
         hide_ads=False,
-        ban_count=0,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -276,8 +275,7 @@ class Subreddit(Thing, Printable, BaseSite):
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
                                                'wiki_edit_karma', 'wiki_edit_age',
-                                               'gilding_server_seconds',
-                                               'ban_count')
+                                               'gilding_server_seconds')
 
     sr_limit = 50
     gold_limit = 100
