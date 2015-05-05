@@ -112,7 +112,7 @@ class APIv1UserController(OAuth2OnlyController):
     )
     @api_doc(
         section=api_section.users,
-        uri='/api/v1/user/{id}/trophies',
+        uri='/api/v1/user/{username}/trophies',
     )
     def GET_usertrophies(self, user):
         """Return a list of trophies for the a given user."""
@@ -177,7 +177,7 @@ class APIv1UserController(OAuth2OnlyController):
         notes_json=FRIEND_JSON_VALIDATOR,
     )
     @api_doc(api_section.users, json_model=FRIEND_JSON_VALIDATOR,
-             uri='/api/v1/me/friends/{id}')
+             uri='/api/v1/me/friends/{username}')
     def PUT_friends(self, friend, notes_json):
         """Create or update a "friend" relationship.
 
@@ -220,7 +220,7 @@ class APIv1UserController(OAuth2OnlyController):
         VUser(),
         friend_rel=VFriendOfMine('id'),
     )
-    @api_doc(api_section.users, uri='/api/v1/me/friends/{id}')
+    @api_doc(api_section.users, uri='/api/v1/me/friends/{username}')
     def GET_friends(self, friend_rel):
         """Get information about a specific 'friend', such as notes."""
         rel_view = FriendTableItem(friend_rel)
@@ -231,7 +231,7 @@ class APIv1UserController(OAuth2OnlyController):
         VUser(),
         friend_rel=VFriendOfMine('id'),
     )
-    @api_doc(api_section.users, uri='/api/v1/me/friends/{id}')
+    @api_doc(api_section.users, uri='/api/v1/me/friends/{username}')
     def DELETE_friends(self, friend_rel):
         """Stop being friends with a user."""
         c.user.remove_friend(friend_rel._thing2)
