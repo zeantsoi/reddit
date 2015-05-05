@@ -114,8 +114,6 @@ class Link(Thing, Printable):
                      ignore_reports=False,
                      gildings=0,
                      mobile_ad_url="",
-                     admin_takedown=False,
-                     removed_link_child=None,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
@@ -932,7 +930,6 @@ class Comment(Thing, Printable):
                      parents=None,
                      ignore_reports=False,
                      sendreplies=True,
-                     admin_takedown=False,
                      )
     _essentials = ('link_id', 'author_id')
 
