@@ -123,7 +123,9 @@ def password_email(user):
     _system_email(user.email,
                   PasswordReset(user=user,
                                 passlink=passlink).render(style='email'),
-                  Email.Kind.RESET_PASSWORD)
+                  Email.Kind.RESET_PASSWORD,
+                  reply_to=g.support_email,
+                  )
     return True
 
 @trylater_hooks.on('trylater.message_notification_email')
@@ -203,7 +205,9 @@ def password_change_email(user):
 
     return _system_email(user.email,
                          PasswordChangeEmail(user=user).render(style='email'),
-                         Email.Kind.PASSWORD_CHANGE)
+                         Email.Kind.PASSWORD_CHANGE,
+                         reply_to=g.support_email,
+                         )
 
 def email_change_email(user):
     """Queues a system email for a email change notification."""
@@ -211,7 +215,9 @@ def email_change_email(user):
 
     return _system_email(user.email,
                          EmailChangeEmail(user=user).render(style='email'),
-                         Email.Kind.EMAIL_CHANGE)
+                         Email.Kind.EMAIL_CHANGE,
+                         reply_to=g.support_email,
+                         )
 
 def community_email(body, kind):
     return _community_email(body, kind)
