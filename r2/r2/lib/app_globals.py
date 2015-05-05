@@ -809,7 +809,7 @@ class Globals(object):
             self.srmembercache = TransitionalCache(
                 original_cache=original_srmembercache,
                 replacement_cache=replacement_srmembercache,
-                read_original=True,
+                read_original=False,
             )
         else:
             self.srmembercache = original_srmembercache
