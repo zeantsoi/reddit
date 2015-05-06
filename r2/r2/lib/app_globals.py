@@ -787,7 +787,7 @@ class Globals(object):
             self.cache = TransitionalCache(
                 original_cache=original_cache,
                 replacement_cache=replacement_cache,
-                read_original=False,
+                read_original=True,
             )
         else:
             self.cache = original_cache
