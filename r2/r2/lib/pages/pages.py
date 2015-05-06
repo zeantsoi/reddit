@@ -985,7 +985,7 @@ class RedditFooter(CachedTemplate):
                     OffsiteButton(_("Alien Blue iOS app"), "//alienblue.org"),
                     OffsiteButton(_("reddit AMA app"), "//redditama.reddit.com/"),
                     OffsiteButton(_("mobile beta"), "https://m.reddit.com"),
-                    NamedButton("buttons", False),
+                    NamedButton("buttons", False, nocname=True),
                 ],
                 title = _("apps & tools"),
                 type = "flat_vert",
