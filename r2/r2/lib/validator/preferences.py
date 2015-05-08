@@ -96,7 +96,8 @@ def set_prefs(user, prefs):
             # to the beta subreddit.
             try:
                 sr = Subreddit._by_name(g.beta_sr)
-                sr.add_subscriber(user)
+                if sr.add_subscriber(user):
+                    sr._incr('_ups', 1)
             except NotFound:
                 g.log.warning("Could not find beta subreddit '%s'. It may "
                               "need to be created." % g.beta_sr)
