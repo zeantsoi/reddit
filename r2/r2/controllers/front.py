@@ -68,7 +68,7 @@ from r2.controllers.ipn import generate_blob, validate_blob, GoldException
 from operator import attrgetter
 import string
 import random as rand
-import re, socket
+import re
 import time as time_module
 from urllib import quote_plus
 
@@ -1155,7 +1155,7 @@ class FrontController(RedditController):
 
         try:
             res = listing.listing(legacy_render_class)
-        except g.search.SearchException + (socket.error,) as e:
+        except g.search.SearchException as e:
             return self.search_fail(e)
 
         return res
