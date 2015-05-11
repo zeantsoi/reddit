@@ -969,7 +969,7 @@ class FrontController(RedditController):
               syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
     @api_doc(api_section.search, supports_rss=True, uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
-                   restrict_sr, include_facets, syntax):
+                   restrict_sr, include_facets, syntax, sr_detail):
         """Search links page."""
 
         # trigger redirect to /over18
@@ -1046,7 +1046,8 @@ class FrontController(RedditController):
                                 recent=recent, syntax=syntax)
                 heading = _('posts') if sr_num > 0 else None
                 content = self._search(q, num=num, after=after, reverse=reverse,
-                                       count=count, heading=heading,
+                                       count=count, sr_detail=sr_detail,
+                                       heading=heading,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
@@ -1128,7 +1129,8 @@ class FrontController(RedditController):
         return wrapper_fn
 
     def _search(self, query_obj, num, after, reverse, count=0, type=None,
-                skip_deleted_authors=True, heading=None, legacy_render_class=True):
+                skip_deleted_authors=True, sr_detail=False,
+                heading=None, legacy_render_class=True):
         """Helper function for interfacing with search.  Basically a
            thin wrapper for SearchBuilder."""
 
@@ -1141,7 +1143,8 @@ class FrontController(RedditController):
                                 after=after, num=num, reverse=reverse,
                                 count=count,
                                 wrap=builder_wrapper,
-                                skip_deleted_authors=skip_deleted_authors)
+                                skip_deleted_authors=skip_deleted_authors,
+                                sr_detail=sr_detail)
         if after and not builder.valid_after(after):
             g.stats.event_count("listing.invalid_after", "search")
             self.abort403()
