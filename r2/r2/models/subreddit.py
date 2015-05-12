@@ -1681,7 +1681,7 @@ class LocalizedDefaultSubreddits(tdb_cassandra.View):
             return ids_by_location[global_key]
 
 
-class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
+class LabeledMulti(tdb_cassandra.Thing, MultiReddit, Printable):
     """Thing with special columns that hold Subreddit ids and properties."""
     _use_db = True
     _views = []
@@ -1719,6 +1719,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         tdb_cassandra.Thing.__init__(self, _id, *args, **kwargs)
         MultiReddit.__init__(self)
         self._owner = None
+        self._ups = 0
+        self._downs = 0
+        self._deleted = False
 
     @classmethod
     def _byID(cls, ids, return_dict=True, properties=None, load_subreddits=True,
