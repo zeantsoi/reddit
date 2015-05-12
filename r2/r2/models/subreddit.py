@@ -1722,6 +1722,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit, Printable):
         self._ups = 0
         self._downs = 0
         self._deleted = False
+        self._voting_score = [1, 1, 1]
 
     @classmethod
     def _byID(cls, ids, return_dict=True, properties=None, load_subreddits=True,
@@ -1783,6 +1784,10 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit, Printable):
     @property
     def linked_multi(self):
         return self._linked_multi
+
+    @property
+    def voting_score(self):
+        return self._voting_score
 
     @property
     def sr_ids(self):
