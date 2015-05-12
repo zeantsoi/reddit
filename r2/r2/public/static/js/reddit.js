@@ -1252,6 +1252,11 @@ $(function() {
             $("#moresearchinfo").slideUp();
             event.preventDefault();
         });
+
+        var query = $('#search input[name="q"]').val();
+        $('.search-result-listing')
+          .find('.search-title, .search-link, .search-subreddit-link, .search-result-body')
+          .highlight(query);
         
         /* Select shortlink text on click */
         $("#shortlink-text").click(function() {
