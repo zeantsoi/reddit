@@ -476,9 +476,6 @@ class SolrSearchUploader(object):
         '''
         add = etree.Element("add")
         delete = etree.Element("delete")
-        commit = etree.Element("commit")
-        commit.attrib["waitSearcher"] = "false"
-
         self.batch_lookups()
         for thing in self.things:
             try:
@@ -500,16 +497,7 @@ class SolrSearchUploader(object):
                 else:
                     g.log.warning("Ignoring problem on thing %r.\n\n%r",
                                   thing, e)
-
-        elems = []
-        if len(add):
-            elems.append(add)
-        if len(delete):
-            elems.append(delete)
-        if elems:
-            # Only need to commit if something is sent
-            elems.append(commit)
-        return elems
+        return (add, delete)
 
 
     def inject(self, quiet=False):
@@ -522,6 +510,9 @@ class SolrSearchUploader(object):
 
         cs_time = 0
         for batch in xml_things:
+
+            if not len(batch):
+                return 0
 
             cs_start = datetime.now(g.tz)
             sent = self.send_documents(batch)
