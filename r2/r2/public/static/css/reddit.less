@@ -6563,6 +6563,9 @@ div #campaign-field {
 }
 
 .sponsored-page {
+    @warning-text-color: @color-semi-black;
+    @warning-background-yellow: @color-yellow;
+
     .checkbox-group,
     .radio-group,
     .form-group,
@@ -6622,6 +6625,14 @@ div #campaign-field {
             label, .label {
                 display: block;
             }
+        }
+        .campaign-weekend-warning {
+            font-size: .8em;
+            color: @warning-text-color;
+            background-color: @warning-background-yellow;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
         }
     }
 

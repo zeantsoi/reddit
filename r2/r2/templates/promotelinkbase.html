@@ -27,6 +27,7 @@
   from r2.lib.pages import UserText
   import simplejson
   from babel.numbers import format_currency
+  from datetime import datetime
 %>
 
 <%namespace file="utils.html" 
@@ -353,7 +354,22 @@
     <div>
       ${error_field("BAD_DATE_RANGE", "enddate", "div")}
     </div>
+    ${make_weekend_warning()}
   </%utils:line_field>
+</%def>
+
+<%def name="make_weekend_warning()">
+    <%
+    show_weekend_warning = False
+    today = datetime.now()
+    if (today.weekday() == 4 and today.hour > 17) or \
+       today.weekday() == 5 or \
+       (today.weekday() == 6 and today.hour < 21):
+        show_weekend_warning = True
+    %>
+    %if show_weekend_warning:
+    <p class="campaign-weekend-warning" role='alert'>${_("Every reddit ad is approved by a person on the reddit ads team. You are creating an ad outside of our business hours. We'll be back to reviewing ads on Monday morning. If your ad has a Monday start date, it will launch at 9am PST / 12pm EST on Monday.")}</p>
+    %endif
 </%def>
 
 <%def name="platform_field()">
