@@ -47,10 +47,13 @@ from r2.lib.providers.search.common import (
 import r2.lib.utils as r2utils
 from r2.models import (
     Account,
+    All,
+    DefaultSR,
     DomainSR,
     FakeSubreddit,
-    FriendsSR,
+    Friends,
     Link,
+    ModContribSR,
     MultiReddit,
     NotFound,
     Subreddit,
