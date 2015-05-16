@@ -1151,22 +1151,18 @@ class Subreddit(Thing, Printable, BaseSite):
             return False
 
     def add_subscriber(self, user):
-        legacy_subscriber_userrel.add_subscriber(self, user)
         SubscribedSubredditsByAccount.create(user, self)
         SubscriptionsByDay.create(self, user)
         self._incr('_ups', 1)
 
     @classmethod
     def subscribe_multiple(cls, user, srs):
-        for sr in srs:
-            legacy_subscriber_userrel.add_subscriber(sr, user)
         SubscribedSubredditsByAccount.create(user, srs)
         SubscriptionsByDay.create(srs, user)
         for sr in srs:
             sr._incr('_ups', 1)
 
     def remove_subscriber(self, user):
-        legacy_subscriber_userrel.remove_subscriber(self, user)
         SubscribedSubredditsByAccount.destroy(user, self)
         self._incr('_ups', -1)
 
@@ -2466,9 +2462,6 @@ Subreddit.__bases__ += (
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
-
-legacy_subscriber_userrel = MigratingUserRel(
-    'subscriber', SRMember, disable_ids_fn=True)
 
 
 class SubredditTempBan(object):
