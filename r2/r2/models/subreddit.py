@@ -965,21 +965,34 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def random_reddit(cls, over18=False, user=None):
+        reddit = cls.random_reddit_minus(
+            over18=over18, user=user, num=1)
+        if not reddit:
+            return None
+        return reddit[0]
+
+    @classmethod
+    def random_reddit_minus(cls, over18=False, user=None,
+                            excluded_ids=None, num=1):
         if over18:
             sr_ids = NamedGlobals.get("popular_over_18_sr_ids")
         else:
             sr_ids = NamedGlobals.get("popular_sr_ids")
 
+        excludes = set(excluded_ids) if excluded_ids else set()
         if user:
-            excludes = set(cls.user_subreddits(user, limit=None))
+            excludes.update(cls.user_subreddits(user, limit=None))
+
+        if excludes:
             sr_ids = list(set(sr_ids) - excludes)
 
         if not sr_ids:
             return Subreddit._by_name(g.default_sr)
 
-        sr_id = random.choice(sr_ids)
-        sr = Subreddit._byID(sr_id, data=True)
-        return sr
+        if (len(sr_ids) > num):
+            sr_ids = random.sample(srs, num)
+        srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
+        return srs
 
     @classmethod
     def update_popular_subreddits(cls, limit=5000):
