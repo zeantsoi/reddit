@@ -580,9 +580,10 @@ class RuleTarget(object):
                 sources = [key] + component.aliases
                 for source in sources:
                     from_source = values.pop(source, None)
-                    value = value or from_source
+                    if value is None:
+                        value = from_source
 
-                if value:
+                if value is not None:
                     if not component.validate(value):
                         raise AutoModeratorSyntaxError(
                             "invalid value for `%s`: `%s`" % (key, value),
