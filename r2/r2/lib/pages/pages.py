@@ -120,7 +120,6 @@ from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.normalized_hot import normalized_hot
-from r2.lib.providers import image_resizing
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import is_subdomain, title_to_url, query_string, UrlParser
 from r2.lib.utils import url_links_builder, median, to36
@@ -1533,7 +1532,6 @@ class LinkInfoPage(Reddit):
 
     create_reddit_box = False
     extra_page_classes = ['single-page']
-    metadata_image_width = 216
 
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, num_duplicates = None,
@@ -1635,9 +1633,7 @@ class LinkInfoPage(Reddit):
             "ttl": "600",  # re-fetch frequently to update vote/comment count
         }
         if not self.link.nsfw:
-            image_data = self._build_og_image()
-            for key, value in image_data.iteritems():
-                data["image:%s" % key] = value
+            data["image"] = self._build_og_image()
 
         return data
 
@@ -1645,40 +1641,21 @@ class LinkInfoPage(Reddit):
         if self.link.media_object:
             media_embed = media.get_media_embed(self.link.media_object)
             if media_embed and media_embed.public_thumbnail_url:
-                return {
-                    'url': media_embed.public_thumbnail_url,
-                    'width': media_embed.width,
-                    'height': media_embed.height,
-                }
+                return media_embed.public_thumbnail_url
 
         if self.link.url and url_is_embeddable_image(self.link.url):
-            return {'url': self.link.url}
-
-        preview_object = getattr(self.link, 'preview_object', None)
-        if preview_object:
-            try:
-                return {
-                    'url': g.image_resizing_provider.resize_image(
-                                preview_object, self.metadata_image_width),
-                    'width': self.metadata_image_width,
-                }
-            except image_resizing.NotLargeEnough:
-                pass
+            return self.link.url
 
         if self.link.has_thumbnail and self.link.thumbnail:
             # This is really not a great thumbnail for facebook right now
-            # because it's so small, but it's better than nothing.
-            width, height = self.link.thumbnail_size
-            return {
-                'url': self.link.thumbnail,
-                'width': width,
-                'height': height,
-            }
+            # because it's so small. We should look into scraping larger
+            # thumbnails.
+            return self.link.thumbnail
 
         # Default to the reddit icon if we've got nothing else.  Force it to be
         # absolute because not all scrapers handle relative protocols or paths
         # well.
-        return {'url': static('icon.png', absolute=True)}
+        return static('icon.png', absolute=True)
 
     def _build_og_description(self, meta_description):
         if self.link.selftext:
