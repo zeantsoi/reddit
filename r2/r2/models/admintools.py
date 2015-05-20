@@ -89,14 +89,15 @@ class AdminTools(object):
             t.ban_info = ban_info
             t._commit()
 
-            if auto:
-                amqp.add_item("auto_removed", t._fullname)
-
         if not auto:
             self.author_spammer(new_things, True)
             self.set_last_sr_ban(new_things)
 
         queries.ban(all_things, filtered=auto)
+
+        if auto:
+            for t in all_things:
+                amqp.add_item("auto_removed", t._fullname)
 
     def unspam(self, things, moderator_unbanned=True, unbanner=None,
                train_spam=True, insert=True):
