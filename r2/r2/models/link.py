@@ -988,8 +988,6 @@ class Comment(Thing, Printable):
 
     @classmethod
     def _new(cls, author, link, parent, body, ip):
-        from r2.lib.emailer import message_notification_email
-
         kw = {}
         if link.comment_tree_version > 1:
             # for top-level comments, parents is an empty string
@@ -1062,17 +1060,6 @@ class Comment(Thing, Printable):
         if to and should_send():
             # Record the inbox relation and give the user an orangered
             inbox_rel = Inbox._add(to, c, name, orangered=True)
-
-            if to.pref_email_messages:
-                data = {
-                    'to': to._id36,
-                    'from': '/u/%s' % author.name,
-                    'comment': c._fullname,
-                    'permalink': c.make_permalink_slow(force_domain=True),
-                }
-                data = json.dumps(data)
-                TryLater.schedule('message_notification_email', data,
-                                  NOTIFICATION_EMAIL_DELAY)
 
         hooks.get_hook('comment.new').call(comment=c)
 
@@ -1734,26 +1721,6 @@ class Message(Thing, Printable):
                 inbox_rel.append(Inbox._add(to, m, 'inbox',
                                             orangered=orangered))
 
-                if orangered and to.pref_email_messages:
-                    from r2.lib.template_helpers import get_domain
-                    if from_sr:
-                        sender_name = '/r/%s' % sr.name
-                    else:
-                        sender_name = '/u/%s' % author.name
-                    permalink = 'http://%(domain)s%(path)s' % {
-                        'domain': get_domain(),
-                        'path': m.permalink,
-                    }
-                    data = {
-                        'to': to._id36,
-                        'from': sender_name,
-                        'comment': m._fullname,
-                        'permalink': permalink,
-                    }
-                    data = json.dumps(data)
-                    TryLater.schedule('message_notification_email', data,
-                                      NOTIFICATION_EMAIL_DELAY)
-
         # update user inboxes for non-mods involved in a modmail conversation
         if not skip_inbox and sr_id and m.first_message:
             first_message = Message._byID(m.first_message, data=True)
@@ -2378,6 +2345,20 @@ class Inbox(MultiRelation('inbox',
         if orangered:
             to._incr('inbox_count', 1)
 
+        if orangered and to.pref_email_messages:
+            i.emailed = False
+            i._commit()
+            from r2.lib.emailer import message_notification_email
+
+            data = {
+                'to': to._id36,
+                'start_date': obj._date.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            data = json.dumps(data)
+
+            TryLater.schedule('message_notification_email', data,
+                              NOTIFICATION_EMAIL_DELAY)
+
         return i
 
     @classmethod
@@ -2418,7 +2399,6 @@ class Inbox(MultiRelation('inbox',
 
         return possible_recipients
 
-
     @classmethod
     def set_unread(cls, things, unread, to=None):
         things = tup(things)
@@ -2457,6 +2437,31 @@ class Inbox(MultiRelation('inbox',
                 to._incr('inbox_count', read_counter)
 
         return res
+
+    @classmethod
+    def get_unread_and_unemailed(cls, to_id):
+        inbox = Inbox._query(
+            Inbox.c._thing1_id == to_id,
+            Inbox.c.new == True,
+            Inbox.c.emailed == False,
+            data=True,
+        )
+
+        for i in inbox:
+            yield i, i._thing2
+
+    @classmethod
+    def mark_all_as_emailed(cls, to_id, end_date):
+        inbox = Inbox._query(
+            Inbox.c._thing1_id == to_id,
+            Inbox.c.emailed == False,
+            Inbox.c._date <= end_date,
+            data=True,
+        )
+
+        for i in inbox:
+            i.emailed = True
+            i._commit()
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):

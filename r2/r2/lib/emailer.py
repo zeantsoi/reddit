@@ -34,7 +34,7 @@ import simplejson as json
 from r2.config import feature
 from r2.lib import hooks
 from r2.lib.utils import timeago
-from r2.models import Comment, Email, DefaultSR, Account, Award
+from r2.models import Account, Award, Comment, DefaultSR, Email, Inbox
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
 
@@ -142,7 +142,6 @@ def message_notification_email(data):
     for datum in data.itervalues():
         datum = json.loads(datum)
         user = Account._byID36(datum['to'], data=True)
-        comment = Comment._by_fullname(datum['comment'], data=True)
 
         # In case a user has enabled the preference while it was enabled for
         # them, but we've since turned it off.  We need to explicitly state the
@@ -154,6 +153,44 @@ def message_notification_email(data):
             raise Exception(
                     'Message notification emails: safety limit exceeded!')
 
+        # Get all new messages that haven't been emailed
+        inbox_items = Inbox.get_unread_and_unemailed(user._id)
+        inbox_items = sorted(inbox_items, key=lambda x: x[1]._date)
+
+        if len(inbox_items) == 0:
+            return
+        now = datetime.datetime.now(g.tz)
+        start_date = datetime.datetime.strptime(datum['start_date'],
+            "%Y-%m-%d %H:%M:%S").replace(tzinfo=g.tz)
+
+        messages = []
+
+        # Batch messages to email starting with older messages
+        for inbox_rel, message in inbox_items:
+            # Get sender_name, replacing with display_author if it exists
+            if getattr(message, 'from_sr', False):
+                sender_name = ('/r/%s' %
+                    Subreddit._byID(message.sr_id, data=True).name)
+            else:
+                if getattr(message, 'display_author', False):
+                    sender_id = message.display_author
+                else:
+                    sender_id = message.author_id
+                sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
+
+            if isinstance(message, Comment):
+                permalink = message.make_permalink_slow(context=1,
+                    force_domain=True)
+            else:
+                permalink = message.make_permalink(force_domain=True)
+
+            messages.append({
+                "author_name": sender_name,
+                "body": message.body,
+                "date": message._date.strftime("%a, %d %b %Y %H:%M:%S %z"),
+                "permalink": permalink,
+            })
+
         mac = generate_notification_email_unsubscribe_token(
                 datum['to'], user_email=user.email,
                 user_password_hash=user.password)
@@ -161,18 +198,18 @@ def message_notification_email(data):
         unsubscribe_link = base + '/mail/unsubscribe/%s/%s' % (datum['to'], mac)
 
         templateData = {
-            'sender_username': datum.get('from', ''),
-            'comment': comment,
-            'permalink': datum['permalink'],
+            'messages': messages,
             'unsubscribe_link': unsubscribe_link,
         }
+
         _system_email(user.email,
                       MessageNotificationEmail(**templateData).render(style='email'),
                       Email.Kind.MESSAGE_NOTIFICATION,
                       from_address=g.notification_email)
-
+        Inbox.mark_all_as_emailed(user._id, start_date)
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
+
 
 def generate_notification_email_unsubscribe_token(user_id36, user_email=None,
                                                   user_password_hash=None):
