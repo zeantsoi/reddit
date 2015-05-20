@@ -841,7 +841,6 @@ class Subreddit(Thing, Printable, BaseSite):
         subscriber_srids = set()
         moderator_srids = set()
         contributor_srids = set()
-        banned_srids = set()
         srmembers_to_fetch = []
 
         if not user or not c.user_is_loggedin or not user.has_subscribed:
@@ -854,7 +853,7 @@ class Subreddit(Thing, Printable, BaseSite):
             srmembers_to_fetch.append('subscriber')
 
         if user and c.user_is_loggedin:
-            srmembers_to_fetch.extend(['moderator', 'contributor', 'banned'])
+            srmembers_to_fetch.extend(['moderator', 'contributor'])
 
         if srmembers_to_fetch:
             rels = SRMember._fast_query(wrapped, [user], srmembers_to_fetch)
@@ -867,15 +866,12 @@ class Subreddit(Thing, Printable, BaseSite):
                     moderator_srids.add(item._id)
                 elif rel_name == 'contributor':
                     contributor_srids.add(item._id)
-                elif rel_name == 'banned':
-                    banned_srids.add(item._id)
 
         target = "_top" if c.cname else None
         for item in wrapped:
             item.subscriber = item._id in subscriber_srids
             item.moderator = item._id in moderator_srids
             item.contributor = item._id in contributor_srids
-            item.banned = item._id in banned_srids
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
