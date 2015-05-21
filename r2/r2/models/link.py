@@ -460,7 +460,7 @@ class Link(Thing, Printable):
 
         if user_is_loggedin:
             srs = {item.subreddit for item in wrapped}
-            is_moderator_srids = {sr.is_moderator(user) for sr in srs}
+            is_moderator_srids = {sr._id for sr in srs if sr.is_moderator(user)}
         else:
             is_moderator_srids = set()
 
