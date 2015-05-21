@@ -613,6 +613,13 @@ class SearchSortMenu(SortMenu):
     _default = 'relevance'
     _options = ('relevance', 'hot', 'top', 'new', 'comments')
 
+    def make_buttons(self):
+        buttons = super(SearchSortMenu, self).make_buttons()
+        if feature.is_enabled('link_relevancy'):
+            button = self.button_cls('relevance2', 'relevance2', self.name)
+            buttons.append(button)
+        return buttons
+
 
 class SubredditSearchSortMenu(SortMenu):
     """Sort menu for subreddit search pages."""
