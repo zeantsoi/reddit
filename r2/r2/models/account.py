@@ -167,10 +167,21 @@ class Account(Thing):
     def has_interacted_with(self, sr):
         try:
             r = SubredditParticipationByAccount.fast_query(self, [sr])
+            return (self, sr) in r
         except tdb_cassandra.NotFound:
+            pass
+
+        if not sr:
             return False
 
-        return (self, sr) in r
+        for type in ('link', 'comment'):
+            if hasattr(self, "%s_%s_karma" % (sr.name, type)):
+                return True
+
+        if sr.is_subscriber(self):
+            return True
+
+        return False
 
     def karma(self, kind, sr = None):
         suffix = '_' + kind + '_karma'
