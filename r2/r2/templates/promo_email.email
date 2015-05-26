@@ -103,6 +103,8 @@ To update your promotion please go to:
     ${edit_url}
 and we'll reconsider it for submission.
 
+Note: For ads going through the approval process — Your payment has been authorized, but has not yet been captured. We charge the amount when an approved ad launches. Since your ad has been rejected, your payment authorization will be voided within 24-48 hours, unless you edit and resubmit the ad for approval.
+
 %elif thing.kind == Email.Kind.QUEUED_PROMO:
 This email is to inform you that your self-serve ad on reddit.com is about to go
 live. Please use this email as your receipt.
