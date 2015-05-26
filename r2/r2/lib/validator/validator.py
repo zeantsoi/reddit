@@ -1844,7 +1844,7 @@ class VRatelimit(Validator):
         self.seconds = None
         Validator.__init__(self, *a, **kw)
 
-    def run(self):
+    def run (self):
         if g.disable_ratelimit:
             return
 
@@ -1852,16 +1852,13 @@ class VRatelimit(Validator):
             hook = hooks.get_hook("account.is_ratelimit_exempt")
             ratelimit_exempt = hook.call_until_return(account=c.user)
             if ratelimit_exempt:
-                self._record_event('exempted')
                 return
 
         to_check = []
         if self.rate_user and c.user_is_loggedin:
             to_check.append('user' + str(c.user._id36))
-            self._record_event('check_user')
         if self.rate_ip:
             to_check.append('ip' + str(request.ip))
-            self._record_event('check_ip')
 
         r = g.cache.get_multi(to_check, self.prefix)
         if r:
@@ -1869,11 +1866,6 @@ class VRatelimit(Validator):
             time = utils.timeuntil(expire_time)
 
             g.log.debug("rate-limiting %s from %s" % (self.prefix, r.keys()))
-            for key in r.keys():
-                if key.startswith('user'):
-                    self._record_event('user_limit_hit')
-                elif key.startswith('ip'):
-                    self._record_event('ip_limit_hit')
 
             # when errors have associated field parameters, we'll need
             # to add that here
@@ -1889,7 +1881,7 @@ class VRatelimit(Validator):
                 self.set_error(self.error)
 
     @classmethod
-    def ratelimit(cls, rate_user = False, rate_ip = False, prefix = "rate_",
+    def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_",
                   seconds = None):
         to_set = {}
         if seconds is None:
@@ -1897,16 +1889,9 @@ class VRatelimit(Validator):
         expire_time = datetime.now(g.tz) + timedelta(seconds = seconds)
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time
-            cls._record_event('set_user_limit')
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
-            cls._record_event('set_ip_limit')
         g.cache.set_multi(to_set, prefix = prefix, time = seconds)
-
-    def _record_event(self, event, prefix=None):
-        if prefix is None:
-            prefix = self.prefix
-        g.stats.event_count('VRatelimit.%s' % prefix, event, sample_rate=0.1)
 
 
 class VCommentIDs(Validator):
