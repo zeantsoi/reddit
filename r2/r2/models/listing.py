@@ -298,11 +298,15 @@ class SearchListing(LinkListing):
         LinkListing.__init__(self, *a, **kw)
         self.heading = kw.get('heading', None)
         self.nav_menus = kw.get('nav_menus', None)
+        self.subreddit_facets = None
+        self.timing = None
 
     def listing(self, legacy_render_class=False, *args, **kwargs):
         wrapped = LinkListing.listing(self, *args, **kwargs)
-        self.subreddit_facets = self.builder.subreddit_facets
-        self.timing = time.time() - self.builder.start_time
+        if hasattr(self.builder, 'subreddit_facets'):
+            self.subreddit_facets = self.builder.subreddit_facets
+        if hasattr(self.builder, 'start_time'):
+            self.timing = time.time() - self.builder.start_time
 
         if legacy_render_class:
             wrapped.render_class = Listing

@@ -1092,6 +1092,18 @@ class FrontController(RedditController):
                                       after=after, count=count, type='sr',
                                       skip_deleted_authors=False, heading=_('subreddits'),
                                       legacy_render_class=legacy_render_class)
+
+            # backfill with facets if no subreddit search results
+            if subreddit_facets and not subreddits.things:
+                names = [sr._fullname for sr, count in subreddit_facets]
+                builder_wrapper = self._search_builder_wrapper(sr_q)
+                builder = IDBuilder(names, num=sr_num, wrap=builder_wrapper)
+                listing = SearchListing(builder, nextprev=False,
+                                        heading=_('subreddits'))
+                subreddits = listing.listing(
+                    legacy_render_class=legacy_render_class)
+
+            # ensure response is not list for subreddit only result type
             if is_api() and not content:
                 content = subreddits
                 subreddits = None
