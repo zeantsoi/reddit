@@ -336,6 +336,7 @@ class Globals(object):
             'gold_revenue_goal',
             'invalid_key_sample_rate',
             'events_collector_sample_rate',
+            'ad_probability',
         ],
         ConfigValue.tuple: [
             'fastlane_links',

@@ -344,7 +344,7 @@ class ListingWithPromos(SubredditListingController):
         show_promo = False
         srnames = []
         can_show_promo = not c.user.pref_hide_ads or not c.user.gold
-        try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
+        try_show_promo = ((c.user_is_loggedin and random.random() < g.live_config["ad_probability"]) or
                           not c.user_is_loggedin)
 
         if can_show_promo and try_show_promo:
