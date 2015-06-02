@@ -1920,6 +1920,10 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
+        # ignore the captcha error for the new improved sharing
+        if feature.is_enabled('improved_sharing'):
+            c.errors.remove((errors.BAD_CAPTCHA, 'captcha'))
+
         # share_from and messages share a too_long error.
         # finding an error on one necessitates hiding the other error
         if shareform.has_errors("share_from", errors.TOO_LONG):
