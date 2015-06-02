@@ -9,37 +9,7 @@ r.ui.init = function() {
         store.safeSet('ui.shown.welcome', true)
     }
 
-    var smallScreen = r.ui.isSmallScreen();
-
-    // mweb beta banner
-    var mwebOptInCookieName = "__cf_mob_redir";
-    var onFrontPage = $.url().attr('path') == '/';
-    if (smallScreen && onFrontPage && r.config.renderstyle != 'compact' && !r.ui.inMobileWebBlacklist()) {
-        var a = document.createElement('a');
-        a.href = window.location;
-        a.host = 'm.' + r.config.cur_domain;
-        a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop'
-        var url = a.href;
-
-        var $bar = $(_.template(
-          '<a href="<%- url %>" class="mobile-web-redirect"><%- button_text %></a>', {
-            url: url,
-            button_text: r._("switch to mobile version"),
-          }));
-
-        $bar.on('click', function() {
-           $.cookie(mwebOptInCookieName, '1', {
-               domain: r.config.cur_domain,
-               path:'/',
-               expires: 90
-            });
-
-           // redirect
-           return true;
-        });
-
-        $('#header').before($bar)
-    }
+    r.ui.initMWebBanner();
 
     $('.help-bubble').each(function(idx, el) {
         $(el).data('HelpBubble', new r.ui.Bubble({el: el}))
@@ -51,7 +21,7 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    if (r.config.new_window && (r.config.logged || !smallScreen)) {
+    if (r.config.new_window && (r.config.logged || !r.ui.isSmallScreen())) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
 
             if (!this.target) {
@@ -115,6 +85,74 @@ r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
         this.timeText.updateCache($els)
     }
 })
+
+r.ui.initMWebBanner = function() {
+    // If we're on mobile web and looking at the desktop site, show a 
+    // closeable banner informing the user of the mweb site
+
+    if (!r.ui.isSmallScreen() || r.config.renderstyle == 'compact') {
+      return;
+    }
+
+    // not on front page
+    if (!$.url().attr('path') == '/') {
+      return;
+    }
+
+    // On a currently-unsupported-on-mweb page, like /live/
+    if (r.ui.inMobileWebBlacklist()) {
+      return;
+    }
+
+    var bannerClosedUntil = new Date(store.get('mweb-beta-banner.closed') || 0);
+    var now = (new Date()).getTime();
+    // We've already closed the banner before
+    if (now < bannerClosedUntil) {
+      return;
+    }
+
+    var mwebOptInCookieName = "__cf_mob_redir";
+    var a = document.createElement('a');
+    a.href = window.location;
+    a.host = 'm.' + r.config.cur_domain;
+    a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop'
+    var url = a.href;
+
+    var $bar = $(_.template(
+      '<div class="mobile-web-redirect-bar">' +
+        '<a href="<%- url %>" class="mobile-web-redirect">' +
+          '<%- callout %>' +
+        '</a>' +
+        '<a href="#" class="mobile-web-redirect-optout">&times;</a>' +
+      '</div>', {
+        callout: r._("switch to mobile version"),
+        url: url,
+        close: r._("no thanks")
+      }));
+
+    $bar.find('.mobile-web-redirect-optout').on('click', function(e) {
+        e.preventDefault();
+
+        // close for 2 weeks
+        var closedUntil = (new Date()).getTime() + (1000 * 60 * 60 * 24 * 14);
+        store.set('mweb-beta-banner.closed', closedUntil);
+
+        $bar.fadeOut();
+    });
+
+    $bar.find('.mobile-web-redirect').on('click', function() {
+       $.cookie(mwebOptInCookieName, '1', {
+           domain: r.config.cur_domain,
+           path:'/',
+           expires: 90
+        });
+
+       // redirect
+       return true;
+    });
+
+    $('#header').before($bar)
+}
 
 r.ui.initLiveTimestamps = function() {
     // We only want a global timestamp scroll listener to instantiate on
