@@ -1902,7 +1902,8 @@ class ApiController(RedditController):
         VUser(),
         VModhash(),
         VCaptcha(),
-        VRatelimit(rate_user=True, rate_ip=True, prefix="rate_share_"),
+        VRatelimitImproved(prefix='share', max_usage=g.RL_SHARE_MAX_REQS,
+                           rate_user=True, rate_ip=True),
         share_from=VLength('share_from', max_length=100),
         emails=ValidEmailsOrExistingUnames("share_to"),
         reply_to=ValidEmails("replyto", num=1), 
@@ -1913,12 +1914,6 @@ class ApiController(RedditController):
                    message):
         if not link:
             abort(404, 'not found')
-
-        # remove the ratelimit error if the user's karma is high
-        sr = link.subreddit_slow
-        should_ratelimit = sr.should_ratelimit(c.user, 'link')
-        if not should_ratelimit:
-            c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
         # ignore the captcha error for the new improved sharing
         if feature.is_enabled('improved_sharing'):
@@ -1947,7 +1942,8 @@ class ApiController(RedditController):
             return
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             return
-        elif not sr.can_view(c.user):
+
+        if not link.subreddit_slow.can_view(c.user):
             return abort(403, 'forbidden')
 
         emails, users = emails
@@ -2026,10 +2022,8 @@ class ApiController(RedditController):
         g.stats.simple_event('share.email_sent', len(emails))
         g.stats.simple_event('share.pm_sent', len(users))
 
-        #set the ratelimiter
-        if should_ratelimit:
-            VRatelimit.ratelimit(rate_user=True, rate_ip = True,
-                                 prefix = "rate_share_")
+        # Set the ratelimiter.
+        VRatelimitImproved.ratelimit('share', rate_user=True, rate_ip=True)
 
     @require_oauth2_scope("vote")
     @noresponse(VUser(),
