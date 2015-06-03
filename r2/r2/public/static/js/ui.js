@@ -95,7 +95,7 @@ r.ui.initMWebBanner = function() {
     }
 
     // not on front page
-    if (!$.url().attr('path') == '/') {
+    if ($.url().attr('path') != '/') {
       return;
     }
 
