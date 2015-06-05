@@ -1901,7 +1901,6 @@ class ApiController(RedditController):
     @validatedForm(
         VUser(),
         VModhash(),
-        VCaptcha(),
         VRatelimitImproved(prefix='share', max_usage=g.RL_SHARE_MAX_REQS,
                            rate_user=True, rate_ip=True),
         share_from=VLength('share_from', max_length=100),
@@ -1914,10 +1913,6 @@ class ApiController(RedditController):
                    message):
         if not link:
             abort(404, 'not found')
-
-        # ignore the captcha error for the new improved sharing
-        if feature.is_enabled('improved_sharing'):
-            c.errors.remove((errors.BAD_CAPTCHA, 'captcha'))
 
         # share_from and messages share a too_long error.
         # finding an error on one necessitates hiding the other error
@@ -1936,9 +1931,6 @@ class ApiController(RedditController):
         elif shareform.has_errors("replyto", errors.BAD_EMAILS,
                                   errors.TOO_MANY_EMAILS):
             shareform.find(".share-to-errors").children().hide()
-            return
-        # lastly, check the captcha.
-        elif shareform.has_errors("captcha", errors.BAD_CAPTCHA):
             return
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             return
