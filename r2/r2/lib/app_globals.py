@@ -249,7 +249,6 @@ class Globals(object):
             'plugins',
             'stalecaches',
             'memcaches',
-            'memcaches_r3_2xl',
             'lockcaches',
             'permacache_memcaches',
             'rendercaches',
@@ -647,20 +646,6 @@ class Globals(object):
             validators=[validate_size_error],
         )
 
-        try:
-            self.memcaches_r3_2xl
-        except AttributeError:
-            memcaches_r3_2xl = None
-        else:
-            memcaches_r3_2xl = CMemcache(
-                "main",
-                self.memcaches_r3_2xl,
-                min_compress_len=1400,
-                num_clients=num_mc_clients,
-                binary=True,
-                validators=[validate_size_error],
-            )
-
         # a pool just used for @memoize results
         memoizecaches = CMemcache(
             "memoize",
@@ -788,33 +773,13 @@ class Globals(object):
                           else LocalCache)
 
         if stalecaches:
-            original_cache = StaleCacheChain(
+            self.cache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 memcaches,
             )
         else:
-            original_cache = CacheChain((localcache_cls(), memcaches))
-
-        if memcaches_r3_2xl:
-            if stalecaches:
-                replacement_cache = StaleCacheChain(
-                    localcache_cls(),
-                    stalecaches,
-                    memcaches_r3_2xl,
-                )
-            else:
-                replacement_cache = CacheChain(
-                    (localcache_cls(), memcaches_r3_2xl))
-
-            self.cache = TransitionalCache(
-                original_cache=original_cache,
-                replacement_cache=replacement_cache,
-                read_original=False,
-            )
-        else:
-            self.cache = original_cache
-
+            self.cache = CacheChain((localcache_cls(), memcaches))
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
