@@ -1002,7 +1002,6 @@ class RuleTarget(object):
             else:
                 reason = None
             Report.new(ACCOUNT, item, reason)
-            admintools.report(item)
 
             g.stats.simple_event("automoderator.report")
 

@@ -1620,13 +1620,10 @@ class ApiController(RedditController):
         elif isinstance(thing, Comment):
             pass
 
-        hooks.get_hook("thing.report").call(thing=thing)
-
         if not (c.user._spam or
                 c.user.ignorereports or
                 (sr and sr.is_banned(c.user))):
             Report.new(c.user, thing, reason)
-            admintools.report(thing)
 
         if isinstance(thing, (Link, Message)):
             button = jquery(".id-%s .report-button" % thing._fullname)

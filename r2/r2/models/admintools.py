@@ -137,9 +137,6 @@ class AdminTools(object):
         self.author_spammer(things, False)
         self.set_last_sr_ban(things)
         queries.unban(things, insert)
-    
-    def report(self, thing):
-        pass
 
     def author_spammer(self, things, spam):
         """incr/decr the 'spammer' field for the author of every

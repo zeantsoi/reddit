@@ -22,6 +22,7 @@
 
 from collections import Counter
 
+from r2.lib import hooks
 from r2.lib.db.thing import Thing, Relation, MultiRelation, thing_prefix
 from r2.lib.utils import tup
 from r2.lib.memoize import memoize
@@ -83,6 +84,8 @@ class Report(MultiRelation('report',
             # if the thing is already marked as spam, accept the report
             if thing._spam:
                 cls.accept(thing)
+
+        hooks.get_hook("report.new").call(report=r)
 
         return r
 
