@@ -296,6 +296,7 @@ class Globals(object):
             'smtp_server',
             'events_collector_url',
             'search_provider',
+            'selfserve_support_email',
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [
