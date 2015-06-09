@@ -613,6 +613,12 @@ class SearchSortMenu(SortMenu):
     _default = 'relevance'
     _options = ('relevance', 'hot', 'top', 'new', 'comments')
 
+    @class_property
+    def hidden_options(cls):
+        if feature.is_enabled('subreddit_search'):
+            return ['hot']
+        return []
+
     def make_buttons(self):
         buttons = super(SearchSortMenu, self).make_buttons()
         if feature.is_enabled('link_relevancy'):
