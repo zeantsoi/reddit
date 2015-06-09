@@ -77,7 +77,9 @@ from pycassa.system_manager import (
 )
 import pytz
 
-NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
+NOTIFICATION_EMAIL_COOLING_PERIOD = timedelta(minutes=10)
+NOTIFICATION_EMAIL_MAX_DELAY = timedelta(hours=1)
+
 
 class LinkExists(Exception): pass
 
@@ -2357,7 +2359,7 @@ class Inbox(MultiRelation('inbox',
             data = json.dumps(data)
 
             TryLater.schedule('message_notification_email', data,
-                              NOTIFICATION_EMAIL_DELAY)
+                              NOTIFICATION_EMAIL_COOLING_PERIOD)
 
         return i
 
@@ -2449,19 +2451,6 @@ class Inbox(MultiRelation('inbox',
 
         for i in inbox:
             yield i, i._thing2
-
-    @classmethod
-    def mark_all_as_emailed(cls, to_id, end_date):
-        inbox = Inbox._query(
-            Inbox.c._thing1_id == to_id,
-            Inbox.c.emailed == False,
-            Inbox.c._date <= end_date,
-            data=True,
-        )
-
-        for i in inbox:
-            i.emailed = True
-            i._commit()
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):

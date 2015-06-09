@@ -20,10 +20,6 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-  from r2.lib.template_helpers import get_domain
-%>
-
 %for message in thing.messages:
   ${_("Received on %(time)s") % dict(time=message["date"])}
   ${_("%(username)s sent you a message!") % dict(username=message["author_name"])}
@@ -33,5 +29,9 @@
   ${_("View on the web")}: ${message["permalink"]}
 
 %endfor
+
+%if thing.more_unread_messages:
+  ${_("More unread messages are available in your inbox.")}
+%endif
 
 ${_("Unsubscribe")}: ${thing.unsubscribe_link}

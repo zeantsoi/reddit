@@ -33,8 +33,12 @@ import simplejson as json
 
 from r2.config import feature
 from r2.lib import hooks
-from r2.lib.utils import timeago
+from r2.lib.utils import timeago, long_datetime
 from r2.models import Account, Award, Comment, DefaultSR, Email, Inbox
+from r2.models.link import (
+    NOTIFICATION_EMAIL_COOLING_PERIOD,
+    NOTIFICATION_EMAIL_MAX_DELAY,
+)
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
 
@@ -134,6 +138,7 @@ def message_notification_email(data):
     from r2.lib.pages import MessageNotificationEmail
 
     MAX_EMAILS_PER_DAY = 1000
+    MAX_MESSAGES_PER_BATCH = 5
     MESSAGE_THROTTLE_KEY = 'message_notification_emails'
 
     # If our counter's expired, initialize it again.
@@ -157,13 +162,29 @@ def message_notification_email(data):
         inbox_items = Inbox.get_unread_and_unemailed(user._id)
         inbox_items = sorted(inbox_items, key=lambda x: x[1]._date)
 
-        if len(inbox_items) == 0:
+        if not inbox_items:
             return
+        newest_inbox_rel = inbox_items[-1][0]
+        oldest_inbox_rel = inbox_items[0][0]
+
         now = datetime.datetime.now(g.tz)
-        start_date = datetime.datetime.strptime(datum['start_date'],
-            "%Y-%m-%d %H:%M:%S").replace(tzinfo=g.tz)
+        if 'start_date' in datum:
+            start_date = datetime.datetime.strptime(datum['start_date'],
+                "%Y-%m-%d %H:%M:%S").replace(tzinfo=g.tz)
+        else:
+            start_date = now
+
+        # If messages are still being queued within the cooling period or
+        # messages have been queued past the max delay, then keep waiting
+        # a little longer to batch all of the messages up
+        if (start_date != newest_inbox_rel._date and
+                now < newest_inbox_rel._date + NOTIFICATION_EMAIL_COOLING_PERIOD and
+                now < oldest_inbox_rel._date + NOTIFICATION_EMAIL_MAX_DELAY):
+            return
 
         messages = []
+        message_count = 0
+        more_unread_messages = False
 
         # Batch messages to email starting with older messages
         for inbox_rel, message in inbox_items:
@@ -172,7 +193,7 @@ def message_notification_email(data):
                 sender_name = ('/r/%s' %
                     Subreddit._byID(message.sr_id, data=True).name)
             else:
-                if getattr(message, 'display_author', False):
+                if hasattr(message, 'display_author'):
                     sender_id = message.display_author
                 else:
                     sender_id = message.author_id
@@ -184,12 +205,18 @@ def message_notification_email(data):
             else:
                 permalink = message.make_permalink(force_domain=True)
 
-            messages.append({
-                "author_name": sender_name,
-                "body": message.body,
-                "date": message._date.strftime("%a, %d %b %Y %H:%M:%S %z"),
-                "permalink": permalink,
-            })
+            message_count += 1
+            if message_count > MAX_MESSAGES_PER_BATCH:
+                more_unread_messages = True
+            else:
+                messages.append({
+                    "author_name": sender_name,
+                    "body": message.body,
+                    "date": long_datetime(message._date),
+                    "permalink": permalink,
+                })
+            inbox_rel.emailed = True
+            inbox_rel._commit()
 
         mac = generate_notification_email_unsubscribe_token(
                 datum['to'], user_email=user.email,
@@ -200,13 +227,14 @@ def message_notification_email(data):
         templateData = {
             'messages': messages,
             'unsubscribe_link': unsubscribe_link,
+            'more_unread_messages': more_unread_messages,
         }
 
         _system_email(user.email,
                       MessageNotificationEmail(**templateData).render(style='email'),
                       Email.Kind.MESSAGE_NOTIFICATION,
                       from_address=g.notification_email)
-        Inbox.mark_all_as_emailed(user._id, start_date)
+
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
 
