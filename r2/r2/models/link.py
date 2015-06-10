@@ -272,7 +272,8 @@ class Link(Thing, Printable):
 
             # never automatically hide user's own posts or stickies
             allow_auto_hide = (not wrapped.stickied and
-                               self.author_id != user._id)
+                               self.author_id != user._id and
+                               getattr(wrapped, "distinguished", "no") != "no")
             if (allow_auto_hide and
                     ((user.pref_hide_ups and wrapped.likes == True) or
                      (user.pref_hide_downs and wrapped.likes == False) or
