@@ -193,7 +193,7 @@ def message_notification_email(data):
                 sender_name = ('/r/%s' %
                     Subreddit._byID(message.sr_id, data=True).name)
             else:
-                if hasattr(message, 'display_author'):
+                if getattr(message, 'display_author', False):
                     sender_id = message.display_author
                 else:
                     sender_id = message.author_id
