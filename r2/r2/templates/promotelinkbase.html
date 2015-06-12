@@ -221,7 +221,6 @@
   ## overwrite the completed image function
   <script type="text/javascript">
     completedUploadImage = (function(cu) {
-      debugger
       return function(status, img_src, name, errors, form_id) {
         cu(status, "", "", errors, form_id);
         if (form_id === 'image-upload') {
