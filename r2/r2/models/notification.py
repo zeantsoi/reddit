@@ -22,6 +22,7 @@
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from pylons import g
 
 from r2.lib import hooks
 from r2.lib.db import tdb_cassandra
@@ -89,7 +90,7 @@ class Notification(object):
         elif getattr(thing, '_name', None) == 'mention':
             return cls.MENTION
         else:
-            return None
+            return cls.UNKNOWN
 
     @classmethod
     def notification_type_from_parent(cls, parent):
@@ -101,6 +102,8 @@ class Notification(object):
             return cls.MESSAGE
         elif getattr(parent, '_name', None) == 'mention':
             return cls.MENTION
+
+        return cls.UNKNOWN
 
 
 class NotificationsByAccountByThing(tdb_cassandra.View):
@@ -249,11 +252,19 @@ def generate_notifications(things):
                 'reply_fullname': thing._thing2._fullname,
             }
 
+    def unknown(thing):
+        g.log.error(
+            'Unknown notification type for thing fullname "%s"' %
+            (thing._fullname)
+        )
+        return None
+
     notification_builders = {
         Notification.COMMENT: comment,
         Notification.LINK: link,
         Notification.MESSAGE: message,
         Notification.MENTION: mention,
+        Notification.UNKNOWN: unknown,
     }
 
     notifications = []
