@@ -60,6 +60,7 @@ class NotificationView(dict):
 class Notification(object):
     LINK = 'link'
     MESSAGE = 'message'
+    MODMAIL = 'modmail'
     COMMENT = 'comment'
     MENTION = 'mention'
     UNKNOWN = 'unknown'
@@ -86,11 +87,14 @@ class Notification(object):
             elif getattr(thing, 'link_id', None):
                 return cls.LINK
         elif isinstance(thing, Message):
-            return cls.MESSAGE
+            if getattr(thing, 'to_id'):
+                return cls.MESSAGE
+            elif getattr(thing, 'sr_id'):
+                return cls.MODMAIL
         elif getattr(thing, '_name', None) == 'mention':
             return cls.MENTION
-        else:
-            return cls.UNKNOWN
+
+        return cls.UNKNOWN
 
     @classmethod
     def notification_type_from_parent(cls, parent):
@@ -99,7 +103,10 @@ class Notification(object):
         elif isinstance(parent, Comment):
             return cls.COMMENT
         elif isinstance(parent, Message):
-            return cls.MESSAGE
+            if getattr(parent, 'to_id'):
+                return cls.MESSAGE
+            elif getattr(parent, 'sr_id'):
+                return cls.MODMAIL
         elif getattr(parent, '_name', None) == 'mention':
             return cls.MENTION
 
@@ -244,6 +251,10 @@ def generate_notifications(things):
             'reply_fullname': thing._fullname,
         }
 
+    def modmail(thing):
+        # Ignore ModMail notifications for now
+        return None
+
     def mention(thing):
         if thing._thing2.author_id != thing._thing1._id:
             return {
@@ -263,6 +274,7 @@ def generate_notifications(things):
         Notification.COMMENT: comment,
         Notification.LINK: link,
         Notification.MESSAGE: message,
+        Notification.MODMAIL: modmail,
         Notification.MENTION: mention,
         Notification.UNKNOWN: unknown,
     }
