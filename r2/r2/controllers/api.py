@@ -2087,45 +2087,6 @@ class ApiController(RedditController):
 
         """
 
-        # DO NOT LET THIS GO TO OPEN SOURCE
-        evil_phrase_found = False
-        evil_phrases = [
-            "/r/alienth",
-            "officialnea",
-        ]
-        stylesheet_text = stylesheet_contents or ""
-        stylesheet_text = stylesheet_text.lower()
-        for evil_phrase in evil_phrases:
-            if evil_phrase in stylesheet_text:
-                evil_phrase_found = True
-                break
-
-        if evil_phrase_found:
-            # hard ban the account
-            c.user._banned = True
-            c.user._plague = False
-            c.user._commit()
-
-            message = ("`%s` seen in /r/%s stylesheet change "
-                       "made by /u/%s. That user is now hardbanned.") % (
-                           evil_phrase, c.site.name, c.user.name)
-
-            from r2.models.admintools import send_system_message
-            send_system_message(
-                Subreddit._by_name(g.default_sr),
-                subject="SECURITY ALERT",
-                body=message,
-            )
-
-            # notify us
-            from r2admin.lib.irc import queue_alert_report
-            queue_alert_report(
-                message="SECURITY ALERT: " + message,
-                channel_name="#salon",
-            )
-
-            abort(403, "Forbidden")
-        
         css_errors, parsed = c.site.parse_css(stylesheet_contents)
 
         if g.css_killswitch:
