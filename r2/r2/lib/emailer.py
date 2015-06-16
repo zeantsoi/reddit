@@ -45,16 +45,18 @@ from r2.models.token import EmailVerificationToken, PasswordResetToken
 
 trylater_hooks = hooks.HookRegistrar()
 
-def _system_email(email, body, kind, reply_to = "", thing = None,
-                  from_address = g.feedback_email):
+def _system_email(email, plaintext_body, kind, reply_to="",
+        thing=None, from_address=g.feedback_email,
+        html_body="", list_unsubscribe_header=""):
     """
     For sending email from the system to a user (reply address will be
     feedback and the name will be reddit.com)
     """
     Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
-                               email, g.domain, from_address,
-                               kind, body = body, reply_to = reply_to,
-                               thing = thing)
+        email, g.domain, from_address, kind,
+        body=plaintext_body, reply_to=reply_to, thing=thing,
+        html_body=html_body, list_unsubscribe_header=list_unsubscribe_header,
+    )
 
 def _nerds_email(body, from_name, kind):
     """
@@ -189,40 +191,39 @@ def message_notification_email(data):
 
         # Batch messages to email starting with older messages
         for inbox_rel, message in inbox_items:
-            # Get sender_name, replacing with display_author if it exists
-            if getattr(message, 'from_sr', False):
-                sender_name = ('/r/%s' %
-                    Subreddit._byID(message.sr_id, data=True).name)
-            else:
-                if getattr(message, 'display_author', False):
-                    sender_id = message.display_author
-                else:
-                    sender_id = message.author_id
-                sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
-
-            if isinstance(message, Comment):
-                permalink = message.make_permalink_slow(context=1,
-                    force_domain=True)
-                link = None
-                parent = None
-                if message.parent_id:
-                    parent = Comment._byID(message.parent_id, data=True)
-                else:
-                    link = Link._byID(message.link_id, data=True)
-                if parent and parent.author_id == user._id:
-                    message_type = N_("comment reply")
-                elif not parent and link.author_id == user._id:
-                    message_type = N_("post reply")
-                else:
-                    message_type = N_("username notification")
-            else:
-                permalink = message.make_permalink(force_domain=True)
-                message_type = N_("message")
-
-            message_count += 1
             if message_count > MAX_MESSAGES_PER_BATCH:
                 more_unread_messages = True
             else:
+                # Get sender_name, replacing with display_author if it exists
+                if getattr(message, 'from_sr', False):
+                    sender_name = ('/r/%s' %
+                        Subreddit._byID(message.sr_id, data=True).name)
+                else:
+                    if getattr(message, 'display_author', False):
+                        sender_id = message.display_author
+                    else:
+                        sender_id = message.author_id
+                    sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
+
+                if isinstance(message, Comment):
+                    permalink = message.make_permalink_slow(context=1,
+                        force_domain=True)
+                    link = None
+                    parent = None
+                    if message.parent_id:
+                        parent = Comment._byID(message.parent_id, data=True)
+                    else:
+                        link = Link._byID(message.link_id, data=True)
+                    if parent and parent.author_id == user._id:
+                        message_type = N_("comment reply")
+                    elif not parent and link.author_id == user._id:
+                        message_type = N_("post reply")
+                    else:
+                        message_type = N_("username notification")
+                else:
+                    permalink = message.make_permalink(force_domain=True)
+                    message_type = N_("message")
+
                 messages.append({
                     "author_name": sender_name,
                     "message_type": message_type,
@@ -230,8 +231,10 @@ def message_notification_email(data):
                     "date": long_datetime(message._date),
                     "permalink": permalink,
                 })
+
             inbox_rel.emailed = True
             inbox_rel._commit()
+            message_count += 1
 
         mac = generate_notification_email_unsubscribe_token(
                 datum['to'], user_email=user.email,
@@ -244,11 +247,15 @@ def message_notification_email(data):
             'unsubscribe_link': unsubscribe_link,
             'more_unread_messages': more_unread_messages,
         }
+        list_unsubscribe_header = "<%s>" % unsubscribe_link
 
         _system_email(user.email,
-                      MessageNotificationEmail(**templateData).render(style='email'),
-                      Email.Kind.MESSAGE_NOTIFICATION,
-                      from_address=g.notification_email)
+            MessageNotificationEmail(**templateData).render(style='email'),
+            Email.Kind.MESSAGE_NOTIFICATION,
+            from_address=g.notification_email,
+            html_body=MessageNotificationEmail(**templateData).render(style='html'),
+            list_unsubscribe_header=list_unsubscribe_header,
+        )
 
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
