@@ -2087,7 +2087,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit, Printable):
         return obj
 
     @classmethod
-    def copy(cls, path, multi, owner, symlink=False):
+    def copy(cls, path, multi, owner, visibility=None, symlink=False):
         if symlink:
             # remove all the sr_ids from the properties
             props = {k: v for k, v in multi._t.iteritems()
@@ -2100,7 +2100,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit, Printable):
         obj._srs = multi._srs
         obj._srs_loaded = multi._srs_loaded
         obj.owner_fullname = owner._fullname
-        obj.copied_from = multi.path.lower()
+        obj.copied_from = multi._id
+        if visibility:
+            obj.visibility = visibility
         obj._commit()
         obj._linked_multi = multi if symlink else None
         obj._owner = owner
