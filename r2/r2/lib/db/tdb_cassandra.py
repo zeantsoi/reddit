@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import collections
 import json
 import inspect
 import pytz
@@ -1425,6 +1426,109 @@ class DenormalizedView(View):
             return objs[0]
         else:
             return objs
+
+
+class NestedDictionaryStorageBase(View):
+    """Base class for storing dictionaries
+
+    Provides an interface to cassandra for storing nested dictionary
+    objects (useful for configuration/settings) in a way that allows for atomic
+    updates of individual fields."""
+
+    _use_db = False
+    _ttl = None
+    _type_prefix = None
+    _cf_name = None
+    _read_consistency_level = CL.ONE
+    _write_consistency_level = CL.QUORUM
+    _extra_schema_creation_args = dict(
+        key_validation_class=UTF8_TYPE,
+        default_validation_class=UTF8_TYPE,
+    )
+    _compare_with = UTF8_TYPE
+
+    _key_separator = '\+|+/'
+
+    @staticmethod
+    def row_key(id):
+        return id
+
+    @staticmethod
+    def json_to_value(json_input):
+        return json.loads(json_input)
+
+    @staticmethod
+    def value_to_json(value):
+        return json.dumps(value)
+
+    @staticmethod
+    def write_dict_value(a_dict, key_tuple, value):
+        cur_dict = a_dict
+        for k in key_tuple[:-1]:
+            if k not in cur_dict:
+                cur_dict[k] = {}
+
+            cur_dict = cur_dict[k]
+
+        cur_dict[key_tuple[-1]] = value
+
+    @classmethod
+    def column_key_to_dict_key(cls, key):
+        return key.split(cls._key_separator)
+
+    @classmethod
+    def dict_key_to_column_key(cls, key):
+        return cls._key_separator.join(key)
+
+    @classmethod
+    def columns_to_dict(cls, columns):
+        a_dict = {}
+        g.log.error(columns)
+        for k, v in columns.iteritems():
+            cls.write_dict_value(
+                a_dict,
+                cls.column_key_to_dict_key(k),
+                cls.json_to_value(v),
+            )
+
+        return a_dict
+
+    @classmethod
+    def dict_to_columns(cls, a_dict, prefix=tuple()):
+        ret = {}
+
+        for k, v in a_dict.iteritems():
+            cur_key = prefix + (k,)
+            if isinstance(v, collections.Mapping):
+                ret.update(
+                    cls.dict_to_columns(
+                        v,
+                        prefix=cur_key,
+                    )
+                )
+            else:
+                ret[cls.dict_key_to_column_key(cur_key)] = cls.value_to_json(v)
+
+        return ret
+
+    @classmethod
+    def get(cls, id):
+        return cls.columns_to_dict(
+            cls._cf.get(NestedDictionaryStorageBase.row_key(id)),
+        )
+
+    @classmethod
+    def update(cls, id, a_dict):
+        values = cls.dict_to_columns(a_dict)
+        cls._cf.insert(
+            NestedDictionaryStorageBase.row_key(id),
+            values,
+        )
+
+    @classmethod
+    def delete(cls, id):
+        cls._cf.remove(NestedDictionaryStorageBase.row_key(id))
+
 
 def schema_report():
     manager = get_manager()
