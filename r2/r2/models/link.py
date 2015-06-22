@@ -2457,7 +2457,9 @@ class Inbox(MultiRelation('inbox',
         )
 
         for i in inbox:
-            yield i, i._thing2
+            if (not getattr(i._thing2, '_deleted', False) and
+                    not getattr(i._thing2, '_spam', False)):
+                yield i, i._thing2
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):
