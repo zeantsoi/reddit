@@ -29,12 +29,13 @@ import datetime
 import traceback, sys, smtplib
 
 from pylons import c, g
+from pylons.i18n import N_
 import simplejson as json
 
 from r2.config import feature
 from r2.lib import hooks
 from r2.lib.utils import timeago, long_datetime
-from r2.models import Account, Award, Comment, DefaultSR, Email, Inbox
+from r2.models import Account, Award, Comment, DefaultSR, Email, Inbox, Link
 from r2.models.link import (
     NOTIFICATION_EMAIL_COOLING_PERIOD,
     NOTIFICATION_EMAIL_MAX_DELAY,
@@ -202,8 +203,21 @@ def message_notification_email(data):
             if isinstance(message, Comment):
                 permalink = message.make_permalink_slow(context=1,
                     force_domain=True)
+                link = None
+                parent = None
+                if message.parent_id:
+                    parent = Comment._byID(message.parent_id, data=True)
+                else:
+                    link = Link._byID(message.link_id, data=True)
+                if parent and parent.author_id == user._id:
+                    message_type = N_("comment reply")
+                elif not parent and link.author_id == user._id:
+                    message_type = N_("post reply")
+                else:
+                    message_type = N_("username notification")
             else:
                 permalink = message.make_permalink(force_domain=True)
+                message_type = N_("message")
 
             message_count += 1
             if message_count > MAX_MESSAGES_PER_BATCH:
@@ -211,6 +225,7 @@ def message_notification_email(data):
             else:
                 messages.append({
                     "author_name": sender_name,
+                    "message_type": message_type,
                     "body": message.body,
                     "date": long_datetime(message._date),
                     "permalink": permalink,

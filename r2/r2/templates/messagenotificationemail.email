@@ -26,7 +26,11 @@
 
 %for message in thing.messages:
   ${_("Received on %(time)s") % dict(time=message["date"])}
-  ${_("%(username)s sent you a message!") % dict(username=message["author_name"])}
+  %if message["message_type"] == "message":
+    ${_("%(username)s sent you a %(message_type)s!") % dict(username=message["author_name"], message_type=_(message["message_type"]))}
+  %else:
+    ${_("%(username)s made a %(message_type)s!") % dict(username=message["author_name"], message_type=_(message["message_type"]))}
+  %endif
 
   ${unsafe(message["body"])}
 
