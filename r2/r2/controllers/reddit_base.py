@@ -1306,6 +1306,7 @@ class MinimalController(BaseController):
         "X-Ratelimit-Remaining",
         "X-Ratelimit-Reset",
         "X-Moose",
+        "X-Reddit-Tracking",
     ))
 
     def check_cors(self):
