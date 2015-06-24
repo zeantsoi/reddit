@@ -204,7 +204,6 @@ class UnloggedUser(FakeAccount):
     COOKIE_NAME = "_options"
     allowed_prefs = {
         "pref_lang": VLang.validate_lang,
-        "pref_frame_commentspanel": bool,
         "pref_hide_locationbar": bool,
         "pref_use_global_defaults": bool,
     }
@@ -214,7 +213,6 @@ class UnloggedUser(FakeAccount):
         lang = browser_langs[0] if browser_langs else g.lang
         self._defaults = self._defaults.copy()
         self._defaults['pref_lang'] = lang
-        self._defaults['pref_frame_commentspanel'] = False
         self._defaults['pref_hide_locationbar'] = False
         self._defaults['pref_use_global_defaults'] = False
         self._load()
@@ -862,8 +860,7 @@ def enforce_https():
                     need_grant = True
 
         # Gradual rollout feature for HTTPS for loggedin users
-        if (feature.is_enabled("https_redirect") and not c.secure
-                and not c.user.uses_toolbar):
+        if feature.is_enabled("https_redirect") and not c.secure:
             redirect_url = make_url_https(request.fullurl)
 
     if feature.is_enabled("give_hsts_grants") and grant is not None:
