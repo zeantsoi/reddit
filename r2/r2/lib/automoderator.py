@@ -1423,8 +1423,8 @@ class Rule(object):
             subject = subject[:100]
 
             new_message, inbox_rel = Message._new(ACCOUNT, data["author"],
-                subject, message, None)
-            queries.new_message(new_message, inbox_rel)
+                subject, message, None, sr=data["subreddit"], from_sr=True)
+            queries.new_message(new_message, inbox_rel, update_modmail=False)
 
             g.stats.simple_event("automoderator.message")
 
