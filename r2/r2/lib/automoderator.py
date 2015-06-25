@@ -81,8 +81,6 @@ if g.automoderator_account:
 else:
     ACCOUNT = None
 
-DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this subreddit](/message/compose/?to=/r/{{subreddit}}) if you have any questions or concerns.*"
-
 rules_by_subreddit = {}
 
 unnumbered_placeholders_regex = re.compile(r"\{\{(match(?:-[^\d-]+?)?)\}\}")
@@ -1164,7 +1162,7 @@ class Rule(object):
         "message": RuleComponent(valid_types=basestring, component_type="action"),
         "message_subject": RuleComponent(
             valid_types=basestring,
-            default="AutoModerator notification",
+            default="Your {{kind}} in /r/{{subreddit}}",
         ),
     }
 
@@ -1382,7 +1380,7 @@ class Rule(object):
             target.perform_actions(target_item, data)
 
         if self.comment:
-            comment = self.build_message(self.comment, item, data, disclaimer=True)
+            comment = self.build_message(self.comment, item, data, "comment")
 
             # TODO: shouldn't have to do all this manually
             if isinstance(item, Comment):
@@ -1402,7 +1400,7 @@ class Rule(object):
             g.stats.simple_event("automoderator.comment")
 
         if self.modmail:
-            message = self.build_message(self.modmail, item, data, permalink=True)
+            message = self.build_message(self.modmail, item, data, "modmail")
             subject = replace_placeholders(
                 self.modmail_subject, data, self.matches)
             subject = subject[:100]
@@ -1416,8 +1414,7 @@ class Rule(object):
             g.stats.simple_event("automoderator.modmail")
 
         if self.message and not data["author"]._deleted:
-            message = self.build_message(self.message, item, data,
-                disclaimer=True, permalink=True)
+            message = self.build_message(self.message, item, data, "message")
             subject = replace_placeholders(
                 self.message_subject, data, self.matches)
             subject = subject[:100]
@@ -1430,13 +1427,30 @@ class Rule(object):
 
         PerformedRulesByThing.mark_performed(item, self)
 
-    def build_message(self, text, item, data, disclaimer=False, permalink=False):
+    def build_message(self, message, item, data, message_type):
         """Generate the text to post as a comment or send as a message."""
-        message = text
-        if disclaimer:
-            message = "%s\n\n%s" % (message, DISCLAIMER)
-        if permalink and "{{permalink}}" not in message:
-            message = "{{permalink}}\n\n%s" % message
+        # add a disclaimer if this is directed to a user (not modmail)
+        if message_type == "comment":
+            message += ("\n\n---\n\n"
+                "*This comment was posted automatically based on settings "
+                "defined by the moderators of /r/{{subreddit}}. To contact "
+                "the moderators about it, please [send them a message]"
+                "(/message/compose/?to=/r/{{subreddit}}"
+                "&message=Re:+AutoModerator+comment+on+{{permalink}})*."
+            )
+        elif message_type == "message":
+            message += ("\n\n---\n\n"
+                "*This message was sent automatically based on settings "
+                "defined by the moderators of /r/{{subreddit}}. To contact "
+                "the moderators about it, you can reply to this message.*"
+            )
+
+        # include permalink to the triggering item if this is a message/modmail
+        # and a permalink wasn't specifically included anywhere already
+        if (message_type in ("message", "modmail") and 
+                "{{permalink}}" not in message):
+            message = "{{permalink}}\n\n" + message
+
         message = replace_placeholders(message, data, self.matches)
 
         message = VMarkdown('').run(message)
