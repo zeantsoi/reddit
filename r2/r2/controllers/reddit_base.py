@@ -804,11 +804,12 @@ def enforce_https():
     if request.environ.get('pylons.error_call', False):
         return
 
+    is_api_request = is_api() or request.path.startswith("/api/")
     redirect_url = None
 
     # This is likely a request from an API client. Redirecting them or giving
     # them an HSTS grant is unlikely to stop them from making requests to HTTP.
-    if is_api() and not c.secure:
+    if is_api_request and not c.secure:
         # Record the violation so we know who to talk to to get this fixed.
         # This is preferable to redirecting insecure API reqs right away
         # because a lot of clients just break on redirect, it would create two
@@ -829,7 +830,7 @@ def enforce_https():
     # Forcing the users through the HSTS gateway probably wouldn't help much for
     # other render types since they're mostly made by clients that don't respect
     # HSTS.
-    if c.render_style in {"html", "compact", "mobile"}:
+    if c.render_style in {"html", "compact", "mobile"} and not is_api_request:
         if hsts_eligible():
             grant = g.hsts_max_age
             # They're forcing HTTPS but don't have a "secure_session" cookie?
