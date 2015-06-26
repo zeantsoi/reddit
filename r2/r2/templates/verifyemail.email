@@ -26,6 +26,6 @@ your username is:
 
 visit this link to verify your email address:
 
-    ${thing.emaillink}
+    ${thing.emaillink + "?ref_source=email&ref=verify_email&ref_campaign=verify_email"}
 
 thanks for using the site!

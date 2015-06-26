@@ -26,7 +26,7 @@
 
   ${unsafe(message["body"])}
 
-  ${_("View on the web")}: ${message["permalink"]}
+  ${_("View on the web")}: ${message["permalink"] + "?ref_source=email&ref=message_notification&ref_campaign=permalink"}
 
 %endfor
 
@@ -34,4 +34,5 @@
   ${_("More unread messages are available in your inbox.")}
 %endif
 
-${_("Unsubscribe")}: ${thing.unsubscribe_link}
+${_("Unsubscribe")}: ${(thing.unsubscribe_link + 
+"?ref_source=email&ref=message_notification&ref_campaign=unsubscribe")}
