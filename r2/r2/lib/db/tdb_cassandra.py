@@ -1483,7 +1483,6 @@ class NestedDictionaryStorageBase(View):
     @classmethod
     def columns_to_dict(cls, columns):
         a_dict = {}
-        g.log.error(columns)
         for k, v in columns.iteritems():
             cls.write_dict_value(
                 a_dict,
