@@ -141,6 +141,7 @@ def message_notification_email(data):
     from r2.lib.pages import MessageNotificationEmail
 
     MAX_EMAILS_PER_DAY = 1000
+    MAX_EMAILS_PER_USER = 30
     MAX_MESSAGES_PER_BATCH = 5
     MESSAGE_THROTTLE_KEY = 'message_notification_emails'
 
@@ -160,6 +161,12 @@ def message_notification_email(data):
         if g.cache.get(MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_DAY:
             raise Exception(
                     'Message notification emails: safety limit exceeded!')
+
+        # Don't send more than MAX_EMAILS_PER_USER per user per day
+        USER_MESSAGE_THROTTLE_KEY = "email-message_notification_%s" % user._id
+        g.cache.add(USER_MESSAGE_THROTTLE_KEY, 0, time=24*60*60)
+        if g.cache.get(USER_MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_USER:
+            return False
 
         # Get all new messages that haven't been emailed
         inbox_items = Inbox.get_unread_and_unemailed(user._id)
@@ -259,6 +266,7 @@ def message_notification_email(data):
 
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
+        g.cache.incr(USER_MESSAGE_THROTTLE_KEY)
 
 
 def generate_notification_email_unsubscribe_token(user_id36, user_email=None,
