@@ -279,7 +279,23 @@ class Ruleset(object):
             if not rule.is_removal_rule:
                 yield rule
 
-    def apply_to_item(self, item):
+    def filter_rules(self, rules, item, check_reason):
+        """Get a filtered list of rules based on the item/reason."""
+        # get the list of rule IDs that have already been performed
+        already_performed = PerformedRulesByThing.get_already_performed(item)
+
+        # remove any unrepeatable rules that have previously triggered
+        rules = [rule for rule in rules
+            if not (rule.is_unrepeatable and
+                rule.unique_id in already_performed)]
+
+        # if we're checking due to a report, only use rules for reported items
+        if check_reason == "new_report":
+            rules = [rule for rule in rules if rule.is_for_reported]
+
+        return rules
+
+    def apply_to_item(self, item, check_reason):
         # fetch supplemental data to use throughout
         data = {}
         data["item"] = item
@@ -300,23 +316,19 @@ class Ruleset(object):
                 data["link_author"] = DeletedUser()
             data["is_submitter"] = (author == link_author)
 
-        # get the list of rule IDs that have already been performed
-        already_performed = PerformedRulesByThing.get_already_performed(item)
+        removal_rules = self.filter_rules(
+            self.removal_rules, item, check_reason)
+        nonremoval_rules = self.filter_rules(
+            self.nonremoval_rules, item, check_reason)
 
         # stop checking removal rules as soon as one triggers
-        for rule in self.removal_rules:
-            if rule.is_unrepeatable and rule.unique_id in already_performed:
-                continue
-
+        for rule in removal_rules:
             if rule.check_item(item, data):
                 rule.perform_actions(item, data)
                 break
 
         # check all other rules, regardless of how many trigger
-        for rule in self.nonremoval_rules:
-            if rule.is_unrepeatable and rule.unique_id in already_performed:
-                continue
-
+        for rule in nonremoval_rules:
             if rule.check_item(item, data):
                 rule.perform_actions(item, data)
 
@@ -1244,6 +1256,11 @@ class Rule(object):
         return self.targets["base"].action in {"spam", "remove", "filter"}
 
     @property
+    def is_for_reported(self):
+        """Whether the rule should be applied to reported items."""
+        return self.targets["base"].reports
+
+    @property
     def is_inapplicable_to_mods(self):
         """Whether the rule should not be applied to moderators' posts."""
         if self.moderators_exempt is not None:
@@ -1465,6 +1482,11 @@ def run():
             return
 
         fullname = msg.body
+
+        # Use the amqp routing key as the "check reason" - Possible values are
+        # the ones that feed automoderator_q as defined in config/queues.py
+        check_reason = msg.delivery_info['routing_key']
+
         with g.make_lock("automoderator", "automod_" + fullname, timeout=5):
             item = Thing._by_fullname(fullname, data=True)
             if not isinstance(item, (Link, Comment)):
@@ -1501,7 +1523,7 @@ def run():
                 return
 
             try:
-                TimeoutFunction(rules.apply_to_item, 2)(item)
+                TimeoutFunction(rules.apply_to_item, 2)(item, check_reason)
                 print "Checked %s from /r/%s" % (item, subreddit.name)
             except TimeoutFunctionException:
                 print "Timed out on %s from /r/%s" % (item, subreddit.name)
