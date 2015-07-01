@@ -754,8 +754,6 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
         adserver_click_url="adserver_click_url",
         mobile_ad_url="mobile_ad_url",
         disable_comments="disable_comments",
-        third_party_tracking="third_party_tracking",
-        third_party_tracking_2="third_party_tracking_2",
     )
     del _data_attrs_['subreddit']
     del _data_attrs_['subreddit_id']
