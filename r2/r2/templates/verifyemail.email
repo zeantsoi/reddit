@@ -20,12 +20,16 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+    from r2.lib.filters import unsafe
+%>
+
 your username is:
 
     ${thing.user.name}
 
 visit this link to verify your email address:
 
-    ${thing.emaillink + "?ref_source=email&ref=verify_email&ref_campaign=verify_email"}
+    ${unsafe(thing.emaillink + "?ref_source=email&ref=verify_email&ref_campaign=verify_email")}
 
 thanks for using the site!

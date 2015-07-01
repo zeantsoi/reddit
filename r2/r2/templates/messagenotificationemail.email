@@ -20,13 +20,17 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+    from r2.lib.filters import unsafe
+%>
+
 %for message in thing.messages:
   ${_("Received on %(time)s") % dict(time=message["date"])}
   ${_("%(username)s sent you a message!") % dict(username=message["author_name"])}
 
   ${unsafe(message["body"])}
 
-  ${_("View on the web")}: ${message["permalink"] + "?ref_source=email&ref=message_notification&ref_campaign=permalink"}
+  ${_("View on the web")}: ${unsafe(message["permalink"] + "?ref_source=email&ref=message_notification&ref_campaign=permalink")}
 
 %endfor
 
@@ -34,5 +38,5 @@
   ${_("More unread messages are available in your inbox.")}
 %endif
 
-${_("Unsubscribe")}: ${(thing.unsubscribe_link + 
+${_("Unsubscribe")}: ${unsafe(thing.unsubscribe_link + 
 "?ref_source=email&ref=message_notification&ref_campaign=unsubscribe")}

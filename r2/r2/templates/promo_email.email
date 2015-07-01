@@ -25,6 +25,7 @@
     from pylons.i18n import ungettext
     from r2.models import Email
     from r2.lib import promote
+    from r2.lib.filters import unsafe
     from r2.lib.template_helpers import get_domain
  %>
 <%
@@ -38,7 +39,7 @@ ad. Currently you have not created any campaigns within this ad. To do so, visit
 the following link, select the date range and budget/impression count you want,
 and choose "frontpage" or "targeted" and click "save":
 
-   ${edit_url + ref_tags % dict(ref="promo_new", campaign="edit_promo")} 
+   ${unsafe(edit_url + ref_tags % dict(ref="promo_new", campaign="edit_promo"))} 
 
 Please note that we can't approve your ad until you have authorized your credit
 card payment, and that your ad must be approved before it goes live on your
@@ -63,7 +64,7 @@ Having second thoughts about your budget? Need to make any edits? You'll have
 until ${(thing.start_date - timedelta(1)).strftime("%Y-%m-%d")} to change your
 ad here:
 
-    ${edit_url + ref_tags % dict(ref="promo_bid", campaign="edit_promo")}
+    ${unsafe(edit_url + ref_tags % dict(ref="promo_bid", campaign="edit_promo"))}
 
 %elif thing.kind == Email.Kind.ACCEPT_PROMO:
 This email is to confirm that your self-serve reddit.com ad has been approved by
@@ -75,7 +76,7 @@ have to be reapproved. If it is near midnight and it is about to go live
 imminently, we can't necessarily guarantee we'll get to it in time, so keep that
 in mind when reviewing your ad.
 
-    ${edit_url + ref_tags % dict(ref="promo_accept", campaign="edit_promo")}
+    ${unsafe(edit_url + ref_tags % dict(ref="promo_accept", campaign="edit_promo"))}
 
 Please email us, advertising@reddit.com, if you need an ad approved
 right away. Sometimes we're ninja fast and can get to you, but we do officially
@@ -101,7 +102,7 @@ Optional note about rejection (for special cases):
 If you have any questions, please reply to this email.
 
 To update your promotion please go to:
-    ${edit_url + ref_tags % dict(ref="promo_reject", campaign="edit_promo")}
+    ${unsafe(edit_url + ref_tags % dict(ref="promo_reject", campaign="edit_promo"))}
 and we'll reconsider it for submission.
 
 Note: For ads going through the approval process — Your payment has been authorized, but has not yet been captured. We charge the amount when an approved ad launches. Since your ad has been rejected, your payment authorization will be voided within 24-48 hours, unless you edit and resubmit the ad for approval.
@@ -121,7 +122,7 @@ DATE: ${datetime.now(g.tz).strftime("%Y-%m-%d")}
 ................................................................................
 
 AMOUNT CHARGED: $${"%.2f" % thing.bid}
-SPONSORSHIP PERMALINK: ${thing.link.make_permalink_slow(force_domain=True) + ref_tags % dict(ref="promo_queued", campaign="view_promo")}
+SPONSORSHIP PERMALINK: ${unsafe(thing.link.make_permalink_slow(force_domain=True) + ref_tags % dict(ref="promo_queued", campaign="view_promo"))}
 
 ================================================================================
 %else:
@@ -132,11 +133,11 @@ Your promotion was a freebie in the amount of $${"%.2f" % thing.bid}.
 This email is to inform you that your self-serve ad on reddit.com is now live
 and can be found at the following link:
 
-    ${thing.link.make_permalink_slow(force_domain=True) + ref_tags % dict(ref="promo_live", campaign="view_promo")}
+    ${unsafe(thing.link.make_permalink_slow(force_domain=True) + ref_tags % dict(ref="promo_live", campaign="view_promo"))}
 
 Thank you for your business!  You can track your promotion's traffic here:
 
-    ${promote.promo_traffic_url(thing.link) + ref_tags % dict(ref="promo_live", campaign="promo_traffic")}
+    ${unsafe(promote.promo_traffic_url(thing.link) + ref_tags % dict(ref="promo_live", campaign="promo_traffic"))}
 
 Note that there is a delay on tracking, so at first you may not see any data,
 and completed traffic will be a few hours behind. All traffic should be
@@ -152,7 +153,7 @@ Please visit the following link to view traffic results for your ad, and note
 that traffic stats are to be considered preliminary until 24 hours after your ad
 has concluded.
 
-    ${promote.promo_traffic_url(thing.link) + ref_tags % dict(ref="promo_finished", campaign="promo_traffic")}
+    ${unsafe(promote.promo_traffic_url(thing.link) + ref_tags % dict(ref="promo_finished", campaign="promo_traffic"))}
 
 Remember to log in to reddit.com using the username and password you used when
 you bought this self-serve ad.
@@ -160,14 +161,14 @@ you bought this self-serve ad.
 Thanks again for advertising on reddit, we hope you'll come back and do business
 with us again!  To extend your campaign, visit this link and click "+ add new":
 
-    ${edit_url + ref_tags % dict(ref="promo_finished", campaign="edit_promo")}
+    ${unsafe(edit_url + ref_tags % dict(ref="promo_finished", campaign="edit_promo"))}
 
 We'd love to know how your experience with reddit's self-serve ad platform was,
 so feel free to reply to this email to let us know if you have any feedback.
 We've also set up a community just for self-serve advertisers like yourself to
 discuss the platform with each other:
 
-    ${"http://www.reddit.com/r/selfserve" + ref_tags % dict(ref="promo_finished", campaign="rselfserve")}
+    ${unsafe("http://www.reddit.com/r/selfserve" + ref_tags % dict(ref="promo_finished", campaign="rselfserve"))}
 
 We're hoping to create a place for you to exchange tips and tricks for getting
 the most out of your sponsored links, as well as to provide support for new
@@ -176,7 +177,7 @@ users.
 %elif thing.kind == Email.Kind.REFUNDED_PROMO:
 We're sorry, but we weren't able to deliver as many impressions as you paid for.
 
-  ${edit_url + ref_tags % dict(ref="promo_refunded", campaign="edit_promo")}
+  ${unsafe(edit_url + ref_tags % dict(ref="promo_refunded", campaign="edit_promo"))}
 
 We're working to improve the systems to predict our pageview inventory so this
 doesn't happen again. You have been refunded the unspent portion of your budget.
@@ -194,13 +195,13 @@ The payment was voided because you changed to a different form of payment.
 
 You can edit your ad at the following url:
 
-${edit_url + ref_tags % dict(ref="promo_void_payment", campaign="edit_promo")}
+${unsafe(edit_url + ref_tags % dict(ref="promo_void_payment", campaign="edit_promo"))}
 %elif thing.reason == 'deleted_campaign':
 The payment was voided because you deleted the campaign.
 
 You can edit your ad at the following url:
 
-${edit_url + ref_tags % dict(ref="promo_void_payment", campaign="edit_promo")}
+${unsafe(edit_url + ref_tags % dict(ref="promo_void_payment", campaign="edit_promo"))}
 %endif
 
 %endif
