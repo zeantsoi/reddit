@@ -1459,7 +1459,7 @@ class VThrottledLogin(VRequired):
             def ip_used_by_account(account_id, ip):
                 return False
 
-        ratelimit_key = None
+        ratelimit_keys = {}
 
         g.stats.event_count("login_throttle", "checked",
                             sample_rate=0.1)
@@ -1488,25 +1488,38 @@ class VThrottledLogin(VRequired):
                 time_slice = ratelimit.get_timeslice(g.RL_RESET_SECONDS)
                 is_previously_seen_ip = ip_used_by_account(account._id, request.ip)
                 if is_previously_seen_ip:
-                    ratelimit_key = "rl-login-familiar-%d" % account._id
+                    ratelimit_keys = {
+                        "rl-login-familiar-%d" % account._id: g.RL_LOGIN_MAX_REQS,
+                    }
                 else:
-                    ratelimit_key = "rl-login-unknown-%d" % account._id
+                    ratelimit_keys = {
+                        "rl-login-unknown-%d" % account._id: g.RL_LOGIN_MAX_REQS,
+                        "rl-login-ip-%s" % request.ip: g.RL_LOGIN_IP_MAX_REQS,
+                    }
 
-                try:
-                    failed_logins = ratelimit.get_usage(ratelimit_key, time_slice)
-                    if failed_logins >= g.RL_LOGIN_MAX_REQS:
-                        self.seconds = time_slice.remaining
-                        period_end = datetime.utcfromtimestamp(
-                            time_slice.end).replace(tzinfo=pytz.UTC)
-                        time = utils.timeuntil(period_end)
-                        self.set_error(
-                            errors.RATELIMIT, {'time': time},
-                            field='ratelimit', code=429)
-                        return False
-                except ratelimit.RatelimitError as e:
-                    g.log.info("ratelimitcache error (login): %s", e)
-                    g.stats.event_count("login_throttle", "limited",
-                                        sample_rate=0.1)
+                hooks.get_hook("login.ratelimits").call(
+                    ratelimit_keys=ratelimit_keys,
+                    familiar=is_previously_seen_ip,
+                )
+
+                for ratelimit_key, max_requests in ratelimit_keys.iteritems():
+                    try:
+                        failed_logins = ratelimit.get_usage(
+                            ratelimit_key, time_slice)
+
+                        if failed_logins >= max_requests:
+                            self.seconds = time_slice.remaining
+                            period_end = datetime.utcfromtimestamp(
+                                time_slice.end).replace(tzinfo=pytz.UTC)
+                            time = utils.timeuntil(period_end)
+                            self.set_error(
+                                errors.RATELIMIT, {'time': time},
+                                field='ratelimit', code=429)
+                            return False
+                    except ratelimit.RatelimitError as e:
+                        g.log.info("ratelimitcache error (login): %s", e)
+                        g.stats.event_count("login_throttle", "limited",
+                                            sample_rate=0.1)
 
             try:
                 str(password)
@@ -1517,13 +1530,14 @@ class VThrottledLogin(VRequired):
                 raise AuthenticationFailed
             return account
         except AuthenticationFailed:
-            if ratelimit_key:
-                try:
-                    ratelimit.record_usage(ratelimit_key, time_slice)
-                except ratelimit.RatelimitError as e:
-                    g.log.info("ratelimitcache error (login): %s", e)
-                g.stats.event_count("login_throttle", "usage_recorded",
-                                    sample_rate=0.1)
+            if ratelimit_keys:
+                for ratelimit_key in ratelimit_keys:
+                    try:
+                        ratelimit.record_usage(ratelimit_key, time_slice)
+                    except ratelimit.RatelimitError as e:
+                        g.log.info("ratelimitcache error (login): %s", e)
+                    g.stats.event_count("login_throttle", "usage_recorded",
+                                        sample_rate=0.1)
             self.error()
             return False
 
