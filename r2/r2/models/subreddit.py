@@ -1161,8 +1161,8 @@ class Subreddit(Thing, Printable, BaseSite):
     def subscribe_multiple(cls, user, srs):
         SubscribedSubredditsByAccount.create(user, srs)
         SubscriptionsByDay.create(srs, user)
+        add_legacy_subscriber(srs, user)
         for sr in srs:
-            add_legacy_subscriber(sr, user)
             sr._incr('_ups', 1)
 
     def remove_subscriber(self, user):
@@ -2481,12 +2481,14 @@ Subreddit.__bases__ += (
 )
 
 
-def add_legacy_subscriber(sr, user):
-    rel = SRMember(sr, user, "subscriber")
-    try:
-        rel._commit()
-    except CreationError:
-        pass
+def add_legacy_subscriber(srs, user):
+    srs = tup(srs)
+    for sr in srs:
+        rel = SRMember(sr, user, "subscriber")
+        try:
+            rel._commit()
+        except CreationError:
+            break
 
 
 def remove_legacy_subscriber(sr, user):
