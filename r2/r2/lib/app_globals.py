@@ -342,6 +342,7 @@ class Globals(object):
             'invalid_key_sample_rate',
             'events_collector_sample_rate',
             'ad_probability',
+            'https_cert_testing_probability',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
