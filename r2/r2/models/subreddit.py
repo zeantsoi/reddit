@@ -2492,14 +2492,19 @@ Subreddit.__bases__ += (
 
 def add_legacy_subscriber(srs, user):
     srs = tup(srs)
-    now = datetime.datetime.now(g.tz)
     for sr in srs:
-        g.log.error("SRMEMBER ADD: %s/%s/%s", sr._id, user._id, now)
+        rel = SRMember(sr, user, "subscriber")
+        try:
+            rel._commit()
+        except CreationError:
+            break
 
 
 def remove_legacy_subscriber(sr, user):
-    now = datetime.datetime.now(g.tz)
-    g.log.error("SRMEMBER REMOVE: %s/%s/%s", sr._id, user._id, now)
+    rels = SRMember._fast_query([sr], [user], "subscriber")
+    rel = rels.get((sr, user, "subscriber"))
+    if rel:
+        rel._delete()
 
 
 class SubredditTempBan(object):
