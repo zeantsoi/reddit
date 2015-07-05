@@ -76,12 +76,20 @@ def update_prediction_data():
 
 def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
     """Return dict mapping sr_name to min_pageviews over the last ndays."""
+    EXCLUDED_DATES = (datetime(2015, 6, 26, 0, 0),
+                      datetime(2015, 6, 27, 0, 0),
+                      datetime(2015, 6, 28, 0, 0),
+                      datetime(2015, 7, 2, 0, 0),
+                      datetime(2015, 7, 3, 0, 0),
+                      datetime(2015, 7, 4, 0, 0),)
+
     if not end_date:
         last_modified = traffic.get_traffic_last_modified()
         end_date = last_modified - timedelta(days=1)
     stop = end_date
     start = stop - timedelta(ndays)
-    time_points = traffic.get_time_points('day', start, stop)
+    full_date_range = traffic.get_time_points('day', start, stop)
+    time_points = [tp for tp in full_date_range if tp not in EXCLUDED_DATES]
     cls = traffic.PageviewsBySubredditAndPath
     q = (traffic.Session.query(cls.srpath, func.min(cls.pageview_count))
                                .filter(cls.interval == 'day')
