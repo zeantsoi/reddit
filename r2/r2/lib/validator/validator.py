@@ -1446,23 +1446,52 @@ class AuthenticationFailed(Exception):
     pass
 
 
+class LoginRatelimit(object):
+    def __init__(self, category, key):
+        self.category = category
+        self.key = key
+
+    def __str__(self):
+        return "rl-login-%s-%s" % (self.category, self.key)
+
+    def __hash__(self):
+        return hash(str(self))
+
+
 class VThrottledLogin(VRequired):
     def __init__(self, params):
         VRequired.__init__(self, params, error=errors.WRONG_PASSWORD)
         self.vlength = VLength("user", max_length=100)
         self.seconds = None
 
-    def run(self, username, password):
+    def get_ratelimits(self, account):
         if config["r2.import_private"]:
             from r2admin.lib.ip_events import ip_used_by_account
         else:
             def ip_used_by_account(account_id, ip):
                 return False
 
-        ratelimit_keys = {}
+        is_previously_seen_ip = ip_used_by_account(account._id, request.ip)
+        if is_previously_seen_ip:
+            ratelimits = {
+                LoginRatelimit("familiar", account._id): g.RL_LOGIN_MAX_REQS,
+            }
+        else:
+            ratelimits = {
+                LoginRatelimit("unfamiliar", account._id): g.RL_LOGIN_MAX_REQS,
+                LoginRatelimit("ip", request.ip): g.RL_LOGIN_IP_MAX_REQS,
+            }
 
-        g.stats.event_count("login_throttle", "checked",
-                            sample_rate=0.1)
+        hooks.get_hook("login.ratelimits").call(
+            ratelimits=ratelimits,
+            familiar=is_previously_seen_ip,
+        )
+
+        return ratelimits
+
+    def run(self, username, password):
+        ratelimits = {}
+
         try:
             if username:
                 username = username.strip()
@@ -1486,26 +1515,11 @@ class VThrottledLogin(VRequired):
             ratelimit_exempt = (account == c.user)
             if not ratelimit_exempt:
                 time_slice = ratelimit.get_timeslice(g.RL_RESET_SECONDS)
-                is_previously_seen_ip = ip_used_by_account(account._id, request.ip)
-                if is_previously_seen_ip:
-                    ratelimit_keys = {
-                        "rl-login-familiar-%d" % account._id: g.RL_LOGIN_MAX_REQS,
-                    }
-                else:
-                    ratelimit_keys = {
-                        "rl-login-unknown-%d" % account._id: g.RL_LOGIN_MAX_REQS,
-                        "rl-login-ip-%s" % request.ip: g.RL_LOGIN_IP_MAX_REQS,
-                    }
+                ratelimits = self.get_ratelimits(account)
 
-                hooks.get_hook("login.ratelimits").call(
-                    ratelimit_keys=ratelimit_keys,
-                    familiar=is_previously_seen_ip,
-                )
-
-                for ratelimit_key, max_requests in ratelimit_keys.iteritems():
+                for rl, max_requests in ratelimits.iteritems():
                     try:
-                        failed_logins = ratelimit.get_usage(
-                            ratelimit_key, time_slice)
+                        failed_logins = ratelimit.get_usage(str(rl), time_slice)
 
                         if failed_logins >= max_requests:
                             self.seconds = time_slice.remaining
@@ -1515,11 +1529,10 @@ class VThrottledLogin(VRequired):
                             self.set_error(
                                 errors.RATELIMIT, {'time': time},
                                 field='ratelimit', code=429)
+                            g.stats.event_count('login.throttle', rl.category)
                             return False
                     except ratelimit.RatelimitError as e:
                         g.log.info("ratelimitcache error (login): %s", e)
-                        g.stats.event_count("login_throttle", "limited",
-                                            sample_rate=0.1)
 
             try:
                 str(password)
@@ -1528,16 +1541,16 @@ class VThrottledLogin(VRequired):
 
             if not valid_password(account, password):
                 raise AuthenticationFailed
+            g.stats.event_count('login', 'success')
             return account
         except AuthenticationFailed:
-            if ratelimit_keys:
-                for ratelimit_key in ratelimit_keys:
+            g.stats.event_count('login', 'failure')
+            if ratelimits:
+                for rl in ratelimits:
                     try:
-                        ratelimit.record_usage(ratelimit_key, time_slice)
+                        ratelimit.record_usage(str(rl), time_slice)
                     except ratelimit.RatelimitError as e:
                         g.log.info("ratelimitcache error (login): %s", e)
-                    g.stats.event_count("login_throttle", "usage_recorded",
-                                        sample_rate=0.1)
             self.error()
             return False
 
