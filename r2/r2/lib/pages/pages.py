@@ -4215,13 +4215,10 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.subreddit_selector = SubredditSelector(
             extra_subreddits=extra_subreddits, include_user_subscriptions=False)
         self.inventory = {}
-        message = _("This dashboard allows you to easily place ads on reddit. "
-                    "Have any questions? [Check out the FAQ](%(faq)s).\n\n"
-                    "Create your ad on this page. Have questions? "
+        message = _("Create your ad on this page. Have questions? "
                     "Check out the [Help Center](%(help_center)s) "
                     "or [/r/selfserve](%(selfserve)s).")
         message %= {
-            'faq': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising-',
             'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
             'selfserve': 'https://www.reddit.com/r/selfserve'
         }
