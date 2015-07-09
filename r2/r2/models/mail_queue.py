@@ -22,8 +22,6 @@
 
 import datetime
 import hashlib
-
-from email.mime.multipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.errors import HeaderParseError
 
@@ -75,13 +73,6 @@ def mail_queue(metadata):
 
                     # any message that may have been included
                     sa.Column('body', sa.String),
-
-                    # html version of the body; body should be included as well
-                    # for the alternate plain-text version
-                    sa.Column('html_body', sa.String),
-
-                    # unsubscribe link
-                    sa.Column('list_unsubscribe_header', sa.String),
 
                     )
 
@@ -215,8 +206,8 @@ class EmailHandler(object):
 
 
     def add_to_queue(self, user, emails, from_name, fr_addr, kind,
-                     date=None, ip=None, body="", reply_to="",
-                     thing=None, html_body="", list_unsubscribe_header=""):
+                     date = None, ip = None,
+                     body = "", reply_to = "", thing = None):
         s = self.queue_table
         hashes = []
         if not date:
@@ -228,22 +219,17 @@ class EmailHandler(object):
             tid = thing._fullname if thing else ""
             key = hashlib.sha1(str((email, from_name, uid, tid, ip, kind, body,
                                datetime.datetime.now(g.tz)))).hexdigest()
-
-            s.insert().values({
-                s.c.to_addr: email,
-                s.c.account_id: uid,
-                s.c.from_name: from_name,
-                s.c.fr_addr: fr_addr,
-                s.c.reply_to: reply_to,
-                s.c.fullname: tid,
-                s.c.ip: ip,
-                s.c.kind: kind,
-                s.c.body: body,
-                s.c.date: date,
-                s.c.msg_hash: key,
-                s.c.html_body: html_body,
-                s.c.list_unsubscribe_header: list_unsubscribe_header,
-            }).execute()
+            s.insert().values({s.c.to_addr : email,
+                               s.c.account_id : uid,
+                               s.c.from_name : from_name,
+                               s.c.fr_addr : fr_addr,
+                               s.c.reply_to : reply_to,
+                               s.c.fullname: tid,
+                               s.c.ip : ip,
+                               s.c.kind: kind,
+                               s.c.body: body,
+                               s.c.date : date,
+                               s.c.msg_hash : key}).execute()
             hashes.append(key)
         return hashes
 
@@ -260,14 +246,12 @@ class EmailHandler(object):
             if kind:
                 where.append(s.c.kind == kind)
 
-            res = sa.select([
-                    s.c.to_addr, s.c.account_id,
-                    s.c.from_name, s.c.fullname, s.c.body,
-                    s.c.kind, s.c.ip, s.c.date, s.c.uid,
-                    s.c.msg_hash, s.c.fr_addr, s.c.reply_to,
-                    s.c.html_body, s.c.list_unsubscribe_header,
-                ], sa.and_(*where), order_by=s.c.uid, limit=batch_limit
-            ).execute()
+            res = sa.select([s.c.to_addr, s.c.account_id,
+                             s.c.from_name, s.c.fullname, s.c.body,
+                             s.c.kind, s.c.ip, s.c.date, s.c.uid,
+                             s.c.msg_hash, s.c.fr_addr, s.c.reply_to],
+                            sa.and_(*where),
+                            order_by = s.c.uid, limit = batch_limit).execute()
             res = res.fetchall()
 
             if not res: break
@@ -288,11 +272,11 @@ class EmailHandler(object):
             # did we not fetch them all?
             keep_trying = (len(res) == batch_limit)
 
-            for (addr, acct, fname, fulln, body, kind, ip, date, uid, msg_hash,
-                 fr_addr, reply_to, html_body, list_unsubscribe_header) in res:
+            for (addr, acct, fname, fulln, body, kind, ip, date, uid,
+                 msg_hash, fr_addr, reply_to) in res:
                 yield (accts.get(acct), things.get(fulln), addr,
                        fname, date, ip, kind, msg_hash, body,
-                       fr_addr, reply_to, html_body, list_unsubscribe_header)
+                       fr_addr, reply_to)
 
     def clear_queue(self, max_date, kind = None):
         s = self.queue_table
@@ -362,8 +346,8 @@ class Email(object):
         }
 
     def __init__(self, user, thing, email, from_name, date, ip,
-                 kind, msg_hash, body="", from_addr="",
-                 reply_to="", html_body="", list_unsubscribe_header=""):
+                 kind, msg_hash, body = '', from_addr = '',
+                 reply_to = ''):
         self.user = user
         self.thing = thing
         self.to_addr = email
@@ -377,8 +361,6 @@ class Email(object):
         self.msg_hash = msg_hash
         self.reply_to = reply_to
         self.subject = self.subjects.get(kind, "")
-        self.html_body = html_body
-        self.list_unsubscribe_header = list_unsubscribe_header
         try:
             self.subject = self.subject % dict(user = self.from_name())
         except UnicodeDecodeError:
@@ -445,33 +427,16 @@ class Email(object):
         # software's argument parsers, and thus are disallowed by default in
         # Postfix: http://www.postfix.org/postconf.5.html#allow_min_user
         if not fr.startswith('-') and not self.to_addr.startswith('-'):
-            if self.html_body:
-                msg = MIMEMultipart("alternative")
-                if self.body:
-                    part1 = MIMEText(utf8(self.body, reject_newlines=False),
-                        'plain')
-                    part1.set_charset('utf8')
-                    msg.attach(part1)
-                part2 = MIMEText(utf8(self.html_body, reject_newlines=False),
-                    'html')
-                part2.set_charset('utf8')
-                msg.attach(part2)
-            else:
-                msg = MIMEText(utf8(self.body, reject_newlines=False),
-                    'plain')
-                msg.set_charset('utf8')
-
+            msg = MIMEText(utf8(self.body, reject_newlines=False))
+            msg.set_charset('utf8')
             msg['To']      = utf8(self.to_addr)
             msg['From']    = utf8(fr)
             msg['Subject'] = utf8(self.subject)
-
             if self.user:
                 msg['X-Reddit-username'] = utf8(self.user.name)
             msg['X-Reddit-ID'] = self.msg_hash
             if self.reply_to:
                 msg['Reply-To'] = utf8(self.reply_to)
-            if self.list_unsubscribe_header:
-                msg.add_header('List-Unsubscribe', self.list_unsubscribe_header)
             return msg
         return None
 
