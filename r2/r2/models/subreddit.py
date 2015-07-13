@@ -247,6 +247,7 @@ class Subreddit(Thing, Printable, BaseSite):
         mod_actions=0,
         # do we allow self-posts, links only, or any?
         link_type='any', # one of ('link', 'self', 'any')
+        sticky_fullname=None,
         sticky_fullnames=None,
         submit_link_label='',
         submit_text_label='',
@@ -1207,7 +1208,6 @@ class Subreddit(Thing, Printable, BaseSite):
             # if there's an old single sticky, convert it
             if getattr(self, "sticky_fullname", None):
                 self.sticky_fullnames = [self.sticky_fullname]
-                self.sticky_fullname = None
                 self._commit()
 
         return self.sticky_fullnames
