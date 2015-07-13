@@ -22,6 +22,7 @@
 
 <%!
     from r2.lib.filters import unsafe
+    from r2.lib.template_helpers import update_query
 %>
 
 your username is:
@@ -30,6 +31,6 @@ your username is:
 
 visit this link to verify your email address:
 
-    ${unsafe(thing.emaillink + "?ref_source=email&ref=verify_email&ref_campaign=verify_email")}
+    ${unsafe(update_query(thing.emaillink, ref_source="email", ref="verify_email", ref_campaign="verify_email"))}
 
 thanks for using the site!

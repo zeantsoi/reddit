@@ -22,6 +22,7 @@
 
 <%!
     from r2.lib.filters import unsafe
+    from r2.lib.template_helpers import update_query
 %>
 
 %for message in thing.messages:
@@ -34,7 +35,7 @@
 
   ${unsafe(message["body"])}
 
-  ${_("View on the web")}: ${unsafe(message["permalink"] + "?ref_source=email&ref=message_notification&ref_campaign=permalink")}
+  ${_("View on the web")}: ${unsafe(update_query(message["permalink"], ref_source="email", ref="message_notification", ref_campaign="permalink"))}
 
 %endfor
 
