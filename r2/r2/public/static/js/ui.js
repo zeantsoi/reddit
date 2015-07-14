@@ -73,9 +73,11 @@ r.ui.firePageTrackingPixel = function() {
     var loggedOutData = tracker.getTrackingData();
     if (loggedOutData && loggedOutData.loid) {
       params = {
-          loid: loggedOutData.loid,
-          loidcreated: loggedOutData.loidcreated
+          loid: loggedOutData.loid
       };
+      if (loggedOutData.loidcreated) {
+        params['loidcreated'] = loggedOutData.loidcreated
+      }
     }
   }
 
