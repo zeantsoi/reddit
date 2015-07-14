@@ -279,11 +279,10 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, bid, cpm, target, frequency_cap, frequency_cap_duration,
-                 priority, location, platform, mobile_os):
+def new_campaign(link, dates, bid, cpm, target, priority, location,
+                 platform, mobile_os):
     campaign = PromoCampaign.create(link, target, bid, cpm, dates[0], dates[1],
-                                    frequency_cap, frequency_cap_duration, priority,
-                                    location, platform, mobile_os)
+                                    priority, location, platform, mobile_os)
     PromotionWeights.add(link, campaign)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
@@ -299,9 +298,8 @@ def new_campaign(link, dates, bid, cpm, target, frequency_cap, frequency_cap_dur
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign, dates, bid, cpm, target, frequency_cap,
-                  frequency_cap_duration, priority, location, platform='desktop',
-                  mobile_os=None):
+def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location,
+                  platform='desktop', mobile_os=None):
     changed = {}
     if bid != campaign.bid:
          # if the bid amount changed, cancel any pending transactions
@@ -322,13 +320,6 @@ def edit_campaign(link, campaign, dates, bid, cpm, target, frequency_cap,
     if target != campaign.target:
         changed['target'] = (campaign.target, target)
         campaign.target = target
-    if frequency_cap != campaign.frequency_cap:
-        changed['frequency_cap'] = (campaign.frequency_cap, frequency_cap)
-        campaign.frequency_cap = frequency_cap
-    if frequency_cap_duration != campaign.frequency_cap_duration:
-        changed['frequency_cap_duration'] = (campaign.frequency_cap_duration,
-                                             frequency_cap_duration)
-        campaign.frequency_cap_duration = frequency_cap_duration
     if priority != campaign.priority:
         changed['priority'] = (campaign.priority.name, priority.name)
         campaign.priority = priority

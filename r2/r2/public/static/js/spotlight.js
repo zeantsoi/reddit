@@ -7,7 +7,6 @@
       this.interestProb = interestProb;
       this.showPromo = showPromo;
       this.srnames = srnames;
-      this.loid = $.cookie('loid');
       this.lastTabChangeTimestamp = Date.now();
       this.MIN_PROMO_TIME = 3000;
       this.next = this._advance.bind(this, 1);
@@ -156,7 +155,6 @@
         data: {
           srnames: this.srnames,
           r: r.config.post_site,
-          loid: this.loid,
         },
       }).pipe(function(promo) {
         var prevPromo = this.$listing.find('.promotedlink')
