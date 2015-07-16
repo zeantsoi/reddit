@@ -44,10 +44,17 @@
       canary = generateCanary();
     }
 
-    // create the cookie, or extend the lifetime of the existing one
+    // Clear out busted path-relative cookies
+    $.cookie(CANARY_COOKIE, null, {
+        secure: r.config.https_forced,
+        domain: r.config.cur_domain,
+    });
+
+    // Create the cookie, or extend the lifetime of the existing one
     $.cookie(CANARY_COOKIE, canary, {
         secure: r.config.https_forced,
         domain: r.config.cur_domain,
+        path: '/',
         expires: 365,
     });
   };
