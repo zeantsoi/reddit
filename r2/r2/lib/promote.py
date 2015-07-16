@@ -373,7 +373,9 @@ def terminate_campaign(link, campaign):
 
     # NOTE: this will delete PromotionWeights after and including now.date()
     edit_campaign(link, campaign, dates, campaign.bid, campaign.cpm,
-                  campaign.target, campaign.priority, campaign.location)
+                  campaign.target, campaign.frequency_cap,
+                  campaign.frequency_cap_duration, campaign.priority,
+                  campaign.location)
 
     campaigns = list(PromoCampaign._by_link(link._id))
     is_live = any(is_live_promo(link, camp) for camp in campaigns
