@@ -1200,7 +1200,9 @@ class Subreddit(Thing, Printable, BaseSite):
             if getattr(self, "sticky_fullname", None):
                 self.sticky_fullnames = [self.sticky_fullname]
                 self.sticky_fullname = None
-                self._commit()
+            else:
+                self.sticky_fullnames = []
+            self._commit()
 
         return self.sticky_fullnames
 
