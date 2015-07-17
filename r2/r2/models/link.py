@@ -2445,6 +2445,10 @@ class Inbox(MultiRelation('inbox',
         )
 
         for i in inbox:
+            if not hasattr(i, 'new'):
+                i.new = True
+                i._commit()
+
             if (not getattr(i._thing2, '_deleted', False) and
                     not getattr(i._thing2, '_spam', False)):
                 yield i, i._thing2
