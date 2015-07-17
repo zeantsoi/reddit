@@ -1188,8 +1188,7 @@ class Subreddit(Thing, Printable, BaseSite):
         # multiple. At some point in the future we can probably replace this
         # function with a simple usage of the sticky_fullnames attr.
 
-        if (self.sticky_fullnames is None or
-                None in self.sticky_fullnames):
+        if self.sticky_fullnames is None:
             # for apps that can't update the db, just return
             if g.disallow_db_writes:
                 if getattr(self, "sticky_fullname", None):
@@ -1201,9 +1200,7 @@ class Subreddit(Thing, Printable, BaseSite):
             if getattr(self, "sticky_fullname", None):
                 self.sticky_fullnames = [self.sticky_fullname]
                 self.sticky_fullname = None
-            else:
-                self.sticky_fullnames = []
-            self._commit()
+                self._commit()
 
         return self.sticky_fullnames
 
