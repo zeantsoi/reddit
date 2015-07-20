@@ -136,6 +136,8 @@ python-boto
 python-tz
 python-crypto
 python-babel
+python-numpy
+python-dateutil
 cython
 python-sqlalchemy
 python-beautifulsoup
