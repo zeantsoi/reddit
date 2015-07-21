@@ -659,10 +659,7 @@ class Reddit(Templated):
 
         no_ads_yet = True
         user_disabled_ads = c.user.gold and c.user.pref_hide_ads
-        sr_disabled_ads = (not isinstance(c.site, FakeSubreddit) and
-            c.site.type == "gold_only" and
-            c.site.hide_ads)
-        show_adbox = not (user_disabled_ads or sr_disabled_ads or g.disable_ads)
+        show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
 
         # secret santa link
         if show_adbox and c.default_sr and feature.is_enabled('show_secret_santa'):
