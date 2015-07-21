@@ -258,7 +258,6 @@ class Globals(object):
             'memoizecaches',
             'srmembercaches',
             'relcaches',
-            'relcaches_r3_2xl',
             'ratelimitcaches',
             'cassandra_seeds',
             'automatic_reddits',
@@ -685,22 +684,6 @@ class Globals(object):
             binary=True,
             validators=[validate_size_error],
         )
-        try:
-            self.relcaches_r3_2xl
-        except AttributeError:
-            relcaches_r3_2xl = None
-        else:
-            if not self.relcaches_r3_2xl:
-                relcaches_r3_2xl = None
-            else:
-                relcaches_r3_2xl = CMemcache(
-                    "rel",
-                    self.relcaches_r3_2xl,
-                    min_compress_len=96,
-                    num_clients=num_mc_clients,
-                    binary=True,
-                    validators=[validate_size_error],
-                )
 
         ratelimitcaches = CMemcache(
             "ratelimit",
@@ -831,34 +814,14 @@ class Globals(object):
         cache_chains.update(srmembercache=self.srmembercache)
 
         if stalecaches:
-            original_relcache = StaleCacheChain(
+            self.relcache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 relcaches,
             )
         else:
-            original_relcache = MemcacheChain(
+            self.relcache = MemcacheChain(
                 (localcache_cls(), relcaches))
-
-        if relcaches_r3_2xl:
-            if stalecaches:
-                replacement_relcache = StaleCacheChain(
-                    localcache_cls(),
-                    stalecaches,
-                    relcaches_r3_2xl,
-                )
-            else:
-                replacement_relcache = MemcacheChain(
-                    (localcache_cls(), relcaches_r3_2xl))
-
-            self.relcache = TransitionalCache(
-                original_cache=original_relcache,
-                replacement_cache=replacement_relcache,
-                read_original=False,
-            )
-        else:
-            self.relcache = original_relcache
-
         cache_chains.update(relcache=self.relcache)
 
         self.ratelimitcache = MemcacheChain(
