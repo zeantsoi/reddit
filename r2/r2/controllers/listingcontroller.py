@@ -26,6 +26,7 @@ import urllib
 from oauth2 import require_oauth2_scope
 from reddit_base import RedditController, base_listing, paginated_listing
 
+from r2.config import feature
 from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
 from r2.config.extensions import is_api
@@ -1105,7 +1106,8 @@ class MessageController(ListingController):
                 message_cls = SrMessageBuilder
 
             enable_threaded = (self.where == "moderator" and
-                c.user.pref_threaded_modmail)
+                c.user.pref_threaded_modmail and
+                feature.is_enabled("threaded_modmail"))
 
             return message_cls(
                 root,
