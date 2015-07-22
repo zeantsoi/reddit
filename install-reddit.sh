@@ -187,7 +187,7 @@ libpcre3-dev
 PACKAGES
 
 # we don't want to upgrade to C* 2.0 yet, so we'll put it on hold
-apt-mark hold cassandra
+apt-mark hold cassandra || true
 
 ###############################################################################
 # Wait for all the services to be up
