@@ -60,6 +60,7 @@ special_pages = {
     'config/sidebar',
     'config/stylesheet',
     'config/submit_text',
+    'usernotes',
 }
 
 special_page_view_permlevels = {
@@ -79,7 +80,8 @@ special_length_restrictions_bytes = {
     'config/stylesheet': 128*1024,
     'config/submit_text': 1024,
     'config/sidebar': 5120,
-    'config/description': 500
+    'config/description': 500,
+    'usernotes': 1024*1024,
 }
 
 modactions = {
