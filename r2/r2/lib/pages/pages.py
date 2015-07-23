@@ -2038,15 +2038,14 @@ class SubredditsPage(Reddit):
                  search_params = {}, *a, **kw):
         Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
-        self.searchbar = SearchBar(
-            prev_search = prev_search,
-            header=_('search subreddits by name'),
-            search_params={},
-            simple=True,
-            subreddit_search=True,
-            search_path="/subreddits/search",
-        )
+        self.searchbar = SearchBar(prev_search = prev_search,
+                                   header = _('search subreddits by name'),
+                                   search_params = {},
+                                   simple=True,
+                                   subreddit_search=True
+                                   )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
+
         self.interestbar = InterestBar(True) if show_interestbar else None
 
     def build_toolbars(self):
@@ -3110,16 +3109,15 @@ class SearchForm(Templated):
     is the previous search."""
     def __init__(self, prev_search='', search_params={}, site=None,
                  simple=True, restrict_sr=False, subreddit_search=False,
-                 syntax=None, search_path="/search"):
+                 syntax=None):
         Templated.__init__(self, prev_search=prev_search,
                            search_params=search_params, site=site,
                            simple=simple, restrict_sr=restrict_sr,
-                           subreddit_search=subreddit_search, syntax=syntax,
-                           search_path=search_path)
+                           subreddit_search=subreddit_search, syntax=syntax)
 
         # generate the over18 redirect url for the current search if needed
         if not c.over18 and feature.is_enabled('safe_search'):
-            u = UrlParser(add_sr(search_path))
+            u = UrlParser(add_sr('/search'))
             if prev_search:
                 u.update_query(q=prev_search)
             if restrict_sr:
@@ -3140,24 +3138,18 @@ class SearchBar(Templated):
     def __init__(self, header=None, prev_search='', search_params={},
                  simple=False, restrict_sr=False, site=None, syntax=None,
                  subreddit_search=False, converted_data=None,
-                 search_path="/search"):
+                 **kw):
         if header is None:
             header = _("search")
         self.header = header
-        self.prev_search  = prev_search
-        self.converted_data = converted_data
 
-        self.search_form = SearchForm(
-            prev_search=prev_search,
-            search_params=search_params,
-            site=site,
-            subreddit_search=subreddit_search,
-            simple=simple,
-            restrict_sr=restrict_sr,
-            syntax=syntax,
-            search_path=search_path,
-        )
-        Templated.__init__(self)
+        self.prev_search  = prev_search
+
+        Templated.__init__(self, search_params=search_params,
+                           simple=simple, restrict_sr=restrict_sr,
+                           site=site, syntax=syntax,
+                           converted_data=converted_data,
+                           subreddit_search=subreddit_search)
 
 
 class SubredditFacets(Templated):
