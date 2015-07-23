@@ -60,7 +60,6 @@ special_pages = {
     'config/sidebar',
     'config/stylesheet',
     'config/submit_text',
-    'usernotes',
 }
 
 special_page_view_permlevels = {
