@@ -731,7 +731,10 @@ class Subreddit(Thing, Printable, BaseSite):
     
     def parse_css(self, content, verify=True):
         from r2.lib import cssfilter
-        from r2.lib.template_helpers import make_url_protocol_relative
+        from r2.lib.template_helpers import (
+            make_url_protocol_relative,
+            static,
+        )
 
         if g.css_killswitch or (verify and not self.can_change_stylesheet(c.user)):
             return (None, None)
@@ -741,6 +744,10 @@ class Subreddit(Thing, Printable, BaseSite):
 
         # parse in regular old http mode
         images = ImagesByWikiPage.get_images(self, "config/stylesheet")
+
+        if self.quarantine:
+            images = {name: static('blank.png') for name, url in images.iteritems()}
+
         protocol_relative_images = {
             name: make_url_protocol_relative(url)
             for name, url in images.iteritems()}
