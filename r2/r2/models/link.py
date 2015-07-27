@@ -1544,6 +1544,10 @@ class MoreMessages(Printable):
         return self.parent._id36
 
     @property
+    def _id(self):
+        return self.parent._id
+
+    @property
     def subject(self):
         return self.parent.subject
 
