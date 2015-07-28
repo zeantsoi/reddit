@@ -254,6 +254,7 @@ class EventQueue(object):
             uuid=modaction._id,
             request=request,
             context=context,
+            testing=True,
         )
 
         event.add("sr_id", subreddit._id)
