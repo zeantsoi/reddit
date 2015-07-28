@@ -1108,8 +1108,7 @@ class MessageController(ListingController):
             enable_threaded = (
                 (self.where == "moderator" or
                     parent and parent.sr_id) and
-                c.user.pref_threaded_modmail and
-                feature.is_enabled("threaded_modmail")
+                c.user.pref_threaded_modmail
             )
 
             return message_cls(
