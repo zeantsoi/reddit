@@ -296,6 +296,7 @@ class Globals(object):
             'ads_email',
             'smtp_server',
             'events_collector_url',
+            'events_collector_test_url',
             'search_provider',
             'selfserve_support_email',
         ],
