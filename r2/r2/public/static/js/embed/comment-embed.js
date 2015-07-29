@@ -70,7 +70,8 @@
         return;
       }
 
-      App.addPostMessageOrigin(embed.getAttribute('data-embed-media'));
+      r.frames.addPostMessageOrigin(embed.getAttribute('data-embed-media'));
+      r.frames.listen('embed');
 
       iframe.height = iframe.style.height = 0;
       iframe.width = iframe.style.width = '100%';
@@ -89,12 +90,12 @@
       iframe.style.boxSizing = 'border-box';
       iframe.src = getEmbedUrl(commentUrl, embed);
 
-      App.receiveMessageOnce(iframe, 'ping', function(e) {
+      r.frames.receiveMessageOnce(iframe, 'ping.embed', function(e) {
         embed.parentNode.removeChild(embed);
         iframe.style.display = 'block';
 
         callback(e);
-        App.postMessage(iframe.contentWindow, 'pong', {
+        r.frames.postMessage(iframe.contentWindow, 'pong.embed', {
           type: embed.getAttribute('data-embed-parent') === 'true' ?
             'comment_and_parent' : 'comment',
           location: location,
@@ -102,7 +103,7 @@
         });
       });
 
-      var resizer = App.receiveMessage(iframe, 'resize', function(e) {
+      var resizer = r.frames.receiveMessage(iframe, 'resize.embed', function(e) {
         if (!iframe.parentNode) {
           resizer.off();
 
@@ -122,4 +123,4 @@
 
   App.init();
 
-})((window.rembeddit = window.rembeddit || {}), this);
+})((window.rembeddit = window.rembeddit || {}), window.r, this);

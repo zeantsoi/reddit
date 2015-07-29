@@ -70,6 +70,7 @@ def load_controllers():
     from awards import AwardsController
     from errorlog import ErrorlogController
     from newsletter import NewsletterController
+    from googletagmanager import GoogleTagManagerController
     from promotecontroller import PromoteController
     from promotecontroller import SponsorController
     from promotecontroller import PromoteApiController
