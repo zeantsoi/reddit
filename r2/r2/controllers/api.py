@@ -3410,6 +3410,8 @@ class ApiController(RedditController):
         if not sr:
             return abort(404, 'not found')
         else:
+            g.events.quarantine_event('quarantine_opt_out', sr,
+                request=request, context=c)
             QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
         return self.redirect('/')
 
