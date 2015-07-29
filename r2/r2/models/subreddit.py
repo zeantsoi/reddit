@@ -405,7 +405,6 @@ class Subreddit(Thing, Printable, BaseSite):
         Subreddit objects. Items that were not found are ommitted from the dict.
         If no items are found, an empty dict is returned.
         '''
-        #lower name here so there is only one cache
         names, single = tup(names, True)
 
         to_fetch = {}
@@ -449,6 +448,10 @@ class Subreddit(Thing, Printable, BaseSite):
                     )
                     fetched = {sr.name.lower(): sr._id for sr in q}
                     srids_by_name.update(fetched)
+
+                    still_missing = set(srnames) - set(fetched)
+                    fetched.update((name, cls.SRNAME_NOTFOUND) for name in still_missing)
+
                     g.cache.set_multi(fetched, prefix='subreddit.byname')
 
             srs = {}
