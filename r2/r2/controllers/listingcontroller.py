@@ -1105,9 +1105,12 @@ class MessageController(ListingController):
                 root = Subreddit._byID(parent.sr_id)
                 message_cls = SrMessageBuilder
 
-            enable_threaded = (self.where == "moderator" and
+            enable_threaded = (
+                (self.where == "moderator" or
+                    parent and parent.sr_id) and
                 c.user.pref_threaded_modmail and
-                feature.is_enabled("threaded_modmail"))
+                feature.is_enabled("threaded_modmail")
+            )
 
             return message_cls(
                 root,
