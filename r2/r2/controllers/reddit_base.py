@@ -1069,8 +1069,10 @@ class MinimalController(BaseController):
         if reqs_remaining <= 0:
             if recent_reqs > (2 * max_reqs):
                 g.stats.event_count("ratelimit.exceeded", "hyperbolic")
+                g.stats.count_string("oauth.hyperbolic", client_id)
             else:
                 g.stats.event_count("ratelimit.exceeded", "over")
+                g.stats.count_string("oauth.over", client_id)
             if g.ENFORCE_RATELIMIT:
                 # For non-abort situations, the headers will be added in post(),
                 # to avoid including them in a pagecache
@@ -1079,6 +1081,7 @@ class MinimalController(BaseController):
                 abort(429)
         elif reqs_remaining < (0.1 * max_reqs):
             g.stats.event_count("ratelimit.exceeded", "close")
+            g.stats.count_string("oauth.close", client_id)
 
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
