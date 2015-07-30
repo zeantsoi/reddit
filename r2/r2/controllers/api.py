@@ -3512,7 +3512,7 @@ class ApiController(RedditController):
         jquery('.tagline .id-%s' % user._fullname).parent().html(unflair)
 
     @require_oauth2_scope("modflair")
-    @validatedForm(
+    @validate(
         VSrModerator(perms='flair'),
         VModhash(),
         flair_csv=nop("flair_csv",
