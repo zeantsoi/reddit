@@ -116,6 +116,10 @@
     });
   };
 
+  if (App.preview) {
+    return;
+  }
+
   App.init();
 
 })((window.rembeddit = window.rembeddit || {}), this);
