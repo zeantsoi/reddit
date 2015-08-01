@@ -660,7 +660,6 @@ class Globals(object):
             self.memcaches,
             min_compress_len=1400,
             num_clients=num_mc_clients,
-            binary=True,
             validators=[validate_size_error],
         )
 
