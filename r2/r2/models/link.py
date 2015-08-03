@@ -503,7 +503,8 @@ class Link(Thing, Printable):
                                 item.nsfw_str)
             item.nsfw = item.over_18 and user.pref_label_nsfw
 
-            item.quarantine = item.subreddit.quarantine
+            item.quarantine_enabled = feature.is_enabled('quarantine')
+            item.quarantine = item.quarantine_enabled and item.subreddit.quarantine
 
             item.show_new_post_sharing = feature.is_enabled('improved_sharing')
 
@@ -1294,6 +1295,8 @@ class Comment(Thing, Printable):
             item.profilepage = c.profilepage
             item.link = links.get(item.link_id)
             item.show_admin_context = user_is_admin
+
+            item.quarantine_enabled = feature.is_enabled('quarantine')
 
             if (item.link._score <= 1 or item.score < 3 or
                 item.link._spam or item._spam or item.author._spam):
