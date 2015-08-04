@@ -245,24 +245,25 @@ def update_promote_status(link, status):
     hooks.get_hook('promote.edit_promotion').call(link=link)
 
 
-def new_promotion(title, url, selftext, user, ip):
+def new_promotion(is_self, title, content, author, ip):
     """
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
     sr = Subreddit._byID(Subreddit.get_promote_srid())
-    l = Link._submit(title, url, user, sr, ip)
+    l = Link._submit(
+        is_self=is_self,
+        title=title,
+        content=content,
+        author=user,
+        sr=sr,
+        ip=ip,
+    )
+
     l.promoted = True
     l.disable_comments = False
     l.sendreplies = True
     PromotionLog.add(l, 'promotion created')
-
-    if url == 'self':
-        l.url = l.make_permalink_slow()
-        l.is_self = True
-        l.selftext = selftext
-
-    l._commit()
 
     update_promote_status(l, PROMOTE_STATUS.unpaid)
 
