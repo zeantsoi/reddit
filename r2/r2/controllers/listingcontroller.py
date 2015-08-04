@@ -646,6 +646,8 @@ class AdsController(SubredditListingController):
 
     def GET_listing(self, *a, **kw):
         self.promos = set()
+        if not c.site.allow_ads:
+            self.abort404()
         return SubredditListingController.GET_listing(self, *a, **kw)
 
 
@@ -1813,4 +1815,6 @@ class GildedController(SubredditListingController):
     def GET_listing(self, **env):
         c.profilepage = True
         self.suppress_reply_buttons = True
+        if not c.site.allow_gilding:
+            self.abort404()
         return ListingController.GET_listing(self, **env)
