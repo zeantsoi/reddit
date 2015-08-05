@@ -147,10 +147,7 @@ def js_config(extra_config=None):
 
     cache_policy = "loggedout_www"
     if c.user_is_loggedin:
-        if feature.is_enabled("new_loggedin_cache_policy"):
-            cache_policy = "loggedin_www_new"
-        else:
-            cache_policy = "loggedin_www"
+        cache_policy = "loggedin_www_new"
 
     # Canary for detecting cache poisoning
     poisoning_canary = None
