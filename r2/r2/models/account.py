@@ -148,6 +148,7 @@ class Account(Thing):
                      pref_show_gold_expiration=False,
                      admin_takedown_strikes=0,
                      pref_threaded_modmail=False,
+                     ad_tracker_access=False
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

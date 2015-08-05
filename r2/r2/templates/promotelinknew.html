@@ -49,7 +49,8 @@
          ${managed_field(None)}
         %endif
         ${title_field(None, editable=True)}
-        ${content_field(None, editable=True, enable_override=c.user_is_sponsor)}
+        ${content_field(None, editable=True, enable_override=c.user_is_sponsor,
+                        tracker_access=c.user.ad_tracker_access==True)}
         <footer class="buttons">
           <div class="rules">
             By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfserve#wiki_online_self_serve_advertising_rules" target="_blank">Self Serve Advertising Rules.</a>

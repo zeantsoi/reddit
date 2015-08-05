@@ -812,8 +812,9 @@ class PromoteApiController(ApiController):
             if c.user_is_sponsor:
                 l.managed_promo = is_managed
                 l.domain_override = domain_override or None
-                l.third_party_tracking = third_party_tracking or None
-                l.third_party_tracking_2 = third_party_tracking_2 or None
+                if c.user.ad_tracker_access == True:
+                    l.third_party_tracking = third_party_tracking or None
+                    l.third_party_tracking_2 = third_party_tracking_2 or None
             l._commit()
 
             # only set the thumbnail when creating a link
@@ -934,9 +935,10 @@ class PromoteApiController(ApiController):
         if c.user_is_sponsor:
             l.media_override = media_override
             l.domain_override = domain_override or None
-            l.third_party_tracking = third_party_tracking or None
-            l.third_party_tracking_2 = third_party_tracking_2 or None
             l.managed_promo = is_managed
+            if c.user.ad_tracker_access == True:
+                l.third_party_tracking = third_party_tracking or None
+                l.third_party_tracking_2 = third_party_tracking_2 or None
 
         l._commit()
         form.redirect(promote.promo_edit_url(l))
