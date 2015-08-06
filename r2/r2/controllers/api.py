@@ -4521,6 +4521,7 @@ class ApiController(RedditController):
                                   skip=True)
         listing = LinkListing(builder, nextprev=False).listing()
         promote.add_trackers(listing.things, c.site)
+        promote.update_served(listing.things)
         if listing.things:
             w = listing.things[0]
             w.num = ""
