@@ -857,14 +857,14 @@ class Subreddit(Thing, Printable, BaseSite):
                     self.is_moderator_invite(user))
 
     def is_exposed(self, user):
+        """Returns whether the user needs to opt-in to seeing the content."""
         if not feature.is_enabled('quarantine'):
             return True
-
-        if c.user_is_admin:
-            return True
+        if not user:
+            return False
         elif not self.quarantine:
             return True
-        elif (user and user.email_verified and
+        elif (user.email_verified and
               QuarantinedSubredditOptInsByAccount.is_opted_in(user, self)):
             return True
 
