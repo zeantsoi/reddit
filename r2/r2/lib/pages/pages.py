@@ -2196,7 +2196,7 @@ class ProfilePage(Reddit):
         classes = Reddit.page_classes(self)
 
         if c.user_is_admin:
-            if self.user._spam or self.user._banned:
+            if self.user._spam or self.user._banned or self.user.in_timeout:
                 classes.add("banned")
             if self.user._deleted:
                 classes.add("deleted")
@@ -3662,7 +3662,7 @@ class WrappedUser(CachedTemplate):
         karma = ''
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
-            if user._spam:
+            if user._spam or user.in_timeout:
                 author_cls += " banned-user"
 
         CachedTemplate.__init__(self,
