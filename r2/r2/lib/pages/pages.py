@@ -2485,6 +2485,12 @@ class InterstitialPage(BoringPage):
             content=content,
         )
 
+    def page_classes(self):
+        classes = super(BoringPage, self).page_classes()
+        if 'quarantine' in classes:
+            classes.remove('quarantine')
+        return classes
+
 
 class Interstitial(Templated):
     """Generic template for rendering an interstitial page's content."""
