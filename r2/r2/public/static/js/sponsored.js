@@ -1186,7 +1186,8 @@ var exports = r.sponsored = {
         osData.versionHiddenInput.val('');
         osData.group.hide();
       }
-      return [deviceError, versionError];
+      return {'deviceError': deviceError,
+              'versionError': versionError}
     },
 
     fill_campaign_editor: function() {
@@ -1285,8 +1286,10 @@ var exports = r.sponsored = {
 
             var iOSErrors = this.validateDeviceAndVersion('iOS', generalData, iOSData);
             var androidErrors = this.validateDeviceAndVersion('Android', generalData, androidData);
-            [iOSDeviceError, iOSVersionError] = iOSErrors;
-            [androidDeviceError, androidVersionError] = androidErrors;
+            var iOSDeviceError = iOSErrors['deviceError']
+            var iOSVersionError = iOSErrors['versionError'];
+            var androidDeviceError = androidErrors['deviceError'];
+            var androidVersionError = androidErrors['versionError'];
 
             if (iOSDeviceError || androidDeviceError) {
               $OSDeviceError.show();
