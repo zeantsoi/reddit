@@ -1400,7 +1400,7 @@ class VOSVersion(Validator):
                     self.assign_error()
                     return
 
-        return (str(min), str(max))
+        return [str(min), str(max)]
 
 
 MIN_PASSWORD_LENGTH = 6
