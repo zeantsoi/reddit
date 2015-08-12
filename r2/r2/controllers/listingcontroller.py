@@ -1558,6 +1558,8 @@ class UserListListingController(ListingController):
     def builder_wrapper(self):
         if self.where == 'banned':
             cls = BannedTableItem
+        elif self.where == 'muted':
+            cls = MutedTableItem
         elif self.where == 'moderators':
             return self.moderator_wrap
         elif self.where == 'wikibanned':
@@ -1600,6 +1602,7 @@ class UserListListingController(ListingController):
               'moderators': 'moderator',
               'contributors': 'contributor',
               'banned': 'banned',
+              'muted': 'muted',
               'wikibanned': 'wikibanned',
               'wikicontributors': 'wikicontributor',
              }
@@ -1707,7 +1710,7 @@ class UserListListingController(ListingController):
                      uses_site=True,
                      uri='/about/{where}',
                      uri_variants=['/about/' + where for where in [
-                        'banned', 'wikibanned', 'contributors',
+                        'banned', 'muted', 'wikibanned', 'contributors',
                         'wikicontributors', 'moderators']])
     def GET_listing(self, where, user=None, **kw):
         if isinstance(c.site, FakeSubreddit):
@@ -1745,6 +1748,11 @@ class UserListListingController(ListingController):
             if not has_mod_access:
                 abort(403)
             self.listing_cls = BannedListing
+
+        elif where == 'muted':
+            if not has_mod_access:
+                abort(403)
+            self.listing_cls = MutedListing
 
         elif where == 'wikibanned':
             if not c.site.is_moderator_with_perms(c.user, 'wiki'):
