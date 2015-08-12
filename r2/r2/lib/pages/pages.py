@@ -2557,6 +2557,11 @@ class BannedInterstitial(Interstitial):
     pass
 
 
+class BannedUserInterstitial(BannedInterstitial):
+    """The banned user message."""
+    pass
+
+
 class PrivateInterstitial(Interstitial):
     """The interstitial shown on private subreddits."""
     pass
