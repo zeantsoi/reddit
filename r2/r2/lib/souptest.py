@@ -1,3 +1,4 @@
+# coding=utf-8
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -29,9 +30,12 @@ import re
 import sys
 import urlparse
 
+import BeautifulSoup
+import HTMLParser
 import lxml.etree
 
 from cStringIO import StringIO
+from r2.lib.unicode import _force_unicode
 
 valid_link_schemes = (
     '/',
@@ -74,7 +78,7 @@ for bt in markdown_user_tags:
     }
 
 
-def souptest_sniff_node(node):
+def souptest_sniff_node(node, document_html):
     """Check that a node from an (X)HTML document passes the sniff test"""
     # Because IE loves conditional comments.
     if node.tag is lxml.etree.Comment:
@@ -88,6 +92,9 @@ def souptest_sniff_node(node):
         tag_name = node.tag
         if tag_name not in allowed_tags:
             raise SoupUnsupportedTagError(tag_name)
+
+        if tag_name == 'table':
+            check_for_alien_blue_xss(node, document_html)
 
         for attr, val in node.items():
             if attr not in allowed_tags[tag_name]:
@@ -104,6 +111,65 @@ def souptest_sniff_node(node):
     else:
         # Processing instructions and friends fall down here.
         raise SoupUnsupportedNodeError(node)
+
+
+# DONT OPENSOURCE (Aug 2015): workaround for Alien Blue XSS, remove after a
+# couple months
+
+def check_for_alien_blue_xss(node, document_html):
+    """Check element for Alien Blue XSS payloads"""
+    def _sniff_bs_node(bs_node):
+        if isinstance(bs_node, BeautifulSoup.NavigableString):
+            return
+        if bs_node.name in {"script", "meta", "base"}:
+            raise SoupAlienBlueXSSError(bs_node)
+        for attr_name, attr_val in bs_node.attrs:
+            # event handlers
+            if attr_name.startswith("on"):
+                raise SoupAlienBlueXSSError(bs_node)
+            attr_val = attr_val.lower()
+            if attr_name == 'href' and attr_val.startswith("javascript"):
+                raise SoupAlienBlueXSSError(bs_node)
+
+    # lxml doesn't give you any way to get the original source pre-decoding,
+    # try to pull it from the original HTML, abusing the fact that snudown
+    # will put `<table>` and `</table>` on their own lines
+    split_html = document_html.splitlines(True)
+    start_line = node.sourceline - 1
+    end_line = None
+    if node.getnext() is not None:
+        # get everything before the start of the next tag
+        end_line = node.getnext().sourceline - 1
+    table_source = _force_unicode(''.join(split_html[start_line:end_line]))
+
+    # Emulate old Alien Blue's broken HTML decoding
+    # `&amp;amp;` was explicitly rewritten to `&`
+    table_source = table_source.replace("&amp;", "&").replace("&amp;", "&")
+    # Angle brackets were replaced with Unicode thingies
+    table_source = table_source.replace("&lt;", ".")
+    table_source = table_source.replace("&gt;", ".")
+    # keep a version of the source with no angle brackets
+    tagless_table_source = table_source.replace("<", "").replace(">", "")
+    # Then a general HTML entity replacement pass was made
+    h = HTMLParser.HTMLParser()
+    table_source = h.unescape(table_source)
+    tagless_table_source = h.unescape(tagless_table_source)
+
+    # No new angle brackets should have been introduced, but someone used
+    # weird encoding tricks to sneak one through.
+    if "<" in tagless_table_source or ">" in tagless_table_source:
+        raise SoupAlienBlueXSSError(table_source)
+
+    # We can't use `souptest_fragment` here because we don't want to disallow
+    # perfectly reasonable rendered md like `<table><th><td>&lt;foo&gt;[...]`.
+    # Just parse the (possibly mangled) markup like a browser would and look
+    # for the low-hanging rotten fruit. Specifically, someone might've escaped
+    # from a title attribute or something similar.
+    bs_root = BeautifulSoup.BeautifulSoup(table_source).contents[0]
+    _sniff_bs_node(bs_root)
+    for bs_child_node in bs_root.nextGenerator():
+        if bs_child_node is not None:
+            _sniff_bs_node(bs_child_node)
 
 
 ENTITY_DTD_PATH = os.path.join(
@@ -156,7 +222,7 @@ def souptest_fragment(fragment):
         # Can't use a SAX interface because lxml's doesn't give you a handler
         # for comments or entities unless you use Python 3. Oh well.
         for node in lxml.etree.parse(s, parser).iter():
-            souptest_sniff_node(node)
+            souptest_sniff_node(node, documentized_fragment)
     except lxml.etree.XMLSyntaxError:
         # Wrap the exception while keeping the original traceback
         type_, value, trace = sys.exc_info()
@@ -224,6 +290,10 @@ class SoupUnsupportedTagError(SoupReprError):
 
 class SoupHostnameLengthError(SoupReprError):
     HUMAN_MESSAGE = "Hostname too long"
+
+
+class SoupAlienBlueXSSError(SoupReprError):
+    HUMAN_MESSAGE = "Possible Alien Blue XSS detected"
 
 
 class SoupUnsupportedEntityError(SoupReprError):

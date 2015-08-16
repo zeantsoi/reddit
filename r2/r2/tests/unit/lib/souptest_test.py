@@ -25,6 +25,7 @@ import unittest
 
 from r2.lib.souptest import (
     souptest_fragment,
+    SoupAlienBlueXSSError,
     SoupError,
     SoupSyntaxError,
     SoupUnexpectedCDataSectionError,
@@ -118,3 +119,28 @@ class TestSoupTest(unittest.TestCase):
         self.assertFragmentValid('<a href="/google.com">a</a>')
         self.assertFragmentRaises('<a href="javascript://google.com">a</a>',
                                   SoupUnsupportedSchemeError)
+
+    # DONT OPENSOURCE: See note in souptest.py
+    def test_alienblue_xss_1(self):
+        self.assertFragmentRaises(
+            '<table>&#60;script&#62;alert(document.body.innerHTML)&#60;/script&#62;</table>',
+            SoupAlienBlueXSSError,
+        )
+
+    def test_alienblue_xss_2(self):
+        self.assertFragmentRaises(
+            '<table><a href="/" title="&quot; onclick=alert(1) foo=&quot;">foo</a></table>',
+            SoupAlienBlueXSSError,
+        )
+
+    def test_alienblue_xss_3(self):
+        self.assertFragmentRaises(
+            '<table><a href="/" title="&amp;quot; onclick=alert(1) foo=&amp;quot;">foo</a></table>',
+            SoupAlienBlueXSSError,
+        )
+
+    def test_alienblue_xss_4(self):
+        # No problems when it's not in a <table>
+        self.assertFragmentValid(
+            '<table></table>\n<a href="/" title="&amp;quot; onclick=alert(1) foo=&amp;quot;">foo</a>',
+        )
