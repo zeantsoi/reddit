@@ -22,7 +22,7 @@
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib import hooks
 from r2.lib.db import tdb_cassandra

@@ -25,7 +25,9 @@ import uuid
 
 import datetime as dt
 
-from pylons import g, request, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+from pylons import request
 
 from r2.lib.cookies import Cookies, Cookie, upgrade_cookie_security, NEVER
 from r2.models import Account, bcrypt_password, COOKIE_TIMESTAMP_FORMAT

@@ -22,7 +22,9 @@
 
 from datetime import datetime, timedelta
 
-from pylons import c, request, g
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+from pylons import request
 
 from r2.lib import utils
 from r2.models import COOKIE_TIMESTAMP_FORMAT

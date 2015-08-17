@@ -37,7 +37,7 @@ import random
 import datetime
 import collections
 
-from pylons import g
+from pylons import app_globals as g
 from pycassa.system_manager import ASCII_TYPE, UTF8_TYPE
 from pycassa.batch import Mutator
 
@@ -648,7 +648,8 @@ class UserQueryCache(_BaseQueryCache):
     @classmethod
     def get(cls, keys):
         import time
-        from pylons import c, request
+        from pylons import request
+        from pylons import tmpl_context as c
 
         start = time.time()
         ret = super(cls, cls).get(keys)

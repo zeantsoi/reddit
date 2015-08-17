@@ -28,7 +28,8 @@ from email.errors import HeaderParseError
 import datetime
 import traceback, sys, smtplib
 
-from pylons import c, g
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import N_
 import simplejson as json
 

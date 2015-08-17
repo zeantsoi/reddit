@@ -21,7 +21,8 @@
 ###############################################################################
 from datetime import datetime
 import json
-from pylons import c, request, response
+from pylons import request, response
+from pylons import tmpl_context as c
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.controllers.reddit_base import OAuth2OnlyController
