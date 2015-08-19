@@ -25,14 +25,14 @@ import hmac
 import json
 import re
 
-from pylons import g, c, request
+from pylons import g, c, request, response
 from pylons.i18n import _
 
 from r2.controllers.reddit_base import RedditController, abort_with_error
 from r2.lib.base import abort
 from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.csrf import csrf_exempt
-from r2.lib.utils import constant_time_compare
+from r2.lib.utils import constant_time_compare, UrlParser, is_subdomain
 from r2.lib.validator import (
     nop,
     validate,
@@ -92,6 +92,22 @@ class WebLogController(RedditController):
         VRatelimit.ratelimit(rate_user=False, rate_ip=True,
                              prefix="rate_weblog_", seconds=10)
 
+    def OPTIONS_report_cache_poisoning(self):
+        """Send CORS headers for cache poisoning reports."""
+        if "Origin" not in request.headers:
+            return
+        origin = request.headers["Origin"]
+        parsed_origin = UrlParser(origin)
+        if not is_subdomain(parsed_origin.hostname, g.domain):
+            return
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "POST"
+        response.headers["Access-Control-Allow-Headers"] = \
+            "Authorization, X-Loggit, "
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers['Access-Control-Expose-Headers'] = \
+            self.COMMON_REDDIT_HEADERS
+
     @csrf_exempt
     @validate(
         VRatelimit(rate_user=False, rate_ip=True, prefix='rate_poison_'),
@@ -127,6 +143,8 @@ class WebLogController(RedditController):
             resp_headers,
     ):
         """Report an instance of cache poisoning and its details"""
+
+        self.OPTIONS_report_cache_poisoning()
 
         if c.errors:
             abort(400)
