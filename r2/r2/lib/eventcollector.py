@@ -210,15 +210,10 @@ class EventQueue(object):
         # try to determine what kind of poisoning we're dealing with
 
         if poison_info["source"] == "web":
-            # We have no way of looking for a set-cookie due to XHR
-            # restrictions, so use the presence of a `_recentclicks2`
-            # cookie to determine whether or not the user is legitimately
-            # logged in or got served another users' cookie. Note that
-            # lack of _recentclicks is not definitive proof of cookie
-            # poisoning, it's just our best guess.
-            poisoner_recentclicks = poisoner_name + "_recentclicks2"
-            have_recentclicks = poisoner_recentclicks in request.cookies
-            if have_recentclicks:
+            # Do we think they logged in the usual way, or do we think they
+            # got poisoned with someone else's session cookie?
+            valid_login_hook = hooks.get_hook("poisoning.guess_valid_login")
+            if valid_login_hook.call_until_return(poisoner_name=poisoner_name):
                 # Maybe a misconfigured local Squid proxy + multiple
                 # clients?
                 event_base["poison_blame_guess"] = "local_proxy"
@@ -226,14 +221,12 @@ class EventQueue(object):
             elif (context.user_is_loggedin and
                   context.user.name == poisoner_name):
                 # Guess we got poisoned with a cookie-bearing response.
-                # Might have just happened if we don't have a recentclicks
-                # for the user.
                 event_base["poison_credentialed_guess"] = True
             else:
                 event_base["poison_credentialed_guess"] = False
         elif poison_info["source"] == "mweb":
-            # All mweb responses contain an OAuth token, so we have to consider
-            # it credentialed poisoning
+            # All mweb responses contain an OAuth token, so we have to assume
+            # whoever got this response can perform actions as the poisoner
             event_base["poison_credentialed_guess"] = True
         else:
             raise Exception("Unsupported source in cache_poisoning_event")
