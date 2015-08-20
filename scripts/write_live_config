@@ -103,6 +103,10 @@ def print_dict_diff(old, new):
             changed_keys.remove(key)
 
     keys = sorted(set(itertools.chain(removed_keys, added_keys, changed_keys)))
+    if not keys:
+        print "No changes found. Did you forget to deploy the INI change?"
+        return
+
     max_key_length = max(len(key) for key in keys)
 
     for key in keys:
@@ -138,7 +142,7 @@ def get_current_live_config(config):
     username = config.get("DEFAULT", "zookeeper_username")
     password = config.get("DEFAULT", "zookeeper_password")
 
-    client = connect_to_zookeeper(zk_hosts, (username, password))
+    client = connect_to_zookeeper(zk_hostlist, (username, password))
     return LiveConfig(client, LIVE_CONFIG_NODE).data
 
 
