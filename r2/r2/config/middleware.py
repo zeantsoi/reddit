@@ -59,7 +59,7 @@ class HTTPTooManyRequests(webob.exc.HTTPClientError):
 webob.exc.status_map[429] = HTTPTooManyRequests
 webob.util.status_reasons[429] = HTTPTooManyRequests.title
 
-# DON'T OPENSOURCE: patch out SSRFable/XSSable endpoints in the pylons error app
+# patch out SSRFable/XSSable endpoints in older versions of weberror
 import weberror.evalexception
 
 
