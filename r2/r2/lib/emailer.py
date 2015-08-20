@@ -35,7 +35,16 @@ import simplejson as json
 from r2.config import feature
 from r2.lib import hooks
 from r2.lib.utils import timeago, long_datetime
-from r2.models import Account, Award, Comment, DefaultSR, Email, Inbox, Link
+from r2.models import (
+    Account,
+    Award,
+    Comment,
+    DefaultSR,
+    Email,
+    Inbox,
+    Link,
+    Subreddit,
+)
 from r2.models.link import (
     NOTIFICATION_EMAIL_COOLING_PERIOD,
     NOTIFICATION_EMAIL_MAX_DELAY,
