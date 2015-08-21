@@ -1626,6 +1626,8 @@ class FormsController(RedditController):
         elif location == 'delete':
             content = PrefDelete()
         elif location == 'security':
+            if c.user.name not in g.admins:
+                return self.redirect('/prefs/')
             content = PrefSecurity()
         else:
             return self.abort404()
