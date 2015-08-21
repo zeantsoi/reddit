@@ -115,6 +115,22 @@ def souptest_sniff_node(node, document_html):
 
 # DONT OPENSOURCE (Aug 2015): workaround for Alien Blue XSS, remove after a
 # couple months
+def alien_blue_html_decode(source, keep_brackets=True):
+    source = _force_unicode(source)
+     # Emulate old Alien Blue's broken HTML decoding
+    # `&amp;amp;` was explicitly rewritten to `&`
+    source = source.replace("&amp;", "&").replace("&amp;", "&")
+    # Angle brackets were replaced with Unicode thingies
+    source = source.replace("&lt;", ".")
+    source = source.replace("&gt;", ".")
+
+    # So we can figure out if any new brackets were introduced after decoding
+    if not keep_brackets:
+        source = source.replace("<", "").replace(">", "")
+    # Then a general HTML entity replacement pass was made
+    h = HTMLParser.HTMLParser()
+    return h.unescape(source)
+
 
 def check_for_alien_blue_xss(node, document_html):
     """Check element for Alien Blue XSS payloads"""
@@ -142,23 +158,7 @@ def check_for_alien_blue_xss(node, document_html):
         end_line = node.getnext().sourceline - 1
     table_source = _force_unicode(''.join(split_html[start_line:end_line]))
 
-    # Emulate old Alien Blue's broken HTML decoding
-    # `&amp;amp;` was explicitly rewritten to `&`
-    table_source = table_source.replace("&amp;", "&").replace("&amp;", "&")
-    # Angle brackets were replaced with Unicode thingies
-    table_source = table_source.replace("&lt;", ".")
-    table_source = table_source.replace("&gt;", ".")
-    # keep a version of the source with no angle brackets
-    tagless_table_source = table_source.replace("<", "").replace(">", "")
-    # Then a general HTML entity replacement pass was made
-    h = HTMLParser.HTMLParser()
-    table_source = h.unescape(table_source)
-    tagless_table_source = h.unescape(tagless_table_source)
-
-    # No new angle brackets should have been introduced, but someone used
-    # weird encoding tricks to sneak one through.
-    if "<" in tagless_table_source or ">" in tagless_table_source:
-        raise SoupAlienBlueXSSError(table_source)
+    table_source = alien_blue_html_decode(table_source)
 
     # We can't use `souptest_fragment` here because we don't want to disallow
     # perfectly reasonable rendered md like `<table><th><td>&lt;foo&gt;[...]`.
@@ -209,6 +209,16 @@ def souptest_fragment(fragment):
     # so we need this hack to keep them out of markup.
     if "<![CDATA" in fragment:
         raise SoupUnexpectedCDataSectionError(fragment)
+
+    # Is someone trying to use weirdly encoded angle brackets to trip up Alien
+    # Blue?
+    try:
+        ab_decoded = alien_blue_html_decode(fragment, keep_brackets=False)
+        if "<" in ab_decoded or ">" in ab_decoded:
+            raise SoupAlienBlueXSSError(ab_decoded)
+    # HTMLParser really doesn't like huge entities
+    except OverflowError:
+        raise SoupUnsupportedEntityError(fragment)
 
     # We need to prepend our doctype + DTD or lxml can't resolve entities.
     # We also need to wrap everything in a div, as lxml throws out

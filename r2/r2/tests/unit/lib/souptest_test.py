@@ -144,3 +144,10 @@ class TestSoupTest(unittest.TestCase):
         self.assertFragmentValid(
             '<table></table>\n<a href="/" title="&amp;quot; onclick=alert(1) foo=&amp;quot;">foo</a>',
         )
+
+    def test_alienblue_xss_5(self):
+        # Tricky angle bracket encodings are disallowed entirely
+        self.assertFragmentRaises(
+            '<b>&amp;#60;table&amp;#62;</b>',
+            SoupAlienBlueXSSError,
+        )
