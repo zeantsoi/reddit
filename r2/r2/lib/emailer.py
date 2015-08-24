@@ -56,12 +56,14 @@ trylater_hooks = hooks.HookRegistrar()
 
 def _system_email(email, plaintext_body, kind, reply_to="",
         thing=None, from_address=g.feedback_email,
-        html_body="", list_unsubscribe_header=""):
+        html_body="", list_unsubscribe_header="", user=None):
     """
     For sending email from the system to a user (reply address will be
     feedback and the name will be reddit.com)
     """
-    Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
+    if user is None and c.user_is_loggedin:
+        user = c.user
+    Email.handler.add_to_queue(user,
         email, g.domain, from_address, kind,
         body=plaintext_body, reply_to=reply_to, thing=thing,
         html_body=html_body, list_unsubscribe_header=list_unsubscribe_header,
@@ -141,6 +143,7 @@ def password_email(user):
                                 passlink=passlink).render(style='email'),
                   Email.Kind.RESET_PASSWORD,
                   reply_to=g.support_email,
+                  user=user,
                   )
     return True
 
@@ -311,6 +314,7 @@ def password_change_email(user):
                          PasswordChangeEmail(user=user).render(style='email'),
                          Email.Kind.PASSWORD_CHANGE,
                          reply_to=g.support_email,
+                         user=user,
                          )
 
 def email_change_email(user):
