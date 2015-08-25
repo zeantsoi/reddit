@@ -300,7 +300,43 @@ try participating in other communities on reddit for a little while first before
 		</table>
   	</div>
   </%utils:line_field>
-  
+
+  <%utils:line_field title="${_('modmail')}">
+    <div class="delete-field">
+        <input class="nomargin" type="checkbox"
+               name="modmail_email_enabled" id="modmail_email_enabled"
+               %if thing.site and thing.site.modmail_email_address:
+                 checked="checked"
+               %endif
+        >
+        <label for="modmail_email_enabled">
+          ${_("forward messages to email")}
+        </label>
+
+    </div>
+    <div class="delete-field">
+        <label for="modmail_email_address">${_("email address")}</label>
+        <input type="text" name="modmail_email_address" id="modmail_email_address"
+               value="${thing.site.modmail_email_address}"
+               ${'disabled' if not thing.site.modmail_email_address else ''}/>
+        ${error_field("BAD_EMAIL", "modmail_email_address")}
+        ${error_field("NO_EMAIL", "modmail_email_address")}
+    </div>
+    <script>
+      (function() {
+        $("#modmail_email_enabled").on("change", function() {
+          var $emailInput = $("#modmail_email_address");
+
+          if ($(this).is(":checked")) {
+            $emailInput.prop("disabled", false);
+          } else {
+            $emailInput.prop("disabled", true);
+          }
+        })
+      })()
+    </script>
+  </%utils:line_field>
+
   <%utils:line_field title="${_('other options')}">
     <div class="delete-field">
       <ul>

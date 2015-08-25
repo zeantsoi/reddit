@@ -2561,6 +2561,8 @@ class ApiController(RedditController):
                                                  CommentSortMenu._options,
                                                  default=None),
                    quarantine = VBoolean('quarantine'),
+                   modmail_email_address=ValidEmail("modmail_email_address"),
+                   modmail_email_enabled=VBoolean("modmail_email_enabled"),
                    # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
@@ -2630,6 +2632,7 @@ class ApiController(RedditController):
             'key_color',
             'lang',
             'link_type',
+            'modmail_email_address',
             'name',
             'over_18',
             'public_description',
@@ -2652,6 +2655,15 @@ class ApiController(RedditController):
         ]
 
         keyword_fields.append('suggested_comment_sort')
+
+        # TODO: add feature flag here
+        kw['modmail_email_address'] = kw['modmail_email_address'] or ''
+        modmail_email_enabled = kw["modmail_email_enabled"]
+
+        if ((errors.NO_EMAIL, 'modmail_email_address') in c.errors and
+                not modmail_email_enabled):
+            # clear the error, email address is being removed
+            c.errors.remove((errors.NO_EMAIL, 'modmail_email_address'))
 
         kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
@@ -2770,6 +2782,10 @@ class ApiController(RedditController):
             pass
         elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
             pass
+        elif form.has_errors('modmail_email_address', errors.BAD_EMAIL):
+            pass
+        elif form.has_errors('modmail_email_address', errors.NO_EMAIL):
+            pass
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
@@ -2831,7 +2847,20 @@ class ApiController(RedditController):
             )
 
             for k, v in kw.iteritems():
-                if getattr(sr, k, None) != v:
+                if k == "modmail_email_address" and getattr(sr, k, None) != v:
+                    # TODO: send an email to the old address and new address
+                    if sr.modmail_email_address and v:
+                        description = "changed from {old} to {new}".format(
+                            old=sr.modmail_email_address, new=v)
+                    elif sr.modmail_email_address:
+                        description = "removed {old}".format(
+                            old=sr.modmail_email_address)
+                    else:
+                        description = "set {new}".format(new=v)
+                    ModAction.create(sr, c.user, action='editsettings', 
+                        details=k, description=description)
+
+                elif getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 
                                      details=k)
 
