@@ -134,5 +134,8 @@ setup(
     [r2.provider.search]
     cloudsearch = r2.lib.providers.search.cloudsearch:CloudSearchProvider
     solr = r2.lib.providers.search.solr:SolrSearchProvider
+    [r2.provider.email]
+    null = r2.lib.providers.email.null:NullEmailProvider
+    mailgun = r2.lib.providers.email.mailgun:MailgunEmailProvider
     """,
 )
