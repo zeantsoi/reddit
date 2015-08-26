@@ -693,7 +693,7 @@ class Link(Thing, Printable):
                 item.author = DeletedUser()
                 item.as_deleted = True
 
-            item.votable = item._age < item.subreddit.archive_age
+            item.votable = not item.archived
 
             item.expunged = False
             if item.is_self:
@@ -826,6 +826,14 @@ class Link(Thing, Printable):
         Designed for Q&A-type threads (eg /r/iama).
         """
         return (self.author_id,)
+
+    @property
+    def archived(self):
+        if getattr(self, 'subreddit', None):
+            sr = self.subreddit
+        else:
+            sr = self.subreddit_slow
+        return self._age >= sr.archive_age
 
     def sort_if_suggested(self):
         """Returns a sort, if the link or its subreddit has suggested one."""
