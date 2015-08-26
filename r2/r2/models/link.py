@@ -1730,6 +1730,8 @@ class Message(Thing, Printable):
                      display_author=None,
                      display_to=None,
                      email_id=None,
+                     sent_via_email=False,
+                     sender_email=None,
                      )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
@@ -1737,7 +1739,7 @@ class Message(Thing, Printable):
 
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
-             from_sr=False):
+             from_sr=False, generated_from_email=False):
         from r2.lib.emailer import message_notification_email
         from r2.lib.message_to_email import queue_modmail_email
 
@@ -1810,7 +1812,7 @@ class Message(Thing, Printable):
                 m.distinguished = 'yes'
                 m._commit()
 
-            if sr.modmail_email_address:
+            if not generated_from_email and sr.modmail_email_address:
                 # TODO: feature flag
                 queue_modmail_email(m)
 
@@ -2019,7 +2021,19 @@ class Message(Thing, Printable):
                         item.sr_blocked = True
                         item.is_collapsed = True
 
-                    if not item.user_is_moderator and not c.user_is_admin:
+                    if (item.sent_via_email and
+                            item.user_is_moderator or c.user_is_admin):
+                        item.author = item.subreddit
+                        item.distinguished = "yes"
+                        item.taglinetext = _(
+                            "moderator email from %(author)s via %(subreddit)s"
+                            " sent %(when)s")
+                    elif item.sent_via_email:
+                        item.author = item.subreddit
+                        item.distinguished = "yes"
+                        item.taglinetext = _(
+                            "subreddit message via %(subreddit)s sent %(when)s")
+                    elif not item.user_is_moderator and not c.user_is_admin:
                         item.author = item.subreddit
                         item.hide_author = True
                         item.taglinetext = _(

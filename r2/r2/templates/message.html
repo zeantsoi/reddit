@@ -78,6 +78,10 @@
     ${"[%s]" % ("+" if thing.collapsed else "–")}
   </a>
 
+  %if getattr(thing, "sent_via_email", False):
+    <span class="sent-via-email" title="${_('this message was sent via email')}"></span>
+  %endif
+
   <%
     substitutions = {}
 
