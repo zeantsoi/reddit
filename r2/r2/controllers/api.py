@@ -1492,9 +1492,6 @@ class ApiController(RedditController):
         by default, or AMAs may be sorted by Q&A. A sort of an empty string
         clears the default sort.
         """
-        if not feature.is_enabled('default_sort'):
-            return abort(403, "This feature is not yet enabled")
-
         if c.user._id != thing.author_id:
             ModAction.create(thing.subreddit_slow, c.user, target=thing,
                              action='setsuggestedsort')
@@ -2592,8 +2589,7 @@ class ApiController(RedditController):
             'wikimode',
         ]
 
-        if feature.is_enabled('default_sort'):
-            keyword_fields.append('suggested_comment_sort')
+        keyword_fields.append('suggested_comment_sort')
 
         kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
