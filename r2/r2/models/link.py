@@ -1729,6 +1729,7 @@ class Message(Thing, Printable):
                      from_sr=False,
                      display_author=None,
                      display_to=None,
+                     email_id=None,
                      )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
@@ -1738,6 +1739,7 @@ class Message(Thing, Printable):
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
              from_sr=False):
         from r2.lib.emailer import message_notification_email
+        from r2.lib.message_to_email import queue_modmail_email
 
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
                     ip=ip, from_sr=from_sr)
@@ -1807,6 +1809,10 @@ class Message(Thing, Printable):
             if sr.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
+
+            if sr.modmail_email_address:
+                # TODO: feature flag
+                queue_modmail_email(m)
 
         if author.name in g.admins:
             m.distinguished = 'admin'
