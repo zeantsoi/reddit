@@ -177,6 +177,10 @@ r.login.ui = {
             }
 
             this.popup.showLogin(actionDetails.description, dest && $.proxy(function(result) {
+                var hsts_redir = result.json.data.hsts_redir
+                if(hsts_redir) {
+                    dest = hsts_redir + encodeURIComponent(dest)
+                }
                 window.location = dest
             }, this))
 
@@ -230,8 +234,14 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
                 this.$el.addClass('working')
                 var base = r.config.extension ? '/.'+r.config.extension : '/',
                     defaultDest = /\/login\/?$/.test($.url().attr('path')) ? base : window.location,
-                    destParam = this.$el.find('input[name="dest"]').val()
+                    destParam = this.$el.find('input[name="dest"]').val(),
+                    hsts_redir = result.json.data.hsts_redir
                 var redir = destParam || defaultDest
+                // We might need to redirect through the base domain to grab
+                // our HSTS grant.
+                if (hsts_redir) {
+                    redir = hsts_redir + encodeURIComponent(redir)
+                }
                 if (window.location === redir) {
                     window.location.reload();
                 } else {

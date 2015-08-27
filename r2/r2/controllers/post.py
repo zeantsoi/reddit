@@ -21,6 +21,8 @@
 ###############################################################################
 from r2.lib.pages import *
 from reddit_base import (
+    hsts_eligible,
+    hsts_modify_redirect,
     set_over18_cookie,
     delete_over18_cookie,
 )
@@ -180,7 +182,7 @@ class PostController(ApiController):
             return LoginPage(user_login = request.POST.get('user'),
                              dest = dest).render()
 
-        return self.redirect(dest)
+        return self.hsts_redirect(dest)
 
     @csrf_exempt
     @validate(dest = VDestination(default = "/"))
@@ -193,7 +195,7 @@ class PostController(ApiController):
             return LoginPage(user_reg = request.POST.get('user'),
                              dest = dest).render()
 
-        return self.redirect(dest)
+        return self.hsts_redirect(dest)
 
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))
