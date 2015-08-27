@@ -605,7 +605,7 @@ class ApiController(RedditController):
         if request.params.get("hoist") != "cookie":
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
-        responder._send_data(need_https=feature.is_enabled("force_https"))
+        responder._send_data(need_https=user.https_forced)
 
     @validatedForm(VLoggedOut(),
                    user = VThrottledLogin(['user', 'passwd']),
