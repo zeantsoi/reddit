@@ -108,7 +108,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      security     = _("security"),
 
                      # messages
-                     compose      = _("compose"),
+                     compose      = _("send a private message"),
                      inbox        = _("inbox"),
                      sent         = _("sent"),
 
