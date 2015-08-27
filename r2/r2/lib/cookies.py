@@ -21,5 +21,5 @@
 ###############################################################################
 
 # Pickle will lose its mind if it doesn't find these in this module
-from r2.controllers.reddit_base import Cookie, Cookies
+from r2.controllers.reddit_base import Cookie, Cookies, NEVER, DELETE
 
