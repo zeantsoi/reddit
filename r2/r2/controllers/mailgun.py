@@ -27,6 +27,7 @@ import time
 from pylons import app_globals as g
 from pylons import request
 
+from r2.config import feature
 from r2.controllers.reddit_base import RedditController
 from r2.lib.base import abort
 from r2.lib.csrf import csrf_exempt
@@ -111,6 +112,9 @@ class MailgunWebhookController(RedditController):
         except SoupError:
             g.log.warning("bad markdown in modmail email: %s", body)
             abort(406, "invalid body")
+
+        if not feature.is_enabled("modmail_email", subreddit=sr):
+            return
 
         # keep the subject consistent
         message_subject = parent.subject
