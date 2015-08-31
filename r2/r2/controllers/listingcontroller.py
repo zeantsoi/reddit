@@ -1228,6 +1228,11 @@ class MessageController(ListingController):
             self.where = "moderator"
         else:
             self.where = where
+
+        # don't allow access to modmail when user is in timeout
+        if self.where == "moderator":
+            VNotInTimeout().run(action_name="modmail", target=message)
+
         self.subwhere = subwhere
         self.message = message
         if mark is not None:
