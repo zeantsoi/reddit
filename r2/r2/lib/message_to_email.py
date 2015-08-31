@@ -22,11 +22,13 @@
 
 import hashlib
 import hmac
+import json
 
 from pylons import app_globals as g
 import requests
 
 from r2.lib import amqp
+from r2.lib.template_helpers import add_sr
 from r2.lib.utils import constant_time_compare
 from r2.models import (
     Account,
@@ -148,15 +150,99 @@ def send_modmail_email(message):
         message._commit()
 
 
+def send_address_change_email(sr, modmail_email, old_modmail_email):
+    if old_modmail_email and not modmail_email:
+        subject = "[r/{subreddit} mail]: modmail forwarding disabled".format(
+            subreddit=sr.name)
+        text = ("Modmail forwarding has been disabled.\n\n"
+            "Previously incoming modmail messages were forwarded to "
+            "{old_email}.\n\nTo re-enable go to {prefs_url}.\n\n"
+            "If you feel you have received this notice in error, "
+            "please contact the community team at {community_email}"
+        )
+        to_addresses = [old_modmail_email]
+    elif not old_modmail_email and modmail_email:
+        subject = "[r/{subreddit} mail]: modmail forwarding enabled".format(
+            subreddit=sr.name)
+        text = ("Modmail forwarding has been enabled.\n\n"
+            "All incoming modmail messages will be forwarded to {email}.\n\n"
+            "To change or disable go to {prefs_url}.\n\n"
+            "If you feel you have received this notice in error, "
+            "please contact the community team at {community_email}"
+        )
+        to_addresses = [modmail_email]
+    elif old_modmail_email and modmail_email:
+        subject = "[r/{subreddit} mail]: modmail forwarding changed".format(
+            subreddit=sr.name)
+        text = ("Modmail forwarding has been changed.\n\n"
+            "All incoming modmail messages will be forwarded to {email}.\n\n"
+            "Previously they were forwarded to {old_email}.\n\n"
+            "To change or disable go to {prefs_url}.\n\n"
+            "If you feel you have received this notice in error, "
+            "please contact the community team at {community_email}"
+        )
+        to_addresses = [modmail_email, old_modmail_email]
+    else:
+        return
+
+    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
+    prefs_url = add_sr(prefs_url, sr_path=False)
+
+    text = text.format(
+        email=modmail_email,
+        old_email=old_modmail_email,
+        prefs_url=prefs_url,
+        community_email=g.community_email,
+    )
+    from_address = "r/{subreddit} mail <{sender_email}>".format(
+        subreddit=sr.name, sender_email=g.modmail_system_email)
+
+    email_id = g.email_provider.send_email(
+        to_address=to_addresses,
+        from_address=from_address,
+        subject=subject,
+        text=text,
+        reply_to=from_address,
+    )
+    if email_id:
+        g.log.info("sent as %s", email_id)
+
+
 def queue_modmail_email(message):
-    amqp.add_item("modmail_email_q", message._id36)
+    amqp.add_item(
+        "modmail_email_q",
+        json.dumps({
+            "event": "new_message",
+            "message_id36": message._id36,
+        }),
+    )
+
+
+def queue_modmail_email_change_email(sr, modmail_email, old_modmail_email):
+    amqp.add_item(
+        "modmail_email_q",
+        json.dumps({
+            "event": "email_change",
+            "subreddit_id36": sr._id36,
+            "modmail_email": modmail_email,
+            "old_modmail_email": old_modmail_email,
+        }),
+    )
 
 
 def process_modmail_email():
     @g.stats.amqp_processor("modmail_email_q")
     def process_message(msg):
-        message_id36 = msg.body
-        message = Message._byID36(message_id36, data=True)
-        send_modmail_email(message)
+        msg_dict = json.loads(msg.body)
+        if msg_dict["event"] == "new_message":
+            message_id36 = msg_dict["message_id36"]
+            message = Message._byID36(message_id36, data=True)
+            send_modmail_email(message)
+        elif msg_dict["event"] == "email_change":
+            subreddit_id36 = msg_dict["subreddit_id36"]
+            sr = Subreddit._byID36(subreddit_id36, data=True)
+            modmail_email = msg_dict["modmail_email"]
+            old_modmail_email = msg_dict["old_modmail_email"]
+            send_address_change_email(sr, modmail_email, old_modmail_email)
 
     amqp.consume_items("modmail_email_q", process_message)

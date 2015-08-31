@@ -114,6 +114,7 @@ from r2.lib.csrf import csrf_exempt
 from r2.models import wiki
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
 from r2.lib.merge import ConflictException
+from r2.lib.message_to_email import queue_modmail_email_change_email
 
 import csv
 from collections import defaultdict
@@ -2847,8 +2848,8 @@ class ApiController(RedditController):
             )
 
             for k, v in kw.iteritems():
-                if k == "modmail_email_address" and getattr(sr, k, None) != v:
-                    # TODO: send an email to the old address and new address
+                if (k == "modmail_email_address" and
+                        sr.modmail_email_address != v):
                     if sr.modmail_email_address and v:
                         description = "changed from {old} to {new}".format(
                             old=sr.modmail_email_address, new=v)
@@ -2859,6 +2860,12 @@ class ApiController(RedditController):
                         description = "set {new}".format(new=v)
                     ModAction.create(sr, c.user, action='editsettings', 
                         details=k, description=description)
+
+                    queue_modmail_email_change_email(
+                        sr=sr,
+                        modmail_email=v,
+                        old_modmail_email=sr.modmail_email_address,
+                    )
 
                 elif getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 
