@@ -1398,13 +1398,16 @@ class ApiController(RedditController):
                 VModhash(),
                 VSrCanBan('id'),
                 thing=VByName('id', thing_cls=Link))
-    @api_doc(api_section.links_and_comments)
     def POST_lock(self, thing):
         """Lock a comment thread.
 
         See also: [/api/unlock](#POST_api_unlock).
 
         """
+        if not feature.is_enabled('thread_locking',
+                                  subreddit=thing.subreddit_slow.name):
+            abort(404, 'not found')
+
         thing.locked = True
         thing._commit()
 
@@ -1418,13 +1421,16 @@ class ApiController(RedditController):
                 VModhash(),
                 VSrCanBan('id'),
                 thing=VByName('id', thing_cls=Link))
-    @api_doc(api_section.links_and_comments)
     def POST_unlock(self, thing):
         """Unlock a comment thread.
 
         See also: [/api/lock](#POST_api_lock).
 
         """
+        if not feature.is_enabled('thread_locking',
+                                  subreddit=thing.subreddit_slow.name):
+            abort(404, 'not found')
+
         thing.locked = False
         thing._commit()
 
