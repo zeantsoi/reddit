@@ -255,7 +255,7 @@ def new_promotion(is_self, title, content, author, ip):
         is_self=is_self,
         title=title,
         content=content,
-        author=user,
+        author=author,
         sr=sr,
         ip=ip,
     )
