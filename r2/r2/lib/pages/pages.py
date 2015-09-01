@@ -2535,6 +2535,8 @@ class ErrorPage(Templated):
 
 
 class InterstitialPage(BoringPage):
+    show_infobar = False
+
     def __init__(self, title, content=None):
         BoringPage.__init__(
             self,

@@ -240,6 +240,8 @@ class ListingController(RedditController):
     @require_oauth2_scope("read")
     @base_listing
     def GET_listing(self, **env):
+        if isinstance(c.site, ModSR):
+            VNotInTimeout().run(action_name="view_mod_subreddit", target=c.site)
         check_cheating('site')
         if self.can_send_referrer():
             c.referrer_policy = "always"
@@ -1151,6 +1153,8 @@ class MessageController(ListingController):
             c.user._incr('inbox_count', -c.user.inbox_count)
 
     def listing(self):
+        if not c.default_sr:
+            VNotInTimeout().run(action_name='view_modmail')
         if (self.where == 'messages' and
             (c.user.pref_threaded_messages or self.message)):
             return Listing(self.builder_obj).listing()
@@ -1753,7 +1757,7 @@ class UserListListingController(ListingController):
             abort(403)
 
         self.listing_cls = None
-        self.editable = True
+        self.editable = not (c.user_is_loggedin and c.user.in_timeout)
         self.paginated = True
         self.jump_to_val = request.GET.get('user')
         self.show_not_found = bool(self.jump_to_val)
@@ -1769,31 +1773,36 @@ class UserListListingController(ListingController):
             if c.site.hide_contributors:
                 abort(403)
             self.listing_cls = ContributorListing
-            self.editable = has_mod_access
+            self.editable = self.editable and has_mod_access 
 
         elif where == 'banned':
             if not has_mod_access:
                 abort(403)
+            VNotInTimeout().run(action_name='bannedlisting')
             self.listing_cls = BannedListing
 
         elif where == 'muted':
             if not (has_mod_access and
                     c.site.is_moderator_with_perms(c.user, 'mail')):
                 abort(403)
+            VNotInTimeout().run(action_name='mutedlisting')
             self.listing_cls = MutedListing
 
         elif where == 'wikibanned':
             if not c.site.is_moderator_with_perms(c.user, 'wiki'):
                 abort(403)
+            VNotInTimeout().run(action_name='wikibannedlisting')
             self.listing_cls = WikiBannedListing
 
         elif where == 'wikicontributors':
             if not c.site.is_moderator_with_perms(c.user, 'wiki'):
                 abort(403)
+            VNotInTimeout().run(action_name='wikicontributorslisting')
             self.listing_cls = WikiMayContributeListing
 
         elif where == 'moderators':
-            self.editable = ((c.user_is_loggedin and
+            self.editable = ((self.editable and
+                              c.user_is_loggedin and
                               c.site.is_unlimited_moderator(c.user)) or
                              c.user_is_admin)
             self.listing_cls = ModListing

@@ -499,6 +499,7 @@ class FrontController(RedditController):
         array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
+              VNotInTimeout(),
               name=nop('name'))
     def GET_newreddit(self, name):
         """Create a subreddit form"""
@@ -552,6 +553,7 @@ class FrontController(RedditController):
     @disable_subreddit_css()
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(
+        VNotInTimeout(),
         mod=nop('mod', docs={"mod": "(optional) a moderator filter"}),
         action=VOneOf('type', ModAction.actions),
     )
@@ -575,7 +577,6 @@ class FrontController(RedditController):
         if not c.user_is_loggedin or not (c.user_is_admin or
                                           c.site.is_moderator(c.user)):
             return self.abort404()
-
         if mod:
             if mod == 'a':
                 modnames = g.admins
@@ -879,6 +880,7 @@ class FrontController(RedditController):
         if isinstance(c.site, FakeSubreddit):
             return self.abort404()
         else:
+            VNotInTimeout().run(action_name="editreddit_%s" % location, target=c.site)
             return self._edit_normal_reddit(location, created)
 
     @require_oauth2_scope("read")
@@ -889,6 +891,7 @@ class FrontController(RedditController):
         Data includes the subscriber count, description, and header image."""
         if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
+        VNotInTimeout().run(action_name="about", target=c.site)
         item = Wrapped(c.site, accounts_active_count=c.site.accounts_active)
         Subreddit.add_props(c.user, [item])
         return Reddit(content=item).render()
@@ -1308,6 +1311,8 @@ class FrontController(RedditController):
 
         if not (c.default_sr or c.site.can_submit(c.user)):
             abort(403, "forbidden")
+
+        VNotInTimeout().run(action_name="submit", target=c.site)
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
@@ -1877,7 +1882,6 @@ class FormsController(RedditController):
     )
     def GET_gold(self, is_payment, goldtype, period, months, num_creddits,
                  signed, recipient, giftmessage, thing, email, edit, timeout):
-
         if thing:
             thing_sr = Subreddit._byID(thing.sr_id, data=True)
             if (thing._deleted or
