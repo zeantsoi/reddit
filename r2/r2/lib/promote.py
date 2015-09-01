@@ -269,9 +269,9 @@ def new_promotion(is_self, title, content, author, ip):
 
     # the user has posted a promotion, so enable the promote menu unless
     # they have already opted out
-    if user.pref_show_promote is not False:
-        user.pref_show_promote = True
-        user._commit()
+    if author.pref_show_promote is not False:
+        author.pref_show_promote = True
+        author._commit()
 
     # notify of new promo
     emailer.new_promo(l)
