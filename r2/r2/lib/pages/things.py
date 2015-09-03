@@ -120,8 +120,15 @@ class LinkButtons(PrintableButtons):
                              c.user_special_distinguish)
                             and getattr(thing, "expand_children", False))
 
+        permalink = thing.permalink
+
         kw = {}
         if thing.promoted is not None:
+            if thing.campaign:
+                permalink = update_query(permalink, {
+                    "campaign": thing.campaign,
+                })
+
             now = datetime.now(g.tz)
             kw = dict(promo_url = promo_edit_url(thing),
                       promote_status = getattr(thing, "promote_status", 0),
@@ -141,7 +148,7 @@ class LinkButtons(PrintableButtons):
                                   # comment link params
                                   comment_label = thing.comment_label,
                                   commentcls = thing.commentcls,
-                                  permalink  = thing.permalink,
+                                  permalink  = permalink,
                                   # button visibility
                                   saved = thing.saved,
                                   editable = editable, 

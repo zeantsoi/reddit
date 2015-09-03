@@ -1506,7 +1506,7 @@ class LinkInfoPage(Reddit):
 
     def __init__(self, link = None, comment = None, disable_comments=False,
                  link_title = '', subtitle = None, num_duplicates = None,
-                 show_promote_button=False, sr_detail=False, *a, **kw):
+                 show_promote_button=False, sr_detail=False, campaign_fullname="", *a, **kw):
 
         c.permalink_page = True
         expand_children = kw.get("expand_children", not bool(comment))
@@ -1516,17 +1516,14 @@ class LinkInfoPage(Reddit):
 
         # link_listing will be the one-element listing at the top
         self.link_listing = wrap_links(link, wrapper=wrapper, sr_detail=sr_detail)
+        things = self.link_listing.things
+        self.link = things[0]
 
         # add click tracker
-        things = self.link_listing.things
-
-        # links aren't associated with any campaign at this point
-        for link in things:
-            link.campaign = ''
-
+        self.link.campaign = campaign_fullname
         promote.add_trackers(things, c.site)
+
         self.disable_comments = disable_comments
-        self.link = things[0]
 
         if promote.is_promo(self.link) and not promote.is_promoted(self.link):
             self.link.votable = False
