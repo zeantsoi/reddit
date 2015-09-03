@@ -2853,11 +2853,14 @@ class ApiController(RedditController):
                     if sr.modmail_email_address and v:
                         description = "changed from {old} to {new}".format(
                             old=sr.modmail_email_address, new=v)
+                        g.stats.simple_event("modmail_email.sr_modified")
                     elif sr.modmail_email_address:
                         description = "removed {old}".format(
                             old=sr.modmail_email_address)
+                        g.stats.simple_event("modmail_email.sr_disabled")
                     else:
                         description = "set {new}".format(new=v)
+                        g.stats.simple_event("modmail_email.sr_enabled")
                     ModAction.create(sr, c.user, action='editsettings', 
                         details=k, description=description)
 

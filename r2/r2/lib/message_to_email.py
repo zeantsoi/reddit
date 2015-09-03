@@ -148,6 +148,7 @@ def send_modmail_email(message):
         g.log.info("sent %s as %s", message._id36, email_id)
         message.email_id = email_id
         message._commit()
+        g.stats.simple_event("modmail_email.outgoing_email")
 
 
 def send_address_change_email(sr, modmail_email, old_modmail_email):

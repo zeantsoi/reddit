@@ -61,9 +61,11 @@ def validate_mailgun_webhook(timestamp, token, signature):
     expected_mac = hmac.new(
         g.secrets['mailgun_api_key'], message, hashlib.sha256).hexdigest()
     if not constant_time_compare(expected_mac, signature):
+        g.stats.simple_event("mailgun.incoming.bad_signature")
         return False
 
     if abs(int(timestamp) - time.time()) > MAX_TIMESTAMP_DEVIATION:
+        g.stats.simple_event("mailgun.incoming.bad_timestamp")
         return False
 
     return True
@@ -133,3 +135,5 @@ class MailgunWebhookController(RedditController):
         message.email_id = email_id
         message._commit()
         queries.new_message(message, inbox_rel)
+        g.stats.simple_event("mailgun.incoming.success")
+        g.stats.simple_event("modmail_email.incoming_email")
