@@ -151,26 +151,6 @@ class Link(Thing, Printable):
 
     @classmethod
     def _by_url(cls, url, sr):
-        if isinstance(sr, FakeSubreddit):
-            sr = None
-
-        try:
-            lbu = LinksByUrl._byID(LinksByUrl._key_from_url(url))
-        except tdb_cassandra.NotFound:
-            # translate the tdb_cassandra.NotFound into the NotFound
-            # the caller is expecting
-            raise NotFound('Link "%s"' % url)
-
-        link_id36s = lbu._values()
-
-        links = Link._byID36(link_id36s, data=True, return_dict=False)
-        links = [l for l in links if not l._deleted]
-        if sr:
-            links = [link for link in links if link.sr_id == sr._id]
-
-        if links:
-            return links
-
         raise NotFound('Link "%s"' % url)
 
     def _unset_url_cache(self):
