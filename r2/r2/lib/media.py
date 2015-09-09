@@ -323,13 +323,14 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
         if thumbnail_image and save_thumbnail:
             thumbnail_size = thumbnail_image.size
             thumbnail_url = upload_media(thumbnail_image)
+        else:
+            # don't cache if thumbnail is absent
+            use_cache = False
 
         media = Media(media_object, secure_media_object, preview_object,
                       thumbnail_url, thumbnail_size)
 
-    # Don't cache partial scrape and don't cache if thumbnail is absent
-    use_cache = use_cache and save_thumbnail and thumbnail_image 
-    if use_cache and media is not ERROR_MEDIA:
+    if use_cache and save_thumbnail and media is not ERROR_MEDIA:
         # Store the media in the cache, possibly extending the ttl
         MediaByURL.add(url,
                        media,
