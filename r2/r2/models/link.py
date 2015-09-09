@@ -225,6 +225,9 @@ class Link(Thing, Printable):
         return l
 
     def set_content(self, is_self, content):
+        if not self.promoted:
+            raise ValueError("set_content is only supported for promoted links")
+
         was_self = self.is_self
         self.is_self = is_self
 
