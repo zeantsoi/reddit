@@ -2562,7 +2562,7 @@ class SubredditTopBar(CachedTemplate):
         # template being added to the header. set c.location as an attribute so
         # it is added to the render cache key.
         self.location = c.location or "no_location"
-
+        self.my_subreddits_dropdown = self.my_reddits_dropdown()
         CachedTemplate.__init__(self, name=name, t=t, over18=c.over18)
 
     @property
@@ -2578,10 +2578,6 @@ class SubredditTopBar(CachedTemplate):
             self._pop_reddits = [ sr for sr in p_srs
                                   if sr.name not in g.automatic_reddits ]
         return self._pop_reddits
-
-    @property
-    def show_my_reddits_dropdown(self):
-        return len(self.my_reddits) > g.sr_dropdown_threshold
 
     def my_reddits_dropdown(self):
         drop_down_buttons = []
