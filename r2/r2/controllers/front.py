@@ -440,6 +440,7 @@ class FrontController(RedditController):
             suggested_sort=suggested_sort,
         )
 
+        campaign_fullname = request.GET.get("campaign", "")
 
         res = LinkInfoPage(link=article,
                            comment=comment,
@@ -452,7 +453,8 @@ class FrontController(RedditController):
                            infotext=infotext,
                            infotext_class=infotext_class,
                            infotext_show_icon=infotext_show_icon,
-                           sr_detail=sr_detail).render()
+                           sr_detail=sr_detail,
+                           campaign_fullname=campaign_fullname).render()
         return res
 
     def _add_show_comments_link(self, array, article, num, max_comm, gold=False):

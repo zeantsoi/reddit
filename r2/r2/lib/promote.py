@@ -59,6 +59,7 @@ from r2.models import (
     Frontpage,
     Link,
     MultiReddit,
+    NotFound,
     NO_TRANSACTION,
     PromoCampaign,
     PROMOTE_STATUS,
@@ -221,7 +222,23 @@ def add_trackers(items, sr, adserver_click_urls=None):
             item.third_party_tracking_url_2 = item.third_party_tracking_2
 
         # construct the click redirect url
-        item_url = adserver_click_urls.get(item.campaign, item.url)
+        item_url = None
+        if item.campaign:
+            adserver_click_url = adserver_click_urls.get(item.campaign, None)
+            if not adserver_click_url:
+                try:
+                    pc = PromoCampaign._by_fullname(item.campaign, data=True)
+                    if item._id == pc.link_id:
+                        adserver_click_url = getattr(pc, "adserver_click_url", None)
+                except NotFound:
+                    pass
+
+            item_url = adserver_click_url
+
+        # no click redirect available, usually from a direct link
+        if not item_url:
+            item_url = item.url
+
         url = urllib.unquote(_force_utf8(item_url))
         hashable = ''.join((url, tracking_name.encode("utf-8")))
         click_mac = hmac.new(
