@@ -850,7 +850,7 @@ class PromoteApiController(ApiController):
 
             # type changing
             if is_self != l.is_self:
-                l.set_type(is_self, selftext if is_self else url)
+                l.set_content(is_self, selftext if is_self else url)
                 changed = True
 
             if is_link and url and url != l.url:
