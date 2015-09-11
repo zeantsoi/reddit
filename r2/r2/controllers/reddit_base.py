@@ -1648,6 +1648,9 @@ class RedditController(OAuth2ResourceController):
         if c.user_is_loggedin:
             return
 
+        if feature.is_enabled("disable_last_modified_check"):
+            return
+
         # HTTP timestamps round to nearest second. truncate this value for
         # comparisons.
         last_modified = last_modified.replace(microsecond=0)
