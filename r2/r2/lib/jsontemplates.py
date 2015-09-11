@@ -562,8 +562,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         elif attr == "link_karma":
             return display_link_karma(thing.link_karma)
         elif attr == "ban_expiration_utc":
-            expiration_hook = hooks.get_hook('timeouts.fetch_expiration')
-            expiration_date = expiration_hook.call_until_return(user=thing)
+            expiration_date = thing.timeout_expiration
             if not expiration_date:
                 return None
 
