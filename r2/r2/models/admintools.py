@@ -377,9 +377,6 @@ def wiki_template(template_slug, sr=None):
 
 @admintools_hooks.on("account.registered")
 def send_welcome_message(user):
-    if not feature.is_enabled('send_welcome_message'):
-        return
-
     welcome_title = wiki_template("welcome_title").format(
         username=user.name,
     )
