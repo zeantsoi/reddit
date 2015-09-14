@@ -447,6 +447,14 @@ class Account(Thing):
         rel.note = note
         rel._commit()
 
+    @memoize("get_random_friends", time=30*60)
+    def get_random_friends(self, limit=100):
+        friends = self.friend_ids()
+        if len(friends) > limit:
+            friends = random.sample(friends)
+
+        return friends
+
     def delete(self, delete_message=None):
         self.delete_message = delete_message
         self.delete_time = datetime.now(g.tz)

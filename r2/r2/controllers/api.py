@@ -51,7 +51,6 @@ from r2.lib.utils import (
     query_string,
     randstr,
     sanitize_url,
-    set_last_modified,
     timeago,
     timefromnow,
     timeuntil,
@@ -89,7 +88,6 @@ from r2.lib.pages.things import (
     hot_links_by_url_listing,
     wrap_links,
 )
-from r2.models.last_modified import LastModified
 
 from r2.lib.menus import CommentSortMenu
 from r2.lib.captcha import get_iden
@@ -1890,10 +1888,6 @@ class ApiController(RedditController):
                 ignore_missing=True,
             )))
 
-        if kind == 'link':
-            set_last_modified(item, 'comments')
-            LastModified.touch(item._fullname, 'Comments')
-
         wrapper = default_thing_wrapper(expand_children = True)
         jquery(".content").replace_things(item, True, True, wrap = wrapper)
         jquery(".content .link .rank").hide()
@@ -2904,16 +2898,6 @@ class ApiController(RedditController):
                         moderator_banned=not c.user_is_admin,
                         banner=c.user.name,
                         train_spam=train_spam)
-
-        modified_thing = None
-        if isinstance(thing, Link):
-            modified_thing = thing
-        elif isinstance(thing, Comment):
-            modified_thing = Link._byID(thing.link_id)
-
-        if modified_thing:
-            set_last_modified(modified_thing, 'comments')
-            LastModified.touch(modified_thing._fullname, 'Comments')
 
         if isinstance(thing, (Link, Comment)):
             sr = thing.subreddit_slow
