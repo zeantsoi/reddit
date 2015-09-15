@@ -69,7 +69,7 @@
   </div>
 
   <div id="header-bottom-right">
-    %if feature.is_enabled('beta_opt_in') and (c.user.pref_beta or c.subdomain == 'beta'):
+    %if c.user.pref_beta or c.subdomain == 'beta':
       <div class="beta-hint help help-hoverable">
         <a class="beta-link" href="/r/${g.beta_sr}">beta</a>
         <div id="beta-help" class="hover-bubble help-bubble anchor-top">
