@@ -50,7 +50,11 @@ from r2.lib.filters import _force_utf8
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
-from r2.lib.utils import to_date, weighted_lottery
+from r2.lib.utils import (
+    constant_time_compare,
+    to_date,
+    weighted_lottery,
+)
 from r2.models import (
     Account,
     Bid,
@@ -196,6 +200,21 @@ def update_served(items):
             campaign._commit()
 
 
+NO_CAMPAIGN = "NO_CAMPAIGN"
+
+def is_valid_click_url(link, click_url, click_hash):
+    expected_mac = get_click_url_hmac(link, click_url)
+
+    return constant_time_compare(click_hash, expected_mac)
+
+
+def get_click_url_hmac(link, click_url):
+    secret = g.secrets["adserver_click_url_secret"]
+    data = "|".join([link._fullname, click_url])
+
+    return hmac.new(secret, data, hashlib.sha256).hexdigest()
+
+
 def add_trackers(items, sr, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
@@ -225,23 +244,7 @@ def add_trackers(items, sr, adserver_click_urls=None):
             item.third_party_tracking_url_2 = item.third_party_tracking_2
 
         # construct the click redirect url
-        item_url = None
-        if item.campaign:
-            adserver_click_url = adserver_click_urls.get(item.campaign, None)
-            if not adserver_click_url:
-                try:
-                    pc = PromoCampaign._by_fullname(item.campaign, data=True)
-                    if item._id == pc.link_id:
-                        adserver_click_url = getattr(pc, "adserver_click_url", None)
-                except NotFound:
-                    pass
-
-            item_url = adserver_click_url
-
-        # no click redirect available, usually from a direct link
-        if not item_url:
-            item_url = item.url
-
+        item_url = adserver_click_urls.get(item.campaign, item.url)
         url = urllib.unquote(_force_utf8(item_url))
         hashable = ''.join((url, tracking_name.encode("utf-8")))
         click_mac = hmac.new(
@@ -259,7 +262,12 @@ def add_trackers(items, sr, adserver_click_urls=None):
         # also overwrite the permalink url with redirect click_url for selfposts
         if item.is_self:
             item.permalink = click_url
-
+        else:
+            # add encrypted click url to the permalink for comments->click
+            item.permalink = update_query(item.permalink, {
+                "click_url": url,
+                "click_hash": get_click_url_hmac(item, url),
+            })
 
 def update_promote_status(link, status):
     queries.set_promote_status(link, status)

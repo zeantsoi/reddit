@@ -1516,7 +1516,9 @@ class LinkInfoPage(Reddit):
 
     def __init__(self, link = None, comment = None, disable_comments=False,
                  link_title = '', subtitle = None, num_duplicates = None,
-                 show_promote_button=False, sr_detail=False, campaign_fullname="", *a, **kw):
+                 show_promote_button=False, sr_detail=False,
+                 campaign_fullname=promote.NO_CAMPAIGN, click_url=None,
+                 *a, **kw):
 
         c.permalink_page = True
         expand_children = kw.get("expand_children", not bool(comment))
@@ -1531,7 +1533,15 @@ class LinkInfoPage(Reddit):
 
         # add click tracker
         self.link.campaign = campaign_fullname
-        promote.add_trackers(things, c.site)
+
+        # don't need to track clicks on self posts since they've
+        # already been clicked at this point
+        if not self.link.is_self:
+            promote.add_trackers(
+                things,
+                c.site,
+                adserver_click_urls={campaign_fullname: click_url},
+            )
 
         self.disable_comments = disable_comments
 
