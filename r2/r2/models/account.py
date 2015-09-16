@@ -453,7 +453,7 @@ class Account(Thing):
     def get_random_friends(self, limit=100):
         friends = self.friend_ids()
         if len(friends) > limit:
-            friends = random.sample(friends)
+            friends = random.sample(friends, limit)
 
         return friends
 
