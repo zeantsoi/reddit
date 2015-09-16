@@ -1413,6 +1413,9 @@ class ApiController(RedditController):
                                   subreddit=thing.subreddit_slow.name):
             abort(404, 'not found')
 
+        if thing.archived:
+            return abort(400, "Bad Request")
+
         thing.locked = True
         thing._commit()
 
@@ -1435,6 +1438,9 @@ class ApiController(RedditController):
         if not feature.is_enabled('thread_locking',
                                   subreddit=thing.subreddit_slow.name):
             abort(404, 'not found')
+
+        if thing.archived:
+            return abort(400, "Bad Request")
 
         thing.locked = False
         thing._commit()
