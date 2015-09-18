@@ -745,6 +745,7 @@ class Link(Thing, Printable):
             if item.deleted and not c.user_is_admin:
                 item.author = DeletedUser()
                 item.as_deleted = True
+                item.selftext = '[deleted]'
 
             item.votable = not item.archived
 
