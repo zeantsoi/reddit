@@ -26,6 +26,7 @@ import unittest
 from r2.lib.souptest import (
     souptest_fragment,
     SoupAlienBlueXSSError,
+    SoupDetectedCrasherError,
     SoupError,
     SoupSyntaxError,
     SoupUnexpectedCDataSectionError,
@@ -119,6 +120,18 @@ class TestSoupTest(unittest.TestCase):
         self.assertFragmentValid('<a href="/google.com">a</a>')
         self.assertFragmentRaises('<a href="javascript://google.com">a</a>',
                                   SoupUnsupportedSchemeError)
+
+    def test_crashers(self):
+        # Chrome crashes on weirdly encoded nulls.
+        self.assertFragmentRaises('<a href="http://example.com/%%30%30">foo</a>',
+                                  SoupDetectedCrasherError)
+        self.assertFragmentRaises('<a href="http://example.com/%0%30">foo</a>',
+                                  SoupDetectedCrasherError)
+        self.assertFragmentRaises('<a href="http://example.com/%%300">foo</a>',
+                                  SoupDetectedCrasherError)
+        # Chrome crashes on extremely long hostnames
+        self.assertFragmentRaises('<a href="http://%s.com">foo</a>' % ("x" * 300),
+                                  SoupDetectedCrasherError)
 
     # DONT OPENSOURCE: See note in souptest.py
     def test_alienblue_xss_1(self):
