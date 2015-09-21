@@ -291,6 +291,7 @@ class Reddit(Templated):
             u = UrlParser(request.fullpath)
             u.set_extension("")
             u.hostname = g.domain
+            u.scheme = g.default_scheme
             if g.domain_prefix:
                 u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
             self.canonical_link = u.unparse()
@@ -682,7 +683,7 @@ class Reddit(Templated):
             ps.append(SideBox(
                 title=_("Shop the reddit Marketplace"),
                 css_class="holiday_shopping",
-                link="http://redditgifts.com/?source=red-hol14-side-14121",
+                link="https://redditgifts.com/?source=red-hol14-side-14121",
                 target="_blank",
             ))
         # don't show the subreddit info bar on cnames unless the option is set

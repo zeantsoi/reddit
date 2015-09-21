@@ -168,7 +168,7 @@ so feel free to reply to this email to let us know if you have any feedback.
 We've also set up a community just for self-serve advertisers like yourself to
 discuss the platform with each other:
 
-    ${unsafe("http://www.reddit.com/r/selfserve" + ref_tags % dict(ref="promo_finished", campaign="rselfserve"))}
+    ${unsafe("https://www.reddit.com/r/selfserve" + ref_tags % dict(ref="promo_finished", campaign="rselfserve"))}
 
 We're hoping to create a place for you to exchange tips and tricks for getting
 the most out of your sponsored links, as well as to provide support for new
