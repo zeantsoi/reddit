@@ -2926,6 +2926,9 @@ class ApiController(RedditController):
         if getattr(thing, "promoted", None):
             return
 
+        if thing._deleted:
+            return
+
         filtered = thing._spam
         kw = {'target': thing}
 
