@@ -301,7 +301,7 @@ try participating in other communities on reddit for a little while first before
   	</div>
   </%utils:line_field>
 
-  %if feature.is_enabled("modmail_email", subreddit=thing.site):
+  %if feature.is_enabled("modmail_email", subreddit=thing.site.name):
   <%utils:line_field title="${_('modmail')}">
     <div class="delete-field">
         <input class="nomargin" type="checkbox"

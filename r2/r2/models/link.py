@@ -1813,7 +1813,7 @@ class Message(Thing, Printable):
                 m._commit()
 
             if not generated_from_email and sr.modmail_email_address:
-                if feature.is_enabled("modmail_email", subreddit=sr):
+                if feature.is_enabled("modmail_email", subreddit=sr.name):
                     queue_modmail_email(m)
 
         if author.name in g.admins:

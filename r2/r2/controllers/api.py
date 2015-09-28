@@ -2657,7 +2657,7 @@ class ApiController(RedditController):
 
         keyword_fields.append('suggested_comment_sort')
 
-        if sr and feature.is_enabled("modmail_email", subreddit=sr):
+        if sr and feature.is_enabled("modmail_email", subreddit=sr.name):
             kw['modmail_email_address'] = kw['modmail_email_address'] or ''
             modmail_email_enabled = kw["modmail_email_enabled"]
         else:

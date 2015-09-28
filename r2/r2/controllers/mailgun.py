@@ -113,7 +113,7 @@ class MailgunWebhookController(RedditController):
             g.log.warning("bad markdown in modmail email: %s", body)
             abort(406, "invalid body")
 
-        if not feature.is_enabled("modmail_email", subreddit=sr):
+        if not feature.is_enabled("modmail_email", subreddit=sr.name):
             return
 
         # keep the subject consistent
