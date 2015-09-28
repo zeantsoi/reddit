@@ -2027,15 +2027,7 @@ class Message(Thing, Printable):
                         item.sr_blocked = True
                         item.is_collapsed = True
 
-                    if (item.sent_via_email and
-                            item.user_is_moderator or c.user_is_admin):
-                        item.author = item.subreddit
-                        item.distinguished = "yes"
-                        item.taglinetext = _(
-                            "moderator email from %(author)s via %(subreddit)s"
-                            " sent %(when)s")
-                    elif item.sent_via_email:
-                        item.author = item.subreddit
+                    if item.sent_via_email:
                         item.distinguished = "yes"
                         item.taglinetext = _(
                             "subreddit message via %(subreddit)s sent %(when)s")

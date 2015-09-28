@@ -88,12 +88,7 @@
     if thing.sr_id:
         substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
 
-    if isinstance(thing.author, Account):
-        sender_thing = WrappedUser(thing.author, thing.attribs, thing)
-    else:
-        sender_thing = thing.author.name
-
-    substitutions['author'] = format_html(u'<span class="sender">%s</span>', sender_thing)
+    substitutions['author'] = format_html(u'<span class="sender">%s</span>', WrappedUser(thing.author, thing.attribs, thing))
 
     if isinstance(thing.to, Account):
         to_attribs = []
