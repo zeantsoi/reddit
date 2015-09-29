@@ -127,7 +127,7 @@ def send_modmail_email(message):
     else:
         conversation_subject = message.subject
 
-    subject = "[r/{subreddit} mail]: {subject}".format(
+    subject = u"[r/{subreddit} mail]: {subject}".format(
         subreddit=sr.name, subject=conversation_subject)
 
     reply_footer = ("\n\n-\n"
