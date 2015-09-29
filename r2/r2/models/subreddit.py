@@ -2248,8 +2248,20 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit, Printable):
         if c.user_is_admin:
             return True
 
+        # Hide multireddits curated by spammers from the public
+        if user != self.owner and getattr(self.owner, '_spam', False):
+            return False
+
+        if getattr(self.owner, '_deleted', False):
+            return False
+
         if self.is_public():
-            return True
+            # To view an sr multi you must be able to view the sr
+            if isinstance(self.owner, Subreddit):
+                if self.owner.can_view(user):
+                    return True
+            else:
+                return True
 
         if isinstance(user, FakeAccount):
             return False
