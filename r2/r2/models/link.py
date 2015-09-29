@@ -2035,6 +2035,7 @@ class Message(Thing, Printable):
                         item.is_collapsed = True
 
                     if item.sent_via_email:
+                        item.hide_author = True
                         item.distinguished = "yes"
                         item.taglinetext = _(
                             "subreddit message via %(subreddit)s sent %(when)s")
