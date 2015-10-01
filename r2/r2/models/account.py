@@ -461,15 +461,15 @@ class Account(Thing):
             result = self.sort_ids_by_data_value(
                 friend_ids, data_value_name, limit=limit, desc=True)
 
-        return result
+        return result.fetchall()
 
     @memoize("get_recently_submitted_friend_ids", time=10*60)
     def get_recently_submitted_friend_ids(self, limit=100):
-        return self._get_friend_ids_by("last_submit_time", limit).fetchall()
+        return self._get_friend_ids_by("last_submit_time", limit)
 
     @memoize("get_recently_commented_friend_ids", time=10*60)
     def get_recently_commented_friend_ids(self, limit=100):
-        return self._get_friend_ids_by("last_comment_time", limit).fetchall()
+        return self._get_friend_ids_by("last_comment_time", limit)
 
     def delete(self, delete_message=None):
         self.delete_message = delete_message
