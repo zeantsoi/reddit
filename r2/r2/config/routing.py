@@ -389,12 +389,12 @@ def make_map(config):
     mc('/api/gadget/:type', controller='api', action='gadget')
     mc('/api/modmailreply', controller='mailgunwebhook', action='modmailreply')
     mc('/api/:action', controller='promoteapi',
-       requirements=dict(action=("promote|unpromote|edit_promo|link_thumb|"
-                                 "freebie|promote_note|update_pay|"
+       requirements=dict(action=("promote|unpromote|edit_promo|ad_s3_callback|"
+                                 "ad_s3_params|freebie|promote_note|update_pay|"
                                  "edit_campaign|delete_campaign|"
                                  "add_roadblock|rm_roadblock|check_inventory|"
                                  "refund_campaign|terminate_campaign|"
-                                 "review_fraud|create_promo|link_mobile_ad_image")))
+                                 "review_fraud|create_promo")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',
