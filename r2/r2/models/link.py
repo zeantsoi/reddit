@@ -224,6 +224,10 @@ class Link(Thing, Printable):
             url = content
             selftext = cls._defaults["selftext"]
 
+        over_18 = False
+        if cls._nsfw.search(title):
+            over_18 = True
+
         l = cls(
             _ups=1,
             title=title,
@@ -237,6 +241,7 @@ class Link(Thing, Printable):
             ip=ip,
             comment_tree_version=cls._choose_comment_tree_version(),
             is_self=is_self,
+            over_18=over_18,
         )
 
         l._commit()
