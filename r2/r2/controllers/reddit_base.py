@@ -1201,7 +1201,7 @@ class MinimalController(BaseController):
             response.headers["Access-Control-Allow-Methods"] = \
                 "GET, POST, PUT, PATCH, DELETE"
             response.headers["Access-Control-Allow-Headers"] = \
-                "Authorization, "
+                "Authorization, Content-Type, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
             response.headers['Access-Control-Expose-Headers'] = \
                 self.COMMON_REDDIT_HEADERS
