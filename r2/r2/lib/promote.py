@@ -222,6 +222,9 @@ def add_trackers(items, sr, adserver_click_urls=None):
         if not item.promoted:
             continue
 
+        if item.campaign is None:
+            item.campaign = NO_CAMPAIGN
+
         tracking_name_fields = [item.fullname, item.campaign]
         if not isinstance(sr, FakeSubreddit):
             tracking_name_fields.append(sr.name)
