@@ -313,6 +313,11 @@ try participating in other communities on reddit for a little while first before
         ${error_field("BAD_EMAIL", "modmail_email_address")}
         ${error_field("NO_EMAIL", "modmail_email_address")}
     </div>
+    %if not thing.site.modmail_email_verified:
+    <span class="error">
+      ${_("disabled pending verification - check your email inbox")}
+    </span>
+    %endif
     <script>
       (function() {
         $("#modmail_email_enabled").on("change", function() {

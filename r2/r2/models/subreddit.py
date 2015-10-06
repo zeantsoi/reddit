@@ -288,6 +288,7 @@ class Subreddit(Thing, Printable, BaseSite):
         ban_count=0,
         quarantine=False,
         modmail_email_address='',
+        modmail_email_verified=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
