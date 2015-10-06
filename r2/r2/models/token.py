@@ -746,6 +746,20 @@ class EmailVerificationToken(ConsumableToken):
         return self.email == user.email
 
 
+class ModmailEmailVerificationToken(ConsumableToken):
+    _use_db = True
+    _connection_pool = "main"
+    _ttl = datetime.timedelta(hours=12)
+    token_size = 20
+
+    @classmethod
+    def _new(cls, sr, modmail_email_address):
+        return super(ModmailEmailVerificationToken, cls)._new(
+            sr_fullname=sr._fullname,
+            modmail_email_address=modmail_email_address,
+        )
+
+
 class PasswordResetToken(ConsumableToken):
     _use_db = True
     _connection_pool = "main"
