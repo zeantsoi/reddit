@@ -1752,7 +1752,7 @@ class Message(Thing, Printable):
 
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
-             from_sr=False, generated_from_email=False):
+             from_sr=False, can_send_email=True):
         from r2.lib.emailer import message_notification_email
         from r2.lib.message_to_email import queue_modmail_email
 
@@ -1825,9 +1825,10 @@ class Message(Thing, Printable):
                 m.distinguished = 'yes'
                 m._commit()
 
-            if not generated_from_email and sr.modmail_email_address:
-                if feature.is_enabled("modmail_email", subreddit=sr.name):
-                    queue_modmail_email(m)
+            if (can_send_email and
+                    sr.modmail_email_address and
+                    feature.is_enabled("modmail_email", subreddit=sr.name)):
+                queue_modmail_email(m)
 
         if author.name in g.admins:
             m.distinguished = 'admin'

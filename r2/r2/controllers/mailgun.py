@@ -132,7 +132,7 @@ class MailgunWebhookController(RedditController):
             parent=parent,
             sr=sr,
             from_sr=True,
-            generated_from_email=True,
+            can_send_email=False,
         )
         message.sent_via_email = True
         message.sender_email = sender
