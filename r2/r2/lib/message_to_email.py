@@ -130,9 +130,21 @@ def send_modmail_email(message):
     subject = u"[r/{subreddit} mail]: {subject}".format(
         subreddit=sr.name, subject=conversation_subject)
 
-    reply_footer = ("\n\n-\n"
-        "Reply to this email directly or view it on reddit: {link}").format(
-            link=message.make_permalink(force_domain=True))
+    if message.from_sr and not message.first_message:
+        # this is a message from the subreddit to a user. add some text that
+        # shows the recipient
+        recipient = Account._byID(message.to_id, data=True)
+        recipient_text = ("This message was sent from r/{subreddit} to "
+            "u/{user}\n\n").format(subreddit=sr.name, user=recipient.name)
+    else:
+        recipient_text = ""
+
+    reply_footer = ("\n\n-\n{recipient_text}"
+        "Reply to this email directly or view it on reddit: {link}")
+    reply_footer = reply_footer.format(
+        recipient_text=recipient_text,
+        link=message.make_permalink(force_domain=True),
+    )
     message_text = message.body + reply_footer
 
     email_id = g.email_provider.send_email(
