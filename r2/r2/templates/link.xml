@@ -25,11 +25,15 @@
    from r2.lib.template_helpers import add_sr, get_domain
    from r2.models import FakeSubreddit
    from r2.lib.filters import unsafe, safemarkdown
+   from r2.lib.template_helpers import make_url_https
 %>
 <%
    permalink = add_sr(thing.permalink, force_hostname = True)
    use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
    use_thumbs = use_thumbs and not thing.thumbnail_sprited
+   thumbnail = thing.thumbnail
+   if c.secure:
+       thumbnail = make_url_https(thumbnail)
  %>
 <item>
   <title>${thing.title}</title>
@@ -44,7 +48,7 @@
       %if use_thumbs:
         <table>
           <tr><td>
-            <a href="${permalink}"><img src="${thing.thumbnail}" alt="${thing.title}" title="${thing.title}" /></a>
+            <a href="${permalink}"><img src="${thumbnail}" alt="${thing.title}" title="${thing.title}" /></a>
           </td><td>
       %endif
       <% 
@@ -80,7 +84,7 @@
   </description>
   %if use_thumbs:
     <media:title>${thing.title}</media:title>
-    <media:thumbnail url="${thing.thumbnail}" />
+    <media:thumbnail url="${thumbnail}" />
   %endif
 </item>
 
