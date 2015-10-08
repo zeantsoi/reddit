@@ -24,6 +24,7 @@
 <%!
    from r2.models.subreddit import DefaultSR
    from r2.lib.template_helpers import get_domain, add_sr, header_url
+   from r2.lib.utils import UrlParser
 %>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
     xmlns:media="http://search.yahoo.com/mrss/"
@@ -38,8 +39,12 @@
             header_img = header_url(DefaultSR().header)
         else:
             header_img = header_url(c.site.header)
-        if not header_img.startswith("http:"):
-            header_img = add_sr(header_img, sr_path=False, force_hostname=True)
+        parsed_header_img = UrlParser(header_img)
+        ## protocol relative, make it absolute
+        if not parsed_header_img.scheme and parsed_header_img.hostname:
+            new_scheme = "https" if c.secure else "http"
+            parsed_header_img.scheme = new_scheme
+            header_img = parsed_header_img.unparse()
       %>
       <url>${header_img}</url>
       <title>${self.Title()}</title>
