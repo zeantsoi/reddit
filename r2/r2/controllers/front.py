@@ -499,10 +499,10 @@ class FrontController(RedditController):
         array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
-              VNotInTimeout(),
               name=nop('name'))
     def GET_newreddit(self, name):
         """Create a subreddit form"""
+        VNotInTimeout().run(action_name="pageview", details_text="newreddit")
         title = _('create a subreddit')
         captcha = Captcha() if c.user.needs_captcha() else None
         content = CreateSubreddit(name=name or '', captcha=captcha)
@@ -553,7 +553,6 @@ class FrontController(RedditController):
     @disable_subreddit_css()
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(
-        VNotInTimeout(),
         mod=nop('mod', docs={"mod": "(optional) a moderator filter"}),
         action=VOneOf('type', ModAction.actions),
     )
@@ -577,6 +576,8 @@ class FrontController(RedditController):
         if not c.user_is_loggedin or not (c.user_is_admin or
                                           c.site.is_moderator(c.user)):
             return self.abort404()
+
+        VNotInTimeout().run(action_name="pageview", details_text="modlog")
         if mod:
             if mod == 'a':
                 modnames = g.admins
@@ -880,7 +881,8 @@ class FrontController(RedditController):
         if isinstance(c.site, FakeSubreddit):
             return self.abort404()
         else:
-            VNotInTimeout().run(action_name="editreddit_%s" % location, target=c.site)
+            VNotInTimeout().run(action_name="pageview",
+                details_text="editreddit_%s" % location, target=c.site)
             return self._edit_normal_reddit(location, created)
 
     @require_oauth2_scope("read")
@@ -891,7 +893,6 @@ class FrontController(RedditController):
         Data includes the subscriber count, description, and header image."""
         if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
-        VNotInTimeout().run(action_name="about", target=c.site)
         item = Wrapped(c.site, accounts_active_count=c.site.accounts_active)
         Subreddit.add_props(c.user, [item])
         return Reddit(content=item).render()
@@ -1313,7 +1314,8 @@ class FrontController(RedditController):
             abort(403, "forbidden")
 
         target = c.site if not isinstance(c.site, FakeSubreddit) else None
-        VNotInTimeout().run(action_name="submit", target=target)
+        VNotInTimeout().run(action_name="pageview", details_text="submit",
+            target=target)
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
@@ -1879,10 +1881,11 @@ class FormsController(RedditController):
               giftmessage=VLength("giftmessage", 10000),
               email=ValidEmail("email"),
               edit=VBoolean("edit", default=False),
-              timeout=VNotInTimeout("thing"),
     )
     def GET_gold(self, is_payment, goldtype, period, months, num_creddits,
-                 signed, recipient, giftmessage, thing, email, edit, timeout):
+                 signed, recipient, giftmessage, thing, email, edit):
+        VNotInTimeout().run(action_name="pageview", details_text="gold",
+            target=thing)
         if thing:
             thing_sr = Subreddit._byID(thing.sr_id, data=True)
             if (thing._deleted or

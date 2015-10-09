@@ -241,7 +241,8 @@ class ListingController(RedditController):
     @base_listing
     def GET_listing(self, **env):
         if isinstance(c.site, ModSR):
-            VNotInTimeout().run(action_name="view_mod_subreddit", target=c.site)
+            VNotInTimeout().run(action_name="pageview",
+                details_text="mod_subreddit")
         check_cheating('site')
         if self.can_send_referrer():
             c.referrer_policy = "always"
@@ -1155,7 +1156,9 @@ class MessageController(ListingController):
 
     def listing(self):
         if not c.default_sr:
-            VNotInTimeout().run(action_name='view_modmail')
+            target = c.site if not isinstance(c.site, FakeSubreddit) else None
+            VNotInTimeout().run(action_name="pageview",
+                details_text="modmail", target=target)
         if (self.where == 'messages' and
             (c.user.pref_threaded_messages or self.message)):
             return Listing(self.builder_obj).listing()
@@ -1236,7 +1239,8 @@ class MessageController(ListingController):
 
         # don't allow access to modmail when user is in timeout
         if self.where == "moderator":
-            VNotInTimeout().run(action_name="modmail", target=message)
+            VNotInTimeout().run(action_name="pageview", details_text="modmail",
+                target=message)
 
         self.subwhere = subwhere
         self.message = message
@@ -1779,26 +1783,30 @@ class UserListListingController(ListingController):
         elif where == 'banned':
             if not has_mod_access:
                 abort(403)
-            VNotInTimeout().run(action_name='bannedlisting')
+            VNotInTimeout().run(action_name="pageview",
+                details_text="banned", target=c.site)
             self.listing_cls = BannedListing
 
         elif where == 'muted':
             if not (has_mod_access and
                     c.site.is_moderator_with_perms(c.user, 'mail')):
                 abort(403)
-            VNotInTimeout().run(action_name='mutedlisting')
+            VNotInTimeout().run(action_name="pageview",
+                details_text="muted", target=c.site)
             self.listing_cls = MutedListing
 
         elif where == 'wikibanned':
             if not c.site.is_moderator_with_perms(c.user, 'wiki'):
                 abort(403)
-            VNotInTimeout().run(action_name='wikibannedlisting')
+            VNotInTimeout().run(action_name="pageview",
+                details_text="wikibanned", target=c.site)
             self.listing_cls = WikiBannedListing
 
         elif where == 'wikicontributors':
             if not c.site.is_moderator_with_perms(c.user, 'wiki'):
                 abort(403)
-            VNotInTimeout().run(action_name='wikicontributorslisting')
+            VNotInTimeout().run(action_name="pageview",
+                details_text="wikicontributors", target=c.site)
             self.listing_cls = WikiMayContributeListing
 
         elif where == 'moderators':
