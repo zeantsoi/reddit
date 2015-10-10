@@ -2867,7 +2867,12 @@ class ApiController(RedditController):
                         old_modmail_email=old_modmail_email,
                     )
                     sr.modmail_email_verified = False
-                    redir = sr.path + "about/edit/?modmail_email_pending"
+
+                    if v:
+                        # modmail email is being enabled, do a redirect to
+                        # the edit page with an infobar explaining about the
+                        # verification email
+                        redir = sr.path + "about/edit/?modmail_email_pending"
 
                 elif getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 
