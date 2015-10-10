@@ -1827,7 +1827,6 @@ class Message(Thing, Printable):
 
             if (can_send_email and
                     sr.modmail_email_address and
-                    sr.modmail_email_verified and
                     feature.is_enabled("modmail_email", subreddit=sr.name)):
                 queue_modmail_email(m)
 

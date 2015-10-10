@@ -355,8 +355,6 @@ def make_map(config):
        action='verify_email')
     mc('/resetpassword', controller='forms',
        action='resetpassword')
-    mc("/verify_modmail_email/:key", controller="forms",
-       action="verify_modmail_email")
 
     mc('/modify_hsts_grant', controller='front', action='modify_hsts_grant')
 

@@ -35,7 +35,6 @@ from r2.models import (
     Message,
     Subreddit,
 )
-from r2.models.token import ModmailEmailVerificationToken
 
 
 def get_reply_to_address(message):
@@ -102,7 +101,7 @@ def send_modmail_email(message):
 
     sr = Subreddit._byID(message.sr_id, data=True)
 
-    if not (sr.modmail_email_address and sr.modmail_email_verified):
+    if not sr.modmail_email_address:
         return
 
     sender = Account._byID(message.author_id, data=True)
@@ -164,120 +163,62 @@ def send_modmail_email(message):
         g.stats.simple_event("modmail_email.outgoing_email")
 
 
-def send_enabled_email(sr, modmail_email):
-    subject = "[r/{subreddit} mail]: modmail forwarding verification required"
-    subject = subject.format(subreddit=sr.name)
-    text = ("You requested modmail messages be forwarded to {email}.\n\n"
-        "Please confirm by visiting this link: {verification_url}\n\n"
-        "To change or disable go to {prefs_url}.\n\n"
-        "If you feel you have received this notice in error, "
-        "please contact us at {support_email}"
-    )
-
-    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
-    prefs_url = add_sr(prefs_url, sr_path=False)
-
-    token = ModmailEmailVerificationToken._new(sr, modmail_email)
-    verification_url = "/r/{subreddit}/verify_modmail_email/{key}"
-    verification_url = verification_url.format(subreddit=sr.name, key=token._id)
-    verification_url = add_sr(verification_url, sr_path=False)
-
-    text = text.format(
-        email=modmail_email,
-        verification_url=verification_url,
-        prefs_url=prefs_url,
-        support_email=g.support_email,
-    )
-    from_address = "r/{subreddit} mail <{sender_email}>".format(
-        subreddit=sr.name, sender_email=g.modmail_system_email)
-
-    email_id = g.email_provider.send_email(
-        to_address=modmail_email,
-        from_address=from_address,
-        subject=subject,
-        text=text,
-        reply_to=from_address,
-    )
-    if email_id:
-        g.log.info("sent as %s", email_id)
-
-
-def send_disabled_email(sr, old_modmail_email):
-    subject = "[r/{subreddit} mail]: modmail forwarding disabled".format(
-        subreddit=sr.name)
-    text = ("Modmail forwarding has been disabled.\n\n"
-        "Previously incoming modmail messages were forwarded to "
-        "{old_email}.\n\nTo re-enable go to {prefs_url}.\n\n"
-        "If you feel you have received this notice in error, "
-        "please contact us at {support_email}"
-    )
-
-    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
-    prefs_url = add_sr(prefs_url, sr_path=False)
-
-    text = text.format(
-        old_email=old_modmail_email,
-        prefs_url=prefs_url,
-        support_email=g.support_email,
-    )
-    from_address = "r/{subreddit} mail <{sender_email}>".format(
-        subreddit=sr.name, sender_email=g.modmail_system_email)
-
-    email_id = g.email_provider.send_email(
-        to_address=old_modmail_email,
-        from_address=from_address,
-        subject=subject,
-        text=text,
-        reply_to=from_address,
-    )
-    if email_id:
-        g.log.info("sent as %s", email_id)
-
-
-def send_changed_email(sr, modmail_email, old_modmail_email):
-    subject = "[r/{subreddit} mail]: modmail forwarding changed".format(
-        subreddit=sr.name)
-    text = ("Modmail messages will no longer be forwarded to {old_email}\n\n"
-        "You requested modmail messages be forwarded to {email}.\n\n"
-        "You will receive an email at {email} to verify this change.\n\n"
-        "To change or disable go to {prefs_url}.\n\n"
-        "If you feel you have received this notice in error, "
-        "please contact us at {support_email}"
-    )
-
-    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
-    prefs_url = add_sr(prefs_url, sr_path=False)
-
-    text = text.format(
-        email=modmail_email,
-        old_email=old_modmail_email,
-        prefs_url=prefs_url,
-        support_email=g.support_email,
-    )
-    from_address = "r/{subreddit} mail <{sender_email}>".format(
-        subreddit=sr.name, sender_email=g.modmail_system_email)
-
-    email_id = g.email_provider.send_email(
-        to_address=old_modmail_email,
-        from_address=from_address,
-        subject=subject,
-        text=text,
-        reply_to=from_address,
-    )
-    if email_id:
-        g.log.info("sent as %s", email_id)
-
-
 def send_address_change_email(sr, modmail_email, old_modmail_email):
     if old_modmail_email and not modmail_email:
-        send_disabled_email(sr, old_modmail_email)
+        subject = "[r/{subreddit} mail]: modmail forwarding disabled".format(
+            subreddit=sr.name)
+        text = ("Modmail forwarding has been disabled.\n\n"
+            "Previously incoming modmail messages were forwarded to "
+            "{old_email}.\n\nTo re-enable go to {prefs_url}.\n\n"
+            "If you feel you have received this notice in error, "
+            "please contact the community team at {community_email}"
+        )
+        to_addresses = [old_modmail_email]
     elif not old_modmail_email and modmail_email:
-        send_enabled_email(sr, modmail_email)
+        subject = "[r/{subreddit} mail]: modmail forwarding enabled".format(
+            subreddit=sr.name)
+        text = ("Modmail forwarding has been enabled.\n\n"
+            "All incoming modmail messages will be forwarded to {email}.\n\n"
+            "To change or disable go to {prefs_url}.\n\n"
+            "If you feel you have received this notice in error, "
+            "please contact the community team at {community_email}"
+        )
+        to_addresses = [modmail_email]
     elif old_modmail_email and modmail_email:
-        send_changed_email(sr, modmail_email, old_modmail_email)
-        send_enabled_email(sr, modmail_email)
+        subject = "[r/{subreddit} mail]: modmail forwarding changed".format(
+            subreddit=sr.name)
+        text = ("Modmail forwarding has been changed.\n\n"
+            "All incoming modmail messages will be forwarded to {email}.\n\n"
+            "Previously they were forwarded to {old_email}.\n\n"
+            "To change or disable go to {prefs_url}.\n\n"
+            "If you feel you have received this notice in error, "
+            "please contact the community team at {community_email}"
+        )
+        to_addresses = [modmail_email, old_modmail_email]
     else:
         return
+
+    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
+    prefs_url = add_sr(prefs_url, sr_path=False)
+
+    text = text.format(
+        email=modmail_email,
+        old_email=old_modmail_email,
+        prefs_url=prefs_url,
+        community_email=g.community_email,
+    )
+    from_address = "r/{subreddit} mail <{sender_email}>".format(
+        subreddit=sr.name, sender_email=g.modmail_system_email)
+
+    email_id = g.email_provider.send_email(
+        to_address=to_addresses,
+        from_address=from_address,
+        subject=subject,
+        text=text,
+        reply_to=from_address,
+    )
+    if email_id:
+        g.log.info("sent as %s", email_id)
 
 
 def queue_modmail_email(message):

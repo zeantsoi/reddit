@@ -2847,18 +2847,11 @@ class ApiController(RedditController):
                     ModAction.create(sr, c.user, action='editsettings', 
                         details=k, description=description)
 
-                    if sr.modmail_email_verified:
-                        old_modmail_email = sr.modmail_email_address
-                    else:
-                        old_modmail_email = None
-
                     queue_modmail_email_change_email(
                         sr=sr,
                         modmail_email=v,
-                        old_modmail_email=old_modmail_email,
+                        old_modmail_email=sr.modmail_email_address,
                     )
-                    sr.modmail_email_verified = False
-                    redir = sr.path + "about/edit/?modmail_email_pending"
 
                 elif getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 

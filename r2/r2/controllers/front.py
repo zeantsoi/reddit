@@ -63,7 +63,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 
-from r2.models.token import EmailVerificationToken, ModmailEmailVerificationToken
+from r2.models.token import EmailVerificationToken
 from r2.controllers.ipn import generate_blob, validate_blob, GoldException
 
 from operator import attrgetter
@@ -735,25 +735,11 @@ class FrontController(RedditController):
 
     def _edit_normal_reddit(self, location, created):
         if (location == 'edit' and
-                c.user_is_loggedin and
-                (c.user_is_admin or
-                    c.site.is_moderator_with_perms(c.user, 'config'))):
+            c.user_is_loggedin and
+            (c.user_is_admin or c.site.is_moderator_with_perms(c.user, 'config'))):
             pane = PaneStack()
-
-            infobar_message = None
             if created == 'true':
-                infobar_message = strings.sr_created
-            elif "modmail_email_verified" in request.GET:
-                infobar_message = strings.modmail_email_verified
-            elif "modmail_email_expired" in request.GET:
-                infobar_message = strings.modmail_email_verify_expired
-            elif "modmail_email_pending" in request.GET:
-                infobar_message = strings.modmail_email_pending
-                infobar_message %= {"email": c.site.modmail_email_address}
-
-            if infobar_message:
-                pane.append(InfoBar(message=infobar_message))
-
+                pane.append(InfoBar(message=strings.sr_created))
             c.allow_styles = True
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
             pane.append(CreateSubreddit(site=c.site))
@@ -1581,49 +1567,6 @@ class FormsController(RedditController):
                         verify=True,
                         password=False)])
         return BoringPage(_("verify email"), content=content).render()
-
-    @validate(
-        VUser(),
-        token=VOneTimeToken(ModmailEmailVerificationToken, "key"),
-    )
-    def GET_verify_modmail_email(self, token):
-        infobar = None
-
-        if isinstance(c.site, FakeSubreddit):
-            abort(404)
-
-        sr = c.site
-
-        if token:
-            sr_fullname = token.sr_fullname
-            if sr_fullname != sr._fullname:
-                abort(404)
-
-        if not sr.is_moderator_with_perms(c.user, "config"):
-            abort(403)
-
-        if token and token.modmail_email_address != sr.modmail_email_address:
-            g.stats.simple_event("modmail_email.verification.expired")
-            redirect_url = "/r/{subreddit}/about/edit/?modmail_email_expired"
-            redirect_url = redirect_url.format(subreddit=sr.name)
-        elif not token:
-            g.stats.simple_event("modmail_email.verification.notfound")
-            redirect_url = "/r/{subreddit}/about/edit/?modmail_email_expired"
-            redirect_url = redirect_url.format(subreddit=sr.name)
-        else:
-            token.consume()
-            sr.modmail_email_verified = True
-            sr._commit()
-            g.stats.simple_event("modmail_email.verification.success")
-            ModAction.create(sr, c.user,
-                action='editsettings',
-                details="modmail_email_address",
-                description="verified {email}".format(
-                    email=sr.modmail_email_address),
-            )
-            redirect_url = "/r/{subreddit}/about/edit/?modmail_email_verified"
-            redirect_url = redirect_url.format(subreddit=sr.name)
-        return self.redirect(redirect_url)
 
     @validate(token=VOneTimeToken(PasswordResetToken, "key"),
               key=nop("key"))
