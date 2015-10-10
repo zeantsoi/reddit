@@ -1941,8 +1941,8 @@ class ApiController(RedditController):
             )))
 
         wrapper = default_thing_wrapper(expand_children = True)
-        jquery(".content").replace_things(item, True, True, wrap = wrapper)
-        jquery(".content .link .rank").hide()
+        jquery("body>div.content").replace_things(item, True, True, wrap = wrapper)
+        jquery("body>div.content .link .rank").hide()
 
     @allow_oauth2_access
     @validatedForm(
