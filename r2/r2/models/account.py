@@ -705,6 +705,8 @@ class Account(Thing):
 
         Returns None if no temp-timeout found.
         """
+        if not feature.is_enabled('timeouts'):
+            return None
         if not self.in_timeout:
             return None
 
