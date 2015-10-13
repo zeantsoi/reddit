@@ -92,6 +92,27 @@
     '</div>'
   );
 
+  /**
+   * update the given url's query params
+   * @param  {String} url
+   * @param  {Object} newParams
+   * @return {String}
+   */
+  function replaceParams(url, newParams) {
+    var a = document.createElement('a');
+    var urlObj = $.url(url);
+    var params = urlObj.param();
+
+    Object.keys(newParams).forEach(function(key) {
+      params[key] = newParams[key]
+    });
+
+    a.href = url;
+    a.search = $.param(params);
+    return a.href;
+  }
+
+
   var PostSharingState = Backbone.Model.extend({
     defaults: function() {
       return {
@@ -218,7 +239,7 @@
         ref_source: refSource,
       };
 
-      return r.utils.replaceUrlParams(this.thingData.link, refParams);
+      return replaceParams(this.thingData.link, refParams);
     },
 
     shareToFacebook: function() {
@@ -231,7 +252,7 @@
         description: this.thingData.title,
         redirect_uri: redirectUrl,
       }
-      var shareUrl = r.utils.replaceUrlParams('https://www.facebook.com/dialog/feed', shareParams);
+      var shareUrl = replaceParams('https://www.facebook.com/dialog/feed', shareParams);
 
       this.openWebIntent(shareUrl, 'facebook');
     },
@@ -265,7 +286,7 @@
         text: title,
         via: twitterHandle,
       };
-      var shareUrl = r.utils.replaceUrlParams('https://twitter.com/intent/tweet', shareParams);
+      var shareUrl = replaceParams('https://twitter.com/intent/tweet', shareParams);
 
       this.openWebIntent(shareUrl, 'twitter');
     },
