@@ -538,7 +538,6 @@ module["sponsored"] = LocalizedModule("sponsored.js",
     "lib/ui.core.js",
     "lib/ui.datepicker.js",
     "lib/react-with-addons-0.11.2.js",
-    "image-upload.js",
     "sponsored.js"
 )
 
