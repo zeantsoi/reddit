@@ -1760,9 +1760,12 @@ class LinkInfoPage(Reddit):
         if self.disable_comments:
             comment_area = InfoBar(message=_("comments disabled"))
         else:
+            panes = [self.nav_menu, self._content]
+            if self.link.locked:
+                panes.append(Popup('locked-popup', LockedInterstitial()))
             comment_area = PaneStack([
                 PaneStack(
-                    (self.nav_menu, self._content)
+                    panes
                 )],
                 title=self.subtitle,
                 title_buttons=getattr(self, "subtitle_buttons", []),
@@ -2580,6 +2583,22 @@ class QuarantineInterstitial(Interstitial):
 class Over18Interstitial(Interstitial):
     """The no-longer-creepy 'over 18' check page for nsfw content."""
     pass
+
+
+class LockedInterstitial(Interstitial):
+    """The error message shown when attempting to comment on a locked post."""
+    pass
+
+
+class Popup(Templated):
+    """Generic template for rendering a modal."""
+    def __init__(self, popup_id=None, content=None, **kwargs):
+        Templated.__init__(
+            self,
+            popup_id=popup_id,
+            content=content,
+            **kwargs
+        )
 
 
 class SubredditTopBar(CachedTemplate):
