@@ -107,8 +107,20 @@ def send_modmail_email(message):
 
     sender = Account._byID(message.author_id, data=True)
 
-    from_address = "u/{username} <{sender_email}>".format(
-        username=sender.name, sender_email=g.modmail_sender_email)
+    if sender.name in g.admins:
+        distinguish = "[A]"
+    elif sr.is_moderator(sender):
+        distinguish = "[M]"
+    else:
+        distinguish = None
+
+    if distinguish:
+        from_address = "u/{username} {distinguish} <{sender_email}>".format(
+            username=sender.name, distinguish=distinguish,
+            sender_email=g.modmail_sender_email)
+    else:
+        from_address = "u/{username} <{sender_email}>".format(
+            username=sender.name, sender_email=g.modmail_sender_email)
 
     reply_to = get_reply_to_address(message)
 
