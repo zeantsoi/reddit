@@ -359,6 +359,7 @@ class EventQueue(object):
             event_type="ss.forbidden_%s" % action_name,
             request=request,
             context=context,
+            testing=True,
         )
         if details_text:
             details_text = "_%s" % details_text
