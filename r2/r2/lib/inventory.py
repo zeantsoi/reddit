@@ -301,7 +301,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
             min_pageviews = min(pageviews_by_location.values())
             if PERCENT_MOBILE != 0:
                 mobile_pageviews = min_pageviews * (float(PERCENT_MOBILE) / 100)
-                if platform == 'mobile':
+                if platform in ('mobile_web', 'mobile_native'):
                     min_pageviews = mobile_pageviews
                 if platform == 'desktop':
                     min_pageviews = min_pageviews - mobile_pageviews

@@ -381,7 +381,7 @@
                %endif
                >
         <div class="label-group">
-          <span class="label">${_("desktop and mobile web")}</span>
+          <span class="label">${_("all platforms")}</span>
         </div>
       </label>
       <label class="form-group">
@@ -395,17 +395,32 @@
           <span class="label">${_("desktop only")}</span>
         </div>
       </label>
-      <label class="form-group">
-        <input id="mobile_platform" class="nomargin"
-               type="radio" value="mobile" name="platform"
-               %if default_checked == 'mobile':
-                 checked="checked"
-               %endif
-               >
-        <div class="label-group">
-          <span class="label">${_("mobile web only")}</span>
-        </div>
-      </label>
+      %if thing.mobile_web_targeting_enabled:
+        <label class="form-group">
+          <input id="mobile_web_platform" class="nomargin"
+                 type="radio" value="mobile_web" name="platform"
+                 %if default_checked == 'mobile_web' or default_checked == 'mobile':
+                   checked="checked"
+                 %endif
+                 >
+          <div class="label-group">
+            <span class="label">${_("mobile web only")}</span>
+          </div>
+        </label>
+      %endif
+      %if thing.mobile_native_targeting_enabled:
+        <label class="form-group">
+          <input id="mobile_native_platform" class="nomargin"
+                 type="radio" value="mobile_native" name="platform"
+                 %if default_checked == 'mobile_native':
+                   checked="checked"
+                 %endif
+                 >
+          <div class="label-group">
+            <span class="label">${_("native mobile only")}</span>
+          </div>
+        </label>
+      %endif
     </div>
     <div class="checkbox-group mobile-os-group">
       <span class="label">mobile OS</span>
@@ -546,10 +561,6 @@
     <%utils:line_field title="${_('platform')}" css_class="rounded platform-field">
       ${platform_field_content()}
     </%utils:line_field>
-  %else:
-    <div class="platform-field" style="display:none">
-      ${platform_field_content()}
-    </div>
   %endif
 </%def>
 

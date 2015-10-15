@@ -179,7 +179,10 @@ def _force_images(link, thumbnail, mobile):
         media.force_thumbnail(link, thumbnail["data"], thumbnail["ext"])
         changed = True
 
-    if feature.is_enabled("mobile_targeting") and mobile:
+    can_target_mobile = (feature.is_enabled("mobile_web_targeting") or
+        feature.is_enabled("mobile_native_targeting"))
+
+    if can_target_mobile and mobile:
         media.force_mobile_ad_image(link, mobile["data"], mobile["ext"])
         changed = True
 
@@ -710,13 +713,18 @@ def allowed_location_and_target(location, target):
 
 
 class PromoteApiController(ApiController):
-    @json_validate(sr=VSubmitSR('sr', promotion=True),
-                   collection=VCollection('collection'),
-                   location=VLocation(),
-                   start=VDate('startdate'),
-                   end=VDate('enddate'),
-                   platform=VOneOf('platform', ('mobile', 'desktop', 'all'), 
-                                   default='all'))
+    @json_validate(
+        sr=VSubmitSR('sr', promotion=True),
+        collection=VCollection('collection'),
+        location=VLocation(),
+        start=VDate('startdate'),
+        end=VDate('enddate'),
+        platform=VOneOf('platform', [
+            'mobile_web',
+            'mobile_native',
+            'desktop',
+            'all',
+        ], default='all'))
     def GET_check_inventory(self, responder, sr, collection, location, start,
                             end, platform):
         if collection:
@@ -1198,7 +1206,7 @@ class PromoteApiController(ApiController):
                                      "frequency_cap"),),
         priority=VPriority("priority"),
         location=VLocation(),
-        platform=VOneOf("platform", ("mobile", "desktop", "all"), default="desktop"),
+        platform=VOneOf("platform", ("mobile_web", "mobile_native", "desktop", "all"), default="desktop"),
         mobile_os=VList("mobile_os", choices=["iOS", "Android"]),
         os_versions=VOneOf('os_versions', ('all', 'filter'), default='all'),
         ios_devices=VList('ios_device', choices=IOS_DEVICES),
@@ -1242,8 +1250,13 @@ class PromoteApiController(ApiController):
             c.errors.add(errors.BAD_DATE, field='startdate')
             form.set_error('startdate', errors.BAD_DATE)
 
-        if (not feature.is_enabled('mobile_targeting') and
-                platform != 'desktop'):
+        can_target_mobile_web = feature.is_enabled('mobile_web_targeting')
+        can_target_mobile_native = feature.is_enabled('mobile_native_targeting')
+        can_target_mobile = can_target_mobile_web or can_target_mobile_native
+
+        if ((not can_target_mobile_web and platform == "mobile_web") or
+                (not can_target_mobile_native and platform == "mobile_native") or
+                (not can_target_mobile and platform == "all")):
             return abort(403, 'forbidden')
 
         if link.over_18 and not target.over_18:

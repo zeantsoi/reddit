@@ -4403,7 +4403,10 @@ class PromoteLinkBase(Templated):
     max_end = None
 
     def __init__(self, **kw):
-        self.mobile_targeting_enabled = feature.is_enabled("mobile_targeting")
+        self.mobile_web_targeting_enabled = feature.is_enabled("mobile_web_targeting")
+        self.mobile_native_targeting_enabled = feature.is_enabled("mobile_native_targeting")
+        self.mobile_targeting_enabled = (self.mobile_web_targeting_enabled or
+            self.mobile_native_targeting_enabled)
         Templated.__init__(self, **kw)
 
     def get_locations(self): 

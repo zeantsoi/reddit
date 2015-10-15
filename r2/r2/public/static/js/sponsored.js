@@ -1,5 +1,7 @@
 !function(r) {
 
+var RE_IS_MOBILE_PLATFORM = /^mobile(?:_(web|native))?$/;
+
 var UseDefaultClassName = (function() {
   var camelCaseRegex = /([a-z])([A-Z])/g;
   function hyphenate(match, $1, $2) {
@@ -1092,7 +1094,7 @@ var exports = r.sponsored = {
 
     getPlatformTargeting: function() {
       var platform = this.$platformInputs.filter(':checked').val();
-      var isMobile = platform === 'mobile' || platform === 'all';
+      var isMobile = RE_IS_MOBILE_PLATFORM.test(platform) || platform === 'all';
 
       function mapTargets(target) {
         targets = target.filter(':checked').map(function() {
@@ -1410,7 +1412,6 @@ var exports = r.sponsored = {
 
         var $form = $("#campaign");
         var platformTargeting = this.getPlatformTargeting();
-        var platformOverride = platformTargeting.isMobile && platformTargeting.platform === 'mobile';
 
         this.currentPlatform = platformTargeting.platform;
 
