@@ -97,6 +97,41 @@ def parse_and_validate_reply_to_address(address):
     return message_id36
 
 
+def get_message_subject(message):
+    sr = Subreddit._byID(message.sr_id, data=True)
+
+    if message.first_message:
+        first_message = Message._byID(message.first_message, data=True)
+        conversation_subject = first_message.subject
+    else:
+        conversation_subject = message.subject
+
+    return u"[r/{subreddit} mail]: {subject}".format(
+        subreddit=sr.name, subject=_force_unicode(conversation_subject))
+
+
+def get_email_ids(message):
+    parent_email_id = None
+    other_email_ids = []
+    if message.parent_id:
+        parent = Message._byID(message.parent_id, data=True)
+        if parent.email_id:
+            other_email_ids.append(parent.email_id)
+            parent_email_id = parent.email_id
+
+    if message.first_message:
+        first_message = Message._byID(message.first_message, data=True)
+        if first_message.email_id:
+            other_email_ids.append(first_message.email_id)
+
+    return parent_email_id, other_email_ids
+
+
+def get_system_from_address(sr):
+    return "r/{subreddit} mail <{sender_email}>".format(
+        subreddit=sr.name, sender_email=g.modmail_system_email)
+
+
 def send_modmail_email(message):
     if not message.sr_id:
         return
@@ -124,25 +159,8 @@ def send_modmail_email(message):
             username=sender.name, sender_email=g.modmail_sender_email)
 
     reply_to = get_reply_to_address(message)
-
-    parent_email_id = None
-    other_email_ids = []
-    if message.parent_id:
-        parent = Message._byID(message.parent_id, data=True)
-        if parent.email_id:
-            other_email_ids.append(parent.email_id)
-            parent_email_id = parent.email_id
-
-    if message.first_message:
-        first_message = Message._byID(message.first_message, data=True)
-        if first_message.email_id:
-            other_email_ids.append(first_message.email_id)
-        conversation_subject = first_message.subject
-    else:
-        conversation_subject = message.subject
-
-    subject = u"[r/{subreddit} mail]: {subject}".format(
-        subreddit=sr.name, subject=_force_unicode(conversation_subject))
+    parent_email_id, other_email_ids = get_email_ids(message)
+    subject = get_message_subject(message)
 
     if message.from_sr and not message.first_message:
         # this is a message from the subreddit to a user. add some text that
@@ -180,6 +198,7 @@ def send_modmail_email(message):
 def send_enabled_email(sr, modmail_email):
     subject = "[r/{subreddit} mail]: modmail forwarding verification required"
     subject = subject.format(subreddit=sr.name)
+    from_address = get_system_from_address(sr)
     text = ("A moderator requested that r/{subreddit} modmail messages be "
         "forwarded to {email}.\n\n"
         "Please confirm by visiting this link: {verification_url}\n\n"
@@ -203,8 +222,6 @@ def send_enabled_email(sr, modmail_email):
         prefs_url=prefs_url,
         support_email=g.support_email,
     )
-    from_address = "r/{subreddit} mail <{sender_email}>".format(
-        subreddit=sr.name, sender_email=g.modmail_system_email)
 
     email_id = g.email_provider.send_email(
         to_address=modmail_email,
@@ -220,6 +237,7 @@ def send_enabled_email(sr, modmail_email):
 def send_disabled_email(sr, old_modmail_email):
     subject = "[r/{subreddit} mail]: modmail forwarding disabled".format(
         subreddit=sr.name)
+    from_address = get_system_from_address(sr)
     text = ("Modmail forwarding for r/{subreddit} has been disabled.\n\n"
         "Previously incoming modmail messages were forwarded to "
         "{old_email}.\n\nTo re-enable go to {prefs_url}.\n\n"
@@ -236,8 +254,6 @@ def send_disabled_email(sr, old_modmail_email):
         prefs_url=prefs_url,
         support_email=g.support_email,
     )
-    from_address = "r/{subreddit} mail <{sender_email}>".format(
-        subreddit=sr.name, sender_email=g.modmail_system_email)
 
     email_id = g.email_provider.send_email(
         to_address=old_modmail_email,
@@ -253,6 +269,7 @@ def send_disabled_email(sr, old_modmail_email):
 def send_changed_email(sr, old_modmail_email):
     subject = "[r/{subreddit} mail]: modmail forwarding changed".format(
         subreddit=sr.name)
+    from_address = get_system_from_address(sr)
     text = ("r/{subreddit} modmail will no longer be forwarded to {old_email}"
         ".\n\nTo change this go to {prefs_url}.\n\n"
         "If you feel you have received this notice in error, "
@@ -268,8 +285,6 @@ def send_changed_email(sr, old_modmail_email):
         prefs_url=prefs_url,
         support_email=g.support_email,
     )
-    from_address = "r/{subreddit} mail <{sender_email}>".format(
-        subreddit=sr.name, sender_email=g.modmail_system_email)
 
     email_id = g.email_provider.send_email(
         to_address=old_modmail_email,
@@ -294,6 +309,27 @@ def send_address_change_email(sr, modmail_email, old_modmail_email):
         return
 
 
+def send_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
+    if not (sr.modmail_email_address and sr.modmail_email_verified):
+        return
+
+    subject = get_message_subject(parent)
+    from_address = get_system_from_address(sr)
+    text = "Message was not delivered because recipient is muted."
+
+    email_id = g.email_provider.send_email(
+        to_address=sender_email,
+        from_address=from_address,
+        subject=subject,
+        text=text,
+        reply_to=from_address,
+        parent_email_id=incoming_email_id,
+        other_email_ids=[parent.email_id],
+    )
+    if email_id:
+        g.log.info("sent as %s", email_id)
+
+
 def queue_modmail_email(message):
     amqp.add_item(
         "modmail_email_q",
@@ -316,6 +352,19 @@ def queue_modmail_email_change_email(sr, modmail_email, old_modmail_email):
     )
 
 
+def queue_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
+    amqp.add_item(
+        "modmail_email_q",
+        json.dumps({
+            "event": "blocked_muted",
+            "subreddit_id36": sr._id36,
+            "parent_id36": parent._id36,
+            "sender_email": sender_email,
+            "incoming_email_id": incoming_email_id,
+        }),
+    )
+
+
 def process_modmail_email():
     @g.stats.amqp_processor("modmail_email_q")
     def process_message(msg):
@@ -330,5 +379,13 @@ def process_modmail_email():
             modmail_email = msg_dict["modmail_email"]
             old_modmail_email = msg_dict["old_modmail_email"]
             send_address_change_email(sr, modmail_email, old_modmail_email)
+        elif msg_dict["event"] == "blocked_muted":
+            subreddit_id36 = msg_dict["subreddit_id36"]
+            sr = Subreddit._byID36(subreddit_id36, data=True)
+            parent_id36 = msg_dict["parent_id36"]
+            parent = Message._byID36(parent_id36, data=True)
+            sender_email = msg_dict["sender_email"]
+            incoming_email_id = msg_dict["incoming_email_id"]
+            send_blocked_muted_email(sr, parent, sender_email, incoming_email_id)
 
     amqp.consume_items("modmail_email_q", process_message)

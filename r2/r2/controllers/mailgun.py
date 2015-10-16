@@ -33,7 +33,10 @@ from r2.lib.base import abort
 from r2.lib.csrf import csrf_exempt
 from r2.lib.db import queries
 from r2.lib.filters import markdown_souptest
-from r2.lib.message_to_email import parse_and_validate_reply_to_address
+from r2.lib.message_to_email import (
+    parse_and_validate_reply_to_address,
+    queue_blocked_muted_email,
+)
 from r2.lib.souptest import SoupError
 from r2.lib.utils import constant_time_compare
 from r2.models import (
@@ -79,7 +82,7 @@ class MailgunWebhookController(RedditController):
     def POST_modmailreply(self):
         request_body = request.POST
         recipient = request_body["recipient"]
-        sender = request_body["sender"]
+        sender_email = request_body["sender"]
         from_ = request_body["from"]
         subject = request_body["subject"]
         body_plain = request_body["body-plain"]
@@ -116,6 +119,10 @@ class MailgunWebhookController(RedditController):
         if not feature.is_enabled("modmail_email", subreddit=sr.name):
             return
 
+        if parent.get_muted_user_in_conversation():
+            queue_blocked_muted_email(sr, parent, sender_email, email_id)
+            return
+
         # keep the subject consistent
         message_subject = parent.subject
         if not message_subject.startswith("re: "):
@@ -135,7 +142,7 @@ class MailgunWebhookController(RedditController):
             can_send_email=False,
         )
         message.sent_via_email = True
-        message.sender_email = sender
+        message.sender_email = sender_email
         message.email_id = email_id
         message._commit()
         queries.new_message(message, inbox_rel)
