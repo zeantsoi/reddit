@@ -612,6 +612,17 @@ class Link(Thing, Printable):
                     show_media_preview = True
 
             item.nsfw_str = item._nsfw.findall(item.title)
+
+            if item.nsfw_str and not item.over_18:
+                from r2admin.lib.irc import queue_alert_report
+                permalink = item.make_permalink_slow(force_domain=True)
+                queue_alert_report(
+                    "NSFW mismatch: %s" % permalink,
+                    channel_name="deimorz",
+                    key="nsfw_alert_%s" % item._id36,
+                    reporting_cooldown=24*60*60,
+                )
+
             item.over_18 = bool(item.over_18 or item.subreddit.over_18 or
                                 item.nsfw_str)
             item.nsfw = item.over_18 and user.pref_label_nsfw
