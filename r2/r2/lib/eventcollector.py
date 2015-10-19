@@ -404,7 +404,7 @@ class EventQueue(object):
         )
 
         if sender == Account.system_user():
-            sender_type == "automated"
+            sender_type = "automated"
         elif sender_is_moderator:
             sender_type = "moderator"
         else:
