@@ -28,6 +28,7 @@ from pylons import app_globals as g
 import requests
 
 from r2.lib import amqp
+from r2.lib.filters import _force_unicode
 from r2.lib.template_helpers import add_sr
 from r2.lib.utils import constant_time_compare
 from r2.models import (
@@ -141,7 +142,7 @@ def send_modmail_email(message):
         conversation_subject = message.subject
 
     subject = u"[r/{subreddit} mail]: {subject}".format(
-        subreddit=sr.name, subject=conversation_subject)
+        subreddit=sr.name, subject=_force_unicode(conversation_subject))
 
     if message.from_sr and not message.first_message:
         # this is a message from the subreddit to a user. add some text that
