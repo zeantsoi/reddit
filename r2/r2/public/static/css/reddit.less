@@ -11364,23 +11364,3 @@ body:not(.loggedin) .report-button {
 .subreddit .midcol .sr-type-icon {
     margin-left: 3px;
 }
-
-/*
-  Age posts on the front page 30 years for Back to the future day
-  Will not affect the linkinfo box in the sidebar
-*/
-
-html[lang^="en"] .front-page.hot-page .tagline time:not(.edit-timestamp) {
-
-    &:before {
-        content: "3";
-    }
-
-    &[datetime^="2015"]:before,
-    &[datetime^="2014-12"]:before,
-    &[datetime^="2014-11"]:before,
-    &[datetime^="2014-10-2"]:before,
-    &[datetime^="2014-10-3"]:before, {
-        content: "30 years, ";
-    }
-}
