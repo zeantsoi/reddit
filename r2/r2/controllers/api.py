@@ -2652,7 +2652,6 @@ class ApiController(RedditController):
                                                  default=None),
                    modmail_email_address=ValidEmail("modmail_email_address"),
                    modmail_email_enabled=VBoolean("modmail_email_enabled"),
-                   # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
                    )
@@ -2694,7 +2693,6 @@ class ApiController(RedditController):
         # and to hide from API docs.
         if feature.is_enabled('mobile_settings'):
             mobile_fields = {
-                'community_rules': VLength('community_rules', max_length=1024),
                 'related_subreddits': VSubredditList('related_subreddits',
                                                      limit=20),
                 'key_color': VColor('key_color'),
@@ -2711,7 +2709,6 @@ class ApiController(RedditController):
             'allow_top',
             'collapse_deleted_comments',
             'comment_score_hide_mins',
-            'community_rules',
             'css_on_cname',
             'description',
             'domain',
@@ -2929,7 +2926,6 @@ class ApiController(RedditController):
 
             # do not clobber these fields if absent in request
             no_clobber = (
-                'community_rules',
                 'key_color',
                 'related_subreddits',
             )
