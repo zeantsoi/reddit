@@ -1907,6 +1907,28 @@ def handle_vote(user, thing, vote, foreground=False, timer=None, date=None):
     new_vote(v, foreground=foreground, timer=timer)
 
 
+def convert_new_vote_data(data):
+    converted = {
+        "uid": data["user_id"],
+        "tid": data["thing_fullname"],
+        "ip": data["data"]["ip"],
+        "cheater": data["data"].get("invalid_source"),
+        "info": data["data"].get("referrer"),
+    }
+
+    if data["direction"] == 0:
+        converted["dir"] = True
+    elif data["direction"] == 1:
+        converted["dir"] = False
+    else:
+        converted["dir"] = None
+
+    if "event_data" in data:
+        converted["event_data"] = data["event_data"]
+
+    return converted
+
+
 def process_votes(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
     stats_qname = qname
@@ -1917,6 +1939,14 @@ def process_votes(qname, limit=0):
         timer.start()
 
         vote = json.loads(msg.body)
+
+        # if it's a new-style vote message, convert back to the old format
+        if "user_id" in vote:
+            # we wouldn't even have queued invalid event votes in the past
+            if not vote["valid_event"]:
+                return
+            
+            vote = convert_new_vote_data(vote)
 
         voter = Account._byID(vote["uid"], data=True)
         votee = Thing._by_fullname(vote["tid"], data=True)

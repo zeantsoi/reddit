@@ -114,6 +114,27 @@ class VoteDetailsByThing(tdb_cassandra.View):
         if ip:
             VoterIPByThing.create(votee._fullname, voter._id36, ip)
 
+    @staticmethod
+    def convert_new_details(new_data):
+        if "valid_thing" in new_data:
+            return new_data
+
+        converted_data = Storage({
+            "direction": str(new_data["direction"]),
+            "date": float(new_data["date"]),
+            "valid_thing": new_data["effects"]["affects_score"],
+            "valid_user": new_data["effects"]["affects_karma"],
+            "ip": new_data["ip"],
+            "voter_id": new_data["voter_id"],
+            "_id": new_data["_id"]
+        })
+
+        referrer = new_data["data"].get("referrer")
+        if referrer:
+            converted_data["vote_info"] = referrer
+
+        return converted_data
+
     @classmethod
     def get_details(cls, thing, voters=None):
         if isinstance(thing, Link):
@@ -137,7 +158,10 @@ class VoteDetailsByThing(tdb_cassandra.View):
         except tdb_cassandra.NotFound:
             ips = None
 
-        return raw_details.decode_details(ips=ips)
+        details = raw_details.decode_details(ips=ips)
+
+        return [cls.convert_new_details(vote) for vote in details]
+
 
     def decode_details(self, ips=None):
         raw_details = self._values()
