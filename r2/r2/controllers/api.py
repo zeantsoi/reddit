@@ -78,6 +78,7 @@ from r2.lib.pages import (
     InvitedModTableItem,
     ModTableItem,
     MutedTableItem,
+    ReportForm,
     SubredditStylesheet,
     WikiBannedTableItem,
     WikiMayContributeTableItem,
@@ -1660,10 +1661,11 @@ class ApiController(RedditController):
         VModhash(),
         thing=VByName('thing_id'),
         reason=VLength('reason', max_length=100, empty_error=None),
+        site_reason=VLength('site_reason', max_length=100, empty_error=None),
         other_reason=VLength('other_reason', max_length=100, empty_error=None),
     )
     @api_doc(api_section.links_and_comments)
-    def POST_report(self, form, jquery, thing, reason, other_reason):
+    def POST_report(self, form, jquery, thing, reason, site_reason, other_reason):
         """Report a link, comment or message.
 
         Reporting a thing brings it to the attention of the subreddit's
@@ -1685,6 +1687,7 @@ class ApiController(RedditController):
             return
 
         if (form.has_errors("reason", errors.TOO_LONG) or
+            form.has_errors("site_reason", errors.TOO_LONG) or
             form.has_errors("other_reason", errors.TOO_LONG)):
             return
 
@@ -1693,6 +1696,8 @@ class ApiController(RedditController):
         if (reason in ("spam", "vote manipulation", "personal information",
                 "sexualizing minors", "breaking reddit")):
             reason_type = "SITE_RULES"
+        elif reason == "site_reason_selected":
+            reason = site_reason
         else:
             reason_type = "CUSTOM"
             if reason == "other":
@@ -1744,7 +1749,9 @@ class ApiController(RedditController):
             return
 
         button.text(_("reported"))
-        form.fadeOut()
+        parent_div = jquery(".report-%s.reportform" % thing._fullname)
+        parent_div.removeClass("active")
+        parent_div.html("")
 
     @require_oauth2_scope("privatemessages")
     @noresponse(
@@ -5067,6 +5074,15 @@ class ApiController(RedditController):
         SubredditRules.remove_rule(c.site, short_name)
         ModAction.create(c.site, c.user, 'deleterule', details=short_name)
         form.refresh()
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        thing=VByName('thing'),
+    )
+    def GET_report_form(self, form, jquery, thing):
+        """Return information about report reasons for the thing."""
+        return ReportForm(thing).render(style="html")
 
     @validatedForm(VModhashIfLoggedIn())
     def POST_hide_locationbar(self, form, jquery):
