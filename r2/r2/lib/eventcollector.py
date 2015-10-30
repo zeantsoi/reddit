@@ -564,6 +564,25 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def bucketing_event(self, experiment_id, experiment_name, variant, user):
+        """Send an event recording an experiment bucketing.
+
+        experiment_id: an integer representing the experiment
+        experiment_name: a human-readable name representing the experiment
+        variant: a string representing the variant name
+        user: the Account that has been put into the variant
+        """
+        event = EventV2(
+            topic='bucketing_events',
+            event_type='bucket',
+        )
+        event.add('experiment_id', experiment_id)
+        event.add('experiment_name', experiment_name)
+        event.add('variant', variant)
+        event.add('user_id', user._id)
+        event.add('user_name', user.name)
+        self.save_event(event)
+
     @squelch_exceptions
     def event_base(self, request, context):
         return Event.base_from_request(request, context)
