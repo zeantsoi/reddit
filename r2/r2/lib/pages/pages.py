@@ -82,6 +82,7 @@ from r2.models.gold import (
 )
 from r2.models.promo import (
     NO_TRANSACTION,
+    PROMOTE_COST_BASIS,
     PROMOTE_PRIORITIES,
     PromotedLinkRoadblock,
     PromotionLog,
@@ -4372,6 +4373,9 @@ class PromoteLinkBase(Templated):
         self.regions = regions
         self.metros = metros
 
+        self.force_auction = (feature.is_enabled('ads_auction') and
+            not c.user_is_sponsor)
+
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
 
@@ -4425,7 +4429,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         min_start, max_start, max_end = promote.get_date_limits(
             link, c.user_is_sponsor)
 
-        default_end = min_start + datetime.timedelta(days=2)
+        default_end = min_start + datetime.timedelta(days=7)
         default_start = min_start
 
         self.min_start = min_start.strftime("%m/%d/%Y")
@@ -4440,11 +4444,27 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.campaigns = RenderableCampaign.from_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
 
-        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
-        self.max_bid = 0 if c.user_is_sponsor else g.max_promote_bid
+        if c.user_is_sponsor:
+            self.min_budget = 0
+            self.max_budget = 0
+        else:
+            self.min_budget = g.min_total_budget_pennies / 100.
+            self.max_budget = g.max_total_budget_pennies / 100.
 
-        self.priorities = [(p.name, p.text, p.description, p.default, p.inventory_override, p.cpm)
-                           for p in sorted(PROMOTE_PRIORITIES.values(), key=lambda p: p.value)]
+        self.default_budget = g.default_total_budget_pennies / 100.
+
+        if c.user_is_sponsor:
+            self.min_bid_pennies = 0
+            self.max_bid_pennies = 0
+        else:
+            self.min_bid_pennies = g.min_bid_pennies
+            self.max_bid_pennies = g.max_bid_pennies
+
+        self.priorities = [
+            (p.name, p.text, p.description, p.default,
+            p.inventory_override, p == PROMOTE_PRIORITIES['auction'])
+            for p in PROMOTE_PRIORITIES.values()
+        ]
 
         self.get_locations()
         self.get_collections()
@@ -4467,6 +4487,8 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.infobar = RedditInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)
 
+        self.ads_auction_enabled = feature.is_enabled('ads_auction')
+
 
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,
@@ -4474,8 +4496,20 @@ class RenderableCampaign(Templated):
         self.link = link
         self.campaign = campaign
 
+        self.ads_auction_enabled = feature.is_enabled('ads_auction')
+        if self.ads_auction_enabled:
+            self.is_auction = not c.user_is_sponsor or campaign.is_auction
+        else:
+            self.is_auction = False
+
+        # Convert total_budget_pennies to dollars for UI
+        self.total_budget = campaign.total_budget_pennies / 100.
+
         if full_details:
-            self.spent = promote.get_spent_amount(campaign)
+            if not self.campaign.is_house and not self.campaign.is_auction:            
+                self.spent = promote.get_spent_amount(campaign)
+            else:
+                self.spent = campaign.adserver_spent_pennies / 100.
         else:
             self.spent = 0.
 
@@ -4486,7 +4520,7 @@ class RenderableCampaign(Templated):
         self.is_complete = is_complete
         self.needs_refund = (is_complete and c.user_is_sponsor and
                              (transaction and not transaction.is_refund()) and
-                             self.spent < campaign.bid)
+                             self.spent < campaign.total_budget_pennies / 100.)
         self.pay_url = promote.pay_url(link, campaign)
         sr_name = random.choice(campaign.target.subreddit_names)
         self.view_live_url = promote.view_live_url(link, sr_name)
@@ -4515,6 +4549,17 @@ class RenderableCampaign(Templated):
         self.android_versions = campaign.android_version_range
 
         self.pause_ads_enabled = feature.is_enabled('pause_ads')
+
+        # If ads_auction not enabled, default cost_basis to fixed_cpm
+        if not feature.is_enabled('ads_auction'):
+            self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.fixed_cpm]
+            self.bid_pennies = campaign.bid_pennies
+        elif campaign.cost_basis != PROMOTE_COST_BASIS.fixed_cpm:
+            self.cost_basis = PROMOTE_COST_BASIS.name[campaign.cost_basis]
+            self.bid_pennies = campaign.bid_pennies
+        else:
+            self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.cpm]
+            self.bid_pennies = g.default_bid_pennies
 
         Templated.__init__(self)
 
@@ -4795,8 +4840,8 @@ class PaymentForm(Templated):
         self.start_date = campaign.start_date.strftime("%m/%d/%Y")
         self.end_date = campaign.end_date.strftime("%m/%d/%Y")
         self.campaign_id36 = campaign._id36
-        self.budget = format_currency(float(campaign.bid), 'USD',
-                                      locale=c.locale)
+        self.budget = format_currency(campaign.total_budget_pennies / 100.,
+            'USD', locale=c.locale)
         Templated.__init__(self, **kw)
 
 
@@ -5073,7 +5118,7 @@ class PromoteReport(PromoteLinkBase):
         traffic_by_key = {}
         for camp in campaigns:
             fullname = camp._fullname
-            bid = camp.bid / max(camp.ndays, 1)
+            bid = camp.total_budget_pennies / max(camp.ndays, 1)
             camp_ndays = max(1, (camp.end_date - camp.start_date).days)
             camp_start = camp.start_date.date()
             days = xrange(camp_ndays)

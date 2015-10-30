@@ -592,7 +592,7 @@ class PromotedLinkTraffic(Templated):
     def make_campaign_table(self):
         campaigns = PromoCampaign._by_link(self.thing._id)
 
-        total_budget = 0
+        total_budget_pennies = 0
         total_spent = 0
         total_paid_impressions = 0
         total_impressions = 0
@@ -622,13 +622,11 @@ class PromotedLinkTraffic(Templated):
             url = '/traffic/%s/%s' % (self.thing._id36, camp._id36)
             is_total = False
             row = self.make_campaign_table_row(camp._id36, start, end, target,
-                                               location, camp.bid, spent,
-                                               camp.impressions,
-                                               impressions, clicks, is_live,
-                                               is_active, url, is_total)
+                location, camp.total_budget_pennies, spent, camp.impressions,
+                impressions, clicks, is_live, is_active, url, is_total)
             self.campaign_table.append(row)
 
-            total_budget += camp.bid
+            total_budget_pennies += camp.total_budget_pennies
             total_spent += spent
             total_paid_impressions += camp.impressions
             total_impressions += impressions
@@ -644,10 +642,8 @@ class PromotedLinkTraffic(Templated):
         url = '/traffic/%s' % self.thing._id36
         is_total = True
         row = self.make_campaign_table_row(_('total'), start, end, target,
-                                           location, total_budget, total_spent,
-                                           total_paid_impressions, total_impressions,
-                                           total_clicks, is_live, is_active, url,
-                                           is_total)
+            location, total_budget_pennies, total_spent, total_paid_impressions,
+            total_impressions, total_clicks, is_live, is_active, url, is_total)
         self.campaign_table.append(row)
 
     def check_dates(self, thing):

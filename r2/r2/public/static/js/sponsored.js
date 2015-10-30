@@ -56,10 +56,12 @@ var CampaignFormattedProps = {
     if (props.impressions) {
       formattedProps.impressions = r.utils.prettyNumber(props.impressions);
     }
-    if (props.bid === null) {
-      formattedProps.bid = 'N/A';
-    } else if (props.bid) {
-      formattedProps.bid = props.bid.toFixed(2);
+    if (props.budget === null) {
+      formattedProps.budget = 'N/A';
+    } else if (_.isNaN(props.budget)) {
+      formattedProps.budget = 0;
+    } else if (props.budget) {
+      formattedProps.budget = props.budget.toFixed(2);
     }
     return formattedProps;
   },
@@ -149,17 +151,26 @@ var CampaignOption = React.createClass({
       bid: '',
       impressions: '',
       isNew: true,
+      costBasis: '',
+      totalBudget: '',
+      costBasis: '',
+      bidPennies: '',
     };
   },
 
   render: function() {
+    var customText;
+    if (r.sponsored.isAuction) {
+      customText = '$' + parseFloat(this.props.bidPennies).toFixed(2) + ' ' + this.props.costBasis;
+    } else {
+      customText = this.formattedProps.impressions + ' impressions';
+    }
     return React.DOM.tr({ className: this.getClassName() },
       React.DOM.td({ className: 'date start-date' }, this.props.start),
       React.DOM.td({ className: 'date end-date' }, this.props.end),
-      React.DOM.td({ className: 'bid' }, '$', this.formattedProps.bid),
-      React.DOM.td({ className: 'impressions' },
-        this.formattedProps.impressions, ' impressions'
-      ),
+      React.DOM.td({ className: 'total-budget' }, '$', this.formattedProps.budget,
+        ' total'),
+      React.DOM.td({}, customText),
       React.DOM.td({ className: 'buttons' },
         CampaignButton({
           className: this.props.primary ? 'primary-button' : '',
@@ -173,13 +184,16 @@ var CampaignOption = React.createClass({
   handleClick: function(close) {
     var $startdate = $('#startdate');
     var $enddate = $('#enddate');
-    var $bid = $('#bid');
+    var $totalBudget = $('#total_budget');
+    var $bidPennies = $('#bid_pennies');
     var userStartdate = $startdate.val();
     var userEnddate = $enddate.val();
-    var userBid = $bid.val();
+    var userTotalBudget = $totalBudget.val();
+    var userBidPennies = $bidPennies.val();
     $('#startdate').val(this.props.start);
     $('#enddate').val(this.props.end);
-    $('#bid').val(this.props.bid);
+    $('#total_budget').val(this.props.budget);
+    $('#bid_pennies').val(this.props.bidPennies);
     setTimeout(function(){
       send_campaign(close);
       // hack, needed because post_pseudo_form hides any element in the form
@@ -189,7 +203,8 @@ var CampaignOption = React.createClass({
       // reset the form with the user's original values
       $startdate.val(userStartdate);
       $enddate.val(userEnddate);
-      $bid.val(userBid);
+      $totalBudget.val(userTotalBudget);
+      $bidPennies.val(userBidPennies);
     }, 0);
   },
 });
@@ -214,11 +229,11 @@ var CampaignCreator = React.createClass({
 
   getDefaultProps: function() {
     return {
-      bid: 0,
+      totalBudget: 0,
       targetName: '',
       cpm: 0,
-      maxValidBid: 0,
-      minValidBid: 0,
+      maxValidBudget: 0,
+      minValidBudget: 0,
       dates: [],
       inventory: [],
       requested: 0,
@@ -230,8 +245,8 @@ var CampaignCreator = React.createClass({
   getInitialState: function() {
     var totalAvailable = this.getAvailable(this.props);
     var available = totalAvailable;
-    if (this.props.maxValidBid) {
-      available = Math.min(available, this.getImpressions(this.props.maxValidBid));
+    if (this.props.maxValidBudget) {
+      available = Math.min(available, this.getImpressions(this.props.maxValidBudget));
     }
     return {
       totalAvailable: totalAvailable,
@@ -249,8 +264,8 @@ var CampaignCreator = React.createClass({
   componentWillReceiveProps: function(nextProps) {
     var totalAvailable = this.getAvailable(nextProps);
     var available = totalAvailable;
-    if (this.props.maxValidBid) {
-      available = Math.min(available, this.getImpressions(this.props.maxValidBid));
+    if (this.props.maxValidBudget) {
+      available = Math.min(available, this.getImpressions(this.props.maxValidBudget));
     }
     this.setState({
       totalAvailable: totalAvailable,
@@ -276,131 +291,154 @@ var CampaignCreator = React.createClass({
   },
 
   getCampaignSets: function() {
-    var requested = this.getRequestedOption();
-    requested.primary = true;
-    var maximized = this.getMaximizedOption();
-    if (this.props.override) {
-      if (requested.impressions <= this.state.available) {
-        return [CampaignSet(null,
-            InfoText(null, r._('the campaign you requested is available!')),
-            CampaignOptionTable(null, CampaignOption(requested))
-          ),
-          InfoText(maximized,
-              r._('the maximum budget available is $%(bid)s (%(impressions)s impressions)')
-          )
-        ];
+    if (r.sponsored.isAuction) {
+      var auction = this.getAuctionOption(),
+          cssClass = null,
+          message = r._('Please confirm the details of your campaign');
+      if (auction.budget < this.props.minValidBudget) {
+        cssClass = {className: 'error', minBudget: auction.minBudget};
+        message = r._('your budget must be at least $%(minBudget)s');
+      } else if (auction.budget > this.props.maxValidBudget &&
+                 this.props.maxValidBudget > 0) {
+        cssClass = {className: 'error', maxBudget: auction.maxBudget};
+        message = r._('your budget must not exceed $%(maxBudget)s');        
+      } else {
+        auction.primary = true;
       }
-      else {
-        return CampaignSet(null,
-          InfoText({
-              className: 'error',
-              available: this.state.available,
-              target: this.props.targetName
-            },
-            r._('we expect to only have %(available)s impressions on %(target)s. ' +
-                 'we may not fully deliver.')
-          ),
+      return [CampaignSet(null,
+          InfoText(cssClass, message),
+          CampaignOptionTable(null, CampaignOption(auction))
+        ),
+      ];      
+    } else {
+      var requested = this.getRequestedOption();
+      requested.primary = true;
+      var maximized = this.getMaximizedOption();
+      
+      if (this.props.override) {
+        if (requested.impressions <= this.state.available) {
+          return [CampaignSet(null,
+              InfoText(null, r._('the campaign you requested is available!')),
+              CampaignOptionTable(null, CampaignOption(requested))
+            ),
+            InfoText(maximized,
+                r._('the maximum budget available is $%(budget)s (%(impressions)s impressions)')
+            )
+          ];
+        }
+        else {
+          return CampaignSet(null,
+            InfoText({
+                className: 'error',
+                available: this.state.available,
+                target: this.props.targetName
+              },
+              r._('we expect to only have %(available)s impressions on %(target)s. ' +
+                   'we may not fully deliver.')
+            ),
+            CampaignOptionTable(null, CampaignOption(requested))
+          );
+        }
+      }
+      else if (requested.budget >= this.props.minValidBudget &&
+               requested.impressions <= this.state.available) {
+        var result = CampaignSet(null,
+          InfoText(null, r._('the campaign you requested is available!')),
           CampaignOptionTable(null, CampaignOption(requested))
         );
+        if (maximized.budget > requested.budget &&
+            requested.budget * 1.2 >= maximized.budget &&
+            this.state.available === this.state.totalAvailable) {
+          var difference = maximized.budget - requested.budget;
+          result = [result, CampaignSet(null,
+            InfoText({ difference: difference.toFixed(2) },
+              r._('want to maximize your campaign? for only $%(difference)s more ' +
+                   'you can buy all available inventory for your selected dates!')
+            ),
+            CampaignOptionTable(null, CampaignOption(maximized))
+          )];
+        }
+        else {
+          result = [result, InfoText(maximized,
+            r._('the maximum budget available is $%(budget)s (%(impressions)s impressions)')
+          )];
+        }
+        return result;
       }
-    }
-    else if (requested.bid >= this.props.minValidBid &&
-             requested.impressions <= this.state.available) {
-      var result = CampaignSet(null,
-        InfoText(null, r._('the campaign you requested is available!')),
-        CampaignOptionTable(null, CampaignOption(requested))
-      );
-      if (maximized.bid > requested.bid &&
-          requested.bid * 1.2 >= maximized.bid &&
-          this.state.available === this.state.totalAvailable) {
-        var difference = maximized.bid - requested.bid;
-        result = [result, CampaignSet(null,
-          InfoText({ difference: difference.toFixed(2) },
-            r._('want to maximize your campaign? for only $%(difference)s more ' +
-                 'you can buy all available inventory for your selected dates!')
+      else if (requested.budget < this.props.minValidBudget) {
+        var minimal = this.getMinimizedOption();
+        if (minimal.impressions <= this.state.available) {
+          if (r.sponsored.userIsSponsor) {
+            return CampaignSet(null,
+              InfoText(null, r._('the campaign you requested is available!')),
+              CampaignOptionTable(null, CampaignOption(requested))
+            );
+          } else {
+            return CampaignSet(null,
+              InfoText({ className: 'error' },
+                r._('the campaign you requested is too small! this campaign is available:')
+              ),
+              CampaignOptionTable(null, CampaignOption(minimal))
+            );
+          }
+        }
+        else {
+          return InfoText({ className: 'error' },
+            r._('the campaign you requested is too small!')
+          );
+        }
+      }
+      else if (requested.impressions > this.state.available &&
+               this.state.totalAvailable > this.state.available &&
+               maximized.budget > this.props.minValidBudget) {
+        return CampaignSet(null,
+          InfoText(null, 
+            r._('the campaign you requested is too big! the largest campaign ' +
+                 'available is:')
           ),
           CampaignOptionTable(null, CampaignOption(maximized))
-        )];
+        );
       }
-      else {
-        result = [result, InfoText(maximized,
-          r._('the maximum budget available is $%(bid)s (%(impressions)s impressions)')
-        )];
-      }
-      return result;
-    }
-    else if (requested.bid < this.props.minValidBid) {
-      var minimal = this.getMinimizedOption();
-      if (minimal.impressions <= this.state.available) {
-        if (r.sponsored.userIsSponsor) {
+      else if (requested.impressions > this.state.available) {
+
+        var options = [];
+        if (maximized.budget >= this.props.minValidBudget) {
+          options.push(CampaignOption(maximized));
+        }
+        var reduced = this.getReducedWindowOption();
+        if (reduced && reduced.budget >= this.props.minValidBudget) {
+          if (reduced.impressions > requested.impressions) {
+            reduced.impressions = requested.impressions;
+            reduced.budget = requested.budget;
+          }
+          options.push(CampaignOption(reduced));
+        }
+        if (options.length) {
           return CampaignSet(null,
-            InfoText(null, r._('the campaign you requested is available!')),
-            CampaignOptionTable(null, CampaignOption(requested))
-          );
-        } else {
-          return CampaignSet(null,
-            InfoText({ className: 'error' },
-              r._('the campaign you requested is too small! this campaign is available:')
+            InfoText({
+                className: 'error',
+                target: this.props.targetName,
+              },
+              r._('we have insufficient available inventory in %(target)s to fulfill ' +
+                   'your requested dates. the following campaigns are available:')
             ),
-            CampaignOptionTable(null, CampaignOption(minimal))
+            CampaignOptionTable(null, options)
+          );
+        }
+        else {
+          r.analytics.fireFunnelEvent('ads', 'inventory-error');
+
+          return InfoText({
+              className: 'error',
+              target: this.props.targetName
+            },
+            r._('inventory for %(target)s is sold out for your requested dates. ' +
+                 'please try a different target or different dates.')
           );
         }
       }
-      else {
-        return InfoText({ className: 'error' },
-          r._('the campaign you requested is too small!')
-        );
-      }
     }
-    else if (requested.impressions > this.state.available &&
-             this.state.totalAvailable > this.state.available &&
-             maximized.bid > this.props.minValidBid) {
-      return CampaignSet(null,
-        InfoText(null, 
-          r._('the campaign you requested is too big! the largest campaign ' +
-               'available is:')
-        ),
-        CampaignOptionTable(null, CampaignOption(maximized))
-      );
-    }
-    else if (requested.impressions > this.state.available) {
-
-      var options = [];
-      if (maximized.bid >= this.props.minValidBid) {
-        options.push(CampaignOption(maximized));
-      }
-      var reduced = this.getReducedWindowOption();
-      if (reduced && reduced.bid >= this.props.minValidBid) {
-        if (reduced.impressions > requested.impressions) {
-          reduced.impressions = requested.impressions;
-          reduced.bid = requested.bid;
-        }
-        options.push(CampaignOption(reduced));
-      }
-      if (options.length) {
-        return CampaignSet(null,
-          InfoText({
-              className: 'error',
-              target: this.props.targetName,
-            },
-            r._('we have insufficient available inventory in %(target)s to fulfill ' +
-                 'your requested dates. the following campaigns are available:')
-          ),
-          CampaignOptionTable(null, options)
-        );
-      }
-      else {
-        r.analytics.fireFunnelEvent('ads', 'inventory-error');
-
-        return InfoText({
-            className: 'error',
-            target: this.props.targetName
-          },
-          r._('inventory for %(target)s is sold out for your requested dates. ' +
-               'please try a different target or different dates.')
-        );
-      }
-    }
+    
     return null;
   },
 
@@ -408,9 +446,9 @@ var CampaignCreator = React.createClass({
     return $.datepicker.formatDate('mm/dd/yy', date);
   },
 
-  getBid: function(impressions, requestedBid) {
-    if (this.getImpressions(requestedBid) === impressions) {
-      return requestedBid; 
+  getBudget: function(impressions, requestedBudget) {
+    if (this.getImpressions(requestedBudget) === impressions) {
+      return requestedBudget; 
     } else {
       return Math.floor((impressions / 1000) * this.props.cpm) / 100;
     }
@@ -420,43 +458,65 @@ var CampaignCreator = React.createClass({
     return Math.floor(bid / this.props.cpm * 1000 * 100);
   },
 
-  getOptionData: function(startDate, duration, impressions, requestedBid) {
+  getOptionDates: function(startDate, duration) {
     var endDate = new Date();
     endDate.setTime(startDate.getTime());
     endDate.setDate(startDate.getDate() + duration);
     return {
       start: this.formatDate(startDate),
       end: this.formatDate(endDate),
-      bid: this.getBid(impressions, requestedBid),
+    }
+  },
+
+  getFixedCPMOptionData: function(startDate, duration, impressions, requestedBudget) {
+    var dates = this.getOptionDates(startDate, duration);
+    return {
+      start: dates.start,
+      end: dates.end,
+      budget: this.getBudget(impressions, requestedBudget),
       impressions: Math.floor(impressions),
       isNew: this.props.isNew,
     };
   },
 
+  getAuctionOption: function() {
+    var dates = this.getOptionDates(this.props.dates[0], this.props.dates.length);
+    return {
+      start: dates.start,
+      end: dates.end,
+      budget: this.props.totalBudget,
+      costBasis: this.props.costBasis,
+      bidPennies: this.props.bidPennies,
+      isNew: this.props.isNew,
+      minBudget: this.props.minValidBudget,
+      maxBudget: this.props.maxValidBudget
+    };
+  },
+
   getRequestedOption: function() {
-    return this.getOptionData(
+    return this.getFixedCPMOptionData(
       this.props.dates[0],
       this.props.dates.length,
       this.props.requested,
-      this.props.bid
+      this.props.totalBudget
     );
   },
 
   getMaximizedOption: function() {
-    return this.getOptionData(
+    return this.getFixedCPMOptionData(
       this.props.dates[0],
       this.props.dates.length,
       this.state.available,
-      this.props.bid
+      this.props.totalBudget
     );
   },
 
   getMinimizedOption: function() {
-    return this.getOptionData(
+    return this.getFixedCPMOptionData(
       this.props.dates[0],
       this.props.dates.length,
-      this.getImpressions(this.props.minValidBid),
-      this.props.minValidBid
+      this.getImpressions(this.props.minValidBudget),
+      this.props.minValidBudget
     );
   },
 
@@ -465,12 +525,12 @@ var CampaignCreator = React.createClass({
     var maxOffset = (this.state.maxTime - this.props.dates[0].getTime()) / days | 0;
     var res =  r.sponsored.getMaximumRequest(
       this.props.inventory,
-      this.getImpressions(this.props.minValidBid),
+      this.getImpressions(this.props.minValidBudget),
       this.props.requested,
       maxOffset
     );
     if (res && res.days.length < this.props.dates.length) {
-      return this.getOptionData(
+      return this.getFixedCPMOptionData(
         this.props.dates[res.offset],
         res.days.length,
         res.maxRequest,
@@ -512,7 +572,10 @@ var exports = r.sponsored = {
         });
     },
 
-    setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {
+    setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor, forceAuction) {
+        if (forceAuction) {
+            this.isAuction = true;
+        }
         this.inventory = inventory_by_sr
         this.priceDict = priceDict
 
@@ -539,6 +602,23 @@ var exports = r.sponsored = {
                 .find("button[name=save]").hide().end()
         }
         this.userIsSponsor = userIsSponsor
+    },
+
+    setupAuctionFields: function($form, targeting, timing) {
+        if (this.isAuction) {
+            $('.auction-field').show();
+            $('.fixed-cpm-field').hide();
+            $('.priority-field').hide();
+            $('#is_auction_true').prop('checked', true);
+
+            this.setup_auction($form, targeting, timing);
+            this.check_bid_pennies($form);
+        } else {
+            $('.auction-field').hide();
+            $('.fixed-cpm-field').show();
+            $('.priority-field').show();
+            $('#is_auction_false').prop('checked', true);
+        }
     },
 
     setup_collection_selector: function() {
@@ -630,6 +710,18 @@ var exports = r.sponsored = {
         }
     },
 
+    toggleAuctionFields: function() {
+        var prevChecked = this.isAuction;
+        var currentlyChecked = ($('input[name="is_auction"]:checked').val() === 'true');
+        if (prevChecked != currentlyChecked) {
+            $('.auction-field').toggle();
+            $('.fixed-cpm-field').toggle();
+            $('.priority-field').toggle();
+            this.isAuction = currentlyChecked;
+            this.render();
+        }
+    },
+
     setup_frequency_cap: function(frequency_capped) {
         this.frequency_capped = !!frequency_capped;
     },
@@ -669,8 +761,7 @@ var exports = r.sponsored = {
           + '<input type="radio" name="collection" value="<%= name %>"'
           + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
           + '  <div class="label-group">'
-          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'
-          + '    <small class="description"><%= description %></small>'
+          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'           + '    <small class="description"><%= description %></small>'
           + '  </div>'
           + '</label>');
 
@@ -831,35 +922,92 @@ var exports = r.sponsored = {
         });
     },
 
+    setup_auction: function($form, targeting, timing) {
+        var dates = timing.dates,
+            totalBudget = parseFloat($("#total_budget").val()),
+            costBasisValue = $form.find('#cost_basis').val(),
+            bidPennies = $form.find('#bid_pennies').val();
+            minbudget_amt = r.sponsored.get_real_min_budget(),
+            maxbudget_amt = r.sponsored.get_max_budget();
+
+        React.renderComponent(
+          CampaignCreator({
+            totalBudget: totalBudget,
+            dates: dates,
+            isNew: !$("#campaign").parents('tr:first').length,
+            maxValidBudget: parseFloat(maxbudget_amt),
+            minValidBudget: parseFloat(minbudget_amt),
+            targetName: targeting.displayName,
+            costBasis: costBasisValue.toUpperCase(),
+            bidPennies: parseFloat(bidPennies),
+          }),
+          document.getElementById('campaign-creator')
+        );
+    },
+
+    setup_house: function($form, targeting, timing, isOverride) {
+      $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
+        function() {
+          var booked = this.get_booked_inventory($form, targeting.sr,
+                                                 targeting.geotarget, isOverride);
+          var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
+                                                           targeting.inventoryKey);
+          var totalImpsAvailable = _.reduce(availableByDate, sum, 0);
+
+          React.renderComponent(
+            React.DOM.div(null,
+              CampaignSet(null,
+                InfoText(null, r._('house campaigns, man.')),
+                CampaignOptionTable(null,
+                  CampaignOption({
+                    bid: null,
+                    end: timing.enddate,
+                    impressions: 'unsold ',
+                    isNew: !$("#campaign").parents('tr:first').length,
+                    primary: true,
+                    start: timing.startdate,
+                  })
+                )
+              ),
+              InfoText({impressions: totalImpsAvailable},
+                  r._('maximum possible impressions: %(impressions)s')
+              )
+            ),
+            document.getElementById('campaign-creator')
+          );
+        }.bind(this)
+      );
+
+    },
+
     check_inventory: function($form, targeting, timing, budget, isOverride) {
-        var bid = budget.bid,
+        var totalBudget = budget.totalBudget,
             cpm = budget.cpm,
             requested = budget.impressions,
             daily_request = Math.floor(requested / timing.duration),
             inventoryKey = targeting.inventoryKey,
             booked = this.get_booked_inventory($form, targeting.sr, 
-                    targeting.geotarget, isOverride);
-
-        var minbid_amt = r.sponsored.get_real_min_bid();
-        var maxbid_amt = r.sponsored.get_max_bid();
-
+                    targeting.geotarget, isOverride),
+            minbudget_amt = r.sponsored.get_real_min_budget(),
+            maxbudget_amt = r.sponsored.get_max_budget();
         $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
             function() {
                 var dates = timing.dates;
                 var availableByDay = this.getAvailableImpsByDay(dates, booked, inventoryKey)
                 React.renderComponent(
                   CampaignCreator({
-                    bid: bid,
+                    totalBudget: totalBudget,
                     cpm: cpm,
-                    dates: dates,
+                    dates: timing.dates,
                     inventory: availableByDay,
                     isNew: !$("#campaign").parents('tr:first').length,
-                    maxValidBid: parseFloat(maxbid_amt),
-                    minValidBid: parseFloat(minbid_amt),
+                    maxValidBudget: parseFloat(maxbudget_amt),
+                    minValidBudget: parseFloat(minbudget_amt),
                     override: isOverride,
                     requested: requested,
                     targetName: targeting.displayName,
                   }),
+
                   document.getElementById('campaign-creator')
                 );
             }.bind(this),
@@ -881,8 +1029,8 @@ var exports = r.sponsored = {
         return Math.round((Date.parse(end) - Date.parse(start)) / (86400*1000))
     },
 
-    get_bid: function($form) {
-        return parseFloat($form.find('*[name="bid"]').val()) || 0
+    get_total_budget: function($form) {
+        return parseFloat($form.find('*[name="total_budget"]').val()) || 0
     },
 
     get_cpm: function($form) {
@@ -1038,12 +1186,12 @@ var exports = r.sponsored = {
     },
 
     get_budget: function($form) {
-        var bid = this.get_bid($form),
+        var totalBudget = this.get_total_budget($form),
             cpm = this.get_cpm($form),
-            impressions = this.calc_impressions(bid, cpm);
+            impressions = this.calc_impressions(totalBudget, cpm);
 
         return {
-            'bid': bid,
+            'totalBudget': totalBudget,
             'cpm': cpm,
             'impressions': impressions,
         };
@@ -1052,11 +1200,11 @@ var exports = r.sponsored = {
     get_priority: function($form) {
         var priority = $form.find('*[name="priority"]:checked'),
             isOverride = priority.data("override"),
-            isCpm = priority.data("cpm");
+            isHouse = priority.data("house");
 
         return {
             isOverride: isOverride,
-            isCpm: isCpm,
+            isHouse: isHouse,
         };
     },
 
@@ -1065,7 +1213,7 @@ var exports = r.sponsored = {
             collections = this.collectionsByName,
             subreddits = {},
             totalImpressions = 0,
-            totalBid = 0;
+            totalBudget = 0;
 
         function mapSubreddit(name) {
             subreddits[name] = 1;
@@ -1087,20 +1235,16 @@ var exports = r.sponsored = {
                 isCollection = (data.targetingCollection === 'True'),
                 mappingFunction = isCollection ? mapCollection : mapSubreddit;
             mappingFunction(data.targeting);
-            var bid = parseFloat(data.bid, 10);
-            var cpm = parseInt(data.cpm, 10);
-            var impressions = bid / cpm * 1000 * 100;
-            totalBid += bid;
-            totalImpressions += impressions;
+            var budget = parseFloat(data.total_budget, 10);
+            var bid_pennies = parseInt(data.bid_pennies, 10);
+            totalBudget += budget;
         });
 
         return {
             count: campaignRows.length,
             subreddits: _.keys(subreddits),
-            totalBid: totalBid,
-            totalImpressions: totalImpressions | 0,
-            prettyBid: '$' + totalBid.toFixed(2),
-            prettyImpressions: r.utils.prettyNumber(totalImpressions),
+            totalBudget: totalBudget,
+            prettyTotalBudget: '$' + totalBudget.toFixed(2),
         };
     },
 
@@ -1115,9 +1259,9 @@ var exports = r.sponsored = {
     },
 
     campaign_dashboard_help_template: _.template('<p>this promotion has a '
-            + 'total budget of <%= prettyBid %> for <%= prettyImpressions %> '
-            + 'impressions in <%= subreddits.length %> '
-            + 'subreddit<% subreddits.length > 1 && print("s") %></p>'),
+            + 'total budget of <%= prettyTotalBudget %> in '
+            + '<%= subreddits.length %> subreddit'
+            + '<% subreddits.length > 1 && print("s") %></p>'),
 
     render_campaign_dashboard_header: function() {
         var campaigns = this.get_campaigns($('.campaign-list'));
@@ -1140,6 +1284,14 @@ var exports = r.sponsored = {
     },
 
     on_bid_change: function() {
+        this.render()
+    },
+
+    on_cost_basis_change: function() {
+        this.render();
+    },
+
+    on_budget_change: function() {
         this.render()
     },
 
@@ -1189,15 +1341,6 @@ var exports = r.sponsored = {
         var platformTargeting = this.getPlatformTargeting();
         var platformOverride = platformTargeting.isMobile && platformTargeting.platform === 'mobile';
 
-        var $priorities = $form.find('*[name="priority"]');
-        if (platformOverride && this.currentPlatform != 'mobile') {
-          $priorities.filter('[value="house"]').prop('checked', 'checked');
-        } else {
-          if (!platformOverride && this.currentPlatform === 'mobile') {
-            $priorities.filter('[value="standard"]').prop('checked', 'checked');
-          }
-          $priorities.prop('disabled', false);
-        }
         this.currentPlatform = platformTargeting.platform;
 
         var priority = this.get_priority($form),
@@ -1207,12 +1350,21 @@ var exports = r.sponsored = {
             budget = this.get_budget($form),
             cpm = budget.cpm,
             impressions = budget.impressions,
-            checkInventory = targeting.isValid;
+            validTargeting = targeting.isValid;
 
-        $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
+        var durationInDays = ndays + " " + ((ndays > 1) ? r._("days") : r._("day"))
+        $(".duration").text(durationInDays)
+        var totalBudget = parseFloat($("#total_budget").val())
+        var dailySpend = totalBudget / parseInt(durationInDays)
+        $(".daily-spend").text((isNaN(dailySpend) ? 0.00 : dailySpend).toFixed(2));
+
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
         $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
         $(".OVERSOLD").hide()
+
+        var costBasisValue = $form.find('#cost_basis').val();
+        var $costBasisLabel = $form.find('.cost-basis-label');
+        $costBasisLabel.text(costBasisValue);
 
         var $mobileOSGroup = $('.mobile-os-group');
         var $mobileOSHiddenInput = $('#mobile_os');
@@ -1314,46 +1466,17 @@ var exports = r.sponsored = {
             this.disable_form($form);
         }
 
-        if (priority.isCpm) {
-            this.show_cpm()
-            this.check_bid($form)
+        if (priority.isHouse) {
+            this.hide_budget()
         } else {
-            this.hide_cpm()
+            this.show_budget()
+            this.check_budget($form)
         }
 
-        if (!priority.isCpm && checkInventory) {
-          $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
-            function() {
-              var booked = this.get_booked_inventory($form, targeting.sr,
-                                                     targeting.geotarget, priority.isOverride);
-              var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
-                                                               targeting.inventoryKey);
-              var totalImpsAvailable = _.reduce(availableByDate, sum, 0);
-
-              React.renderComponent(
-                React.DOM.div(null,
-                  CampaignSet(null,
-                    InfoText(null, r._('house campaigns, man.')),
-                    CampaignOptionTable(null,
-                      CampaignOption({
-                        bid: null,
-                        end: timing.enddate,
-                        impressions: 'unsold ',
-                        isNew: !$("#campaign").parents('tr:first').length,
-                        primary: true,
-                        start: timing.startdate,
-                      })
-                    )
-                  ),
-                  InfoText({impressions: totalImpsAvailable},
-                      r._('maximum possible impressions: %(impressions)s')
-                  )
-                ),
-                document.getElementById('campaign-creator')
-              );
-            }.bind(this)
-          );
-        } else if (checkInventory) {
+        this.setupAuctionFields($form, targeting, timing);
+        if (priority.isHouse && validTargeting) {
+            this.setup_house($form, targeting, timing, priority.isOverride);
+        } else if (!this.isAuction && validTargeting) {
             this.check_inventory($form, targeting, timing, budget, priority.isOverride)
         }
             
@@ -1388,11 +1511,11 @@ var exports = r.sponsored = {
         }
     },
 
-    hide_cpm: function() {
+    hide_budget: function() {
         $('.budget-field').css('display', 'none');
     },
 
-    show_cpm: function() {
+    show_budget: function() {
         $('.budget-field').css('display', 'block');
     },
 
@@ -1467,37 +1590,37 @@ var exports = r.sponsored = {
         this.render()
     },
 
-    get_min_bid: function() {
-        return $('#bid').data('min_bid');
+    get_min_budget: function() {
+        return $('#total_budget').data('min_budget');
     },
 
-    get_real_min_bid: function() {
-        return $('#bid').data('real_min_bid');
+    get_real_min_budget: function() {
+        return $('#total_budget').data('real_min_budget');
     },
 
-    get_max_bid: function() {
-        return $('#bid').data('max_bid');
+    get_max_budget: function() {
+        return $('#total_budget').data('max_budget');
     },
 
-    check_bid: function($form) {
-        var bid = this.get_bid($form),
-            minimum_bid = this.get_min_bid(),
+    check_budget: function($form) {
+        var budget = this.get_budget($form),
+            minimum_bid = this.get_min_budget(),
             campaignName = $form.find('*[name=campaign_name]').val()
 
         $('.budget-change-warning').hide()
         if (campaignName != '') {
             var $campaignRow = $('.' + campaignName),
                 campaignIsPaid = $campaignRow.data('paid'),
-                campaignBid = $campaignRow.data('bid')
+                campaignTotalBudget = $campaignRow.data('total_budget')
 
-            if (campaignIsPaid && bid != campaignBid) {
+            if (campaignIsPaid && budget != campaignTotalBudget) {
                 $('.budget-change-warning').show()
             }
         }
 
         $(".minimum-spend").removeClass("error");
 
-        if (bid < minimum_bid) {
+        if (budget.totalBudget < minimum_bid) {
             this.bidValid = false;
             this.disable_form($form);
             $(".minimum-spend").addClass("error");
@@ -1506,6 +1629,26 @@ var exports = r.sponsored = {
             this.enable_form($form);
             $(".minimum-spend").removeClass("error");
         }
+    },
+
+    check_bid_pennies: function($form) {
+      var totalBudget = $form.find('#total_budget').val(),
+          bidPennies = $form.find('#bid_pennies').val(),
+          duration = this.get_timing($form).duration;
+
+      var dailyMaxSpend = totalBudget / duration;
+      $form.find('.daily-max-spend').text(dailyMaxSpend.toFixed(2));
+
+      if (bidPennies > dailyMaxSpend) {
+        this.bidValid = false;
+        this.disable_form($form);
+        $('.daily-bid-message').show();
+      } else {
+        this.bidValid = true;
+        this.enable_form($form);
+        $('.daily-bid-message').hide();
+      }
+
     },
 
     calc_impressions: function(bid, cpm_pennies) {
@@ -1517,8 +1660,8 @@ var exports = r.sponsored = {
     },
 
     render_timing_duration: function($form, ndays) {
-        $form.find('.timing-field .duration').text(
-                ndays + " " + ((ndays > 1) ? r._("days") : r._("day")));
+        var totalBudget = ndays + ' ' + ((ndays > 1) ? r._('days') : r._('day'));
+        $form.find('.timing-field .duration').text(totalBudget);
     },
 
     fill_inventory_form: function() {
@@ -1791,17 +1934,18 @@ function edit_campaign($campaign_row) {
         $campaign_row.fadeOut(function() {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
-                    'frequency_cap', 'frequency_cap_duration'],
+                    'frequency_cap', 'frequency_cap_duration', 'total_budget',
+                    'bid_pennies'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]')
                     $input.val(val)
             })
 
-            if ($campaign_row.data('has-served')) {
-              campaign.find('[name="startdate"]').prop('disabled', true);
+            if ($campaign_row.data('is_auction') === 'True') {
+              r.sponsored.isAuction = true;
             } else {
-              campaign.find('[name="startdate"]').prop('disabled', false);
+              r.sponsored.isAuction = false;
             }
 
             var platform = $campaign_row.data('platform');
@@ -1914,6 +2058,9 @@ function edit_campaign($campaign_row) {
                     campaign.find("#metro").val(metro)
                 }
             }
+
+            /* set cost basis */
+            $('#cost_basis').val($campaign_row.data('cost_basis'));
 
             /* attach the dates to the date widgets */
             init_startdate();

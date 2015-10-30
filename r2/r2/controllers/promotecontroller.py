@@ -146,6 +146,7 @@ from r2.models import (
     Subreddit,
     Target,
 )
+from r2.models.promo import PROMOTE_COST_BASIS, PROMOTE_PRIORITIES
 
 IOS_DEVICES = ('iPhone', 'iPad', 'iPod',)
 ANDROID_DEVICES = ('phone', 'tablet',)
@@ -185,14 +186,21 @@ def campaign_has_oversold_error(form, campaign):
         return
 
     return has_oversold_error(
-        form, campaign, campaign.start_date, campaign.end_date, campaign.bid,
-        campaign.cpm, campaign.target, campaign.location,
+        form,
+        campaign,
+        start=campaign.start_date,
+        end=campaign.end_date,
+        total_budget_pennies=campaign.total_budget_pennies,
+        cpm=campaign.bid_pennies,
+        target=campaign.target,
+        location=campaign.location,
     )
 
 
-def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
+def has_oversold_error(form, campaign, start, end, total_budget_pennies, cpm,
+        target, location):
     ndays = (to_date(end) - to_date(start)).days
-    total_request = calc_impressions(bid, cpm)
+    total_request = calc_impressions(total_budget_pennies, cpm)
     daily_request = int(total_request / ndays)
     oversold = inventory.get_oversold(
         target, start, end, daily_request, ignore=campaign, location=location)
@@ -206,9 +214,9 @@ def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
             'start': start.strftime('%m/%d/%Y'),
             'end': end.strftime('%m/%d/%Y'),
         }
-        c.errors.add(errors.OVERSOLD_DETAIL, field='bid',
+        c.errors.add(errors.OVERSOLD_DETAIL, field='total_budget',
                      msg_params=msg_params)
-        form.has_errors('bid', errors.OVERSOLD_DETAIL)
+        form.has_errors('total_budget', errors.OVERSOLD_DETAIL)
         return True
 
 
@@ -763,10 +771,17 @@ class PromoteApiController(ApiController):
         if not link or not campaign or link._id != campaign.link_id:
             return abort(404, 'not found')
 
-        billable_impressions = promote.get_billable_impressions(campaign)
-        billable_amount = promote.get_billable_amount(campaign,
-                                                      billable_impressions)
-        refund_amount = promote.get_refund_amount(campaign, billable_amount)
+        # If created before switch to auction, use old billing method
+        if hasattr(campaign, 'cpm'):
+            billable_impressions = promote.get_billable_impressions(campaign)
+            billable_amount = promote.get_billable_amount(campaign,
+                                                          billable_impressions)
+            refund_amount = promote.get_refund_amount(campaign, billable_amount)
+        # Otherwise, use adserver_spent_pennies
+        else:
+            refund_amount = (campaign.total_budget_pennies -
+                campaign.adserver_spent_pennies) / 100.
+
         if refund_amount > 0:
             promote.refund_campaign(link, campaign, billable_amount,
                                     billable_impressions)
@@ -1121,10 +1136,10 @@ class PromoteApiController(ApiController):
     @validatedForm(
         VSponsor('link_id36'),
         VModhash(),
+        is_auction=VBoolean('is_auction'),
         start=VDate('startdate', required=False),
         end=VDate('enddate'),
         link=VLink('link_id36'),
-        bid=VFloat('bid', coerce=False),
         target=VPromoTarget(),
         campaign_id36=nop("campaign_id36"),
         frequency_cap=VFrequencyCap(("frequency_capped",
@@ -1139,17 +1154,44 @@ class PromoteApiController(ApiController):
         android_devices=VList('android_device', choices=ANDROID_DEVICES),
         ios_versions=VOSVersion('ios_version_range', 'ios'),
         android_versions=VOSVersion('android_version_range', 'android'),
+        total_budget=VFloat('total_budget', coerce=False),
+        cost_basis=VOneOf('cost_basis', ('cpc', 'cpm',), default=None),
+        bid_pennies=VFloat('bid_pennies', coerce=True),
     )
-    def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                           start, end, bid, target, frequency_cap,
+    def POST_edit_campaign(self, form, jquery, is_auction, link, campaign_id36,
+                           start, end, target, frequency_cap,
                            priority, location, platform, mobile_os,
                            os_versions, ios_devices, ios_versions,
-                           android_devices, android_versions):
+                           android_devices, android_versions,
+                           total_budget, cost_basis, bid_pennies):
         if not link:
             return
 
         if form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP):
             return
+
+        # Configure priority, cost_basis, and bid_pennies
+        if feature.is_enabled('ads_auction'):
+            if c.user_is_sponsor:
+                if is_auction:
+                    priority = PROMOTE_PRIORITIES['auction']
+                    cost_basis = PROMOTE_COST_BASIS[cost_basis]
+                else:
+                    cost_basis = PROMOTE_COST_BASIS.fixed_cpm
+            else:
+                priority = PROMOTE_PRIORITIES['auction']
+                cost_basis = PROMOTE_COST_BASIS[cost_basis]
+        else:
+            cost_basis = PROMOTE_COST_BASIS.fixed_cpm
+
+        if priority == PROMOTE_PRIORITIES['auction']:
+            # bid_pennies comes as dollars in request,
+            # convert to pennies
+            bid_pennies *= 100
+        else:
+            bid_pennies = PromotionPrices.get_price(c.user, target,
+                location)
+
 
         if (not feature.is_enabled('mobile_targeting') and
                 platform != 'desktop'):
@@ -1187,8 +1229,6 @@ class PromoteApiController(ApiController):
 
         if not allowed_location_and_target(location, target):
             return abort(403, 'forbidden')
-
-        cpm = PromotionPrices.get_price(c.user, target, location)
 
         if (form.has_errors('startdate', errors.BAD_DATE) or
                 form.has_errors('enddate', errors.BAD_DATE)):
@@ -1277,27 +1317,38 @@ class PromoteApiController(ApiController):
             if not campaign:
                 return abort(404, 'not found')
 
-        if priority.cpm:
-            min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
-            max_bid = None if c.user_is_sponsor else g.max_promote_bid
+        if not priority == PROMOTE_PRIORITIES['house']:
+            # total_budget_pennies is submitted as a float;
+            # convert it to pennies
+            total_budget_pennies = int(total_budget * 100)
+            if c.user_is_sponsor:
+                min_total_budget_pennies = 0
+                max_total_budget_pennies = 0
+            else:
+                min_total_budget_pennies = g.min_total_budget_pennies
+                max_total_budget_pennies = g.max_total_budget_pennies
 
-            if bid is None or bid < min_bid or (max_bid and bid > max_bid):
-                c.errors.add(errors.BAD_BID, field='bid',
-                             msg_params={'min': min_bid,
-                                         'max': max_bid or g.max_promote_bid})
-                form.has_errors('bid', errors.BAD_BID)
+            if (total_budget_pennies is None or
+                    total_budget_pennies < min_total_budget_pennies or
+                    (max_total_budget_pennies and
+                    total_budget_pennies > max_total_budget_pennies)):
+                c.errors.add(errors.BAD_BUDGET, field='total_budget',
+                             msg_params={'min': min_total_budget_pennies,
+                                         'max': max_total_budget_pennies or
+                                         g.max_total_budget_pennies})
+                form.has_errors('total_budget', errors.BAD_BUDGET)
                 return
 
             # you cannot edit the bid of a live ad unless it's a freebie
-            if (campaign and bid != campaign.bid and
-                promote.is_live_promo(link, campaign) and
-                not campaign.is_freebie()):
-                c.errors.add(errors.BID_LIVE, field='bid')
-                form.has_errors('bid', errors.BID_LIVE)
+            if (campaign and
+                    total_budget_pennies != campaign.total_budget_pennies and
+                    promote.is_live_promo(link, campaign) and
+                    not campaign.is_freebie()):
+                c.errors.add(errors.BUDGET_LIVE, field='total_budget')
+                form.has_errors('total_budget', errors.BUDGET_LIVE)
                 return
-
         else:
-            bid = 0.   # Set bid to 0 as dummy value
+            total_budget_pennies = 0
 
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
@@ -1322,23 +1373,52 @@ class PromoteApiController(ApiController):
         # Check inventory
         campaign = campaign if campaign_id36 else None
         if not priority.inventory_override:
-            oversold = has_oversold_error(form, campaign, start, end, bid, cpm,
+            oversold = has_oversold_error(form, campaign, start, end,
+                                          total_budget_pennies, bid_pennies,
                                           target, location)
             if oversold:
                 return
 
         dates = (start, end)
         if campaign:
-            promote.edit_campaign(link, campaign, dates, bid, cpm, target,
-                                  frequency_cap[0], frequency_cap[1], priority,
-                                  location, platform, mobile_os, ios_devices,
-                                  ios_versions, android_devices, android_versions)
+            promote.edit_campaign(
+                link,
+                campaign,
+                dates=dates,
+                target=target,
+                frequency_cap=frequency_cap[0],
+                frequency_cap_duration=frequency_cap[1],
+                priority=priority,
+                location=location,
+                total_budget_pennies=total_budget_pennies,
+                cost_basis=cost_basis,
+                bid_pennies=bid_pennies,
+                platform=platform,
+                mobile_os=mobile_os,
+                ios_devices=ios_devices,
+                ios_version_range=ios_versions,
+                android_devices=android_devices,
+                android_version_range=android_versions,
+            )
         else:
-            campaign = promote.new_campaign(link, dates, bid, cpm, target,
-                                            frequency_cap[0], frequency_cap[1],
-                                            priority, location, platform, mobile_os,
-                                            ios_devices, ios_versions, android_devices,
-                                            android_versions)
+            campaign = promote.new_campaign(
+                link,
+                dates=dates,
+                target=target,
+                frequency_cap=frequency_cap[0],
+                frequency_cap_duration=frequency_cap[1],
+                priority=priority,
+                location=location,
+                platform=platform,
+                mobile_os=mobile_os,
+                ios_devices=ios_devices,
+                ios_version_range=ios_versions,
+                android_devices=android_devices,
+                android_version_range=android_versions,
+                total_budget_pennies=total_budget_pennies,
+                cost_basis=cost_basis,
+                bid_pennies=bid_pennies,
+            )
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
@@ -1412,8 +1492,9 @@ class PromoteApiController(ApiController):
             return abort(404, 'not found')
 
         # Check inventory
-        if campaign_has_oversold_error(form, campaign):
-            return
+        if not campaign.is_auction:
+            if campaign_has_oversold_error(form, campaign):
+                return
 
         # check the campaign dates are still valid (user may have created
         # the campaign a few days ago)
@@ -1474,7 +1555,8 @@ class PromoteApiController(ApiController):
 
                 promote.successful_payment(link, campaign, request.ip, address)
 
-                jquery.payment_redirect(promote.promo_edit_url(link), new_payment, campaign.bid)
+                jquery.payment_redirect(promote.promo_edit_url(link),
+                        new_payment, campaign.total_budget_pennies)
                 return
             else:
                 _handle_failed_payment(reason)

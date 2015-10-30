@@ -203,12 +203,15 @@ class Globals(object):
             'RL_OAUTH_RESET_MINUTES',
             'comment_karma_display_floor',
             'link_karma_display_floor',
+            'default_total_budget_pennies',
+            'min_total_budget_pennies',
+            'max_total_budget_pennies',
+            'default_bid_pennies',
+            'min_bid_pennies',
+            'max_bid_pennies',
         ],
 
         ConfigValue.float: [
-            'default_promote_bid',
-            'min_promote_bid',
-            'max_promote_bid',
             'statsd_sample_rate',
             'querycache_prune_chance',
             'RL_AVG_REQ_PER_SEC',
