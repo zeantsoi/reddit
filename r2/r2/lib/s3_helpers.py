@@ -73,7 +73,7 @@ def get_text_from_s3(s3_connection, path):
     """Read a file from S3 and return it as text."""
     bucket_name, key_name = _from_path(path)
     bucket = s3_connection.get_bucket(bucket_name)
-    k = boto.s3.Key(bucket)
+    k = boto.s3.key.Key(bucket)
     k.key = key_name
     txt = k.get_contents_as_string()
     return txt
@@ -85,7 +85,7 @@ def mv_file_s3(s3_connection, src_path, dst_path):
     dst_bucket_name, dst_key_name = _from_path(dst_path)
 
     src_bucket = s3_connection.get_bucket(src_bucket_name)
-    k = boto.s3.Key(src_bucket)
+    k = boto.s3.key.Key(src_bucket)
     k.key = src_key_name
     k.copy(dst_bucket_name, dst_key_name)
     k.delete()
@@ -111,7 +111,7 @@ def copy_to_s3(s3_connection, local_path, dst_path, verbose=False):
         return
 
     key_name = os.path.join(dst_key_name, filename)
-    k = boto.s3.Key(bucket)
+    k = boto.s3.key.Key(bucket)
     k.key = key_name
 
     kw = {}
