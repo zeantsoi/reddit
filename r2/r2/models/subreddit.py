@@ -264,6 +264,7 @@ class Subreddit(Thing, Printable, BaseSite):
         banner_size=None,
         key_color='',
         hide_ads=False,
+        hide_sponsored_headlines=False,
         ban_count=0,
         quarantine=False,
     )

@@ -360,8 +360,11 @@ class ListingWithPromos(SubredditListingController):
         # targeting them.
         keywords = promote.keywords_from_context(c.user, c.site)
         if keywords:
-            return SpotlightListing(show_promo=c.site.allow_ads, site=c.site,
-                                    navigable=False).listing()
+            return SpotlightListing(
+                show_promo=(not c.site.hide_sponsored_headlines and c.site.allow_ads),
+                site=c.site,
+                navigable=False,
+            ).listing()
 
     def make_spotlight(self):
         """Build the Spotlight.
@@ -378,7 +381,11 @@ class ListingWithPromos(SubredditListingController):
 
         show_promo = False
         keywords = []
-        can_show_promo = not c.user.pref_hide_ads or not c.user.gold and c.site.allow_ads
+        # `pref_hide_ads` doesn't reset after gold expires.
+        # need to ensure they still have gold.
+        gold_user_ads_off = c.user.gold and c.user.pref_hide_ads
+        site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
+        can_show_promo = (not gold_user_ads_off and not site_headlines_off)
         try_show_promo = ((c.user_is_loggedin and random.random() < g.live_config["ad_probability"]) or
                           not c.user_is_loggedin)
 
