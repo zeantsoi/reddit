@@ -1137,7 +1137,7 @@ class Comment(Thing, Printable):
 
     @property
     def vote_queue_name(self):
-        if utils.to36(self.link_id) in g.live_config["fastlane_links"]:
+        if to36(self.link_id) in g.live_config["fastlane_links"]:
             return "vote_fastlane_q"
         else:
             return "vote_comment_q"
