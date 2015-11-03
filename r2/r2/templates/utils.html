@@ -82,7 +82,7 @@ data-${name}="${value}"
       %endif
       >
   %if c.user_is_loggedin:
-     <input type="hidden" name="uh" value="${c.modhash}">
+  <input type="hidden" name="uh" value="${c.user.modhash()}" />
   %endif
   %for key, value in params.iteritems():
   <input type="hidden" name="${key}" value="${value}" />
