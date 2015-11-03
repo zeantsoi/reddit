@@ -1767,6 +1767,7 @@ vote_fastlane_q = 'vote_fastlane_q'
 
 vote_names_by_dir = {True: "1", None: "0", False: "-1"}
 vote_dirs_by_name = {v: k for k, v in vote_names_by_dir.iteritems()}
+vote_dirs_by_name.update({1: True, -1: False, 0: None})
 
 def queue_vote(user, thing, dir, ip, vote_info=None, cheater=False, store=True,
         send_event=True):
