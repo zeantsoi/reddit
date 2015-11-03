@@ -22,7 +22,6 @@
 
 from datetime import datetime
 import json
-import pytz
 
 from pylons import tmpl_context as c, app_globals as g, request
 
@@ -82,39 +81,6 @@ def cast_vote(user, thing, direction):
     amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
 
 
-def convert_old_vote_data(data, timestamp):
-    converted = {
-        "user_id": data["uid"],
-        "thing_fullname": data["tid"],
-        "date": int(epoch_timestamp(timestamp.replace(tzinfo=pytz.UTC))),
-    }
-
-    if data["dir"] == True:
-        converted["direction"] = Vote.DIRECTIONS.up
-    elif data["dir"] == False:
-        converted["direction"] = Vote.DIRECTIONS.down
-    else:
-        converted["direction"] = Vote.DIRECTIONS.unvote
-
-    extra_data = {
-        "ip": data["ip"],
-        "valid_event": True,  # vote wouldn't have been queued for invalid ones
-    }
-
-    if data["cheater"]:
-        extra_data["invalid_source"] = data["cheater"]
-
-    if data["info"]:
-        extra_data["referrer"] = data["info"]
-
-    converted["data"] = extra_data
-
-    if "event_data" in data:
-        converted["event_data"] = data["event_data"]
-
-    return converted
-
-
 def consume_vote_queue(queue):
     @g.stats.amqp_processor(queue)
     def process_message(msg):
@@ -122,10 +88,6 @@ def consume_vote_queue(queue):
         timer.start()
 
         vote_data = json.loads(msg.body)
-
-        # if it's an old-style vote, convert to the new format
-        if "uid" in vote_data:
-            vote_data = convert_old_vote_data(vote_data, msg.timestamp)
 
         user = Account._byID(vote_data.pop("user_id"), data=True)
         thing = Thing._by_fullname(vote_data.pop("thing_fullname"), data=True)

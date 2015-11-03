@@ -47,7 +47,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator
 from r2.lib import utils
 from r2.lib import amqp, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
-from r2.lib.voting import consume_vote_queue, prequeued_vote_key
+from r2.lib.voting import prequeued_vote_key
 from r2.models.promo import PROMOTE_STATUS, PromotionLog
 from r2.models.query_cache import (
     cached_query,
@@ -1840,10 +1840,6 @@ def get_likes(user, requested_items):
     res.update(cassavotes)
 
     return res
-
-
-def process_votes(qname, limit=0):
-    consume_vote_queue(qname)
 
 
 def consume_mark_all_read():
