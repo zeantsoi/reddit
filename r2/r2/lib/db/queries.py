@@ -1944,7 +1944,7 @@ def process_votes(qname, limit=0):
         # if it's a new-style vote message, convert back to the old format
         if "user_id" in vote:
             # we wouldn't even have queued invalid event votes in the past
-            if not vote["valid_event"]:
+            if "valid_event" in vote and not vote["valid_event"]:
                 return
             
             vote = convert_new_vote_data(vote)
