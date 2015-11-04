@@ -689,33 +689,41 @@ ul.flat-vert {text-align: left;}
     font-size: 110%;
 }
 
-.sidebox.hohoho, .sidebox.holiday_shopping {
+.sidebox.hohoho {
     .morelink {
+        .linear-gradient(#fffbfb, #e5fbd8);
+        border-color: #9eae9e;
+        border-radius: 2px;
+
+        &:hover {
+            border-color: #5d945d;
+        }
+
         a {
+            color: #f14b4a;
             overflow: visible;
-            color: #417142;
+            white-space: nowrap;
 
             &:before {
                 content: '';
                 display: inline-block;
-                background-image: url(../rg-santa-and-elves.png);
+                background-image: url(../rg-santa.png);
                 background-repeat: no-repeat;
-                background-size: 46px;
+                background-size: 50%;
                 background-position: center left;
-                width: 46px;
-                height: 42px;
+                width: 32px;
+                height: 34px;
                 vertical-align: top;
-                margin-top: -7px;
+                margin-top: -3px;
                 margin-left: -8px;
-                margin-right: 0px;
+                margin-right: 3px;
             }
         }
     }
-}
 
-.sidebox.holiday_shopping .morelink a:before {
-  background-image: url(../rg-elf.png);
-  background-size: 36px;
+    .nub {
+        display: none;
+    }
 }
 
 .account-activity-box {

@@ -58,6 +58,10 @@
             title=header_title, size=header_size)}
     % else:
         <a href="/" id="header-img" class="default-header" title="${header_title}">${g.domain}</a>
+
+        % if c.default_sr and feature.is_enabled('show_secret_santa'):
+          <a class="hohoho-header" href="https://www.redditgifts.com/exchanges/secret-santa-2015/?source=giftbttn-ss15-ftpg-151109">${_("Join our Secret Santa tradition")}</a>
+        % endif
     % endif
     
     ##keeps the height of the header from varying when there isnt any content
