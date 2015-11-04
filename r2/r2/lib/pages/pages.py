@@ -701,14 +701,6 @@ class Reddit(Templated):
         user_disabled_ads = c.user.gold and c.user.pref_hide_ads
         show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
 
-        # secret santa link
-        if show_adbox and c.default_sr and feature.is_enabled('show_secret_santa'):
-            ps.append(SideBox(
-                title=_("Shop the reddit Marketplace"),
-                css_class="holiday_shopping",
-                link="https://redditgifts.com/?source=red-hol14-side-14121",
-                target="_blank",
-            ))
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
             ps.append(SubredditInfoBar())
