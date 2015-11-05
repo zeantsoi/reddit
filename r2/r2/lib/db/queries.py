@@ -1103,8 +1103,10 @@ def new_subreddit(sr):
 
 
 def new_vote(vote):
-    if (vote.effects.affects_score and
-            not (vote.thing._spam or vote.thing._deleted)):
+    vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
+    thing_valid = not (vote.thing._spam or vote.thing._deleted)
+
+    if vote_valid and thing_valid:
         sr = vote.thing.subreddit_slow
         results = []
 
