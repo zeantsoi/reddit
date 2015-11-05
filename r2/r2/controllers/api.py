@@ -22,6 +22,7 @@
 
 from r2.controllers.reddit_base import (
     cross_domain,
+    generate_modhash,
     is_trusted_origin,
     MinimalController,
     pagecache_policy,
@@ -602,7 +603,7 @@ class ApiController(RedditController):
         self.login(user, rem = rem)
 
         if request.params.get("hoist") != "cookie":
-            responder._send_data(modhash=c.modhash)
+            responder._send_data(modhash=generate_modhash())
             responder._send_data(cookie  = user.make_cookie())
         responder._send_data(need_https=feature.is_enabled("force_https"))
 
