@@ -135,7 +135,7 @@
 </%def>
 
 <%def name="javascript_run()">
-   reddit.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
+   r.config.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
 </%def>
 
 <%def name="bodyContent()">
