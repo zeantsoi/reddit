@@ -470,8 +470,11 @@ class VoteDetailsByDay(tdb_cassandra.View):
 
     @classmethod
     def _rowkey(cls, vote):
-        date = vote.date.astimezone(cls.TIMEZONE).date()
-        return date.strftime("%Y-%m-%d")
+        return cls._rowkey_by_datetime(vote.date)
+
+    @classmethod
+    def _rowkey_by_datetime(cls, date):
+        return date.astimezone(cls.TIMEZONE).strftime("%Y-%m-%d")
 
     @classmethod
     def create(cls, user, thing, vote):
