@@ -168,8 +168,17 @@ r.timeseries = {
                 var datum = data.eq(s.index).data('value')
                 // if we have a maximum number of data points to chart, choose
                 // the most recent ones from the table
-                if (!maxPoints || i > rows.length - maxPoints)
+                if (!maxPoints || i >= rows.length - maxPoints)
                     s.data.push([timestamp, datum])
+
+                // if this is the last row add an extra point with the same
+                // value as the previous one to finish off the step.
+                if (i == (rows.length - 1)) {
+                    var prevRow = $(rows.get(i - 1));
+                    var prevTimestamp = prevRow.length && prevRow.children('th').data('value');
+                    var diff = timestamp - prevTimestamp;
+                    s.data.push([timestamp + diff, datum]);
+                }
                 s.maxValue = Math.max(s.maxValue, datum)
             })
         })
