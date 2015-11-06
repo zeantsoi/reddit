@@ -879,7 +879,7 @@ class FrontController(RedditController):
             return self.abort404()
         else:
             VNotInTimeout().run(action_name="pageview",
-                details_text="editreddit_%s" % location, target=c.site)
+                details_text="editsubreddit_%s" % location, target=c.site)
             return self._edit_normal_reddit(location, created)
 
     @require_oauth2_scope("read")
