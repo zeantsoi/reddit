@@ -322,19 +322,18 @@ def totals(cls, interval):
     return fill_gaps(time_points, q, "sum")
 
 
-def total_by_codename(cls, codenames):
+def total_by_codename(cls, codenames, interval="hour"):
     """Return total lifetime pageviews (or clicks) for given codename(s)."""
     codenames = tup(codenames)
-    # uses hour totals to get the most up-to-date count
     q = (Session.query(cls.codename, sum(cls.pageview_count))
-                       .filter(cls.interval == "hour")
+                       .filter(cls.interval == interval)
                        .filter(cls.codename.in_(codenames))
                        .group_by(cls.codename))
     return list(q)
 
 
-def promotion_history(cls, count_column, codename, start, stop):
-    """Get hourly traffic for a self-serve promotion.
+def promotion_history(cls, count_column, codename, start, stop, interval="hour"):
+    """Get traffic by `interval` for a self-serve promotion.
 
     Traffic stats are summed over all targets for classes that include a target.
 
@@ -345,9 +344,9 @@ def promotion_history(cls, count_column, codename, start, stop):
 
     """
 
-    time_points = get_time_points('hour', start, stop)
+    time_points = get_time_points(interval, start, stop)
     q = (Session.query(cls.date, sum(count_column))
-                .filter(cls.interval == "hour")
+                .filter(cls.interval == interval)
                 .filter(cls.codename == codename)
                 .filter(cls.date.in_(time_points))
                 .group_by(cls.date)
@@ -355,11 +354,11 @@ def promotion_history(cls, count_column, codename, start, stop):
     return [(r[0], (r[1],)) for r in q.all()]
 
 
-def campaign_history(cls, codenames, start, stop):
-    """Get hourly traffic for given campaigns."""
-    time_points = get_time_points('hour', start, stop)
+def campaign_history(cls, codenames, start, stop, interval="hour"):
+    """Get traffic by `interval` for given campaigns."""
+    time_points = get_time_points(interval, start, stop)
     q = (Session.query(cls)
-                .filter(cls.interval == "hour")
+                .filter(cls.interval == interval)
                 .filter(cls.codename.in_(codenames))
                 .filter(cls.date.in_(time_points))
                 .order_by(cls.date))
@@ -542,6 +541,202 @@ class TargetedClickthroughsByCodename(Base):
     @classmethod
     def campaign_history(cls, codenames, start, stop):
         return campaign_history(cls, codenames, start, stop)
+
+
+class AdserverImpressionsByCodename(Base):
+    """Impressions for ads."""
+
+    __tablename__ = "adserver_traffic_thing"
+
+    codename = Column("fullname", String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", BigInteger())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def history(cls, interval, codename):
+        if interval != "day":
+            raise NotImplementedError
+
+        time_points, q = make_history_query(cls, interval)
+        q = q.filter(cls.codename == codename)
+        return fill_gaps(time_points, q, "unique_count", "pageview_count")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, cls.pageview_count, codename, start, stop, interval="day")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def historical_totals(cls, interval):
+        if interval != "day":
+            raise NotImplementedError
+
+        return totals(cls, interval)
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def top_last_month(cls):
+        return top_last_month(cls, "codename")
+
+    @classmethod
+    def recent_codenames(cls, fullname):
+        raise NotImplementedError
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codename):
+        return total_by_codename(cls, codename, interval="day")
+
+
+class AdserverClickthroughsByCodename(Base):
+    """Clickthrough counts for ads."""
+
+    __tablename__ = "adserver_traffic_click"
+
+    codename = Column("fullname", String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def history(cls, interval, codename):
+        if interval != "day":
+            raise NotImplementedError
+
+        time_points, q = make_history_query(cls, interval)
+        q = q.filter(cls.codename == codename)
+        return fill_gaps(time_points, q, "unique_count", "pageview_count")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, cls.unique_count, codename, start, stop, interval="day")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def historical_totals(cls, interval):
+        if interval != "day":
+            raise NotImplementedError
+
+        return totals(cls, interval)
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames, interval="day")
+
+
+class AdserverSpentByCodename(Base):
+    """Spend for ads, correlated by ad."""
+
+    __tablename__ = "adserver_traffic_spent"
+
+    codename = Column("fullname", String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, cls.unique_count, codename, start, stop, interval="day")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames, interval="day")
+
+    @classmethod
+    def campaign_history(cls, codenames, start, stop):
+        return campaign_history(cls, codenames, start, stop, interval="day")
+
+
+class AdserverTargetedClickthroughsByCodename(Base):
+    """Clickthroughs for ads, correlated by ad campaign."""
+
+    __tablename__ = "adserver_traffic_clicktarget"
+
+    codename = Column("fullname", String(), nullable=False, primary_key=True)
+    subreddit = Column(String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, cls.unique_count, codename, start, stop, interval="day")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames, interval="day")
+
+    @classmethod
+    def campaign_history(cls, codenames, start, stop):
+        return campaign_history(cls, codenames, start, stop, interval="day")
+
+
+class AdserverTargetedImpressionsByCodename(Base):
+    """Impressions for ads, correlated by ad campaign."""
+
+    __tablename__ = "adserver_traffic_thingtarget"
+
+    codename = Column("fullname", String(), nullable=False, primary_key=True)
+    subreddit = Column(String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, cls.pageview_count, codename, start, stop, interval="day")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames, interval="day")
+
+    @classmethod
+    def campaign_history(cls, codenames, start, stop):
+        return campaign_history(cls, codenames, start, stop, interval="day")
+
+
+class AdserverTargetedSpentByCodename(Base):
+    """Spend for ads, correlated by ad campaign."""
+
+    __tablename__ = "adserver_traffic_spenttarget"
+
+    codename = Column("fullname", String(), nullable=False, primary_key=True)
+    subreddit = Column(String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, cls.unique_count, codename, start, stop, interval="day")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames, interval="day")
+
+    @classmethod
+    def campaign_history(cls, codenames, start, stop):
+        return campaign_history(cls, codenames, start, stop, interval="day")
 
 
 class AdImpressionsByCodename(Base):
