@@ -592,13 +592,13 @@ def rel_query(rel, thing_id, name, filters = []):
 cached_userrel_query = cached_query(UserQueryCache, filter_thing2)
 cached_srrel_query = cached_query(SubredditQueryCache, filter_thing2)
 
-@cached_query(UserQueryCache)
+@cached_query(UserQueryCache, filter_thing)
 def get_liked(user):
-    return FakeQuery(sort=[desc("_date")])
+    return FakeQuery(sort=[desc("date")])
 
-@cached_query(UserQueryCache)
+@cached_query(UserQueryCache, filter_thing)
 def get_disliked(user):
-    return FakeQuery(sort=[desc("_date")])
+    return FakeQuery(sort=[desc("date")])
 
 @cached_query(UserQueryCache)
 def get_hidden_links(user_id):
@@ -1137,17 +1137,19 @@ def new_vote(vote):
         add_queries(results, insert_items=vote.thing)
     
     if isinstance(vote.thing, Link):
-        # must update both because we don't know if it's a changed vote
         with CachedQueryMutator() as m:
+            # if this is a changed vote, remove from the previous cached query
+            if vote.previous_vote:
+                if vote.previous_vote.is_upvote:
+                    m.delete(get_liked(vote.user), [vote.previous_vote])
+                elif vote.previous_vote.is_downvote:
+                    m.delete(get_disliked(vote.user), [vote.previous_vote])
+
+            # and then add to the new cached query
             if vote.is_upvote:
-                m.insert(get_liked(vote.user), [vote.thing])
-                m.delete(get_disliked(vote.user), [vote.thing])
+                m.insert(get_liked(vote.user), [vote])
             elif vote.is_downvote:
-                m.delete(get_liked(vote.user), [vote.thing])
-                m.insert(get_disliked(vote.user), [vote.thing])
-            else:
-                m.delete(get_liked(vote.user), [vote.thing])
-                m.delete(get_disliked(vote.user), [vote.thing])
+                m.insert(get_disliked(vote.user), [vote])
 
 
 def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
