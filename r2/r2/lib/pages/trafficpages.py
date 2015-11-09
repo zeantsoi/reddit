@@ -34,7 +34,9 @@ from pylons import app_globals as g
 import babel.core
 from babel.dates import format_datetime
 from babel.numbers import format_currency
+from dateutil.parser import parse as parse_date
 
+from r2.config import feature
 from r2.lib import promote
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.menus import menu
@@ -487,26 +489,89 @@ def _is_promo_preliminary(end_date):
     return end_date + datetime.timedelta(days=1) > now
 
 
+def _use_adserver_reporting(thing):
+    if not feature.is_enabled("adserver_reporting"):
+        return False
+
+    if not g.adserver_reporting_cutoff:
+        return False
+
+    try:
+        cutoff = parse_date(g.adserver_reporting_cutoff)
+    except ValueError:
+        return False
+
+    if isinstance(thing, PromoCampaign):
+        link = Link._byID(thing.link_id)
+    else:
+        link = thing
+
+    campaigns = PromoCampaign._by_link(link._id)
+    end_date = max(campaign.end_date for campaign in campaigns)
+    end_date = end_date.replace(tzinfo=g.tz)
+    cutoff = cutoff.replace(tzinfo=g.tz)
+
+    if end_date < cutoff:
+        return False
+
+    return not feature.is_enabled("legacy_ad_reporting")
+
+
 def get_promo_traffic(thing, start, end):
     """Get traffic for a Promoted Link or PromoCampaign"""
-    if isinstance(thing, Link):
-        imp_fn = traffic.AdImpressionsByCodename.promotion_history
-        click_fn = traffic.ClickthroughsByCodename.promotion_history
-    elif isinstance(thing, PromoCampaign):
-        imp_fn = traffic.TargetedImpressionsByCodename.promotion_history
-        click_fn = traffic.TargetedClickthroughsByCodename.promotion_history
 
-    imps = imp_fn(thing._fullname, start.replace(tzinfo=None),
-                  end.replace(tzinfo=None))
-    clicks = click_fn(thing._fullname, start.replace(tzinfo=None),
-                      end.replace(tzinfo=None))
+    use_adserver_reporting = _use_adserver_reporting(thing)
+    spent_fn = None
+
+    if isinstance(thing, Link):
+        if use_adserver_reporting:
+            imp_fn = traffic.AdserverImpressionsByCodename.promotion_history
+            click_fn = traffic.AdserverClickthroughsByCodename.promotion_history
+            spent_fn = traffic.AdserverSpentPenniesByCodename.promotion_history
+        else:
+            imp_fn = traffic.AdImpressionsByCodename.promotion_history
+            click_fn = traffic.ClickthroughsByCodename.promotion_history
+    elif isinstance(thing, PromoCampaign):
+        if use_adserver_reporting:
+            imp_fn = traffic.AdserverTargetedImpressionsByCodename.promotion_history
+            click_fn = traffic.AdserverTargetedClickthroughsByCodename.promotion_history
+            spent_fn = traffic.AdserverTargetedSpentPenniesByCodename.promotion_history
+        else:
+            imp_fn = traffic.TargetedImpressionsByCodename.promotion_history
+            click_fn = traffic.TargetedClickthroughsByCodename.promotion_history
+
+    start = start.replace(tzinfo=None)
+    end = end.replace(tzinfo=None)
+
+    # adserver is daily aggregate.
+    if use_adserver_reporting:
+        start = start.replace(hour=0)
+        end = end.replace(hour=0)
+
+    imps = imp_fn(thing._fullname, start, end)
+    clicks = click_fn(thing._fullname, start, end)
+    spent_pennies = spent_fn and spent_fn(thing._fullname, start, end)
 
     if imps and not clicks:
         clicks = [(imps[0][0], (0,))]
-    elif clicks and not imps:
+    if clicks and not imps:
         imps = [(clicks[0][0], (0,))]
 
-    history = traffic.zip_timeseries(imps, clicks, order="ascending")
+    if imps and not spent_pennies:
+        spent_pennies = [(imps[0][0], (0,))]
+    elif clicks and not spent_pennies:
+        spent_pennies = [(clicks[0][0], (0,))]
+
+    args = [
+        imps,
+        clicks,
+    ]
+
+    if use_adserver_reporting:
+        spent = [(date, (values[0] / 100.,)) for date, values in spent_pennies]
+        args.append(spent)
+
+    history = traffic.zip_timeseries(*args, order="ascending")
     return history
 
 
@@ -528,24 +593,41 @@ def is_launched_campaign(campaign):
 
 
 class PromotedLinkTraffic(Templated):
+
+    date_format_by_interval = {
+        "day": "yyyy-MM-dd",
+        "hour": "yyyy-MM-dd HH:mm zzz",
+    }
+
     def __init__(self, thing, campaign, before, after):
         self.thing = thing
         self.campaign = campaign
         self.before = before
         self.after = after
-        self.period = datetime.timedelta(days=7)
         self.prev = None
         self.next = None
         self.has_live_campaign = False
         self.has_early_campaign = False
         self.detail_name = ('campaign %s' % campaign._id36 if campaign
                                                            else 'all campaigns')
+        self.has_adserver_reporting = feature.is_enabled("adserver_reporting")
+        self.use_adserver_reporting = _use_adserver_reporting(thing)
+        self.has_spent = self.use_adserver_reporting
+
 
         editable = c.user_is_sponsor or c.user._id == thing.author_id
-        self.traffic_last_modified = traffic.get_traffic_last_modified()
-        self.traffic_lag = (datetime.datetime.utcnow() -
-                            self.traffic_last_modified)
-        self.make_hourly_table(campaign or thing)
+        if self.use_adserver_reporting:
+            # can't get this info from adserver
+            self.traffic_last_modified = False
+        else:
+            self.traffic_last_modified = traffic.get_traffic_last_modified()
+            self.traffic_lag = (datetime.datetime.utcnow() -
+                                self.traffic_last_modified)
+
+        self.interval = self.get_interval(thing)
+        self.period = datetime.timedelta(days=30 if self.interval == "day" else 7)
+
+        self.make_table(campaign or thing)
         self.make_campaign_table()
         Templated.__init__(self)
 
@@ -607,17 +689,24 @@ class PromotedLinkTraffic(Templated):
             self.has_early_campaign |= is_early_campaign(camp)
             self.has_live_campaign |= is_live
 
-            history = get_billable_traffic(camp)
-            impressions, clicks = 0, 0
-            for date, (imp, click) in history:
-                impressions += imp
-                clicks += click
+            history = list(get_billable_traffic(camp))
+
+            if not history:
+                impressions, clicks, spent = 0, 0, 0
+            elif self.use_adserver_reporting:
+                impressions, clicks, spent = map(sum, zip(*[values for date, values in history]))
+            else:
+                impressions, clicks = map(sum, zip(*[values for date, values in history]))
+                spent = promote.get_spent_amount(camp)
+
+            # don't show spending higher than the budget since we
+            # don't charge for overdelivery.
+            spent = min(camp.total_budget_pennies / 100., spent)
 
             start = to_date(camp.start_date).strftime('%Y-%m-%d')
             end = to_date(camp.end_date).strftime('%Y-%m-%d')
             target = camp.target.pretty_name
             location = camp.location_str
-            spent = promote.get_spent_amount(camp)
             is_active = self.campaign and self.campaign._id36 == camp._id36
             url = '/traffic/%s/%s' % (self.thing._id36, camp._id36)
             is_total = False
@@ -717,42 +806,82 @@ class PromotedLinkTraffic(Templated):
         return display_start, display_end
 
     @classmethod
-    def get_hourly_traffic(cls, thing, start, end):
-        """Retrieve hourly traffic for a Promoted Link or PromoCampaign."""
+    def get_interval(cls, thing):
+        if _use_adserver_reporting(thing):
+            return "day"
+
+        return "hour"
+
+    @classmethod
+    def get_traffic(cls, thing, start, end):
+        """Retrieve traffic by interval for a Promoted Link or PromoCampaign."""
         history = get_promo_traffic(thing, start, end)
+        interval = cls.get_interval(thing)
+        needs_hour_adjustment = _use_adserver_reporting(thing)
+        promote_hour = promote.promo_datetime_now().hour
+
         computed_history = []
         for date, data in history:
-            imps, clicks = data
+            imps = data[0]
+            clicks = data[1]
+            spent = None if len(data) == 2 else data[2]
             ctr = _clickthrough_rate(imps, clicks)
+
+            # replace hour to ensure that adserver dates appear correct
+            # since we store them without the promotion hour.
+            if needs_hour_adjustment:
+                date = date.replace(hour=promote_hour)
 
             date = date.replace(tzinfo=pytz.utc)
             date = date.astimezone(pytz.timezone("EST"))
             datestr = format_datetime(
                 date,
                 locale=c.locale,
-                format="yyyy-MM-dd HH:mm zzz",
+                format=cls.date_format_by_interval.get(interval),
             )
-            computed_history.append((date, datestr, data + (ctr,)))
+            values = ((imps, format_number(imps)), (clicks, format_number(clicks)), (ctr, format_number(ctr)))
+            if spent is not None:
+                values = ((spent, format_currency(spent, 'USD', locale=c.locale)),) + values
+            computed_history.append((date, datestr, values))
         return computed_history
 
-    def make_hourly_table(self, thing):
+    def make_table(self, thing):
         start, end = self.check_dates(thing)
-        self.history = self.get_hourly_traffic(thing, start, end)
+        self.history = self.get_traffic(thing, start, end)
 
-        self.total_impressions, self.total_clicks = 0, 0
-        for date, datestr, data in self.history:
-            imps, clicks, ctr = data
-            self.total_impressions += imps
-            self.total_clicks += clicks
+        totals = map(sum, zip(*[[value for value, formatted in values] for date, datestr, values in self.history]))
+        if not totals:
+            self.total_impressions = 0
+            self.total_clicks = 0
+            self.total_spent = 0
+        else:
+            self.total_impressions = totals[1]
+            self.total_clicks = totals[2]
+            self.total_spent = totals[0] if self.has_spent else None
+
         if self.total_impressions > 0:
             self.total_ctr = _clickthrough_rate(self.total_impressions,
                                                 self.total_clicks)
+
+        self.overdelivered = self.total_spent > self.get_total_budget(thing)
+
         # XXX: _is_promo_preliminary correctly expects tz-aware datetimes
         # because it's also used with datetimes from promo code. this hack
         # relies on the fact that we're storing UTC w/o timezone info.
         # TODO: remove this when traffic is correctly using timezones.
         end_aware = end.replace(tzinfo=g.tz)
         self.is_preliminary = _is_promo_preliminary(end_aware)
+
+    @classmethod
+    def get_total_budget(cls, thing):
+        if isinstance(thing, Link):
+            campaigns = PromoCampaign._by_link(thing._id)
+        else:
+            campaigns = [thing]
+
+        total_budget_pennies = sum(map(lambda camp: camp.total_budget_pennies, campaigns))
+
+        return total_budget_pennies / 100.
 
     @classmethod
     def as_csv(cls, thing):
@@ -762,18 +891,27 @@ class PromotedLinkTraffic(Templated):
         import cStringIO
 
         start, end = promote.get_traffic_dates(thing)
-        history = cls.get_hourly_traffic(thing, start, end)
-
+        history = cls.get_traffic(thing, start, end)
         out = cStringIO.StringIO()
         writer = csv.writer(out)
 
-        writer.writerow((_("date and time (UTC)"),
-                         _("impressions"),
-                         _("clicks"),
-                         _("click-through rate (%)")))
+        headers = [
+            _("date and time (UTC)"),
+            _("impressions"),
+            _("clicks"),
+            _("click-through rate (%)"),
+        ]
+
+        # peek at the first row's values tuple to see if we have spent
+        first_row = history and history[0]
+        has_spent = first_row and len(first_row[2]) == 4
+        if has_spent:
+            headers.insert(1, _("spent"))
+
+        writer.writerow(headers)
         for date, datestr, values in history:
             # flatten (date, datestr, value-tuple) to (date, value1, value2...)
-            writer.writerow((date,) + values)
+            writer.writerow((date,) + tuple(value for value, formated in values))
 
         return out.getvalue()
 

@@ -314,7 +314,8 @@ class Globals(object):
             'events_collector_test_url',
             'search_provider',
             'selfserve_support_email',
-            'eu_cookie'
+            'eu_cookie',
+            'adserver_reporting_cutoff',
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [

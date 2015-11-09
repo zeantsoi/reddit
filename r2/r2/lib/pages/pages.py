@@ -4585,10 +4585,7 @@ class RenderableCampaign(Templated):
         self.total_budget_dollars = campaign.total_budget_pennies / 100.
 
         if full_details:
-            if not self.campaign.is_house and not self.campaign.is_auction:
-                self.spent = promote.get_spent_amount(campaign)
-            else:
-                self.spent = campaign.adserver_spent_pennies / 100.
+            self.spent = promote.get_spent_amount(campaign)
         else:
             self.spent = 0.
 

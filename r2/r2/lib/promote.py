@@ -38,6 +38,7 @@ from pylons import app_globals as g
 from pylons.i18n import ungettext
 from pytz import timezone
 
+from r2.config import feature
 from r2.lib import (
     authorize,
     emailer,
@@ -1180,6 +1181,10 @@ def get_traffic_dates(thing):
 
 
 def get_billable_impressions(campaign):
+    if (feature.is_enabled("adserver_reporting") and
+            hasattr(campaign, "adserver_impressions")):
+        return campaign.adserver_impressions
+
     start, end = get_traffic_dates(campaign)
     if start > datetime.datetime.now(g.tz):
         return 0
@@ -1210,7 +1215,7 @@ def get_spent_amount(campaign):
     elif hasattr(campaign, 'refund_amount'):
         # no need to calculate spend if we've already refunded
         spent = campaign.total_budget_dollars - campaign.refund_amount
-    elif campaign.is_auction:
+    elif feature.is_enabled("adserver_reporting"):
         spent = campaign.adserver_spent_pennies / 100.
     else:
         billable_impressions = get_billable_impressions(campaign)
