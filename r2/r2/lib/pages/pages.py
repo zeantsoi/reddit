@@ -4661,6 +4661,7 @@ class UserText(CachedTemplate):
                  show_embed_help=False,
                  admin_takedown=False,
                  source=None,
+                 data_attrs={},
                 ):
 
         css_class = "usertext"
@@ -4701,6 +4702,7 @@ class UserText(CachedTemplate):
                                 show_embed_help=show_embed_help,
                                 admin_takedown=admin_takedown,
                                 source=source,
+                                data_attrs=data_attrs,
                                )
 
 class MediaEmbedBody(CachedTemplate):
