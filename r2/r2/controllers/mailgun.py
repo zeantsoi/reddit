@@ -142,7 +142,6 @@ class MailgunWebhookController(RedditController):
             can_send_email=False,
         )
         message.sent_via_email = True
-        message.sender_email = sender_email
         message.email_id = email_id
         message._commit()
         queries.new_message(message, inbox_rel)

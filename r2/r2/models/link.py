@@ -1830,7 +1830,6 @@ class Message(Thing, Printable):
                      display_to=None,
                      email_id=None,
                      sent_via_email=False,
-                     sender_email=None,
                      )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
