@@ -1552,3 +1552,11 @@ class TrophyListJsonTemplate(ThingJsonTemplate):
 
     def kind(self, wrapped):
         return "TrophyList"
+
+
+class RulesJsonTemplate(JsonTemplate):
+    def render(self, thing, *a, **kw):
+        rules = {}
+        rules['site_rules'] = thing.site_rules
+        rules['rules'] = thing.rules
+        return ObjectTemplate(rules)
