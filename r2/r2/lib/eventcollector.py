@@ -355,7 +355,6 @@ class EventQueue(object):
             event_type="ss.forbidden_%s" % action_name,
             request=request,
             context=context,
-            testing=True,
         )
         event.add("details_text", details_text)
         event.add("process_notes", "IN_TIMEOUT")
