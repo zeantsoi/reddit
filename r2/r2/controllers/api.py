@@ -5012,6 +5012,8 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_add_subreddit_rule(self, form, jquery, short_name, description):
+        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+            abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
                 errors.TOO_LONG):
             return
@@ -5035,6 +5037,8 @@ class ApiController(RedditController):
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_update_subreddit_rule(self, form, jquery, old_short_name,
             short_name, description):
+        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+            abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
                 errors.TOO_LONG):
             return
@@ -5057,6 +5061,8 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_reorder_subreddit_rule(self, form, jquery, short_name, priority):
+        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+            abort(404)
         if not SubredditRules.get_rule(c.site, short_name):
             return
         SubredditRules.reorder(c.site, short_name, priority)
@@ -5071,6 +5077,8 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_remove_subreddit_rule(self, form, jquery, short_name):
+        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+            abort(404)
         SubredditRules.remove_rule(c.site, short_name)
         ModAction.create(c.site, c.user, 'deleterule', details=short_name)
         form.refresh()
