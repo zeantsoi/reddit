@@ -90,8 +90,14 @@ class HousePriority(PriorityLevel):
     cpm = False
 
 
-HIGH, MEDIUM, REMNANT, HOUSE = HighPriority(), MediumPriority(), RemnantPriority(), HousePriority()
-PROMOTE_PRIORITIES = {p.name: p for p in (HIGH, MEDIUM, REMNANT, HOUSE)}
+class AuctionPriority(PriorityLevel):
+    name = 'auction'
+    _text = N_('auction DO NOT SELECT')
+    value = 0
+
+
+HIGH, MEDIUM, REMNANT, HOUSE, AUCTION = HighPriority(), MediumPriority(), RemnantPriority(), HousePriority(), AuctionPriority()
+PROMOTE_PRIORITIES = {p.name: p for p in (HIGH, MEDIUM, REMNANT, HOUSE, AUCTION)}
 PROMOTE_DEFAULT_PRIORITY = MEDIUM
 
 
