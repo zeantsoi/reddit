@@ -1284,7 +1284,7 @@ class MessageController(ListingController):
     def GET_compose(self, to, subject, message):
         mod_srs = []
         subreddit_message = False
-        from_user = True
+        only_as_subreddit = False
         self.where = "compose"
 
         if isinstance(c.site, MultiReddit):
@@ -1297,7 +1297,7 @@ class MessageController(ListingController):
                 abort(403)
             mod_srs = [c.site]
             subreddit_message = True
-            from_user = False
+            only_as_subreddit = True
         elif c.user.is_moderator_somewhere:
             mod_srs = Mod.srs_with_perms(c.user, "mail")
             subreddit_message = bool(mod_srs)
@@ -1309,7 +1309,7 @@ class MessageController(ListingController):
         if subreddit_message:
             content = ModeratorMessageCompose(
                 mod_srs,
-                from_user=from_user,
+                only_as_subreddit=only_as_subreddit,
                 to=to,
                 subject=subject,
                 captcha=captcha,
