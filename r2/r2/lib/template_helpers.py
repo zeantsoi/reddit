@@ -36,9 +36,13 @@ from filters import (
 from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
 
-from r2.lib import hooks
+from r2.lib import (
+    geoip,
+    hooks,
+    js,
+    tracking,
+)
 from r2.lib.static import static_mtime
-from r2.lib import js, tracking
 
 import babel.numbers
 import simplejson
@@ -243,6 +247,13 @@ def js_config(extra_config=None):
         "facebook_app_id": g.live_config["facebook_app_id"],
         "feature_tumblr_sharing": feature.is_enabled('tumblr_sharing'),
     }
+
+    if feature.is_enabled("eu_cookie_policy"):
+        config.update({
+            "requires_eu_cookie_policy": geoip.requires_eu_cookie_policy(request.ip),
+            "eu_cookie": g.eu_cookie,
+            "eu_cookie_max_attempts": g.eu_cookie_max_attempts,
+        })
 
     if g.tracker_url:
         config["tracker_url"] = tracking.get_pageview_pixel_url()

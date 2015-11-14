@@ -47,7 +47,7 @@ from pylons.i18n.translation import LanguageError
 
 from r2.config import feature
 from r2.config.extensions import is_api, set_extension
-from r2.lib import filters, pages, utils, hooks, ratelimit
+from r2.lib import filters, geoip, pages, utils, hooks, ratelimit
 from r2.lib.base import BaseController, abort
 from r2.lib.cache import (
     is_valid_size_for_cache,
@@ -995,6 +995,7 @@ class MinimalController(BaseController):
         c.subdomain = extract_subdomain()
         c.errors = ErrorSet()
         c.cookies = Cookies()
+
         # if an rss feed, this will also log the user in if a feed=
         # GET param is included
         set_content_type()

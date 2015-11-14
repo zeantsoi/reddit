@@ -103,8 +103,14 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.controllers.util import abort
 
-from r2.lib import hooks, inventory, media
-from r2.lib import promote, tracking
+from r2.lib import (
+    geoip,
+    hooks,
+    inventory,
+    media,
+    promote,
+    tracking,
+)
 from r2.lib.captcha import get_iden
 from r2.lib.filters import (
     scriptsafe_dumps,

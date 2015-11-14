@@ -41,6 +41,39 @@ MAX_IPS_PER_GROUP = 500
 
 GEOIP_CACHE_TIME = datetime.timedelta(days=7).total_seconds()
 
+EU_COOKIE_COUNTRIES = {
+    "AT",
+    "BE",
+    "BG",
+    "HR",
+    "CY",
+    "CZ",
+    "DK",
+    "EE",
+    "FI",
+    "FR",
+    "DE",
+    "GR",
+    "HU",
+    "IS",
+    "IE",
+    "IT",
+    "LV",
+    "LI",
+    "LT",
+    "LU",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SK",
+    "SI",
+    "ES",
+    "SE",
+    "UK",
+}
+
 def _location_by_ips(ips):
     if not hasattr(g, 'geoip_location'):
         g.log.warning("g.geoip_location not set. skipping GeoIP lookup.")
@@ -141,3 +174,11 @@ def get_request_location(request, context):
         timer.stop()
 
     return context.location
+
+
+def requires_eu_cookie_policy(ip):
+    location = location_by_ips(ip)
+
+    return (location and
+        location.get("country_code") in EU_COOKIE_COUNTRIES)
+

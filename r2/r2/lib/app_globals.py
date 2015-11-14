@@ -209,6 +209,7 @@ class Globals(object):
             'default_bid_pennies',
             'min_bid_pennies',
             'max_bid_pennies',
+            'eu_cookie_max_attempts',
         ],
 
         ConfigValue.float: [
@@ -307,6 +308,7 @@ class Globals(object):
             'events_collector_test_url',
             'search_provider',
             'selfserve_support_email',
+            'eu_cookie'
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [
