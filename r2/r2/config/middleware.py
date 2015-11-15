@@ -61,6 +61,16 @@ class HTTPTooManyRequests(webob.exc.HTTPClientError):
 webob.exc.status_map[429] = HTTPTooManyRequests
 webob.util.status_reasons[429] = HTTPTooManyRequests.title
 
+
+class HTTPUnavailableForLegalReasons(webob.exc.HTTPClientError):
+    code = 451
+    title = "Unavailable"
+    explanation = ("This content is not available.")
+
+webob.exc.status_map[451] = HTTPUnavailableForLegalReasons
+webob.util.status_reasons[451] = HTTPUnavailableForLegalReasons.title
+
+
 # patch out SSRFable/XSSable endpoints in older versions of weberror
 import weberror.evalexception
 
@@ -93,7 +103,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
     if global_conf is None:
         global_conf = {}
-    codes = [304, 400, 401, 403, 404, 409, 415, 429, 503]
+    codes = [304, 400, 401, 403, 404, 409, 415, 429, 451, 503]
     if not asbool(global_conf.get('debug')):
         codes.append(500)
     if code in codes:
@@ -115,6 +125,8 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             d['takedown'] = environ.get('REDDIT_TAKEDOWN')
         if environ.get('REDDIT_ERROR_NAME'):
             d['error_name'] = environ.get('REDDIT_ERROR_NAME')
+        if environ.get("REDDIT_LEGAL_BLOCK"):
+            d["legal_info"] = environ.get("REDDIT_LEGAL_BLOCK")
 
         # preserve x-frame-options when 304ing
         if code == 304:

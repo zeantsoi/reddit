@@ -174,6 +174,15 @@ class ErrorController(RedditController):
             retry_after=retry_after,
         )
 
+    def send451(self):
+        c.site = DefaultSR()
+        return pages.InterstitialPage(
+            _("unavailable"),
+            content=pages.LegalBlockInterstitial(
+                message=request.GET.get("legal_info"),
+            ),
+        ).render()
+
     def send503(self):
         retry_after = request.environ.get("retry_after")
         if retry_after:
@@ -238,6 +247,8 @@ class ErrorController(RedditController):
                 return self.send403()
             elif code == 429:
                 return self.send429()
+            elif code == 451:
+                return self.send451()
             elif code == 500:
                 failien_url = make_failien_url()
                 sad_message = get_funny_translated_string("500_page")
