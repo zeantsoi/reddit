@@ -1582,6 +1582,8 @@ class Comment(Thing, Printable):
             if item.author_id == item.link.author_id and not item.link._deleted:
                 add_submitter_distinguish(item.attribs, item.link, item.subreddit)
 
+            item.wrapped_author = WrappedUser(item.author, item.attribs, item)
+
             if not hasattr(item, 'target'):
                 item.target = None
 

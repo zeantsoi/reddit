@@ -22,7 +22,6 @@
 
 <%!
     from r2.config import feature
-    from r2.lib.pages import WrappedUser
     from r2.lib.template_helpers import add_sr, _wsf
 %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
@@ -73,7 +72,7 @@
    %>
   <div class="entry ${like_cls}">
     <div class="tagline">
-     ${WrappedUser(thing.author, thing.attribs, thing, gray=collapse)}&#32;
+     ${thing.wrapped_author}&#32;
      %if thing.score_hidden:
        [${_("score hidden")}]
      %else:
