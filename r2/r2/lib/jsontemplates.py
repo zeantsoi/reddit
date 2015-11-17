@@ -202,24 +202,6 @@ class ThingJsonTemplate(JsonTemplate):
             if thing.author._deleted:
                 return "[deleted]"
             return thing.author.name
-        if attr == "author_flair_text":
-            if thing.author._deleted:
-                return None
-            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
-                return getattr(thing.author,
-                               'flair_%s_text' % (thing.subreddit._id),
-                               None)
-            else:
-                return None
-        if attr == "author_flair_css_class":
-            if thing.author._deleted:
-                return None
-            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
-                return getattr(thing.author,
-                               'flair_%s_css_class' % (thing.subreddit._id),
-                               None)
-            else:
-                return None
         elif attr == "created":
             return time.mktime(thing._date.timetuple())
         elif attr == "created_utc":
@@ -709,6 +691,22 @@ class LinkJsonTemplate(ThingJsonTemplate):
                 return safemarkdown(_("[removed]"))
         elif attr == "archived":
             return not thing.votable
+        elif attr == "author_flair_text":
+            if thing.wrapped_author.user_deleted:
+                return None
+
+            if thing.wrapped_author.flair_enabled:
+                return thing.wrapped_author.flair_text
+            else:
+                return None
+        elif attr == "author_flair_css_class":
+            if thing.wrapped_author.user_deleted:
+                return None
+
+            if thing.wrapped_author.flair_enabled:
+                return thing.wrapped_author.flair_css_class
+            else:
+                return None
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     @staticmethod
@@ -852,15 +850,12 @@ class CommentJsonTemplate(ThingTemplate):
 
             data["author"] = author.name
 
-            if author.flair_enabled_in_sr(sr_id):
-                flair_text = getattr(author, 'flair_%s_text' % sr_id, None)
-                flair_css = getattr(author, 'flair_%s_css_class' % sr_id, None)
+            if item.wrapped_author.flair_enabled:
+                data["author_flair_text"] = item.wrapped_author.flair_text
+                data["author_flair_css_class"] = item.wrapped_author.flair_css_class
             else:
-                flair_text = None
-                flair_css = None
-            data["author_flair_text"] = flair_text
-            data["author_flair_css_class"] = flair_css
-
+                data["author_flair_text"] = None
+                data["author_flair_css_class"] = None
         else:
             data["author"] = "[deleted]"
             data["author_flair_text"] = None
