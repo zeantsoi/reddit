@@ -106,5 +106,5 @@
   ${unsafe(taglinetext % dict(reddit = self.subreddit(),
                               domain = self.domain(),
                               when = thing.timesince,
-                              author= self.author()))}
+                              author = thing.wrapped_author.render()))}
 </%def>

@@ -522,6 +522,7 @@ class Link(Thing, Printable):
         from r2.lib.template_helpers import get_domain, unsafe, format_html
         from r2.models.report import Report
         from r2.lib.wrapped import CachedVariable
+        from r2.lib.pages import WrappedUser
 
         # referencing c's getattr is cheap, but not as cheap when it
         # is in a loop that calls it 30 times on 25-200 things.
@@ -856,6 +857,9 @@ class Link(Thing, Printable):
                 else:
                     taglinetext = _("submitted %(when)s by %(author)s")
             item.taglinetext = taglinetext
+
+            item.wrapped_author = WrappedUser(
+                item.author, attribs=item.attribs, context_thing=item)
 
             if item.is_author:
                 item.should_incr_counts = False

@@ -20,10 +20,6 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-    from r2.lib.pages import WrappedUser
- %>
-
 <li>
   ${self.parent()}
   ${self.entry()}
@@ -44,10 +40,6 @@
 </%def>
 
 <%def name="entry()">
-</%def>
-
-<%def name="author(friend = False, gray = False)" buffered="True">
-  ${WrappedUser(thing.author, thing.attribs, thing, gray = collapse)}
 </%def>
 
 <%def name="score(this, likes=None, inline=True, label = True, _id = True)">
