@@ -373,7 +373,7 @@ class Reddit(Templated):
                 self.locationbar = LocationBar()
 
         self.srtopbar = None
-        if srbar and not c.cname and not is_api():
+        if srbar and not is_api():
             self.srtopbar = SubredditTopBar()
 
         panes = [content]
@@ -777,7 +777,7 @@ class Reddit(Templated):
         show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
 
         # don't show the subreddit info bar on cnames unless the option is set
-        if not isinstance(c.site, FakeSubreddit) and not c.cname:
+        if not isinstance(c.site, FakeSubreddit):
             ps.append(SubredditInfoBar())
             moderator = c.user_is_loggedin and (c.user_is_admin or
                                           c.site.is_moderator(c.user))
@@ -806,7 +806,7 @@ class Reddit(Templated):
                            data_attrs=data_attrs,
                            show_cover = True, nocname=True))
 
-        if not isinstance(c.site, FakeSubreddit) and not c.cname:
+        if not isinstance(c.site, FakeSubreddit):
             moderator_ids = c.site.moderator_ids()
             if moderator_ids:
                 sidebar_list_length = 10
@@ -967,7 +967,7 @@ class Reddit(Templated):
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
 
-        if not isinstance(c.site, DefaultSR) and not c.cname:
+        if not isinstance(c.site, DefaultSR):
             func = 'subreddit'
             if isinstance(c.site, DomainSR):
                 func = 'domain'
@@ -1134,9 +1134,8 @@ class ClickGadget(Templated):
 
 class LoginFormWide(CachedTemplate):
     """generates a login form suitable for the 300px rightbox."""
-    def __init__(self):
-        self.cname = c.cname
-        CachedTemplate.__init__(self)
+    pass
+
 
 class SubredditInfoBar(CachedTemplate):
     """When not on Default, renders a sidebox which gives info about
@@ -1149,9 +1148,7 @@ class SubredditInfoBar(CachedTemplate):
 
         # hackity hack. do i need to add all the others props?
         self.sr = list(wrap_links(site))[0]
-        target = "_top" if c.cname else None
-        self.description_usertext = UserText(self.sr, self.sr.description,
-                                             target=target)
+        self.description_usertext = UserText(self.sr, self.sr.description)
 
         # we want to cache on the number of subscribers
         self.subscribers = self.sr._ups
@@ -1426,7 +1423,7 @@ class BoringPage(Reddit):
         Reddit.__init__(self, **context)
 
     def build_toolbars(self):
-        if not isinstance(c.site, DefaultSR) and not c.cname:
+        if not isinstance(c.site, DefaultSR):
             return [PageNameNav('subreddit', title = self.pagename)]
         else:
             return [PageNameNav('nomenu', title = self.pagename)]
@@ -1856,7 +1853,7 @@ class LinkInfoPage(Reddit):
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
-        if not isinstance(c.site, DefaultSR) and not c.cname:
+        if not isinstance(c.site, DefaultSR):
             toolbar.insert(0, PageNameNav('subreddit'))
 
         if c.user_is_admin:
@@ -2174,10 +2171,8 @@ class EditReddit(Reddit):
         Reddit.__init__(self, title=title, *a, **kw)
 
     def build_toolbars(self):
-        if not c.cname:
-            return [PageNameNav('subreddit', title=self.title)]
-        else:
-            return []
+        return [PageNameNav('subreddit', title=self.title)]
+
 
 class SubredditsPage(Reddit):
     """container for rendering a list of reddits.  The corner
@@ -4832,7 +4827,6 @@ class SelfTextChild(LinkChild):
         u = UserText(self.link, self.link.selftext,
                      editable = c.user == self.link.author,
                      nofollow = self.nofollow,
-                     target="_top" if c.cname else None,
                      expunged=self.link.expunged)
         return u.render()
 
