@@ -887,8 +887,6 @@ def finalize_completed_campaigns(daysago=1):
     q = PromoCampaign._query(PromoCampaign.c.end_date == date,
                              # exclude no transaction
                              PromoCampaign.c.trans_id != NO_TRANSACTION,
-                             # TEMP: exclude auction test campaigns
-                             PromoCampaign.c.bid > 0,
                              data=True)
     # filter out freebies
     campaigns = filter(lambda camp: camp.trans_id > NO_TRANSACTION, q)
