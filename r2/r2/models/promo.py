@@ -515,7 +515,7 @@ class PromoCampaign(Thing):
         if self.cost_basis == PROMOTE_COST_BASIS.fixed_cpm:
             return calc_impressions(self.total_budget_pennies, self.bid_pennies)
 
-        return None
+        return 0
 
     @property
     def priority(self):
