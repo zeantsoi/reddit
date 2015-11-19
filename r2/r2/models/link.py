@@ -184,6 +184,13 @@ class Link(Thing, Printable):
     def is_embeddable(self):
         return not self.is_nsfw and self.subreddit_slow.is_embeddable
 
+    @property
+    def has_legal_blocks(self):
+        return bool(self._t.get("legal_blocks", {}))
+
+    def get_legal_block_for_country(self, country):
+        return getattr(self, "legal_blocks", {}).get(country, None)
+
     @classmethod
     def _by_url(cls, url, sr):
         if isinstance(sr, FakeSubreddit):

@@ -1193,6 +1193,55 @@ class MinimalController(BaseController):
     def abort403(self):
         abort(403, "forbidden")
 
+    def abort_if_blocked_legally(self, link):
+        # we can unfortunately be compelled to block content in certain
+        # jurisdictions by legal process. this is a rudimentary implementation
+        # which blocks whole threads based on the requester's country code.
+        # to add a block, create or update the "legal_blocks" data attribute
+        # on a link using the two-letter country code.
+        #
+        # for a default 451 page with no further explanation:
+        #
+        #   link.legal_blocks = {"ZZ": {}}
+        #
+        # for a 451 with explanation
+        #
+        #   link.legal_blocks = {"ZZ": {"description": "sorry :("}}
+        #
+        # or if required by the legal order, another code can be used:
+        #
+        #   link.legal_blocks = {"ZZ": {"code": 403}}
+        #
+        # this can all be combined with multiple blocks as well
+        #
+        #   link.legal_blocks = {
+        #      "AA": {"description": "AA doesn't like this stuff"},
+        #      "ZZ": {"code": 403},
+        #   }
+        #
+        # note: Thing is dumb about mutable data attributes. always assign
+        # whole dictionaries and don't try to modify `legal_blocks` in-place,
+        # it won't work.
+
+        if link.has_legal_blocks:
+            location = geoip.get_request_location(request, c)
+            legal_block = link.get_legal_block_for_country(location)
+            if legal_block is not None:
+                code = legal_block.get("code", 451)
+                if code == 451:
+                    # https://tools.ietf.org/html/draft-ietf-httpbis-legally-restricted-status-04#section-4
+                    headers = {
+                        "Link": '<{}://{}>; rel="blocked-by"'.format(
+                            g.default_scheme, g.domain),
+                    }
+                else:
+                    headers = {}
+
+                description = legal_block.get("description", None)
+                request.environ["REDDIT_LEGAL_BLOCK"] = description
+
+                abort(code, headers=headers)
+
     COMMON_REDDIT_HEADERS = ", ".join((
         "X-Ratelimit-Used",
         "X-Ratelimit-Remaining",
