@@ -818,7 +818,7 @@ def charge_campaign(link, campaign):
         update_promote_status(link, PROMOTE_STATUS.pending)
 
     total_budget_dollars = campaign.total_budget_pennies / 100.
-    emailer.queue_promo(link, total_budget, campaign.trans_id)
+    emailer.queue_promo(link, total_budget_dollars, campaign.trans_id)
     text = ('auth charge for campaign %s, trans_id: %d' %
             (campaign._id, campaign.trans_id))
     PromotionLog.add(link, text)
