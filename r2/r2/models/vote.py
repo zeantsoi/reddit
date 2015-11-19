@@ -434,18 +434,24 @@ class VoteDetailsByThing(tdb_cassandra.View):
 
         details = []
         for voter_id36, json_data in raw_details.iteritems():
-            data = json.loads(json_data)
-            data = cls.convert_old_details(data)
+            vote_data = json.loads(json_data)
+            vote_data = cls.convert_old_details(vote_data)
 
-            user = Account._byID36(voter_id36, data=True)
-            direction = Vote.deserialize_direction(data.pop("direction"))
-            date = datetime.utcfromtimestamp(data.pop("date"))
-            effects = data.pop("effects")
-            data["ip"] = ips.get(voter_id36)
+            extra_data = vote_data["data"]
+            extra_data["ip"] = ips.get(voter_id36)
 
-            vote = Vote(user, thing, direction, date, data, effects,
-                get_previous_vote=False)
+            vote = Vote(
+                user=Account._byID36(voter_id36, data=True),
+                thing=thing,
+                direction=Vote.deserialize_direction(vote_data["direction"]),
+                date=datetime.utcfromtimestamp(vote_data["date"]),
+                data=extra_data,
+                effects=vote_data["effects"],
+                get_previous_vote=False,
+            )
+
             details.append(vote)
+
         details.sort(key=lambda d: d.date)
 
         return details
