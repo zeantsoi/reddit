@@ -960,7 +960,7 @@
       </label>
     </div>
   </%def>
-  %if c.user_is_sponsor:
+  %if thing.auction_optional:
     <%utils:line_field title="${_('campaign type')}" css_class="rounded">
       ${is_auction_field_content()}
     </%utils:line_field>

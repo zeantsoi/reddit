@@ -4441,8 +4441,9 @@ class PromoteLinkBase(Templated):
         self.regions = regions
         self.metros = metros
 
-        self.force_auction = (feature.is_enabled('ads_auction') and
-            not c.user_is_sponsor)
+        ads_auction_enabled = feature.is_enabled('ads_auction')
+        self.force_auction = (ads_auction_enabled and not c.user_is_sponsor)
+        self.auction_optional = (ads_auction_enabled and c.user_is_sponsor)
 
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
