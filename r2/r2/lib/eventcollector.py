@@ -432,6 +432,7 @@ class EventQueue(object):
             event_type="ss.report",
             request=request,
             context=context,
+            testing=True,
         )
         if process_notes:
             event.add("process_notes", process_notes)
