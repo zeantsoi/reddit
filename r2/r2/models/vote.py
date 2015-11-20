@@ -401,8 +401,8 @@ class VoteDetailsByThing(tdb_cassandra.View):
             "affects_karma": valid_user,
         }
 
-        if old_data:
-            converted_data["data"] = old_data
+        # anything remaining goes into "data"
+        converted_data["data"] = old_data
 
         return converted_data
 
