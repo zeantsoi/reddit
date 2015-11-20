@@ -250,7 +250,7 @@ def js_config(extra_config=None):
 
     if feature.is_enabled("eu_cookie_policy"):
         config.update({
-            "requires_eu_cookie_policy": geoip.requires_eu_cookie_policy(request.ip),
+            "requires_eu_cookie_policy": geoip.requires_eu_cookie_policy(request, c),
             "eu_cookie": g.eu_cookie,
             "eu_cookie_max_attempts": g.eu_cookie_max_attempts,
         })
