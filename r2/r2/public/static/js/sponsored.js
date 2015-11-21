@@ -154,14 +154,14 @@ var CampaignOption = React.createClass({
       costBasis: '',
       totalBudget: '',
       costBasis: '',
-      bidPennies: '',
+      bidDollars: '',
     };
   },
 
   render: function() {
     var customText;
     if (r.sponsored.isAuction) {
-      customText = '$' + parseFloat(this.props.bidPennies).toFixed(2) + ' ' + this.props.costBasis;
+      customText = '$' + parseFloat(this.props.bidDollars).toFixed(2) + ' ' + this.props.costBasis;
     } else {
       customText = this.formattedProps.impressions + ' impressions';
     }
@@ -185,15 +185,15 @@ var CampaignOption = React.createClass({
     var $startdate = $('#startdate');
     var $enddate = $('#enddate');
     var $totalBudget = $('#total_budget');
-    var $bidPennies = $('#bid_pennies');
+    var $bidDollars = $('#bid_dollars');
     var userStartdate = $startdate.val();
     var userEnddate = $enddate.val();
     var userTotalBudget = $totalBudget.val();
-    var userBidPennies = $bidPennies.val();
+    var userBidDollars = $bidDollars.val();
     $('#startdate').val(this.props.start);
     $('#enddate').val(this.props.end);
     $('#total_budget').val(this.props.budget);
-    $('#bid_pennies').val(this.props.bidPennies);
+    $('#bid_dollars').val(this.props.bidDollars);
     setTimeout(function(){
       send_campaign(close);
       // hack, needed because post_pseudo_form hides any element in the form
@@ -204,7 +204,7 @@ var CampaignOption = React.createClass({
       $startdate.val(userStartdate);
       $enddate.val(userEnddate);
       $totalBudget.val(userTotalBudget);
-      $bidPennies.val(userBidPennies);
+      $bidDollars.val(userBidDollars);
     }, 0);
   },
 });
@@ -486,7 +486,7 @@ var CampaignCreator = React.createClass({
       end: dates.end,
       budget: this.props.totalBudget,
       costBasis: this.props.costBasis,
-      bidPennies: this.props.bidPennies,
+      bidDollars: this.props.bidDollars,
       isNew: this.props.isNew,
       minBudget: this.props.minValidBudget,
       maxBudget: this.props.maxValidBudget
@@ -612,7 +612,7 @@ var exports = r.sponsored = {
             $('#is_auction_true').prop('checked', true);
 
             this.setup_auction($form, targeting, timing);
-            this.check_bid_pennies($form);
+            this.check_bid_dollars($form);
         } else {
             $('.auction-field').hide();
             $('.fixed-cpm-field').show();
@@ -926,7 +926,7 @@ var exports = r.sponsored = {
         var dates = timing.dates,
             totalBudget = parseFloat($("#total_budget").val()),
             costBasisValue = $form.find('#cost_basis').val(),
-            bidPennies = $form.find('#bid_pennies').val();
+            bidDollars = $form.find('#bid_dollars').val();
             minbudget_amt = r.sponsored.get_real_min_budget(),
             maxbudget_amt = r.sponsored.get_max_budget();
 
@@ -939,7 +939,7 @@ var exports = r.sponsored = {
             minValidBudget: parseFloat(minbudget_amt),
             targetName: targeting.displayName,
             costBasis: costBasisValue.toUpperCase(),
-            bidPennies: parseFloat(bidPennies),
+            bidDollars: parseFloat(bidDollars),
           }),
           document.getElementById('campaign-creator')
         );
@@ -1236,7 +1236,6 @@ var exports = r.sponsored = {
                 mappingFunction = isCollection ? mapCollection : mapSubreddit;
             mappingFunction(data.targeting);
             var budget = parseFloat(data.total_budget, 10);
-            var bid_pennies = parseInt(data.bid_pennies, 10);
             totalBudget += budget;
         });
 
@@ -1631,15 +1630,15 @@ var exports = r.sponsored = {
         }
     },
 
-    check_bid_pennies: function($form) {
+    check_bid_dollars: function($form) {
       var totalBudget = $form.find('#total_budget').val(),
-          bidPennies = $form.find('#bid_pennies').val(),
+          bidDollars = $form.find('#bid_dollars').val(),
           duration = this.get_timing($form).duration;
 
       var dailyMaxSpend = totalBudget / duration;
       $form.find('.daily-max-spend').text(dailyMaxSpend.toFixed(2));
 
-      if (bidPennies > dailyMaxSpend) {
+      if (bidDollars > dailyMaxSpend) {
         this.bidValid = false;
         this.disable_form($form);
         $('.daily-bid-message').show();
@@ -1935,7 +1934,7 @@ function edit_campaign($campaign_row) {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
                     'frequency_cap', 'frequency_cap_duration', 'total_budget',
-                    'bid_pennies'],
+                    'bid_dollars'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]')

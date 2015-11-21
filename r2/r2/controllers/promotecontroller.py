@@ -1167,14 +1167,14 @@ class PromoteApiController(ApiController):
         android_versions=VOSVersion('android_version_range', 'android'),
         total_budget=VFloat('total_budget', coerce=False),
         cost_basis=VOneOf('cost_basis', ('cpc', 'cpm',), default=None),
-        bid_pennies=VFloat('bid_pennies', coerce=True),
+        bid_dollars=VFloat('bid_dollars', coerce=True),
     )
     def POST_edit_campaign(self, form, jquery, is_auction, link, campaign_id36,
                            start, end, target, frequency_cap,
                            priority, location, platform, mobile_os,
                            os_versions, ios_devices, ios_versions,
                            android_devices, android_versions,
-                           total_budget, cost_basis, bid_pennies):
+                           total_budget, cost_basis, bid_dollars):
         if not link:
             return
 
@@ -1196,9 +1196,7 @@ class PromoteApiController(ApiController):
             cost_basis = PROMOTE_COST_BASIS.fixed_cpm
 
         if priority == PROMOTE_PRIORITIES['auction']:
-            # bid_pennies comes as dollars in request,
-            # convert to pennies
-            bid_pennies *= 100
+            bid_pennies = bid_dollars * 100
         else:
             bid_pennies = PromotionPrices.get_price(c.user, target,
                 location)

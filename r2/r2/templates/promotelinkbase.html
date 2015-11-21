@@ -683,16 +683,16 @@
       <div class="form-group">
         <span class="label cost-basis-label" id="cost-basis-label"></span>
         <div class="input-group">
-          $<input id="bid_pennies" name="bid_pennies" size="7"
+          $<input id="bid_dollars" name="bid_dollars" size="7"
                   type="text" class="rounded styled-input"
                   style="width:auto"
                   onchange="r.sponsored.on_bid_change()"
                   onkeyup="r.sponsored.on_bid_change()"
                   value="${'%.2f' % (g.default_bid_pennies / 100.)}"
-                  data-default_bid_pennies="${g.default_bid_pennies}"
-                  data-min_bid_pennies="${thing.min_bid_pennies}"
-                  data-real_min_bid_pennies="${g.min_bid_pennies}"
-                  data-max_bid_pennies="${thing.max_bid_pennies}"/>
+                  data-default_bid_dollars="${g.default_bid_pennies / 100.}"
+                  data-min_bid_dollars="${thing.min_bid_dollars}"
+                  data-real_min_bid_dollars="${g.min_bid_pennies / 100.}"
+                  data-max_bid_dollars="${thing.max_bid_dollars}"/>
         </div>
         <div class="daily-bid-message error">
           Bid cannot be greater than $<span class="daily-max-spend"></span>

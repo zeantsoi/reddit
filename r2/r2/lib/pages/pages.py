@@ -4530,11 +4530,11 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.default_budget = g.default_total_budget_pennies / 100.
 
         if c.user_is_sponsor:
-            self.min_bid_pennies = 0
-            self.max_bid_pennies = 0
+            self.min_bid_dollars = 0.
+            self.max_bid_dollars = 0.
         else:
-            self.min_bid_pennies = g.min_bid_pennies
-            self.max_bid_pennies = g.max_bid_pennies
+            self.min_bid_dollars = g.min_bid_pennies / 100.
+            self.max_bid_dollars = g.max_bid_pennies / 100.
 
         self.priorities = [
             (p.name, p.text, p.description, p.default,
