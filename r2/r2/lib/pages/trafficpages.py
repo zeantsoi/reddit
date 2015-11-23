@@ -621,7 +621,7 @@ class PromotedLinkTraffic(Templated):
             is_active = self.campaign and self.campaign._id36 == camp._id36
             url = '/traffic/%s/%s' % (self.thing._id36, camp._id36)
             is_total = False
-            budget_dollars = camp.total_budget_pennies / 100.
+            budget_dollars = camp.total_budget_dollars
             row = self.make_campaign_table_row(camp._id36,
                                                start=start,
                                                end=end,
@@ -653,7 +653,7 @@ class PromotedLinkTraffic(Templated):
         is_active = not self.campaign
         url = '/traffic/%s' % self.thing._id36
         is_total = True
-        total_budget_dollars = total_budget_pennies / 100.
+        total_budget_dollars = total_budget_dollars
         row = self.make_campaign_table_row(_('total'),
                                            start=start,
                                            end=end,

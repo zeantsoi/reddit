@@ -111,7 +111,7 @@
   %if thing.ads_auction_enabled:
     <td class="campaign-bid">
       %if getattr(thing.campaign, 'cost_basis') is not 0:
-        ${format_currency(thing.campaign.bid_pennies / 100., 'USD', locale=c.locale)}
+        ${thing.printable_bid}
         ${thing.cost_basis.upper()}
       %else:
         ${_("N/A")}

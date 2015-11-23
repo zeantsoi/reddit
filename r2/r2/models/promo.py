@@ -24,6 +24,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from uuid import uuid1
 
+from babel.numbers import format_currency
 from pycassa.types import CompositeType
 from pylons import tmpl_context as c
 from pylons import app_globals as g
@@ -639,6 +640,20 @@ class PromoCampaign(Thing):
     @property
     def is_house(self):
        return self.priority == HOUSE
+
+    @property
+    def total_budget_dollars(self):
+        return self.total_budget_pennies / 100.
+
+    @property
+    def bid_dollars(self):
+        return self.bid_pennies / 100.
+
+    def printable_total_budget(self, locale):
+        return format_currency(self.total_budget_dollars, 'USD', locale=locale)
+
+    def printable_bid(self, locale):
+        return format_currency(self.bid_dollars, 'USD', locale=locale)
 
     def delete(self):
         self._deleted = True

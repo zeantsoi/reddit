@@ -75,7 +75,7 @@ def get_scheduled(date, sr_name=''):
 
         kept.append(camp._id)
 
-    return [(camp._fullname, camp.link_id, camp.total_budget_pennies / 100.)
+    return [(camp._fullname, camp.link_id, camp.total_budget_dollars)
         for camp in kept]
 
 

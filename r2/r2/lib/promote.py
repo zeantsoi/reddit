@@ -530,18 +530,17 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
     """
     void_campaign(link, campaign, reason='changed_payment')
 
-    total_budget_dollars = campaign.total_budget_pennies / 100.
     if freebie:
         trans_id, reason = authorize.auth_freebie_transaction(
-            total_budget_dollars, user, link, campaign._id)
+            campaign.total_budget_dollars, user, link, campaign._id)
     else:
-        trans_id, reason = authorize.auth_transaction(total_budget_dollars,
-            user, pay_id, link, campaign._id)
+        trans_id, reason = authorize.auth_transaction(
+            campaign.total_budget_dollars, user, pay_id, link, campaign._id)
 
     if trans_id and not reason:
         text = ('updated payment and/or budget for campaign %s: '
                 'SUCCESS (trans_id: %d, amt: %0.2f)' %
-                (campaign._id, trans_id, campaign.total_budget_pennies / 100.))
+                (campaign._id, trans_id, campaign.total_budget_dollars))
         PromotionLog.add(link, text)
         if trans_id < 0:
             PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign._id)
@@ -558,8 +557,8 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
         update_promote_status(link, new_status)
 
         if user and (user._id == link.author_id) and trans_id > 0:
-            total_budget_dollars = campaign.total_budget_pennies / 100.
-            emailer.promo_total_budget(link, total_budget_dollars,
+            emailer.promo_total_budget(link,
+                campaign.printable_total_budget(locale=c.locale),
                 campaign.start_date)
 
     else:
@@ -826,8 +825,9 @@ def charge_campaign(link, campaign):
     if not is_promoted(link):
         update_promote_status(link, PROMOTE_STATUS.pending)
 
-    total_budget_dollars = campaign.total_budget_pennies / 100.
-    emailer.queue_promo(link, total_budget_dollars, campaign.trans_id)
+    emailer.queue_promo(link,
+        campaign.printable_total_budget(locale=c.locale),
+        campaign.trans_id)
     text = ('auth charge for campaign %s, trans_id: %d' %
             (campaign._id, campaign.trans_id))
     PromotionLog.add(link, text)
@@ -927,7 +927,7 @@ def finalize_completed_campaigns(daysago=1):
             if hasattr(camp, 'cpm'):
                 text = '%s completed with $%s billable (%s impressions @ $%s).'
                 text %= (camp, billable_amount, billable_impressions,
-                    camp.bid_pennies / 100.)
+                    camp.bid_dollars)
             else:
                 text = '%s completed with $%s billable (pre-CPM).'
                 text %= (camp, billable_amount) 
@@ -943,7 +943,7 @@ def finalize_completed_campaigns(daysago=1):
 
 def get_refund_amount(camp, billable):
     existing_refund = getattr(camp, 'refund_amount', 0.)
-    charge = camp.total_budget_pennies / 100. - existing_refund
+    charge = camp.total_budget_dollars - existing_refund
     refund_amount = charge - billable
     refund_amount = Decimal(str(refund_amount)).quantize(Decimal('.01'),
                                                     rounding=ROUND_UP)
@@ -1056,7 +1056,7 @@ def _get_live_promotions(sanitized_names):
     ret = {sr_name: [] for sr_name in sanitized_names}
     for camp, link in get_promos(now, sr_names=sr_names):
         if is_live_promo(link, camp):
-            weight = ((camp.total_budget_pennies / 100.) / camp.ndays)
+            weight = (camp.total_budget_dollars / camp.ndays)
             pt = PromoTuple(link=link._fullname, weight=weight,
                             campaign=camp._fullname)
             for sr_name in camp.target.subreddit_names:
@@ -1152,11 +1152,11 @@ def get_billable_impressions(campaign):
 
 def get_billable_amount(camp, impressions):
     if not camp.is_auction:
-        value_delivered = impressions / 1000. * camp.bid_pennies / 100.
-        billable_amount = min(camp.total_budget_pennies / 100., value_delivered)
+        value_delivered = impressions / 1000. * camp.bid_dollars
+        billable_amount = min(camp.total_budget_dollars, value_delivered)
     else:
         # pre-CPM campaigns are charged in full regardless of impressions
-        billable_amount = camp.total_budget_pennies / 100.
+        billable_amount = camp.total_budget_dollars
 
     billable_amount = Decimal(str(billable_amount)).quantize(Decimal('.01'),
                                                         rounding=ROUND_DOWN)
@@ -1168,7 +1168,7 @@ def get_spent_amount(campaign):
         spent = 0.
     elif hasattr(campaign, 'refund_amount'):
         # no need to calculate spend if we've already refunded
-        spent = campaign.total_budget_pennies / 100. - campaign.refund_amount
+        spent = campaign.total_budget_dollars - campaign.refund_amount
     elif campaign.is_auction:
         spent = campaign.adserver_spent_pennies / 100.
     else:

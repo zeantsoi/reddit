@@ -4588,7 +4588,7 @@ class RenderableCampaign(Templated):
         self.is_complete = is_complete
         self.needs_refund = (is_complete and c.user_is_sponsor and
                              (transaction and not transaction.is_refund()) and
-                             self.spent < campaign.total_budget_pennies / 100.)
+                             self.spent < campaign.total_budget_dollars)
         self.pay_url = promote.pay_url(link, campaign)
         sr_name = random.choice(campaign.target.subreddit_names)
         self.view_live_url = promote.view_live_url(link, sr_name)
@@ -4628,6 +4628,8 @@ class RenderableCampaign(Templated):
         else:
             self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.cpm]
             self.bid_pennies = g.default_bid_pennies
+
+        self.printable_bid = campaign.printable_bid(locale=c.locale)
 
         Templated.__init__(self)
 
@@ -4673,6 +4675,8 @@ class RefundPage(Reddit):
         self.billable_impressions = billable_impressions
         self.billable_amount = billable_amount
         self.refund_amount = refund_amount
+        self.printable_total_budget = campaign.printable_total_budget(locale=c.locale)
+        self.printable_bid = campaign.printable_bid(locale=c.locale)
         self.traffic_url = '/traffic/%s/%s' % (link._id36, campaign._id36)
         Reddit.__init__(self, title="refund", show_sidebar=False)
 
@@ -4908,8 +4912,7 @@ class PaymentForm(Templated):
         self.start_date = campaign.start_date.strftime("%m/%d/%Y")
         self.end_date = campaign.end_date.strftime("%m/%d/%Y")
         self.campaign_id36 = campaign._id36
-        self.budget = format_currency(campaign.total_budget_pennies / 100.,
-            'USD', locale=c.locale)
+        self.budget = campaign.printable_total_budget(locale=c.locale)
         Templated.__init__(self, **kw)
 
 
