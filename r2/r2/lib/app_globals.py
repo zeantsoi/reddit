@@ -282,6 +282,7 @@ class Globals(object):
             'multi_icons',
             'hide_subscribers_srs',
             'can_track_ads',
+            'mcrouter_addr',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [
@@ -802,6 +803,14 @@ class Globals(object):
         )
 
         self.startup_timer.intermediate("memcache")
+
+        ################# MCROUTER
+        self.mcrouter = CMemcache(
+            "mcrouter",
+            self.mcrouter_addr,
+            min_compress_len=1400,
+            num_clients=1,
+        )
 
         ################# THRIFT-BASED SERVICES
         activity_endpoint = self.config.get("activity_endpoint")
