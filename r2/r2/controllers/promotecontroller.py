@@ -151,6 +151,7 @@ from r2.models.promo import PROMOTE_COST_BASIS, PROMOTE_PRIORITIES
 IOS_DEVICES = ('iPhone', 'iPad', 'iPod',)
 ANDROID_DEVICES = ('phone', 'tablet',)
 
+ADZERK_URL_MAX_LENGTH = 499
 
 EXPIRES_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 ALLOWED_IMAGE_TYPES = set(["image/jpg", "image/jpeg", "image/png"])
@@ -928,8 +929,14 @@ class PromoteApiController(ApiController):
                 # want the URL
                 url = url[0].url
 
+            # Adzerk limits URLs length for creatives
+            if len(url) > ADZERK_URL_MAX_LENGTH:
+                c.errors.add(errors.TOO_LONG, field='url',
+                    msg_params={'max_length': PROMO_URL_MAX_LENGTH})
+
         if is_link:
-            if form.has_errors('url', errors.NO_URL, errors.BAD_URL):
+            if form.has_errors('url', errors.NO_URL, errors.BAD_URL,
+                    errors.TOO_LONG):
                 return
 
         # users can change the disable_comments on promoted links
