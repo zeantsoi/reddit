@@ -177,8 +177,6 @@ def get_request_location(request, context):
 
 
 def requires_eu_cookie_policy(request, context):
-    location = get_request_location(request, context)
+    country_code = get_request_location(request, context)
 
-    return (location and
-        location.get("country_code") in EU_COOKIE_COUNTRIES)
-
+    return (country_code in EU_COOKIE_COUNTRIES)
