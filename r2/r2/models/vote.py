@@ -36,7 +36,7 @@ from r2.lib.db.tdb_cassandra import (
     ASCII_TYPE,
     UTF8_TYPE,
 )
-from r2.lib.utils import Enum, epoch_timestamp
+from r2.lib.utils import Enum, epoch_timestamp, in_chunks
 
 from r2.models import Account
 
@@ -432,6 +432,12 @@ class VoteDetailsByThing(tdb_cassandra.View):
         except tdb_cassandra.NotFound:
             ips = {}
 
+        # look up all the accounts in batches of 100
+        account_id36s = set(raw_details.keys())
+        accounts = {}
+        for id_chunk in in_chunks(account_id36s, size=100):
+            accounts.update(Account._byID36(id_chunk, data=True))
+
         details = []
         for voter_id36, json_data in raw_details.iteritems():
             vote_data = json.loads(json_data)
@@ -441,7 +447,7 @@ class VoteDetailsByThing(tdb_cassandra.View):
             extra_data["ip"] = ips.get(voter_id36)
 
             vote = Vote(
-                user=Account._byID36(voter_id36, data=True),
+                user=accounts[voter_id36],
                 thing=thing,
                 direction=Vote.deserialize_direction(vote_data["direction"]),
                 date=datetime.utcfromtimestamp(vote_data["date"]),
