@@ -30,13 +30,13 @@
         ).on('submit', function(e) {
           e.preventDefault();
 
-          $.cookie(cookie, maxAttempts);
+          $.cookie(cookie, maxAttempts, {domain:r.config.cur_domain, path:'/'});
 
           $(this).hide();
         })
     );
 
-    $.cookie(cookie, Math.min(shown + 1, maxAttempts));
+    $.cookie(cookie, Math.min(shown + 1, maxAttempts), {domain:r.config.cur_domain, path:'/'});
   }
 
 })(this, (this.r = this.r || {}), this.jQuery);
