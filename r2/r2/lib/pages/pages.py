@@ -3310,12 +3310,15 @@ class Gilding(Templated):
 
 class ReportForm(CachedTemplate):
     def __init__(self, thing=None, **kw):
-        subreddit = thing.subreddit_slow
         self.rules = []
         self.system_rules = []
         self.thing_fullname = thing._fullname
+        subreddit = None
 
-        if feature.is_enabled("subreddit_rules", subreddit=subreddit.name):
+        if isinstance(thing, Comment, Link):
+            subreddit = thing.subreddit_slow
+        if (subreddit and
+                feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
             for rule in SubredditRules.get_rules(subreddit):
                 self.rules.append(rule["short_name"])
             if self.rules:
@@ -3330,12 +3333,15 @@ class ReportForm(CachedTemplate):
 
 class SubredditReportForm(CachedTemplate):
     def __init__(self, thing=None, **kw):
-        subreddit = thing.subreddit_slow
         self.rules = []
         self.system_rules = []
         self.thing_fullname = thing._fullname
+        subreddit = None
 
-        if feature.is_enabled("subreddit_rules", subreddit=subreddit.name):
+        if isinstance(thing, Comment, Link):
+            subreddit = thing.subreddit_slow
+        if (subreddit and
+                feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
             for rule in SubredditRules.get_rules(subreddit):
                 self.rules.append(rule["short_name"])
             if self.rules:
