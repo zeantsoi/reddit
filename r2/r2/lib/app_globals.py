@@ -261,7 +261,6 @@ class Globals(object):
             'memcaches',
             'lockcaches',
             'permacache_memcaches',
-            'pagecaches',
             'memoizecaches',
             'srmembercaches',
             'relcaches',
@@ -769,17 +768,6 @@ class Globals(object):
         else:
             stalecaches = None
 
-        # pagecaches hold fully rendered pages
-        pagecaches = CMemcache(
-            "page",
-            self.pagecaches,
-            noreply=True,
-            no_block=True,
-            num_clients=num_mc_clients,
-            min_compress_len=1400,
-            validators=[],
-        )
-
         # hardcache memcache pool
         hardcache_memcaches = CMemcache(
             "hardcache",
@@ -898,9 +886,10 @@ class Globals(object):
         ))
         cache_chains.update(rendercache=self.rendercache)
 
+        # pagecaches hold fully rendered pages (includes comment panes)
         self.pagecache = MemcacheChain((
             localcache_cls(),
-            pagecaches,
+            self.mcrouter,
         ))
         cache_chains.update(pagecache=self.pagecache)
 
