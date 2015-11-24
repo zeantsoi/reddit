@@ -29,6 +29,7 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.lib.unicode import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
@@ -102,7 +103,7 @@ PROMOTE_PRIORITIES = OrderedDict((p.name, p) for p in (HIGH, MEDIUM, REMNANT,
 
 
 def PROMOTE_DEFAULT_PRIORITY():
-    if c.user_is_sponsor:
+    if c.user_is_sponsor or not feature.is_enabled('ads_auction'):
         return MEDIUM
     else:
         return AUCTION
