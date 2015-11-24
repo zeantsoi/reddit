@@ -950,11 +950,8 @@ def get_refund_amount(camp, billable):
     return max(float(refund_amount), 0.)
 
 
-def refund_campaign(link, camp, billable_amount, billable_impressions):
-    refund_amount = get_refund_amount(camp, billable_amount)
-    if refund_amount <= 0:
-        return
-
+def refund_campaign(link, camp, refund_amount, billable_amount,
+        billable_impressions):
     owner = Account._byID(camp.owner_id, data=True)
     success, reason = authorize.refund_transaction(
         owner, camp.trans_id, camp._id, refund_amount)
@@ -962,17 +959,26 @@ def refund_campaign(link, camp, billable_amount, billable_impressions):
         text = ('%s $%s refund failed' % (camp, refund_amount))
         PromotionLog.add(link, text)
         g.log.debug(text + ' (reason: %s)' % reason)
-        return
 
-    text = ('%s completed with $%s billable (%s impressions @ $%s).'
-            ' %s refunded.' % (camp, billable_amount,
-                               billable_impressions, camp.bid_pennies,
-                               refund_amount))
+        return False
+
+    if billable_impressions:
+        text = ('%s completed with $%s billable (%s impressions @ $%s).'
+                ' %s refunded.' % (camp, billable_amount,
+                                   billable_impressions,
+                                   camp.bid_pennies / 100.,
+                                   refund_amount))
+    else:
+        text = ('%s completed with $%s billable. %s refunded' % (camp,
+            billable_amount, refund_amount))
+
     PromotionLog.add(link, text)
     camp.refund_amount = refund_amount
     camp._commit()
     queries.unset_underdelivered_campaigns(camp)
     emailer.refunded_promo(link)
+
+    return True
 
 
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])

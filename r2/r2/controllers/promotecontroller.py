@@ -775,19 +775,24 @@ class PromoteApiController(ApiController):
         if hasattr(campaign, 'cpm'):
             billable_impressions = promote.get_billable_impressions(campaign)
             billable_amount = promote.get_billable_amount(campaign,
-                                                          billable_impressions)
+                billable_impressions)
             refund_amount = promote.get_refund_amount(campaign, billable_amount)
         # Otherwise, use adserver_spent_pennies
         else:
-            refund_amount = (campaign.total_budget_pennies -
-                campaign.adserver_spent_pennies) / 100.
+            billable_amount = campaign.total_budget_pennies / 100.
+            refund_amount = (billable_amount -
+                (campaign.adserver_spent_pennies / 100.))
+            billable_impressions = None
 
-        if refund_amount > 0:
-            promote.refund_campaign(link, campaign, billable_amount,
-                                    billable_impressions)
+        if refund_amount <= 0:
+            form.set_text('.status', _('refund not needed'))
+            return
+
+        if promote.refund_campaign(link, campaign, refund_amount,
+                billable_amount, billable_impressions):
             form.set_text('.status', _('refund succeeded'))
         else:
-            form.set_text('.status', _('refund not needed'))
+            form.set_text('.status', _('refund failed'))
 
     @validatedForm(
         VSponsor('link_id36'),
