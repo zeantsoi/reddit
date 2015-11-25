@@ -1848,12 +1848,14 @@ class Message(Thing, Printable):
 
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
-             from_sr=False, can_send_email=True):
+             from_sr=False, can_send_email=True, sent_via_email=False,
+             email_id=None):
         from r2.lib.emailer import message_notification_email
         from r2.lib.message_to_email import queue_modmail_email
 
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
-                    ip=ip, from_sr=from_sr)
+                    ip=ip, from_sr=from_sr, sent_via_email=sent_via_email,
+                    email_id=email_id)
         m._spam = author._spam
 
         if author._spam:
@@ -1878,8 +1880,12 @@ class Message(Thing, Printable):
                 m.first_message = parent.first_message
             else:
                 m.first_message = parent._id
+
             if parent.sr_id:
                 sr_id = parent.sr_id
+
+            if parent.display_author and not getattr(parent, "signed", False):
+                m.display_to = parent.display_author
 
         if not to and not sr_id:
             raise CreationError("Message created with neither to nor sr_id")

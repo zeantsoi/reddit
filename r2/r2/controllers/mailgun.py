@@ -140,9 +140,9 @@ class MailgunWebhookController(RedditController):
             sr=sr,
             from_sr=True,
             can_send_email=False,
+            sent_via_email=True,
+            email_id=email_id,
         )
-        message.sent_via_email = True
-        message.email_id = email_id
         message._commit()
         queries.new_message(message, inbox_rel)
         g.stats.simple_event("mailgun.incoming.success")
