@@ -368,6 +368,7 @@ class Globals(object):
             'events_collector_quarantine_sample_rate',
             'events_collector_modmail_sample_rate',
             'events_collector_report_sample_rate',
+            'events_collector_submit_sample_rate',
             'ad_probability',
             'https_cert_testing_probability',
         ],
