@@ -21,12 +21,26 @@
    * cookie at the time it was set, so probably sometime in early 2016 we can
    * migrate back to just eu_cookie.
   **/
-  var oldCookieName = "eu_cookie";
-  var newCookieName = "eu_cookie_v2";
-
+  var oldCookieName = 'eu_cookie';
+  var newCookieName = 'eu_cookie_v2';
   var previousTimesShown = parseInt($.cookie(newCookieName) || 0, 10);
+
+  function _setEUCookieValue(value) {
+    $.cookie(newCookieName, value, {
+      domain: r.config.cur_domain,
+      path: '/',
+      expires: 365 * 10,
+    });
+  }
+
   if (!previousTimesShown) {
     previousTimesShown = parseInt($.cookie(oldCookieName) || 0, 10);
+
+    // Copy the current value to the new cookie location regardless
+    // of the state.
+    if (previousTimesShown) {
+      _setEUCookieValue(previousTimesShown);
+    }
   }
 
   if (required && previousTimesShown < maxAttempts) {
@@ -53,13 +67,13 @@
         ).on('submit', function(e) {
           e.preventDefault();
 
-          $.cookie(newCookieName, maxAttempts, {domain:r.config.cur_domain, path:'/', expires: 365 * 10});
+          _setEUCookieValue(maxAttempts);
 
           $(this).hide();
         })
     );
 
-    $.cookie(newCookieName, Math.min(previousTimesShown + 1, maxAttempts), {domain:r.config.cur_domain, path:'/', expires: 365 * 10});
+    _setEUCookieValue(Math.min(previousTimesShown + 1, maxAttempts));
   }
 
 })(this, (this.r = this.r || {}), this.jQuery);
