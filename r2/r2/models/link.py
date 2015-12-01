@@ -683,8 +683,7 @@ class Link(Thing, Printable):
                 item.ignore_reports_key = item.ignore_reports
             item.locked_key = item.locked
 
-            if (feature.is_enabled('timeouts') and c.user_is_loggedin and
-                    c.user.in_timeout):
+            if c.user_is_loggedin and c.user.in_timeout:
                 item.mod_reports, item.user_reports = [], []
             else:
                 item.mod_reports, item.user_reports = Report.get_reports(item)
@@ -1531,8 +1530,7 @@ class Comment(Thing, Printable):
                 item.subreddit.allow_gilding
             )
 
-            if (feature.is_enabled('timeouts') and c.user_is_loggedin and
-                    c.user.in_timeout):
+            if c.user_is_loggedin and c.user.in_timeout:
                 item.mod_reports, item.user_reports = [], []
             else:
                 item.mod_reports, item.user_reports = Report.get_reports(item)
