@@ -592,7 +592,7 @@ class PromotedLinkTraffic(Templated):
     def make_campaign_table(self):
         campaigns = PromoCampaign._by_link(self.thing._id)
 
-        total_budget_pennies = 0
+        total_budget_dollars = 0.
         total_spent = 0
         total_paid_impressions = 0
         total_impressions = 0
@@ -621,13 +621,13 @@ class PromotedLinkTraffic(Templated):
             is_active = self.campaign and self.campaign._id36 == camp._id36
             url = '/traffic/%s/%s' % (self.thing._id36, camp._id36)
             is_total = False
-            budget_dollars = camp.total_budget_dollars
+            campaign_budget_dollars = camp.total_budget_dollars
             row = self.make_campaign_table_row(camp._id36,
                                                start=start,
                                                end=end,
                                                target=target,
                                                location=location,
-                                               budget_dollars=budget_dollars,
+                                               budget_dollars=campaign_budget_dollars,
                                                spent=spent,
                                                paid_impressions=camp.impressions,
                                                impressions=impressions,
@@ -638,7 +638,7 @@ class PromotedLinkTraffic(Templated):
                                                is_total=is_total)
             self.campaign_table.append(row)
 
-            total_budget_pennies += camp.total_budget_pennies
+            total_budget_dollars += campaign_budget_dollars
             total_spent += spent
             total_paid_impressions += camp.impressions
             total_impressions += impressions
@@ -653,7 +653,6 @@ class PromotedLinkTraffic(Templated):
         is_active = not self.campaign
         url = '/traffic/%s' % self.thing._id36
         is_total = True
-        total_budget_dollars = total_budget_dollars
         row = self.make_campaign_table_row(_('total'),
                                            start=start,
                                            end=end,
