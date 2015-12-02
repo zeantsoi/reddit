@@ -56,7 +56,6 @@ EU_COOKIE_COUNTRIES = {
     "GB",
     "GR",
     "HU",
-    "IS",
     "IE",
     "IT",
     "LV",
