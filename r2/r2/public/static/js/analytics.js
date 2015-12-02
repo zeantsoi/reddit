@@ -22,7 +22,9 @@ r.analytics = {
     }
 
     var url = r.config.tracker_url;
-    var params = {};
+    var params = {
+      dnt: window.DO_NOT_TRACK,
+    };
 
     if (!r.config.user_id) {
       var tracker = new redditlib.Tracker();
