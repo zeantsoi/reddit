@@ -487,6 +487,9 @@ def edit_campaign(
     change_text = ', '.join(change_strs)
     campaign._commit()
 
+    if "platform" in changed:
+        queries.update_link_platforms(link)
+
     # update the index
     PromotionWeights.reschedule(link, campaign)
 
@@ -565,10 +568,6 @@ def delete_campaign(link, campaign):
     campaign.delete()
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
     hooks.get_hook('promote.delete_campaign').call(link=link, campaign=campaign)
-
-
-def toggle_pause_campaign(link, campaign, should_pause):
-    edit_campaign(link, campaign, paused=should_pause)
 
 
 def void_campaign(link, campaign, reason):

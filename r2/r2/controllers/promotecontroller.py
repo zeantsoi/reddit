@@ -535,6 +535,7 @@ class PromoteListingController(ListingController):
 
 class SponsorListingController(PromoteListingController):
     titles = dict(PromoteListingController.titles.items() + {
+        'by_platform': N_('promoted links by platform'),
         'underdelivered': N_('underdelivered promoted links'),
         'reported': N_('reported promoted links'),
         'house': N_('house promoted links'),
@@ -555,10 +556,28 @@ class SponsorListingController(PromoteListingController):
                         query_param='include_managed'),
         ], base_path=request.path, type='lightdrop')
 
-        if self.sort in {'underdelivered', 'reported', 'house', 'fraud'}:
+        if self.sort in {'underdelivered', 'reported', 'house',
+                         'fraud', 'by_platform'}:
             menus = []
 
-            if self.sort == 'fraud':
+            if self.sort == 'by_platform':
+                platform_menu = NavMenu([
+                    QueryButton("desktop", dest="desktop",
+                                query_param='platform'),
+                    QueryButton("mobile web", dest="mobile_web",
+                                query_param='platform'),
+                    QueryButton("native mobile", dest="mobile_native",
+                                query_param='platform'),
+                    QueryButton("all platforms", dest="all",
+                                query_param='platform'),
+                    ],
+                    base_path=request.path,
+                    title='platform',
+                    default='desktop',
+                    type='lightdrop',
+                )
+                menus.append(platform_menu)
+            elif self.sort == 'fraud':
                 fraud_menu = NavMenu([
                     QueryButton("exclude unpaid", dest=None,
                                 query_param='exclude_unpaid'),
@@ -566,7 +585,7 @@ class SponsorListingController(PromoteListingController):
                                 query_param='exclude_unpaid'),
                 ], base_path=request.path, type='lightdrop')
                 menus.append(fraud_menu)
-            if self.sort in ('house', 'fraud'):
+            if self.sort in ('house', 'fraud', 'by_platform'):
                 menus.append(managed_menu)
         else:
             # copy to prevent modifing the class attribute.
@@ -674,6 +693,8 @@ class SponsorListingController(PromoteListingController):
             return self.get_house_link_names()
         elif self.sort == 'all':
             return queries.get_all_promoted_links()
+        elif self.sort == 'by_platform':
+            return queries.get_platform_links(self.platform)
 
     def listing(self):
         """For sponsors, update wrapped links to include their campaigns."""
@@ -697,13 +718,20 @@ class SponsorListingController(PromoteListingController):
     @validate(
         VSponsorAdmin(),
         srname=nop('sr'),
+        platform=VOneOf("platform", (
+            "desktop",
+            "mobile_web",
+            "mobile_native",
+            "all",
+        ), default="desktop"),
         include_managed=VBoolean("include_managed"),
         exclude_unpaid=VBoolean("exclude_unpaid"),
     )
-    def GET_listing(self, srname=None, include_managed=False,
+    def GET_listing(self, srname=None, platform="desktop", include_managed=False,
                     exclude_unpaid=None, sort="all", **kw):
         self.sort = sort
         self.sr = None
+        self.platform = platform
         self.include_managed = include_managed
 
         if "exclude_unpaid" not in request.GET:
@@ -1551,7 +1579,7 @@ class PromoteApiController(ApiController):
         if campaign.paused == should_pause:
             return
 
-        promote.toggle_pause_campaign(link, campaign, should_pause)
+        promote.edit_campaign(link, campaign, paused=should_pause)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 

@@ -35,6 +35,7 @@ from r2.models import (
     LinksByAccount,
     Notification,
     VotesByAccount,
+    PromoCampaign,
 )
 from r2.models.notification import (
     add_notifications,
@@ -885,6 +886,35 @@ def unset_payment_flagged_link(link):
     with CachedQueryMutator() as m:
         q = get_payment_flagged_links()
         m.delete(q, [link])
+
+
+@cached_query(UserQueryCache)
+def get_platform_links(platform):
+    return FakeQuery(sort=[desc("_date")])
+
+
+def update_link_platforms(link):
+    campaigns = PromoCampaign._by_link(link._id)
+    platforms = {
+        "all": False,
+        "desktop": False,
+        "mobile_web": False,
+        "mobile_native": False,
+    }
+
+    for campaign in campaigns:
+        platforms[campaign.platform] = True
+
+        if all(platforms.values()):
+            break
+
+    with CachedQueryMutator() as m:
+        for platform, has_platform in platforms.iteritems():
+            q = get_platform_links(platform)
+            if has_platform:
+                m.insert(q, [link])
+            else:
+                m.delete(q, [link])
 
 
 @cached_query(UserQueryCache)

@@ -4386,6 +4386,7 @@ class PromotePage(Reddit):
                           aliases=['/sponsor']),
                 NavButton('inventory', '/sponsor/inventory'),
                 NavButton('report', '/sponsor/report'),
+                NavButton('by platform', '/sponsor/promoted/by_platform'),
                 NavButton('underdelivered', '/sponsor/promoted/underdelivered'),
                 NavButton('house ads', '/sponsor/promoted/house'),
                 NavButton('reported links', '/sponsor/promoted/reported'),
