@@ -649,12 +649,6 @@ class PromoCampaign(Thing):
     def bid_dollars(self):
         return self.bid_pennies / 100.
 
-    def printable_total_budget(self, locale):
-        return format_currency(self.total_budget_dollars, 'USD', locale=locale)
-
-    def printable_bid(self, locale):
-        return format_currency(self.bid_dollars, 'USD', locale=locale)
-
     def delete(self):
         self._deleted = True
         self._commit()

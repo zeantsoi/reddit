@@ -558,7 +558,7 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
 
         if user and (user._id == link.author_id) and trans_id > 0:
             emailer.promo_total_budget(link,
-                campaign.printable_total_budget(locale=c.locale),
+                campaign.total_budget_dollars,
                 campaign.start_date)
 
     else:
@@ -826,7 +826,7 @@ def charge_campaign(link, campaign):
         update_promote_status(link, PROMOTE_STATUS.pending)
 
     emailer.queue_promo(link,
-        campaign.printable_total_budget(locale=c.locale),
+        campaign.total_budget_dollars,
         campaign.trans_id)
     text = ('auth charge for campaign %s, trans_id: %d' %
             (campaign._id, campaign.trans_id))
