@@ -422,6 +422,13 @@ class Reddit(Templated):
             if c.user_is_sponsor:
                 panes.append(FraudForm())
 
+        if c.user_is_loggedin and c.user.in_timeout:
+            self.show_timeout_modal = True
+            self.timeout_days_remaining = c.user.days_remaining_in_timeout
+
+        self.popup_panes = self.build_popup_panes()
+        panes.append(self.popup_panes)
+
         self._content = PaneStack(panes)
 
         self.show_chooser = (
@@ -435,10 +442,6 @@ class Reddit(Templated):
         )
 
         self.toolbars = self.build_toolbars()
-
-        if c.user_is_loggedin and c.user.in_timeout:
-            self.show_timeout_modal = True
-            self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
         has_style_override = (c.user_is_loggedin and
                 c.user.pref_default_theme_sr and
@@ -1015,6 +1018,18 @@ class Reddit(Templated):
             self.nav_menu,
             self._content,
         ))
+
+    def build_popup_panes(self):
+        panes = []
+         
+        if self.show_timeout_modal:
+            popup_content = InTimeoutInterstitial(
+                timeout_days_remaining=self.timeout_days_remaining,
+                hide_message=True,
+            )
+            panes.append(Popup('access-popup', popup_content))
+        
+        return PaneStack(panes)
 
     def is_gold_page(self):
         return "gold-page-ga-tracking" in self.supplied_page_classes
@@ -1896,8 +1911,7 @@ class LinkInfoPage(Reddit):
             comment_area = InfoBar(message=_("comments disabled"))
         else:
             panes = [self.nav_menu, self._content]
-            if self.link.locked:
-                panes.append(Popup('locked-popup', LockedInterstitial()))
+
             comment_area = PaneStack([
                 PaneStack(
                     panes
@@ -1907,9 +1921,21 @@ class LinkInfoPage(Reddit):
                 css_class="commentarea",
             )
 
-        return self.content_stack(
-            (self.infobar, self.link_listing, comment_area)
-        )
+        return self.content_stack((
+            self.infobar,
+            self.link_listing,
+            comment_area,
+            self.popup_panes,
+        ))
+
+    def build_popup_panes(self):
+        panes = super(LinkInfoPage, self).build_popup_panes()
+
+        if self.link.locked:
+            panes.append(Popup('locked-popup', LockedInterstitial()))
+
+        return panes
+
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
