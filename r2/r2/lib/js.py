@@ -459,6 +459,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "do-not-track.js",
     "bootstrap.tooltip.extension.js",
     "base.js",
+    "uuid.js",
     "hooks.js",
     "setup.js",
     "migrate-global-reddit.js",
@@ -624,6 +625,8 @@ module["less"] = Module('less.js',
 # This needs to be separate module because we need it to load on old / bad
 # browsers that choke on reddit.js
 module["https-tester"] = Module("https-tester.js",
+    "base.js",
+    "uuid.js",
     "https-tester.js"
 )
 
