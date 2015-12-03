@@ -30,9 +30,7 @@ r.analytics = {
       var tracker = new redditlib.Tracker();
       var loggedOutData = tracker.getTrackingData();
       if (loggedOutData && loggedOutData.loid) {
-        params = {
-            loid: loggedOutData.loid
-        };
+        params.loid = loggedOutData.loid;
         if (loggedOutData.loidcreated) {
           params['loidcreated'] = loggedOutData.loidcreated
         }
