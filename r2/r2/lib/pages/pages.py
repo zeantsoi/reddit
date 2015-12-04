@@ -1958,6 +1958,7 @@ class CommentPane(Templated):
             "commentpane",
             self.article._fullname,
             self.article.contest_mode,
+            self.article.locked,
             num,
             self.sort,
             self.num,
