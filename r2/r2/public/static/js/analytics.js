@@ -6,6 +6,7 @@ r.analytics = {
       'onshow',
       _.bind(function(ev) {
         this.fireTrackingPixel(ev.target);
+        r.analytics.bindAdEventPixels();
       }, this)
     );
 
@@ -46,7 +47,7 @@ r.analytics = {
     }
 
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
-
+    r.analytics.bindAdEventPixels();
   },
 
   _eventPredicates: {},
@@ -180,6 +181,70 @@ r.analytics = {
     _gaq.push(callback);
   },
 
+  bindAdEventPixels: function() {
+    var $el = $('.link.promoted');
+
+    if (!$el.length) {
+      return;
+    }
+
+    var onCommentsPage = $('body').hasClass('comments-page');
+    var thingId = $el.thing_id();
+    var adserverUpvotePixel, adserverDownvotePixel;
+
+    function setEventPixel(eventName, pixel) {
+      var key = 'ads.' + eventName;
+      var pixels = (store.safeGet(key) || {});
+      var recentAds = (store.safeGet('ads.recent') || []);
+
+      // ensure this doesn't get too big
+      if (recentAds.length > 2) {
+        var removeThing = recentAds.pop();
+        delete pixels[removeThing];
+      }
+
+      pixels[thingId] = pixel;
+      recentAds.push(thingId);
+      recentAds = _.unique(recentAds);
+
+      store.safeSet(key, pixels);
+      store.safeSet('ads.recent', recentAds);
+    }
+
+    function getEventPixel(eventName) {
+      var key = 'ads.' + eventName;
+      return (store.safeGet(key) || {})[thingId];
+    }
+
+    if (onCommentsPage) {
+      adserverUpvotePixel = getEventPixel('adserverUpvotePixel');
+      adserverDownvotePixel = getEventPixel('adserverDownvotePixel');
+    } else {
+      adserverUpvotePixel = $el.data('adserverUpvotePixel');
+      adserverDownvotePixel = $el.data('adserverDownvotePixel');
+
+      // store in localStorage in case the user nagivates to the comments
+      // and then decides to vote
+      setEventPixel('adserverUpvotePixel', adserverUpvotePixel);
+      setEventPixel('adserverDownvotePixel', adserverDownvotePixel);
+    }
+
+    if (adserverUpvotePixel) {
+      $el.on('click', '.link .arrow.up', function() {
+        var pixel = new Image();
+        pixel.src = adserverUpvotePixel;
+      });
+    }
+
+    if (adserverDownvotePixel) {
+      $el.on('click', '.link .arrow.down', function() {
+        var pixel = new Image();
+        pixel.src = adserverDownvotePixel;
+      });
+    }
+
+  },
+
   fireTrackingPixel: function(el) {
     var $el = $(el);
     var onCommentsPage = $('body').hasClass('comments-page');
@@ -210,12 +275,11 @@ r.analytics = {
       }
     }
 
-    var adServerPixel = new Image();
-    var adServerImpPixel = $el.data('adserverImpPixel');
-    var adServerClickUrl = $el.data('adserverClickUrl');
+    var adserverPixel = new Image();
+    var adserverImpPixel = $el.data('adserverImpPixel');
 
-    if (adServerImpPixel && !adBlockIsEnabled) {
-      adServerPixel.src = adServerImpPixel;
+    if (adserverImpPixel && !adBlockIsEnabled) {
+      adserverPixel.src = adserverImpPixel;
     }
 
     $el.data('trackerFired', true);

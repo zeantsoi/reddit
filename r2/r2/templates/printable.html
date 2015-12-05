@@ -140,6 +140,14 @@ ${self.RenderPrintable()}
       data-adserver-click-url="${what.adserver_click_url}"
     % endif
 
+    % if hasattr(what, 'adserver_upvote_pixel'):
+      data-adserver-upvote-pixel="${what.adserver_upvote_pixel}"
+    % endif
+
+    % if hasattr(what, 'adserver_downvote_pixel'):
+      data-adserver-downvote-pixel="${what.adserver_downvote_pixel}"
+    % endif
+
     % if hasattr(what, 'third_party_tracking_url'):
       data-third-party-tracking-url="${what.third_party_tracking_url}"
     % endif
