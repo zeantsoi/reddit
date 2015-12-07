@@ -632,10 +632,10 @@ class AdserverClickthroughsByCodename(Base):
         return total_by_codename(cls, codenames, interval="day")
 
 
-class AdserverSpentByCodename(Base):
+class AdserverSpentPenniesByCodename(Base):
     """Spend for ads, correlated by ad."""
 
-    __tablename__ = "adserver_traffic_spent"
+    __tablename__ = "adserver_traffic_spentpennies"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
     date = Column(DateTime(), nullable=False, primary_key=True)
@@ -712,10 +712,10 @@ class AdserverTargetedImpressionsByCodename(Base):
         return campaign_history(cls, codenames, start, stop, interval="day")
 
 
-class AdserverTargetedSpentByCodename(Base):
+class AdserverTargetedSpentPenniesByCodename(Base):
     """Spend for ads, correlated by ad campaign."""
 
-    __tablename__ = "adserver_traffic_spenttarget"
+    __tablename__ = "adserver_traffic_spentpenniestarget"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
     subreddit = Column(String(), nullable=False, primary_key=True)
