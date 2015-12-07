@@ -343,6 +343,7 @@ class Globals(object):
             'create_sr_link_karma',
             'cflag_min_votes',
             'ticket_contact_user_id',
+            'ads_popularity_threshold',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',
