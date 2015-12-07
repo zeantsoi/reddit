@@ -998,7 +998,7 @@ def get_nsfw_collections_srnames():
     return set(srnames)
 
 
-def srnames_from_site(user, site):
+def srnames_from_site(user, site, include_subscriptions=True):
     is_logged_in = user and not isinstance(user, FakeAccount)
     srnames = set()
 
@@ -1009,7 +1009,7 @@ def srnames_from_site(user, site):
     else:
         srnames.add(Frontpage.name)
 
-        if is_logged_in:
+        if is_logged_in and include_subscriptions:
             subscriptions = Subreddit.user_subreddits(
                 user,
                 ids=False,
@@ -1039,8 +1039,11 @@ def srnames_from_site(user, site):
 
     return srnames
 
-def srnames_with_live_promos(user, site):
-    site_srnames = srnames_from_site(user, site)
+def srnames_with_live_promos(user, site, include_subscriptions=True):
+    site_srnames = srnames_from_site(
+        user, site,
+        include_subscriptions=True,
+    )
     promo_srnames = all_live_promo_srnames()
     return promo_srnames.intersection(site_srnames)
 
