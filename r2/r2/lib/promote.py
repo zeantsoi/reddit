@@ -1047,14 +1047,18 @@ def srnames_from_site(user, site, include_subscriptions=True):
 def srnames_with_live_promos(user, site, include_subscriptions=True):
     site_srnames = srnames_from_site(
         user, site,
-        include_subscriptions=True,
+        include_subscriptions,
     )
     promo_srnames = all_live_promo_srnames()
     return promo_srnames.intersection(site_srnames)
 
 
 def keywords_from_context(user, site, include_subscriptions=True):
-    keywords = srnames_with_live_promos(user, site)
+    keywords = srnames_with_live_promos(
+        user,
+        site,
+        include_subscriptions,
+    )
 
     if (not isinstance(site,FakeSubreddit) and
             site._downs > g.live_config["ads_popularity_threshold"]):
