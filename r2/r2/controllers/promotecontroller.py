@@ -1166,8 +1166,7 @@ class PromoteApiController(ApiController):
         target=VPromoTarget(),
         campaign_id36=nop("campaign_id36"),
         frequency_cap=VFrequencyCap(("frequency_capped",
-                                     "frequency_cap",
-                                     "frequency_cap_duration"),),
+                                     "frequency_cap"),),
         priority=VPriority("priority"),
         location=VLocation(),
         platform=VOneOf("platform", ("mobile", "desktop", "all"), default="desktop"),
@@ -1190,7 +1189,8 @@ class PromoteApiController(ApiController):
         if not link:
             return
 
-        if form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP):
+        if (form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP) or
+                form.has_errors('frequency_cap', errors.FREQUENCY_CAP_TOO_LOW)):
             return
 
         # Configure priority, cost_basis, and bid_pennies
@@ -1424,8 +1424,7 @@ class PromoteApiController(ApiController):
                 campaign,
                 dates=dates,
                 target=target,
-                frequency_cap=frequency_cap[0],
-                frequency_cap_duration=frequency_cap[1],
+                frequency_cap=frequency_cap,
                 priority=priority,
                 location=location,
                 total_budget_pennies=total_budget_pennies,
@@ -1443,8 +1442,7 @@ class PromoteApiController(ApiController):
                 link,
                 dates=dates,
                 target=target,
-                frequency_cap=frequency_cap[0],
-                frequency_cap_duration=frequency_cap[1],
+                frequency_cap=frequency_cap,
                 priority=priority,
                 location=location,
                 platform=platform,

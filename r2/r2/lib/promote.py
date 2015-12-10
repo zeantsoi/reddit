@@ -335,12 +335,12 @@ def get_transactions(link, campaigns):
     return bids_by_campaign
 
 def new_campaign(link, dates, target, frequency_cap,
-                 frequency_cap_duration, priority, location, platform,
+                 priority, location, platform,
                  mobile_os, ios_devices, ios_version_range, android_devices,
                  android_version_range, total_budget_pennies, cost_basis,
                  bid_pennies):
     campaign = PromoCampaign.create(link, target, dates[0], dates[1],
-                                    frequency_cap, frequency_cap_duration, priority,
+                                    frequency_cap, priority,
                                     location, platform, mobile_os, ios_devices,
                                     ios_version_range, android_devices,
                                     android_version_range, total_budget_pennies,
@@ -362,7 +362,7 @@ def free_campaign(link, campaign, user):
 
 
 def edit_campaign(link, campaign, dates, target, frequency_cap,
-                  frequency_cap_duration, priority, location,
+                  priority, location,
                   total_budget_pennies, cost_basis, bid_pennies,
                   platform='desktop', mobile_os=None, ios_devices=None,
                   ios_version_range=None, android_devices=None,
@@ -380,10 +380,6 @@ def edit_campaign(link, campaign, dates, target, frequency_cap,
     if frequency_cap != campaign.frequency_cap:
         changed['frequency_cap'] = (campaign.frequency_cap, frequency_cap)
         campaign.frequency_cap = frequency_cap
-    if frequency_cap_duration != campaign.frequency_cap_duration:
-        changed['frequency_cap_duration'] = (campaign.frequency_cap_duration,
-                                             frequency_cap_duration)
-        campaign.frequency_cap_duration = frequency_cap_duration
     if priority != campaign.priority:
         changed['priority'] = (campaign.priority.name, priority.name)
         campaign.priority = priority
@@ -457,7 +453,6 @@ def terminate_campaign(link, campaign):
         dates=dates,
         target=campaign.target,
         frequency_cap=campaign.frequency_cap,
-        frequency_cap_duration=campaign.frequency_cap_duration,
         priority=campaign.priority,
         location=campaign.location,
         total_budget_pennies=campaign.total_budget_pennies,
