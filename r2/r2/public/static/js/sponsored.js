@@ -1150,7 +1150,7 @@ var exports = r.sponsored = {
             sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
             collection = isCollection ? collectionVal : null,
             displayName = isFrontpage ? 'the frontpage' : isCollection ? collection : sr,
-            canGeotarget = isFrontpage || this.userIsSponsor,
+            canGeotarget = isFrontpage || this.userIsSponsor || this.isAuction,
             country = canGeotarget && $('#country').val() || '',
             region = canGeotarget && $('#region').val() || '',
             metro = canGeotarget && $('#metro').val() || '',

@@ -670,7 +670,7 @@ class SponsorListingController(PromoteListingController):
 
 
 def allowed_location_and_target(location, target):
-    if c.user_is_sponsor:
+    if c.user_is_sponsor or feature.is_enabled('ads_auction'):
         return True
 
     # regular users can only use locations when targeting frontpage
