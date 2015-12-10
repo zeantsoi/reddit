@@ -215,9 +215,9 @@ def has_oversold_error(form, campaign, start, end, total_budget_pennies, cpm,
             'start': start.strftime('%m/%d/%Y'),
             'end': end.strftime('%m/%d/%Y'),
         }
-        c.errors.add(errors.OVERSOLD_DETAIL, field='total_budget',
+        c.errors.add(errors.OVERSOLD_DETAIL, field='total_budget_dollars',
                      msg_params=msg_params)
-        form.has_errors('total_budget', errors.OVERSOLD_DETAIL)
+        form.has_errors('total_budget_dollars', errors.OVERSOLD_DETAIL)
         return True
 
 
@@ -1144,6 +1144,18 @@ class PromoteApiController(ApiController):
             PromotedLinkRoadblock.remove(sr, start, end)
             jquery.refresh()
 
+    def _lowest_max_bid_dollars(self, total_budget_dollars, bid_dollars, start,
+            end):
+        """
+        Calculate the lower between g.max_bid_pennies
+        and maximum bid per day by budget
+        """
+        ndays = (to_date(end) - to_date(start)).days
+        max_daily_bid = total_budget_dollars / ndays
+        max_bid_dollars = g.max_bid_pennies / 100.
+
+        return min(max_daily_bid, max_bid_dollars)
+
     @validatedForm(
         VSponsor('link_id36'),
         VModhash(),
@@ -1165,7 +1177,7 @@ class PromoteApiController(ApiController):
         android_devices=VList('android_device', choices=ANDROID_DEVICES),
         ios_versions=VOSVersion('ios_version_range', 'ios'),
         android_versions=VOSVersion('android_version_range', 'android'),
-        total_budget=VFloat('total_budget', coerce=False),
+        total_budget_dollars=VFloat('total_budget_dollars', coerce=False),
         cost_basis=VOneOf('cost_basis', ('cpc', 'cpm',), default=None),
         bid_dollars=VFloat('bid_dollars', coerce=True),
     )
@@ -1174,7 +1186,7 @@ class PromoteApiController(ApiController):
                            priority, location, platform, mobile_os,
                            os_versions, ios_devices, ios_versions,
                            android_devices, android_versions,
-                           total_budget, cost_basis, bid_dollars):
+                           total_budget_dollars, cost_basis, bid_dollars):
         if not link:
             return
 
@@ -1192,6 +1204,23 @@ class PromoteApiController(ApiController):
             else:
                 priority = PROMOTE_PRIORITIES['auction']
                 cost_basis = PROMOTE_COST_BASIS[cost_basis]
+
+                # Error if bid is outside acceptable range
+                min_bid_dollars = g.min_bid_pennies / 100.
+                max_bid_dollars = self._lowest_max_bid_dollars(
+                    total_budget_dollars=total_budget_dollars,
+                    bid_dollars=bid_dollars,
+                    start=start,
+                    end=end)
+
+                if bid_dollars < min_bid_dollars or bid_dollars > max_bid_dollars:
+                    c.errors.add(errors.BAD_BID, field='bid',
+                        msg_params={'min': '%.2f' % round(min_bid_dollars, 2),
+                                    'max': '%.2f' % round(max_bid_dollars, 2)}
+                    )
+                    form.has_errors('bid', errors.BAD_BID)
+                    return
+
         else:
             cost_basis = PROMOTE_COST_BASIS.fixed_cpm
 
@@ -1327,9 +1356,9 @@ class PromoteApiController(ApiController):
                 return abort(404, 'not found')
 
         if not priority == PROMOTE_PRIORITIES['house']:
-            # total_budget_pennies is submitted as a float;
+            # total_budget_dollars is submitted as a float;
             # convert it to pennies
-            total_budget_pennies = int(total_budget * 100)
+            total_budget_pennies = int(total_budget_dollars * 100)
             if c.user_is_sponsor:
                 min_total_budget_pennies = 0
                 max_total_budget_pennies = 0
@@ -1341,11 +1370,11 @@ class PromoteApiController(ApiController):
                     total_budget_pennies < min_total_budget_pennies or
                     (max_total_budget_pennies and
                     total_budget_pennies > max_total_budget_pennies)):
-                c.errors.add(errors.BAD_BUDGET, field='total_budget',
+                c.errors.add(errors.BAD_BUDGET, field='total_budget_dollars',
                              msg_params={'min': min_total_budget_pennies,
                                          'max': max_total_budget_pennies or
                                          g.max_total_budget_pennies})
-                form.has_errors('total_budget', errors.BAD_BUDGET)
+                form.has_errors('total_budget_dollars', errors.BAD_BUDGET)
                 return
 
             # you cannot edit the bid of a live ad unless it's a freebie
@@ -1353,8 +1382,8 @@ class PromoteApiController(ApiController):
                     total_budget_pennies != campaign.total_budget_pennies and
                     promote.is_live_promo(link, campaign) and
                     not campaign.is_freebie()):
-                c.errors.add(errors.BUDGET_LIVE, field='total_budget')
-                form.has_errors('total_budget', errors.BUDGET_LIVE)
+                c.errors.add(errors.BUDGET_LIVE, field='total_budget_dollars')
+                form.has_errors('total_budget_dollars', errors.BUDGET_LIVE)
                 return
         else:
             total_budget_pennies = 0

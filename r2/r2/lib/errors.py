@@ -71,6 +71,7 @@ error_list = dict((
         ('BAD_NUMBER', _("that number isn't in the right range (%(range)s)")),
         ('BAD_STRING', _("you used a character here that we can't handle")),
         ('BAD_BUDGET', _("your budget must be at least $%(min)d and no more than $%(max)d.")),
+        ('BAD_BID', _('your bid must be at least $%(min)s and no more than $%(max)s.')),
         ('ALREADY_SUB', _("that link has already been submitted")),
         ('SUBREDDIT_EXISTS', _('that subreddit already exists')),
         ('SUBREDDIT_NOEXIST', _('that subreddit doesn\'t exist')),

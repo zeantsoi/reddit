@@ -51,7 +51,7 @@
     data-android_versions="${json.dumps(thing.android_versions) if thing.android_versions else ''}"
     data-paid="${json.dumps(thing.paid)}"
     data-has-served="${json.dumps(thing.campaign.has_served or thing.is_live or thing.is_complete)}"
-    data-total_budget="${'%.2f' % thing.total_budget}"
+    data-total_budget_dollars="${'%.2f' % thing.total_budget_dollars}"
     data-cost_basis="${thing.cost_basis}"
     data-bid_pennies="${'%.2f' % (thing.bid_pennies / 100.)}">
   <td class="campaign-start-date">
@@ -72,7 +72,7 @@
       %if thing.campaign.is_house:
         ${_("N/A")}
       %else:
-        ${format_currency(thing.total_budget, 'USD', locale=c.locale)}
+        ${format_currency(thing.total_budget_dollars, 'USD', locale=c.locale)}
       %endif
     </span>
     %if not thing.campaign.is_house:

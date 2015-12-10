@@ -4521,13 +4521,13 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.promotion_log = PromotionLog.get(link)
 
         if c.user_is_sponsor:
-            self.min_budget = 0
-            self.max_budget = 0
+            self.min_budget_dollars = 0
+            self.max_budget_dollars = 0
         else:
-            self.min_budget = g.min_total_budget_pennies / 100.
-            self.max_budget = g.max_total_budget_pennies / 100.
+            self.min_budget_dollars = g.min_total_budget_pennies / 100.
+            self.max_budget_dollars = g.max_total_budget_pennies / 100.
 
-        self.default_budget = g.default_total_budget_pennies / 100.
+        self.default_budget_dollars = g.default_total_budget_pennies / 100.
 
         if c.user_is_sponsor:
             self.min_bid_dollars = 0.
@@ -4579,7 +4579,7 @@ class RenderableCampaign(Templated):
             self.is_auction = False
 
         # Convert total_budget_pennies to dollars for UI
-        self.total_budget = campaign.total_budget_pennies / 100.
+        self.total_budget_dollars = campaign.total_budget_pennies / 100.
 
         if full_details:
             if not self.campaign.is_house and not self.campaign.is_auction:            

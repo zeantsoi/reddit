@@ -691,12 +691,9 @@
                   value="${'%.2f' % (g.default_bid_pennies / 100.)}"
                   data-default_bid_dollars="${g.default_bid_pennies / 100.}"
                   data-min_bid_dollars="${thing.min_bid_dollars}"
-                  data-real_min_bid_dollars="${g.min_bid_pennies / 100.}"
                   data-max_bid_dollars="${thing.max_bid_dollars}"/>
         </div>
-        <div class="daily-bid-message error">
-          Bid cannot be greater than $<span class="daily-max-spend"></span>
-        </div>
+        ${error_field('BAD_BID', 'bid', 'div')}
       </div>
       <div class="form-group">
         
@@ -711,18 +708,17 @@
       <div class="form-group">
         <span class="label">${_("total budget")}</span>
         <div class="input-group">
-          $<input id="total_budget" name="total_budget" size="7" type="text"
+          $<input id="total_budget_dollars" name="total_budget_dollars" size="7" type="text"
                   class="rounded styled-input"
                   style="width:auto"
                   onchange="r.sponsored.on_budget_change()"
                   onkeyup="r.sponsored.on_budget_change()"
-                  value="${'%.2f' % thing.default_budget}"
-                  data-default_budget="${thing.default_budget}"
-                  data-min_budget="${thing.min_budget}"
-                  data-real_min_budget="${thing.min_budget}"
-                  data-max_budget="${thing.max_budget}"/>
+                  value="${'%.2f' % thing.default_budget_dollars}"
+                  data-default_budget_dollars="${thing.default_budget_dollars}"
+                  data-min_budget_dollars="${thing.min_budget_dollars}"
+                  data-max_budget_dollars="${thing.max_budget_dollars}"/>
           <div class="minimum-spend">
-            ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_budget, 'USD', locale=c.locale))}
+            ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_budget_dollars, 'USD', locale=c.locale))}
           </div>
         </div>
       </div>
@@ -745,13 +741,13 @@
     </div>
 
     <div>
-      ${error_field("BAD_BUDGET", "total_budget", "div")}
-      ${error_field("BUDGET_LIVE", "total_budget", "div")}
+      ${error_field("BAD_BUDGET", "total_budget_dollars", "div")}
+      ${error_field("BUDGET_LIVE", "total_budget_dollars", "div")}
       <div class="budget-change-warning error">
         ${_('if you modify the budget of this paid campaign you will need to reauthorize payment by clicking the "pay" button')}
       </div>
       <div class="available-info"></div>
-      ${error_field("OVERSOLD_DETAIL", "total_budget", "div")}
+      ${error_field("OVERSOLD_DETAIL", "total_budget_dollars", "div")}
     </div>
   </%utils:line_field>
 </%def>
