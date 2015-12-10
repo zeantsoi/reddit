@@ -1270,6 +1270,8 @@ class Comment(Thing, Printable):
 
         comment._commit()
 
+        g.events.comment_event(comment, request=request, context=c)
+
         cast_vote(author, comment, Vote.DIRECTIONS.up)
 
         if link.num_comments < 20 or link.num_comments % 10 == 0:
