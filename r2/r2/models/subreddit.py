@@ -577,10 +577,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def accounts_active(self):
-        if self.hide_num_users_info:
-            return 0
-
-        return self.get_accounts_active()[0]
+        return 0
 
     @property
     def wiki_use_subreddit_karma(self):
