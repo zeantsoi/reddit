@@ -28,7 +28,7 @@ $(function() {
 
   function openReportForm(e) {
     if (r.access.isLinkRestricted(e.target)) {
-      return false;
+      return;
     }
 
     var $flatList = $(this).closest('.flat-list');
