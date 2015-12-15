@@ -217,6 +217,8 @@ class Ruleset(object):
             if isinstance(parsed, dict):
                 rule_defs.append(RuleDefinition(yaml=section, values=parsed))
 
+        timer.intermediate("yaml_parsing")
+
         if any("standard" in rule_def.values for rule_def in rule_defs):
             # load standard rules from wiki page
             standard_rules = {}
