@@ -612,7 +612,8 @@ class Account(Thing):
                 target=self, details=log_details)
 
     def update_sr_activity(self, sr):
-        pass
+        if not self._spam:
+            AccountsActiveBySR.touch(self, sr)
 
     def get_trophy_id(self, uid):
         '''Return the ID of the Trophy associated with the given "uid"
