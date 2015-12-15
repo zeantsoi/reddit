@@ -246,6 +246,7 @@ class Link(Thing, Printable):
     def _submit(cls, is_self, title, content, author, sr, ip,
                 spam=False, sendreplies=True):
         from r2.models import admintools
+        from r2.models.comment_tree import CommentTree
 
         if is_self:
             url = "self"
@@ -295,6 +296,8 @@ class Link(Thing, Printable):
             admintools.spam(l, banner='banned user')
 
         hooks.get_hook('link.new').call(link=l)
+
+        CommentTree.on_new_link(l)
 
         cast_vote(author, l, Vote.DIRECTIONS.up)
 
