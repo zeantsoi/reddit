@@ -2633,6 +2633,7 @@ class ApiController(RedditController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
+                   show_media_preview = VBoolean('show_media_preview'),
                    public_traffic = VBoolean('public_traffic'),
                    collapse_deleted_comments = VBoolean('collapse_deleted_comments'),
                    exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
@@ -2723,6 +2724,7 @@ class ApiController(RedditController):
             'public_description',
             'public_traffic',
             'show_media',
+            'show_media_preview',
             'spam_comments',
             'spam_links',
             'spam_selfposts',
@@ -2911,6 +2913,7 @@ class ApiController(RedditController):
             if sr.quarantine:
                 del kw['allow_top']
                 del kw['show_media']
+                del kw['show_media_preview']
 
             #notify ads if sr in a collection changes over_18 to true
             if kw.get('over_18', False) and not sr.over_18:
