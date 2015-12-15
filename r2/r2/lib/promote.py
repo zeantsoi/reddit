@@ -506,7 +506,12 @@ def void_campaign(link, campaign, reason):
         if bid_record.transaction > 0:
             # notify the user that the transaction was voided if it was not
             # a freebie
-            emailer.void_payment(link, campaign, reason)
+            emailer.void_payment(
+                link,
+                campaign,
+                reason=reason,
+                total_budget_dollars=campaign.total_budget_dollars
+            )
 
 
 def auth_campaign(link, campaign, user, pay_id=None, freebie=False):

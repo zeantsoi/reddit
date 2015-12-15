@@ -480,8 +480,9 @@ def refunded_promo(thing):
     return _promo_email(thing, Email.Kind.REFUNDED_PROMO)
 
 
-def void_payment(thing, campaign, reason):
+def void_payment(thing, campaign, total_budget_dollars, reason):
     return _promo_email(thing, Email.Kind.VOID_PAYMENT, campaign=campaign,
+                        total_budget_dollars=total_budget_dollars,
                         reason=reason)
 
 
