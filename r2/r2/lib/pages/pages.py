@@ -4540,7 +4540,7 @@ class PromoteLinkEdit(PromoteLinkBase):
 
         self.priorities = [
             (p.name, p.text, p.description, p.default,
-            p.inventory_override, p == PROMOTE_PRIORITIES['auction'])
+            p.inventory_override, p == PROMOTE_PRIORITIES['house'])
             for p in PROMOTE_PRIORITIES.values()
         ]
 
