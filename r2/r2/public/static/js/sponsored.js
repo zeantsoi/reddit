@@ -1393,7 +1393,12 @@ var exports = r.sponsored = {
 
         var costBasisValue = $form.find('#cost_basis').val();
         var $costBasisLabel = $form.find('.cost-basis-label');
+        var $pricingMessageDiv = $form.find('.pricing-message');
+
+        var pricingMessage = (costBasisValue === 'cpc') ? 'click' : '1,000 impressions';
+
         $costBasisLabel.text(costBasisValue);
+        $pricingMessageDiv.text('Set how much you\'re willing to pay per ' + pricingMessage);
 
         var $mobileOSGroup = $('.mobile-os-group');
         var $mobileOSHiddenInput = $('#mobile_os');

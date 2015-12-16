@@ -654,9 +654,7 @@
 
 <%def name="pricing_field()">
   <%utils:line_field title="${_('pricing')}" css_class="rounded pricing-field auction-field">
-    <div class="pricing-message">
-      Set how much a click is worth to you.
-    </div>
+    <div class="pricing-message"></div>
     <div class="group"> 
       %if thing.cpc_pricing:
         <div class="form-group pricing-group">
