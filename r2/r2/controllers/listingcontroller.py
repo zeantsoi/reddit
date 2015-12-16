@@ -286,8 +286,10 @@ class SubredditListingController(ListingController):
 
     @property
     def render_params(self):
+        render_params = {}
+
         if isinstance(c.site, DefaultSR):
-            return {'show_locationbar': True}
+            render_params.update({'show_locationbar': True})
         else:
             if not c.user_is_loggedin:
                 # This data is only for scrapers, which shouldn't be logged in.
@@ -302,7 +304,7 @@ class SubredditListingController(ListingController):
                 hook = hooks.get_hook('subreddit_listing.twitter_card')
                 hook.call(tags=twitter_card, sr_name=c.site.name)
 
-                return {
+                render_params.update({
                     "og_data": {
                         "site_name": "reddit",
                         "title": self._build_og_title(),
@@ -310,9 +312,29 @@ class SubredditListingController(ListingController):
                         "description": self._build_og_description(),
                     },
                     "twitter_card": twitter_card,
-                }
+                })
 
-            return {}
+        # event target for screenviews
+        event_target = {}
+        if not isinstance(c.site, FakeSubreddit):
+            event_target['target_type'] = 'subreddit'
+            event_target['target_fullname'] = c.site._fullname
+            event_target['target_id'] = c.site._id
+        if hasattr(self, 'sort'):
+            event_target['target_sort'] = self.sort
+        elif hasattr(self, 'where'):
+            event_target['target_sort'] = self.where
+        if hasattr(self, 'time'):
+            event_target['target_filter_time'] = self.time
+        if self.after:
+            event_target['target_count'] = self.count
+            if self.reverse:
+                event_target['target_before'] = self.after._fullname
+            else:
+                event_target['target_after'] = self.after._fullname
+        render_params['extra_js_config'] = {'event_target': event_target}
+
+        return render_params
 
 
 class ListingWithPromos(SubredditListingController):
@@ -613,6 +635,7 @@ class BrowseController(ListingWithPromos):
 
 
 class AdsController(SubredditListingController):
+    where = 'ads'
     builder_cls = CampaignBuilder
     title_text = _('promoted links')
 
@@ -952,7 +975,7 @@ class UserController(ListingController):
             self.savedcategory = category
 
         self.vuser = vuser
-        self.render_params = {'user' : vuser}
+
         c.profilepage = True
         self.suppress_reply_buttons = True
 
@@ -960,6 +983,29 @@ class UserController(ListingController):
             self.robots = 'noindex,nofollow'
 
         return ListingController.GET_listing(self, **env)
+
+    @property
+    def render_params(self):
+        render_params = {'user': self.vuser}
+
+        # event target for screenviews
+        event_target = {
+            'target_type': 'account',
+            'target_fullname': self.vuser._fullname,
+            'target_id': self.vuser._id,
+            'target_name': self.vuser.name,
+            'target_sort': self.sort,
+            'target_filter_time': self.time,
+        }
+        if self.after:
+            event_target['target_count'] = self.count
+            if self.reverse:
+                event_target['target_before'] = self.after._fullname
+            else:
+                event_target['target_after'] = self.after._fullname
+        render_params['extra_js_config'] = {'event_target': event_target}
+
+        return render_params
 
     @require_oauth2_scope("read")
     @validate(vuser = VExistingUname('username'))
@@ -1225,6 +1271,26 @@ class MessageController(ListingController):
 
         return q
 
+    @property
+    def render_params(self):
+        render_params = {'source': self.source}
+
+        # event target for screenviews
+        event_target = {}
+        if self.message:
+            event_target['target_type'] = 'message'
+            event_target['target_fullname'] = self.message._fullname
+            event_target['target_id'] = self.message._id
+        if self.after:
+            event_target['target_count'] = self.count
+            if self.reverse:
+                event_target['target_before'] = self.after._fullname
+            else:
+                event_target['target_after'] = self.after._fullname
+        render_params['extra_js_config'] = {'event_target': event_target}
+
+        return render_params
+
     @require_oauth2_scope("privatemessages")
     @validate(VUser(),
               message = VMessageID('mid'),
@@ -1269,13 +1335,11 @@ class MessageController(ListingController):
             self.next_suggestions_cls = UnreadMessagesSuggestions
 
         if self.message:
-            source = "permalink"
+            self.source = "permalink"
         elif self.where in {"moderator", "multi"}:
-            source = "modmail"
+            self.source = "modmail"
         else:
-            source = "usermail"
-
-        self.render_params = {"source": source}
+            self.source = "usermail"
 
         return ListingController.GET_listing(self, **env)
 
@@ -1412,10 +1476,28 @@ class RedditsController(ListingController):
                 if promo_sr_id:
                     reddits._filter(Subreddit.c._id != promo_sr_id)
 
-        if self.where == 'popular':
-            self.render_params = {"show_interestbar": True}
-
         return reddits
+
+    @property
+    def render_params(self):
+        render_params = {}
+
+        if self.where == 'popular':
+            render_params['show_interestbar'] = True
+
+        # event target for screenviews
+        event_target = {
+            'target_sort': self.where,
+        }
+        if self.after:
+            event_target['target_count'] = self.count
+            if self.reverse:
+                event_target['target_before'] = self.after._fullname
+            else:
+                event_target['target_after'] = self.after._fullname
+        render_params['extra_js_config'] = {'event_target': event_target}
+
+        return render_params
 
     @require_oauth2_scope("read")
     @listing_api_doc(section=api_section.subreddits,
@@ -1517,6 +1599,24 @@ class MyredditsController(ListingController):
                     after, c.user, self.where, data=False).values()[0]
 
         return ListingController.build_listing(self, after=after, **kwargs)
+
+    @property
+    def render_params(self):
+        render_params = {}
+
+        # event target for screenviews
+        event_target = {
+            'target_sort': self.where,
+        }
+        if self.after:
+            event_target['target_count'] = self.count
+            if self.reverse:
+                event_target['target_before'] = self.after._fullname
+            else:
+                event_target['target_after'] = self.after._fullname
+        render_params['extra_js_config'] = {'event_target': event_target}
+
+        return render_params
 
     @require_oauth2_scope("mysubreddits")
     @validate(VUser())
@@ -1838,6 +1938,7 @@ class UserListListingController(ListingController):
 
 
 class GildedController(SubredditListingController):
+    where = 'gilded'
     title_text = _("gilded")
 
     @property
