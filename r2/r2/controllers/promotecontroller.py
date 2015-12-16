@@ -1197,6 +1197,9 @@ class PromoteApiController(ApiController):
                 form.has_errors('frequency_cap', errors.FREQUENCY_CAP_TOO_LOW)):
             return
 
+        if not feature.is_enabled('cpc_pricing'):
+            cost_basis = 'cpm'
+
         # Configure priority, cost_basis, and bid_pennies
         if feature.is_enabled('ads_auction'):
             if c.user_is_sponsor:

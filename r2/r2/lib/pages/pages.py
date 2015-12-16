@@ -4452,6 +4452,8 @@ class PromoteLinkBase(Templated):
         self.force_auction = (ads_auction_enabled and not c.user_is_sponsor)
         self.auction_optional = (ads_auction_enabled and c.user_is_sponsor)
 
+        self.cpc_pricing = feature.is_enabled('cpc_pricing')
+
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
 

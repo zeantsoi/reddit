@@ -658,22 +658,26 @@
       Set how much a click is worth to you.
     </div>
     <div class="group"> 
-      <div class="form-group pricing-group">
-        <span class="label">Cost basis</span>
-        <div class="cost-basis-select">
-          <select class="cost-basis-select" id="cost_basis" name="cost_basis"
-                  title="${_("price basis")}"
-                  onchange="r.sponsored.on_cost_basis_change()">
-            <option ${"selected='selected'" if selected else ""} value="cpc">
-              CPC
-            </option>
-            <option value="cpm">
-              CPM
-            </option>
-          </select>
-          ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+      %if thing.cpc_pricing:
+        <div class="form-group pricing-group">
+          <span class="label">Cost basis</span>
+          <div class="cost-basis-select">
+            <select class="cost-basis-select" id="cost_basis" name="cost_basis"
+                    title="${_("price basis")}"
+                    onchange="r.sponsored.on_cost_basis_change()">
+              <option ${"selected='selected'" if selected else ""} value="cpc">
+                CPC
+              </option>
+              <option value="cpm">
+                CPM
+              </option>
+            </select>
+            ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+          </div>
         </div>
-      </div>
+      %else:
+        <input type="hidden" id="cost_basis" name="cost_basis" value="cpm"/>
+      %endif
       <div class="form-group">
         <span class="label cost-basis-label" id="cost-basis-label"></span>
         <div class="input-group">
