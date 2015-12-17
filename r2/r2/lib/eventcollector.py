@@ -109,8 +109,8 @@ class EventQueue(object):
 
             event.add(name, value)
 
-        self.add_subreddit_fields(vote.thing.subreddit_slow)
-        self.add_target_fields(vote.thing)
+        event.add_subreddit_fields(vote.thing.subreddit_slow)
+        event.add_target_fields(vote.thing)
 
         self.save_event(event)
 
