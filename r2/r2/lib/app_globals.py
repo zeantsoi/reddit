@@ -278,6 +278,7 @@ class Globals(object):
             'exempt_login_user_agents',
             'timed_templates',
             'autoexpand_media_types',
+            'media_preview_domain_whitelist',
             'multi_icons',
             'hide_subscribers_srs',
             'can_track_ads',
@@ -286,6 +287,8 @@ class Globals(object):
 
         ConfigValue.tuple_of(ConfigValue.int): [
             'thumbnail_size',
+            'preview_image_max_size',
+            'preview_image_min_size',
             'mobile_ad_image_size',
         ],
 
