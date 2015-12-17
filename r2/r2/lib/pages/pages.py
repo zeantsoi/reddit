@@ -4678,7 +4678,7 @@ class RenderableCampaign(Templated):
             is_charged_or_refunded = (transaction and
                 (transaction.is_charged() or transaction.is_refund()))
             is_expired_house = camp.is_house and camp.end_date < now
-            is_live_or_pending = not (is_live or is_pending)
+            is_live_or_pending = is_live or is_pending
             is_complete = ((is_charged_or_refunded and
                 not is_live_or_pending) or
                 is_expired_house)
