@@ -668,11 +668,7 @@ class EventV2(object):
 
         self.add("target_id", target._id)
         self.add("target_fullname", target._fullname)
-
-        target_type = target.__class__.__name__.lower()
-        if target_type == "link" and target.is_self:
-            target_type = "self"
-        self.add("target_type", target_type)
+        self.add("target_type", target.__class__.__name__.lower())
 
         # If the target is an Account or Subreddit (or has a "name" attr),
         # add the target_name
