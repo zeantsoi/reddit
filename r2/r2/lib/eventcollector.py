@@ -103,7 +103,12 @@ class EventQueue(object):
         event.add("sr_id", subreddit._id)
         event.add("sr_name", subreddit.name)
 
-        self.add_target_fields(vote.thing)
+        target = vote.thing
+        target_type = target.__class__.__name__.lower()
+        if target_type == "link" and target.is_self:
+            target_type = "self"
+        event.add("target_fullname", target._fullname)
+        event.add("target_type", target_type)
 
         if vote.previous_vote:
             event.add("prev_vote_direction",
