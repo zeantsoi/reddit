@@ -622,7 +622,9 @@ class Account(Thing):
                     c.activity_service.record_activity(
                         sr._fullname, self._fullname)
                 except Thrift.TException as exc:
-                    g.log.warning("failed to update activity: %s", exc)
+                    g.stats.simple_event("activity_service.write.fail")
+                    g.log.warning("failed to record activity in %s: %s",
+                        sr._fullname, exc)
 
     def get_trophy_id(self, uid):
         '''Return the ID of the Trophy associated with the given "uid"
