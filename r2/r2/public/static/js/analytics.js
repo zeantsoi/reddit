@@ -57,7 +57,9 @@ r.analytics = {
       }
     }
 
-    r.analytics.screenviewEvent();
+    if (r.config.feature_screenview_events) {
+      r.analytics.screenviewEvent();
+    }
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
   },
