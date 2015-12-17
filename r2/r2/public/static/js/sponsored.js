@@ -1998,7 +1998,7 @@ function edit_campaign($campaign_row) {
         $campaign_row.fadeOut(function() {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
-                    'frequency_cap', 'total_budget',
+                    'frequency_cap', 'total_budget_dollars',
                     'bid_pennies'],
                 function(input) {
                     var val = $campaign_row.data(input),
