@@ -99,6 +99,12 @@ class EventQueue(object):
 
         event.add("vote_direction", get_vote_direction_name(vote))
 
+        subreddit = vote.thing.subreddit_slow
+        event.add("sr_id", subreddit._id)
+        event.add("sr_name", subreddit.name)
+
+        self.add_target_fields(vote.thing)
+
         if vote.previous_vote:
             event.add("prev_vote_direction",
                 get_vote_direction_name(vote.previous_vote))
@@ -114,9 +120,6 @@ class EventQueue(object):
                 name = "process_notes"
 
             event.add(name, value)
-
-        self.add_subreddit_fields(vote.thing.subreddit_slow)
-        self.add_target_fields(vote.thing)
 
         self.save_event(event)
 
@@ -269,7 +272,10 @@ class EventQueue(object):
             event.add("parent_message_id", parent_message._id)
             event.add("parent_message_fullname", parent_message._fullname)
 
-        event.add_subreddit_fields(subreddit)
+        if subreddit:
+            event.add("sr_id", subreddit._id)
+            event.add("sr_name", subreddit.name)
+
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -354,6 +360,7 @@ class EventQueue(object):
         )
         event.add("details_text", details_text)
         event.add("process_notes", "IN_TIMEOUT")
+        event.add_target_fields(target)
 
         from r2.models import Comment, Link, Subreddit
         if not subreddit:
@@ -364,9 +371,11 @@ class EventQueue(object):
             elif isinstance(target, Subreddit):
                 subreddit = target
 
-        event.add_subreddit_fields(subreddit)
-        event.add_target_fields(target)
+        if subreddit:
+            event.add("sr_id", subreddit._id)
+            event.add("sr_name", subreddit.name)
 
+        event.add_target_fields(target)
         self.save_event(event)
 
     @squelch_exceptions
@@ -391,6 +400,9 @@ class EventQueue(object):
             context=context,
         )
 
+        event.add("sr_id", subreddit._id)
+        event.add("sr_name", subreddit.name)
+
         if modaction.details_text:
             event.add("details_text", modaction.details_text)
 
@@ -402,7 +414,6 @@ class EventQueue(object):
             event["user_id"] = mod._id
             event["user_name"] = mod.name
 
-        event.add_subreddit_fields(subreddit)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -442,9 +453,11 @@ class EventQueue(object):
         if details_text:
             event.add("details_text", details_text)
 
-        event.add_subreddit_fields(subreddit)
-        event.add_target_fields(target)
+        if subreddit:
+            event.add("sr_id", subreddit._id)
+            event.add("sr_name", subreddit.name)
 
+        event.add_target_fields(target)
         self.save_event(event)
 
     @squelch_exceptions
@@ -472,6 +485,9 @@ class EventQueue(object):
             else:
                 event.add("verified_email", False)
 
+        event.add("sr_id", subreddit._id)
+        event.add("sr_name", subreddit.name)
+
         # Due to the redirect, the request object being sent isn't the
         # original, so referrer and action data is missing for certain events
         if request and (event_type == "quarantine_interstitial_view" or
@@ -488,8 +504,6 @@ class EventQueue(object):
 
             if thing_id36:
                 event.add("thing_id", int(thing_id36, 36))
-
-        event.add_subreddit_fields(subreddit)
 
         self.save_event(event)
 
@@ -538,6 +552,8 @@ class EventQueue(object):
             sender_type = "user"
 
         event.add("sender_type", sender_type)
+        event.add("sr_id", sr._id)
+        event.add("sr_name", sr.name)
         event.add("message_id", message._id)
         event.add("message_fullname", message._fullname)
         event.add("first_message_id", first_message._id)
@@ -557,7 +573,6 @@ class EventQueue(object):
         else:
             target = Account._byID(message.to_id, data=True)
 
-        event.add_subreddit_fields(sr)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -684,13 +699,6 @@ class EventV2(object):
         if isinstance(target, (Comment, Link)):
             self.add("target_created_ts",
                 _epoch_to_millis(epoch_timestamp(target._date)))
-
-    def add_subreddit_fields(self, subreddit):
-        if not subreddit:
-            return
-
-        self.add("sr_id", subreddit._id)
-        self.add("sr_name", subreddit.name)
 
     def get(self, field, obfuscated=False):
         if obfuscated:
