@@ -27,7 +27,7 @@ import pytz
 from pylons import tmpl_context as c, app_globals as g, request
 
 from r2.lib import amqp, hooks
-from r2.lib.eventcollector import Event
+from r2.lib.eventcollector import EventV2
 from r2.lib.utils import epoch_timestamp
 from r2.models import Account, Thing
 from r2.models.last_modified import LastModified
@@ -77,8 +77,8 @@ def cast_vote(user, thing, direction):
     # we need to pull out the context data at this point
     if not g.running_as_script:
         vote_data["event_data"] = {
-            "context": Event.get_context_data(request, c),
-            "sensitive": Event.get_sensitive_context_data(request, c),
+            "context": EventV2.get_context_data(request, c),
+            "sensitive": EventV2.get_sensitive_context_data(request, c),
         }
 
     amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
