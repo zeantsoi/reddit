@@ -57,13 +57,17 @@ trylater_hooks = hooks.HookRegistrar()
 
 def _system_email(email, plaintext_body, kind, reply_to="",
         thing=None, from_address=g.feedback_email,
-        html_body="", list_unsubscribe_header="", user=None):
+        html_body="", list_unsubscribe_header="", user=None,
+        suppress_username=False):
     """
     For sending email from the system to a user (reply address will be
     feedback and the name will be reddit.com)
     """
-    if user is None and c.user_is_loggedin:
+    if suppress_username:
+        user = None
+    elif user is None and c.user_is_loggedin:
         user = c.user
+
     Email.handler.add_to_queue(user,
         email, g.domain, from_address, kind,
         body=plaintext_body, reply_to=reply_to, thing=thing,
@@ -449,7 +453,8 @@ def _promo_email(thing, kind, body = "", **kw):
     body = Promo_Email(link = thing, kind = kind,
                        body = body, **kw).render(style = "email")
     return _system_email(a.email, body, kind, thing = thing,
-                         reply_to = g.selfserve_support_email)
+                         reply_to = g.selfserve_support_email,
+                         suppress_username=True)
 
 
 def new_promo(thing):
