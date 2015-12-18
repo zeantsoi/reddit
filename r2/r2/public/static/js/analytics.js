@@ -230,14 +230,14 @@ r.analytics = {
     }
 
     if (adserverUpvotePixel) {
-      $el.on('click', '.link .arrow.up', function() {
+      $el.on('click', '.arrow.up', function() {
         var pixel = new Image();
         pixel.src = adserverUpvotePixel;
       });
     }
 
     if (adserverDownvotePixel) {
-      $el.on('click', '.link .arrow.down', function() {
+      $el.on('click', '.arrow.down', function() {
         var pixel = new Image();
         pixel.src = adserverDownvotePixel;
       });
