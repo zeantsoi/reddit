@@ -416,8 +416,8 @@ class EventQueue(object):
         # the actions. In that case, set the user data based on the mod that's
         # performing the action.
         if not event.get("user_id"):
-            event["user_id"] = mod._id
-            event["user_name"] = mod.name
+            event.add("user_id", mod._id)
+            event.add("user_name", mod.name)
 
         event.add_subreddit_fields(subreddit)
         event.add_target_fields(target)
