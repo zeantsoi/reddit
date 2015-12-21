@@ -465,6 +465,8 @@ r.analytics = {
   },
 
   expandoEvent: function(actionName, targetData) {
+    if (!r.config.feature_expando_events) { return; }
+
     var eventTopic = 'expando_events';
     var eventType = 'cs.' + actionName;
     var payload = {};
