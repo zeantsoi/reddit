@@ -402,6 +402,10 @@ r.analytics = {
       payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
     }
 
+    if (this.contextData.listingName) {
+      payload['listing_name'] = this.contextData.listingName;
+    }
+
     if (this.contextData.referrer) {
       payload['referrer_url'] = this.contextData.referrer;
     }
