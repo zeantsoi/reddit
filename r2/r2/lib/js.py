@@ -424,6 +424,8 @@ module["gtm"] = Module("gtm.js",
 
 module["reddit-embed-base"] = Module("reddit-embed-base.js",
     "lib/json2.js",
+    "base.js",
+    "uuid.js",
     "custom-event.js",
     "frames.js",
     "embed/utils.js",
