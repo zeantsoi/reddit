@@ -4650,8 +4650,8 @@ class PromoteLinkEdit(PromoteLinkBase):
         default_end = min_start + datetime.timedelta(days=7)
         default_start = min_start
 
-        self.min_start = min_start.strftime("%m/%d/%Y")
         self.max_start = max_start.strftime("%m/%d/%Y")
+        self.min_start = min_start.strftime("%m/%d/%Y")
         self.max_end = max_end.strftime("%m/%d/%Y")
         self.default_start = default_start.strftime("%m/%d/%Y")
         self.default_end = default_end.strftime("%m/%d/%Y") 
@@ -4661,6 +4661,8 @@ class PromoteLinkEdit(PromoteLinkBase):
         campaigns = list(PromoCampaign._by_link(link._id))
         self.campaigns = RenderableCampaign.from_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
+
+        self.username = Account._byID(link.author_id, data=True).name
 
         if c.user_is_sponsor:
             self.min_budget_dollars = 0

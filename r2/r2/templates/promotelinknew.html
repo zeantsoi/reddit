@@ -37,7 +37,7 @@
         <div class="editor-group">
           ${pr.image_field(images=thing.images)}
           %if c.user_is_sponsor:
-            ${username_field()}
+            ${pr.username_field(c.user.name)}
             ${pr.managed_field(None)}
             ${promoted_externally()}
           %endif
@@ -64,19 +64,6 @@
     </div>
   </div>
 </div>
-
-<%def name="username_field()">
-  <%utils:line_field title="${_('create as user')}" id="username-field" css_class="rounded">
-    <input id="username" name="username" type="text" 
-           class="rounded">
-    ${error_field("NO_EMAIL_FOR_USER", "username", "div")}
-    ${error_field("NO_VERIFIED_EMAIL", "username", "div")}
-    ${error_field("USER_DOESNT_EXIST", "username", "div")}
-    <div class="infotext rounded">
-      <p>${_("Create a promotion on another user's account.")}</p>
-    </div>
-  </%utils:line_field>
-</%def>
 
 <%def name="promoted_externally()">
   <%utils:line_field title="" id="promoted_externally-field" css_class="rounded">

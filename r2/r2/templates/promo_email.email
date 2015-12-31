@@ -223,6 +223,12 @@ You can edit your ad at the following url:
 ${unsafe(edit_url + ref_tags % dict(ref="promo_void_payment", campaign="edit_promo"))}
 %endif
 
+%elif thing.kind == Email.Kind.CHANGED_AUTHOR:
+This email is to inform you that an ad was transferred to your user account's ownership.
+
+You can view and edit your ad at the following url:
+
+${unsafe(edit_url + ref_tags % dict(ref="changed_author", campaign="edit_promo"))}
 %endif
 
 Thank you,

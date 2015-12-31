@@ -40,6 +40,7 @@ from pytz import timezone
 
 from r2.config import feature
 from r2.lib import (
+    amqp,
     authorize,
     emailer,
     hooks,
@@ -78,6 +79,8 @@ from r2.models import (
     traffic,
 )
 from r2.models.keyvalue import NamedGlobals
+from r2.models.query_cache import CachedQueryMutator
+
 
 PROMO_HEALTH_KEY = 'promotions_last_updated'
 
@@ -310,6 +313,12 @@ def update_promote_status(link, status):
     queries.set_promote_status(link, status)
     hooks.get_hook('promote.edit_promotion').call(link=link)
 
+def _set_promote_menu_preference(author):
+    # the user has posted a promotion, so enable the promote menu unless
+    # they have already opted out
+    if author.pref_show_promote is not False:
+        author.pref_show_promote = True
+        author._commit()
 
 def new_promotion(is_self, title, content, author, ip):
     """
@@ -333,16 +342,82 @@ def new_promotion(is_self, title, content, author, ip):
 
     update_promote_status(l, PROMOTE_STATUS.unpaid)
 
-    # the user has posted a promotion, so enable the promote menu unless
-    # they have already opted out
-    if author.pref_show_promote is not False:
-        author.pref_show_promote = True
-        author._commit()
+    _set_promote_menu_preference(author)
 
     # notify of new promo
     emailer.new_promo(l)
     return l
 
+def queue_change_promo_author(link, author):
+    """
+    Queue job to update promo link author and
+    associated query_cache records.
+    """
+
+    # queue the job to update the promotionweights author
+    g.log.debug('queuing queue_change_promo_author for %s, %s' %
+        (link, author))
+    msg = json.dumps({
+        'action': 'queue_change_promo_author',
+        'link_id': link._id,
+        'author_id': author._id,
+    })
+    amqp.add_item('promo_q', msg)
+
+def _change_promo_author(link, author):
+    """
+    NOTE/WARNING: Bid ownership won't be changed.
+    """
+
+    user_queries = (
+        queries.get_unpaid_links,
+        queries.get_unapproved_links,
+        queries.get_rejected_links,
+        queries.get_live_links,
+        queries.get_accepted_links,
+    )
+
+    general_queries = (
+        queries.get_all_unpaid_links(),
+        queries.get_all_unapproved_links(),
+        queries.get_all_rejected_links(),
+        queries.get_all_live_links(),
+        queries.get_all_accepted_links(),
+    )
+
+    # delete queries associated with original author
+    all_queries = [promote_query(link.author_id) for promote_query in
+        user_queries]
+    all_queries.extend(general_queries)
+    with CachedQueryMutator() as m:
+        for q in all_queries:
+            m.delete(q, [link])
+
+    # update the link
+    link.author_id = author._id
+    link._commit()
+
+    # update the queries
+    queries.set_promote_status(link, link.promote_status)
+
+    # update PromoCampaigns
+    q = PromoCampaign._by_link(link._id)
+    for pc in q:
+        pc.owner_id = author._id
+        pc._commit()
+
+    # update PromotionWeights
+    q = PromotionWeights.query(thing_name=link._fullname)
+    for pw in q:
+        pw.account_id = author._id
+        pw._commit()
+
+    # set/update user preference for displaying promo menu
+    _set_promote_menu_preference(author)
+
+    # if non-sponsor, notify of change in authorship
+    if not author.name in g.sponsors:
+        emailer.changed_promo_author(link, author)
 
 def get_transactions(link, campaigns):
     """Return Bids for specified campaigns on the link.
@@ -1623,6 +1698,21 @@ def new_payment_method(user, ip, address, link):
 def failed_payment_method(user, link):
     user._incr('num_failed_payments')
     hooks.get_hook('promote.failed_payment').call(user=user, link=link)
+
+
+def process_promo_q():
+    @g.stats.amqp_processor('promo_q')
+    def _process_promo(msg):
+        data = json.loads(msg.body)
+        action = data.get('action')
+
+        link = Link._byID(data['link_id'])
+        author = Account._byID(data['author_id'])
+
+        if action == 'queue_change_promo_author':
+            _change_promo_author(link, author)
+
+    amqp.consume_items('promo_q', _process_promo, verbose=False)
 
 
 def Run(verbose=True):

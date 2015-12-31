@@ -88,6 +88,7 @@ def declare_queues(g):
         "automoderator_q": MessageQueue(),
         "modmail_email_q": MessageQueue(bind_to_self=True),
         "keyword_target_q": MessageQueue(),
+        "promo_q": MessageQueue(bind_to_self=True),
     })
 
     if g.shard_link_vote_queues:

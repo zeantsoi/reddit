@@ -202,6 +202,9 @@ ${pr.javascript_setup()}
     <div class="uncollapsed-display" style="display:none">
       <div class="editor-group">
         ${pr.image_field(thing.link)}
+        %if c.user_is_sponsor:
+          ${pr.username_field(thing.username)}
+        %endif
         <% is_link = not thing.link.is_self %>
         ${pr.title_field(thing.link)}
         ${pr.content_field(thing.link, enable_override=c.user_is_sponsor,

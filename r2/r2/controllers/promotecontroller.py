@@ -988,7 +988,12 @@ class PromoteApiController(ApiController):
         changed = {}
 
         # check for user override
-        if is_new_promoted and c.user_is_sponsor and username:
+        if c.user_is_sponsor:
+            if not username:
+                c.errors.add(errors.NO_USER, field="username")
+                form.set_error(errors.NO_USER, "username")
+                return
+
             try:
                 user = Account._by_name(username)
             except NotFound:
@@ -1005,6 +1010,7 @@ class PromoteApiController(ApiController):
                 c.errors.add(errors.NO_VERIFIED_EMAIL, field="username")
                 form.set_error(errors.NO_VERIFIED_EMAIL, "username")
                 return
+
         else:
             user = c.user
 
@@ -1195,6 +1201,9 @@ class PromoteApiController(ApiController):
         if sendreplies != l.sendreplies:
             changed["sendreplies"] = (l.sendreplies, sendreplies)
             l.sendreplies = sendreplies
+
+        if c.user_is_sponsor and l.author_id != user._id:
+            promote.queue_change_promo_author(l, user)
 
         if c.user_is_sponsor:
             if media_override != l.media_override:

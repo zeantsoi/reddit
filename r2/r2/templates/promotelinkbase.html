@@ -303,6 +303,20 @@
   </%utils:line_field>
 </%def>
 
+<%def name="username_field(username)">
+  <%utils:line_field title="${_('assign to user')}" id="username-field" css_class="rounded">
+    <input id="username" name="username" type="text" value="${username}"
+           class="rounded">
+    ${error_field("NO_EMAIL_FOR_USER", "username", "div")}
+    ${error_field("NO_VERIFIED_EMAIL", "username", "div")}
+    ${error_field("USER_DOESNT_EXIST", "username", "div")}
+    ${error_field("NO_USER", "username", "div")}
+    <div class="infotext rounded">
+      <p>${_("User to assign as this promotion's author.")}</p>
+    </div>
+  </%utils:line_field>
+</%def>
+
 <%def name="managed_field(link)">
   <%utils:line_field title="" id="managed-field" css_class="rounded managed-field">
     <div class="checkbox-group">

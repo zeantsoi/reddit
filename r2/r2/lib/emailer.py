@@ -519,6 +519,9 @@ def void_payment(thing, campaign, total_budget_dollars, reason):
                         total_budget_dollars=total_budget_dollars,
                         reason=reason)
 
+def changed_promo_author(thing, author):
+    return _promo_email(thing, Email.Kind.CHANGED_AUTHOR, author=author)
+
 
 def fraud_alert(body):
     return _fraud_email(body, Email.Kind.FRAUD_ALERT)
