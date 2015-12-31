@@ -1234,44 +1234,6 @@ var exports = r.sponsored = {
         };
     },
 
-    get_campaigns: function($list) {
-        var campaignRows = $list.find('.existing-campaigns tbody tr').toArray(),
-            collections = this.collectionsByName,
-            subreddits = {},
-            totalImpressions = 0,
-            totalBudgetDollars = 0;
-
-        function mapSubreddit(name) {
-            subreddits[name] = 1;
-        }
-
-        function getSubredditsByCollection(name) {
-            return collections[name] && collections[name].sr_names || null;
-        }
-
-        function mapCollection(name) {
-            var subredditNames = getSubredditsByCollection(name);
-            if (subredditNames) {
-                _.each(subredditNames, mapSubreddit);
-            }
-        }
-
-        _.each(campaignRows, function(row) {
-            var data = $(row).data(),
-                isCollection = (data.targetingCollection === 'True'),
-                mappingFunction = isCollection ? mapCollection : mapSubreddit;
-            mappingFunction(data.targeting);
-            var budget = parseFloat(data.total_budget_dollars, 10);
-            totalBudgetDollars += budget;
-        });
-
-        return {
-            count: campaignRows.length,
-            subreddits: _.keys(subreddits),
-            totalBudgetDollars: totalBudgetDollars,
-            prettyTotalBudgetDollars: '$' + totalBudgetDollars.toFixed(2),
-        };
-    },
 
     get_reporting: function($form) {
         var link_text = $form.find('[name=link_text]').val(),
@@ -1283,18 +1245,98 @@ var exports = r.sponsored = {
         };
     },
 
-    campaign_dashboard_help_template: _.template('<p>this promotion has a '
-            + 'total budget of <%= prettyTotalBudgetDollars %> in '
-            + '<%= subreddits.length %> subreddit'
-            + '<% subreddits.length > 1 && print("s") %></p>'),
+    get_campaigns: function($list, $form) {
+        var campaignRows = $list.find('.existing-campaigns tbody tr').toArray();
+        var collections = this.collectionsByName;
+        var fixedCPMCampaigns = 0;
+        var fixedCPMSubreddits = {};
+        var totalFixedCPMBudgetDollars = 0;
+        var auctionCampaigns = 0;
+        var auctionSubreddits = {};
+        var totalAuctionBudgetDollars = 0;
+        var totalImpressions = 0;
+
+        function mapSubreddit(name, subreddits) {
+            subreddits[name] = 1;
+        }
+
+        function getSubredditsByCollection(name) {
+            return collections[name] && collections[name].sr_names || null;
+        }
+
+        function mapCollection(name, subreddits) {
+            var subredditNames = getSubredditsByCollection(name);
+            if (subredditNames) {
+                _.each(subredditNames, function(subredditName) {
+                    mapSubreddit(subredditName, subreddits);
+                });
+            }
+        }
+
+        _.each(campaignRows, function(row) {
+            var data = $(row).data();
+            var isCollection = (data.targetingCollection === 'True');
+            var mappingFunction = isCollection ? mapCollection : mapSubreddit;
+            var budget = parseFloat(data.total_budget_dollars, 10);
+
+            if (data.is_auction === 'True') {
+                auctionCampaigns++;
+                mappingFunction(data.targeting, auctionSubreddits);
+                totalAuctionBudgetDollars += budget;
+            } else {
+                fixedCPMCampaigns++;
+                mappingFunction(data.targeting, fixedCPMSubreddits);
+                totalFixedCPMBudgetDollars += budget;
+                var bid = data.bid_pennies;
+                var impressions = Math.floor(budget / bid * 1000);
+                totalImpressions += impressions;
+            }
+        });
+
+        return {
+            count: campaignRows.length,
+            fixedCPMCampaigns: fixedCPMCampaigns,
+            auctionCampaigns: auctionCampaigns,
+            fixedCPMSubreddits: fixedCPMSubreddits,
+            auctionSubreddits: _.keys(auctionSubreddits),
+            fixedCPMSubreddits: _.keys(fixedCPMSubreddits),
+            prettyTotalAuctionBudgetDollars: '$' + totalAuctionBudgetDollars.toFixed(2),
+            prettyTotalFixedCPMBudgetDollars: '$' + totalFixedCPMBudgetDollars.toFixed(2),
+            totalImpressions: totalImpressions,
+        };
+    },
+
+    auction_dashboard_help_template: _.template('<p>there '
+        + '<% auctionCampaigns > 1 ? print("are") : print("is") %> '
+        + '<%= auctionCampaigns %> auction campaign'
+        + '<% auctionCampaigns > 1 && print("s") %> with a total budget of '
+        + '<%= prettyTotalAuctionBudgetDollars %> in '
+        + '<%= auctionSubreddits.length %> subreddit'
+        + '<% auctionSubreddits.length > 1 && print("s") %></p>'),
+
+    fixed_cpm_dashboard_help_template: _.template('<p>there '
+        + '<% fixedCPMCampaigns > 1 ? print("are") : print("is") %> '
+        + '<%= fixedCPMCampaigns %> fixed CPM campaign'
+        + '<% fixedCPMCampaigns > 1 && print("s") %> with a total budget of '
+        + '<%= prettyTotalFixedCPMBudgetDollars %> in '
+        + '<%= fixedCPMSubreddits.length %> subreddit'
+        + '<% fixedCPMSubreddits.length > 1 && print("s") %>, amounting to a '
+        + 'total of <%= totalImpressions %> impressions</p>'),
 
     render_campaign_dashboard_header: function() {
-        var campaigns = this.get_campaigns($('.campaign-list'));
+        var $form = $("#campaign");
+        var campaigns = this.get_campaigns($('.campaign-list'), $form);
         var $campaignDashboardHeader = $('.campaign-dashboard header');
         if (campaigns.count) {
+            var templateText = '';
+            if (campaigns.auctionCampaigns > 0) {
+                templateText += this.auction_dashboard_help_template(campaigns);
+            }
+            if (campaigns.fixedCPMCampaigns > 0) {
+                templateText += this.fixed_cpm_dashboard_help_template(campaigns);
+            }
             $campaignDashboardHeader
-                .find('.help').show().html(
-                        this.campaign_dashboard_help_template(campaigns)).end()
+                .find('.help').show().html(templateText).end()
                 .find('.error').hide();
         }
         else {
