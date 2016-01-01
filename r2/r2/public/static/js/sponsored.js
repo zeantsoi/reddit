@@ -1428,7 +1428,7 @@ var exports = r.sponsored = {
         $(".duration").text(durationInDays)
         var totalBudgetDollars = parseFloat($("#total_budget_dollars").val())
         var dailySpend = totalBudgetDollars / parseInt(durationInDays)
-        $(".daily-spend").text((isNaN(dailySpend) ? 0.00 : dailySpend).toFixed(2));
+        $(".daily-max-spend").text((isNaN(dailySpend) ? 0.00 : dailySpend).toFixed(2));
 
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
         $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
@@ -2047,7 +2047,7 @@ function edit_campaign($campaign_row) {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
                     'frequency_cap', 'total_budget_dollars',
-                    'bid_pennies'],
+                    'bid_dollars'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]')
