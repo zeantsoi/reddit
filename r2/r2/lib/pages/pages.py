@@ -4629,13 +4629,11 @@ class RenderableCampaign(Templated):
         # If ads_auction not enabled, default cost_basis to fixed_cpm
         if not feature.is_enabled('ads_auction'):
             self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.fixed_cpm]
-            self.bid_pennies = campaign.bid_pennies
         elif campaign.cost_basis != PROMOTE_COST_BASIS.fixed_cpm:
             self.cost_basis = PROMOTE_COST_BASIS.name[campaign.cost_basis]
-            self.bid_pennies = campaign.bid_pennies
         else:
             self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.cpm]
-            self.bid_pennies = g.default_bid_pennies
+        self.bid_pennies = campaign.bid_pennies
 
         self.printable_bid = format_currency(campaign.bid_dollars, 'USD',
             locale=c.locale)
