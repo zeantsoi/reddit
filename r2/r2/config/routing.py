@@ -232,9 +232,6 @@ def make_map(config):
     mc('/mail/unsubscribe/:user/:key', controller='forms',
        action='unsubscribe_emails')
     mc('/stylesheet', controller='front', action='stylesheet')
-    mc('/framebuster/:blah', controller='front', action='framebuster')
-    mc('/framebuster/:what/:blah',
-       controller='front', action='framebuster')
 
     mc('/share/close', controller='front', action='share_close')
 
@@ -305,8 +302,7 @@ def make_map(config):
        dest='/gold?goldtype=creddits')
 
     mc('/password', controller='forms', action="password")
-    mc('/:action', controller='front',
-       requirements=dict(action="random|framebuster"))
+    mc('/random', controller='front', action="random")
     mc('/:action', controller='embed',
        requirements=dict(action="blog"))
     mc('/help/gold', controller='redirect', action='redirect',
