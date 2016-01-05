@@ -88,6 +88,7 @@ def declare_queues(g):
         "del_account_q": MessageQueue(),
         "automoderator_q": MessageQueue(),
         "event_collector": MessageQueue(bind_to_self=True),
+        "event_collector_failed": MessageQueue(bind_to_self=True),
         "modmail_email_q": MessageQueue(bind_to_self=True),
     })
 
