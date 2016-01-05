@@ -1735,6 +1735,9 @@ def run_commentstree(qname="commentstree_q", limit=100):
         if comments:
             add_comments(comments)
 
+    # High velocity threads put additional pressure on Cassandra.
+    if qname == "commentstree_fastlane_q":
+        limit = max(1000, limit)
     amqp.handle_items(qname, _run_commentstree, limit = limit)
 
 
