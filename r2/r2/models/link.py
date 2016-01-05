@@ -52,7 +52,7 @@ from printable import Printable
 from r2.config import extensions
 from r2.lib.memoize import memoize
 from r2.lib.filters import _force_utf8, _force_unicode
-from r2.lib import hooks, utils
+from r2.lib import hooks, utils, geoip
 from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
@@ -580,6 +580,10 @@ class Link(Thing, Printable):
 
         sticky_fullnames = site.get_sticky_fullnames()
 
+        legal_blocks_present = any(item.has_legal_blocks for item in wrapped)
+        if legal_blocks_present:
+            location = geoip.get_request_location(request, c)
+
         for item in wrapped:
             show_media = False
             if not hasattr(item, "score_fmt"):
@@ -874,6 +878,14 @@ class Link(Thing, Printable):
 
             # This is passed in promotedlink.html
             item.ads_auction_enabled = feature.is_enabled('ads_auction')
+
+            # see RedditBase.abort_if_blocked_legally for a description of
+            # the data model here
+            if item.has_legal_blocks:
+                legal_block = item.get_legal_block_for_country(location)
+                item.is_blocked_for_legal_reasons = legal_block is not None
+            else:
+                item.is_blocked_for_legal_reasons = False
 
         if user_is_loggedin:
             incr_counts(wrapped)

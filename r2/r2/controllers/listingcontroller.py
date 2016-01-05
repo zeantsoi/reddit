@@ -716,11 +716,6 @@ class ByIDController(ListingController):
         if not links:
             return self.abort404()
 
-        if any(link.has_legal_blocks for link in links):
-            country_code = geoip.get_request_location(request, c)
-            links = [link for link in links
-                     if link.get_legal_block_for_country(country_code) is None]
-
         self.names = [l._fullname for l in links]
         return ListingController.GET_listing(self, **env)
 

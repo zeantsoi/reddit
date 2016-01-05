@@ -342,6 +342,11 @@ class Builder(object):
         was contructed with skip=true"""
         user = c.user if c.user_is_loggedin else None
 
+        # hide legally blocked items from listings
+        is_blocked_for_legal_reasons = getattr(item, "is_blocked_for_legal_reasons", False)
+        if is_blocked_for_legal_reasons:
+            return True
+
         if hasattr(item, "promoted") and item.promoted is not None:
             return False
 
