@@ -35,16 +35,18 @@
 
 <%def name="javascript_setup()">
 <script type="text/javascript">
-  r.sponsored.init();
-  r.sponsored.set_form_render_fnc(r.sponsored.fill_campaign_editor);
-  r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
-                    ${unsafe(simplejson.dumps(thing.price_dict))},
-                    ${simplejson.dumps(not thing.campaigns)},
-                    ${simplejson.dumps(c.user_is_sponsor)},
-                    ${simplejson.dumps(thing.force_auction)});
-  r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
-                                 ${unsafe(simplejson.dumps(thing.metros))});
-  r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))});
+  $(function() {
+    r.sponsored.init();
+    r.sponsored.set_form_render_fnc(r.sponsored.fill_campaign_editor);
+    r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
+                      ${unsafe(simplejson.dumps(thing.price_dict))},
+                      ${simplejson.dumps(not thing.campaigns)},
+                      ${simplejson.dumps(c.user_is_sponsor)},
+                      ${simplejson.dumps(thing.force_auction)});
+    r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
+                                   ${unsafe(simplejson.dumps(thing.metros))});
+    r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))});
+  })
 </script>
 </%def>
 

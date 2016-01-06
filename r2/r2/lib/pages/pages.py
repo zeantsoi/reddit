@@ -4579,7 +4579,7 @@ class PromoteLinkEdit(PromoteLinkBase):
 
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,
-                 is_complete, full_details=True):
+                 is_complete, full_details=True, hide_after_seen=False):
         self.link = link
         self.campaign = campaign
 
@@ -4597,8 +4597,14 @@ class RenderableCampaign(Templated):
         else:
             self.spent = 0.
 
+        self.hide_after_seen = hide_after_seen
+
         self.paid = bool(transaction and not transaction.is_void())
         self.free = campaign.is_freebie()
+        # only show approval if the link has been accepted. accepting the link
+        # automatically approvals all the current campaigns.
+        self.needs_approval = (promote.campaign_needs_approval(link, campaign) and
+                               promote.is_accepted(link))
         self.is_pending = is_pending
         self.is_live = is_live
         self.is_complete = is_complete
@@ -4649,7 +4655,8 @@ class RenderableCampaign(Templated):
         Templated.__init__(self)
 
     @classmethod
-    def from_campaigns(cls, link, campaigns, full_details=True):
+    def from_campaigns(cls, link, campaigns,
+                       full_details=True, hide_after_seen=False):
         campaigns, is_single = tup(campaigns, ret_is_single=True)
 
         if full_details:
@@ -4673,7 +4680,7 @@ class RenderableCampaign(Templated):
                 not is_live_or_pending) or
                 is_expired_house)
             rc = cls(link, camp, transaction, is_pending, is_live, is_complete,
-                     full_details)
+                     full_details, hide_after_seen)
             ret.append(rc)
         if is_single:
             return ret[0]

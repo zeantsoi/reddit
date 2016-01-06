@@ -160,6 +160,11 @@ def is_accepted(link):
             link.promote_status != PROMOTE_STATUS.rejected and
             link.promote_status >= PROMOTE_STATUS.accepted)
 
+
+def campaign_needs_approval(link, campaign):
+    return not link.managed_promo and campaign.needs_approval
+
+
 def is_unpaid(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.unpaid
 
@@ -354,6 +359,10 @@ def new_campaign(link, dates, target, frequency_cap,
         if getattr(author, "complimentary_promos", False):
             free_campaign(link, campaign, c.user)
 
+    # force campaigns for approved links to also be approved
+    if is_accepted(link):
+        queries.set_campaign_approval(link, campaign, False)
+
     hooks.get_hook('promote.new_campaign').call(link=link, campaign=campaign)
     return campaign
 
@@ -367,7 +376,7 @@ def edit_campaign(link, campaign, dates, target, frequency_cap,
                   total_budget_pennies, cost_basis, bid_pennies,
                   platform='desktop', mobile_os=None, ios_devices=None,
                   ios_version_range=None, android_devices=None,
-                  android_version_range=None):
+                  android_version_range=None, is_approved=None):
     changed = {}
     if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
         original = '%s to %s' % (campaign.start_date, campaign.end_date)
@@ -417,6 +426,9 @@ def edit_campaign(link, campaign, dates, target, frequency_cap,
         changed['bid_pennies'] = (campaign.bid_pennies,
                                         bid_pennies)
         campaign.bid_pennies = bid_pennies
+    if is_approved is not None and is_approved != campaign.is_approved:
+        changed['is_approved'] = (campaign.is_approved, is_approved)
+        queries.set_campaign_approval(link, campaign, is_approved)
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
@@ -437,6 +449,43 @@ def edit_campaign(link, campaign, dates, target, frequency_cap,
         PromotionLog.add(link, 'edited %s: %s' % (campaign, change_text))
 
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
+
+
+def all_campaigns_approved(link):
+    campaigns = PromoCampaign._by_link(link._id)
+    return link.managed_promo or all(map(lambda campaign: not campaign.needs_approval, campaigns))
+
+
+def approve_all_campaigns(link):
+    campaigns = PromoCampaign._by_link(link._id)
+    for campaign in campaigns:
+        set_campaign_approval(link, campaign, True)
+
+
+def unapprove_all_campaigns(link):
+    campaigns = PromoCampaign._by_link(link._id)
+    for campaign in campaigns:
+        set_campaign_approval(link, campaign, False)
+
+
+def set_campaign_approval(link, campaign, is_approved):
+    # can't approve campaigns until the link is approved
+    if not is_accepted(link) and is_approved:
+        return
+
+    edit_campaign(
+        link=link,
+        campaign=campaign,
+        dates=[campaign.start_date, campaign.end_date],
+        target=campaign.target,
+        frequency_cap=campaign.frequency_cap,
+        priority=campaign.priority,
+        location=campaign.location,
+        total_budget_pennies=campaign.total_budget_pennies,
+        cost_basis=campaign.cost_basis,
+        bid_pennies=campaign.bid_pennies,
+        is_approved=is_approved,
+    )
 
 
 def terminate_campaign(link, campaign):

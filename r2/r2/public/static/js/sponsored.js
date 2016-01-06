@@ -2259,6 +2259,23 @@ function terminate_campaign($campaign_row) {
               null, true, "json", false);
 }
 
+function approve_campaign($campaign_row) {
+  var campaignId = $campaign_row.data('campaign_id36');
+  var linkId = $campaign_row.data('link_id36');
+  var $hideAfter = $campaign_row.find('input[name="hide_after"]');
+  var hideAfter = false;
+
+  if ($hideAfter.length) {
+    hideAfter = $hideAfter.val();
+  }
+
+  $.request('approve_campaign', {
+    campaign_id36: campaignId,
+    link_id36: linkId,
+    hide_after: hideAfter,
+  }, null, true, 'json', false);
+}
+
 function edit_promotion() {
     $("button.new-campaign").prop("disabled", false);
     cancel_edit(function() {

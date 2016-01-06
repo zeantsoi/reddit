@@ -450,6 +450,7 @@ class PromoteListingController(ListingController):
     where = 'promoted'
     render_cls = PromotePage
     titles = {
+        'unapproved_campaigns': N_('unapproved campaigns'),
         'future_promos': N_('unapproved promoted links'),
         'pending_promos': N_('accepted promoted links'),
         'unpaid_promos': N_('unpaid promoted links'),
@@ -458,6 +459,22 @@ class PromoteListingController(ListingController):
         'all': N_('all promoted links'),
     }
     base_path = '/promoted'
+
+    default_filters = [
+        NamedButton('all_promos', dest='',
+                    use_params=False,
+                    aliases=['/sponsor']),
+        NamedButton('future_promos',
+                    use_params=False),
+        NamedButton('unpaid_promos',
+                    use_params=False),
+        NamedButton('rejected_promos',
+                    use_params=False),
+        NamedButton('pending_promos',
+                    use_params=False),
+        NamedButton('live_promos',
+                    use_params=False),
+    ]
 
     def title(self):
         return _(self.titles[self.sort])
@@ -468,24 +485,8 @@ class PromoteListingController(ListingController):
 
     @property
     def menus(self):
-        filters = [
-            NamedButton('all_promos', dest='',
-                        use_params=False,
-                        aliases=['/sponsor']),
-            NamedButton('future_promos',
-                        use_params=False),
-            NamedButton('unpaid_promos',
-                        use_params=False),
-            NamedButton('rejected_promos',
-                        use_params=False),
-            NamedButton('pending_promos',
-                        use_params=False),
-            NamedButton('live_promos',
-                        use_params=False),
-        ]
-        menus = [NavMenu(filters, base_path=self.base_path, title='show',
+        return [NavMenu(self.default_filters, base_path=self.base_path, title='show',
                          type='lightdrop')]
-        return menus
 
     def builder_wrapper(self, thing):
         builder_wrapper = default_thing_wrapper()
@@ -511,7 +512,9 @@ class PromoteListingController(ListingController):
         return keep
 
     def query(self):
-        if self.sort == "future_promos":
+        if self.sort == "unapproved_campaigns":
+            return queries.get_unapproved_links
+        elif self.sort == "future_promos":
             return queries.get_unapproved_links(c.user._id)
         elif self.sort == "pending_promos":
             return queries.get_accepted_links(c.user._id)
@@ -566,7 +569,20 @@ class SponsorListingController(PromoteListingController):
             if self.sort in ('house', 'fraud'):
                 menus.append(managed_menu)
         else:
-            menus = super(SponsorListingController, self).menus
+            # copy to prevent modifing the class attribute.
+            filters = self.default_filters[:]
+            filters.append(
+                NamedButton('unapproved_campaigns',
+                            use_params=False)
+            )
+
+            menus = [
+                NavMenu(filters,
+                    base_path=self.base_path,
+                    title='show',
+                    type='lightdrop',
+                ),
+            ]
             menus.append(managed_menu)
 
         if self.sort == 'live_promos':
@@ -630,7 +646,9 @@ class SponsorListingController(PromoteListingController):
         return keep
 
     def query(self):
-        if self.sort == "future_promos":
+        if self.sort == "unapproved_campaigns":
+            return queries.get_all_links_with_unapproved_campaigns()
+        elif self.sort == "future_promos":
             return queries.get_all_unapproved_links()
         elif self.sort == "pending_promos":
             return queries.get_all_accepted_links()
@@ -671,7 +689,7 @@ class SponsorListingController(PromoteListingController):
             for item in pane.things:
                 campaigns = campaigns_by_link[item._id]
                 item.campaigns = RenderableCampaign.from_campaigns(
-                    item, campaigns, full_details=False)
+                    item, campaigns, full_details=False, hide_after_seen=True)
                 item.cachable = False
                 item.show_campaign_summary = True
         return pane
@@ -791,6 +809,9 @@ class PromoteApiController(ApiController):
     def POST_promote(self, thing):
         if promote.is_promo(thing):
             promote.accept_promotion(thing)
+            if isinstance(thing, Link):
+                promote.approve_all_campaigns(thing)
+
 
     @noresponse(VSponsorAdmin(),
                 VModhash(),
@@ -799,6 +820,8 @@ class PromoteApiController(ApiController):
     def POST_unpromote(self, thing, reason):
         if promote.is_promo(thing):
             promote.reject_promotion(thing, reason=reason)
+            if isinstance(thing, Link):
+                promote.unapprove_all_campaigns(thing)
 
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
@@ -1543,6 +1566,23 @@ class PromoteApiController(ApiController):
         promote.terminate_campaign(link, campaign)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
+
+    @validatedForm(VSponsorAdmin(),
+                   VModhash(),
+                   link=VLink('link_id36'),
+                   campaign=VPromoCampaign("campaign_id36"),
+                   hide_after_seen=VBoolean("hide_after"))
+    def POST_approve_campaign(self, form, jquery,
+                              link, campaign, hide_after_seen):
+        if not link or not campaign or link._id != campaign.link_id:
+            return abort(404, 'not found')
+
+        promote.set_campaign_approval(link, campaign, True)
+        rc = RenderableCampaign.from_campaigns(link, campaign)
+        jquery.update_campaign(campaign._fullname, rc.render_html())
+
+        if hide_after_seen and promote.all_campaigns_approved(link):
+            jquery("#thing_%s" % link._fullname).hide()
 
     @validatedForm(
         VVerifiedSponsor('link'),

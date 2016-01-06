@@ -29,6 +29,7 @@ from r2.models import (
     MultiReddit,
     Account,
     Link,
+    PromoCampaign,
     Comment,
     Report,
     LinksByAccount,
@@ -733,6 +734,24 @@ def get_user_reported(user_id):
             get_user_reported_messages(user_id)]
 
 
+def set_campaign_approval(link, campaign, is_approved):
+    campaign.is_approved = is_approved
+    campaign._commit()
+
+    # cannot import at module level due to circularity
+    from r2.lib import promote
+    is_insert = (promote.is_accepted(link) and
+        not promote.all_campaigns_approved(link))
+
+    with CachedQueryMutator() as m:
+        q = get_all_links_with_unapproved_campaigns()
+
+        if is_insert:
+            m.insert(q, [link])
+        else:
+            m.delete(q, [link])
+
+
 def set_promote_status(link, promote_status):
     all_queries = [promote_query(link.author_id) for promote_query in 
                    (get_unpaid_links, get_unapproved_links, 
@@ -805,6 +824,20 @@ def get_unapproved_links(user_id):
 @cached_query(UserQueryCache)
 def get_all_unapproved_links():
     return _promoted_link_query(None, 'unapproved')
+
+
+@cached_query(UserQueryCache)
+def get_all_links_with_unapproved_campaigns():
+    unapproved_campaigns = PromoCampaign._query(
+        PromoCampaign.c.is_approved == False,
+        PromoCampaign.c.is_house == False,
+    )
+
+    link_ids = {campaign.link_id for campaign in unapproved_campaigns}
+    return Link._query(Link.c._id.in_(link_ids),
+                       Link.c.promote_status != PROMOTE_STATUS.rejected,
+                       Link.c.managed_promo == False,
+                       sort=db_sort('new'))
 
 
 @cached_query(UserQueryCache)

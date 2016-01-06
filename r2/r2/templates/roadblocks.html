@@ -23,14 +23,11 @@
 <%!
   from r2.lib.pages import SubredditSelector
   from r2.lib.template_helpers import static
-  from r2.lib import js
  %>
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="promotelinkbase.html" name="p" />
 <%namespace file="utils.html" 
             import="error_field, checkbox, image_upload" />
-
-${unsafe(js.use('sponsored'))}
 
 <div class="sponsored-page">
   <div class="dashboard roadblock-dashboard campaign">

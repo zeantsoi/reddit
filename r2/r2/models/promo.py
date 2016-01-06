@@ -371,6 +371,7 @@ class PromoCampaign(Thing):
         cost_basis=PROMOTE_COST_BASIS.fixed_cpm,
         bid_pennies=g.default_bid_pennies,
         adserver_spent_pennies=0,
+        is_approved=None,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -442,6 +443,10 @@ class PromoCampaign(Thing):
             return True
 
         return False
+
+    @property
+    def needs_approval(self):
+        return not self.is_approved or self.is_house
 
     def priority_name_from_priority(self, priority):
         if not priority in PROMOTE_PRIORITIES.values():

@@ -36,6 +36,7 @@
     data-country="${thing.country}"
     data-region="${thing.region}"
     data-metro="${thing.metro}"
+    data-link_id36="${thing.link._id36}"
     data-campaign_id36="${thing.campaign._id36}"
     data-campaign_name="${thing.campaign._fullname}"
     data-frequency_cap="${thing.campaign.frequency_cap}"
@@ -177,6 +178,15 @@
       %if thing.is_live and c.user_is_sponsor:
         <button class="terminate" onclick="terminate_campaign(${jquery_row})">
           ${_("terminate")}
+        </button>
+      %endif
+
+      %if thing.needs_approval and c.user_is_sponsor:
+        %if thing.hide_after_seen:
+          <input type="hidden" name="hide_after" value="yes">
+        %endif
+        <button class="approve" onclick="approve_campaign(${jquery_row})">
+          ${_("approve")}
         </button>
       %endif
     %endif

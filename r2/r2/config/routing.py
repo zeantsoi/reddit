@@ -245,7 +245,7 @@ def make_map(config):
     mc('/sponsor/promoted/:sort', controller='sponsorlisting', action='listing',
        requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
                               "rejected_promos|live_promos|underdelivered|"
-                              "reported|house|fraud|all"))
+                              "reported|house|fraud|all|unapproved_campaigns"))
     mc('/sponsor', controller='sponsorlisting', action="listing",
        sort="all")
     mc('/sponsor/promoted/', controller='sponsorlisting', action="listing",
@@ -393,7 +393,7 @@ def make_map(config):
                                  "add_roadblock|rm_roadblock|check_inventory|"
                                  "refund_campaign|terminate_campaign|"
                                  "review_fraud|create_promo|"
-                                 "toggle_pause_campaign")))
+                                 "toggle_pause_campaign|approve_campaign")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',
