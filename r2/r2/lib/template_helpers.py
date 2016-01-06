@@ -260,7 +260,6 @@ def js_config(extra_config=None):
           "actionName": route_name,
         },
         "facebook_app_id": g.live_config["facebook_app_id"],
-        "feature_tumblr_sharing": feature.is_enabled('tumblr_sharing'),
         "feature_expando_events": feature.is_enabled('expando_events'),
     }
 
