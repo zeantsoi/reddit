@@ -49,10 +49,10 @@ p {
     width: 100%;
 
     p {
-        display: table-cell; 
+        display: table-cell;
         margin: 0;
         padding: 0;
-        vertical-align: middle; 
+        vertical-align: middle;
     }
 
     .reddit-embed-footer-img {
@@ -95,13 +95,14 @@ p {
 // Comment embeds
 .reddit-embed-comment-header {
     position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .reddit-embed-comment-meta {
     font-size: 12px;
-    position: absolute;
-    right: 0;
-    bottom: 0;
+    float: right;
 }
 
 .reddit-embed-comment-meta-item {
