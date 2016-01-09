@@ -373,64 +373,114 @@ def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, freebie=True)
 
 
-def edit_campaign(link, campaign, dates, target, frequency_cap,
-                  priority, location,
-                  total_budget_pennies, cost_basis, bid_pennies,
-                  platform='desktop', mobile_os=None, ios_devices=None,
-                  ios_version_range=None, android_devices=None,
-                  android_version_range=None, is_approved=None):
+def edit_campaign(
+        link, campaign,
+        **kwargs
+    ):
+
     changed = {}
-    if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
-        original = '%s to %s' % (campaign.start_date, campaign.end_date)
-        edited = '%s to %s' % (dates[0], dates[1])
-        changed['dates'] = (original, edited)
-        campaign.start_date = dates[0]
-        campaign.end_date = dates[1]
-    if target != campaign.target:
-        changed['target'] = (campaign.target, target)
-        campaign.target = target
-    if frequency_cap != campaign.frequency_cap:
-        changed['frequency_cap'] = (campaign.frequency_cap, frequency_cap)
-        campaign.frequency_cap = frequency_cap
-    if priority != campaign.priority:
-        changed['priority'] = (campaign.priority.name, priority.name)
-        campaign.priority = priority
-    if location != campaign.location:
-        changed['location'] = (campaign.location, location)
-        campaign.location = location
-    if platform != campaign.platform:
-        changed["platform"] = (campaign.platform, platform)
-        campaign.platform = platform
-    if mobile_os != campaign.mobile_os:
-        changed["mobile_os"] = (campaign.mobile_os, mobile_os)
-        campaign.mobile_os = mobile_os
-    if ios_devices != campaign.ios_devices:
-        changed['ios_devices'] = (campaign.ios_devices, ios_devices)
-        campaign.ios_devices = ios_devices
-    if android_devices != campaign.android_devices:
-        changed['android_devices'] = (campaign.android_devices, android_devices)
-        campaign.android_devices = android_devices
-    if ios_version_range != campaign.ios_version_range:
-        changed['ios_version_range'] = (campaign.ios_version_range,
-                                        ios_version_range)
-        campaign.ios_version_range = ios_version_range
-    if android_version_range != campaign.android_version_range:
-        changed['android_version_range'] = (campaign.android_version_range,
-                                            android_version_range)
-        campaign.android_version_range = android_version_range
-    if total_budget_pennies != campaign.total_budget_pennies:
-        void_campaign(link, campaign, reason='changed_budget')
-        campaign.total_budget_pennies = total_budget_pennies
-    if cost_basis != campaign.cost_basis:
-        changed['cost_basis'] = (campaign.cost_basis, cost_basis)
-        campaign.cost_basis = cost_basis
-    if bid_pennies != campaign.bid_pennies:
-        changed['bid_pennies'] = (campaign.bid_pennies,
-                                        bid_pennies)
-        campaign.bid_pennies = bid_pennies
-    if is_approved is not None and is_approved != campaign.is_approved:
-        changed['is_approved'] = (campaign.is_approved, is_approved)
-        queries.set_campaign_approval(link, campaign, is_approved)
+
+    if "dates" in kwargs:
+        dates = kwargs["dates"]
+        if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
+            original = '%s to %s' % (campaign.start_date, campaign.end_date)
+            edited = '%s to %s' % (dates[0], dates[1])
+            changed['dates'] = (original, edited)
+            campaign.start_date = dates[0]
+            campaign.end_date = dates[1]
+
+    if "target" in kwargs:
+        target = kwargs["target"]
+        if target != campaign.target:
+            changed['target'] = (campaign.target, target)
+            campaign.target = target
+
+    if "frequency_cap" in kwargs:
+        frequency_cap = kwargs["frequency_cap"]
+        if frequency_cap != campaign.frequency_cap:
+            changed['frequency_cap'] = (campaign.frequency_cap, frequency_cap)
+            campaign.frequency_cap = frequency_cap
+
+    if "priority" in kwargs:
+        priority = kwargs["priority"]
+        if priority != campaign.priority:
+            changed['priority'] = (campaign.priority.name, priority.name)
+            campaign.priority = priority
+
+    if "location" in kwargs:
+        location = kwargs["location"]
+        if location != campaign.location:
+            changed['location'] = (campaign.location, location)
+            campaign.location = location
+
+    if "platform" in kwargs:
+        platform = kwargs["platform"]
+        if platform != campaign.platform:
+            changed["platform"] = (campaign.platform, platform)
+            campaign.platform = platform
+
+    if "mobile_os" in kwargs:
+        mobile_os = kwargs["mobile_os"]
+        if mobile_os != campaign.mobile_os:
+            changed["mobile_os"] = (campaign.mobile_os, mobile_os)
+            campaign.mobile_os = mobile_os
+
+    if "ios_devices" in kwargs:
+        ios_devices = kwargs["ios_devices"]
+        if ios_devices != campaign.ios_devices:
+            changed['ios_devices'] = (campaign.ios_devices, ios_devices)
+            campaign.ios_devices = ios_devices
+
+    if "android_devices" in kwargs:
+        android_devices = kwargs["android_devices"]
+        if android_devices != campaign.android_devices:
+            changed['android_devices'] = (campaign.android_devices, android_devices)
+            campaign.android_devices = android_devices
+
+    if "ios_version_range" in kwargs:
+        ios_version_range = kwargs["ios_version_range"]
+        if ios_version_range != campaign.ios_version_range:
+            changed['ios_version_range'] = (campaign.ios_version_range,
+                                            ios_version_range)
+            campaign.ios_version_range = ios_version_range
+
+    if "android_version_range" in kwargs:
+        android_version_range = kwargs["android_version_range"]
+        if android_version_range != campaign.android_version_range:
+            changed['android_version_range'] = (campaign.android_version_range,
+                                                android_version_range)
+            campaign.android_version_range = android_version_range
+
+    if "total_budget_pennies" in kwargs:
+        total_budget_pennies = kwargs["total_budget_pennies"]
+        if total_budget_pennies != campaign.total_budget_pennies:
+            void_campaign(link, campaign, reason='changed_budget')
+            campaign.total_budget_pennies = total_budget_pennies
+
+    if "cost_basis" in kwargs:
+        cost_basis = kwargs["cost_basis"]
+        if cost_basis != campaign.cost_basis:
+            changed['cost_basis'] = (campaign.cost_basis, cost_basis)
+            campaign.cost_basis = cost_basis
+
+    if "bid_pennies" in kwargs:
+        bid_pennies = kwargs["bid_pennies"]
+        if bid_pennies != campaign.bid_pennies:
+            changed['bid_pennies'] = (campaign.bid_pennies,
+                                            bid_pennies)
+            campaign.bid_pennies = bid_pennies
+
+    if "paused" in kwargs:
+        paused = kwargs["paused"]
+        if paused != campaign.paused:
+            changed["paused"] = (campaign.paused, paused)
+            campaign.paused = paused
+
+    if "is_approved" in kwargs:
+        is_approved = kwargs["is_approved"]
+        if is_approved != campaign.is_approved:
+            changed['is_approved'] = (campaign.is_approved, is_approved)
+            queries.set_campaign_approval(link, campaign, is_approved)
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
@@ -478,14 +528,6 @@ def set_campaign_approval(link, campaign, is_approved):
     edit_campaign(
         link=link,
         campaign=campaign,
-        dates=[campaign.start_date, campaign.end_date],
-        target=campaign.target,
-        frequency_cap=campaign.frequency_cap,
-        priority=campaign.priority,
-        location=campaign.location,
-        total_budget_pennies=campaign.total_budget_pennies,
-        cost_basis=campaign.cost_basis,
-        bid_pennies=campaign.bid_pennies,
         is_approved=is_approved,
     )
 
@@ -503,13 +545,6 @@ def terminate_campaign(link, campaign):
         link=link,
         campaign=campaign,
         dates=dates,
-        target=campaign.target,
-        frequency_cap=campaign.frequency_cap,
-        priority=campaign.priority,
-        location=campaign.location,
-        total_budget_pennies=campaign.total_budget_pennies,
-        cost_basis=campaign.cost_basis,
-        bid_pennies=campaign.bid_pennies,
     )
 
     campaigns = list(PromoCampaign._by_link(link._id))
@@ -533,14 +568,7 @@ def delete_campaign(link, campaign):
 
 
 def toggle_pause_campaign(link, campaign, should_pause):
-    campaign.paused = should_pause
-    campaign._commit()
-
-    action = 'paused' if should_pause else 'resumed'
-    PromotionLog.add(link, '%s campaign %s' % (action, campaign._id))
-
-    hooks.get_hook('promote.edit_campaign').call(link=link,
-        campaign=campaign)
+    edit_campaign(link, campaign, paused=should_pause)
 
 
 def void_campaign(link, campaign, reason):
