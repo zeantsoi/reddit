@@ -1164,17 +1164,14 @@ class SubredditInfoBar(CachedTemplate):
         # so the menus cache properly
         self.path = request.path
 
-        self.accounts_active, self.accounts_active_fuzzed = self.sr.get_accounts_active()
-
-        if c.activity_service and feature.is_enabled("activity_service_read"):
-            try:
-                info = c.activity_service.count_activity(self.sr._fullname)
-                self.visitor_count = info.count
-                self.visitor_count_is_fuzzed = info.is_fuzzed
-            except Thrift.TException as exc:
-                g.stats.simple_event("activity_service.read.fail")
-                g.log.warning("failed to fetch activity for %s: %s",
-                    self.sr._fullname, exc)
+        try:
+            info = c.activity_service.count_activity(self.sr._fullname)
+            self.visitor_count = info.count
+            self.visitor_count_is_fuzzed = info.is_fuzzed
+        except Thrift.TException as exc:
+            g.stats.simple_event("activity_service.read.fail")
+            g.log.warning("failed to fetch activity for %s: %s",
+                self.sr._fullname, exc)
 
         if c.user_is_loggedin and c.user.pref_show_flair:
             self.flair_prefs = FlairPrefs()
