@@ -615,7 +615,9 @@ class Account(Thing):
 
     def update_sr_activity(self, sr):
         if not self._spam:
-            if c.activity_service:
+            AccountsActiveBySR.touch(self, sr)
+
+            if c.activity_service and feature.is_enabled("activity_service_write"):
                 try:
                     c.activity_service.record_activity(
                         sr._fullname, self._fullname)

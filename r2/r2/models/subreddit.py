@@ -644,6 +644,22 @@ class Subreddit(Thing, Printable, BaseSite):
         else:
             multi.delete()
 
+    def get_accounts_active(self):
+        fuzzed = False
+        count = AccountsActiveBySR.get_count(self)
+        key = 'get_accounts_active-' + self._id36
+
+        # Fuzz counts having low values, for privacy reasons
+        if count < 100 and not c.user_is_admin:
+            fuzzed = True
+            cached_count = g.cache.get(key)
+            if not cached_count:
+                count = fuzz_activity(count)
+                g.cache.set(key, count, time=5*60)
+            else:
+                count = cached_count
+        return count, fuzzed
+
     def spammy(self):
         return self._spam
 
