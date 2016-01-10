@@ -55,6 +55,7 @@
 
   ${SubscribeButton(thing.sr)}
   %if not thing.sr.hide_num_users_info and getattr(thing, "visitor_count", None):
+  <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
   <p class="users-online ${'fuzzed' if thing.visitor_count_is_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
     ${unsafe(Score.users_here_now(thing.visitor_count, prepend='~' if thing.visitor_count_is_fuzzed else ''))}
   </p>
