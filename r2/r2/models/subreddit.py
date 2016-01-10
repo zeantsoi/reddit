@@ -37,6 +37,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
+from thrift import Thrift
 
 from r2.config import feature
 from r2.lib.db.thing import Thing, Relation, NotFound
@@ -580,7 +581,14 @@ class Subreddit(Thing, Printable, BaseSite):
         if self.hide_num_users_info:
             return 0
 
-        return self.get_accounts_active()[0]
+        try:
+            info = c.activity_service.count_activity(self._fullname)
+            return info.count
+        except Thrift.TException as exc:
+            g.stats.simple_event("activity_service.read.fail")
+            g.log.warning("failed to fetch activity for %s: %s",
+                self._fullname, exc)
+            return 0
 
     @property
     def wiki_use_subreddit_karma(self):
@@ -643,22 +651,6 @@ class Subreddit(Thing, Printable, BaseSite):
             multi._commit()
         else:
             multi.delete()
-
-    def get_accounts_active(self):
-        fuzzed = False
-        count = AccountsActiveBySR.get_count(self)
-        key = 'get_accounts_active-' + self._id36
-
-        # Fuzz counts having low values, for privacy reasons
-        if count < 100 and not c.user_is_admin:
-            fuzzed = True
-            cached_count = g.cache.get(key)
-            if not cached_count:
-                count = fuzz_activity(count)
-                g.cache.set(key, count, time=5*60)
-            else:
-                count = cached_count
-        return count, fuzzed
 
     def spammy(self):
         return self._spam
