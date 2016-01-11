@@ -582,6 +582,9 @@ class Subreddit(Thing, Printable, BaseSite):
         if self.hide_num_users_info:
             return 0
 
+        if not c.activity_service:
+            return 0
+
         try:
             info = c.activity_service.count_activity(self._fullname)
             return info.count
