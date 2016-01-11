@@ -21,21 +21,20 @@
 ###############################################################################
 
 from r2.models import (
-    Message,
+    Account,
+    Comment,
     Inbox,
-    Subreddit,
+    Link,
+    LinksByAccount,
+    Message,
     ModContribSR,
     ModeratorInbox,
     MultiReddit,
-    Account,
-    Link,
-    PromoCampaign,
-    Comment,
-    Report,
-    LinksByAccount,
     Notification,
-    VotesByAccount,
     PromoCampaign,
+    Report,
+    Subreddit,
+    VotesByAccount,
 )
 from r2.models.notification import (
     add_notifications,
