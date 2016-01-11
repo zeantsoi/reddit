@@ -85,6 +85,7 @@
 </div>
 
 <script type="text/javascript">
+  $(function() {
     r.sponsored.set_form_render_fnc(r.sponsored.fill_inventory_form);
     r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
                                    ${unsafe(simplejson.dumps(thing.metros))});
@@ -95,4 +96,5 @@
       init_startdate();
       init_enddate();
     });
+  });
 </script>
