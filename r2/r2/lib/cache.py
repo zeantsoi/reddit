@@ -28,6 +28,8 @@ from copy import copy
 from curses.ascii import isgraph
 import logging
 from time import sleep
+import zlib
+import simplejson as json
 
 from pylons import app_globals as g
 
@@ -45,8 +47,6 @@ from r2.lib.hardcachebackend import HardCacheBackend
 from r2.lib.sgm import sgm # get this into our namespace so that it's
                            # importable from us
 
-import random
-                           
 # This is for use in the health controller
 _CACHE_SERVERS = set()
 
@@ -856,13 +856,14 @@ CL_QUORUM = ConsistencyLevel.QUORUM
 
 class Permacache(object):
     """Cassandra key/value column family backend with a cachechain in front.
-    
+
     Probably best to not think of this as a cache but rather as a key/value
     datastore that's faster to access than cassandra because of the cache.
 
     """
 
-    COLUMN_NAME = 'value'
+    # None to disable
+    min_compress_len = None
 
     def __init__(self, cache_chain, column_family, lock_factory):
         self.cache_chain = cache_chain
@@ -878,11 +879,35 @@ class Permacache(object):
 
     def _backend_get(self, keys):
         keys, is_single = tup(keys, ret_is_single=True)
-        rows = self.cf.multiget(keys, columns=[self.COLUMN_NAME])
-        ret = {
-            key: pickle.loads(columns[self.COLUMN_NAME])
-            for key, columns in rows.iteritems()
-        }
+        rows = self.cf.multiget(keys, columns=['value', 'compressed', 'format'])
+
+        ret = {}
+
+        for key, columns in rows.iteritems():
+            value = columns['value']
+
+            compressed = columns.get('compressed')
+            assert not compressed or compressed == 'zlib'
+
+            if compressed:
+                with g.stats.get_timer('permacache.deserialize.decompress_zlib'):
+                    value = zlib.decompress(value)
+
+            format = columns.get('format') or 'pickle'
+
+            if format == 'pickle':
+                with g.stats.get_timer('permacache.deserialize.pickle'):
+                    value = pickle.loads(value)
+            elif format == 'json':
+                with g.stats.get_timer('permacache.deserialize.json'):
+                    value = json.loads(value)
+            else:
+                # we don't know how to deal with any other formats
+                raise Exception("Unknown permacache serialization format %r"
+                                % (format,))
+
+            ret[key] = value
+
         if is_single:
             if ret:
                 return ret.values()[0]
@@ -891,19 +916,47 @@ class Permacache(object):
         else:
             return ret
 
-    def _backend_set(self, key, val):
+    def _backend_set(self, key, val, format=None):
         keys = {key: val}
-        ret = self._backend_set_multi(keys)
-        return ret.get(key)
+        self._backend_set_multi(keys, format=format)
 
-    def _backend_set_multi(self, keys, prefix=''):
+    def _backend_set_multi(self, keys, prefix='', format=None):
         ret = {}
-        with self.cf.batch():
+        with self.cf.batch() as batch:
             for key, val in keys.iteritems():
                 rowkey = "%s%s" % (prefix, key)
-                column = {self.COLUMN_NAME: pickle.dumps(val, protocol=2)}
-                ret[key] = self.cf.insert(rowkey, column)
-        return ret
+
+                format = format or 'pickle'
+
+                if format == 'pickle':
+                    with g.stats.get_timer('permacache.serialize.pickle'):
+                        serialized = pickle.dumps(val, protocol=-1)
+                elif format == 'json':
+                    with g.stats.get_timer('permacache.serialize.json'):
+                        serialized = json.dumps(val)
+                else:
+                    raise Exception("Unknown permacache serialization format %r"
+                                    % (format,))
+
+                columns = {
+                    'value': serialized,
+                    'format': format,
+
+                    # we can't just not send this column, because the value may
+                    # have been previously compressed and we need to overwrite
+                    # that marker if so
+                    'compressed': '',
+                }
+
+                should_compress = (self.min_compress_len
+                                   and len(serialized) >= self.min_compress_len)
+
+                if should_compress:
+                    with g.stats.get_timer('permacache.serialize.compress_zlib'):
+                        columns['value'] = zlib.compress(serialized)
+                        columns['compressed'] = 'zlib'
+
+                batch.insert(rowkey, columns)
 
     def _backend_delete(self, key):
         self.cf.remove(key)
@@ -918,22 +971,22 @@ class Permacache(object):
                 self.cache_chain.set(key, val)
         return val
 
-    def set(self, key, val):
-        self._backend_set(key, val)
+    def set(self, key, val, format=None):
+        self._backend_set(key, val, format=format)
         self.cache_chain.set(key, val)
 
-    def set_multi(self, keys, prefix='', time=None):
+    def set_multi(self, keys, prefix='', time=None, format=None):
         # time is sent by sgm but will be ignored
-        self._backend_set_multi(keys, prefix=prefix)
+        self._backend_set_multi(keys, prefix=prefix, format=format)
         self.cache_chain.set_multi(keys, prefix=prefix)
 
-    def pessimistically_set(self, key, value):
+    def pessimistically_set(self, key, value, format=None):
         """
         Sets a value in Cassandra but instead of setting it in memcached,
         deletes it from there instead. This is useful for the mr_top job which
         sets thousands of keys but almost all of them will never be read out of
         """
-        self._backend_set(key, value)
+        self._backend_set(key, value, format=format)
         self.cache_chain.delete(key)
 
     def get_multi(self, keys, prefix='', allow_local=True, stale=False):
@@ -955,7 +1008,7 @@ class Permacache(object):
         self._backend_delete(key)
         self.cache_chain.delete(key)
 
-    def mutate(self, key, mutation_fn, default=None, willread=True):
+    def mutate(self, key, mutation_fn, default=None, willread=True, format=None):
         """Mutate a Cassandra key as atomically as possible"""
         with self.make_lock("permacache_mutate", "mutate_%s" % key):
             # This has an edge-case where the cache chain was populated by a ONE
@@ -972,14 +1025,13 @@ class Permacache(object):
             new_value = mutation_fn(copy(value))
 
             if not willread or value != new_value:
-                self._backend_set(key, new_value)
+                self._backend_set(key, new_value, format=format)
             self.cache_chain.set(key, new_value, use_timer=False)
         return new_value
 
     def __repr__(self):
         return '<%s %r %r>' % (self.__class__.__name__,
                             self.cache_chain, self.cf.column_family)
-
 
 def test_cache(cache, prefix=''):
     #basic set/get
@@ -992,7 +1044,7 @@ def test_cache(cache, prefix=''):
 
     #set multi, no prefix
     cache.set_multi({'%s3' % prefix:3, '%s4' % prefix: 4})
-    assert cache.get_multi(('%s3' % prefix, '%s4' % prefix)) == {'%s3' % prefix: 3, 
+    assert cache.get_multi(('%s3' % prefix, '%s4' % prefix)) == {'%s3' % prefix: 3,
                                                                  '%s4' % prefix: 4}
 
     #set multi, prefix

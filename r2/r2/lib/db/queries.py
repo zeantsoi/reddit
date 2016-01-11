@@ -213,10 +213,11 @@ class CachedResults(object):
                 # that are large enough that they won't be immediately truncated
                 # out of storage
                 # item structure is (name, sortval1[, sortval2, ...])
-                smallest = data[-1]
+                smallest = data[-1] if data else None
                 item_tuples = [item for item in item_tuples
-                                    if (item[0] in existing_fnames or
-                                        item[1:] >= smallest[1:])]
+                               if (smallest is None or
+                                   item[0] in existing_fnames or
+                                   item[1:] >= smallest[1:])]
 
             if not item_tuples:
                 return data
