@@ -855,9 +855,14 @@ class PromotedLinkTraffic(Templated):
             self.total_clicks = 0
             self.total_spent = 0
         else:
-            self.total_impressions = totals[1]
-            self.total_clicks = totals[2]
-            self.total_spent = totals[0] if self.has_spent else None
+            if self.has_spent:
+                self.total_spent = totals[0]
+                self.total_impressions = totals[1]
+                self.total_clicks = totals[2]
+            else:
+                self.total_spent = None
+                self.total_impressions = totals[0]
+                self.total_clicks = totals[1]
 
         if self.total_impressions > 0:
             self.total_ctr = _clickthrough_rate(self.total_impressions,
