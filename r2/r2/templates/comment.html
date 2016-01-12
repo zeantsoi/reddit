@@ -96,7 +96,17 @@ ${parent.midcol(cls = cls)}
   %endif
 
   %if show and thing.score_hidden:
-    <span title="${_('this subreddit hides comment scores for %d minutes') % thing.subreddit.comment_score_hide_mins}">
+    <%
+    if thing.is_sticky:
+        score_hidden_reason = _('scores for stickied comments are visible to mods only')
+    elif thing.link.contest_mode:
+        score_hidden_reason = _('scores are not shown for comments in contest mode')
+    elif thing.subreddit.comment_score_hide_mins:
+        score_hidden_reason = _('this subreddit hides comment scores for %d minutes') % thing.subreddit.comment_score_hide_mins
+    else:
+        score_hidden_reason = ''
+    %>
+    <span class="score-hidden" title="${score_hidden_reason}">
       [${_("score hidden")}]
     </span>&#32;
   %elif show and not thing.score_hidden:
