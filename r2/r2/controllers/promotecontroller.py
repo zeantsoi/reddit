@@ -1138,13 +1138,24 @@ class PromoteApiController(ApiController):
                 iframe_embed_url != l.iframe_embed_url):
             if iframe_embed_url:
 
+                sandbox = (
+                    'allow-popups',
+                    'allow-forms',
+                    'allow-same-origin',
+                    'allow-scripts',
+                )
+                iframe_attributes = {
+                    'embed_url': websafe(iframe_embed_url),
+                    'sandbox': ' '.join(sandbox),
+                }
                 iframe = """
                     <iframe class="redditgifts-embed"
                             src="%(embed_url)s"
                             width="710" height="500" scrolling="no"
-                            frameborder="0" allowfullscreen>
+                            frameborder="0" allowfullscreen
+                            sandbox="%(sandbox)s">
                     </iframe>
-                """ % {'embed_url': websafe(iframe_embed_url)}
+                """ % iframe_attributes
                 media_object = {
                     'oembed': {
                         'description': 'redditgifts embed',
