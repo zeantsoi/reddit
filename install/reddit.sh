@@ -1,25 +1,3 @@
-#!/bin/bash
-# The contents of this file are subject to the Common Public Attribution
-# License Version 1.0. (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
-# License Version 1.1, but Sections 14 and 15 have been added to cover use of
-# software over a computer network and provide for limited attribution for the
-# Original Developer. In addition, Exhibit A has been modified to be consistent
-# with Exhibit B.
-#
-# Software distributed under the License is distributed on an "AS IS" basis,
-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-# the specific language governing rights and limitations under the License.
-#
-# The Original Code is reddit.
-#
-# The Original Developer is the Initial Developer.  The Initial Developer of
-# the Original Code is reddit Inc.
-#
-# All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
-# Inc. All Rights Reserved.
-###############################################################################
 
 ###############################################################################
 # reddit dev environment installer
@@ -39,30 +17,14 @@
 # Several configuration options (listed in the "Configuration" section below)
 # are overridable with environment variables. e.g.
 #
-#    sudo REDDIT_DOMAIN=example.com ./install-reddit.sh
+#    sudo REDDIT_DOMAIN=example.com ./install/reddit.sh
 #
 ###############################################################################
-set -e
 
-###############################################################################
-# Configuration
-###############################################################################
-# which user to install the code for; defaults to the user invoking this script
-REDDIT_USER=${REDDIT_USER:-$SUDO_USER}
+# load configuration
+RUNDIR=$(dirname $0)
+source $RUNDIR/install.cfg
 
-# the group to run reddit code as; must exist already
-REDDIT_GROUP=${REDDIT_GROUP:-nogroup}
-
-# the root directory to base the install in. must exist already
-REDDIT_HOME=${REDDIT_HOME:-/home/$REDDIT_USER}
-
-# the domain that you will connect to your reddit install with.
-# MUST contain a . in it somewhere as browsers won't do cookies for dotless
-# domains. an IP address will suffice if nothing else is available.
-REDDIT_DOMAIN=${REDDIT_DOMAIN:-reddit.local}
-
-#The plugins to clone and register in the ini file
-REDDIT_PLUGINS=${REDDIT_PLUGINS:-meatspace about liveupdate}
 
 ###############################################################################
 # Sanity Checks
@@ -119,130 +81,26 @@ fi
 ###############################################################################
 # Install prerequisites
 ###############################################################################
-set -x
 
-# aptitude configuration
-APTITUDE_OPTIONS="-y"
-export DEBIAN_FRONTEND=noninteractive
+# install primary packages
+$RUNDIR/install_apt.sh
 
-# run an aptitude update to make sure python-software-properties
-# dependencies are found
-apt-get update
+# install cassandra from datastax
+$RUNDIR/install_cassandra.sh
 
-# add the reddit ppa for some custom packages
-apt-get install $APTITUDE_OPTIONS python-software-properties
-apt-add-repository -y ppa:reddit/ppa
-
-# pin the ppa -- packages present in the ppa will take precedence over
-# ones in other repositories (unless further pinning is done)
-cat <<HERE > /etc/apt/preferences.d/reddit
-Package: *
-Pin: release o=LP-PPA-reddit
-Pin-Priority: 600
-HERE
-
-# add the datastax cassandra repos
-echo deb http://debian.datastax.com/community stable main > /etc/apt/sources.list.d/cassandra.sources.list
-wget -qO- -L https://debian.datastax.com/debian/repo_key | sudo apt-key add -
-
-# grab the new ppas' package listings
-apt-get update
-
-# install prerequisites
-cat <<PACKAGES | xargs apt-get install $APTITUDE_OPTIONS
-netcat-openbsd
-git-core
-
-python-dev
-python-setuptools
-python-routes
-python-pylons
-python-boto
-python-tz
-python-crypto
-python-babel
-python-numpy
-python-dateutil
-cython
-python-sqlalchemy
-python-beautifulsoup
-python-chardet
-python-psycopg2
-python-pycassa
-python-imaging
-python-pycaptcha
-python-amqplib
-python-pylibmc=1.2.2-1~trusty5
-python-bcrypt
-python-snudown
-python-l2cs
-python-lxml
-python-kazoo
-python-stripe
-python-tinycss2
-python-unidecode
-python-mock
-python-yaml
-
-python-baseplate
-
-python-flask
-geoip-bin
-geoip-database
-python-geoip
-
-nodejs
-node-less
-node-uglify
-gettext
-make
-optipng
-jpegoptim
-
-mcrouter
-memcached
-postgresql
-postgresql-client
-rabbitmq-server
-cassandra=1.2.19
-haproxy
-nginx
-gunicorn
-sutro
-libpcre3-dev
-PACKAGES
-
-# we don't want to upgrade to C* 2.0 yet, so we'll put it on hold
-apt-mark hold cassandra || true
-
-###############################################################################
-# Wait for all the services to be up
-###############################################################################
-# cassandra doesn't auto-start after install
-service cassandra start
-
-# check each port for connectivity
-echo "Waiting for services to be available, see source for port meanings..."
-# 11211 - memcache
-# 5432 - postgres
-# 5672 - rabbitmq
-# 9160 - cassandra
-for port in 11211 5432 5672 9160; do
-    while ! nc -vz localhost $port; do
-        sleep 1
-    done
-done
+# install services (rabbitmq, postgres, memcached, etc.)
+$RUNDIR/install_services.sh
 
 ###############################################################################
 # Install the reddit source repositories
 ###############################################################################
-if [ ! -d $REDDIT_HOME/src ]; then
-    mkdir -p $REDDIT_HOME/src
-    chown $REDDIT_USER $REDDIT_HOME/src
+if [ ! -d $REDDIT_SRC ]; then
+    mkdir -p $REDDIT_SRC
+    chown $REDDIT_USER $REDDIT_SRC
 fi
 
 function clone_reddit_repo {
-    local destination=$REDDIT_HOME/src/${1}
+    local destination=$REDDIT_SRC/${1}
     local repository_url=https://github.com/${2}.git
 
     if [ ! -d $destination ]; then
@@ -265,102 +123,26 @@ for plugin in $REDDIT_PLUGINS; do
 done
 
 ###############################################################################
+# Configure Services
+###############################################################################
+
 # Configure Cassandra
-###############################################################################
-python <<END
-import pycassa
-sys = pycassa.SystemManager("localhost:9160")
+$RUNDIR/setup_cassandra.sh
 
-if "reddit" not in sys.list_keyspaces():
-    print "creating keyspace 'reddit'"
-    sys.create_keyspace("reddit", "SimpleStrategy", {"replication_factor": "1"})
-    print "done"
-
-if "permacache" not in sys.get_keyspace_column_families("reddit"):
-    print "creating column family 'permacache'"
-    sys.create_column_family("reddit", "permacache")
-    print "done"
-END
-
-###############################################################################
 # Configure PostgreSQL
-###############################################################################
-SQL="SELECT COUNT(1) FROM pg_catalog.pg_database WHERE datname = 'reddit';"
-IS_DATABASE_CREATED=$(sudo -u postgres psql -t -c "$SQL")
+$RUNDIR/setup_postgres.sh
 
-if [ $IS_DATABASE_CREATED -ne 1 ]; then
-    cat <<PGSCRIPT | sudo -u postgres psql
-CREATE DATABASE reddit WITH ENCODING = 'utf8' TEMPLATE template0 LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8';
-CREATE USER reddit WITH PASSWORD 'password';
-PGSCRIPT
-fi
-
-sudo -u postgres psql reddit < $REDDIT_HOME/src/reddit/sql/functions.sql
-
-###############################################################################
 # Configure mcrouter
-###############################################################################
-if [ ! -d /etc/mcrouter ]; then
-    mkdir -p /etc/mcrouter
-fi
+$RUNDIR/setup_mcrouter.sh
 
-if [ ! -f /etc/mcrouter/global.conf ]; then
-    cat > /etc/mcrouter/global.conf <<MCROUTER
-{
-  // route all valid prefixes to the local memcached
-  "pools": {
-    "local": {
-      "servers": [
-        "127.0.0.1:11211",
-      ],
-      "protocol": "ascii",
-      "keep_routing_prefix": false,
-    },
-  },
-  "route": {
-    "type": "PrefixSelectorRoute",
-    "policies": {
-      "rend:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "page:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "pane:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-    },
-    "wildcard": {
-      "type": "NullRoute",
-    },
-  },
-}
-MCROUTER
-fi
-
-###############################################################################
 # Configure RabbitMQ
-###############################################################################
-if ! rabbitmqctl list_vhosts | egrep "^/$"
-then
-    rabbitmqctl add_vhost /
-fi
-
-if ! rabbitmqctl list_users | egrep "^reddit"
-then
-    rabbitmqctl add_user reddit reddit
-fi
-
-rabbitmqctl set_permissions -p / reddit ".*" ".*" ".*"
+$RUNDIR/setup_rabbitmq.sh
 
 ###############################################################################
 # Install and configure the reddit code
 ###############################################################################
 function install_reddit_repo {
-    cd $REDDIT_HOME/src/$1
+    cd $REDDIT_SRC/$1
     sudo -u $REDDIT_USER python setup.py build
     python setup.py develop --no-deps
 }
@@ -372,13 +154,13 @@ for plugin in $REDDIT_PLUGINS; do
 done
 
 # generate binary translation files from source
-cd $REDDIT_HOME/src/i18n/
+cd $REDDIT_SRC/i18n/
 sudo -u $REDDIT_USER make clean all
 
 # this builds static files and should be run *after* languages are installed
 # so that the proper language-specific static files can be generated and after
 # plugins are installed so all the static files are available.
-cd $REDDIT_HOME/src/reddit/r2
+cd $REDDIT_SRC/reddit/r2
 sudo -u $REDDIT_USER make clean all
 
 plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
@@ -414,9 +196,9 @@ port = 8001
 DEVELOPMENT
     chown $REDDIT_USER development.update
 else
-    sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_HOME/src/reddit/r2/development.update
-    sed -i "s/^domain = .*$/domain = $REDDIT_DOMAIN/" $REDDIT_HOME/src/reddit/r2/development.update
-    sed -i "s/^oauth_domain = .*$/oauth_domain = $REDDIT_DOMAIN/" $REDDIT_HOME/src/reddit/r2/development.update
+    sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_SRC/reddit/r2/development.update
+    sed -i "s/^domain = .*$/domain = $REDDIT_DOMAIN/" $REDDIT_SRC/reddit/r2/development.update
+    sed -i "s/^oauth_domain = .*$/oauth_domain = $REDDIT_DOMAIN/" $REDDIT_SRC/reddit/r2/development.update
 fi
 
 sudo -u $REDDIT_USER make ini
@@ -435,12 +217,12 @@ function helper-script() {
 
 helper-script /usr/local/bin/reddit-run <<REDDITRUN
 #!/bin/bash
-exec paster --plugin=r2 run $REDDIT_HOME/src/reddit/r2/run.ini "\$@"
+exec paster --plugin=r2 run $REDDIT_SRC/reddit/r2/run.ini "\$@"
 REDDITRUN
 
 helper-script /usr/local/bin/reddit-shell <<REDDITSHELL
 #!/bin/bash
-exec paster --plugin=r2 shell $REDDIT_HOME/src/reddit/r2/run.ini
+exec paster --plugin=r2 shell $REDDIT_SRC/reddit/r2/run.ini
 REDDITSHELL
 
 helper-script /usr/local/bin/reddit-start <<REDDITSTART
@@ -471,13 +253,13 @@ chown $REDDIT_USER:$REDDIT_GROUP /var/opt/reddit/
 
 mkdir -p /srv/www/pixel
 chown $REDDIT_USER:$REDDIT_GROUP /srv/www/pixel
-cp $REDDIT_HOME/src/reddit/r2/r2/public/static/pixel.png /srv/www/pixel
+cp $REDDIT_SRC/reddit/r2/r2/public/static/pixel.png /srv/www/pixel
 
 if [ ! -f /etc/gunicorn.d/click.conf ]; then
     cat > /etc/gunicorn.d/click.conf <<CLICK
 CONFIG = {
     "mode": "wsgi",
-    "working_dir": "$REDDIT_HOME/src/reddit/scripts",
+    "working_dir": "$REDDIT_SRC/reddit/scripts",
     "user": "$REDDIT_USER",
     "group": "$REDDIT_USER",
     "args": (
@@ -584,7 +366,7 @@ ln -nsf /etc/nginx/sites-available/reddit-ssl /etc/nginx/sites-enabled/
 mkdir -p /var/log/nginx/traffic
 
 # link the ini file for the Flask click tracker
-ln -nsf $REDDIT_HOME/src/reddit/r2/development.ini $REDDIT_HOME/src/reddit/scripts/production.ini
+ln -nsf $REDDIT_SRC/reddit/r2/development.ini $REDDIT_SRC/reddit/scripts/production.ini
 
 service nginx restart
 
@@ -758,7 +540,7 @@ if [ ! -f /etc/gunicorn.d/geoip.conf ]; then
     cat > /etc/gunicorn.d/geoip.conf <<GEOIP
 CONFIG = {
     "mode": "wsgi",
-    "working_dir": "$REDDIT_HOME/src/reddit/scripts",
+    "working_dir": "$REDDIT_SRC/reddit/scripts",
     "user": "$REDDIT_USER",
     "group": "$REDDIT_USER",
     "args": (
@@ -780,13 +562,13 @@ CONSUMER_CONFIG_ROOT=$REDDIT_HOME/consumer-count.d
 
 if [ ! -f /etc/default/reddit ]; then
     cat > /etc/default/reddit <<DEFAULT
-export REDDIT_ROOT=$REDDIT_HOME/src/reddit/r2
-export REDDIT_INI=$REDDIT_HOME/src/reddit/r2/run.ini
+export REDDIT_ROOT=$REDDIT_SRC/reddit/r2
+export REDDIT_INI=$REDDIT_SRC/reddit/r2/run.ini
 export REDDIT_USER=$REDDIT_USER
 export REDDIT_GROUP=$REDDIT_GROUP
 export REDDIT_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
-alias wrap-job=$REDDIT_HOME/src/reddit/scripts/wrap-job
-alias manage-consumers=$REDDIT_HOME/src/reddit/scripts/manage-consumers
+alias wrap-job=$REDDIT_SRC/reddit/scripts/wrap-job
+alias manage-consumers=$REDDIT_SRC/reddit/scripts/manage-consumers
 DEFAULT
 fi
 
@@ -847,63 +629,11 @@ if [ ! -f /etc/cron.d/reddit ]; then
 
 # jobs that recalculate time-limited listings (e.g. top this year)
 PGPASSWORD=password
-*/15 * * * * $REDDIT_USER $REDDIT_HOME/src/reddit/scripts/compute_time_listings link year '("hour", "day", "week", "month", "year")'
-*/15 * * * * $REDDIT_USER $REDDIT_HOME/src/reddit/scripts/compute_time_listings comment year '("hour", "day", "week", "month", "year")'
+*/15 * * * * $REDDIT_USER $REDDIT_SRC/reddit/scripts/compute_time_listings link year '("hour", "day", "week", "month", "year")'
+*/15 * * * * $REDDIT_USER $REDDIT_SRC/reddit/scripts/compute_time_listings comment year '("hour", "day", "week", "month", "year")'
 
 # disabled by default, uncomment if you need these jobs
 #*    * * * * root /sbin/start --quiet reddit-job-email
 #0    0 * * * root /sbin/start --quiet reddit-job-update_gold_users
 CRON
 fi
-
-###############################################################################
-# All done!
-###############################################################################
-cd $REDDIT_HOME
-
-cat <<CONCLUSION
-
-Congratulations! reddit is now installed.
-
-The reddit application code is managed with upstart, to see what's currently
-running, run
-
-    sudo initctl list | grep reddit
-
-Cron jobs start with "reddit-job-" and queue processors start with
-"reddit-consumer-". The crons are managed by /etc/cron.d/reddit. You can
-initiate a restart of all the consumers by running:
-
-    sudo reddit-restart
-
-or target specific ones:
-
-    sudo reddit-restart scraper_q
-
-See the GitHub wiki for more information on these jobs:
-
-* https://github.com/reddit/reddit/wiki/Cron-jobs
-* https://github.com/reddit/reddit/wiki/Services
-
-The reddit code can be shut down or started up with
-
-    sudo reddit-stop
-    sudo reddit-start
-
-And if you think caching might be hurting you, you can flush memcache with
-
-    reddit-flush
-
-Now that the core of reddit is installed, you may want to do some additional
-steps:
-
-* Ensure that $REDDIT_DOMAIN resolves to this machine.
-
-* To populate the database with test data, run:
-
-    cd $REDDIT_HOME/src/reddit
-    reddit-run scripts/inject_test_data.py -c 'inject_test_data()'
-
-* Manually run reddit-job-update_reddits immediately after populating the db
-  or adding your own subreddits.
-CONCLUSION
