@@ -1324,7 +1324,7 @@ var exports = r.sponsored = {
                 fixedCPMCampaigns++;
                 mappingFunction(data.targeting, fixedCPMSubreddits);
                 totalFixedCPMBudgetDollars += budget;
-                var bid = data.bid_pennies;
+                var bid = data.bid_dollars;
                 var impressions = Math.floor(budget / bid * 1000);
                 totalImpressions += impressions;
             }
@@ -1339,7 +1339,7 @@ var exports = r.sponsored = {
             fixedCPMSubreddits: _.keys(fixedCPMSubreddits),
             prettyTotalAuctionBudgetDollars: '$' + totalAuctionBudgetDollars.toFixed(2),
             prettyTotalFixedCPMBudgetDollars: '$' + totalFixedCPMBudgetDollars.toFixed(2),
-            totalImpressions: totalImpressions,
+            totalImpressions: r.utils.prettyNumber(totalImpressions),
         };
     },
 
