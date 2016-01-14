@@ -101,12 +101,16 @@ function sr_dropdown_mup(row) {
         var name = $(row).text();
         $("#sr-autocomplete").val(name);
         $("#sr-drop-down").hide();
-        $("#sr-autocomplete").trigger("sr-changed");
+        $("#sr-autocomplete").trigger("sr-changed", {
+            is_autocomplete: true,
+        });
     }
 }
 
 function set_sr_name(link) {
     var name = $(link).text();
     $("#sr-autocomplete").trigger('focus').val(name);
-    $("#sr-autocomplete").trigger("sr-changed");
+    $("#sr-autocomplete").trigger("sr-changed", {
+        is_suggestion: true,
+    });
 }

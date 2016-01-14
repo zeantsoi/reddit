@@ -173,21 +173,31 @@ def _get_callback_hmac(username, key, expires):
     return hmac.new(secret, data, hashlib.sha256).hexdigest()
 
 
-def _force_images(link, thumbnail, mobile):
-    changed = False
-
+def _force_images(link, thumbnail, mobile, changed=None):
     if thumbnail:
+        old_thumbnail_url = link.thumbnail_url
         media.force_thumbnail(link, thumbnail["data"], thumbnail["ext"])
-        changed = True
+        new_thumbnail_url = link.thumbnail_url
+
+        if changed is not None and old_thumbnail_url != new_thumbnail_url:
+            changed["thumbnail_url"] = (
+                old_thumbnail_url,
+                new_thumbnail_url,
+            )
 
     can_target_mobile = (feature.is_enabled("mobile_web_targeting") or
         feature.is_enabled("mobile_native_targeting"))
 
     if can_target_mobile and mobile:
+        old_mobile_ad_url = link.mobile_ad_url
         media.force_mobile_ad_image(link, mobile["data"], mobile["ext"])
-        changed = True
+        new_mobile_ad_url = link.mobile_ad_url
 
-    return changed
+        if changed is not None and old_mobile_ad_url != new_mobile_ad_url:
+            changed["mobile_ad_url"] = (
+                old_mobile_ad_url,
+                new_mobile_ad_url,
+            )
 
 
 def campaign_has_oversold_error(form, campaign):
@@ -984,6 +994,8 @@ class PromoteApiController(ApiController):
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
+        changed = {}
+
         # check for user override
         if is_new_promoted and c.user_is_sponsor and username:
             try:
@@ -1057,41 +1069,64 @@ class PromoteApiController(ApiController):
                     l.third_party_tracking_2 = third_party_tracking_2 or None
             l._commit()
 
-            _force_images(l, thumbnail=thumbnail, mobile=mobile)
+            _force_images(
+                link=l,
+                thumbnail=thumbnail,
+                mobile=mobile,
+            )
 
             form.redirect(promote.promo_edit_url(l))
 
         elif not promote.is_promo(l):
             return
 
-        changed = False
         if title and title != l.title:
+            changed["title"] = (l.title, title)
             l.title = title
-            changed = True
 
-        if _force_images(l, thumbnail=thumbnail, mobile=mobile):
-            changed = True
+        _force_images(
+            link=l,
+            thumbnail=thumbnail,
+            mobile=mobile,
+            changed=changed,
+        )
 
         # type changing
         if is_self != l.is_self:
+            changed["is_self"] = (l.is_self, is_self)
+
+            if selftext != l.selftext:
+                changed["selftext"] = (l.selftext, selftext)
             l.set_content(is_self, selftext if is_self else url)
-            changed = True
 
         if is_link and url and url != l.url:
+            changed["selftext"] = (l.url, url)
             l.url = url
-            changed = True
+
+        requires_approval = any(key in changed for key in (
+            "title",
+            "is_self",
+            "selftext",
+            "url",
+        ))
 
         # only trips if changed by a non-sponsor
-        if changed and not c.user_is_sponsor and promote.is_promoted(l):
+        if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
             promote.edited_live_promotion(l)
 
         # selftext can be changed at any time
-        if is_self:
+        if is_self and selftext != l.selftext:
+            changed["selftext"] = (l.selftext, selftext)
             l.selftext = selftext
 
         # comment disabling and sendreplies is free to be changed any time.
-        l.disable_comments = disable_comments
-        l.sendreplies = sendreplies
+        if disable_comments != l.disable_comments:
+            changed["disable_comments"] = (l.disable_comments, disable_comments)
+            l.disable_comments = disable_comments
+
+        if sendreplies != l.sendreplies:
+            changed["sendreplies"] = (l.sendreplies, sendreplies)
+            l.sendreplies = sendreplies
 
         if c.user_is_sponsor:
             if (form.has_errors("media_url", errors.BAD_URL) or
@@ -1185,6 +1220,18 @@ class PromoteApiController(ApiController):
         # see: `promote.unapprove_promotion`
         if not is_new_promoted:
             hooks.get_hook('promote.edit_promotion').call(link=l)
+            g.events.edit_promoted_link_event(
+                link=l,
+                changed_attributes=changed,
+                request=request,
+                context=c,
+            )
+        else:
+            g.events.new_promoted_link_event(
+                link=l,
+                request=request,
+                context=c,
+            )
 
         # clean up so the same images don't reappear if they create
         # another link
@@ -1590,7 +1637,7 @@ class PromoteApiController(ApiController):
         if campaign.paused == should_pause:
             return
 
-        promote.edit_campaign(link, campaign, paused=should_pause)
+        promote.toggle_pause_campaign(link, campaign, should_pause)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
@@ -1648,10 +1695,22 @@ class PromoteApiController(ApiController):
     def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
                         edit, address, creditcard):
 
-        def _handle_failed_payment(reason=None):
+        def _handle_failed_payment(pay_id=None, reason=None):
             promote.failed_payment_method(c.user, link)
             msg = reason or _("failed to authenticate card. sorry.")
             form.set_text(".status", msg)
+            g.events.campaign_payment_failed_event(
+                link=link,
+                campaign=campaign,
+                amount_pennies=campaign.total_budget_pennies,
+                reason=reason,
+                address=address,
+                payment=creditcard,
+                is_new_payment_method=new_payment,
+                payment_id=pay_id,
+                request=request,
+                context=c,
+            )
 
         if not g.authorizenetapi:
             return
@@ -1684,6 +1743,7 @@ class PromoteApiController(ApiController):
             return
 
         new_payment = not pay_id
+        payment_failed_reason = None
 
         address_modified = new_payment or edit
         if address_modified:
@@ -1705,12 +1765,23 @@ class PromoteApiController(ApiController):
                                                address=address,
                                                link=link)
 
-            except AuthorizeNetException:
-                _handle_failed_payment()
-                return
+            except AuthorizeNetException as e:
+                payment_failed_reason = e.message
 
-        if pay_id:
-            success, reason = promote.auth_campaign(link, campaign, c.user,
+        g.events.campaign_payment_attempt_event(
+            link=link,
+            campaign=campaign,
+            address=address,
+            payment=creditcard,
+            amount_pennies=campaign.total_budget_pennies,
+            is_new_payment_method=new_payment,
+            payment_id=pay_id,
+            request=request,
+            context=c,
+        )
+
+        if pay_id and payment_failed_reason is None:
+            success, payment_failed_reason = promote.auth_campaign(link, campaign, c.user,
                                                     pay_id)
 
             if success:
@@ -1722,15 +1793,27 @@ class PromoteApiController(ApiController):
                     address = profile.billTo
 
                 promote.successful_payment(link, campaign, request.ip, address)
+                g.events.campaign_payment_success_event(
+                    link=link,
+                    campaign=campaign,
+                    amount_pennies=campaign.total_budget_pennies,
+                    address=address,
+                    payment=creditcard,
+                    is_new_payment_method=new_payment,
+                    payment_id=pay_id,
+                    transaction_id=campaign.trans_id,
+                    request=request,
+                    context=c,
+                )
 
                 jquery.payment_redirect(promote.promo_edit_url(link),
                         new_payment, campaign.total_budget_pennies)
                 return
             else:
-                _handle_failed_payment(reason)
+                _handle_failed_payment(pay_id=pay_id, reason=payment_failed_reason)
 
         else:
-            _handle_failed_payment()
+            _handle_failed_payment(pay_id=pay_id, reason=payment_failed_reason)
 
     @json_validate(
         VSponsor("link"),

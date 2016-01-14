@@ -419,6 +419,24 @@ r.analytics = {
     return payload;
   },
 
+  adsInteractionEvent: function(action, payload, done) {
+    var eventTopic = 'selfserve_events';
+    var eventType = 'cs.interaction.' + action;
+
+    r.events.track(
+      eventTopic,
+      eventType,
+      this.addContextData([
+        'referrer_domain',
+        'referrer_url',
+      ], payload)
+    );
+
+    if (done) {
+      r.events.send(done);
+    }
+  },
+
   screenviewEvent: function() {
     var eventTopic = 'screenview_events';
     var eventType = 'cs.screenview';

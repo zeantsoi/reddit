@@ -97,10 +97,12 @@
 
     (function($) {
       $.payment_redirect = function(url, isNewCard, amount) {
-        r.analytics.fireFunnelEvent('ads', isNewCard ? 'checkout-new' : 'checkout-existing');
-        r.analytics.fireFunnelEvent('ads', 'checkout-pay', {value: amount}, function() {
+        var redirect = _.after(2, function() {
           window.location.href = url;
         });
+
+        r.analytics.fireFunnelEvent('ads', isNewCard ? 'checkout-new' : 'checkout-existing');
+        r.analytics.fireFunnelEvent('ads', 'checkout-pay', {value: amount}, redirect);
       };
     })(window.jQuery);
   </script>

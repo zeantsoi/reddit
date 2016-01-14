@@ -420,6 +420,7 @@ var CampaignCreator = React.createClass({
         );
       }
       else if (requested.impressions > this.state.available) {
+        r.analytics.fireFunnelEvent('ads', 'inventory-error');
 
         var options = [];
         if (maximized.totalBudgetDollars >= this.props.minBudgetDollars) {
@@ -446,8 +447,6 @@ var CampaignCreator = React.createClass({
           );
         }
         else {
-          r.analytics.fireFunnelEvent('ads', 'inventory-error');
-
           return InfoText({
               className: 'error',
               target: this.props.targetName
@@ -574,9 +573,28 @@ var exports = r.sponsored = {
     render: function() {},
 
     init: function() {
-        $("#sr-autocomplete").on("sr-changed blur", function() {
-            r.sponsored.render()
-        })
+        $("#sr-autocomplete").on("sr-changed blur", function(e, data) {
+            data = data || {};
+            r.sponsored.render();
+
+            if (e.type !== 'sr-changed') {
+              return;
+            }
+
+            var target = null;
+
+            if (data.is_autocomplete) {
+              target = 'autocomplete';
+            } else if (data.is_suggestion) {
+              target = 'suggestion';
+            }
+
+            r.analytics.adsInteractionEvent('select_subreddit', {
+              subreddit_name: $(this).val(),
+              target: target,
+            });
+        });
+
         this.targetValid = true;
         this.bidValid = true;
         this.inventory = {}
@@ -681,13 +699,15 @@ var exports = r.sponsored = {
             }
         }, this);
 
-        var collapse = _.bind(function() {
-            this.collapse_collection_selector();
+        var collapse = _.bind(function(track) {
+            this.collapse_collection_selector(track);
             this.render();
         }, this);
-        
-        this.collapse_collection_selector = function collapse_widget() {
-            $('body').off('click', collapse);
+
+        var collapseAndTrack = _.partial(collapse, true);
+
+        this.collapse_collection_selector = function collapse_widget(track) {
+            $('body').off('click', collapseAndTrack);
             var $selected = get_selected();
             var index = $collections.index($selected);
             $collectionSelector.addClass('collapsed').removeClass('expanded');
@@ -704,14 +724,21 @@ var exports = r.sponsored = {
                 $collectionLabel.show();
                 $frontpageLabel.hide();
             }
+
+            if (track) {
+              r.analytics.adsInteractionEvent('close_collections');
+            }
+
         }
 
         function expand() {
-            $('body').on('click', collapse);
+            $('body').on('click', collapseAndTrack);
             $collectionSelector.addClass('expanded').removeClass('collapsed');
             $collectionList
                 .innerHeight(collectionCount * collectionHeight)
                 .css('top', 0);
+
+            r.analytics.adsInteractionEvent('open_collections');
         }
 
         function get_selected() {
@@ -728,8 +755,14 @@ var exports = r.sponsored = {
                 else {
                     var $selected = get_selected();
                     if ($selected[0] !== this) {
+                        var $input = $(this).siblings('input');
+
                         $selected.siblings('input').prop('checked', false);
-                        $(this).siblings('input').prop('checked', 'checked');
+                        $input.prop('checked', 'checked');
+
+                        r.analytics.adsInteractionEvent('select_collection', {
+                          collection_name: $input.val() || 'frontpage',
+                        });
                     }
                     collapse();
                 }
@@ -981,6 +1014,7 @@ var exports = r.sponsored = {
             maxBudgetDollars: parseFloat(maxBudgetDollars),
             minBudgetDollars: parseFloat(minBudgetDollars),
             targetName: targeting.displayName,
+            targeting: targeting,
             costBasis: costBasisValue.toUpperCase(),
             bidDollars: parseFloat(bidDollars),
           }),
@@ -2265,7 +2299,12 @@ function create_campaign() {
         return;
     }
 
+    var link_id36 = $("#campaign").find('*[name="link_id36"]').val();
+
     r.analytics.fireFunnelEvent('ads', 'new-campaign');
+    r.analytics.adsInteractionEvent('new_campaign', {
+      link_id: parseInt(link_id36, 36),
+    });
 
     cancel_edit(function() {
             cancel_edit_promotion();

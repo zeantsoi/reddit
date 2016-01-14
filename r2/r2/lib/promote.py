@@ -35,6 +35,7 @@ import urlparse
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
+from pylons import request
 from pytz import timezone
 
 from r2.config import feature
@@ -376,15 +377,29 @@ def new_campaign(link, dates, target, frequency_cap,
         set_campaign_approval(link, campaign, False)
 
     hooks.get_hook('promote.new_campaign').call(link=link, campaign=campaign)
+
+    g.events.new_campaign_event(
+        link=link,
+        campaign=campaign,
+        request=request,
+        context=c,
+    )
+
     return campaign
 
 
 def free_campaign(link, campaign, user):
-    auth_campaign(link, campaign, user, freebie=True)
+    transaction_id, reason = auth_campaign(link, campaign, user, freebie=True)
+    g.events.campaign_freebie_event(
+        link=link,
+        campaign=campaign,
+        amount_pennies=campaign.total_budget_pennies,
+        transaction_id=transaction_id,
+    )
 
 
 def edit_campaign(
-        link, campaign,
+        link, campaign, send_event=True,
         **kwargs
     ):
 
@@ -514,6 +529,15 @@ def edit_campaign(
     if change_text:
         PromotionLog.add(link, 'edited %s: %s' % (campaign, change_text))
 
+    if send_event:
+        g.events.edit_campaign_event(
+            link=link,
+            campaign=campaign,
+            changed_attributes=changed,
+            request=request,
+            context=c,
+        )
+
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
 
 
@@ -543,6 +567,15 @@ def set_campaign_approval(link, campaign, is_approved):
         link=link,
         campaign=campaign,
         is_approved=is_approved,
+        send_event=False,
+    )
+
+    g.events.approve_campaign_event(
+        link=link,
+        campaign=campaign,
+        is_approved=is_approved,
+        request=request,
+        context=c,
     )
 
 
@@ -559,6 +592,7 @@ def terminate_campaign(link, campaign):
         link=link,
         campaign=campaign,
         dates=dates,
+        send_event=False,
     )
 
     campaigns = list(PromoCampaign._by_link(link._id))
@@ -572,14 +606,39 @@ def terminate_campaign(link, campaign):
                                                         original_end.date())
     PromotionLog.add(link, msg)
 
+    g.events.terminate_campaign_event(
+        link=link,
+        campaign=campaign,
+        original_end=original_end,
+        request=request,
+        context=c,
+    )
+
 
 def delete_campaign(link, campaign):
     PromotionWeights.delete(link, campaign)
     void_campaign(link, campaign, reason='deleted_campaign')
     campaign.delete()
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
+    g.events.delete_campaign_event(
+        link=link,
+        campaign=campaign,
+        request=request,
+        context=c,
+    )
     hooks.get_hook('promote.delete_campaign').call(link=link, campaign=campaign)
     queries.update_unapproved_campaigns_listing(link)
+
+
+def toggle_pause_campaign(link, campaign, should_pause):
+    edit_campaign(link, campaign, paused=should_pause, send_event=False)
+
+    g.events.pause_campaign_event(
+        link=link,
+        campaign=campaign,
+        request=request,
+        context=c,
+    )
 
 
 def void_campaign(link, campaign, reason):
@@ -593,6 +652,15 @@ def void_campaign(link, campaign, reason):
         text = ('voided transaction for %s: (trans_id: %d)'
                 % (campaign, bid_record.transaction))
         PromotionLog.add(link, text)
+
+        g.events.campaign_payment_void_event(
+            link=link,
+            campaign=campaign,
+            reason=reason,
+            amount_pennies=campaign.total_budget_pennies,
+            request=request,
+            context=c,
+        )
 
         if bid_record.transaction > 0:
             # notify the user that the transaction was voided if it was not
@@ -757,6 +825,13 @@ def accept_promotion(link):
     if is_live:
         all_live_promo_srnames(_update=True)
 
+    g.events.approve_promoted_link_event(
+        link=link,
+        is_approved=True,
+        request=request,
+        context=c,
+    )
+
 
 def flag_payment(link, reason):
     # already determined to be fraud or already flagged for that reason.
@@ -799,6 +874,14 @@ def reject_promotion(link, reason=None, notify_why=True):
 
     if was_live:
         all_live_promo_srnames(_update=True)
+
+    g.events.approve_promoted_link_event(
+        link=link,
+        is_approved=False,
+        reason=reason,
+        request=request,
+        context=c,
+    )
 
 
 def unapprove_promotion(link):

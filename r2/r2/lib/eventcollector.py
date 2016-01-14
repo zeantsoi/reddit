@@ -36,7 +36,10 @@ from uuid import uuid4
 from wsgiref.handlers import format_date_time
 
 from r2.lib import amqp, hooks
-from r2.lib.geoip import get_request_location
+from r2.lib.geoip import (
+    get_request_location,
+    location_by_ips,
+)
 from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
@@ -654,6 +657,436 @@ class EventQueue(object):
         event.add('loid', loid)
         self.save_event(event)
 
+    @squelch_exceptions
+    def new_promoted_link_event(self, link, request=None, context=None):
+        """Send an event recording a new promoted link's creation.
+
+        link: A promoted r2.models.Link object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        if not link.promoted:
+            return
+
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.new_promoted_link",
+            time=link._date,
+            request=request,
+            context=context,
+        )
+
+        event.add_promoted_link_fields(link)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def edit_promoted_link_event(self, link, changed_attributes,
+            request=None, context=None):
+        """Send an event recording edits to a promoted link.
+
+        link: A promoted r2.models.Link object
+        changed_attributes: A dictionary of tuples for the attributes that changed,
+            the first value in the tuple being the prevous value and the second
+            being the new value.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        if not link.promoted:
+            return
+
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.edit_promoted_link",
+            request=request,
+            context=context,
+        )
+
+        event.add_promoted_link_fields(link, changed=changed_attributes)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def approve_promoted_link_event(self, link, is_approved,
+            reason=None, request=None, context=None):
+        """Send an event recording a promo link's approval status.
+
+        link: A promoted r2.models.Link object
+        is_approved: Boolean for if the post is accepted or rejected
+        reason: Optional string specifying reason for the rejection
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        if not link.promoted:
+            return
+
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.approve_promoted_link",
+            request=request,
+            context=context,
+            data=dict(
+                is_approved=is_approved,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+
+        if not is_approved and reason:
+            event.add("rejection_reason", reason)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def approve_campaign_event(self, link, campaign, is_approved, request=None, context=None):
+        """Send an event recording when promo campaign's is approved.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        is_approved: Boolean for if the campaign is approved or unapproved
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.approve_campaign",
+            request=request,
+            context=context,
+            data=dict(
+                is_approved=is_approved,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def new_campaign_event(self, link, campaign,
+            request=None, context=None):
+        """Send an event recording a new promo campaign's creation.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        if not link.promoted:
+            return
+
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.new_campaign",
+            time=campaign._date,
+            request=request,
+            context=context,
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def edit_campaign_event(self, link, campaign, changed_attributes,
+            request=None, context=None):
+        """Send an event recording edits to a promo campaign.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        changed_attributes: A dictionary of tuples for the attributes that changed,
+            the first value in the tuple being the prevous value and the second
+            being the new value.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        if not link.promoted:
+            return
+
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.edit_campaign",
+            request=request,
+            context=context,
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign, changed=changed_attributes)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def pause_campaign_event(self, link, campaign,
+            request=None, context=None):
+        """Send an event recording when a campaign is paused/unpaused.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.pause_campaign",
+            request=request,
+            context=context,
+            data=dict(
+                is_paused=campaign.paused,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def terminate_campaign_event(self, link, campaign, original_end,
+            request=None, context=None):
+        """Send an event recording when a campaign is terminated.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        original_end: Datetime which the campaign was originally suppose to end.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.terminate_campaign",
+            request=request,
+            context=context,
+            data=dict(
+                original_end_date=_datetime_to_millis(original_end),
+            )
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def delete_campaign_event(self, link, campaign,
+            request=None, context=None):
+        """Send an event recording when a campaign is deleted.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.delete_campaign",
+            request=request,
+            context=context,
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def campaign_payment_void_event(
+            self, link, campaign,
+            reason, amount_pennies,
+            request=None, context=None):
+        """Send an event recording when a campaign payment is voided.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        reason: Why the campaign was voided
+        amount_pennies: Transaction amount in pennies.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.campaign_payment_voided",
+            request=request,
+            context=context,
+            data=dict(
+                reason=reason,
+                amount_pennies=amount_pennies,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def campaign_freebie_event(
+            self, link, campaign, amount_pennies,
+            transaction_id=None,
+            request=None, context=None):
+        """Send an event recording when a campaign is comped.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        amount_pennies: Transaction amount in pennies.
+        transaction_id: Unique id of the transaction if successful.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.campaign_freebie",
+            request=request,
+            context=context,
+            data=dict(
+                amount_pennies=amount_pennies,
+                transaction_id=transaction_id,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def campaign_payment_attempt_event(
+            self, link, campaign,
+            is_new_payment_method, amount_pennies,
+            payment_id=None, address=None, payment=None,
+            request=None, context=None):
+        """Send an event recording when a campaign payment is attempted.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        is_new_payment_method: Whether or not this is a new or
+            existing payment method.
+        amount_pennies: Transaction amount in pennies.
+        payment_id: Unique id of payment method used (optional)
+        address: An r2.lib.authorize.api.Address object
+        payment: An r2.lib.authorize.api.CreditCard object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.campaign_payment_attempt",
+            request=request,
+            context=context,
+            data=dict(
+                payment_id=payment_id,
+                is_new_payment_method=is_new_payment_method,
+            )
+        )
+
+        event.add_payment_fields(
+            payment=payment,
+            address=address,
+            request=request,
+        )
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def campaign_payment_failed_event(
+            self, link, campaign,
+            is_new_payment_method, amount_pennies, reason,
+            payment_id=None, address=None, payment=None,
+            request=None, context=None):
+        """Send an event recording when a campaign payment fails.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        is_new_payment_method: Whether or not this is a new or
+            existing payment method.
+        amount_pennies: Transaction amount in pennies.
+        reason: Reason for the payment failure.
+        payment_id: Unique id of payment method used (optional)
+        address: An r2.lib.authorize.api.Address object
+        payment: An r2.lib.authorize.api.CreditCard object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.campaign_payment_failed",
+            request=request,
+            context=context,
+            data=dict(
+                payment_id=payment_id,
+                is_new_payment_method=is_new_payment_method,
+                reason=reason,
+            ),
+        )
+
+        event.add_payment_fields(
+            payment=payment,
+            address=address,
+            request=request,
+        )
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def campaign_payment_success_event(
+            self, link, campaign,
+            is_new_payment_method, amount_pennies, transaction_id,
+            payment_id=None, address=None, payment=None,
+            request=None, context=None):
+        """Send an event recording when a campaign payment succeeds.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        is_new_payment_method: Whether or not this is a new or
+            existing payment method.
+        amount_pennies: Transaction amount in pennies.
+        payment_id: Unique id of payment method used (optional)
+        transaction_id: Unique id of transaction (optional)
+        address: An r2.lib.authorize.api.Address object
+        payment: An r2.lib.authorize.api.CreditCard object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.campaign_payment_success",
+            request=request,
+            context=context,
+            data=dict(
+                payment_id=payment_id,
+                transaction_id=transaction_id,
+                is_new_payment_method=is_new_payment_method,
+            ),
+        )
+
+        event.add_payment_fields(
+            payment=payment,
+            address=address,
+            request=request,
+        )
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
 
 class Event(object):
     def __init__(self, topic, event_type,
@@ -857,6 +1290,201 @@ class Event(object):
             data["payload"]["obfuscated_data"] = self.obfuscated_data
 
         return json.dumps(data)
+
+
+class SelfServeEvent(Event):
+    def add_payment_fields(self, payment, address, request=None):
+        if request:
+            location = location_by_ips(request.ip)
+            if location:
+                self.add("geoip_region", location.get("region_name"))
+
+        if not (payment and address):
+            return
+
+        card_number = getattr(payment, "cardNumber", None)
+
+        if card_number is None:
+            return
+
+        self.add("payment_card_last4", card_number[-4:], obfuscate=True)
+        self.add("payment_card_expiry", payment.expirationDate, obfuscate=True)
+        self.add("payment_postal_code", address.zip)
+
+    def add_promoted_link_fields(self, link, changed=None):
+        if not link.promoted:
+            return
+
+        from r2.lib import media
+
+        author = link.author_slow
+
+        self.add("link_id", link._id)
+        self.add("link_fullname", link._fullname)
+        self.add("title", link.title)
+        self.add("author_id", author._id)
+        self.add("author_neutered", author._spam)
+        self.add("author_email_verified", author.email_verified)
+        self.add("is_managed", link.managed_promo)
+
+        if link.is_self:
+            self.truncatable_field = "post_body"
+            self.add("post_type", "self")
+            self.add("post_body", link.selftext)
+        else:
+            self.add("post_type", "link")
+            self.add("target_url", link.url)
+            self.add("target_domain", domain(link.url))
+
+        self.add("thumbnail_url", media.thumbnail_url(link))
+        self.add("mobile_card_url", media.mobile_ad_url(link))
+        self.add("domain_override", link.domain_override)
+        self.add("third_party_tracking", link.third_party_tracking)
+        self.add("third_party_tracking_2", link.third_party_tracking_2)
+
+        if changed is not None:
+            prev_attrs = {key: prev
+                for key, (prev, current) in changed.iteritems()}
+            self.add("prev_title", prev_attrs.get("title"))
+            self.add("prev_is_managed", prev_attrs.get("managed_promo"))
+
+            is_self = prev_attrs.get("is_self", link.is_self)
+
+            if "is_self" in prev_attrs:
+                self.add("prev_post_type", "self" if is_self else "link")
+
+            if is_self:
+                self.add("prev_post_body", prev_attrs.get("selftext"))
+            elif "url" in prev_attrs:
+                url = prev_attrs["url"]
+                self.add("prev_target_url", url)
+                self.add("prev_target_domain", domain(url))
+
+            self.add("prev_thumbnail_url", prev_attrs.get("thumbnail_url"))
+            self.add("prev_mobile_card_url", prev_attrs.get("mobile_ad_url"))
+            self.add("prev_domain_override",
+                prev_attrs.get("domain_override"))
+            self.add("prev_third_party_tracking",
+                prev_attrs.get("third_party_tracking"))
+            self.add("prev_third_party_tracking_2",
+                prev_attrs.get("third_party_tracking_2"))
+
+    def add_campaign_fields(self, campaign, changed=None):
+        from r2.models.promo import PROMOTE_COST_BASIS
+
+        self.add("campaign_id", campaign._id)
+        self.add("start_date_ts", _datetime_to_millis(campaign.start_date))
+        self.add("end_date_ts", _datetime_to_millis(campaign.end_date))
+        self.add("target_name", campaign.target.pretty_name)
+        self.add("subreddit_targets", campaign.target.subreddit_names)
+        self.add("total_budget_pennies", campaign.total_budget_pennies)
+        self.add("priority", campaign.priority_name)
+        self.add("cost_basis", PROMOTE_COST_BASIS.name[campaign.cost_basis])
+        self.add("platform", campaign.platform)
+
+        self.add_location_fields(campaign.location)
+
+        if campaign.cost_basis != PROMOTE_COST_BASIS.fixed_cpm:
+            self.add("bid_pennies", campaign.bid_pennies)
+
+        self.add("frequency_cap", campaign.frequency_cap)
+        self.add("mobile_os_names", campaign.mobile_os)
+        self.add("ios_device_types", campaign.ios_devices)
+        self.add("android_device_types", campaign.android_devices)
+
+        if campaign.ios_version_range is not None:
+            self.add("ios_version_range",
+                "-".join(campaign.ios_version_range))
+        if campaign.android_version_range is not None:
+            self.add("android_version_range",
+                "-".join(campaign.android_version_range))
+
+        if changed is not None:
+            prev_attrs = {key: prev
+                for key, (prev, current) in changed.iteritems()}
+
+            prev_start_date = prev_attrs.get("start_date")
+            if prev_start_date is not None:
+                self.add("prev_start_date_ts",
+                    _datetime_to_millis(prev_start_date))
+            prev_end_date = prev_attrs.get("end_date")
+            if prev_end_date is not None:
+                self.add("prev_end_date_ts",
+                    _datetime_to_millis(prev_end_date))
+
+            prev_target = prev_attrs.get("target")
+            if prev_target:
+                self.add("prev_target_name", prev_target.pretty_name)
+                self.add("prev_subreddit_targets", prev_target.subreddit_names)
+
+            self.add_location_fields(
+                prev_attrs.get("location"),
+                prefix="prev_",
+            )
+
+            self.add("prev_total_budget_pennies",
+                prev_attrs.get("total_budget_pennies"))
+            self.add("prev_priority",
+                prev_attrs.get("priority_name"))
+            self.add("prev_platform", prev_attrs.get("platform"))
+
+            prev_cost_basis = prev_attrs.get("cost_basis")
+            if prev_cost_basis is not None:
+                self.add("prev_cost_basis",
+                    PROMOTE_COST_BASIS.name[prev_cost_basis])
+                if prev_cost_basis != PROMOTE_COST_BASIS.fixed_cpm:
+                    self.add("prev_bid_pennies", prev_attrs.get("bid_pennies"))
+
+            self.add("prev_frequency_cap", prev_attrs.get("frequency_cap"))
+            self.add("prev_mobile_os_names", prev_attrs.get("mobile_os"))
+            self.add("prev_ios_device_types", prev_attrs.get("ios_devices"))
+            self.add("prev_android_device_types",
+                prev_attrs.get("android_devices"))
+
+            prev_ios_version_range = prev_attrs.get("ios_version_range")
+            if prev_ios_version_range is not None:
+                self.add("ios_version_range",
+                    "-".join(prev_ios_version_range))
+
+            prev_android_version_range = prev_attrs.get("android_version_range")
+            if prev_android_version_range is not None:
+                self.add("android_version_range",
+                    "-".join(prev_android_version_range))
+
+    def add_location_fields(self, location, prefix=""):
+        if location is None:
+            return
+
+        fields = ["country", "region", "metro"]
+
+        if not location.country:
+            return
+
+        from r2.models.promo import Location
+
+        self.add(
+            prefix + "country_targets",
+            [Location.DELIMITER.join(
+                getattr(location, f, "") for f in fields[:1])],
+        )
+
+        if not location.region:
+            return
+
+        self.add(
+            prefix + "region_targets",
+            [Location.DELIMITER.join(
+                getattr(location, f, "") for f in fields[:2])],
+        )
+
+        if not location.metro:
+            return
+
+        self.add(
+            prefix + "metro_targets",
+            [Location.DELIMITER.join(
+                getattr(location, f, "") for f in fields[:3])],
+        )
 
 
 class PublishableEvent(object):

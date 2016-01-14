@@ -223,6 +223,17 @@ def thumbnail_url(link):
         return ''
 
 
+def mobile_ad_url(link):
+    """Given a link, returns the url for its mobile card based on its fullname"""
+    if link.has_thumbnail:
+        if hasattr(link, "mobile_ad_url"):
+            return link.mobile_ad_url
+        else:
+            return ''
+    else:
+        return ''
+
+
 def _filename_from_content(contents):
     hash_bytes = hashlib.sha256(contents).digest()
     return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
