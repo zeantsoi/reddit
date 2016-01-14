@@ -134,7 +134,7 @@ def promo_edit_url(l):
 def view_live_url(link, campaign, srname):
     is_mobile_web = campaign.platform == "mobile_web"
     host = _base_host(is_mobile_web=is_mobile_web)
-    if srname:
+    if srname and srname != Frontpage.name:
         host += '/r/%s' % srname
     return '%s/?ad=%s' % (host, link._fullname)
 
