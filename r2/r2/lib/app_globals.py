@@ -370,6 +370,7 @@ class Globals(object):
             'events_collector_report_sample_rate',
             'events_collector_submit_sample_rate',
             'events_collector_comment_sample_rate',
+            'events_collector_use_gzip_chance',
             'ad_probability',
             'https_cert_testing_probability',
         ],
