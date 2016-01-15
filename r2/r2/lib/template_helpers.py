@@ -198,6 +198,15 @@ def js_config(extra_config=None):
     elif isinstance(c.site, FakeSubreddit):
         cur_listing = c.site.name
 
+    if g.debug:
+        events_collector_url = g.events_collector_test_url
+        events_collector_key = g.secrets['events_collector_test_js_key']
+        events_collector_secret = g.secrets['events_collector_test_js_secret']
+    else:
+        events_collector_url = g.events_collector_url
+        events_collector_key = g.secrets['events_collector_js_key']
+        events_collector_secret = g.secrets['events_collector_js_secret']
+
     config = {
         # is the user logged in?
         "logged": logged,
@@ -248,9 +257,9 @@ def js_config(extra_config=None):
         "uitracker_url": g.uitracker_url,
         "eventtracker_url": g.eventtracker_url,
         "anon_eventtracker_url": g.anon_eventtracker_url,
-        "events_collector_url": g.events_collector_url,
-        "events_collector_key": g.secrets['events_collector_js_key'],
-        "events_collector_secret": g.secrets['events_collector_js_secret'],
+        "events_collector_url": events_collector_url,
+        "events_collector_key": events_collector_key,
+        "events_collector_secret": events_collector_secret,
         "feature_screenview_events": feature.is_enabled('screenview_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),
