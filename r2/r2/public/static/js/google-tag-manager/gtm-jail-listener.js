@@ -1,8 +1,6 @@
 ;(function(global, r, undefined) {
   var jail = document.createElement('iframe');
 
-  r.frames.proxy('gtm', [jail.contentWindow, window.parent]);
-
   jail.style.display = 'none';
   jail.referrer = 'no-referrer';
   jail.id = 'jail';
@@ -10,4 +8,6 @@
   jail.src = '/gtm?id=' + global.CONTAINER_ID;
 
   document.body.appendChild(jail);
+
+  r.frames.proxy('gtm', [jail.contentWindow, window.parent]);
 })(this, this.r);
