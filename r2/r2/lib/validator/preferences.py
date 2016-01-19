@@ -143,7 +143,8 @@ def filter_prefs(prefs, user):
         prefs['pref_highlight_new_comments'] = True
 
     # check stylesheet override
-    if feature.is_enabled('stylesheets_everywhere', user=user):
+    if (feature.is_enabled('stylesheets_everywhere', user=user) and
+            prefs['pref_default_theme_sr']):
         override_sr = Subreddit._by_name(prefs['pref_default_theme_sr'])
         if not override_sr:
             del prefs['pref_default_theme_sr']
