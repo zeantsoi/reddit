@@ -112,6 +112,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
         filesystem_checks=getattr(g, "reload_templates", False),
         imports=[
             "from r2.lib.filters import websafe, unsafe, conditional_websafe",
+            "from r2.lib.filters import double_websafe",
             "from pylons import request",
             "from pylons import tmpl_context as c",
             "from pylons import app_globals as g",
