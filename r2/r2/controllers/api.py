@@ -1117,21 +1117,33 @@ class ApiController(RedditController):
 
         if type in ('banned', 'wikibanned'):
             if duration:
-                container.unschedule_unban(friend, type)
-                tempinfo = container.schedule_unban(
-                    type,
-                    friend,
-                    c.user,
-                    duration,
-                )
-                log_details = "changed to " if not new else ""
-                log_details += "%d days" % duration
+                ban_buffer = timedelta(hours=6)
+                # Temp ban that doesn't have a preceding temp ban that ends
+                # ends within ban_buffer of this new duration. this is just a
+                # small buffer to prevent repetitive ban messages sent to users
+                # when the mod wants to update a note but not the duration
+                if not new:
+                    now = datetime.now(g.tz)
+                    existing_ban = container.get_tempbans(type, friend.name)
+                    ban_remaining = existing_ban[friend.name] - now
+                    timediff = abs(timedelta(days=duration) - ban_remaining)
+                if new or timediff >= ban_buffer:
+                    container.unschedule_unban(friend, type)
+                    tempinfo = container.schedule_unban(
+                        type,
+                        friend,
+                        c.user,
+                        duration,
+                    )
+                    log_details = "changed to " if not new else ""
+                    log_details += "%d days" % duration
             elif not new:
                 # Preexisting ban and no duration specified means turn the
                 # temporary ban into a permanent one.
                 container.unschedule_unban(friend, type)
                 log_details = "changed to permanent"
-            else:
+            elif new:
+                # New ban without a duration is permanent
                 log_details = "permanent"
         elif new and type == 'muted':
             MutedAccountsBySubreddit.mute(container, friend, c.user)
@@ -1183,7 +1195,10 @@ class ApiController(RedditController):
             table.find(".notfound").hide()
 
         if type == "banned":
-            if friend.has_interacted_with(container):
+            # If the ban is new or has had the duration changed,
+            # send a ban message
+            if (friend.has_interacted_with(container) and 
+                    (new or log_details)):
                 send_ban_message(container, c.user, friend,
                     ban_message, duration, new)
         elif new:
