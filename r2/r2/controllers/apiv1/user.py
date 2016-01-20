@@ -19,8 +19,6 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from datetime import datetime
-import json
 from pylons import request, response
 from pylons import tmpl_context as c
 from r2.controllers.api_docs import api_doc, api_section
@@ -35,28 +33,15 @@ from r2.lib.jsontemplates import (
 )
 from r2.lib.pages import FriendTableItem
 from r2.lib.validator import (
-    nop,
     validate,
     VAccountByName,
-    VBoolean,
-    VFloat,
     VFriendOfMine,
-    VInt,
     VLength,
     VList,
-    VOneOf,
     VValidatedJSON,
     VUser,
 )
-from r2.models import (
-    Account,
-    Trophy,
-)
-from r2.models.notification import (
-    get_notifications,
-    mark_notifications_read,
-    NotificationView,
-)
+from r2.models import Account
 
 import r2.lib.errors as errors
 import r2.lib.validator.preferences as vprefs
@@ -66,18 +51,6 @@ PREFS_JSON_SPEC = VValidatedJSON.PartialObject({
     k[len("pref_"):]: v for k, v in
     vprefs.PREFS_VALIDATORS.iteritems()
 })
-
-
-NOTIFICATION_JSON_SPEC = VValidatedJSON.PartialObject({
-    "read": VBoolean("read"),
-})
-
-
-NOTIFICATION_JSON_VALIDATOR = VValidatedJSON(
-    "json",
-    spec=NOTIFICATION_JSON_SPEC,
-    body=True
-)
 
 
 class APIv1UserController(OAuth2OnlyController):
@@ -238,65 +211,3 @@ class APIv1UserController(OAuth2OnlyController):
         if c.user.gold:
             c.user.friend_rels_cache(_update=True)
         response.status = 204
-
-    MAX_DATE = 2147485547
-
-    @require_oauth2_scope("privatemessages")
-    @validate(
-        VUser(),
-        start_date=VFloat('start_date', min=0, max=MAX_DATE),
-        end_date=VFloat('end_date', min=0, max=MAX_DATE),
-        count=VInt('count', min=0, max=1000, num_default=30),
-        sort=VOneOf('sort', ('new', 'old', None)),
-    )
-    @api_doc(api_section.users, uri='/api/v1/me/notifications')
-    def GET_notifications(self, start_date, end_date, count, sort):
-        """Get my notifications."""
-
-        _kwargs = {
-            'count': count,
-        }
-        if start_date:
-            _kwargs['start_date'] = datetime.utcfromtimestamp(start_date)
-
-        if end_date:
-            _kwargs['end_date'] = datetime.utcfromtimestamp(end_date)
-
-        if sort != 'old':
-            _kwargs['reverse'] = True
-
-        notifications = get_notifications(
-            c.user._id,
-            **_kwargs
-        )
-
-        return json.dumps([
-            NotificationView(n) for n in notifications
-        ])
-
-    @require_oauth2_scope("privatemessages")
-    @validate(
-        VUser(),
-        thing_fullname=nop('id'),
-        validated_notification=NOTIFICATION_JSON_VALIDATOR,
-    )
-    @api_doc(
-        api_section.users,
-        json_model=NOTIFICATION_JSON_VALIDATOR,
-        uri='/api/v1/me/notifications/{id}'
-    )
-    def PATCH_notifications(self, thing_fullname, validated_notification):
-        read = validated_notification.get('read', None)
-        if read is not None:
-            if read:
-                mark_notifications_read(
-                    c.user._id,
-                    [thing_fullname],
-                    validated_notification['read'],
-                )
-            else:
-                response.status = 400
-                return
-
-        response.status = 204
-        return
