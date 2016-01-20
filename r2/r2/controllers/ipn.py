@@ -537,7 +537,7 @@ class IpnController(RedditController):
 
                 subject, message = subscr_pm(pennies, months, new_subscr=False)
                 message = append_random_bottlecap_phrase(message)
-                send_system_message(existing.name, subject, message,
+                send_system_message(existing, subject, message,
                                     distinguished='gold-auto')
 
                 g.log.info("Just applied IPN renewal for %s, %d days" %
