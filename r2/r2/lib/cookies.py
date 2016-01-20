@@ -83,7 +83,7 @@ class Cookie(object):
 
 
 # Cookies that might need the secure flag toggled
-PRIVATE_USER_COOKIES = ["recentclicks2"]
+PRIVATE_USER_COOKIES = ["recentclicks2", "recent_srs"]
 PRIVATE_SESSION_COOKIES = [g.login_cookie, g.admin_cookie, "_options"]
 
 

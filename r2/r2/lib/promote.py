@@ -1130,6 +1130,13 @@ def srnames_from_site(user, site, include_subscriptions=True):
     return srnames
 
 
+def keywords_from_recent_clicks():
+    if not c.recent_subreddits:
+        return set()
+
+    return {sr.name for sr in c.recent_subreddits}
+
+
 def keywords_from_context(
         user, site,
         include_subscriptions=True,
@@ -1148,8 +1155,12 @@ def keywords_from_context(
         live_srnames = all_live_promo_srnames()
         keywords = live_srnames.intersection(keywords)
 
-    if (not isinstance(site,FakeSubreddit) and
-            site._downs > g.live_config["ads_popularity_threshold"]):
+    if isinstance(site, FakeSubreddit):
+        # only use recent click data on the frontpage/all to avoid issues
+        # of ads being shown in questionable places. ie. Dewers ad showing
+        # up in /r/TreatmentForAddiction.
+        keywords = keywords | keywords_from_recent_clicks()
+    elif site._downs > g.live_config["ads_popularity_threshold"]:
         keywords.add("s.popular")
 
     if is_site_over18(site):

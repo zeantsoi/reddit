@@ -256,6 +256,7 @@ def set_user_cookie(name, val, **kwargs):
 valid_click_cookie = fullname_regex(Link, True).match
 def set_recent_clicks():
     c.recent_clicks = []
+
     if not c.user_is_loggedin:
         return
 
@@ -279,6 +280,31 @@ def set_recent_clicks():
         else:
             #if the cookie wasn't valid, clear it
             set_user_cookie('recentclicks2', '')
+
+
+valid_recent_subreddit_cookie = fullname_regex(Subreddit, True).match
+def set_recent_subreddits():
+    subreddits_cookie = read_user_cookie("recent_srs")
+    recent_subreddits = []
+
+    if subreddits_cookie:
+        if not valid_recent_subreddit_cookie(subreddits_cookie):
+            # bad values, reset it.
+            set_user_cookie("recent_srs", "")
+        else:
+            fullnames = subreddits_cookie.split(",")
+            try:
+                recent_subreddits = Subreddit._by_fullname(
+                    fullnames,
+                    data=True,
+                    return_dict=False,
+                )
+            except NotFound:
+                # bad values, reset it.
+                set_user_cookie("recent_srs", "")
+
+    c.recent_subreddits = recent_subreddits
+
 
 def delete_obsolete_cookies():
     for cookie_name in c.cookies:
@@ -1472,6 +1498,9 @@ class RedditController(OAuth2ResourceController):
 
             for cookietype, count in cookie_counts.iteritems():
                 g.stats.simple_event("cookie.%s" % cookietype, count)
+
+            # update list of recently viewed subreddits
+            set_recent_subreddits()
 
         delete_obsolete_cookies()
 
