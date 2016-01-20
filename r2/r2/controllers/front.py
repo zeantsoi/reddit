@@ -35,7 +35,7 @@ from r2.models import *
 from r2.models.recommend import ExploreSettings
 from r2.config import feature
 from r2.config.extensions import is_api, API_TYPES, RSS_TYPES
-from r2.lib import hooks, recommender, embeds, pages
+from r2.lib import recommender, embeds, pages
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
@@ -266,16 +266,6 @@ class FrontController(RedditController):
 
         if is_embed:
             embeds.set_up_comment_embed(sr, comment, showedits=showedits)
-
-        # Temporary hook until IAMA app "OP filter" is moved from partners
-        # Not to be open-sourced
-        page = hooks.get_hook("comments_page.override").call_until_return(
-            controller=self,
-            article=article,
-            limit=limit,
-        )
-        if page:
-            return page
 
         # If there is a focal comment, communicate down to
         # comment_skeleton.html who that will be. Also, skip

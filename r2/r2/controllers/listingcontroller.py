@@ -302,8 +302,6 @@ class SubredditListingController(ListingController):
                     # attributes, so we don't need to define
                     # 'twitter:image' or 'twitter:description'.
                 }
-                hook = hooks.get_hook('subreddit_listing.twitter_card')
-                hook.call(tags=twitter_card, sr_name=c.site.name)
 
                 render_params.update({
                     "og_data": {
