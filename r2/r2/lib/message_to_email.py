@@ -57,7 +57,16 @@ def get_reply_to_address(message):
 
     sr = Subreddit._byID(message.sr_id, data=True)
 
-    email_id = "-".join([sr._id36, message._id36])
+    if (getattr(sr, "modmail_email_reply_to_first", False) and
+            message.first_message):
+        # if this subreddit attribute is set, all email replies will be treated
+        # as replies to the first message in the conversation. this is to get
+        # around some peculiarities of zendesk
+        first_message = Message._byID(message.first_message, data=True)
+        email_id = "-".join([sr._id36, first_message._id36])
+    else:
+        email_id = "-".join([sr._id36, message._id36])
+
     email_mac = hmac.new(
         g.secrets['modmail_email_secret'], email_id, hashlib.sha256).hexdigest()
     reply_id = "modmailreply+{email_id}-{email_mac}".format(
