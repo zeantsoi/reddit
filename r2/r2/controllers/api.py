@@ -2744,11 +2744,10 @@ class ApiController(RedditController):
             'wikimode',
         ]
 
-        if sr:
-            if feature.is_enabled('mobile_settings'):
-                keyword_fields.append('key_color')
-            if feature.is_enabled('related_subreddits'):
-                keyword_fields.append('related_subreddits')
+        if feature.is_enabled('mobile_settings'):
+            keyword_fields.append('key_color')
+        if sr and feature.is_enabled('related_subreddits'):
+            keyword_fields.append('related_subreddits')
 
         if sr and feature.is_enabled("modmail_email", subreddit=sr.name):
             kw['modmail_email_address'] = kw['modmail_email_address'] or ''
