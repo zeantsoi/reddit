@@ -300,6 +300,9 @@ class Reddit(Templated):
         self.mobilewebredirectbar = None
         self.show_timeout_modal = False
 
+        if feature.is_enabled("new_expando_icons"):
+            self.feature_new_expando_icons = True
+
         # generate a canonical link for google
         self.canonical_link = request.fullpath
         if c.render_style != "html":
