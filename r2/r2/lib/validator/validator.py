@@ -829,7 +829,7 @@ class VSubredditRule(Validator):
             self.set_error(errors.SR_RULE_DOESNT_EXIST)
         else:
             return rule
-        
+
 
 class VAccountByName(VRequired):
     def __init__(self, param, error = errors.USER_DOESNT_EXIST, *a, **kw):
@@ -1642,6 +1642,17 @@ class VThrottledLogin(VRequired):
                 return False
 
         is_previously_seen_ip = ip_used_by_account(account._id, request.ip)
+
+        # We want to maintain different rate-limit buckets depending on whether
+        # we have seen the IP logging in before.  If someone is trying to brute
+        # force an account from an unfamiliar location, we will rate limit
+        # *all* requests from unfamiliar locations that try to access the
+        # account, while still maintaining a separate rate-limit for IP
+        # addresses we have seen use the account before.
+        #
+        # Finally, we also rate limit IPs themselves that appear to be trying
+        # to log into accounts they have never logged into before.  This goes
+        # into a separately maintained bucket.
         if is_previously_seen_ip:
             ratelimits = {
                 LoginRatelimit("familiar", account._id): g.RL_LOGIN_MAX_REQS,
