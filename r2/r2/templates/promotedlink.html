@@ -25,6 +25,7 @@
    from r2.lib.promote import promo_edit_url
    from r2.lib import promote
    from r2.lib.pages.things import LinkButtons
+   from r2.lib.pages import WrappedUser
 %>
 
 <%inherit file="link.html"/>
@@ -39,7 +40,8 @@
    else:
      taglinetext = _("promoted by %(author)s") 
    taglinetext = conditional_websafe(taglinetext).replace(" ", "&#32;")
-   author = thing.wrapped_author.render()
+   author = WrappedUser(thing.author, thing.attribs, thing,
+                        force_show_flair=False).render()
  %>
 ${unsafe(taglinetext % dict(author=author))}
 </%def>
