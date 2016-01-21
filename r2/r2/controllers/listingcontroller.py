@@ -356,9 +356,11 @@ class ListingWithPromos(SubredditListingController):
             return res
 
     def make_single_ad(self):
+        # check for the existance of keywords to ensure an ad exists
+        # targeting them.
         keywords = promote.keywords_from_context(c.user, c.site)
         if keywords:
-            return SpotlightListing(show_promo=c.site.allow_ads, keywords=keywords,
+            return SpotlightListing(show_promo=c.site.allow_ads, site=c.site,
                                     navigable=False).listing()
 
     def make_spotlight(self):
@@ -408,7 +410,7 @@ class ListingWithPromos(SubredditListingController):
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
                              show_promo=show_promo,
-                             keywords=keywords,
+                             site=c.site,
                              max_num = self.listing_obj.max_num,
                              max_score = self.listing_obj.max_score).listing()
         return s

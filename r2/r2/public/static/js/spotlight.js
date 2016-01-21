@@ -31,13 +31,13 @@
       }
     },
 
-    setup: function(organicLinks, interestProb, showPromo, srnames) {
+    setup: function(organicLinks, interestProb, showPromo, site) {
       this.organics = [];
       this.lineup = [];
       this.adWasClicked = false;
       this.interestProb = interestProb;
       this.showPromo = showPromo;
-      this.srnames = srnames;
+      this.site = site;
       this.loid = $.cookie('loid');
       this.lastTabChangeTimestamp = Date.now();
       this.MIN_PROMO_TIME = 3000;
@@ -166,7 +166,7 @@
         url: '/api/request_promo',
         timeout: 1000,
         data: {
-          srnames: this.srnames,
+          site: this.site,
           r: r.config.post_site,
           loid: this.loid,
           is_refresh: options.refresh,

@@ -33,7 +33,10 @@ from r2.config import feature
 from r2.lib.wrapped import Wrapped, CachedVariable
 from r2.lib import utils
 from r2.lib.db import operators
-from r2.models import rules
+from r2.models import (
+    MultiReddit,
+    rules,
+)
 
 from collections import namedtuple
 from copy import deepcopy, copy
@@ -391,9 +394,13 @@ class SpotlightListing(Listing):
         self.interestbar = kw.get('interestbar')
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
-        keywords = kw.get('keywords', [])
-        self.keywords = '+'.join([keyword if keyword else Frontpage.name
-                                 for keyword in keywords])
+        site = kw.get('site', Frontpage)
+
+        if isinstance(site, MultiReddit):
+            self.site = site.path
+        else:
+            self.site = site.name
+
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
 
