@@ -1159,7 +1159,8 @@ def keywords_from_context(
         # only use recent click data on the frontpage/all to avoid issues
         # of ads being shown in questionable places. ie. Dewers ad showing
         # up in /r/TreatmentForAddiction.
-        keywords = keywords | keywords_from_recent_clicks()
+        if include_subscriptions:
+            keywords = keywords | keywords_from_recent_clicks()
     elif site._downs > g.live_config["ads_popularity_threshold"]:
         keywords.add("s.popular")
 
