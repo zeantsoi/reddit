@@ -24,6 +24,7 @@
    from r2.config import feature
    from r2.lib.filters import unsafe
    from r2.lib.pages.things import CommentButtons
+   from r2.lib.pages import WrappedUser
 %>
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, edited, nsfw_stamp, quarantine_stamp" />
@@ -84,7 +85,7 @@ ${parent.midcol(cls = cls)}
      %if thing.deleted:
        <em>${_("deleted comment from")}</em>&#32;
      %endif
-     ${thing.wrapped_author}
+     ${WrappedUser(thing.author, thing.attribs, thing)}
      &#32;
   %else:
      <em>${_("[deleted]")}</em>&#32;
