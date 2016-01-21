@@ -27,7 +27,11 @@
     <% enabled = user.flair_enabled %>
   %endif
   %if user.has_flair and enabled:
-    <span class="flair ${' '.join('flair-%s' % cls for cls in user.flair_css_class.split())}" title="${user.flair_text}">${user.flair_text}</span>
+    %if user.flair_css_class:
+      <span class="flair ${' '.join('flair-%s' % cls for cls in user.flair_css_class.split())}" title="${user.flair_text}">${user.flair_text}</span>
+    %else:
+      <span class="flair" title="${user.flair_text}">${user.flair_text}</span>
+    %endif
   %endif
 </%def>
 
