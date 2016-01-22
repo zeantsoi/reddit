@@ -54,7 +54,7 @@
 
 <item>
   <guid>${thing._id}</guid>
-  <title>${title|double_websafe}</title>
+  <title>${title}</title>
   <pubDate>${thing.date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   %if permalink:
     <link>${add_sr(permalink)}</link>

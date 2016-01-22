@@ -30,9 +30,9 @@
     xmlns:media="http://search.yahoo.com/mrss/"
     xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${self.Title()}</title>
+    <title>${self.Title()}</title>        
     <link>${add_sr("/", force_hostname = True)}</link>
-    <description>${(c.site.public_description or '')|double_websafe}</description>
+    <description>${c.site.public_description or ''}</description>
     <image>
       <%
         if g.css_killswitch or not c.site.header or not c.can_apply_styles:
@@ -47,7 +47,7 @@
             header_img = parsed_header_img.unparse()
       %>
       <url>${header_img}</url>
-      <title>${self.Title()|double_websafe}</title>
+      <title>${self.Title()}</title>
       <link>${add_sr("/", force_hostname = True)}</link>
     </image>
     <atom:link rel="self" href="${add_sr(request.fullpath, sr_path=False, force_hostname=True)}" type="application/rss+xml" />
@@ -58,3 +58,4 @@
 <%def name="Title()">
 ${c.site.title}
 </%def>
+

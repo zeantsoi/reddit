@@ -32,7 +32,6 @@ from filters import (
     conditional_websafe,
     keep_space,
     unsafe,
-    double_websafe,
     websafe,
 )
 from r2.lib.cache_poisoning import make_poisoning_report_mac

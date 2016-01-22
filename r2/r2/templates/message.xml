@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown
+   from r2.lib.filters import safemarkdown, websafe, conditional_websafe
    from r2.lib.template_helpers import add_sr, format_html
    from r2.models.account import DeletedUser, Account
 %>
