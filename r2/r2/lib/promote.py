@@ -1130,7 +1130,7 @@ def srnames_from_site(user, site, include_subscriptions=True):
     return srnames
 
 
-def keywords_from_recent_clicks():
+def srnames_from_recent_clicks():
     if not c.recent_subreddits:
         return set()
 
@@ -1143,25 +1143,34 @@ def keywords_from_context(
         live_promos_only=True,
     ):
 
-    keywords = srnames_from_site(
+    is_frontpage = isinstance(site, FakeSubreddit)
+    keywords = set()
+
+    srnames = srnames_from_site(
         user, site,
         include_subscriptions,
     )
 
-    # if the ad was created by selfserve then we know
-    # whether or not there exists an ad for that keyword
-    # and can remove un-targeted keywords accordingly.
-    if live_promos_only:
-        live_srnames = all_live_promo_srnames()
-        keywords = live_srnames.intersection(keywords)
-
-    if isinstance(site, FakeSubreddit):
+    if is_frontpage and include_subscriptions:
         # only use recent click data on the frontpage/all to avoid issues
         # of ads being shown in questionable places. ie. Dewers ad showing
         # up in /r/TreatmentForAddiction.
-        if include_subscriptions:
-            keywords = keywords | keywords_from_recent_clicks()
-    elif site._downs > g.live_config["ads_popularity_threshold"]:
+        srnames = srnames | srnames_from_recent_clicks()
+
+    if Frontpage.name in srnames:
+        srnames = srnames - Frontpage.name
+        keywords.add("s.frontpage")
+
+    # if the ad was created by selfserve then we know
+    # whether or not there exists an ad for that keyword
+    # and can remove un-targeted srnames accordingly.
+    if live_promos_only:
+        live_srnames = all_live_promo_srnames()
+        srnames = live_srnames.intersection(srnames)
+
+    keywords.update(srnames)
+
+    if not is_frontpage and site._downs > g.live_config["ads_popularity_threshold"]:
         keywords.add("s.popular")
 
     if is_site_over18(site):
@@ -1170,9 +1179,9 @@ def keywords_from_context(
         keywords.add("s.sfw")
 
     if c.user_is_loggedin:
-        keywords.add("loggedin")
+        keywords.add("s.loggedin")
     else:
-        keywords.add("loggedout")
+        keywords.add("s.loggedout")
 
     return keywords
 
