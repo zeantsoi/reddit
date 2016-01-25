@@ -1129,7 +1129,7 @@ class ApiController(RedditController):
                     now = datetime.now(g.tz)
                     ban_remaining = existing_ban[friend.name] - now
                     timediff = abs(timedelta(days=duration) - ban_remaining)
-                if new or (existing_ban and timediff >= ban_buffer):
+                if not existing_ban or timediff >= ban_buffer:
                     container.unschedule_unban(friend, type)
                     tempinfo = container.schedule_unban(
                         type,
