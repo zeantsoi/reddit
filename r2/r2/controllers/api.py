@@ -2935,7 +2935,8 @@ class ApiController(RedditController):
             if sr.quarantine:
                 del kw['allow_top']
                 del kw['show_media']
-                del kw['show_media_preview']
+                if feature.is_enabled('autoexpand_media_previews'):
+                    del kw['show_media_preview']
 
             #notify ads if sr in a collection changes over_18 to true
             if kw.get('over_18', False) and not sr.over_18:
