@@ -363,7 +363,7 @@ def new_campaign(link, dates, target, frequency_cap,
 
     # force campaigns for approved links to also be approved
     if is_accepted(link):
-        queries.set_campaign_approval(link, campaign, False)
+        set_campaign_approval(link, campaign, False)
 
     hooks.get_hook('promote.new_campaign').call(link=link, campaign=campaign)
     return campaign
@@ -480,7 +480,8 @@ def edit_campaign(
         is_approved = kwargs["is_approved"]
         if is_approved != campaign.is_approved:
             changed['is_approved'] = (campaign.is_approved, is_approved)
-            queries.set_campaign_approval(link, campaign, is_approved)
+            campaign.is_approved = is_approved
+            queries.update_unapproved_campaigns_listing(link)
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
@@ -568,6 +569,7 @@ def delete_campaign(link, campaign):
     campaign.delete()
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
     hooks.get_hook('promote.delete_campaign').call(link=link, campaign=campaign)
+    queries.update_unapproved_campaigns_listing(link)
 
 
 def void_campaign(link, campaign, reason):

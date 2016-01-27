@@ -734,10 +734,7 @@ def get_user_reported(user_id):
             get_user_reported_messages(user_id)]
 
 
-def set_campaign_approval(link, campaign, is_approved):
-    campaign.is_approved = is_approved
-    campaign._commit()
-
+def update_unapproved_campaigns_listing(link):
     # cannot import at module level due to circularity
     from r2.lib import promote
     is_insert = (promote.is_accepted(link) and
