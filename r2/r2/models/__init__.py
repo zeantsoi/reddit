@@ -21,7 +21,6 @@
 ###############################################################################
 
 from account import *
-from ip import *
 from link import *
 from listing import *
 from vote import *
