@@ -650,6 +650,11 @@ class PromotedLinkTraffic(Templated):
             cpc = '---'
             ctr = '---'
 
+        if feature.is_enabled("legacy_ad_reporting"):
+            url_query = "?feature=legacy_ad_reporting"
+        else:
+            url_query = ""
+
         return {
             'id': id,
             'start': start,
@@ -666,8 +671,8 @@ class PromotedLinkTraffic(Templated):
             'ctr': ctr,
             'live': is_live,
             'active': is_active,
-            'url': url,
-            'csv': url + '.csv',
+            'url': (url + url_query),
+            'csv': (url + '.csv' + url_query),
             'total': is_total,
         }
 
