@@ -398,8 +398,10 @@ class SpotlightListing(Listing):
 
         if isinstance(site, MultiReddit):
             self.site = site.path
-        else:
+        elif not isinstance(site, FakeSubreddit):
             self.site = site.name
+        else:
+            self.site = Frontpage.name
 
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
