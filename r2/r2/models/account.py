@@ -151,6 +151,7 @@ class Account(Thing):
                      pref_show_snoovatar=False,
                      gild_reveal_username=False,
                      selfserve_cpm_override_pennies=None,
+                     selfserve_min_bid_override_pennies=None,
                      pref_show_gold_expiration=False,
                      admin_takedown_strikes=0,
                      pref_threaded_modmail=False,

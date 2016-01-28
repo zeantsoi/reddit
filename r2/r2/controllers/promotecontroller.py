@@ -1338,7 +1338,7 @@ class PromoteApiController(ApiController):
                 cost_basis = PROMOTE_COST_BASIS[cost_basis]
 
                 # Error if bid is outside acceptable range
-                min_bid_dollars = g.min_bid_pennies / 100.
+                min_bid_dollars = promote.get_min_bid_dollars(c.user)
                 max_bid_dollars = self._lowest_max_bid_dollars(
                     total_budget_dollars=total_budget_dollars,
                     bid_dollars=bid_dollars,

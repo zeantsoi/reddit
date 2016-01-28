@@ -4570,7 +4570,7 @@ class PromoteLinkEdit(PromoteLinkBase):
             self.min_bid_dollars = 0.
             self.max_bid_dollars = 0.
         else:
-            self.min_bid_dollars = g.min_bid_pennies / 100.
+            self.min_bid_dollars = promote.get_min_bid_dollars(c.user)
             self.max_bid_dollars = g.max_bid_pennies / 100.
 
         self.priorities = [
