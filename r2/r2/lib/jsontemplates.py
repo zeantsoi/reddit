@@ -545,6 +545,18 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             # No access to privatemessages, but the rest of
             # the identity information is sufficient.
             pass
+
+        # Add as private data attributes states about this user if the
+        # api user states flag is enabled. This is used for feature
+        # flagging by user state on first-party API clients (like mobile web)
+        if (
+            c.user_is_loggedin and thing._id == c.user._id and
+            feature.is_enabled('api_user_states')
+        ):
+            data['is_admin'] = thing.name in g.admins
+            data['is_employee'] = thing.employee
+            data['in_beta'] = thing.pref_beta
+
         return data
 
     @extra_oauth2_scope("privatemessages")
