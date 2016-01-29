@@ -51,13 +51,19 @@
     media_override = thing.link_child and getattr(thing, 'media_override', False)
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
-            ${ media_override and 'open-expando' or '' }"
+            ${ media_override and 'open-expando' or '' }
+            ${'outbound' if thing.use_outbound else '' }"
+
      href="${thing.href_url}"
      %if tabindex:
        tabindex="${tabindex}"
      %endif
      %if thing.nofollow:
        rel="nofollow"
+     %endif
+     %if thing.use_outbound:
+       data-href-url="${thing.href_url}"
+       data-outbound-url="${thing.outbound_url}"
      %endif
      >
      ${caller.body()}

@@ -29,6 +29,7 @@ from r2.lib.utils import (
     base_url,
     domain,
     epoch_timestamp,
+    outbound_link_url,
     strip_www,
     timesince,
     title_to_url,
@@ -807,10 +808,13 @@ class Link(Thing, Printable):
             else:
                 item.feature_media_previews = False
 
+            item.use_outbound = False
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink
             else:
                 item.href_url = item.url
+                item.use_outbound = True
+                item.outbound_url = outbound_link_url(item, item.url)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
