@@ -174,3 +174,21 @@ class TestTruncString(unittest.TestCase):
     def test_really_long_words(self):
         truncated = utils.trunc_string('ThisIsALongWord', 10)
         self.assertEqual(truncated, 'ThisIsA...')
+
+class TestOutboundLinks(unittest.TestCase):
+    def setUp(self):
+        from r2.models import Link
+        self.url = "https://www.google.com"
+        self.thing = Link._byID36("1wfh5c", data=True)
+
+    def test_reddit_url(self):
+        # Send a reddit.com url and get back the same url
+        permalink = self.thing.make_permalink_slow(True)
+        outbound_url = utils.outbound_link_url(self.thing, permalink)
+        self.assertEqual(outbound_url, permalink)
+
+    def test_url_query(self):
+        # Send a reddit.com url and get back a different url
+        outbound_url = utils.outbound_link_url(self.thing, self.url)
+        urlparser = utils.UrlParser(outbound_url)
+        self.assertEqual(urlparser.query_dict["url"], self.url)

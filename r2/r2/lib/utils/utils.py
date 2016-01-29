@@ -33,13 +33,14 @@ import re
 import signal
 import traceback
 
+from baseplate.crypto import MessageSigner
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from urllib import unquote_plus, unquote
 from urllib2 import urlopen, Request
-from urlparse import urlparse, urlunparse
+from urlparse import urlparse, urlunparse, urlunsplit
 
 import pytz
 import snudown
@@ -1534,6 +1535,31 @@ def extract_user_mentions(text):
         usernames.add(username.lower())
 
     return usernames
+
+
+def outbound_link_url(thing, url):
+    """Get the outbound clicktracking url
+
+    The url will be redirected through a service in baseplate which
+    will collect events and redirect the user to the original url.
+    The outboundtracker_url will contain a token to see if the url has
+    expired and the thing_fullname so that the user can be redirected to
+    the thing if the token expired.
+    """
+    urlparser = UrlParser(_force_utf8(url))
+    if urlparser.is_reddit_url():
+        return url
+
+    signer = MessageSigner(g.secrets["outbound_url_secret"])
+    token = signer.make_signature(url, max_age=timedelta(hours=1))
+
+    return urlunsplit((
+        "https" if c.secure else "http",
+        g.outboundtracker_url,
+        thing._fullname,
+        "url=%(url)s&token=%(token)s" % dict(url=url, token=token),
+        None,
+    ))
 
 
 def summarize_markdown(md):
