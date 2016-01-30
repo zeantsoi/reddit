@@ -2016,9 +2016,7 @@ class Message(Thing, Printable):
                 m._commit()
 
             if (can_send_email and
-                    sr.modmail_email_address and
-                    sr.modmail_email_verified and
-                    feature.is_enabled("modmail_email", subreddit=sr.name)):
+                    sr.name in g.live_config['modmail_forwarding_email']):
                 queue_modmail_email(m)
 
         if author.name in g.admins:

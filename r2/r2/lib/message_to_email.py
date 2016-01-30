@@ -29,58 +29,53 @@ import requests
 
 from r2.lib import amqp
 from r2.lib.filters import _force_unicode
-from r2.lib.template_helpers import add_sr
 from r2.lib.utils import constant_time_compare
 from r2.models import (
     Account,
     Message,
     Subreddit,
 )
-from r2.models.token import ModmailEmailVerificationToken
 
 
 def get_reply_to_address(message):
     """Construct a reply-to address that encodes the message id.
 
     The address is of the form:
-        modmailreply+{subreddit_id36}-{message_id36}-{email_mac}
+        zendeskreply+{message_id36}-{email_mac}
 
-    where the mac is generated from {subreddit_id36}-{message_id36} using
-    the `modmail_email_secret`
+    where the mac is generated from {message_id36} using the
+    `modmail_email_secret`
 
     The reply address should be configured with the inbound email service so
     that replies to our messages are routed back to the app somehow. For mailgun
     this involves adding a Routes filter for messages sent to
-    "modmailreply\+*@". to be forwarded to POST /api/modmailreply.
+    "zendeskreply\+*@". to be forwarded to POST /api/zendeskreply.
 
     """
 
-    sr = Subreddit._byID(message.sr_id, data=True)
-
-    if (getattr(sr, "modmail_email_reply_to_first", False) and
-            message.first_message):
-        # if this subreddit attribute is set, all email replies will be treated
-        # as replies to the first message in the conversation. this is to get
-        # around some peculiarities of zendesk
+    # all email replies are treated as replies to the first message in the
+    # conversation. this is to get around some peculiarities of zendesk
+    if message.first_message:
         first_message = Message._byID(message.first_message, data=True)
-        email_id = "-".join([sr._id36, first_message._id36])
     else:
-        email_id = "-".join([sr._id36, message._id36])
+        first_message = message
+    email_id = first_message._id36
 
     email_mac = hmac.new(
         g.secrets['modmail_email_secret'], email_id, hashlib.sha256).hexdigest()
-    reply_id = "modmailreply+{email_id}-{email_mac}".format(
+    reply_id = "zendeskreply+{email_id}-{email_mac}".format(
         email_id=email_id, email_mac=email_mac)
 
+    sr = Subreddit._byID(message.sr_id, data=True)
     return "r/{subreddit} mail <{reply_id}@{domain}>".format(
         subreddit=sr.name, reply_id=reply_id, domain=g.modmail_email_domain)
 
 
 def parse_and_validate_reply_to_address(address):
     """Validate the address and parse out and return the message id.
-    
+
     This is the reverse operation of `get_reply_to_address`.
-    
+
     """
 
     recipient, sep, domain = address.partition("@")
@@ -88,21 +83,21 @@ def parse_and_validate_reply_to_address(address):
         return
 
     main, sep, remainder = recipient.partition("+")
-    if not sep or not main or main != "modmailreply":
+    if not sep or not main or main != "zendeskreply":
         return
 
     try:
-        subreddit_id36, message_id36, mac = remainder.split("-")
+        email_id, email_mac = remainder.split("-")
     except ValueError:
         return
 
-    email_id = "-".join((subreddit_id36, message_id36))
     expected_mac = hmac.new(
         g.secrets['modmail_email_secret'], email_id, hashlib.sha256).hexdigest()
 
-    if not constant_time_compare(expected_mac, mac):
+    if not constant_time_compare(expected_mac, email_mac):
         return
 
+    message_id36 = email_id
     return message_id36
 
 
@@ -147,7 +142,8 @@ def send_modmail_email(message):
 
     sr = Subreddit._byID(message.sr_id, data=True)
 
-    if not (sr.modmail_email_address and sr.modmail_email_verified):
+    forwarding_email = g.live_config['modmail_forwarding_email'].get(sr.name)
+    if not forwarding_email:
         return
 
     sender = Account._byID(message.author_id, data=True)
@@ -189,7 +185,7 @@ def send_modmail_email(message):
     message_text = message.body + reply_footer
 
     email_id = g.email_provider.send_email(
-        to_address=sr.modmail_email_address,
+        to_address=forwarding_email,
         from_address=from_address,
         subject=subject,
         text=message_text,
@@ -204,124 +200,7 @@ def send_modmail_email(message):
         g.stats.simple_event("modmail_email.outgoing_email")
 
 
-def send_enabled_email(sr, modmail_email):
-    subject = "[r/{subreddit} mail]: modmail forwarding verification required"
-    subject = subject.format(subreddit=sr.name)
-    from_address = get_system_from_address(sr)
-    text = ("A moderator requested that r/{subreddit} modmail messages be "
-        "forwarded to {email}.\n\n"
-        "Please confirm by visiting this link: {verification_url}\n\n"
-        "To change or disable go to {prefs_url}.\n\n"
-        "If you feel you have received this notice in error, "
-        "please contact us at {support_email}"
-    )
-
-    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
-    prefs_url = add_sr(prefs_url, sr_path=False)
-
-    token = ModmailEmailVerificationToken._new(sr, modmail_email)
-    verification_url = "/r/{subreddit}/verify_modmail_email/{key}"
-    verification_url = verification_url.format(subreddit=sr.name, key=token._id)
-    verification_url = add_sr(verification_url, sr_path=False)
-
-    text = text.format(
-        subreddit=sr.name,
-        email=modmail_email,
-        verification_url=verification_url,
-        prefs_url=prefs_url,
-        support_email=g.support_email,
-    )
-
-    email_id = g.email_provider.send_email(
-        to_address=modmail_email,
-        from_address=from_address,
-        subject=subject,
-        text=text,
-        reply_to=from_address,
-    )
-    if email_id:
-        g.log.info("sent as %s", email_id)
-
-
-def send_disabled_email(sr, old_modmail_email):
-    subject = "[r/{subreddit} mail]: modmail forwarding disabled".format(
-        subreddit=sr.name)
-    from_address = get_system_from_address(sr)
-    text = ("Modmail forwarding for r/{subreddit} has been disabled.\n\n"
-        "Previously incoming modmail messages were forwarded to "
-        "{old_email}.\n\nTo re-enable go to {prefs_url}.\n\n"
-        "If you feel you have received this notice in error, "
-        "please contact us at {support_email}"
-    )
-
-    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
-    prefs_url = add_sr(prefs_url, sr_path=False)
-
-    text = text.format(
-        subreddit=sr.name,
-        old_email=old_modmail_email,
-        prefs_url=prefs_url,
-        support_email=g.support_email,
-    )
-
-    email_id = g.email_provider.send_email(
-        to_address=old_modmail_email,
-        from_address=from_address,
-        subject=subject,
-        text=text,
-        reply_to=from_address,
-    )
-    if email_id:
-        g.log.info("sent as %s", email_id)
-
-
-def send_changed_email(sr, old_modmail_email):
-    subject = "[r/{subreddit} mail]: modmail forwarding changed".format(
-        subreddit=sr.name)
-    from_address = get_system_from_address(sr)
-    text = ("r/{subreddit} modmail will no longer be forwarded to {old_email}"
-        ".\n\nTo change this go to {prefs_url}.\n\n"
-        "If you feel you have received this notice in error, "
-        "please contact us at {support_email}"
-    )
-
-    prefs_url = "/r/{subreddit}/about/edit/".format(subreddit=sr.name)
-    prefs_url = add_sr(prefs_url, sr_path=False)
-
-    text = text.format(
-        subreddit=sr.name,
-        old_email=old_modmail_email,
-        prefs_url=prefs_url,
-        support_email=g.support_email,
-    )
-
-    email_id = g.email_provider.send_email(
-        to_address=old_modmail_email,
-        from_address=from_address,
-        subject=subject,
-        text=text,
-        reply_to=from_address,
-    )
-    if email_id:
-        g.log.info("sent as %s", email_id)
-
-
-def send_address_change_email(sr, modmail_email, old_modmail_email):
-    if old_modmail_email and not modmail_email:
-        send_disabled_email(sr, old_modmail_email)
-    elif not old_modmail_email and modmail_email:
-        send_enabled_email(sr, modmail_email)
-    elif old_modmail_email and modmail_email:
-        send_changed_email(sr, old_modmail_email)
-        send_enabled_email(sr, modmail_email)
-    else:
-        return
-
-
 def send_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
-    if not (sr.modmail_email_address and sr.modmail_email_verified):
-        return
-
     subject = get_message_subject(parent)
     from_address = get_system_from_address(sr)
     text = "Message was not delivered because recipient is muted."
@@ -349,18 +228,6 @@ def queue_modmail_email(message):
     )
 
 
-def queue_modmail_email_change_email(sr, modmail_email, old_modmail_email):
-    amqp.add_item(
-        "modmail_email_q",
-        json.dumps({
-            "event": "email_change",
-            "subreddit_id36": sr._id36,
-            "modmail_email": modmail_email,
-            "old_modmail_email": old_modmail_email,
-        }),
-    )
-
-
 def queue_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
     amqp.add_item(
         "modmail_email_q",
@@ -382,12 +249,6 @@ def process_modmail_email():
             message_id36 = msg_dict["message_id36"]
             message = Message._byID36(message_id36, data=True)
             send_modmail_email(message)
-        elif msg_dict["event"] == "email_change":
-            subreddit_id36 = msg_dict["subreddit_id36"]
-            sr = Subreddit._byID36(subreddit_id36, data=True)
-            modmail_email = msg_dict["modmail_email"]
-            old_modmail_email = msg_dict["old_modmail_email"]
-            send_address_change_email(sr, modmail_email, old_modmail_email)
         elif msg_dict["event"] == "blocked_muted":
             subreddit_id36 = msg_dict["subreddit_id36"]
             sr = Subreddit._byID36(subreddit_id36, data=True)

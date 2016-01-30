@@ -353,8 +353,6 @@ def make_map(config):
        action='verify_email')
     mc('/resetpassword', controller='forms',
        action='resetpassword')
-    mc("/verify_modmail_email/:key", controller="forms",
-       action="verify_modmail_email")
 
     mc('/modify_hsts_grant', controller='front', action='modify_hsts_grant')
 
@@ -385,7 +383,7 @@ def make_map(config):
     mc('/api/gadget/click/:ids', controller='api', action='gadget',
        type='click')
     mc('/api/gadget/:type', controller='api', action='gadget')
-    mc('/api/modmailreply', controller='mailgunwebhook', action='modmailreply')
+    mc('/api/zendeskreply', controller='mailgunwebhook', action='zendeskreply')
     mc('/api/:action', controller='promoteapi',
        requirements=dict(action=("promote|unpromote|edit_promo|ad_s3_callback|"
                                  "ad_s3_params|freebie|promote_note|update_pay|"

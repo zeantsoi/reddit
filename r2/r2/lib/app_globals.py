@@ -406,6 +406,7 @@ class Globals(object):
         ],
         ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
             'employee_approved_clients',
+            'modmail_forwarding_email',
         ],
         ConfigValue.dict(ConfigValue.str, ConfigValue.choice(**PERMISSIONS)): [
             'employees',

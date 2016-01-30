@@ -185,7 +185,6 @@ class ModAction(tdb_cassandra.UuidThing):
                      'upload_image_icon': _('upload icon image'),
                      'upload_image_banner': _('upload banner image'),
                      'upload_image': _('upload image'),
-                     'modmail_email_address': _('modmail email'),
                      # editflair
                      'flair_edit': _('add/edit flair'),
                      'flair_delete': _('delete flair'),

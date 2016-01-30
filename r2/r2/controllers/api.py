@@ -120,7 +120,6 @@ from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
 from r2.models.rules import SubredditRules
 from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
-from r2.lib.message_to_email import queue_modmail_email_change_email
 
 import csv
 from collections import defaultdict
@@ -2671,8 +2670,6 @@ class ApiController(RedditController):
                    suggested_comment_sort=VOneOf('suggested_comment_sort',
                                                  CommentSortMenu._options,
                                                  default=None),
-                   modmail_email_address=ValidEmail("modmail_email_address"),
-                   modmail_email_enabled=VBoolean("modmail_email_enabled"),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
                    )
@@ -2741,7 +2738,6 @@ class ApiController(RedditController):
             'hide_ads',
             'lang',
             'link_type',
-            'modmail_email_address',
             'name',
             'over_18',
             'public_description',
@@ -2766,18 +2762,6 @@ class ApiController(RedditController):
             keyword_fields.append('key_color')
         if sr and feature.is_enabled('related_subreddits'):
             keyword_fields.append('related_subreddits')
-
-        if sr and feature.is_enabled("modmail_email", subreddit=sr.name):
-            kw['modmail_email_address'] = kw['modmail_email_address'] or ''
-            modmail_email_enabled = kw["modmail_email_enabled"]
-        else:
-            kw['modmail_email_address'] = ''
-            modmail_email_enabled = False
-
-        if ((errors.NO_EMAIL, 'modmail_email_address') in c.errors and
-                not modmail_email_enabled):
-            # clear the error, email address is being removed
-            c.errors.remove((errors.NO_EMAIL, 'modmail_email_address'))
 
         kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
@@ -2889,10 +2873,6 @@ class ApiController(RedditController):
             pass
         elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
             pass
-        elif form.has_errors('modmail_email_address', errors.BAD_EMAIL):
-            pass
-        elif form.has_errors('modmail_email_address', errors.NO_EMAIL):
-            pass
         #creating a new reddit
         elif not sr:
             # Don't allow user in timeout to create a new subreddit
@@ -2952,42 +2932,8 @@ class ApiController(RedditController):
                     emailer.ads_email(msg)
 
             for k, v in kw.iteritems():
-                if (k == "modmail_email_address" and
-                        sr.modmail_email_address != v):
-                    if sr.modmail_email_address and v:
-                        description = "changed from {old} to {new}".format(
-                            old=sr.modmail_email_address, new=v)
-                        g.stats.simple_event("modmail_email.sr_modified")
-                    elif sr.modmail_email_address:
-                        description = "removed {old}".format(
-                            old=sr.modmail_email_address)
-                        g.stats.simple_event("modmail_email.sr_disabled")
-                    else:
-                        description = "set {new}".format(new=v)
-                        g.stats.simple_event("modmail_email.sr_enabled")
-                    ModAction.create(sr, c.user, action='editsettings', 
-                        details=k, description=description)
-
-                    if sr.modmail_email_verified:
-                        old_modmail_email = sr.modmail_email_address
-                    else:
-                        old_modmail_email = None
-
-                    queue_modmail_email_change_email(
-                        sr=sr,
-                        modmail_email=v,
-                        old_modmail_email=old_modmail_email,
-                    )
-                    sr.modmail_email_verified = False
-
-                    if v:
-                        # modmail email is being enabled, do a redirect to
-                        # the edit page with an infobar explaining about the
-                        # verification email
-                        redir = sr.path + "about/edit/?modmail_email_pending"
-
-                elif getattr(sr, k, None) != v:
-                    ModAction.create(sr, c.user, action='editsettings', 
+                if getattr(sr, k, None) != v:
+                    ModAction.create(sr, c.user, action='editsettings',
                                      details=k)
 
                 setattr(sr, k, v)
