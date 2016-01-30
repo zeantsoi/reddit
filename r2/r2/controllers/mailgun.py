@@ -22,6 +22,7 @@
 
 import hashlib
 import hmac
+import re
 import time
 
 from pylons import app_globals as g
@@ -130,17 +131,27 @@ class MailgunWebhookController(RedditController):
         if not message_subject.startswith("re: "):
             message_subject = "re: " + message_subject
 
-        system_user = Account.system_user()
+        # from_ is like '"NAME (GROUP)" <something@domain.zendesk.com>'
+        match = re.search("\"(?P<name>\w+) [\w ()]*\"", from_)
+        from_sr = True
+        author = Account.system_user()
+
+        if match and match.group("name") in g.live_config['modmail_account_map']:
+            moderator_name = match.group("name")
+            moderator = Account._by_name(moderator_name)
+            if sr.is_moderator_with_perms(moderator, "mail"):
+                author = moderator
+                from_sr = False
 
         message, inbox_rel = Message._new(
-            author=system_user,
+            author=author,
             to=to,
             subject=message_subject,
             body=body,
             ip='0.0.0.0',
             parent=parent,
             sr=sr,
-            from_sr=True,
+            from_sr=from_sr,
             can_send_email=False,
             sent_via_email=True,
             email_id=email_id,
