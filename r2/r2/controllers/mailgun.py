@@ -47,6 +47,7 @@ from r2.models import (
 
 
 MAX_TIMESTAMP_DEVIATION = 600
+ZENDESK_PREFIX = "##- Please type your reply above this line -##"
 
 
 def validate_mailgun_webhook(timestamp, token, signature):
@@ -105,6 +106,10 @@ class MailgunWebhookController(RedditController):
         parent = Message._byID36(message_id36, data=True)
         to = Account._byID(parent.author_id, data=True)
         sr = Subreddit._byID(parent.sr_id, data=True)
+
+        if stripped_text.startswith(ZENDESK_PREFIX):
+            stripped_text = stripped_text[len(ZENDESK_PREFIX):].lstrip()
+
         if len(stripped_text) > 10000:
             body = stripped_text[:10000] + "\n\n--snipped--"
         else:
