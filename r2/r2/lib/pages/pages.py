@@ -2030,7 +2030,7 @@ class CommentPane(Templated):
         return key
 
     def __init__(self, article, sort, comment, context, num, **kw):
-        from r2.models import CommentBuilder, NestedListing
+        from r2.models import Builder, CommentBuilder, NestedListing
         from r2.controllers.reddit_base import UnloggedUser
 
         self.sort = sort
@@ -2151,7 +2151,7 @@ class CommentPane(Templated):
 
                 # wrap the comments so the builder will customize them for
                 # the loggedin user
-                wrapped_for_user = builder.wrap_items(builder.comments)
+                wrapped_for_user = Builder.wrap_items(builder, builder.comments)
                 timer.intermediate("wrap_comments_for_user")
 
                 for t in wrapped_for_user:
