@@ -86,6 +86,7 @@ from r2.lib.system_messages import user_added_messages
 from r2.lib.utils import (
     constant_time_compare,
     is_subdomain,
+    exclude_from_logging,
     to_date,
     to36,
     UrlParser,
@@ -1623,6 +1624,14 @@ class PromoteApiController(ApiController):
         if hide_after_seen and promote.all_campaigns_approved(link):
             jquery("#thing_%s" % link._fullname).hide()
 
+    @exclude_from_logging(
+        "firstName",
+        "lastName"
+        "phoneNumber",
+        "cardNumber",
+        "cardCode",
+        "expirationDate",
+    )
     @validatedForm(
         VVerifiedSponsor('link'),
         VModhash(),

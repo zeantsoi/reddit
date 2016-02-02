@@ -1757,6 +1757,13 @@ def lowercase_keys_recursively(subject):
     return lowercased
 
 
+def exclude_from_logging(*params):
+    request.environ['exclude_from_logging'] = params
+    def exclude_from_logging_fn(fn):
+        return fn
+    return exclude_from_logging_fn
+
+
 def sampled(live_config_var):
     """Wrap a function that should only actually run occasionally
 

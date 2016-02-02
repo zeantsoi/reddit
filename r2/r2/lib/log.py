@@ -140,6 +140,16 @@ class LoggingErrorReporter(Reporter):
         # streaming log for errors.
         write_error_summary(exception)
 
+        # remove any sensitive POST data
+        if "exclude_from_logging" in request.environ:
+            all_wsgi_variables = exc_data.extra_data.get(("extra", "WSGI Variables"), [])
+            for wsgi_variables in all_wsgi_variables:
+                if wsgi_variables.has_key("webob._parsed_post_vars"):
+                    post_vars, io_buffer = wsgi_variables.get("webob._parsed_post_vars")
+                    for param in request.environ["exclude_from_logging"]:
+                        if post_vars.has_key(param):
+                            del post_vars[param]
+
         text, extra = self.format_text(exc_data)
         # TODO: send this all in one burst so that error reports aren't
         # interleaved / individual lines aren't dropped. doing so will take
