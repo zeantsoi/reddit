@@ -60,4 +60,12 @@
     dict(year=datetime.datetime.now().timetuple()[0])}
   </p>
   <p class="bottommenu">REDDIT and the ALIEN Logo are registered trademarks of reddit inc.</p>
+  %if thing.advertiser_category is not None:
+    <p class="bottommenu bottommenu-advertise">
+      <a href="/advertising">
+        ${_("Advertise - %(category)s" % dict(
+            category=thing.advertiser_category.lower()))}
+      </a>
+    </p>
+  %endif
 </div>

@@ -1614,6 +1614,7 @@ class FriendsSR(FakeSubreddit):
 class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all subreddits'
+    advertiser_category = "Lifestyles"
     path = '/r/all'
 
     def keep_for_rising(self, sr_id):

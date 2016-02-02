@@ -1127,7 +1127,11 @@ class RedditFooter(CachedTemplate):
                 type = "flat_vert",
                 separator = "")
         ]
-        CachedTemplate.__init__(self)
+        CachedTemplate.__init__(self,
+            advertiser_category=self.get_advertiser_category(c.site))
+
+    def get_advertiser_category(self, site):
+        return getattr(site, "advertiser_category", None)
 
 class ClickGadget(Templated):
     def __init__(self, links, *a, **kw):
