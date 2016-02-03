@@ -446,7 +446,7 @@ class PromoCampaign(Thing):
 
     @property
     def needs_approval(self):
-        return not self.is_approved or self.is_house
+        return not (self.is_approved or self.is_house)
 
     def priority_name_from_priority(self, priority):
         if not priority in PROMOTE_PRIORITIES.values():
