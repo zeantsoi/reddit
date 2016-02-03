@@ -137,7 +137,8 @@ class MailgunWebhookController(RedditController):
         author = Account.system_user()
 
         if match and match.group("name") in g.live_config['modmail_account_map']:
-            moderator_name = match.group("name")
+            zendesk_name = match.group("name")
+            moderator_name = g.live_config['modmail_account_map'][zendesk_name]
             moderator = Account._by_name(moderator_name)
             if sr.is_moderator_with_perms(moderator, "mail"):
                 author = moderator
