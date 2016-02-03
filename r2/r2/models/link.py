@@ -813,7 +813,8 @@ class Link(Thing, Printable):
                 item.href_url = item.permalink
             else:
                 item.href_url = item.url
-                if not request.headers.get('dnt'):
+                if (not request.headers.get('dnt') and
+                        feature.is_enabled('outbound_clicktracking')):
                     item.use_outbound = True
                     item.outbound_url = outbound_link_url(item, item.url)
 
