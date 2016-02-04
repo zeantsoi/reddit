@@ -23,7 +23,8 @@
 import collections
 import itertools
 import math
-import mock
+
+from pylons import app_globals as g
 
 from r2.config.feature.state import FeatureState
 from . feature_test import TestFeatureBase, MockAccount
@@ -289,7 +290,9 @@ class TestExperiment(TestFeatureBase):
 
     def test_loggedout_experiment_global_disable(self, num_users=2000):
         """Test we can disable loid-experiments via configuration."""
-        self.patch_g(enable_loggedout_experiments=False)
+        # we already patch this attr in setUp, so we can just explicitly change
+        # it and rely on *that* cleanup
+        g.enable_loggedout_experiments = False
 
         self.assert_no_experiment(
             self.get_loggedout_users(num_users),
