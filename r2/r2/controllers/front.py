@@ -1688,11 +1688,6 @@ class FormsController(RedditController):
               verified=VBoolean("verified"))
     def GET_prefs(self, location='', verified=False):
         """Preference page"""
-        # Run an A/A test just to make sure everything's working in the
-        # experiment system.  Since everything's a control, we don't need to
-        # actually use the return value.
-        feature.is_enabled('aa_test')
-
         content = None
         infotext = None
         if not location or location == 'options':
