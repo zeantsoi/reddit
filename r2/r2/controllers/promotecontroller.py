@@ -1334,6 +1334,9 @@ class PromoteApiController(ApiController):
                 else:
                     cost_basis = PROMOTE_COST_BASIS.fixed_cpm
             else:
+                # if non-sponsor, is_auction is not part of the POST request,
+                # so must be set independently
+                is_auction = True
                 priority = PROMOTE_PRIORITIES['auction']
                 cost_basis = PROMOTE_COST_BASIS[cost_basis]
 
