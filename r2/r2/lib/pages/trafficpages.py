@@ -634,7 +634,7 @@ class PromotedLinkTraffic(Templated):
     @classmethod
     def make_campaign_table_row(cls, id, start, end, target, location,
             budget_dollars, spent, paid_impressions, impressions, clicks,
-            is_live, is_active, url, is_total):
+            is_live, is_active, url, is_total, is_auction=False):
 
         if impressions:
             cpm = format_currency(promote.cost_per_mille(spent, impressions),
@@ -663,7 +663,7 @@ class PromotedLinkTraffic(Templated):
             'location': location,
             'budget': format_currency(budget_dollars, 'USD', locale=c.locale),
             'spent': format_currency(spent, 'USD', locale=c.locale),
-            'impressions_purchased': format_number(paid_impressions),
+            'impressions_purchased': "---" if is_auction else format_number(paid_impressions),
             'impressions_delivered': format_number(impressions),
             'cpm': cpm,
             'clicks': format_number(clicks),
@@ -684,6 +684,7 @@ class PromotedLinkTraffic(Templated):
         total_paid_impressions = 0
         total_impressions = 0
         total_clicks = 0
+        all_auction = True
 
         self.campaign_table = []
         for camp in campaigns:
@@ -729,7 +730,8 @@ class PromotedLinkTraffic(Templated):
                                                is_live=is_live,
                                                is_active=is_active,
                                                url=url,
-                                               is_total=is_total)
+                                               is_total=is_total,
+                                               is_auction=camp.is_auction)
             self.campaign_table.append(row)
 
             total_budget_dollars += campaign_budget_dollars
@@ -737,6 +739,9 @@ class PromotedLinkTraffic(Templated):
             total_paid_impressions += camp.impressions
             total_impressions += impressions
             total_clicks += clicks
+
+            if not camp.is_auction:
+                all_auction = False
 
         # total row
         start = '---'
@@ -746,7 +751,6 @@ class PromotedLinkTraffic(Templated):
         is_live = False
         is_active = not self.campaign
         url = '/traffic/%s' % self.thing._id36
-        is_total = True
         row = self.make_campaign_table_row(_('total'),
                                            start=start,
                                            end=end,
@@ -760,7 +764,8 @@ class PromotedLinkTraffic(Templated):
                                            is_live=is_live,
                                            is_active=is_active,
                                            url=url,
-                                           is_total=is_total)
+                                           is_total=True,
+                                           is_auction=all_auction)
         self.campaign_table.append(row)
 
     def check_dates(self, thing):
