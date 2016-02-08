@@ -45,7 +45,10 @@
         </tr>
     </thead>
     <tbody>
-        % for ip, last_visit, location in thing.ips[:10]:
+        % for ip_data in thing.ips[:10]:
+        <% 
+            ip, last_visit, location = ip_data[:3]
+        %>
         <tr>
             <td>${ip}</td>
             <td>${location.get('country_name', '')}</td>
