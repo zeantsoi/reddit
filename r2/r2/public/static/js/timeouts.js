@@ -27,11 +27,22 @@
       r.access.isLinkRestricted = function(el) {
         return r.timeouts.isLinkRestricted(el) || isLinkRestricted(el);
       }
+    },
 
-      this._popup = r.ui.createGatePopup({
-        templateId: 'access-popup',
-        className: 'access-denied-modal',
+    getPopup: function() {
+      // gets the cached popup instance if available, otherwise creates it.
+      if (this._popup) { return this._popup; }
+
+      var content = $('#access-popup').html();
+      var popup = new r.ui.Popup({
+          size: 'large',
+          content: content,
+          className: 'access-denied-modal',
       });
+
+      popup.$.on('click', '.interstitial .c-btn', this._handleModalClick);
+      this._popup = popup;
+      return popup;
     },
 
     _logEvent: function(e) {
@@ -60,8 +71,15 @@
     },
 
     _handleClick: function onClick(e) {
-      this._popup.show();
+      this.getPopup()
+          .show();
       this._logEvent(e);
+      return false;
+    }.bind(r.timeouts),
+
+    _handleModalClick: function onClick(e) {
+      this.getPopup()
+          .hide();
       return false;
     }.bind(r.timeouts),
 

@@ -12,11 +12,22 @@
   _.extend(r.locked, {
     init: function() {
       $('body').on('click', '.locked-error', this._handleClick);
+    },
 
-      this._popup = r.ui.createGatePopup({
-        templateId: 'locked-popup',
+    getPopup: function() {
+      // gets the cached popup instance if available, otherwise creates it.
+      if (this._popup) { return this._popup; }
+
+      var content = $('#locked-popup').html();
+      var popup = new r.ui.Popup({
+        size: 'large',
+        content: content,
         className: 'locked-error-modal',
       });
+
+      popup.$.on('click', '.interstitial .c-btn', this._handleModalClick);
+      this._popup = popup;
+      return popup;
     },
 
     _handleClick: function onClick(e) {
@@ -24,7 +35,14 @@
         return;
       }
 
-      this._popup.show();
+      this.getPopup()
+        .show();
+      return false;
+    }.bind(r.locked),
+
+    _handleModalClick: function onClick(e) {
+      this.getPopup()
+        .hide();
       return false;
     }.bind(r.locked),
   });
