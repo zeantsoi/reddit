@@ -1167,6 +1167,7 @@ def keywords_from_context(
         srnames = srnames | srnames_from_recent_clicks()
 
     if Frontpage.name in srnames:
+        srnames.remove(Frontpage.name)
         keywords.add("s.frontpage")
 
     # if the ad was created by selfserve then we know
@@ -1188,10 +1189,8 @@ def keywords_from_context(
 
     if c.user_is_loggedin:
         keywords.add("s.loggedin")
-        keywords.add("loggedin")
     else:
         keywords.add("s.loggedout")
-        keywords.add("loggedout")
 
     return keywords
 
