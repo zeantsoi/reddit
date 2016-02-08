@@ -56,6 +56,7 @@
       }
 
       if ($el.hasClass('archived')) {
+        $el.show_unvotable_message();
         return;
       }
 
