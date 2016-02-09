@@ -1548,7 +1548,6 @@ class RedditController(OAuth2ResourceController):
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid
-            c.user_can_track_ads = c.user.name in g.can_track_ads
 
         enforce_https()
 

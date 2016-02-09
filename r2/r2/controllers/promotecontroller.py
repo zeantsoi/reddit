@@ -985,6 +985,7 @@ class PromoteApiController(ApiController):
         is_self = (kind == "self")
         is_link = not is_self
         is_new_promoted = not l
+        third_party_tracking_enabled = feature.is_enabled("third_party_tracking")
         if not c.user_is_sponsor:
             should_ratelimit = True
 
@@ -1059,7 +1060,7 @@ class PromoteApiController(ApiController):
             if c.user_is_sponsor:
                 l.managed_promo = is_managed
                 l.domain_override = domain_override or None
-                if c.user_can_track_ads == True:
+                if third_party_tracking_enabled:
                     l.third_party_tracking = third_party_tracking or None
                     l.third_party_tracking_2 = third_party_tracking_2 or None
             l._commit()
@@ -1184,7 +1185,7 @@ class PromoteApiController(ApiController):
             l.media_override = media_override
             l.domain_override = domain_override or None
             l.managed_promo = is_managed
-            if c.user_can_track_ads == True:
+            if third_party_tracking_enabled:
                 l.third_party_tracking = third_party_tracking or None
                 l.third_party_tracking_2 = third_party_tracking_2 or None
 

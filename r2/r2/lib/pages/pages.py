@@ -4494,6 +4494,7 @@ class PromoteLinkBase(Templated):
     max_end = None
 
     def __init__(self, **kw):
+        self.third_party_tracking_enabled = feature.is_enabled("third_party_tracking")
         self.mobile_web_targeting_enabled = feature.is_enabled("mobile_web_targeting")
         self.mobile_native_targeting_enabled = feature.is_enabled("mobile_native_targeting")
         self.mobile_targeting_enabled = (self.mobile_web_targeting_enabled or

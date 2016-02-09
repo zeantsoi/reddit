@@ -282,7 +282,6 @@ class Globals(object):
             'media_preview_domain_whitelist',
             'multi_icons',
             'hide_subscribers_srs',
-            'can_track_ads',
             'mcrouter_addr',
         ],
 

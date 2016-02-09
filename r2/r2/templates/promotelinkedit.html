@@ -196,7 +196,7 @@ ${pr.javascript_setup()}
         <% is_link = not thing.link.is_self %>
         ${pr.title_field(thing.link, editable=editable)}
         ${pr.content_field(thing.link, editable=editable, enable_override=c.user_is_sponsor,
-                           tracker_access=c.user_can_track_ads)}
+                           tracker_access=thing.third_party_tracking_enabled)}
         ${utils.error_field("NO_CHANGE_KIND", "kind", "div")}
         
         %if editable:
