@@ -22,21 +22,57 @@
 
 <%!
    from r2.lib import tracking
+   from r2.lib.filters import scriptsafe_dumps
  %>
 
-<iframe id="${thing.frame_id}" frameborder="0" scrolling="no" name="${thing.frame_id}"
-        src="${thing.ad_url}">
-</iframe>
+<div id="${thing.frame_id}"></div>
 
-<script type="text/javascript">
-    <% 
-      tracker_url = tracking.get_impression_pixel_url("adblock")
-     %>
-    $(function() {
-      var ad = $("#${thing.frame_id}");
-      if(!ad.length || ad.height() == 0 || ad.width() == 0 || ad.offset().left == 0) {
-        $(".footer").append("<img alt='' src='${unsafe(tracker_url)}&random=" +
-                                    Math.random()*10000000000000000 + "'/>");
+<script>
+  <%
+    tracker_url = tracking.get_impression_pixel_url("adblock")
+  %>
+  r.hooks.get('reddit').register(function() {
+    var timeout;
+
+    function loadAd() {
+      if (timeout) {
+        clearTimeout(timeout);
       }
-    });
+
+      var $ad = $('#' + ${scriptsafe_dumps(thing.frame_id)});
+      var iframe = document.createElement('iframe');
+      iframe.frameborder = 0;
+      iframe.scolling = 'no';
+      iframe.name = ${scriptsafe_dumps(thing.frame_id)};
+      iframe.src = ${scriptsafe_dumps(thing.ad_url)};
+      iframe.style.border = '0';
+      iframe.style.height = '100%';
+      iframe.style.width = '100%';
+
+      if (!$ad.length) {
+        return;
+      }
+
+      $ad.get(0).appendChild(iframe);
+
+      if ($ad.height() === 0 ||
+          $ad.width() === 0 ||
+          $ad.offset().left === 0) {
+        $('.footer').append(
+          '<img alt="" src="' +
+            ${scriptsafe_dumps(tracker_url)} +
+            '&random=' + (Math.random() * 10000000000000000) + '"/>'
+        );
+      }
+    }
+
+    if (r.config.feature_ads_user_matching && !window.DO_NOT_TRACK) {
+      r.frames.receiveMessageOnce('userMatched.gtm', loadAd);
+    } else {
+      loadAd();
+    }
+
+    timeout = setTimeout(loadAd, 1000);
+
+  });
 </script>

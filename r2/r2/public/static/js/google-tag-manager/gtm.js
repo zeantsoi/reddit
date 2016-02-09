@@ -19,4 +19,6 @@
 
   };
 
+  r.frames.listen('gtm');
+
 })((this.r = this.r || {}), this);
