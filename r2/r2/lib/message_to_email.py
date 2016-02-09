@@ -29,6 +29,7 @@ import requests
 
 from r2.lib import amqp
 from r2.lib.filters import _force_unicode
+from r2.lib.template_helpers import add_sr
 from r2.lib.utils import constant_time_compare
 from r2.models import (
     Account,
@@ -171,15 +172,18 @@ def send_modmail_email(message):
         # this is a message from the subreddit to a user. add some text that
         # shows the recipient
         recipient = Account._byID(message.to_id, data=True)
-        recipient_text = ("This message was sent from r/{subreddit} to "
-            "u/{user}\n\n").format(subreddit=sr.name, user=recipient.name)
+        sender_text = ("This message was sent from r/{subreddit} to "
+            "u/{user}").format(subreddit=sr.name, user=recipient.name)
     else:
-        recipient_text = ""
+        userlink = add_sr("/u/{name}".format(name=sender.name), sr_path=False)
+        sender_text = "This message was sent by {userlink}".format(
+            userlink=userlink,
+        )
 
-    reply_footer = ("\n\n-\n{recipient_text}"
+    reply_footer = ("\n\n-\n{sender_text}\n\n"
         "Reply to this email directly or view it on reddit: {link}")
     reply_footer = reply_footer.format(
-        recipient_text=recipient_text,
+        sender_text=sender_text,
         link=message.make_permalink(force_domain=True),
     )
     message_text = message.body + reply_footer
