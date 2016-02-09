@@ -104,6 +104,7 @@ error_list = dict((
         ('DATE_TOO_LATE', _('please enter a date %(day)s or earlier')),
         ('DATE_TOO_EARLY', _('please enter a date %(day)s or later')),
         ('START_DATE_CANNOT_CHANGE', _('start date cannot be changed')),
+        ('COST_BASIS_CANNOT_CHANGE', _('this campaign was created prior to auction and cannot be edited')),
         ('BAD_ADDRESS', _('address problem: %(message)s')),
         ('BAD_CARD', _('card problem: %(message)s')),
         ('TOO_LONG', _("this is too long (max: %(max_length)s)")),

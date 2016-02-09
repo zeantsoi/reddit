@@ -1393,6 +1393,15 @@ class PromoteApiController(ApiController):
         if campaign_id36:
             promo_campaign = PromoCampaign._byID36(campaign_id36)
 
+            if feature.is_enabled('ads_auction'):
+                # non-sponsors cannot update fixed CPM campaigns,
+                # even if they haven't launched (due to auction)
+                if not c.user_is_sponsor and not promo_campaign.is_auction:
+                    c.errors.add(errors.COST_BASIS_CANNOT_CHANGE,
+                        field='cost_basis')
+                    form.set_error(errors.COST_BASIS_CANNOT_CHANGE, 'cost_basis')
+                    return
+
             # Start not sent for campaigns already serving,
             # use the current start
             if not start:

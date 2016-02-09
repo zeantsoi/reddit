@@ -145,7 +145,8 @@
     %if thing.is_complete:
       <span class='info'>${_("complete")}</span>
     %else:
-      %if not thing.is_live or c.user_is_sponsor:
+      ## if auction enabled, prohibit advertisers from editing any fixed CPM campaign
+      %if c.user_is_sponsor or (not thing.is_live and (not thing.ads_auction_enabled or thing.is_auction)):
         <button class="edit" onclick="edit_campaign(${jquery_row})">
           ${_("edit")}
         </button>

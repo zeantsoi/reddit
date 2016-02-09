@@ -100,6 +100,7 @@ ${pr.javascript_setup()}
         <%utils:line_field title="${_('confirm')}" css_class="rounded confirmation-field">
           <div id="campaign-creator">
           </div>
+          ${utils.error_field("COST_BASIS_CANNOT_CHANGE", "cost_basis", "div")}
           ${utils.error_field("BAD_BUDGET", "total_budget_dollars", "div")}
           ${utils.error_field("BUDGET_LIVE", "total_budget_dollars", "div")}
         </%utils:line_field>

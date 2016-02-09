@@ -4658,7 +4658,7 @@ class RenderableCampaign(Templated):
 
         self.ads_auction_enabled = feature.is_enabled('ads_auction')
         if self.ads_auction_enabled:
-            self.is_auction = not c.user_is_sponsor or campaign.is_auction
+            self.is_auction = campaign.is_auction
         else:
             self.is_auction = False
 
