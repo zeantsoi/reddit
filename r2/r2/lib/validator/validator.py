@@ -22,6 +22,7 @@
 
 import cgi
 import json
+import math
 from collections import OrderedDict
 from decimal import Decimal
 
@@ -1971,7 +1972,11 @@ class VInt(VNumber):
 
 class VFloat(VNumber):
     def cast(self, val):
-        return float(val)
+        f = float(val)
+        if math.isnan(f):
+            raise ValueError, ""
+
+        return f
 
 
 class VDecimal(VNumber):
