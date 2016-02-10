@@ -506,7 +506,13 @@ def _use_adserver_reporting(thing):
     else:
         link = thing
 
-    campaigns = PromoCampaign._by_link(link._id)
+    campaigns = list(PromoCampaign._by_link(link._id))
+
+    # No campaigns, so nothing to report. Show the new
+    # view anyway.
+    if not campaigns:
+        return True
+
     end_date = max(campaign.end_date for campaign in campaigns)
     end_date = end_date.replace(tzinfo=g.tz)
     cutoff = cutoff.replace(tzinfo=g.tz)
