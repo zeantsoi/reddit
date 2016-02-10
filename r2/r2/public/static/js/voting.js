@@ -83,6 +83,11 @@
         isTrusted: isTrusted,
       };
 
+      var rank = $thing.data('rank');
+      if (rank) {
+        voteData.rank = parseInt(rank);
+      }
+
       $.request("vote", voteData);
       $thing.updateThing({ voted: dir });
     });
