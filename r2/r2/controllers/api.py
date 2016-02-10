@@ -3610,6 +3610,7 @@ class ApiController(RedditController):
             form.redirect("/gold/thanks?v=%s" % status)
 
     @csrf_exempt
+    @cross_domain(allow_credentials=True)
     @validatedForm(
         VRatelimit(rate_ip=True, prefix="rate_password_"),
         user=VUserWithEmail('name'),
