@@ -318,9 +318,6 @@ var CampaignCreator = React.createClass({
         if (r.sponsored.userIsSponsor) {
           auction.primary = true;
         } else {
-          console.log('bid: ', auction.bidDollars)
-          console.log('max: ', auction.maxBidDollars)
-          console.log('min: ', auction.minBidDollars)
           formattedMaxBidDollars = parseFloat(auction.maxBidDollars).toFixed(2);
           cssClass = {className: 'error', maxBid: formattedMaxBidDollars};
           message = r._('your bid must not exceed $%(maxBid)s');
