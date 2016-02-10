@@ -145,34 +145,36 @@
       <div class="infotext rounded">
         <p>${_("Choose a different domain name to display on the site (the small grey text next to a link)")}</p>
       </div>
-
-      %if tracker_access:
-        <label style="display:block; text-align:right" for="third_party_tracking">${_("Impression tracking URL:")}</label>
-        <input id="third_party_tracking" name="third_party_tracking" type="text"
-               %if link and link.third_party_tracking:
-                 value="${link.third_party_tracking}" class="rounded"
-               %else:
-                 class="rounded" placeholder="optional"
-               %endif
-        >
-        <div class="infotext rounded">
-          <p>${_("Enter a URL to insert into a 3rd-party impression tracking code snippet")}</p>
-        </div>
-
-        <label style="display:block; text-align:right" for="third_party_tracking_2">${_("Secondary Impression tracking URL:")}</label>
-        <input id="third_party_tracking_2" name="third_party_tracking_2" type="text"
-               %if link and link.third_party_tracking_2:
-                 value="${link.third_party_tracking_2}" class="rounded"
-               %else:
-                 class="rounded" placeholder="optional (not common)"
-               %endif
-        >
-        <div class="infotext rounded">
-          <p>${_("Enter a second 3rd-party impression tracking URL (not common)")}</p>
-        </div>
-      %endif
     %endif
   </%utils:line_field>
+  %if tracker_access:
+    <%utils:line_field title="${_('impression tracking url')}" css_class="rounded text-field"
+                       style="${('' if not is_link else 'display:none')}">
+      <input id="third_party_tracking" name="third_party_tracking" type="text"
+             %if link and link.third_party_tracking:
+               value="${link.third_party_tracking}" class="rounded"
+             %else:
+               class="rounded" placeholder="optional"
+             %endif
+      >
+      <div class="infotext rounded">
+        <p>${_("Enter a URL to insert into a 3rd-party impression tracking code snippet")}</p>
+      </div>
+    </%utils:line_field>
+    <%utils:line_field title="${_('secondary impression tracking url')}" css_class="rounded text-field"
+                       style="${('' if not is_link else 'display:none')}">
+      <input id="third_party_tracking_2" name="third_party_tracking_2" type="text"
+             %if link and link.third_party_tracking_2:
+               value="${link.third_party_tracking_2}" class="rounded"
+             %else:
+               class="rounded" placeholder="optional (not common)"
+             %endif
+      >
+      <div class="infotext rounded">
+        <p>${_("Enter a second 3rd-party impression tracking URL (not common)")}</p>
+      </div>
+    </%utils:line_field>
+  %endif
 </%def>
 
 <%def name="image_field(link=None, images=None)">
