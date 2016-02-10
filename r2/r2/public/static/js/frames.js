@@ -42,8 +42,14 @@
 
       var customEvent = new CustomEvent(type, {detail: message.data});
       customEvent.source = e.source;
-
+      customEvent.options = message.options;
       global.dispatchEvent(customEvent);
+
+      var wildcardEvent = new CustomEvent('*.' + namespace, {detail: message.data});
+      wildcardEvent.source = e.source;
+      wildcardEvent.options = message.options;
+      wildcardEvent.originalType = type;
+      global.dispatchEvent(wildcardEvent);
     } catch (x) {}
   }
 

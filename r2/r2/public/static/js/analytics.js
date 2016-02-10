@@ -287,16 +287,22 @@ r.analytics = {
     }
 
     if (!adBlockIsEnabled) {
-      var thirdPartyTrackingUrl = $el.data('thirdPartyTrackingUrl');
-      if (thirdPartyTrackingUrl) {
-        var thirdPartyTrackingImage = new Image();
-        thirdPartyTrackingImage.src = thirdPartyTrackingUrl;
+      var thirdParty = [];
+      var pixel1 = $el.data('thirdPartyTrackingUrl');
+      var pixel2 = $el.data('thirdPartyTrackingTwoUrl');
+
+      if (pixel1) {
+        thirdParty.push(pixel1);
       }
 
-      var thirdPartyTrackingUrl2 = $el.data('thirdPartyTrackingTwoUrl');
-      if (thirdPartyTrackingUrl2) {
-        var thirdPartyTrackingImage2 = new Image();
-        thirdPartyTrackingImage2.src = thirdPartyTrackingUrl2;
+      if (pixel2) {
+        thirdParty.push(pixel2);
+      }
+
+      if (thirdParty.length) {
+        r.gtm.trigger('fire-pixels', {
+          pixels: thirdParty,
+        });
       }
     }
 
