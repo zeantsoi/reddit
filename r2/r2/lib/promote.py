@@ -501,7 +501,7 @@ def edit_campaign(
     # update the index
     PromotionWeights.reschedule(link, campaign)
 
-    if not campaign.is_house:
+    if not charged_or_not_needed(campaign):
         # make it a freebie, if applicable
         author = Account._byID(link.author_id, True)
         if getattr(author, "complimentary_promos", False):
