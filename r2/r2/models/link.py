@@ -522,6 +522,22 @@ class Link(Thing, Printable):
         return True
 
     @classmethod
+    def update_nofollow(cls, user, wrapped):
+        user_is_loggedin = c.user_is_loggedin
+        for item in wrapped:
+            if user_is_loggedin and item.author_id == user._id:
+                item.nofollow = False
+            elif item._spam or item.author._spam:
+                item.nofollow = True
+            else:
+                item.nofollow = False
+
+        hooks.get_hook('link.update_nofollow').call(
+            user=user,
+            wrapped=wrapped,
+        )
+
+    @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.pages import make_link_child
         from r2.lib.count import incr_counts
@@ -591,6 +607,9 @@ class Link(Thing, Printable):
         legal_blocks_present = any(item.has_legal_blocks for item in wrapped)
         if legal_blocks_present:
             location = geoip.get_request_location(request, c)
+
+        # set the nofollow state where needed
+        cls.update_nofollow(user, wrapped)
 
         for item in wrapped:
             show_media = False
@@ -774,13 +793,6 @@ class Link(Thing, Printable):
                                  site.name != item.subreddit.name)
             item.stickied = (not item.different_sr and
                 item._fullname in sticky_fullnames)
-
-            if user_is_loggedin and item.author_id == user._id:
-                item.nofollow = False
-            elif item.score <= 1 or item._spam or item.author._spam:
-                item.nofollow = True
-            else:
-                item.nofollow = False
 
             item.subreddit_path = item.subreddit.path
             item.domain_path = "/domain/%s/" % item.domain
@@ -1493,6 +1505,22 @@ class Comment(Thing, Printable):
         return score
 
     @classmethod
+    def update_nofollow(cls, user, wrapped):
+        user_is_loggedin = c.user_is_loggedin
+        for item in wrapped:
+            if user_is_loggedin and item.author_id == user._id:
+                item.nofollow = False
+            elif item._spam or item.link._spam or item.author._spam:
+                item.nofollow = True
+            else:
+                item.nofollow = False
+
+        hooks.get_hook("comment.update_nofollow").call(
+            user=user,
+            wrapped=wrapped,
+        )
+
+    @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_submitter_distinguish, get_domain
         from r2.lib.utils import timeago
@@ -1566,15 +1594,12 @@ class Comment(Thing, Printable):
             item.link = links.get(item.link_id)
             item.show_admin_context = user_is_admin
 
-            if (item.link._score <= 1 or item.score < 3 or
-                item.link._spam or item._spam or item.author._spam):
-                item.nofollow = True
-            else:
-                item.nofollow = False
-
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
 
+        cls.update_nofollow(user, wrapped)
+
+        for item in wrapped:
             if item.author_id == item.link.author_id and not item.link._deleted:
                 add_submitter_distinguish(item.attribs, item.link, item.subreddit)
 
