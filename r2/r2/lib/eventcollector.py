@@ -322,6 +322,8 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
+        from r2.models import Account, Comment, Link, Subreddit
+
         if not action_name:
             request_vars = request.environ["pylons.routes_dict"]
             action_name = request_vars.get('action_name')
@@ -388,7 +390,6 @@ class EventQueue(object):
         event.add("details_text", details_text)
         event.add("process_notes", "IN_TIMEOUT")
 
-        from r2.models import Comment, Link, Subreddit
         if not subreddit:
             if isinstance(context.site, Subreddit):
                 subreddit = context.site
