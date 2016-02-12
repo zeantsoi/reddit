@@ -21,6 +21,7 @@
 ###############################################################################
 """Utilities for interfacing with the WebSocket server Sutro."""
 
+import datetime
 import hashlib
 import hmac
 import json
@@ -28,6 +29,7 @@ import time
 import urllib
 import urlparse
 
+from baseplate.crypto import MessageSigner
 from pylons import app_globals as g
 
 from r2.lib import amqp
@@ -64,9 +66,14 @@ def make_url(namespace, max_age):
     mac = hmac.new(g.secrets["websocket"], expires + namespace,
                    hashlib.sha1).hexdigest()
 
+    signer = MessageSigner(g.secrets["websocket"])
+    signature = signer.make_signature(
+        namespace, max_age=datetime.timedelta(seconds=max_age))
+
     query_string = urllib.urlencode({
         "h": mac,
         "e": expires,
+        "m": signature,
     })
 
     return urlparse.urlunparse(("wss", g.websocket_host, namespace,
