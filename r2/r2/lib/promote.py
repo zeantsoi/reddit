@@ -1192,6 +1192,9 @@ def keywords_from_context(
     else:
         keywords.add("s.loggedout")
 
+    if c.user.employee:
+        keywords.add("s.employee")
+
     return keywords
 
 
