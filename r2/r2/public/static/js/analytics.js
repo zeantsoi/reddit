@@ -71,6 +71,14 @@ r.analytics = {
       r.analytics.screenviewEvent();
     }
 
+    if (r.config.expando_preference) {
+      r.analytics.contextData.expando_preference = r.config.expando_preference;
+    }
+
+    if (r.config.pref_no_profanity) {
+      r.analytics.contextData.media_preference_hide_nsfw = r.config.pref_no_profanity
+    }
+
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
   },
@@ -473,6 +481,8 @@ r.analytics = {
       'listing_name',
       'referrer_domain',
       'referrer_url',
+      'expando_preference',
+      'media_preference_hide_nsfw',
     ]);
 
     if ('linkIsNSFW' in targetData) {
