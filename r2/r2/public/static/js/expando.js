@@ -4,6 +4,60 @@
     return elem.tagName === 'A';
   }
 
+  /*
+  This is a temporary hack to block RES from hijacking our expando _only_ on
+  when it is auto-expanded.  The current behavior without this hack will cause
+  a double-expando (ours being visible initially, and a second when the RES user
+  tries to collapse it).  We want to prevent RES users from having a poor
+  experience with release of the new media preview features, so we're hacking in
+  a fix on _our_ end and giving RES a hard deadline to fix it on theirs.
+
+  RES removes our expando button completely and seems to be swallowing click
+  events on theirs.  This fixes it by using a MutationObserver, which any
+  RES-supported browser should support.  We'll watch for RES's button swap, and
+  simply swap it back in with our own.
+
+  https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
+   */
+  function blockPluginExpando(view) {
+    try {
+        var entryNode = view.$el.find('.entry')[0];
+        var originalButton = view.$button[0];
+        var pluginButton;
+        var removedButton;
+
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutationRecord) {
+            // look for mutations adding a new expando-button element
+            if (mutationRecord.addedNodes.length &&
+                $(mutationRecord.addedNodes[0]).is('.expando-button')) {
+              pluginButton = mutationRecord.addedNodes[0];
+            }
+
+            // look for mutations removing the original expando-button element
+            if (mutationRecord.removedNodes.length &&
+                mutationRecord.removedNodes[0] === originalButton) {
+              removedButton = originalButton;
+            }
+
+            // when both mutations have been observed, stop observing and undo
+            if (pluginButton && removedButton) {
+              observer.disconnect();
+              $(pluginButton).before(removedButton).remove();
+            }
+          });
+        });
+
+        observer.observe(entryNode, { childList: true });
+
+        // if nothing happens for 5 seconds, probably safe to say they don't have RES
+        setTimeout(function() {
+          observer.disconnect();
+        }, 5000);
+      } catch (err) {
+      }
+  }
+
   var Expando = Backbone.View.extend({
     buttonSelector: '.expando-button',
     expandoSelector: '.expando',
@@ -73,6 +127,8 @@
       this.autoexpanded = this.options.autoexpanded;
 
       if (this.autoexpanded) {
+        blockPluginExpando(this);
+
         this.loaded = true;
         this.cachedHTML = this.$expando.html();
       }
