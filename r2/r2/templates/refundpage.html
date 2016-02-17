@@ -61,10 +61,14 @@
         <th>${_("cpm")}</th>
         <td class="prefright">${thing.printable_bid}</td>
       </tr>
+      %if thing.campaign.impressions:
       <tr>
         <th>${_("impressions purchased")}</th>
-        <td class="prefright">${format_number(thing.campaign.impressions, locale=c.locale)}</td>
+        <td class="prefright">
+            ${format_number(thing.campaign.impressions, locale=c.locale)}
+        </td>
       </tr>
+      %endif
       <tr>
         <th>${_("impressions received")}</th>
         <td class="prefright">
