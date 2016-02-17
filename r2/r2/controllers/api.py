@@ -2718,7 +2718,7 @@ class ApiController(RedditController):
             value = request.params.get('related_subreddits')
             kw['related_subreddits'] = validator.run(value)
 
-        if feature.is_enabled('autoexpand_media_previews'):
+        if feature.is_enabled('autoexpand_media_subreddit_setting'):
             validator = VBoolean('show_media_preview')
             value = request.params.get('show_media_preview')
             kw["show_media_preview"] = validator.run(value)
@@ -2915,7 +2915,7 @@ class ApiController(RedditController):
             if sr.quarantine:
                 del kw['allow_top']
                 del kw['show_media']
-                if feature.is_enabled('autoexpand_media_previews'):
+                if feature.is_enabled('autoexpand_media_subreddit_setting'):
                     del kw['show_media_preview']
 
             #notify ads if sr in a collection changes over_18 to true

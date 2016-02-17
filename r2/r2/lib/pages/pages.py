@@ -3027,7 +3027,9 @@ class CreateSubreddit(Templated):
     """reddit creation form."""
     def __init__(self, site = None, name = '', captcha=None):
         allow_image_upload = site and not site.quarantine
-        feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_previews")
+        # feature flag was changed to split it off from user preferences
+        # keeping the same attribute name to unnecessary transient errors
+        feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_subreddit_setting")
         Templated.__init__(self,
                            site=site,
                            name=name,
