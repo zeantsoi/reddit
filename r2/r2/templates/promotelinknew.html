@@ -40,7 +40,7 @@
             ${username_field()}
             ${managed_field(None)}
           %endif
-          ${title_field(None)}
+          ${title_field(None, editable=True)}
           ${content_field(None, editable=True, enable_override=c.user_is_sponsor,
                           tracker_access=thing.third_party_tracking_enabled)}
           <footer class="buttons">

@@ -470,9 +470,6 @@ def accept_promo(thing):
 def reject_promo(thing, reason = ""):
     return _promo_email(thing, Email.Kind.REJECT_PROMO, reason)
 
-def edited_live_promo(thing):
-    return _promo_email(thing, Email.Kind.EDITED_LIVE_PROMO)
-
 def queue_promo(thing, total_budget_dollars, trans_id):
     return _promo_email(thing, Email.Kind.QUEUED_PROMO,
         total_budget_dollars=total_budget_dollars, trans_id = trans_id)
