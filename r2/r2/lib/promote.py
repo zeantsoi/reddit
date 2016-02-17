@@ -35,7 +35,6 @@ import urlparse
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
-from pylons.i18n import ungettext
 from pytz import timezone
 
 from r2.config import feature
@@ -1026,11 +1025,11 @@ def finalize_completed_campaigns(daysago=1):
             continue
 
         link = links[camp.link_id]
-        billable_impressions = get_billable_impressions(camp)
-        billable_amount = get_billable_amount(camp, billable_impressions)
+        billable_amount = get_billable_amount(camp)
 
-        if billable_amount >= camp.total_budget_pennies:
-            if hasattr(camp, 'cpm'):
+        if billable_amount >= camp.total_budget_dollars:
+            if not is_pre_cpm(camp):
+                billable_impressions = get_billable_impressions(camp)
                 text = '%s completed with $%s billable (%s impressions @ $%s).'
                 text %= (camp, billable_amount, billable_impressions,
                     camp.bid_dollars)
@@ -1040,51 +1039,77 @@ def finalize_completed_campaigns(daysago=1):
             PromotionLog.add(link, text)
             camp.refund_amount = 0.
             camp._commit()
+        elif camp.is_auction:
+            try:
+                refund_campaign(link, camp)
+            # Something went wrong, throw it in the queue for a manual refund.
+            except RefundProviderException:
+                underdelivered_campaigns.append(camp)
         elif charged_or_not_needed(camp):
             underdelivered_campaigns.append(camp)
 
-        if underdelivered_campaigns:
-            queries.set_underdelivered_campaigns(underdelivered_campaigns)
+    if underdelivered_campaigns:
+        queries.set_underdelivered_campaigns(underdelivered_campaigns)
 
 
-def get_refund_amount(camp, billable):
-    existing_refund = getattr(camp, 'refund_amount', 0.)
-    charge = camp.total_budget_dollars - existing_refund
-    refund_amount = charge - billable
+def get_refund_amount(campaign):
+    billable_amount = get_billable_amount(campaign)
+    existing_refund = getattr(campaign, 'refund_amount', 0.)
+    charge = campaign.total_budget_dollars - existing_refund
+    refund_amount = charge - billable_amount
     refund_amount = Decimal(str(refund_amount)).quantize(Decimal('.01'),
                                                     rounding=ROUND_UP)
     return max(float(refund_amount), 0.)
 
+def can_refund(link, campaign):
+    if campaign.is_freebie():
+        return False
+    transactions = get_transactions(link, [campaign])
+    transaction = transactions.get(campaign._id)
+    charged_and_not_refunded = (transaction and
+        transaction.is_charged() and not transaction.is_refund())
+    refund_amount = get_refund_amount(campaign)
 
-def refund_campaign(link, camp, refund_amount, billable_amount,
-        billable_impressions):
-    owner = Account._byID(camp.owner_id, data=True)
+    return charged_and_not_refunded and refund_amount > 0
+
+
+class InapplicableRefundException(Exception): pass
+class RefundProviderException(Exception): pass
+
+def refund_campaign(link, campaign):
+    if not can_refund(link, campaign):
+        raise InapplicableRefundException()
+
+    owner = Account._byID(campaign.owner_id, data=True)
+    refund_amount = get_refund_amount(campaign)
     success, reason = authorize.refund_transaction(
-        owner, camp.trans_id, camp._id, refund_amount)
+        owner, campaign.trans_id, campaign._id, refund_amount)
+
     if not success:
-        text = ('%s $%s refund failed' % (camp, refund_amount))
+        text = ('%s $%s refund failed' % (campaign, refund_amount))
         PromotionLog.add(link, text)
         g.log.debug(text + ' (reason: %s)' % reason)
 
-        return False
+        raise RefundProviderException(reason)
 
+    billable_impressions = get_billable_impressions(campaign)
+    billable_amount = get_billable_amount(campaign)
     if billable_impressions:
         text = ('%s completed with $%s billable (%s impressions @ $%s).'
-                ' %s refunded.' % (camp, billable_amount,
+                ' %s refunded.' % (campaign, billable_amount,
                                    billable_impressions,
-                                   camp.bid_pennies / 100.,
+                                   campaign.bid_pennies / 100.,
                                    refund_amount))
     else:
-        text = ('%s completed with $%s billable. %s refunded' % (camp,
+        text = ('%s completed with $%s billable. %s refunded' % (campaign,
             billable_amount, refund_amount))
 
+    g.log.info(text)
     PromotionLog.add(link, text)
-    camp.refund_amount = refund_amount
-    camp._commit()
-    queries.unset_underdelivered_campaigns(camp)
+    campaign.refund_amount = refund_amount
+    campaign._commit()
+    queries.unset_underdelivered_campaigns(campaign)
     emailer.refunded_promo(link)
-
-    return True
 
 
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
@@ -1325,31 +1350,31 @@ def get_billable_impressions(campaign):
     return billable_impressions
 
 
-def get_billable_amount(camp, impressions):
-    if not camp.is_auction:
-        value_delivered = impressions / 1000. * camp.bid_dollars
-        billable_amount = min(camp.total_budget_dollars, value_delivered)
-    else:
-        # pre-CPM campaigns are charged in full regardless of impressions
-        billable_amount = camp.total_budget_dollars
+def get_billable_amount(campaign):
+    value_delivered = get_spent_amount(campaign)
 
+    # Never bill for more than the budget.
+    billable_amount = min(campaign.total_budget_dollars, value_delivered)
     billable_amount = Decimal(str(billable_amount)).quantize(Decimal('.01'),
                                                         rounding=ROUND_DOWN)
     return float(billable_amount)
 
 
+def is_pre_cpm(campaign):
+    return getattr(campaign, "is_pre_cpm", False)
+
+
 def get_spent_amount(campaign):
     if campaign.is_house:
-        spent = 0.
-    elif hasattr(campaign, 'refund_amount'):
-        # no need to calculate spend if we've already refunded
-        spent = campaign.total_budget_dollars - campaign.refund_amount
-    elif feature.is_enabled("adserver_reporting"):
-        spent = campaign.adserver_spent_pennies / 100.
+        return 0.
+    elif campaign.is_auction:
+        return campaign.adserver_spent_pennies / 100.
+    elif not is_pre_cpm(campaign):
+        impressions = get_billable_impressions(campaign)
+        return impressions / 1000. * campaign.bid_dollars
     else:
-        billable_impressions = get_billable_impressions(campaign)
-        spent = get_billable_amount(campaign, billable_impressions)
-    return spent
+        # pre-CPM campaigns are charged in full regardless of impressions
+        return campaign.total_budget_dollars
 
 
 def successful_payment(link, campaign, ip, address):

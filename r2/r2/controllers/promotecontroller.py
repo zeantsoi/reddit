@@ -867,28 +867,13 @@ class PromoteApiController(ApiController):
         if not link or not campaign or link._id != campaign.link_id:
             return abort(404, 'not found')
 
-        # If created before switch to auction, use old billing method
-        if hasattr(campaign, 'cpm'):
-            billable_impressions = promote.get_billable_impressions(campaign)
-            billable_amount = promote.get_billable_amount(campaign,
-                billable_impressions)
-            refund_amount = promote.get_refund_amount(campaign, billable_amount)
-        # Otherwise, use adserver_spent_pennies
-        else:
-            billable_amount = campaign.total_budget_pennies / 100.
-            refund_amount = (billable_amount -
-                (campaign.adserver_spent_pennies / 100.))
-            billable_impressions = None
-
-        if refund_amount <= 0:
-            form.set_text('.status', _('refund not needed'))
-            return
-
-        if promote.refund_campaign(link, campaign, refund_amount,
-                billable_amount, billable_impressions):
-            form.set_text('.status', _('refund succeeded'))
-        else:
-            form.set_text('.status', _('refund failed'))
+        try:
+            promote.refund_campaign(link, campaign)
+            form.set_text('.status', _("refund succeeded"))
+        except promote.InapplicableRefundException:
+            form.set_text('.status', _("refund not needed"))
+        except promote.RefundProviderException as e:
+            form.set_text(".status", e.message)
 
     @validatedForm(
         VSponsor('link_id36'),

@@ -4713,9 +4713,7 @@ class RenderableCampaign(Templated):
         self.is_live = is_live
         self.is_complete = is_complete
         self.is_edited_live = is_edited_live
-        self.needs_refund = (is_complete and c.user_is_sponsor and
-                             (transaction and not transaction.is_refund()) and
-                             self.spent < campaign.total_budget_dollars)
+        self.needs_refund = promote.can_refund(link, campaign) and is_complete
         self.pay_url = promote.pay_url(link, campaign)
         sr_name = random.choice(campaign.target.subreddit_names)
         self.view_live_url = promote.view_live_url(link, campaign, sr_name)
@@ -4803,13 +4801,9 @@ class RefundPage(Reddit):
         self.link = link
         self.campaign = campaign
         self.listing = wrap_links(link, skip=False)
-        billable_impressions = promote.get_billable_impressions(campaign)
-        billable_amount = promote.get_billable_amount(campaign,
-                                                      billable_impressions)
-        refund_amount = promote.get_refund_amount(campaign, billable_amount)
-        self.billable_impressions = billable_impressions
-        self.billable_amount = billable_amount
-        self.refund_amount = refund_amount
+        self.billable_impressions = promote.get_billable_impressions(campaign)
+        self.billable_amount = promote.get_billable_amount(campaign)
+        self.refund_amount = promote.get_refund_amount(campaign)
         self.printable_total_budget = format_currency(
             campaign.total_budget_dollars, 'USD', locale=c.locale)
         self.printable_bid = format_currency(campaign.bid_dollars, 'USD',

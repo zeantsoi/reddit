@@ -97,7 +97,7 @@
         <span class='info'>${_("freebie")}</span>
       %endif
 
-      %if not thing.free and c.user_is_sponsor and thing.needs_refund:
+      %if thing.needs_refund and c.user_is_sponsor:
         <button class="refund" onclick="$.redirect('${thing.refund_url}')">
           ${_("refund")}
         </button>

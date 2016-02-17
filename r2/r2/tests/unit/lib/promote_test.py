@@ -2,11 +2,17 @@ import unittest
 
 from mock import MagicMock, Mock, patch
 
+from r2.lib.authorize.api import Transaction
 from r2.lib.promote import (
+    can_refund,
     get_nsfw_collections_srnames,
     get_refund_amount,
+    get_spent_amount,
+    is_pre_cpm,
+    RefundProviderException,
     refund_campaign,
     srnames_from_site,
+    InapplicableRefundException,
 )
 from r2.models import (
     Account,
@@ -132,85 +138,240 @@ class TestPromoteRefunds(unittest.TestCase):
     def setUp(self):
         self.link = Mock()
         self.campaign = MagicMock()
+        self.campaign._id = 1
         self.campaign.total_budget_dollars = 200.
-        self.refund_amount = 100.
-        self.billable_amount = 100.
-        self.billable_impressions = 1000
 
-    @patch('r2.lib.promote.authorize.refund_transaction')
-    @patch('r2.lib.promote.PromotionLog.add')
-    @patch('r2.lib.promote.queries.unset_underdelivered_campaigns')
-    @patch('r2.lib.promote.emailer.refunded_promo')
-    def test_refund_campaign_success(self, emailer_refunded_promo,
+    @patch("r2.lib.promote.get_refund_amount")
+    @patch("r2.lib.promote.get_transactions")
+    def test_can_refund_returns_false_if_transaction_not_charged(
+            self, get_transactions, get_refund_amount):
+        transaction = MagicMock()
+        get_transactions.return_value = {self.campaign._id: transaction}
+        transaction.is_charged = MagicMock()
+        transaction.is_charged.return_value = False
+
+        self.campaign.is_freebie = MagicMock()
+        self.campaign.is_freebie.return_value = False
+
+        self.assertFalse(can_refund(self.link, self.campaign))
+
+    @patch("r2.lib.promote.get_refund_amount")
+    @patch("r2.lib.promote.get_transactions")
+    def test_can_refund_returns_false_if_transaction_is_already_refunded(
+            self, get_transactions, get_refund_amount):
+        transaction = MagicMock()
+        get_transactions.return_value = {self.campaign._id:transaction}
+        transaction.is_charged = MagicMock()
+        transaction.is_charged.return_value = True
+        transaction.is_refund = MagicMock()
+        transaction.is_refund.return_value = True
+
+        self.campaign.is_freebie = MagicMock()
+        self.campaign.is_freebie.return_value = False
+
+        self.assertFalse(can_refund(self.link, self.campaign))
+
+    @patch("r2.lib.promote.get_refund_amount")
+    @patch("r2.lib.promote.get_transactions")
+    def test_can_refund_returns_false_if_refund_amount_is_zero(
+            self, get_transactions, get_refund_amount):
+        transaction = MagicMock()
+        get_transactions.return_value = {self.campaign._id: transaction}
+        get_refund_amount.return_value = 0
+        transaction.is_charged = MagicMock()
+        transaction.is_charged.return_value = True
+
+        self.campaign.is_freebie = MagicMock()
+        self.campaign.is_freebie.return_value = False
+
+        self.assertFalse(can_refund(self.link, self.campaign))
+
+    def test_can_refund_returns_false_if_campaign_is_free(self):
+        self.campaign.is_freebie = MagicMock()
+        self.campaign.is_freebie.return_value = True
+
+        self.assertFalse(can_refund(self.link, self.campaign))
+
+    @patch("r2.lib.promote.can_refund")
+    def test_refund_campaign_throws_if_transaction_cant_be_refunded(
+            self, can_refund):
+        can_refund.return_value = False
+
+        with self.assertRaises(InapplicableRefundException):
+            refund_campaign(self.link, self.campaign)
+
+    @patch("r2.models.Account._byID")
+    @patch('r2.models.PromotionLog.add')
+    @patch("r2.lib.promote.can_refund")
+    @patch("r2.lib.promote.get_refund_amount")
+    @patch("r2.lib.authorize.refund_transaction")
+    def test_refund_campaign_throws_if_refund_fails(
+            self, refund_transaction, get_refund_amount,
+            can_refund, account_by_id, promo_log_add):
+        error_message = "because we're testing errors!"
+        refund_transaction.return_value = (False, error_message)
+        can_refund.return_value = True
+        account_by_id.return_value = MagicMock()
+
+        with self.assertRaisesRegexp(RefundProviderException, error_message):
+            refund_campaign(self.link, self.campaign)
+
+    @patch("r2.lib.authorize.refund_transaction")
+    @patch('r2.models.PromotionLog.add')
+    @patch('r2.lib.db.queries.unset_underdelivered_campaigns')
+    @patch('r2.lib.emailer.refunded_promo')
+    @patch("r2.lib.promote.can_refund")
+    @patch("r2.lib.promote.get_refund_amount")
+    def test_refund_campaign_success(
+            self, get_refund_amount, can_refund, emailer_refunded_promo,
             queries_unset, promotion_log_add, refund_transaction):
         """Assert return value and that correct calls are made on success."""
-        refund_transaction.return_value = (True, None)
+        refund_amount = 100.
+        get_refund_amount.return_value = refund_amount
+        can_refund.return_value = True
+        refund_transaction.return_value = (True, "")
 
-        success = refund_campaign(
+        refund_campaign(
             link=self.link,
-            camp=self.campaign,
-            refund_amount=self.refund_amount,
-            billable_amount=self.billable_amount,
-            billable_impressions=self.billable_impressions,
+            campaign=self.campaign,
         )
 
         self.assertTrue(refund_transaction.called)
         self.assertTrue(promotion_log_add.called)
         queries_unset.assert_called_once_with(self.campaign)
         emailer_refunded_promo.assert_called_once_with(self.link)
-        self.assertTrue(success)
+        self.assertEqual(self.campaign.refund_amount, refund_amount)
 
-    @patch('r2.lib.promote.authorize.refund_transaction')
-    @patch('r2.lib.promote.PromotionLog.add')
-    def test_refund_campaign_failed(self, promotion_log_add,
-            refund_transaction):
-        """Assert return value and that correct calls are made on failure."""
-        refund_transaction.return_value = (False, None)
+    @patch("r2.lib.promote.get_billable_amount")
+    def test_get_refund_amount_with_no_existing_refund(self, get_billable_amount):
+        billable_amount = 100
+        get_billable_amount.return_value = billable_amount
+        self.campaign.refund_amount = 0.
+        self.assertEquals(get_refund_amount(self.campaign), billable_amount)
 
-        success = refund_campaign(
-            link=self.link,
-            camp=self.campaign,
-            refund_amount=self.refund_amount,
-            billable_amount=self.billable_amount,
-            billable_impressions=self.billable_impressions,
-        )
+    @patch("r2.lib.promote.get_billable_amount")
+    def test_get_refund_amount_with_existing_refund_amount(self, get_billable_amount):
+        billable_amount = 100.
+        existing_refund = 10.
+        get_billable_amount.return_value = billable_amount
+        self.campaign.refund_amount = existing_refund
+        refund_amount = get_refund_amount(self.campaign)
+        self.assertEquals(refund_amount, billable_amount - existing_refund)
 
-        self.assertTrue(refund_transaction.called)
-        self.assertTrue(promotion_log_add.called)
-        self.assertFalse(success)
-
-    def test_get_refund_amount_when_zero(self):
-        """
-        Assert that correct value is returned when existing refund_amount is
-        zero.
-        """
-        campaign = Mock(spec=('total_budget_dollars',))
-        campaign.total_budget_dollars = 200.
-        refund_amount = get_refund_amount(campaign, self.billable_amount)
-        self.assertEquals(refund_amount,
-            campaign.total_budget_dollars - self.billable_amount)
-
-    def test_get_refund_amount_rounding(self):
+    @patch("r2.lib.promote.get_billable_amount")
+    def test_get_refund_amount_rounding(self, get_billable_amount):
         """Assert that inputs are correctly rounded up to the nearest penny."""
-        # If campaign.refund_amount is less than a fraction of a penny,
-        # the refund_amount should be campaign.total_budget_dollars.
-        self.campaign.refund_amount = 0.00000001
-        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
-        self.assertEquals(refund_amount, self.billable_amount)
-
-        self.campaign.refund_amount = 0.00999999
-        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
-        self.assertEquals(refund_amount, self.billable_amount)
+        billable_amount = 100.
+        get_billable_amount.return_value = billable_amount
+        self.campaign.refund_amount = 0.0001
+        refund_amount = get_refund_amount(self.campaign)
+        self.assertEquals(refund_amount, billable_amount)
 
         # If campaign.refund_amount is just slightly more than a penny,
         # the refund amount should be campaign.total_budget_dollars - 0.01.
         self.campaign.refund_amount = 0.01000001
-        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
-        self.assertEquals(refund_amount, self.billable_amount - 0.01)
+        refund_amount = get_refund_amount(self.campaign)
+        self.assertEquals(refund_amount, billable_amount - 0.01)
 
         # Even if campaign.refund_amount is just barely short of two pennies,
         # the refund amount should be campaign.total_budget_dollars - 0.01.
         self.campaign.refund_amount = 0.01999999
-        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
-        self.assertEquals(refund_amount, self.billable_amount - 0.01)
+        refund_amount = get_refund_amount(self.campaign)
+        self.assertEquals(refund_amount, billable_amount - 0.01)
 
+    def test_get_spent_amount_returns_zero_for_house(self):
+        house_campaign = MagicMock(spec=("is_house",))
+        house_campaign.is_house = True
+
+        spent = get_spent_amount(house_campaign)
+
+        self.assertEqual(spent, 0)
+
+    def test_get_spent_amount_uses_adserver_spent_for_auction(self):
+        spent_pennies = 1000
+        auction_campaign = MagicMock(spec=(
+            "adserver_spent_pennies",
+            "is_house",
+            "is_auction",
+        ))
+        auction_campaign.adserver_spent_pennies = spent_pennies
+        auction_campaign.is_house = False
+        auction_campaign.is_auction = True
+
+        spent = get_spent_amount(auction_campaign)
+
+        self.assertEqual(spent, spent_pennies / 100.)
+
+    @patch("r2.lib.promote.get_billable_impressions")
+    def test_get_spent_amount_fixed_cpm(self, get_billable_impressions):
+        """`get_spent_amount`: fixed cpm campaigns should bill the bid amount
+                for every 1k impressions
+        """
+
+        get_billable_impressions.return_value = 2000
+        fixed_cpm_campaign = MagicMock(spec=(
+            "is_house",
+            "is_auction",
+            "bid_dollars",
+        ))
+        fixed_cpm_campaign.is_house = False
+        fixed_cpm_campaign.is_auction = False
+        fixed_cpm_campaign.bid_dollars = 10.
+
+        spent = get_spent_amount(fixed_cpm_campaign)
+        self.assertTrue(spent, 20.)
+
+    @patch("r2.lib.promote.is_pre_cpm")
+    def test_get_spent_amount_pre_cpm(self, is_pre_cpm):
+        """`get_spent_amount`: Fixed price campaigns should use their budget"""
+
+        budget = 100.
+        is_pre_cpm.return_value = True
+        pre_cpm_campaign = MagicMock(spec=(
+            "is_house",
+            "is_auction",
+            "total_budget_dollars",
+        ))
+        pre_cpm_campaign.is_house = False
+        pre_cpm_campaign.is_auction = False
+        pre_cpm_campaign.total_budget_dollars = budget
+
+        spent = get_spent_amount(pre_cpm_campaign)
+        self.assertTrue(spent, budget)
+
+    @patch("r2.lib.promote.get_spent_amount")
+    def test_get_billable_amount(
+            self, get_spent_amount):
+        spent = 90.
+        get_spent_amount.return_value = spent
+        campaign = MagicMock(spec=("total_budget_dollars"))
+        campaign.total_budget_dollars = 100.
+
+        self.assertTrue(get_spent_amount(campaign), spent)
+
+    @patch("r2.lib.promote.get_spent_amount")
+    def test_get_billable_amount_should_not_exceed_budget(
+            self, get_spent_amount):
+        get_spent_amount.return_value = 1000.
+        campaign = MagicMock(spec=("total_budget_dollars"))
+        campaign.total_budget_dollars = 100.
+
+        spent = get_spent_amount(campaign)
+        self.assertTrue(spent, campaign.total_budget_dollars)
+
+    def test_is_pre_cpm(self):
+        """Tests all cases of `is_pre_cpm`"""
+
+        # True
+        campaign_is_pre = MagicMock(spec=("is_pre_cpm"))
+        campaign_is_pre.is_pre_cpm = True
+        self.assertTrue(is_pre_cpm(campaign_is_pre))
+
+        # False
+        campaign_is_not_pre = MagicMock(spec=("is_pre_cpm"))
+        campaign_is_not_pre.is_pre_cpm = False
+        self.assertFalse(is_pre_cpm(campaign_is_not_pre))
+
+        # Undefined
+        campaign = object()
+        self.assertFalse(is_pre_cpm(campaign))
