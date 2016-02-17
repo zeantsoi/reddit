@@ -1018,3 +1018,18 @@
 <%def name="is_new_field()">
   <input type="hidden" id="is_new" name="is_new" value="true">
 </%def>
+
+<%def name="moat_tracking_field(link)">
+  %if thing.configure_moat_enabled:
+    <%utils:line_field title="" id="moat_tracking-field" css_class="rounded">
+      <div class="checkbox-group">
+        <div class="form-group">
+          ${utils.checkbox("moat_tracking", _("enable moat"), (link.moat_tracking if link else False))}
+        </div>
+        <div class="infotext rounded">
+          <p>${_("Enable moat viewablility tracking.")}</p>
+        </div>
+      </div>
+    </%utils:line_field>
+  %endif
+</%def>

@@ -908,6 +908,7 @@ class PromoteApiController(ApiController):
         third_party_tracking=VUrl("third_party_tracking"),
         third_party_tracking_2=VUrl("third_party_tracking_2"),
         is_managed=VBoolean("is_managed"),
+        moat_tracking=VBoolean("moat_tracking"),
         promoted_externally=VBoolean("promoted_externally", default=False),
     )
     def POST_create_promo(self, form, jquery, username, title, url,
@@ -915,7 +916,7 @@ class PromoteApiController(ApiController):
                           media_url, media_autoplay, media_override,
                           iframe_embed_url, media_url_type, domain_override,
                           third_party_tracking, third_party_tracking_2,
-                          is_managed, promoted_externally):
+                          is_managed, moat_tracking, promoted_externally):
 
         images = _get_ads_images(c.user, data=True, meta=True)
 
@@ -924,7 +925,8 @@ class PromoteApiController(ApiController):
             selftext, kind, disable_comments, sendreplies,
             media_url, media_autoplay, media_override,
             iframe_embed_url, media_url_type, domain_override,
-            third_party_tracking, third_party_tracking_2, is_managed,
+            third_party_tracking, third_party_tracking_2,
+            is_managed, moat_tracking,
             promoted_externally=promoted_externally,
             thumbnail=images.get("thumbnail", None),
             mobile=images.get("mobile", None),
@@ -955,6 +957,7 @@ class PromoteApiController(ApiController):
         third_party_tracking=VUrl("third_party_tracking"),
         third_party_tracking_2=VUrl("third_party_tracking_2"),
         is_managed=VBoolean("is_managed"),
+        moat_tracking=VBoolean("moat_tracking"),
         l=VLink('link_id36'),
     )
     def POST_edit_promo(self, form, jquery, username, title, url,
@@ -962,7 +965,7 @@ class PromoteApiController(ApiController):
                         media_url, media_autoplay, media_override,
                         iframe_embed_url, media_url_type, domain_override,
                         third_party_tracking, third_party_tracking_2,
-                        is_managed, l):
+                        is_managed, moat_tracking, l):
 
         images = _get_ads_images(l, data=True, meta=True)
 
@@ -971,7 +974,8 @@ class PromoteApiController(ApiController):
             selftext, kind, disable_comments, sendreplies,
             media_url, media_autoplay, media_override,
             iframe_embed_url, media_url_type, domain_override,
-            third_party_tracking, third_party_tracking_2, is_managed,
+            third_party_tracking, third_party_tracking_2,
+            is_managed, moat_tracking,
             l=l,
             thumbnail=images.get("thumbnail", None),
             mobile=images.get("mobile", None),
@@ -982,13 +986,14 @@ class PromoteApiController(ApiController):
                     media_url, media_autoplay, media_override,
                     iframe_embed_url, media_url_type, domain_override,
                     third_party_tracking, third_party_tracking_2,
-                    managed_promo, promoted_externally=False,
+                    managed_promo, moat_tracking, promoted_externally=False,
                     l=None, thumbnail=None, mobile=None):
         should_ratelimit = False
         is_self = (kind == "self")
         is_link = not is_self
         is_new_promoted = not l
         third_party_tracking_enabled = feature.is_enabled("third_party_tracking")
+        configure_moat_enabled = feature.is_enabled("configure_moat")
         if not c.user_is_sponsor:
             should_ratelimit = True
 
@@ -1228,6 +1233,11 @@ class PromoteApiController(ApiController):
             if managed_promo != l.managed_promo:
                 changed["managed_promo"] = (l.managed_promo, managed_promo)
                 l.managed_promo = managed_promo
+
+        if configure_moat_enabled:
+            if moat_tracking != l.moat_tracking:
+                changed["moat_tracking"] = (l.moat_tracking, moat_tracking)
+                l.moat_tracking = moat_tracking
 
         if third_party_tracking_enabled:
             third_party_tracking = third_party_tracking or None

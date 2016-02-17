@@ -39,6 +39,7 @@
           %if c.user_is_sponsor:
             ${pr.username_field(c.user.name)}
             ${pr.managed_field(None)}
+            ${pr.moat_tracking_field(None)}
             ${promoted_externally()}
           %endif
           ${pr.title_field(None)}

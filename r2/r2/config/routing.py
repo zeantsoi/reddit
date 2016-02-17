@@ -184,6 +184,8 @@ def make_map(config):
 
     mc("/newsletter", controller="newsletter", action="newsletter")
 
+    mc("/moat/proxy", controller="moat", action="proxy")
+
     mc("/gtm/jail", controller="googletagmanager", action="jail")
     mc("/gtm", controller="googletagmanager", action="gtm")
 

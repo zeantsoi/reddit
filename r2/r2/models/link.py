@@ -122,6 +122,7 @@ class Link(Thing, Printable):
                      domain_override=None,
                      third_party_tracking=None,
                      third_party_tracking_2=None,
+                     moat_tracking=False,
                      promoted=None,
                      payment_flagged_reason="",
                      fraud=None,
@@ -1290,6 +1291,7 @@ class PromotedLink(Link):
     @classmethod
     def add_props(cls, user, wrapped):
         Link.add_props(user, wrapped)
+        moat_tracking_enabled = feature.is_enabled("moat_tracking")
 
         for item in wrapped:
             item.nofollow = True
@@ -1309,6 +1311,11 @@ class PromotedLink(Link):
             item.rowstyle_cls = "link %s" % status
             if item.new_ads_styles_enabled:
                 item.rowstyle_cls += " new-ad-style"
+
+            item.moat_tracking_enabled = (
+                moat_tracking_enabled and
+                item.moat_tracking
+            )
 
         # Run this last
         Printable.add_props(user, wrapped)

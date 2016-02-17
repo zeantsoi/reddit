@@ -221,6 +221,7 @@ ${pr.javascript_setup()}
 
         %if c.user_is_sponsor:
           ${pr.managed_field(thing.link)}
+          ${pr.moat_tracking_field(thing.link)}
           ${pr.media_field(thing.link)}
         %endif
       </div>

@@ -1705,6 +1705,7 @@ class SelfServeEvent(Event):
         self.add("author_neutered", author._spam)
         self.add("author_email_verified", author.email_verified)
         self.add("is_managed", link.managed_promo)
+        self.add("moat_tracking", link.moat_tracking)
         self.add("promote_status", PROMOTE_STATUS.name[link.promote_status])
 
         if link.is_self:
@@ -1727,6 +1728,7 @@ class SelfServeEvent(Event):
                 for key, (prev, current) in changed.iteritems()}
             self.add_text("prev_title", prev_attrs.get("title"))
             self.add("prev_is_managed", prev_attrs.get("managed_promo"))
+            self.add("prev_moat_tracking", prev_attrs.get("moat_tracking"))
 
             is_self = prev_attrs.get("is_self", link.is_self)
 

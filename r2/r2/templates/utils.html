@@ -454,6 +454,22 @@ ${unsafe(txt)}
   %endif
 </%def>
 
+<%def name="moatframe()">
+  %if thing.moat_tracking_enabled:
+    <script>
+      %if thing.dnt_enabled:
+      if (!window.DO_NOT_TRACK) {
+      %endif
+        var mf = document.createElement('script'); mf.type = 'text/javascript'; mf.async = true;
+        mf.src = ${scriptsafe_dumps(static('moat/moatframe.js'))};
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mf, s);
+      %if thing.dnt_enabled:
+      }
+      %endif
+    </script>
+  %endif
+</%def>
+
 <%def name="googleanalytics(uitype, is_gold_page=False)">
   %if (g.googleanalytics or g.googleanalytics_gold) and thing.site_tracking:
     <script type="text/javascript">

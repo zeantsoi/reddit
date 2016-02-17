@@ -276,6 +276,8 @@ class Reddit(Templated):
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
         self.dnt_enabled = feature.is_enabled("do_not_track")
+        self.moat_tracking_enabled = (feature.is_enabled("moat_tracking") and
+                                      g.live_config.get("moat_script_url"))
         self.header = header
         self.footer = RedditFooter()
         self.debug_footer = DebugFooter()
@@ -4679,6 +4681,7 @@ class PromoteLinkBase(Templated):
             self.mobile_native_targeting_enabled)
         self.mobile_device_version_targeting_enabled = feature.is_enabled("mobile_device_version_targeting")
         self.auto_extend_enabled = feature.is_enabled("ads_auto_extend")
+        self.configure_moat_enabled = feature.is_enabled("configure_moat")
         Templated.__init__(self, **kw)
 
     def get_locations(self): 
@@ -5937,6 +5940,10 @@ class PolicyPage(BoringPage):
                                 base_path='/help')
         toolbars.append(policies_menu)
         return toolbars
+
+
+class MoatProxy(Templated):
+    pass
 
 
 class GoogleTagManagerJail(Templated):

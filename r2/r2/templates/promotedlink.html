@@ -75,6 +75,12 @@ ${unsafe(taglinetext % dict(author=author))}
 </%def>
 
 <%def name="entry()">
+  %if thing.moat_tracking_enabled and hasattr(thing, "moat_query"):
+  <iframe
+    src="//${g.media_domain}/moat/proxy#${thing.moat_query}"
+    style="visibility: hidden; position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: -9999;"
+    referrer="no-referrer"></iframe>
+  %endif
   ${parent.entry()}
   <%
      promoter = None
