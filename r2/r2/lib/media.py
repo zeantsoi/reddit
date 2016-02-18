@@ -545,10 +545,10 @@ def get_media_embed(media_object):
     if media_object.get("type") == "custom":
         return _make_custom_media_embed(media_object)
 
-    if media_object.get("type") == "youtube.com":
-        return _YouTubeScraper.media_embed(media_object)
-
     if "oembed" in media_object:
+        if media_object.get("type") == "youtube.com":
+            return _YouTubeScraper.media_embed(media_object)
+
         return _EmbedlyScraper.media_embed(media_object)
 
 
