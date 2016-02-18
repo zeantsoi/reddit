@@ -306,24 +306,26 @@ var CampaignCreator = React.createClass({
                  this.props.maxBudgetDollars > 0) {
         cssClass = {className: 'error', maxBudgetDollars: auction.maxBudgetDollars};
         message = r._('your budget must not exceed $%(maxBudgetDollars)s');
-      } else if (auction.bidDollars < auction.minBidDollars) {
+      } else {
         if (r.sponsored.userIsSponsor) {
           auction.primary = true;
-        } else {
+        } else if (auction.maxBidDollars < auction.minBidDollars) {
+          formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
+          cssClass = {className: 'error', minBid: formattedMinBidDollars};
+          message = r._('Your campaign must be capable of claiming at least \
+                         1,000 impressions per day. Please adjust your bid, \
+                         budget, or schedule in order to enable this.');
+        } else if (auction.bidDollars < auction.minBidDollars) {
           formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
           cssClass = {className: 'error', minBid: formattedMinBidDollars};
           message = r._('your bid must be at least $%(minBid)s');
-        }
-      } else if (auction.bidDollars > auction.maxBidDollars) {
-        if (r.sponsored.userIsSponsor) {
-          auction.primary = true;
-        } else {
+        } else if (auction.bidDollars > auction.maxBidDollars) {
           formattedMaxBidDollars = parseFloat(auction.maxBidDollars).toFixed(2);
           cssClass = {className: 'error', maxBid: formattedMaxBidDollars};
           message = r._('your bid must not exceed $%(maxBid)s');
+        } else {
+          auction.primary = true;
         }
-      } else {
-        auction.primary = true;
       }
       return [CampaignSet(null,
           InfoText(cssClass, message),
@@ -1847,11 +1849,18 @@ var exports = r.sponsored = {
     },
 
     check_bid_dollars: function($form) {
-      var maxBidDollars = r.sponsored.get_lowest_max_bid_dollars($form),
-          bidDollars = $form.find('#bid_dollars').val() || 0.;
+      var maxBidDollars = r.sponsored.get_lowest_max_bid_dollars($form);
+      var minBidDollars = r.sponsored.get_min_bid_dollars();
+      var bidDollars = $form.find('#bid_dollars').val() || 0.;
+
       $form.find('.daily-max-spend').text(maxBidDollars.toFixed(2));
 
-
+      // Form validation
+      if ((maxBidDollars < minBidDollars) ||
+              (bidDollars < minBidDollars) ||
+              (bidDollars > maxBidDollars)) {
+          this.disable_form($form);
+      }
     },
 
     calc_impressions: function(bid, cpm_pennies) {
