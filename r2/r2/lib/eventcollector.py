@@ -793,8 +793,11 @@ class Event(object):
             data["user_name"] = context.user.name
         else:
             loid = request.cookies.get("loid", None)
+            loid_created = request.cookies.get("loidcreated", None)
             if loid:
                 data["loid"] = loid
+                if loid_created:
+                    data["loid_created"] = loid_created
 
         oauth2_client = getattr(context, "oauth2_client", None)
         if oauth2_client:
