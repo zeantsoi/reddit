@@ -320,7 +320,6 @@ class Email(object):
                 "LIVE_PROMO",
                 "FINISHED_PROMO",
                 "NEW_PROMO",
-                "EDITED_LIVE_PROMO",
                 "NERDMAIL",
                 "GOLDMAIL",
                 "PASSWORD_CHANGE",
@@ -333,6 +332,7 @@ class Email(object):
                 "USER_FRAUD",
                 "MESSAGE_NOTIFICATION",
                 "ADS_ALERT",
+                "EDITED_LIVE_PROMO",
                 )
 
     # Do not remove anything from this dictionary!  See above comment.
