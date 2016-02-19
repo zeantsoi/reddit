@@ -360,6 +360,7 @@ class Globals(object):
             'cflag_min_votes',
             'ticket_contact_user_id',
             'ads_popularity_threshold',
+            'precomputed_comment_sort_min_comments',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',
@@ -379,6 +380,7 @@ class Globals(object):
             'events_collector_use_gzip_chance',
             'ad_probability',
             'https_cert_testing_probability',
+            'precomputed_comment_sort_read_chance',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
@@ -387,6 +389,7 @@ class Globals(object):
             'proxy_gilding_accounts',
             'mweb_blacklist_expressions',
             'global_loid_experiments',
+            'precomputed_comment_sorts',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',
