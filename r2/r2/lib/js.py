@@ -673,7 +673,8 @@ module["admin"] = Module("admin.js",
 module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
     "lib/jquery.lazyload.js",
-    "compact.js"
+    "compact.js",
+    filter_module=module["reddit-init-base"],
 )
 
 
