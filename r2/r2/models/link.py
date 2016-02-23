@@ -630,7 +630,7 @@ class Link(Thing, Printable):
                     show_media = True
 
             show_media_preview = False
-            if feature.is_enabled('autoexpand_media_previews'):
+            if feature.is_enabled('inline_image_previews'):
                 if pref_media_preview == "on":
                     show_media_preview = True
                 elif pref_media_preview == "subreddit" and item.subreddit.show_media_preview:
@@ -799,7 +799,7 @@ class Link(Thing, Printable):
 
             # attach video or selftext as needed
             item.link_child, item.editable = make_link_child(item, show_media_preview)
-            item.feature_media_previews = feature.is_enabled("media_previews")
+            item.feature_media_previews = feature.is_enabled("inline_image_previews")
 
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink
