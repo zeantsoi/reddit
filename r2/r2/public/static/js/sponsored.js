@@ -664,7 +664,7 @@ var exports = r.sponsored = {
     setupLiveEditing: function(isLive) {
         var $budgetChangeWarning = $('.budget-unchangeable-warning');
         var $targetChangeWarning = $('.target-change-warning');
-        if (isLive) {
+        if (isLive && !this.userIsSponsor) {
             $budgetChangeWarning.show();
             $targetChangeWarning.show();
             $('#total_budget_dollars').prop('disabled', true);
