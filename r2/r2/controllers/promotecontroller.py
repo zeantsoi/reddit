@@ -175,7 +175,7 @@ def _get_callback_hmac(username, key, expires):
 
 def _force_images(link, thumbnail, mobile, changed=None):
     if thumbnail:
-        old_thumbnail_url = link.thumbnail_url
+        old_thumbnail_url = getattr(link, "thumbnail_url", None)
         media.force_thumbnail(link, thumbnail["data"], thumbnail["ext"])
         new_thumbnail_url = link.thumbnail_url
 
@@ -189,7 +189,7 @@ def _force_images(link, thumbnail, mobile, changed=None):
         feature.is_enabled("mobile_native_targeting"))
 
     if can_target_mobile and mobile:
-        old_mobile_ad_url = link.mobile_ad_url
+        old_mobile_ad_url = getattr(link, "mobile_ad_url", None)
         media.force_mobile_ad_image(link, mobile["data"], mobile["ext"])
         new_mobile_ad_url = link.mobile_ad_url
 
