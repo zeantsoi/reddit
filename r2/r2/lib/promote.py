@@ -1039,7 +1039,7 @@ def finalize_completed_campaigns(daysago=1):
             PromotionLog.add(link, text)
             camp.refund_amount = 0.
             camp._commit()
-        elif camp.is_auction:
+        elif camp.is_auction and can_refund(link, camp):
             try:
                 refund_campaign(link, camp)
             # Something went wrong, throw it in the queue for a manual refund.
