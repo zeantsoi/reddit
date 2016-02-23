@@ -25,6 +25,7 @@ import httpagentparser
 from pylons import app_globals as g
 
 from r2.lib import hooks
+from r2.lib.language import charset_summary
 from r2.lib.geoip import (
     get_request_location,
     location_by_ips,
@@ -155,13 +156,13 @@ class EventQueue(object):
 
         event.add("post_id", new_post._id)
         event.add("post_fullname", new_post._fullname)
-        event.add("post_title", new_post.title)
+        event.add_text("post_title", new_post.title)
 
         event.add("user_neutered", new_post.author_slow._spam)
 
         if new_post.is_self:
             event.add("post_type", "self")
-            event.add("post_body", new_post.selftext)
+            event.add_text("post_body", new_post.selftext)
         else:
             event.add("post_type", "link")
             event.add("post_target_url", new_post.url)
@@ -192,7 +193,7 @@ class EventQueue(object):
         event.add("comment_id", new_comment._id)
         event.add("comment_fullname", new_comment._fullname)
 
-        event.add("comment_body", new_comment.body)
+        event.add_text("comment_body", new_comment.body)
 
         post = Link._byID(new_comment.link_id)
         event.add("post_id", post._id)
@@ -569,6 +570,10 @@ class EventQueue(object):
         event.add("sender_type", sender_type)
         event.add("message_id", message._id)
         event.add("message_fullname", message._fullname)
+
+        event.add_text("message_body", message.body)
+        event.add_text("message_subject", message.subject)
+
         event.add("first_message_id", first_message._id)
         event.add("first_message_fullname", first_message._fullname)
 
@@ -1130,6 +1135,11 @@ class Event(baseplate.events.Event):
     def add(self, key, value, obfuscate=False):
         self.set_field(key, value, obfuscate=obfuscate)
 
+    def add_text(self, key, value, obfuscate=False):
+        self.add(key, value, obfuscate=obfuscate)
+        for k, v in charset_summary(value).iteritems():
+            self.add("{}_{}".format(key, k), v)
+
     def add_target_fields(self, target):
         if not target:
             return
@@ -1161,7 +1171,7 @@ class Event(baseplate.events.Event):
 
         # Add info about the url being linked to for link posts
         if isinstance(target, Link):
-            self.add("target_title", target.title)
+            self.add_text("target_title", target.title)
             if not target.is_self:
                 self.add("target_url", target.url)
                 self.add("target_url_domain", target.link_domain())
@@ -1286,7 +1296,7 @@ class SelfServeEvent(Event):
         if link.is_self:
             self.truncatable_field = "post_body"
             self.add("post_type", "self")
-            self.add("post_body", link.selftext)
+            self.add_text("post_body", link.selftext)
         else:
             self.add("post_type", "link")
             self.add("target_url", link.url)
@@ -1301,7 +1311,7 @@ class SelfServeEvent(Event):
         if changed is not None:
             prev_attrs = {key: prev
                 for key, (prev, current) in changed.iteritems()}
-            self.add("prev_title", prev_attrs.get("title"))
+            self.add_text("prev_title", prev_attrs.get("title"))
             self.add("prev_is_managed", prev_attrs.get("managed_promo"))
 
             is_self = prev_attrs.get("is_self", link.is_self)
@@ -1310,7 +1320,7 @@ class SelfServeEvent(Event):
                 self.add("prev_post_type", "self" if is_self else "link")
 
             if is_self:
-                self.add("prev_post_body", prev_attrs.get("selftext"))
+                self.add_text("prev_post_body", prev_attrs.get("selftext"))
             elif "url" in prev_attrs:
                 url = prev_attrs["url"]
                 self.add("prev_target_url", url)
