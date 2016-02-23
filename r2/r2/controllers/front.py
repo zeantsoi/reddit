@@ -1128,6 +1128,12 @@ class FrontController(RedditController):
         if c.site.login_required and not c.user_is_loggedin:
             raise UserRequiredException
 
+        # Run an A/A test just to make sure everything's working in the
+        # experiment system.  Since everything's a control, we don't need to
+        # actually use the return value.
+        if c.render_style == 'html':
+            feature.is_enabled('aa_test_loggedout')
+
         # trigger redirect to /over18
         if request.GET.get('over18') == 'yes':
             u = UrlParser(request.fullurl)
