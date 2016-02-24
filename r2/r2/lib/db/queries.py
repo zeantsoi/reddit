@@ -1809,8 +1809,9 @@ def run_commentstree(qname="commentstree_q", limit=100):
 
     @g.stats.amqp_processor(qname)
     def _run_commentstree(msgs, chan):
-        comments = Comment._by_fullname([msg.body for msg in msgs],
-                                        data = True, return_dict = False)
+        comment_names = {msg.body for msg in msgs}
+        comments = Comment._by_fullname(
+            comment_names, data=True, return_dict=False)
         print 'Processing %r' % (comments,)
 
         # when fastlaning a thread, we may need to have this qproc ignore
