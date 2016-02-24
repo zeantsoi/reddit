@@ -282,7 +282,6 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         banner_size="banner_size",
         collapse_deleted_comments="collapse_deleted_comments",
         comment_score_hide_mins="comment_score_hide_mins",
-        community_rules="community_rules",
         description="description",
         description_html="description_html",
         display_name="name",
