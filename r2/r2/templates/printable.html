@@ -155,6 +155,10 @@ ${self.RenderPrintable()}
     % if hasattr(what, 'third_party_tracking_url_2'):
       data-third-party-tracking-two-url="${what.third_party_tracking_url_2}"
     % endif
+
+    % if hasattr(what, 'house'):
+      data-house="true"
+    % endif
 </%def>
 
 <%def name="RenderPrintable()">

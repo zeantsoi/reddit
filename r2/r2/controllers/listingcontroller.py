@@ -386,10 +386,8 @@ class ListingWithPromos(SubredditListingController):
         gold_user_ads_off = c.user.gold and c.user.pref_hide_ads
         site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
         can_show_promo = (not gold_user_ads_off and not site_headlines_off)
-        try_show_promo = ((c.user_is_loggedin and random.random() < g.live_config["ad_probability"]) or
-                          not c.user_is_loggedin)
 
-        if can_show_promo and try_show_promo:
+        if can_show_promo:
             keywords = promote.keywords_from_context(c.user, c.site)
             if keywords:
                 show_promo = True
@@ -413,10 +411,13 @@ class ListingWithPromos(SubredditListingController):
                                          'spotlight_interest_nosub_p']
         interestbar = InterestBar(has_subscribed)
 
+        house_probability = 1 if not c.user_is_loggedin else g.live_config["ad_probability"]
+
         s = SpotlightListing(organic_links=organic_links,
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
                              show_promo=show_promo,
+                             house_probability=house_probability,
                              site=c.site,
                              max_num = self.listing_obj.max_num,
                              max_score = self.listing_obj.max_score).listing()

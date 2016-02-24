@@ -31,12 +31,13 @@
       }
     },
 
-    setup: function(organicLinks, interestProb, showPromo, site) {
+    setup: function(organicLinks, interestProb, showPromo, houseProbability, site) {
       this.organics = [];
       this.lineup = [];
       this.adWasClicked = false;
       this.interestProb = interestProb;
       this.showPromo = showPromo;
+      this.houseProbability = houseProbability;
       this.site = site;
       this.loid = $.cookie('loid');
       this.lastTabChangeTimestamp = Date.now();
@@ -174,11 +175,17 @@
       }).pipe(function(promo) {
         var prevPromo = this.$listing.find('.promotedlink')
         if (promo) {
-          if (this.showPromo) {
+          var $item = $(promo);
+          var isHouse = $item.data('house');
+          var showPromo = this.showPromo &&
+            (!isHouse || Math.random() <= this.houseProbability);
+
+          if (showPromo) {
             $('#siteTable_organic').show('slow');
+          } else {
+            return;
           }
 
-          var $item = $(promo);
           // adsense will throw error if inserted while hidden
           if (!$item.hasClass('adsense-wrap')) {
             $item.hide().appendTo(this.$listing);

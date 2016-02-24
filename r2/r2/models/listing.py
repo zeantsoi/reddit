@@ -394,6 +394,7 @@ class SpotlightListing(Listing):
         self.interestbar = kw.get('interestbar')
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
+        self.house_probability = kw.get('house_probability', 1)
         site = kw.get('site', Frontpage)
 
         if isinstance(site, MultiReddit):

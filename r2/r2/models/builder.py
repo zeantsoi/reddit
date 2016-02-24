@@ -55,6 +55,7 @@ from r2.models import (
     CommentSavesByAccount,
     Link,
     LinkSavesByAccount,
+    PromoCampaign,
     Message,
     MoreChildren,
     MoreMessages,
@@ -610,10 +611,23 @@ class CampaignBuilder(IDBuilder):
         links = Link._by_fullname([t.link for t in tuples], data=True,
                                   return_dict=True, stale=self.stale)
 
+        campaign_fullnames = [
+            t.campaign for t in tuples if
+                t.campaign.startswith(PromoCampaign._type_prefix)
+        ]
+        campaigns = PromoCampaign._by_fullname(
+            campaign_fullnames, data=True,
+            return_dict=True, stale=self.stale)
+
         return [Storage({'thing': links[t.link],
                          '_id': links[t.link]._id,
                          '_fullname': links[t.link]._fullname,
                          'weight': t.weight,
+                         'house': getattr(
+                            campaigns.get(t.campaign, None),
+                            "is_house",
+                            False,
+                         ),
                          'campaign': t.campaign}) for t in tuples]
 
     def wrap_items(self, items):
@@ -628,6 +642,7 @@ class CampaignBuilder(IDBuilder):
             w = by_link[i.thing._fullname].pop()
             w.campaign = i.campaign
             w.weight = i.weight
+            w.house = i.house
             ret.append(w)
 
         return ret
