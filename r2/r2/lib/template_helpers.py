@@ -201,7 +201,7 @@ def js_config(extra_config=None):
     else:
         expando_preference = "do_not_expand"
 
-    pref_beta = c.user.pref_beta
+    pref_beta = logged and c.user.pref_beta
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
     if isinstance(c.site, Subreddit) and not c.default_sr:
@@ -284,7 +284,7 @@ def js_config(extra_config=None):
         "pref_no_profanity": pref_no_profanity,
         "pref_beta": pref_beta,
         "nsfw_media_acknowledged": nsfw_media_acknowledged,
-        "new_window": bool(c.user.pref_newwindow),
+        "new_window": logged and bool(c.user.pref_newwindow),
         "mweb_blacklist_expressions": g.live_config['mweb_blacklist_expressions'],
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,
