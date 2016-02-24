@@ -1359,6 +1359,11 @@ def keywords_from_context(
             keywords.update(['k.' + word 
                              for word in link.keyword_targets.split(',')])            
 
+    hook = hooks.get_hook("ads.get_additional_keywords")
+    additional_keywords = hook.call_until_return(user=user, site=site)
+    if additional_keywords is not None:
+        keywords.update(additional_keywords)
+
     return keywords
 
 
