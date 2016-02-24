@@ -496,15 +496,6 @@ _submodule["archived"] = Module("_archived.js",
     "archived.js",
 )
 
-_submodule["res-event"] = Module("_res_event.js",
-    "base.js",
-    "lib/store.js",
-    "synced-session-storage.js",
-    "is-res-active.js",
-    _submodule["analytics"],
-    "res-event.js",
-)
-
 module["gtm-jail"] = Module("gtm-jail.js",
     "lib/json2.js",
     "custom-event.js",
@@ -575,7 +566,6 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "utils.js",
     "analytics.js",
     "events.js",
-    _submodule["res-event"],
     "access.js",
     "reddit-init-hook.js",
     "jquery.reddit.js",
