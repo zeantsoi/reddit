@@ -1215,10 +1215,10 @@ class PromoteApiController(ApiController):
 
         l._commit()
 
-        # ensure plugins are notified of the final edits to the link.
-        # other methods also call this hook earlier in the process.
-        # see: `promote.unapprove_promotion`
         if not is_new_promoted:
+            # ensure plugins are notified of the final edits to the link.
+            # other methods also call this hook earlier in the process.
+            # see: `promote.unapprove_promotion`
             hooks.get_hook('promote.edit_promotion').call(link=l)
             g.events.edit_promoted_link_event(
                 link=l,
