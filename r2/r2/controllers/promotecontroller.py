@@ -1103,6 +1103,10 @@ class PromoteApiController(ApiController):
             changed["url"] = (l.url, url)
             l.url = url
 
+        if is_self and selftext != l.selftext:
+            changed["selftext"] = (l.selftext, selftext)
+            l.selftext = selftext
+
         requires_approval = any(key in changed for key in (
             "title",
             "is_self",
@@ -1114,10 +1118,6 @@ class PromoteApiController(ApiController):
         if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
             promote.edited_live_promotion(l)
 
-        # selftext can be changed at any time
-        if is_self and selftext != l.selftext:
-            changed["selftext"] = (l.selftext, selftext)
-            l.selftext = selftext
 
         # comment disabling and sendreplies is free to be changed any time.
         if disable_comments != l.disable_comments:
