@@ -539,6 +539,20 @@ _submodule["res-event"] = Module("_res_event.js",
     "res-event.js",
 )
 
+module["reddit-core-legacy"] = LocalizedModule("reddit-core-legacy.js",
+    "lib/html5shiv.js",
+    "lib/jquery-1.11.1.js",
+    "lib/es5-shim.js",
+    "lib/es5-sham.js",
+    "core.js",
+)
+
+module["reddit-core"] = LocalizedModule("reddit-core.js",
+    "lib/jquery-2.1.1.js",
+    "lib/es5-shim.js",
+    "core.js",
+)
+
 module["gtm-jail"] = Module("gtm-jail.js",
     "lib/json2.js",
     "custom-event.js",
@@ -578,7 +592,7 @@ module["comment-embed"] = Module("comment-embed.js",
 )
 
 
-module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
+module["reddit-init"] = LocalizedModule("reddit-init.js",
     "lib/modernizr.js",
     "lib/json2.js",
     "lib/underscore-1.4.4-1.js",
@@ -626,21 +640,6 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     ],
 )
 
-module["reddit-init-legacy"] = LocalizedModule("reddit-init-legacy.js",
-    "lib/html5shiv.js",
-    "lib/jquery-1.11.1.js",
-    "lib/es5-shim.js",
-    "lib/es5-sham.js",
-    module["reddit-init-base"],
-    wrap=catch_errors,
-)
-
-module["reddit-init"] = LocalizedModule("reddit-init.js",
-    "lib/jquery-2.1.1.js",
-    "lib/es5-shim.js",
-    module["reddit-init-base"],
-    wrap=catch_errors,
-)
 
 module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
     TemplateFileSource('ui/formbar.html'),
@@ -698,8 +697,7 @@ module["reddit"] = LocalizedModule("reddit.js",
         "moderator": ModeratorPermissionSet,
         "moderator_invite": ModeratorPermissionSet,
     }),
-    wrap=catch_errors,
-    filter_module=module["reddit-init-base"],
+    filter_module=module["reddit-init"],
 )
 
 module["modtools"] = Module("modtools.js",
@@ -721,7 +719,7 @@ module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
     "lib/jquery.lazyload.js",
     "compact.js",
-    filter_module=module["reddit-init-base"],
+    filter_module=module["reddit-init"],
 )
 
 

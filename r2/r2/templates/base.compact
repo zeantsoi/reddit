@@ -47,14 +47,15 @@
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
 
     <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('reddit-init'))}
+      ${unsafe(js.use('reddit-core'))}
     <!-- <![endif]-->
 
     <!--[if lt IE 9]>
-      ${unsafe(js.use('reddit-init-legacy'))}
+      ${unsafe(js.use('reddit-core-legacy'))}
     <![endif]-->
 
     ${js_setup(thing.extra_js_config)}
+    ${unsafe(js.use('reddit-init'))}
     ${googleanalytics('mobile')}
   </head>
   <body ${classes(*thing.page_classes())}>
