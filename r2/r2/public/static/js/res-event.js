@@ -7,29 +7,30 @@
   function isResNightmodeEnabled() {
     return !!store.safeGet('RES_nightMode');
   }
-
-  r.hooks.get('logging').register(function() {
-    if (!r.syncedSessionStorage.isSupported) {
-      return;
-    }
-
-    try {
-      if (!r.isResActive() || r.syncedSessionStorage.getItem(SESSION_KEY)) {
+  r.resEvent = {
+    init: function() {
+      if (!r.syncedSessionStorage.isSupported) {
         return;
       }
 
-      var defaultFields = [
-        'dnt',
-      ];
+      try {
+        if (!r.isResActive() || r.syncedSessionStorage.getItem(SESSION_KEY)) {
+          return;
+        }
 
-      var customFields = {
-        night_mode: isResNightmodeEnabled(),
-      };
+        var defaultFields = [
+          'dnt',
+        ];
 
-      r.analytics.sendEvent(EVENT_TOPIC, EVENT_TYPE, defaultFields, customFields);
-      r.syncedSessionStorage.setItem(SESSION_KEY, true);
-    } catch (err) {
-      r.sendError("Error in res-event.js:", err.toString());
-    }
-  });
+        var customFields = {
+          night_mode: isResNightmodeEnabled(),
+        };
+
+        r.analytics.sendEvent(EVENT_TOPIC, EVENT_TYPE, defaultFields, customFields);
+        r.syncedSessionStorage.setItem(SESSION_KEY, true);
+      } catch (err) {
+        r.sendError("Error in res-event.js:", err.toString());
+      }
+    },
+  };
 }(r);
