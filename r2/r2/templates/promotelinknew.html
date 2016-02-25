@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="promotelinkbase.html" import="title_field, content_field, managed_field, image_field" />
+<%namespace name="pr" file="promotelinkbase.html" />
 <%namespace file="utils.html" import="error_field" />
 <%namespace name="utils" file="utils.html"/>
 
@@ -35,14 +35,15 @@
         <input type="hidden" name="uh" value="${c.modhash}">
         <input type="hidden" name="id" value="#promo-form">
         <div class="editor-group">
-          ${image_field(images=thing.images)}
+          ${pr.image_field(images=thing.images)}
           %if c.user_is_sponsor:
-            ${username_field()}
-            ${managed_field(None)}
+            ${pr.username_field()}
+            ${pr.managed_field(None)}
           %endif
-          ${title_field(None)}
-          ${content_field(None, enable_override=c.user_is_sponsor,
-                          tracker_access=thing.third_party_tracking_enabled)}
+          ${pr.title_field(None)}
+          ${pr.content_field(None, enable_override=c.user_is_sponsor,
+                             tracker_access=thing.third_party_tracking_enabled)}
+          ${pr.commenting_field(None)}
           <footer class="buttons">
             ${error_field("RATELIMIT", "ratelimit")}
             &#32;

@@ -24,6 +24,7 @@
   from r2.lib.media import thumbnail_url
   from r2.lib.filters import jssafe, scriptsafe_dumps
   from r2.lib.pages import UserText
+  from r2.models import Link
   import simplejson
   from babel.numbers import format_currency
   from datetime import datetime
@@ -232,14 +233,22 @@
 </%def>
 
 <%def name="commenting_field(link)">
+  <% 
+    if link:
+      disable_comments = link.disable_comments
+      sendreplies = link.sendreplies
+    else:
+      disable_comments = Link._defaults["disable_comments"]
+      sendreplies = Link._defaults["sendreplies"]
+  %>
   <%utils:line_field title="${_('options')}" id="commenting-field" css_class="rounded commenting-field">
     <div class="checkbox-group">
       <div class="form-group">
-        ${checkbox("disable_comments", _("disable comments"), link.disable_comments)}
+        ${checkbox("disable_comments", _("disable comments"), disable_comments)}
       </div>
       
       <div class="form-group">
-        ${checkbox("sendreplies", _("send comments on my ad to my inbox"), link.sendreplies)}
+        ${checkbox("sendreplies", _("send comments on my ad to my inbox"), sendreplies)}
       </div>
     </div>
 
