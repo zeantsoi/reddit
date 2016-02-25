@@ -778,7 +778,7 @@ class GoldPaymentController(RedditController):
             msg = _('Your reddit gold payment has failed, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldsupport_email}
-            get_hook('user.gold_payment_failed').call(buyer=buyer)
+            get_hook('user.gold_payment_failed').call(buyer=webhook.buyer)
         elif event_type == 'deleted_subscription':
             # the subscription may have been deleted directly by the user using
             # POST_delete_subscription, in which case gold_subscr_id is already
