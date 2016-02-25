@@ -122,4 +122,5 @@ r.logging.sendError = function() {
 
 r.hooks.get('setup').register(function() {
     r.logging.init();
+    r.hooks.get('logging').call();
 });

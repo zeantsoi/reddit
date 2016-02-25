@@ -82,8 +82,6 @@ r.analytics = {
 
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
-
-    r.hooks.get('analytics').call();
   },
 
   _eventPredicates: {},
