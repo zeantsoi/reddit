@@ -711,10 +711,6 @@ class PromotedLinkTraffic(Templated):
                 impressions, clicks = map(sum, zip(*[values for date, values in history]))
                 spent = promote.get_spent_amount(camp)
 
-            # don't show spending higher than the budget since we
-            # don't charge for overdelivery.
-            spent = min(camp.total_budget_pennies / 100., spent)
-
             start = to_date(camp.start_date).strftime('%Y-%m-%d')
             end = to_date(camp.end_date).strftime('%Y-%m-%d')
             target = camp.target.pretty_name

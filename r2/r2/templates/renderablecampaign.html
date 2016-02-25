@@ -106,7 +106,19 @@
   </td>
 
   <td class="campaign-spent">
-      ${format_currency(thing.spent, 'USD', locale=c.locale)}
+    ${format_currency(thing.spent, 'USD', locale=c.locale)}
+    %if thing.spent > thing.total_budget_dollars:
+      <div class="spent-help help help-hoverable">
+        <sup class="spent-help-text">?</sup>
+        <div class="hover-bubble help-bubble anchor-top">
+          <div class="help-section">
+            <p>
+              ${_("This figure indicates what was delivered, not what you will be charged. You will only be charged for %s" % format_currency(thing.total_budget_dollars, 'USD', locale=c.locale))}
+            </p>
+          </div>
+        </div>
+      </div>
+    %endif
   </td>
 
   %if thing.ads_auction_enabled:

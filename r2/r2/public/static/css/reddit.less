@@ -1700,6 +1700,16 @@ body.with-listing-chooser.explore-page #header .pagename {
     height: 10em; 
 }
 
+.spent-help {
+    display: inline-block;
+    width: 0;
+}
+
+.spent-help-text {
+    margin-right: -100%;
+    font-weight: bold;
+}
+
 .promoted-list { font-size: larger; }
 .promoted-list .unpromote-button { display: inline }
 .promoted-list .unpromote-button a { color: gray; }
@@ -6007,7 +6017,10 @@ div.timeseries span.title {
 
     thead th {
         text-align: right;
-        padding: 0 5px;
+    }
+
+    th, td {
+        padding: 0 10px 0 0;
     }
 
     tr.total {
