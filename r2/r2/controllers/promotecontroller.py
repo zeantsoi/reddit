@@ -1100,7 +1100,7 @@ class PromoteApiController(ApiController):
             l.set_content(is_self, selftext if is_self else url)
 
         if is_link and url and url != l.url:
-            changed["selftext"] = (l.url, url)
+            changed["url"] = (l.url, url)
             l.url = url
 
         requires_approval = any(key in changed for key in (
