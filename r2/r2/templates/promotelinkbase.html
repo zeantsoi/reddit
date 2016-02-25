@@ -147,8 +147,7 @@
     %endif
   </%utils:line_field>
   %if tracker_access:
-    <%utils:line_field title="${_('impression tracking url')}" css_class="rounded text-field"
-                       style="${('' if not is_link else 'display:none')}">
+    <%utils:line_field title="${_('impression tracking url')}" css_class="rounded text-field">
       <input id="third_party_tracking" name="third_party_tracking" type="text"
              %if link and link.third_party_tracking:
                value="${link.third_party_tracking}" class="rounded"
@@ -160,8 +159,7 @@
         <p>${_("Enter a URL to insert into a 3rd-party impression tracking code snippet")}</p>
       </div>
     </%utils:line_field>
-    <%utils:line_field title="${_('secondary impression tracking url')}" css_class="rounded text-field"
-                       style="${('' if not is_link else 'display:none')}">
+    <%utils:line_field title="${_('secondary impression tracking url')}" css_class="rounded text-field">
       <input id="third_party_tracking_2" name="third_party_tracking_2" type="text"
              %if link and link.third_party_tracking_2:
                value="${link.third_party_tracking_2}" class="rounded"
