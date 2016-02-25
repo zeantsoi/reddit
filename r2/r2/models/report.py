@@ -72,8 +72,6 @@ class Report(MultiRelation('report',
                          getattr(thing, cls._field, "(nonexistent)")))
             raise
 
-        r._commit()
-
         if hasattr(thing, 'author_id'):
             author = Account._byID(thing.author_id, data=True)
             author._incr('reported')
@@ -88,6 +86,8 @@ class Report(MultiRelation('report',
 
         hooks.get_hook("report.new").call(report=r)
 
+        r._commit()
+
         return r
 
     @classmethod
@@ -98,7 +98,7 @@ class Report(MultiRelation('report',
         return list(rels)
 
     @classmethod
-    def accept(cls, things, correct = True):
+    def accept(cls, things, correct=True):
         from r2.lib.db import queries
 
         things = tup(things)
@@ -112,7 +112,7 @@ class Report(MultiRelation('report',
             # look up all of the reports for each thing
             rel_cls = cls.rel(Account, thing_cls)
             thing_ids = [t._id for t in cls_things]
-            rels = rel_cls._query(rel_cls.c._thing2_id == thing_ids)
+            rels = list(rel_cls._query(rel_cls.c._thing2_id == thing_ids))
             for r in rels:
                 if r._name == '0':
                     r._name = '1' if correct else '-1'
@@ -125,6 +125,11 @@ class Report(MultiRelation('report',
                     to_clear.append(thing)
 
             queries.clear_reports(to_clear, rels)
+
+            if correct:
+                hooks.get_hook("report.accept").call(reports=rels)
+            else:
+                hooks.get_hook("report.reject").call(reports=rels)
 
     @classmethod
     def get_reports(cls, wrapped, max_user_reasons=20):

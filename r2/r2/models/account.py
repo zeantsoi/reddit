@@ -63,8 +63,7 @@ class AccountExists(Exception): pass
 
 class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
-                                               'report_made', 'report_correct',
-                                               'report_ignored', 'spammer',
+                                               'spammer',
                                                'reported', 'gold_creddits',
                                                'inbox_count',
                                                'num_payment_methods',
@@ -119,9 +118,6 @@ class Account(Thing):
                      mobile_compress = False,
                      mobile_thumbnail = True,
                      reported = 0,
-                     report_made = 0,
-                     report_correct = 0,
-                     report_ignored = 0,
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
