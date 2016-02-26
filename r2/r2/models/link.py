@@ -813,8 +813,9 @@ class Link(Thing, Printable):
                 item.href_url = item.permalink
             else:
                 item.href_url = item.url
-                item.use_outbound = True
-                item.outbound_url = outbound_link_url(item, item.url)
+                if not request.headers.get('dnt'):
+                    item.use_outbound = True
+                    item.outbound_url = outbound_link_url(item, item.url)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
