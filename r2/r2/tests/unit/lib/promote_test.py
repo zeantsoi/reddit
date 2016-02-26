@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from mock import MagicMock, Mock, patch
@@ -19,6 +20,7 @@ from r2.models import (
     Collection,
     FakeAccount,
     Frontpage,
+    PromoCampaign,
     Subreddit,
     MultiReddit,
 )
@@ -137,8 +139,13 @@ class TestSRNamesFromSite(unittest.TestCase):
 class TestPromoteRefunds(unittest.TestCase):
     def setUp(self):
         self.link = Mock()
-        self.campaign = MagicMock()
+        self.campaign = MagicMock(spec=PromoCampaign)
         self.campaign._id = 1
+        self.campaign.owner_id = 1
+        self.campaign.trans_id = 1
+        self.campaign.start_date = datetime.datetime.now()
+        self.campaign.end_date = (datetime.datetime.now() +
+            datetime.timedelta(days=1))
         self.campaign.total_budget_dollars = 200.
 
     @patch("r2.lib.promote.get_refund_amount")
