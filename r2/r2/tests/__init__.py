@@ -22,14 +22,16 @@
 
 import os
 import sys
+import Queue
 from unittest import TestCase
 from mock import patch
-from collections import defaultdict
 
+import baseplate.events
 import pkg_resources
 import paste.fixture
 import paste.script.appinstall
 from paste.deploy import loadapp
+
 
 __all__ = ['RedditTestCase']
 
@@ -59,46 +61,64 @@ except ImportError:
 from pylons import app_globals as g
 
 
-class MockAmqp(object):
-    """An amqp replacement, suitable for unit tests.
+def assert_same_dict(data, expected_data, prefix=None):
+    prefix = prefix or []
+    for k in set(data.keys() + expected_data.keys()):
+        current_prefix = prefix + [k]
+        want = expected_data.get(k)
+        got = data.get(k)
+        if isinstance(want, dict) and isinstance(got, dict):
+            assert_same_dict(got, want, prefix=current_prefix)
+        elif got != want:
+            raise AssertionError(
+                "Mismatch for %s: %r != %r" % (
+                    ".".join(current_prefix), got, want
+                )
+            )
+
+
+class MockEventQueue(object):
+    """An event-queue replacement, suitable for unit tests.
 
     Besides providing a mock `queue` for storing all received events, this
     class provides a set of handy assert-style functions for checking what
     was previously queued.
     """
-    def __init__(self, test_cls):
-        self.queue = defaultdict(list)
-        self.test_cls = test_cls
+    def __init__(self):
+        self.queue = []
 
-    def add_item(self, name, body, **kw):
-        self.queue[name].append((body, kw))
+    def put(self, event):
+        with patch("json.dumps", lambda x: x):
+            event_as_dict = event.serialize()
+        self.queue.append(event_as_dict)
 
-    def assert_item_count(self, name, count=None):
-        """Assert that `count` items have been queued in queue `name`.
+    def assert_item_count(self, count=None):
+        """Assert that `count` items have been enqueued.
 
         If count is none, just asserts that at least one item has been added
         to that queue
         """
         if count is None:
-            self.test_cls.assertTrue(bool(self.queue.get(name)))
+            assert self.queue, "no events in queue"
         else:
-            self.test_cls.assertEqual(len(self.queue[name]), count)
+            assert len(self.queue) == count, \
+                "expected %d events in queue, saw %d" % (count, len(self.queue))
 
-    def assert_event_item(self, expected_data, name="event_collector"):
-        self.assert_item_count(name, count=1)
+    def assert_event_item(self, expected_data):
+        self.assert_item_count(count=1)
 
-        data, _ = self.queue[name][0]
+        data = self.queue[0]
 
         # and do they have a timestamp, uuid, and payload?
-        self.test_cls.assertNotEqual(data.pop("event_ts", None), None)
-        self.test_cls.assertNotEqual(data.pop("uuid", None), None)
+        assert data.pop("event_ts", None) is not None, "event_ts is missing"
+        assert data.pop("uuid", None) is not None, "uuid is missing"
         # there is some variability, but this should at least be present
-        self.test_cls.assertIn("event_topic", data)
+        assert "event_topic" in data, "event_topic is missing"
 
         # these prints are for debgging when the subsequent assert fails
         print "GOT: ", data
         print "WANT:", expected_data
-        self.test_cls.assert_same_dict(data, expected_data)
+        assert_same_dict(data, expected_data)
 
 
 
@@ -110,6 +130,10 @@ class RedditTestCase(TestCase):
 
     """
     if not _app_context:
+        # the event queues want to create posix message queues, this is bad in
+        # testing. mock this out now, and we'll clean the mock state every test
+        baseplate.events.EventQueue = Queue.Queue
+
         wsgiapp = loadapp('config:test.ini', relative_to=conf_dir)
         test_app = paste.fixture.TestApp(wsgiapp)
 
@@ -127,21 +151,7 @@ class RedditTestCase(TestCase):
     def __init__(self, *args, **kwargs):
         TestCase.__init__(self, *args, **kwargs)
 
-    def assert_same_dict(self, data, expected_data, prefix=None):
-        prefix = prefix or []
-        for k in set(data.keys() + expected_data.keys()):
-            current_prefix = prefix + [k]
-            want = expected_data.get(k)
-            got = data.get(k)
-            if isinstance(want, dict) and isinstance(got, dict):
-                self.assert_same_dict(got, want, prefix=current_prefix)
-            else:
-                self.assertEqual(
-                    got, want,
-                    "Mismatch for %s: %r != %r" % (
-                        ".".join(current_prefix), got, want
-                    )
-                )
+    assert_same_dict = staticmethod(assert_same_dict)
 
     def autopatch(self, obj, attr, *a, **kw):
         """Helper method to patch an object and automatically cleanup."""
@@ -164,12 +174,3 @@ class RedditTestCase(TestCase):
             g.live_config[k] = orig
         g.live_config[k] = v
         self.addCleanup(cleanup)
-
-    def patch_eventcollector(self):
-        """Helper method to patch the event collector (g.events).
-
-        Rather than actually enqueuing data in amqp, this creates and returns a
-        MockAmqp object which stores all items enqueued."""
-        amqp = MockAmqp(self)
-        self.autopatch(g.events, "queue", amqp)
-        return amqp

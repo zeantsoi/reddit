@@ -253,6 +253,44 @@ exec paster serve --reload $REDDIT_SRC/reddit/r2/run.ini
 REDDITSERVE
 
 ###############################################################################
+# make event queues a thing
+###############################################################################
+# boost the kernel limits on queues
+cat <<QUEUE_SYSCTL > /etc/sysctl.d/60-message-queues.conf
+# boost some hard limits on POSIX message queues
+# maximum number of messages in a queue
+fs.mqueue.msg_max = 65536
+
+# maximum message size for queues
+fs.mqueue.msgsize_max = 102400
+QUEUE_SYSCTL
+
+sysctl --system
+
+# make it easy for human users on the system to do stuff with queues
+cat <<LIMITS > /etc/security/limits.d/message-queues.conf
+*   -   msgqueue unlimited
+LIMITS
+
+# allow the installer's invocation of reddit to create the queues
+ulimit -q unlimited
+
+# this ensures the queues exist
+cat <<MAKE_QUEUES > /etc/init/baseplate-make-queues.conf
+description "create all posix queues"
+
+start on starting reddit-*
+
+limit msgqueue unlimited unlimited
+
+script
+    . /etc/default/reddit
+    wrap-job python -m baseplate.message_queue --create --max-message-size 102400 --max-messages 10000 /events-production
+    wrap-job python -m baseplate.message_queue --create --max-message-size 102400 --max-messages 10000 /events-test
+end script
+MAKE_QUEUES
+
+###############################################################################
 # pixel and click server
 ###############################################################################
 mkdir -p /var/opt/reddit/
@@ -601,6 +639,8 @@ set_consumer_count vote_link_q 1
 set_consumer_count vote_comment_q 1
 set_consumer_count automoderator_q 0
 set_consumer_count butler_q 1
+set_consumer_count event_discard_production 1
+set_consumer_count event_discard_test 1
 
 chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
@@ -611,7 +651,7 @@ chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
 # the initial database setup should be done by one process rather than a bunch
 # vying with eachother to get there first
-reddit-run -c 'print "ok done"'
+sudo -u $REDDIT_USER reddit-run -c 'print "ok done"'
 
 # ok, now start everything else up
 initctl emit reddit-stop

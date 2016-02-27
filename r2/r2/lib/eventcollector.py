@@ -19,24 +19,12 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from cStringIO import StringIO
-import datetime
-import gzip
-import hashlib
-import hmac
-import itertools
-import json
-import pytz
-import random
-import requests
-import time
+import baseplate.events
 
 import httpagentparser
 from pylons import app_globals as g
-from uuid import uuid4
-from wsgiref.handlers import format_date_time
 
-from r2.lib import amqp, hooks
+from r2.lib import hooks
 from r2.lib.geoip import (
     get_request_location,
     location_by_ips,
@@ -49,12 +37,6 @@ from r2.lib.utils import (
     squelch_exceptions,
     to36,
 )
-
-
-def _make_http_date(when=None):
-    if when is None:
-        when = datetime.datetime.now(pytz.UTC)
-    return format_date_time(time.mktime(when.timetuple()))
 
 
 def _epoch_to_millis(timestamp):
@@ -84,22 +66,22 @@ def parse_agent(ua):
 
 
 class EventQueue(object):
-    def __init__(self, queue=amqp):
-        self.queue = queue
+    def __init__(self):
+        self.queue_production = baseplate.events.EventQueue("production")
+        self.queue_test = baseplate.events.EventQueue("test")
 
-    def save_event(self, event):
-        if event.testing:
-            queue_name = "event_collector_test"
-        else:
-            queue_name = "event_collector"
-
-        # send info about truncatable field as a header, separate from the
-        # actual event data
-        headers = None
-        if event.truncatable_field:
-            headers = {"truncatable_field": event.truncatable_field}
-
-        self.queue.add_item(queue_name, event.dump(), headers=headers)
+    def save_event(self, event, test=False):
+        try:
+            if not test:
+                self.queue_production.put(event)
+            else:
+                self.queue_test.put(event)
+        except baseplate.events.EventTooLargeError as exc:
+            g.log.warning("%s", exc)
+            g.stats.simple_event("eventcollector.oversize_dropped")
+        except baseplate.events.EventQueueFullError as exc:
+            g.log.warning("%s", exc)
+            g.stats.simple_event("eventcollector.queue_full")
 
     @squelch_exceptions
     @sampled("events_collector_vote_sample_rate")
@@ -169,7 +151,6 @@ class EventQueue(object):
             time=new_post._date,
             request=request,
             context=context,
-            truncatable_field="post_body",
         )
 
         event.add("post_id", new_post._id)
@@ -206,7 +187,6 @@ class EventQueue(object):
             time=new_comment._date,
             request=request,
             context=context,
-            truncatable_field="comment_body",
         )
 
         event.add("comment_id", new_comment._id)
@@ -251,7 +231,6 @@ class EventQueue(object):
             request=request,
             context=context,
             data=poison_info,
-            truncatable_field="resp_headers",
         )
 
         event.add("poison_blame_guess", "proxy")
@@ -451,7 +430,7 @@ class EventQueue(object):
         # run without actually logging into the account that performs the
         # the actions. In that case, set the user data based on the mod that's
         # performing the action.
-        if not event.get("user_id"):
+        if not event.get_field("user_id"):
             event.add("user_id", mod._id)
             event.add("user_name", mod.name)
 
@@ -1107,10 +1086,10 @@ class EventQueue(object):
         self.save_event(event)
 
 
-class Event(object):
+class Event(baseplate.events.Event):
     def __init__(self, topic, event_type,
-            time=None, uuid=None, request=None, context=None, testing=False,
-            data=None, obfuscated_data=None, truncatable_field=None):
+                 time=None, uuid=None, request=None, context=None,
+                 data=None, obfuscated_data=None):
         """Create a new event for event-collector.
 
         topic: Used to filter events into appropriate streams for processing
@@ -1118,57 +1097,38 @@ class Event(object):
         time: Should be a datetime.datetime object in UTC timezone
         uuid: Should be a UUID object
         request, context: Should be pylons.request & pylons.c respectively
-        testing: Whether to send the event to the test endpoint
         data: A dict of field names/values to initialize the payload with
         obfuscated_data: Same as `data`, but fields that need obfuscation
-        truncatable_field: Field to truncate if the event is too large
         """
-        self.topic = topic
-        self.event_type = event_type
-        self.testing = testing or g.debug
-        self.truncatable_field = truncatable_field
 
-        if not time:
-            time = datetime.datetime.now(pytz.UTC)
-        self.timestamp = _datetime_to_millis(time)
+        super(Event, self).__init__(
+            topic=topic,
+            event_type=event_type,
+            timestamp=time,
+            id=uuid,
+        )
 
-        if not uuid:
-            uuid = uuid4()
-        self.uuid = str(uuid)
-
-        self.payload = {}
-        if data:
-            self.payload.update(data)
-        self.obfuscated_data = {}
-        if obfuscated_data:
-            self.obfuscated_data.update(obfuscated_data)
-
-        if context and request:
-            # Since we don't want to override any of these values that callers
-            # might have set, we have to do a bit of finagling to filter out
-            # the values that've already been set. Variety of other solutions
-            # here: http://stackoverflow.com/q/6354436/120999
+        # this happens before we ingest data/obfuscated_data so explicitly
+        # passed data can override the general context data
+        if request and context:
             context_data = self.get_context_data(request, context)
-            new_context_data = {k: v for (k, v) in context_data.items()
-                                if k not in self.payload}
-            self.payload.update(new_context_data)
+            for key, value in context_data.iteritems():
+                self.set_field(key, value)
 
-            context_data = self.get_sensitive_context_data(request, context)
-            new_context_data = {k: v for (k, v) in context_data.items()
-                                if k not in self.obfuscated_data}
-            self.obfuscated_data.update(new_context_data)
+            sensitive_data = self.get_sensitive_context_data(request, context)
+            for key, value in sensitive_data.iteritems():
+                self.set_field(key, value, obfuscate=True)
 
-    def add(self, field, value, obfuscate=False):
-        # There's no need to send null/empty values, the collector will act
-        # the same whether they're sent or not. Zeros are important though,
-        # so we can't use a simple boolean truth check here.
-        if value is None or value == "":
-            return
+        if data:
+            for key, value in data.iteritems():
+                self.set_field(key, value)
 
-        if obfuscate:
-            self.obfuscated_data[field] = value
-        else:
-            self.payload[field] = value
+        if obfuscated_data:
+            for key, value in obfuscated_data.iteritems():
+                self.set_field(key, value, obfuscate=True)
+
+    def add(self, key, value, obfuscate=False):
+        self.set_field(key, value, obfuscate=obfuscate)
 
     def add_target_fields(self, target):
         if not target:
@@ -1228,12 +1188,6 @@ class Event(object):
         self.add("sr_id", subreddit._id)
         self.add("sr_name", subreddit.name)
 
-    def get(self, field, obfuscated=False):
-        if obfuscated:
-            return self.obfuscated_data.get(field, None)
-        else:
-            return self.payload.get(field, None)
-
     @classmethod
     def get_context_data(self, request, context):
         """Extract common data from the current request and context
@@ -1292,20 +1246,6 @@ class Event(object):
                 data["client_ipv4_16"] = ".".join(octets[:2])
 
         return data
-
-    def dump(self):
-        """Returns the JSON representation of the event."""
-        data = {
-            "event_topic": self.topic,
-            "event_type": self.event_type,
-            "event_ts": self.timestamp,
-            "uuid": self.uuid,
-            "payload": self.payload,
-        }
-        if self.obfuscated_data:
-            data["payload"]["obfuscated_data"] = self.obfuscated_data
-
-        return json.dumps(data)
 
 
 class SelfServeEvent(Event):
@@ -1501,205 +1441,3 @@ class SelfServeEvent(Event):
             [Location.DELIMITER.join(
                 getattr(location, f, "") for f in fields[:3])],
         )
-
-
-class PublishableEvent(object):
-    def __init__(self, data, truncatable_field=None):
-        self.data = data
-        self.truncatable_field = truncatable_field
-
-    def __len__(self):
-        return len(self.data)
-
-    def truncate_data(self, target_len):
-        if not self.truncatable_field:
-            return
-
-        if len(self.data) <= target_len:
-            return
-
-        # this will over-truncate with unicode characters, but it shouldn't be
-        # important to cut it as close as possible
-        oversize_by = len(self.data) - target_len
-
-        # make space for the is_truncated field we're going to add
-        oversize_by += len('"is_truncated": true, ')
-
-        deserialized_data = json.loads(self.data)
-
-        original = deserialized_data["payload"][self.truncatable_field]
-        truncated = original[:-oversize_by]
-        deserialized_data["payload"][self.truncatable_field] = truncated
-
-        deserialized_data["payload"]["is_truncated"] = True
-
-        self.data = json.dumps(deserialized_data)
-
-        g.stats.simple_event("eventcollector.oversize_truncated")
-
-
-class EventPublisher(object):
-    # The largest JSON string for a single event in bytes (but it's encoded
-    # to ASCII, so this is the same as character length)
-    MAX_EVENT_SIZE = 100 * 1024
-
-    # The largest combined total JSON string that can be sent (multiple events)
-    MAX_CONTENT_LENGTH = 500 * 1024
-
-    def __init__(self, url, signature_key, secret, user_agent, stats,
-            max_event_size=MAX_EVENT_SIZE, max_content_length=MAX_CONTENT_LENGTH,
-            timeout=None):
-        self.url = url
-        self.signature_key = signature_key
-        self.secret = secret
-        self.user_agent = user_agent
-        self.timeout = timeout
-        self.stats = stats
-        self.max_event_size = max_event_size
-        self.max_content_length = max_content_length
-
-        self.session = requests.Session()
-
-    def _make_signature(self, payload):
-        mac = hmac.new(self.secret, payload, hashlib.sha256).hexdigest()
-        return "key={key}, mac={mac}".format(key=self.signature_key, mac=mac)
-
-    def _publish(self, events):
-        # Note: If how the JSON payload is created is changed,
-        # update the content-length estimations in `_chunk_events`
-        data = "[" + ", ".join(events) + "]"
-
-        headers = {
-            "Date": _make_http_date(),
-            "User-Agent": self.user_agent,
-            "Content-Type": "application/json",
-            "X-Signature": self._make_signature(data),
-        }
-
-        # Gzip body
-        use_gzip = (g.live_config.get("events_collector_use_gzip_chance", 0) >
-                    random.random())
-        if use_gzip:
-            f = StringIO()
-            gzip.GzipFile(fileobj=f, mode='wb').write(data)
-            data = f.getvalue()
-            headers["Content-Encoding"] = "gzip"
-
-        # Post events
-        with self.stats.get_timer("providers.event_collector"):
-            resp = self.session.post(self.url, data=data,
-                                     headers=headers, timeout=self.timeout)
-            return resp
-
-    def _chunk_events(self, events):
-        """Break a PublishableEvent list into chunks to obey size limits.
-
-        Note that this yields lists of strings (the serialized data) to
-        publish directly, not PublishableEvent objects.
-
-        """
-        to_send = []
-        send_size = 0
-
-        for event in events:
-            # make sure the event is inside the size limit, and drop it if
-            # truncation wasn't possible (or didn't make it small enough)
-            event.truncate_data(self.max_event_size)
-            if len(event) > self.max_event_size:
-                g.log.warning("Event too large (%s); dropping", len(event))
-                g.log.warning("%r", event.data)
-                g.stats.simple_event("eventcollector.oversize_dropped")
-                continue
-
-            # increase estimated content-length by length of message,
-            # plus the length of the `, ` used to join the events JSON
-            # if there will be more than one event in the list
-            send_size += len(event)
-            if len(to_send) > 0:
-                send_size += len(", ")
-
-            # If adding this event would put us over the batch limit, yield
-            # the current set of events first. Note that we add 2 chars to the
-            # send_size to account for the square brackets around the list of
-            # events when serialized to JSON
-            if send_size + 2 >= self.max_content_length:
-                yield to_send
-                to_send = []
-                send_size = len(event)
-
-            to_send.append(event.data)
-
-        if to_send:
-            yield to_send
-
-    def publish(self, events):
-        for some_events in self._chunk_events(events):
-            resp = self._publish(some_events)
-            # read from resp.content, so that the connection can be re-used
-            # http://docs.python-requests.org/en/latest/user/advanced/#keep-alive
-            ignored = resp.content
-            yield resp, some_events
-
-
-def _get_reason(response):
-    return (getattr(response, "reason", None) or
-            getattr(response.raw, "reason", "{unknown}"))
-
-
-def process_events(g, timeout=5.0, **kw):
-    publisher = EventPublisher(
-        g.events_collector_url,
-        g.secrets["events_collector_key"],
-        g.secrets["events_collector_secret"],
-        g.useragent,
-        g.stats,
-        timeout=timeout,
-    )
-    test_publisher = EventPublisher(
-        g.events_collector_test_url,
-        g.secrets["events_collector_key"],
-        g.secrets["events_collector_secret"],
-        g.useragent,
-        g.stats,
-        timeout=timeout,
-    )
-
-    @g.stats.amqp_processor("event_collector")
-    def processor(msgs, chan):
-        events = []
-        test_events = []
-
-        for msg in msgs:
-            headers = msg.properties.get("application_headers", {})
-            truncatable_field = headers.get("truncatable_field")
-
-            event = PublishableEvent(msg.body, truncatable_field)
-            if msg.delivery_info["routing_key"] == "event_collector_test":
-                test_events.append(event)
-            else:
-                events.append(event)
-
-        to_publish = itertools.chain(
-            publisher.publish(events),
-            test_publisher.publish(test_events),
-        )
-        for response, sent in to_publish:
-            if response.ok:
-                g.log.info("Published %s events", len(sent))
-            else:
-                g.log.warning(
-                    "Event send failed %s - %s",
-                    response.status_code,
-                    _get_reason(response),
-                )
-                g.log.warning("Response headers: %r", response.headers)
-
-                # if the events were too large, move them into a separate
-                # queue to get them out of here, since they'll always fail
-                if response.status_code == 413:
-                    for event in sent:
-                        amqp.add_item("event_collector_failed", event)
-                else:
-                    response.raise_for_status()
-
-    amqp.handle_items("event_collector", processor, **kw)

@@ -86,8 +86,6 @@ def declare_queues(g):
         "markread_q": MessageQueue(),
         "del_account_q": MessageQueue(),
         "automoderator_q": MessageQueue(),
-        "event_collector": MessageQueue(bind_to_self=True),
-        "event_collector_failed": MessageQueue(bind_to_self=True),
         "modmail_email_q": MessageQueue(bind_to_self=True),
     })
 
@@ -119,6 +117,5 @@ def declare_queues(g):
         "link_text_edited",
         "comment_text_edited",
     )
-    queues.event_collector << "event_collector_test"
 
     return queues

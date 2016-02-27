@@ -22,25 +22,30 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import json
+import datetime
+
+import pytz
 from pylons import app_globals as g
-from mock import MagicMock, patch
+from mock import MagicMock
 
 from r2.tests import RedditTestCase
 from r2.models import Link
 from r2.lib import eventcollector
 from r2.lib import hooks
 
+from ... import MockEventQueue
+
+
+FAKE_DATE = datetime.datetime(2005, 6, 23, 3, 14, 0, tzinfo=pytz.UTC)
+
 
 class TestEventCollector(RedditTestCase):
 
     def setUp(self):
-        p = patch.object(json, "dumps", lambda x: x)
-        p.start()
-        self.addCleanup(p.stop)
+        self.autopatch(g.events, "queue_production", MockEventQueue())
+        self.autopatch(g.events, "queue_test", MockEventQueue())
 
         self.domain_mock = self.autopatch(eventcollector, "domain")
-        self.amqp = self.patch_eventcollector()
 
         self.created_ts_mock = MagicMock(name="created_ts")
         self._datetime_to_millis = self.autopatch(
@@ -54,11 +59,12 @@ class TestEventCollector(RedditTestCase):
         initial_vote = MagicMock(is_upvote=True, is_downvote=False,
                                  is_automatic_initial_vote=True,
                                  previous_vote=None,
+                                 date=FAKE_DATE,
                                  data={"rank": MagicMock()},
                                  name="initial_vote")
         g.events.vote_event(initial_vote)
 
-        self.amqp.assert_event_item(
+        g.events.queue_production.assert_event_item(
             dict(
                 event_topic="vote_server",
                 event_type="server_vote",
@@ -81,12 +87,14 @@ class TestEventCollector(RedditTestCase):
         self.patch_liveconfig("events_collector_vote_sample_rate", 1.0)
         upvote = MagicMock(name="upvote",
                            is_automatic_initial_vote=False,
+                           date=FAKE_DATE,
                            data={"rank": MagicMock()})
         upvote.previous_vote = MagicMock(name="previous_vote",
+                                         date=FAKE_DATE,
                                          is_upvote=False, is_downvote=True)
         g.events.vote_event(upvote)
 
-        self.amqp.assert_event_item(
+        g.events.queue_production.assert_event_item(
             dict(
                 event_topic="vote_server",
                 event_type="server_vote",
@@ -108,13 +116,13 @@ class TestEventCollector(RedditTestCase):
 
     def test_submit_event(self):
         self.patch_liveconfig("events_collector_submit_sample_rate", 1.0)
-        new_link = MagicMock(name="new_link")
+        new_link = MagicMock(name="new_link", _date=FAKE_DATE)
         context = MagicMock(name="context")
         request = MagicMock(name="request")
         request.ip = "1.2.3.4"
         g.events.submit_event(new_link, context=context, request=request)
 
-        self.amqp.assert_event_item(
+        g.events.queue_production.assert_event_item(
             dict(
                 event_topic="submit_events",
                 event_type="ss.submit",
@@ -165,7 +173,7 @@ class TestEventCollector(RedditTestCase):
             target=target, context=context, request=request
         )
 
-        self.amqp.assert_event_item(
+        g.events.queue_production.assert_event_item(
             {
                 'event_type': "ss.report",
                 'event_topic': 'report_events',
@@ -206,7 +214,7 @@ class TestEventCollector(RedditTestCase):
     def test_mod_event(self):
         self.patch_liveconfig("events_collector_mod_sample_rate", 1.0)
         mod = MagicMock(name="mod")
-        modaction = MagicMock(name="modaction")
+        modaction = MagicMock(name="modaction", date=FAKE_DATE)
         subreddit = MagicMock(name="subreddit")
         context = MagicMock(name="context")
         request = MagicMock(name="request")
@@ -215,7 +223,7 @@ class TestEventCollector(RedditTestCase):
             modaction, subreddit, mod, context=context, request=request
         )
 
-        self.amqp.assert_event_item(
+        g.events.queue_production.assert_event_item(
             {
                 'event_type': modaction.action,
                 'event_topic': 'mod_events',
@@ -257,7 +265,7 @@ class TestEventCollector(RedditTestCase):
             event_type, subreddit, context=context, request=request
         )
 
-        self.amqp.assert_event_item(
+        g.events.queue_production.assert_event_item(
             {
                 'event_type': event_type,
                 'event_topic': 'quarantine',
