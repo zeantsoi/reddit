@@ -106,6 +106,9 @@ class CommentOrderTest(RedditTestCase):
         # make the lookup in _get_comments a noop
         self.autopatch(Comment, "_byID", return_value={})
 
+        # side effect of building MoreRecursion objects
+        self.autopatch(Comment, "_type_id", 1, create=True)
+
     def tearDown(self):
         self.link = None
 
