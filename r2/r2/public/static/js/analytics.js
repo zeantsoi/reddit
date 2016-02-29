@@ -460,15 +460,24 @@ r.analytics = {
       }
     }
 
-    var rank_by_link = {};
+    var linkListing = [];
+    var minRank = null;
+    var maxRank = 0;
     $('.linklisting .thing.link').each(function() {
         var $thing = $(this);
         var fullname = $thing.data('fullname');
         var rank = parseInt($thing.data('rank')) || '';
-        rank_by_link[fullname] = rank;
+        linkListing.push(fullname);
+        maxRank = Math.max(maxRank, rank);
+        if (minRank == null) {
+            minRank = rank;
+        }
+        minRank = Math.min(minRank, rank);
     });
-    if (!_.isEmpty(rank_by_link)) {
-        payload['rank_by_link'] = rank_by_link;
+    if (!_.isEmpty(linkListing)) {
+        payload.link_listing = linkListing;
+        payload.link_listing_min_rank = minRank;
+        payload.link_listing_max_rank = maxRank;
     }
 
     // event collector
