@@ -46,7 +46,7 @@ r.analytics = {
       if (loggedOutData && loggedOutData.loid) {
         r.analytics.contextData.loid = loggedOutData.loid;
         if (loggedOutData.loidcreated) {
-          r.analytics.contextData.loid_created = loggedOutData.loidcreated;
+          r.analytics.contextData.loid_created = decodeURIComponent(loggedOutData.loidcreated);
         }
       }
     }
@@ -353,7 +353,7 @@ r.analytics = {
       params.loid = this.contextData.loid;
     }
     if (this.contextData.loid_created) {
-      params.loidcreated = this.contextData.loid_created;
+      params.loidcreated = decodeURIComponent(this.contextData.loid_created);
     }
 
     var querystring = [
@@ -406,7 +406,7 @@ r.analytics = {
       payload['user_name'] = this.contextData.user_name;
     } else {
       payload['loid'] = this.contextData.loid;
-      payload['loid_created'] = this.contextData.loid_created;
+      payload['loid_created'] = decodeURIComponent(this.contextData.loid_created);
     }
 
     properties.forEach(function(contextProperty) {
