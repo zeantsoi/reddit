@@ -1012,10 +1012,16 @@ class ChildrenCommentOrderer(CommentOrdererBase):
     def get_initial_candidates(self, comment_tree):
         """Start the tree from the requested children."""
 
-        children_depth = min(
-            comment_tree.depth[comment_id] for comment_id in self.children)
         children = [
             comment_id for comment_id in self.children
+            if comment_id in comment_tree.depth
+        ]
+
+        children_depth = min(
+            comment_tree.depth[comment_id] for comment_id in children)
+
+        children = [
+            comment_id for comment_id in children
             if comment_tree.depth[comment_id] == children_depth
         ]
 
