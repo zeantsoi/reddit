@@ -1075,6 +1075,26 @@ def make_daily_promotions():
     hooks.get_hook('promote.make_daily_promotions').call(offset=0)
 
 
+def adserver_reports_pending(campaigns):
+    pending = []
+
+    for campaign in campaigns:
+        # we only run reports on campaigns that have served.
+        if not campaign.has_served:
+            continue
+
+        last_run = getattr(campaign, "last_lifetime_report_run", None)
+        if last_run is None:
+            pending.append(campaign._fullname)
+
+        # check that the report was run at least 24 hours after the
+        # campaign completed since results are preliminary beforehand.
+        elif last_run < (campaign.end_date + datetime.timedelta(hours=24)):
+            pending.append(campaign._fullname)
+
+    return pending
+
+
 def finalize_completed_campaigns(daysago=1):
     # PromoCampaign.end_date is utc datetime with year, month, day only
     now = datetime.datetime.now(g.tz)
@@ -1091,14 +1111,11 @@ def finalize_completed_campaigns(daysago=1):
     if not campaigns:
         return
 
-    # check that traffic is up to date
-    earliest_campaign = min(campaigns, key=lambda camp: camp.start_date)
-    start, end = get_total_run(earliest_campaign)
-    missing_traffic = traffic.get_missing_traffic(start.replace(tzinfo=None),
-                                                  date.replace(tzinfo=None))
-    if missing_traffic:
+    reports_pending = adserver_reporting_pending(campaigns)
+
+    if reports_pending:
         raise ValueError("Can't finalize campaigns finished on %s."
-                         "Missing traffic from %s" % (date, missing_traffic))
+                         "Missing adserver reports from %s" % (date, str(reports_pending)))
 
     links = Link._byID([camp.link_id for camp in campaigns], data=True)
     underdelivered_campaigns = []
