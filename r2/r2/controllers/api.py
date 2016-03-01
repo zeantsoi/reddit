@@ -332,6 +332,7 @@ class ApiController(RedditController):
         VCaptcha(),
         VUser(),
         VModhash(),
+        VRatelimit(rate_user=True, rate_ip=True, prefix="rate_compose_"),
         from_sr=VSRByName('from_sr', required=False),
         to=VMessageRecipient('to'),
         subject=VLength('subject', 100, empty_error=errors.NO_SUBJECT),
@@ -394,6 +395,27 @@ class ApiController(RedditController):
                     '/r/%s' % to.name == g.admin_message_acct)):
                 VNotInTimeout().run(target=to)
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
+
+            VRatelimit.ratelimit(
+                rate_user=True, rate_ip=True, prefix="rate_compose_")
+
+            # send a slack alert if this message would have been ratelimited
+            if form.has_errors("ratelimit", errors.RATELIMIT):
+                c.errors.remove((errors.RATELIMIT, "ratelimit"))
+                jquery._errors.remove((form, errors.RATELIMIT, "ratelimit"))
+                from r2admin.lib.irc import queue_alert_report
+
+                message = u'{permalink} by {user} "{subject}"'.format(
+                    permalink=m.make_permalink(force_domain=True),
+                    user="https://reddit.com/u/%s" % c.user.name,
+                    subject=m.subject,
+                )
+                queue_alert_report(
+                    message,
+                    channel_name="deimorz",
+                    key="compose_ratelimit_%s" % c.user._id36,
+                    reporting_cooldown=60*60,
+                )
 
         form.set_text(".status", _("your message has been delivered"))
         form.set_inputs(to = "", subject = "", text = "", captcha="")
