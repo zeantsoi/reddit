@@ -1658,13 +1658,10 @@ class VThrottledLogin(VRequired):
         self.seconds = None
 
     def get_ratelimits(self, account):
-        if config["r2.import_private"]:
-            from r2admin.lib.ip_events import ip_used_by_account
-        else:
-            def ip_used_by_account(account_id, ip):
-                return False
-
-        is_previously_seen_ip = ip_used_by_account(account._id, request.ip)
+        is_previously_seen_ip = request.ip in [
+            j for i in IPsByAccount.get(account._id, column_count=1000)
+            for j in i.itervalues()
+        ]
 
         # We want to maintain different rate-limit buckets depending on whether
         # we have seen the IP logging in before.  If someone is trying to brute
