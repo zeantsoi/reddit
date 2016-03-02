@@ -1061,35 +1061,12 @@ class PromoteApiController(ApiController):
                 ip=request.ip,
             )
 
-            if c.user_is_sponsor:
-                l.managed_promo = is_managed
-                l.domain_override = domain_override or None
-                if third_party_tracking_enabled:
-                    l.third_party_tracking = third_party_tracking or None
-                    l.third_party_tracking_2 = third_party_tracking_2 or None
-            l._commit()
-
-            _force_images(
-                link=l,
-                thumbnail=thumbnail,
-                mobile=mobile,
-            )
-
-            form.redirect(promote.promo_edit_url(l))
-
         elif not promote.is_promo(l):
             return
 
         if title and title != l.title:
             changed["title"] = (l.title, title)
             l.title = title
-
-        _force_images(
-            link=l,
-            thumbnail=thumbnail,
-            mobile=mobile,
-            changed=changed,
-        )
 
         # type changing
         if is_self != l.is_self:
@@ -1117,16 +1094,6 @@ class PromoteApiController(ApiController):
         # only trips if changed by a non-sponsor
         if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
             promote.edited_live_promotion(l)
-
-
-        # comment disabling and sendreplies is free to be changed any time.
-        if disable_comments != l.disable_comments:
-            changed["disable_comments"] = (l.disable_comments, disable_comments)
-            l.disable_comments = disable_comments
-
-        if sendreplies != l.sendreplies:
-            changed["sendreplies"] = (l.sendreplies, sendreplies)
-            l.sendreplies = sendreplies
 
         if c.user_is_sponsor:
             if (form.has_errors("media_url", errors.BAD_URL) or
@@ -1204,6 +1171,22 @@ class PromoteApiController(ApiController):
                 l.media_url = None
                 l.iframe_embed_url = None
                 l.media_autoplay = False
+
+        _force_images(
+            link=l,
+            thumbnail=thumbnail,
+            mobile=mobile,
+            changed=(changed if is_new_promoted else None),
+        )
+
+        # comment disabling and sendreplies is free to be changed any time.
+        if disable_comments != l.disable_comments:
+            changed["disable_comments"] = (l.disable_comments, disable_comments)
+            l.disable_comments = disable_comments
+
+        if sendreplies != l.sendreplies:
+            changed["sendreplies"] = (l.sendreplies, sendreplies)
+            l.sendreplies = sendreplies
 
         if c.user_is_sponsor:
             if media_override != l.media_override:
