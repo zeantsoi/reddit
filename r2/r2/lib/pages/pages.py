@@ -1099,8 +1099,11 @@ class AccountActivityBox(Templated):
 
 class RedditFooter(CachedTemplate):
     def cachable_attrs(self):
-        return [('path', request.path),
-                ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
+        return [
+            ('path', request.path),
+            ('buttons', [[(x.title, x.path) for x in y] for y in self.nav]),
+            ('advertiser_category', self.get_advertiser_category(c.site)),
+        ]
 
     def __init__(self):
         self.nav = [
