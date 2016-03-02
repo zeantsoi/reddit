@@ -1344,7 +1344,6 @@ class View(ThingBase):
     @will_write
     def _set_values(cls, row_key, col_values,
                     write_consistency_level = None,
-                    batch=None,
                     ttl=None):
         """Set a set of column values in a row of a view without
            looking up the whole row first"""
@@ -1360,17 +1359,12 @@ class View(ThingBase):
         # there is a default set on either the row or the column
         default_ttl = ttl or cls._ttl
 
-        def do_inserts(b):
+        with cls._cf.batch(write_consistency_level = cls._wcl(write_consistency_level)) as b:
+            # with some quick tweaks we could have a version that
+            # operates across multiple row keys, but this is not it
             for k, v in updates.iteritems():
                 b.insert(row_key, {k: v},
                          ttl=cls._default_ttls.get(k, default_ttl))
-
-        if batch is None:
-            batch = cls._cf.batch(write_consistency_level = cls._wcl(write_consistency_level))
-            with batch as b:
-                do_inserts(b)
-        else:
-            do_inserts(batch)
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
