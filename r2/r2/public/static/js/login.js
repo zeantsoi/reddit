@@ -296,6 +296,8 @@ r.ui.RegisterForm = function() {
         this.$user.on('keyup', $.proxy(this, 'usernameChanged'));
     }
 
+    this.$user.one('focus', $.proxy(this, 'loadCaptcha'))
+
     this.$el.find('[name="passwd2"]').on('keyup', $.proxy(this, 'checkPasswordMatch'));
     this.$el.find('[name="passwd"][data-validate-url]')
         .strengthMeter({
@@ -332,6 +334,9 @@ r.ui.RegisterForm = function() {
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     maxName: 0,
+    captchaLoaded: false,
+    captchaChecked: false,
+
     usernameChanged: function() {
         var name = this.$user.val()
         if (name == this._priorName) {
@@ -383,6 +388,27 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
             })
         } else {
             this.$el.removeClass('name-available name-taken')
+        }
+    },
+
+    loadCaptcha: function() {
+        if (!this.captchaChecked) {
+            this.captchaChecked = true;
+            $.getJSON("/api/requires_captcha.json", function(res) {
+                if (res.required) {
+                    window.captchaLoaded = function() {
+                        $('.g-recaptcha').each(function(i, el) {
+                            grecaptcha.render(el, { sitekey : el.getAttribute('data-sitekey') });
+                        });
+                    };
+
+                    if (!window.grecaptcha) {
+                        $.getScript('https://www.google.com/recaptcha/api.js?render=explicit&onload=captchaLoaded');
+                    }
+                }
+            });
+        } else if (window.grecaptcha && window.captchaLoaded) {
+            captchaLoaded();
         }
     },
 

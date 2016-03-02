@@ -255,6 +255,14 @@ class FeatureState(object):
         if cfg.get('loggedout') and not loggedin:
             return True
 
+        loid = self.world.current_loid_obj()
+        if (
+            cfg.get("no_loid") and
+            (not loid or loid._new) and
+            not loggedin
+        ):
+            return True
+
         users = [u.lower() for u in cfg.get('users', [])]
         if users and user and user.name.lower() in users:
             return True

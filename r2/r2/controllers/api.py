@@ -317,6 +317,15 @@ class ApiController(RedditController):
             g.log.warning("Failed to subscribe: %r" % e)
             abort(500)
 
+    @pagecache_policy(PAGECACHE_POLICY.NEVER)
+    @json_validate()
+    def GET_requires_captcha(self, responder):
+        """
+        Check whether CAPTCHAs are needed for API methods that define the
+        "captcha" and "iden" parameters.
+        """
+        return {"required": bool(need_provider_captcha())}
+        
     @allow_oauth2_access
     @json_validate()
     @api_doc(api_section.captcha)
@@ -668,6 +677,7 @@ class ApiController(RedditController):
     def _handle_register(self, form, responder, name, email,
                          password, rem, newsletter_subscribe,
                          sponsor):
+
         def _event(error):
             g.events.login_event(
                 'register_attempt',
@@ -720,6 +730,10 @@ class ApiController(RedditController):
             c.errors.add(errors.SPONSOR_NO_EMAIL, field="email")
             form.has_errors("email", errors.SPONSOR_NO_EMAIL)
             _event(error='SPONSOR_NO_EMAIL')
+
+        # last but not least, we have to check the captcha
+        elif not valid_provider_captcha(responder):
+            _event(error='BAD_CAPTCHA')
 
         else:
             try:

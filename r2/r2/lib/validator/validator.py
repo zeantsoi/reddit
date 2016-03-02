@@ -969,6 +969,28 @@ class VCaptcha(Validator):
         }
 
 
+class VProviderCaptcha(Validator):
+    """A provider captcha is the newer captcha from the provider service.
+
+    Currently used on register, and is recaptcha in production, no-op in dev.
+    """
+
+    def run(self, captcha):
+        """Attempt to validate our captcha response, or set an error.
+
+        Failure to validate will result in a silent pass.
+        """
+
+        try:
+            if not g.captcha_provider.validate_captcha(captcha):
+                self.set_error(errors.BAD_CAPTCHA)
+        except CaptchaError:
+            # We had a captcha error, which meant we couldn't validate the
+            # captcha. Pass silently, as we don't want to turn away valid
+            # users due to an outage or something.
+            pass
+
+
 class VUser(Validator):
     def run(self):
         if not c.user_is_loggedin:
@@ -3202,3 +3224,21 @@ class VResultTypes(Validator):
                 '(`%s`)' % '`, `'.join(self.options)
             ),
         }
+
+
+def need_provider_captcha():
+    # don't show captchas to registered clients (for now)
+    return not c.oauth2_client and feature.is_enabled("registration_captcha")
+
+
+def valid_provider_captcha(
+    responder,
+    field='g-recaptcha-response',
+    error=errors.BAD_CAPTCHA,
+):
+    if need_provider_captcha():
+        check_captcha = VProviderCaptcha(field, default='')
+        check_captcha({})
+        return not responder.has_errors(field, error)
+    else:
+        return True

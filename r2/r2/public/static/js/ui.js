@@ -517,6 +517,8 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
     },
 
     checkCaptcha: function(errors) {
+        // Check for old style captchas (new style captchas take care of
+        // themselves)
         if (this.$el.has('input[name="captcha"]').length) {
             var badCaptcha = $.grep(errors, function(el) {
                 return el[0] == 'badCaptcha'

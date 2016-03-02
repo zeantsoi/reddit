@@ -133,5 +133,8 @@ setup(
     [r2.provider.email]
     null = r2.lib.providers.email.null:NullEmailProvider
     mailgun = r2.lib.providers.email.mailgun:MailgunEmailProvider
+    [r2.provider.captcha]
+    recaptcha = r2.lib.providers.captcha.recaptcha:RecaptchaProvider
+    no_op = r2.lib.providers.captcha.no_op:NoOpCaptchaProvider
     """,
 )
