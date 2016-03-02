@@ -29,6 +29,7 @@ from curses.ascii import isgraph
 import logging
 from time import sleep
 import zlib
+import snappy
 import simplejson as json
 
 from pylons import app_globals as g
@@ -887,11 +888,16 @@ class Permacache(object):
             value = columns['value']
 
             compressed = columns.get('compressed')
-            assert not compressed or compressed == 'zlib'
 
-            if compressed:
+            if compressed == 'zlib':
                 with g.stats.get_timer('permacache.deserialize.decompress_zlib'):
                     value = zlib.decompress(value)
+            elif compressed == 'snappy':
+                with g.stats.get_timer('permacache.deserialize.decompress_snappy'):
+                    value = snappy.decompress(value)
+            elif compressed:
+                raise Exception("Unknown compression format %r(%r)"
+                                 % (compression, format))
 
             format = columns.get('format') or 'pickle'
 
