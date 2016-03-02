@@ -1111,7 +1111,7 @@ def finalize_completed_campaigns(daysago=1):
     if not campaigns:
         return
 
-    reports_pending = adserver_reporting_pending(campaigns)
+    reports_pending = adserver_reports_pending(campaigns)
 
     if reports_pending:
         raise ValueError("Can't finalize campaigns finished on %s."
