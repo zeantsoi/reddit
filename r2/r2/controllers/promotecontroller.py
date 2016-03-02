@@ -1206,12 +1206,21 @@ class PromoteApiController(ApiController):
                 l.media_autoplay = False
 
         if c.user_is_sponsor:
-            l.media_override = media_override
-            l.domain_override = domain_override or None
-            l.managed_promo = is_managed
             if third_party_tracking_enabled:
                 l.third_party_tracking = third_party_tracking or None
                 l.third_party_tracking_2 = third_party_tracking_2 or None
+            if media_override != l.media_override:
+                changed["media_override"] = (l.media_override, media_override)
+                l.media_override = media_override
+
+            domain_override = domain_override or None
+            if domain_override != l.domain_override:
+                changed["domain_override"] = (l.domain_override, domain_override)
+                l.domain_override = domain_override
+
+            if managed_promo != l.managed_promo:
+                changed["managed_promo"] = (l.managed_promo, managed_promo)
+                l.managed_promo = is_managed
 
         l._commit()
 
