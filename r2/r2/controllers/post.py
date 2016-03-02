@@ -61,7 +61,8 @@ class PostController(ApiController):
               all_langs=VOneOf('all-langs', ('all', 'some'), default='all'),
               **PREFS_VALIDATORS)
     def POST_options(self, all_langs, **prefs):
-        if feature.is_enabled("inline_image_previews"):
+        if (feature.is_enabled("inline_image_previews_logged_in") or
+                feature.is_enabled("inline_image_previews_logged_out")):
             validator = VOneOf('media_preview', ('on', 'off', 'subreddit'))
             value = request.params.get('media_preview')
             prefs["pref_media_preview"] = validator.run(value)

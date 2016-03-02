@@ -192,7 +192,8 @@ def js_config(extra_config=None):
     pref_no_profanity = not logged or c.user.pref_no_profanity
     pref_media_preview = c.user.pref_media_preview if logged else "subreddit"
 
-    if not feature.is_enabled("inline_image_previews"):
+    if not (feature.is_enabled("inline_image_previews_logged_in") or
+            feature.is_enabled("inline_image_previews_logged_out")):
         expando_preference = None
     elif pref_media_preview == "subreddit":
         expando_preference = "subreddit_default"

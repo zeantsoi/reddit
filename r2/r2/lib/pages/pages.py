@@ -303,7 +303,8 @@ class Reddit(Templated):
         if feature.is_enabled("new_expando_icons"):
             self.feature_new_expando_icons = True
 
-        if feature.is_enabled("inline_image_previews"):
+        if (feature.is_enabled("inline_image_previews_logged_in") or
+            feature.is_enabled("inline_image_previews_logged_out")):
             self.feature_expando_nsfw_flow = True
 
         # generate a canonical link for google
@@ -1322,7 +1323,11 @@ class PrefOptions(Templated):
                     use_other_theme = False
                     theme.checked = True
 
-        feature_autoexpand_media_previews = feature.is_enabled("inline_image_previews")
+        feature_autoexpand_media_previews = False
+        if (feature.is_enabled("inline_image_previews_logged_in") or
+                feature.is_enabled("inline_image_previews_logged_out")):
+            feature_autoexpand_media_previews = True
+
         Templated.__init__(self, done=done,
                 error_style_override=error_style_override,
                 feature_autoexpand_media_previews=feature_autoexpand_media_previews,
@@ -4929,7 +4934,8 @@ def make_link_child(item, show_media_preview=False):
                                    nofollow=item.nofollow,
                                    position_inline=position_inline)
     # if the item has a preview image and is on the whitelist, show it
-    elif (feature.is_enabled('inline_image_previews') and
+    elif ((feature.is_enabled("inline_image_previews_logged_in") or
+           feature.is_enabled("inline_image_previews_logged_out")) and
             item.preview_object and
             media.allowed_media_preview_url(item.url)):
         media_object = media.get_preview_image(
