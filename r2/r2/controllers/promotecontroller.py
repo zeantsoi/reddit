@@ -1051,8 +1051,8 @@ class PromoteApiController(ApiController):
         if is_self and form.has_errors('text', errors.TOO_LONG):
             return
 
+        # create only
         if is_new_promoted:
-            # creating a new promoted link
             l = promote.new_promotion(
                 is_self=is_self,
                 title=title,
@@ -1060,117 +1060,117 @@ class PromoteApiController(ApiController):
                 author=user,
                 ip=request.ip,
             )
-
         elif not promote.is_promo(l):
             return
+        # edit only
+        else:
+            if title and title != l.title:
+                changed["title"] = (l.title, title)
+                l.title = title
 
-        if title and title != l.title:
-            changed["title"] = (l.title, title)
-            l.title = title
+            # type changing
+            if is_self != l.is_self:
+                changed["is_self"] = (l.is_self, is_self)
 
-        # type changing
-        if is_self != l.is_self:
-            changed["is_self"] = (l.is_self, is_self)
+                if selftext != l.selftext:
+                    changed["selftext"] = (l.selftext, selftext)
+                l.set_content(is_self, selftext if is_self else url)
 
-            if selftext != l.selftext:
+            if is_link and url and url != l.url:
+                changed["url"] = (l.url, url)
+                l.url = url
+
+            if is_self and selftext != l.selftext:
                 changed["selftext"] = (l.selftext, selftext)
-            l.set_content(is_self, selftext if is_self else url)
+                l.selftext = selftext
 
-        if is_link and url and url != l.url:
-            changed["url"] = (l.url, url)
-            l.url = url
+            requires_approval = any(key in changed for key in (
+                "title",
+                "is_self",
+                "selftext",
+                "url",
+            ))
 
-        if is_self and selftext != l.selftext:
-            changed["selftext"] = (l.selftext, selftext)
-            l.selftext = selftext
+            # only trips if changed by a non-sponsor
+            if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
+                promote.edited_live_promotion(l)
 
-        requires_approval = any(key in changed for key in (
-            "title",
-            "is_self",
-            "selftext",
-            "url",
-        ))
-
-        # only trips if changed by a non-sponsor
-        if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
-            promote.edited_live_promotion(l)
-
-        if c.user_is_sponsor:
-            if (form.has_errors("media_url", errors.BAD_URL) or
-                    form.has_errors("iframe_embed_url", errors.BAD_URL)):
-                return
-
-        scraper_embed = media_url_type == "scrape"
-        media_url = media_url or None
-        iframe_embed_url = iframe_embed_url or None
-
-        if c.user_is_sponsor and scraper_embed and media_url != l.media_url:
-            if media_url:
-                scraped = media._scrape_media(
-                    media_url, autoplay=media_autoplay,
-                    save_thumbnail=False, use_cache=True)
-
-                if scraped:
-                    l.set_media_object(scraped.media_object)
-                    l.set_secure_media_object(scraped.secure_media_object)
-                    l.media_url = media_url
-                    l.iframe_embed_url = None
-                    l.media_autoplay = media_autoplay
-                else:
-                    c.errors.add(errors.SCRAPER_ERROR, field="media_url")
-                    form.set_error(errors.SCRAPER_ERROR, "media_url")
+            if c.user_is_sponsor:
+                if (form.has_errors("media_url", errors.BAD_URL) or
+                        form.has_errors("iframe_embed_url", errors.BAD_URL)):
                     return
-            else:
-                l.set_media_object(None)
-                l.set_secure_media_object(None)
-                l.media_url = None
-                l.iframe_embed_url = None
-                l.media_autoplay = False
 
-        if (c.user_is_sponsor and not scraper_embed and
-                iframe_embed_url != l.iframe_embed_url):
-            if iframe_embed_url:
+            scraper_embed = media_url_type == "scrape"
+            media_url = media_url or None
+            iframe_embed_url = iframe_embed_url or None
 
-                sandbox = (
-                    'allow-popups',
-                    'allow-forms',
-                    'allow-same-origin',
-                    'allow-scripts',
-                )
-                iframe_attributes = {
-                    'embed_url': websafe(iframe_embed_url),
-                    'sandbox': ' '.join(sandbox),
-                }
-                iframe = """
-                    <iframe class="redditgifts-embed"
-                            src="%(embed_url)s"
-                            width="710" height="500" scrolling="no"
-                            frameborder="0" allowfullscreen
-                            sandbox="%(sandbox)s">
-                    </iframe>
-                """ % iframe_attributes
-                media_object = {
-                    'oembed': {
-                        'description': 'redditgifts embed',
-                        'height': 500,
-                        'html': iframe,
-                        'provider_name': 'iframe embed',
-                        'provider_url': iframe_embed_url,
-                        'type': 'rich',
-                        'width': 710},
-                        'type': 'iframe'
-                }
-                l.set_media_object(media_object)
-                l.set_secure_media_object(media_object)
-                l.media_url = None
-                l.iframe_embed_url = iframe_embed_url
-                l.media_autoplay = False
-            else:
-                l.set_media_object(None)
-                l.set_secure_media_object(None)
-                l.media_url = None
-                l.iframe_embed_url = None
-                l.media_autoplay = False
+            if c.user_is_sponsor and scraper_embed and media_url != l.media_url:
+                if media_url:
+                    scraped = media._scrape_media(
+                        media_url, autoplay=media_autoplay,
+                        save_thumbnail=False, use_cache=True)
+
+                    if scraped:
+                        l.set_media_object(scraped.media_object)
+                        l.set_secure_media_object(scraped.secure_media_object)
+                        l.media_url = media_url
+                        l.iframe_embed_url = None
+                        l.media_autoplay = media_autoplay
+                    else:
+                        c.errors.add(errors.SCRAPER_ERROR, field="media_url")
+                        form.set_error(errors.SCRAPER_ERROR, "media_url")
+                        return
+                else:
+                    l.set_media_object(None)
+                    l.set_secure_media_object(None)
+                    l.media_url = None
+                    l.iframe_embed_url = None
+                    l.media_autoplay = False
+
+            if (c.user_is_sponsor and not scraper_embed and
+                    iframe_embed_url != l.iframe_embed_url):
+                if iframe_embed_url:
+
+                    sandbox = (
+                        'allow-popups',
+                        'allow-forms',
+                        'allow-same-origin',
+                        'allow-scripts',
+                    )
+                    iframe_attributes = {
+                        'embed_url': websafe(iframe_embed_url),
+                        'sandbox': ' '.join(sandbox),
+                    }
+                    iframe = """
+                        <iframe class="redditgifts-embed"
+                                src="%(embed_url)s"
+                                width="710" height="500" scrolling="no"
+                                frameborder="0" allowfullscreen
+                                sandbox="%(sandbox)s">
+                        </iframe>
+                    """ % iframe_attributes
+                    media_object = {
+                        'oembed': {
+                            'description': 'redditgifts embed',
+                            'height': 500,
+                            'html': iframe,
+                            'provider_name': 'iframe embed',
+                            'provider_url': iframe_embed_url,
+                            'type': 'rich',
+                            'width': 710},
+                            'type': 'iframe'
+                    }
+                    l.set_media_object(media_object)
+                    l.set_secure_media_object(media_object)
+                    l.media_url = None
+                    l.iframe_embed_url = iframe_embed_url
+                    l.media_autoplay = False
+                else:
+                    l.set_media_object(None)
+                    l.set_secure_media_object(None)
+                    l.media_url = None
+                    l.iframe_embed_url = None
+                    l.media_autoplay = False
 
         _force_images(
             link=l,
