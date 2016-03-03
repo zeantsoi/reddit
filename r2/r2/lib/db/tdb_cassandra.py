@@ -141,7 +141,7 @@ class ThingMeta(type):
 
             # if we weren't given a specific _cf_name, we can use the
             # classes's name
-            cls._cf_name = cf_name = cls._cf_name or name
+            cf_name = cls._cf_name or name
 
             thing_types[cls._type_prefix] = cls
 
