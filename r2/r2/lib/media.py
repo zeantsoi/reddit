@@ -792,6 +792,13 @@ class _EmbedlyScraper(Scraper):
         if not thumbnail_url:
             return None, None, None, None
 
+        if (oembed.get('provider_name') == "Imgur" 
+                and not "i.imgur" in self.url):
+            temp_url = UrlParser(thumbnail_url)
+            if temp_url.query_dict.get('fb') is not None:
+                del temp_url.query_dict['fb']
+                thumbnail_url = temp_url.unparse()
+
         content_type, content = _fetch_url(thumbnail_url, referer=self.url)
         uid = _filename_from_content(content)
         image = str_to_image(content)
