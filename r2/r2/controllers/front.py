@@ -280,8 +280,7 @@ class FrontController(RedditController):
         c.can_embed = bool(comment) and article.is_embeddable
 
         is_embed = embeds.prepare_embed_request()
-
-        if is_embed:
+        if is_embed and comment:
             embeds.set_up_comment_embed(sr, comment, showedits=showedits)
 
         # If there is a focal comment, communicate down to
