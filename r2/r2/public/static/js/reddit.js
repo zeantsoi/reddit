@@ -1006,7 +1006,11 @@ $(function() {
         });
 
         /* mouse click */
-        $("a.outbound").on('mousedown', function() {
+        $("a.outbound").on('mousedown', function(e) {
+            // if right click (context menu), don't show redirect url
+            if (e.which === 3) {
+                return true;
+            }
             return setOutboundURL(this);
         });
 
