@@ -21,6 +21,8 @@
 ###############################################################################
 
 <%!
+   import simplejson
+
    from r2.lib.filters import jssafe
    from r2.lib.template_helpers import add_sr, static
    from r2.lib.strings import strings
@@ -157,7 +159,7 @@ ${self.RenderPrintable()}
     % endif
 
     % if hasattr(what, 'house'):
-      data-house="true"
+      data-house="${simplejson.dumps(what.house)}"
     % endif
 </%def>
 
