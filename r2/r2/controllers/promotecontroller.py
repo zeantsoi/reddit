@@ -1071,18 +1071,24 @@ class PromoteApiController(ApiController):
             # type changing
             if is_self != l.is_self:
                 changed["is_self"] = (l.is_self, is_self)
+                prev_selftext = l.selftext
+                prev_url = l.url
 
-                if selftext != l.selftext:
-                    changed["selftext"] = (l.selftext, selftext)
                 l.set_content(is_self, selftext if is_self else url)
 
-            if is_link and url and url != l.url:
-                changed["url"] = (l.url, url)
-                l.url = url
+                if l.is_self:
+                    changed["selftext"] = (prev_selftext, l.selftext)
+                else:
+                    changed["url"] = (prev_url, l.url)
 
-            if is_self and selftext != l.selftext:
-                changed["selftext"] = (l.selftext, selftext)
-                l.selftext = selftext
+            else:
+                if is_link and url and url != l.url:
+                    changed["url"] = (l.url, url)
+                    l.url = url
+
+                if is_self and selftext != l.selftext:
+                    changed["selftext"] = (l.selftext, selftext)
+                    l.selftext = selftext
 
             requires_approval = any(key in changed for key in (
                 "title",
