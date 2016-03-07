@@ -80,6 +80,11 @@
     <link rel="shorturl" href="https://${thing.shortlink}"/>
   %endif
 
+  %if feature.is_enabled("outbound_clicktracking"):
+    <link rel="dns-prefetch" href="//out.reddit.com">
+    <link rel="preconnect" href="//out.reddit.com">
+  %endif
+
   %if hasattr(thing, "og_data"):
     %for (og_property, og_value) in thing.og_data.iteritems():
       <meta property="og:${og_property}" content="${og_value}">
