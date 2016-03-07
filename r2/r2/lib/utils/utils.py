@@ -38,7 +38,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from urllib import unquote_plus, unquote
+from urllib import unquote_plus, unquote, urlencode
 from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse, urlunsplit
 
@@ -1557,7 +1557,7 @@ def outbound_link_url(thing, url):
         "https" if c.secure else "http",
         g.outboundtracker_url,
         thing._fullname,
-        "url=%(url)s&token=%(token)s" % dict(url=url, token=token),
+        urlencode({"url": url, "token": token}),
         None,
     ))
 
