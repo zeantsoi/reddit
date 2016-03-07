@@ -1551,7 +1551,7 @@ def outbound_link_url(thing, url):
         return url
 
     signer = MessageSigner(g.secrets["outbound_url_secret"])
-    token = signer.make_signature(url, max_age=timedelta(hours=1))
+    token = signer.make_signature(_force_unicode(url), max_age=timedelta(hours=1))
 
     return urlunsplit((
         "https" if c.secure else "http",
