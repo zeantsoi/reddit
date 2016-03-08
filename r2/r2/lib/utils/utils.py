@@ -1546,7 +1546,8 @@ def outbound_link_url(thing, url):
     expired and the thing_fullname so that the user can be redirected to
     the thing if the token expired.
     """
-    urlparser = UrlParser(_force_utf8(url))
+    utf8_url = _force_utf8(url)
+    urlparser = UrlParser(utf8_url)
     if urlparser.is_reddit_url():
         return url
 
@@ -1557,7 +1558,7 @@ def outbound_link_url(thing, url):
         "https" if c.secure else "http",
         g.outboundtracker_url,
         thing._fullname,
-        urlencode({"url": url, "token": token}),
+        urlencode({"url": utf8_url, "token": token}),
         None,
     ))
 
