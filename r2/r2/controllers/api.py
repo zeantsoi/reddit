@@ -31,6 +31,7 @@ from r2.controllers.reddit_base import (
     paginated_listing,
     RedditController,
     set_user_cookie,
+    vary_pagecache_on_experiments,
 )
 
 from pylons.i18n import _
@@ -318,7 +319,7 @@ class ApiController(RedditController):
             g.log.warning("Failed to subscribe: %r" % e)
             abort(500)
 
-    @pagecache_policy(PAGECACHE_POLICY.NEVER)
+    @vary_pagecache_on_experiments("registration_captcha")
     @json_validate()
     def GET_requires_captcha(self, responder):
         """
