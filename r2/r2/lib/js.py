@@ -496,6 +496,13 @@ _submodule["archived"] = Module("_archived.js",
     "archived.js",
 )
 
+_submodule["flatlist-events"] = Module("_flatlist-events.js",
+    "base.js",
+    "actions.js",
+    _submodule["analytics"],
+    "flatlist-events.js",
+)
+
 _submodule["post-sharing"] = Module("_post-sharing.js",
     "base.js",
     "actions.js",
@@ -650,6 +657,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "newsletter.js",
     "flair.js",
     "report.js",
+    _submodule["flatlist-events"],
     "interestbar.js",
     "visited.js",
     "wiki.js",

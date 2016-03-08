@@ -852,4 +852,33 @@ $.fn.recaptcha = function() {
     return $form;
 };
 
+$.getLinkURL = function($el) {
+    var linkURL = $el.data('url');
+    if (!linkURL) {
+        linkURL = this.$el.children('.entry').find('a.title').attr('href');
+    }
+
+    if (!linkURL) {
+        return null;
+    }
+
+    if (/^\//.test(linkURL)) {
+        var protocol = window.location.protocol;
+        var hostname = window.location.hostname;
+        linkURL = protocol + '//' + hostname + linkURL;
+    }
+
+    return linkURL;
+}
+
+$.getThingType = function($thing) {
+    var type = $thing.data('type');
+
+    if (type === 'link' && $thing.hasClass('self')) {
+        return 'self';
+    }
+
+    return type;
+}
+
 })(jQuery);

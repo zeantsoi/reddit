@@ -123,7 +123,7 @@
       this.loaded = !!this.cachedHTML;
       this.id = this.$el.thing_id();
       this.isNSFW = this.$el.hasClass('over18');
-      this.linkType = this.$el.hasClass('self') ? 'self' : 'link';
+      this.linkType = $.getThingType(this.$el);
       this.autoexpanded = this.options.autoexpanded;
 
       if (this.autoexpanded) {
@@ -142,14 +142,7 @@
         this.collapse();
       }.bind(this));
 
-      // expando events
-      var linkURL = this.$el.children('.entry').find('a.title').attr('href');
-
-      if (/^\//.test(linkURL)) {
-        var protocol = window.location.protocol;
-        var hostname = window.location.hostname;
-        linkURL = protocol + '//' + hostname + linkURL;
-      }
+      var linkURL = $.getLinkURL(this.$el);
 
       // event context
       var eventData = {
