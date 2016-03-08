@@ -89,7 +89,7 @@ $(function() {
 
         close_menus(e);
 
-        var button = this;
+        var button = e.target;
         var selector = $(button).siblings(".flairselector")[0];
 
         function columnize(col) {
@@ -183,7 +183,7 @@ $(function() {
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");
 
-        var attrs = getFlairAttrs($(this))
+        var attrs = getFlairAttrs($(e.target))
         $.request("flairselector",  attrs, handleResponse, true, "html");
         return false;
     }
@@ -221,7 +221,25 @@ $(function() {
     });
     $(".flairtoggle input").change(function() { $(this).parent().submit(); });
 
-    $(document).on("click", ".tagline .flairselectbtn, .thing .flairselectbtn", openFlairSelector);
+    $(document).on("click", ".tagline .flairselectbtn, .thing .flairselectbtn", function(e) {
+        var eventAction = $(e.target).data('event-action');
+        var eventDetail = $(e.target).data('event-detail');
+
+        r.actions.trigger('flair', {
+            target: e.target,
+            eventAction: eventAction,
+            eventDetail: eventDetail,
+        });
+        return false;
+    });
+
+    r.actions.on('flair', function(e) {
+        if (r.access.isLinkRestricted(e.target)) {
+            e.preventDefault();
+        }
+    });
+
+    r.actions.on('flair:success', openFlairSelector);
 
     $(".flairselector .dropdown").click(toggleFlairSelector);
 });

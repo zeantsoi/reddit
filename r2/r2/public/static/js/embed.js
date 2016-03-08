@@ -124,6 +124,12 @@
     });
 
     $('body').on('click', '.embed-comment', function(e) {
+      r.actions.trigger('embed', {
+        target: e.target,
+      });
+    });
+
+    r.actions.on('embed:success', function(e) {
       var $el = $(e.target);
       var data = $el.data();
       var embedOptions = getEmbedOptions(data);

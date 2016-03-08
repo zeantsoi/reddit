@@ -11,9 +11,30 @@ r.gold = {
             this._toggleGiftMessage.bind(this)
         );
 
+        $('div.content').on('click', 'a.give-gold', function(e) {
+          var eventAction = $(e.target).data('event-action');
+
+          r.actions.trigger('give-gold', {
+            target: e.target,
+            eventAction: eventAction,
+          });
+
+          return false;
+        });
+
+        r.actions.on('give-gold', function(e) {
+          if (r.access.isLinkRestricted(e.target)) {
+            e.preventDefault();
+          }
+        });
+
+        r.actions.on('give-gold:success', function(e) {
+          r.gold._toggleThingGoldForm(e);
+        });
+
         $('div.content').on(
             'click',
-            'a.give-gold, .gold-payment .close-button',
+            '.gold-payment .close-button',
             this._toggleThingGoldForm.bind(this)
         );
 

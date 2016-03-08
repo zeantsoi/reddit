@@ -114,17 +114,24 @@ r.report = {
       this.validate.bind(this)
     );
 
-    $('div.content').on(
-      'click',
-      '.reported-stamp.has-reasons',
-      this.toggleReasons.bind(this)
-    );
+    $('div.content').on('click', '.reported-stamp.has-reasons', function(e) {
+      r.actions.trigger('report_list', {
+        target: e.target,
+      })
+    });
+
+    r.actions.on('report_list', function(e) {
+      if (r.access.isLinkRestricted(e.target)) {
+        e.stopPropagation();
+      }
+    });
+
+    r.actions.on('report_list:success', function(e) {
+      r.report.toggleReasons(e);
+    });
   },
 
   toggleReasons: function(e) {
-    if (r.access.isLinkRestricted(e.target)) {
-      return;
-    }
 
     $(e.target).parent().find('.report-reasons').toggle();
   },

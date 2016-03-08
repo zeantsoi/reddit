@@ -115,10 +115,10 @@ $(function() {
       return;
     }
 
-    var $thing = $(this).closest('.thing');
+    var $thing = $(e.target).closest('.thing');
     var srFullname = $thing.data('subreddit-fullname');
     var thingType = $thing.data('type');
-    var $flatList = $(this).closest('.flat-list');
+    var $flatList = $(e.target).closest('.flat-list');
     var $reportForm = $flatList.siblings('.reportform').eq(0);
     $reportForm.toggleClass('active');
 
@@ -141,7 +141,7 @@ $(function() {
     var $imgChild = $reportForm.children("img");
     $imgChild.attr('src', r.utils.staticURL('throbber.gif'));
 
-    var attrs = getReportAttrs($(this))
+    var attrs = getReportAttrs($(e.target))
     var useHtmlAPI = !(templates && r.config.feature_new_report_dialog);
 
     if (useHtmlAPI) {
@@ -197,7 +197,14 @@ $(function() {
       return post_pseudo_form($actionForm, 'report');
     });
 
-    $("div.content").on("click", ".tagline .reportbtn, .thing .reportbtn", openReportForm);
+    $("div.content").on("click", ".tagline .reportbtn, .thing .reportbtn", function(e) {
+      r.actions.trigger('report', {
+        target: e.target,
+      });
+    });
+
+    r.actions.on('report:success', openReportForm);
+
     $("div.content").on("click", ".btn.report-cancel", toggleReportForm);
     $("div.content").on("change", "input[name='reason']", toggleOther);
   });

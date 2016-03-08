@@ -418,7 +418,12 @@
   $(function() {
     $('body').on('click', '.post-sharing-button', function(e) {
       e.preventDefault();
+      r.actions.trigger('share', {
+        target: e.target,
+      })
+    });
 
+    r.actions.on('share:success', function(e) {
       var $shareButton = $(e.target);
       var $parentThing = $shareButton.closest('.thing');
       var thingId = $parentThing.thing_id();

@@ -174,6 +174,21 @@ r.saved.init = function() {
     $('body').on('click', '.save-button a, a.save-button', function(e) {
         e.stopPropagation()
         e.preventDefault()
-        r.saved.SaveButton.toggleSaved($(this))
+
+        var target = e.target;
+        var eventAction = 'save';
+
+        if ($(target).text() === r._('unsave')) {
+            eventAction = 'unsave';
+        }
+
+        r.actions.trigger('save', {
+            target: target,
+            eventAction: eventAction,
+        });
     })
+
+    r.actions.on('save:success', function(e) {
+        r.saved.SaveButton.toggleSaved($(e.target));
+    });
 }

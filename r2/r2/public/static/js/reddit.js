@@ -153,24 +153,54 @@ function deleteRow(elem) {
 /* general things */
 
 function change_state(elem, op, callback, keep, post_callback) {
-    var form = $(elem).parents("form").first();
-    /* look to see if the form has an id specified */
-    var id = form.find('input[name="id"]');
-    if (id.length) 
-        id = id.val();
-    else /* fallback on the parent thing */
-        id = $(elem).thing_id();
+    var $form = $(elem).parents("form").first();
+        
+    var eventAction = $(elem).data('event-action');
 
-    simple_post_form(form, op, {id: id}, undefined, post_callback);
-    /* call the callback first before we mangle anything */
-    if (callback) {
-        callback(form.length ? form : elem, op);
+    // some ui elements (like ynbuttons) will have the event data attached on
+    // a different element
+    if (!eventAction) {
+        eventAction = $form.find('[data-event-action]').data('event-action');
     }
-    if(!$.defined(keep)) {
-        form.html(form.find('[name="executed"]').val());
-    }
-    return false;
+
+    r.actions.trigger('legacy:change-state', {
+        target: elem,
+        eventAction: eventAction,
+        op: op,
+        callback: callback,
+        keep: keep,
+        post_callback: post_callback,
+        $form: $form,
+    });
 };
+
+$(function() {
+    r.actions.on('legacy:change-state:success', function(e) {
+        var elem = e.target;
+        var op = e.op;
+        var callback = e.callback;
+        var keep = e.keep;
+        var post_callback = e.post_callback;
+        var form = e.$form;
+
+        /* look to see if the form has an id specified */
+        var id = form.find('input[name="id"]');
+        if (id.length) 
+            id = id.val();
+        else /* fallback on the parent thing */
+            id = $(elem).thing_id();
+
+        simple_post_form(form, op, {id: id}, undefined, post_callback);
+        /* call the callback first before we mangle anything */
+        if (callback) {
+            callback(form.length ? form : elem, op);
+        }
+        if(!$.defined(keep)) {
+            form.html(form.find('[name="executed"]').val());
+        }
+        return false;
+    })
+});
 
 function unread_thing(elem) {
     var t = $(elem);
@@ -726,10 +756,18 @@ function comment_reply_for_elem(elem) {
 }
 
 function edit_usertext(elem) {
-    var t = $(elem).thing();
-    t.find(".edit-usertext:first").parent("li").addBack().hide();
-    show_edit_usertext(t.find(".usertext:first"));
+    r.actions.trigger('edit', {
+        target: elem,
+    });
 }
+
+$(function() {
+    r.actions.on('edit:success', function(e) {
+        var t = $(e.target).thing();
+        t.find(".edit-usertext:first").parent("li").addBack().hide();
+        show_edit_usertext(t.find(".usertext:first"));
+    });
+});
 
 function cancel_usertext(elem) {
     var t = $(elem);
@@ -738,39 +776,52 @@ function cancel_usertext(elem) {
 }
 
 function reply(elem) {
-    if (r.access.isLinkRestricted(elem)) {
-        return;
-    }
+    r.actions.trigger('reply', {
+        target: elem,
+        eventAction: $(elem).data('event-action'),
+    });
 
-    var form = comment_reply_for_elem(elem);
+    return false;
+}
 
-    // quote any selected text and put it in the textarea if it's empty
-    // not compatible with IE < 9
-    var textarea = form.find("textarea")
-    if (window.getSelection && textarea.val().length == 0) {
-        // check if the selection is all inside one markdown element
-        var sel = window.getSelection()
-        var focusParentDiv = $(sel.focusNode).parents(".md").first()
-        var anchorParentDiv = $(sel.anchorNode).parents(".md").first()
-        if (focusParentDiv.length && focusParentDiv.is(anchorParentDiv)) {
-            var selectedText = sel.toString()
-            if (selectedText.length > 0) {
-                selectedText = selectedText.replace(/^/gm, "> ")
-                textarea.val(selectedText+"\n\n")
-                textarea.scrollTop(textarea.scrollHeight)
+$(function() {
+    r.actions.on('reply', function(e) {
+        if (r.access.isLinkRestricted(e.target)) {
+            e.preventDefault();
+        }
+    });
+
+    r.actions.on('reply:success', function(e) {
+        var form = comment_reply_for_elem(e.target);
+
+        // quote any selected text and put it in the textarea if it's empty
+        // not compatible with IE < 9
+        var textarea = form.find("textarea")
+        if (window.getSelection && textarea.val().length == 0) {
+            // check if the selection is all inside one markdown element
+            var sel = window.getSelection()
+            var focusParentDiv = $(sel.focusNode).parents(".md").first()
+            var anchorParentDiv = $(sel.anchorNode).parents(".md").first()
+            if (focusParentDiv.length && focusParentDiv.is(anchorParentDiv)) {
+                var selectedText = sel.toString()
+                if (selectedText.length > 0) {
+                    selectedText = selectedText.replace(/^/gm, "> ")
+                    textarea.val(selectedText+"\n\n")
+                    textarea.scrollTop(textarea.scrollHeight)
+                }
             }
         }
-    }
 
-    //show the right buttons
-    show_edit_usertext(form);
-    //re-show the whole form if required
-    form.show();
-    //update the cancel button to call the toggle button's click
-    form.find(".cancel").get(0).onclick = function() {form.hide()};
-    $(elem).thing().find(".showreplies:visible").click();
-    return false; 
-}
+        //show the right buttons
+        show_edit_usertext(form);
+        //re-show the whole form if required
+        form.show();
+        //update the cancel button to call the toggle button's click
+        form.find(".cancel").get(0).onclick = function() {form.hide()};
+        $(e.target).thing().find(".showreplies:visible").click();
+    });
+});
+    
 
 function toggle_distinguish_span(elem) {
   var form = $(elem).parents("form")[0];
@@ -844,42 +895,80 @@ function fetch_parent(elem, parent_permalink, parent_id) {
 }
 
 function big_mod_action(elem, dir) {
-   if ( ! elem.hasClass("pressed")) {
-      elem.addClass("pressed");
+    if (!elem.hasClass("pressed")) {
+        var thing_id = elem.thing_id();
 
-      var thing_id = elem.thing_id();
+        var apiAction, eventAction, showSiblingSelector
 
-      d = {
-         id: thing_id
-      };
+        if (dir === -1) {
+            eventAction = 'remove';
+            apiAction = 'remove';
+            showSiblingSelector = '.removed';
+        } else if (dir === -2) {
+            eventAction = 'spam';
+            apiAction = 'remove';
+            showSiblingSelector = '.spammed';
+        } else if (dir === 1) {
+            eventAction = 'approve';
+            apiAction = 'approve';
+            showSiblingSelector = '.approved';
+        }
 
-      elem.siblings(".status-msg").hide();
-      if (dir == -1) {
-        d.spam = false;
-        $.request("remove", d, null, true);
-        elem.siblings(".removed").show();
-      } else if (dir == -2) {
-        $.request("remove", d, null, true);
-        elem.siblings(".spammed").show();
-      } else if (dir == 1) {
-        $.request("approve", d, null, true);
-        elem.siblings(".approved").show();
-      }
-   }
-   elem.siblings(".pretty-button").removeClass("pressed");
-   return false;
+        r.actions.trigger('legacy:big-mod-action', {
+            target: elem[0],
+            thingID: thing_id,
+            apiAction: apiAction,
+            eventAction: eventAction,
+            showSiblingSelector: showSiblingSelector,
+        });
+    }
+    elem.siblings(".pretty-button").removeClass("pressed");
+    return false;
 }
 
 function big_mod_toggle(el, press_action, unpress_action) {
-    el.toggleClass('pressed')
-    $.request(el.is('.pressed') ? press_action : unpress_action, {
-        id: el.thing_id()
-    }, null, true)
+    var isActionPress = !el.hasClass('pressed');
+
+    r.actions.trigger('legacy:big-mod-toggle', {
+        target: el[0],
+        eventAction: isActionPress ? press_action : unpress_action,
+        isActionPress: isActionPress,
+        thingID: el.thing_id(),
+    });
+
     return false
 }
 
 /* The ready method */
 $(function() {
+    r.actions.on('legacy:big-mod-action:success', function(e) {
+        var $elem = $(e.target);
+        var d = {
+            id: e.thingID,
+        };
+
+        if (e.eventAction === 'remove') {
+            d.spam = false;
+        }
+
+        $elem.addClass("pressed");
+        $elem.siblings(".status-msg").hide();
+        $.request(e.apiAction, d, null, true);
+        $elem.siblings(e.showSiblingSelector).show();
+        $elem.siblings(".pretty-button").removeClass("pressed");
+    });
+
+    r.actions.on('legacy:big-mod-toggle:success', function(e) {
+        if (e.isActionPress) {
+            $(e.target).addClass('pressed');
+        } else {
+            $(e.target).removeClass('pressed');
+        }
+
+        $.request(e.eventAction, { id: e.thingID }, null, true);
+    });
+
+    // why is this extra indent here? nobody knows...
         $("body").click(close_menus);
 
         /* set function to be called on thing creation/replacement,
