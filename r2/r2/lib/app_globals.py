@@ -217,6 +217,7 @@ class Globals(object):
             'frequency_cap_min',
             'frequency_cap_default',
             'eu_cookie_max_attempts',
+            'mobile_auth_gild_time',
         ],
 
         ConfigValue.float: [
@@ -348,6 +349,7 @@ class Globals(object):
     live_config_spec = {
         ConfigValue.bool: [
             'frontend_logging',
+            'mobile_gild_first_login',
         ],
         ConfigValue.int: [
             'captcha_exempt_comment_karma',
