@@ -657,6 +657,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "reddit-hook.js",
     "eu-cookie-policy.js",
     "recent-subreddits.js",
+    "outbound-link-tracking.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,
         "moderator_invite": ModeratorPermissionSet,
