@@ -1186,7 +1186,7 @@ def refund_campaign(link, campaign):
         owner, campaign.trans_id, campaign._id, refund_amount)
 
     if not success:
-        text = ('%s $%s refund failed' % (campaign, refund_amount))
+        text = ('%s $%s refund failed: %s' % (campaign, refund_amount, reason))
         PromotionLog.add(link, text)
         g.log.debug(text + ' (reason: %s)' % reason)
 
