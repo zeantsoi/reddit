@@ -31,6 +31,10 @@ r.newsletter.ui = {
       $('.newsletterbar').hide();
     });
 
+    $(".newsletter-signup .c-form-control").one("focus", function() {
+        $('.newsletter-signup').recaptcha();
+    });
+
     store.safeSet('newsletterbar.seen', true);
   },
 
@@ -50,6 +54,10 @@ r.newsletter.ui = {
   init: function() {
     $('.newsletter-signup').each(function(i, el) {
       new r.newsletter.ui.NewsletterForm(el)
+    });
+
+    $(".c-form-control").one("focus", function() {
+        $('.newsletter-signup').recaptcha();
     });
 
     this._setupNewsletterBar();

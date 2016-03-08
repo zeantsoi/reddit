@@ -309,6 +309,10 @@ class ApiController(RedditController):
         VRatelimit.ratelimit(rate_ip=True,
                              prefix="rate_newsletter_")
 
+        if responder.has_errors('email', errors.BAD_EMAIL):
+            return
+        elif not valid_provider_captcha(responder, force_check=True):
+            return
         try:
             newsletter.add_subscriber(email, source=source)
         except newsletter.EmailUnacceptableError as e:

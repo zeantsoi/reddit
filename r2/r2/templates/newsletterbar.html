@@ -46,8 +46,16 @@
              data-validate-url="/api/check_email.json"
              data-validate-on="change blur">
     </%call>
-
-    <button type="submit" class="c-btn c-btn-highlight">${_('subscribe')}</button>
+    <button type="submit" class="c-btn c-btn-highlight">
+    ${_('subscribe')}
+    </button>
+    %if thing.recaptcha_public_key:
+     <br/>
+     <%call expr="form_group('g-recaptcha-response', 'BAD_CAPTCHA', show_errors=True, feedback_inside_input=True)">
+       <div class="g-recaptcha" data-sitekey="${thing.recaptcha_public_key}">
+       </div>
+     </%call>
+    %endif
   </form>
   <a href="#" class="newsletter-close" title="close">&times;</a>
 </section>

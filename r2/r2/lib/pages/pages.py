@@ -2633,8 +2633,13 @@ class WelcomeBar(InfoBar):
                        _("where your votes shape what the world is talking about."))
         InfoBar.__init__(self, message=message)
 
+
 class NewsletterBar(InfoBar):
-    pass
+    def __init__(self):
+        super(InfoBar, self).__init__(
+            recaptcha_public_key=g.secrets.get('recaptcha_public_key')
+        )
+
 
 class ClientInfoBar(InfoBar):
     """Draws the message the top of a login page before OAuth2 authorization"""
@@ -5752,8 +5757,14 @@ class Newsletter(BoringPage):
     extra_page_classes = ['newsletter']
 
     def __init__(self, pagename=None, content=None, **kw):
-        BoringPage.__init__(self, pagename=pagename, show_sidebar=False,
-                            content=content, **kw)
+        BoringPage.__init__(
+            self,
+            pagename=pagename,
+            show_sidebar=False,
+            recaptcha_public_key=g.secrets.get('recaptcha_public_key'),
+            content=content,
+            **kw
+        )
 
 
 class SubscribeButton(Templated):

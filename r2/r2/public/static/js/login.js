@@ -392,23 +392,17 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     loadCaptcha: function() {
+        var $form = this.$el;
         if (!this.captchaChecked) {
             this.captchaChecked = true;
             $.getJSON("/api/requires_captcha.json", function(res) {
                 if (res.required) {
-                    window.captchaLoaded = function() {
-                        $('.g-recaptcha').each(function(i, el) {
-                            grecaptcha.render(el, { sitekey : el.getAttribute('data-sitekey') });
-                        });
-                    };
-
-                    if (!window.grecaptcha) {
-                        $.getScript('https://www.google.com/recaptcha/api.js?render=explicit&onload=captchaLoaded');
-                    }
+                    $form.recaptcha();
+                    this.captchaLoaded = True;
                 }
-            });
-        } else if (window.grecaptcha && window.captchaLoaded) {
-            captchaLoaded();
+            }.bind(this));
+        } else if (this.captchaLoaded) {
+            $form.recaptcha();
         }
     },
 

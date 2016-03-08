@@ -824,4 +824,32 @@ $.fn.highlight = function(text) {
   });
 };
 
+$.fn.recaptcha = function() {
+    var $form = $(this);
+
+    var render_captcha = function() {
+        if (window.grecaptcha) {
+            $form.find('.g-recaptcha:empty').each(function(i, el) {
+                window.grecaptcha.render(el, {
+                    sitekey : el.getAttribute('data-sitekey') });
+            });
+        }
+    };
+
+    if (!window.grecaptcha) {
+        var callback_name = "callback_" + (Math.random() + "").split('.')[1];
+        window[callback_name] = function() {
+            render_captcha();
+            delete window[callback_name];
+        }
+        $.getScript(
+            'https://www.google.com/recaptcha/api.js?render=explicit&onload=' + callback_name
+        );
+    } else {
+        render_captcha();
+    };
+
+    return $form;
+};
+
 })(jQuery);

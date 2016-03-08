@@ -61,6 +61,12 @@ ${_('reddit newsletter - upvoted weekly')}
              data-validate-url="/api/check_email.json"
              data-validate-on="change blur">
     </%call>
+    %if thing.recaptcha_public_key:
+      <%call expr="form_group('g-recaptcha-response', 'BAD_CAPTCHA', show_errors=True, feedback_inside_input=True)">
+          <div class="g-recaptcha" data-sitekey="${thing.recaptcha_public_key}">
+          </div>
+      </%call>
+    %endif
     <button type="submit" class="c-btn c-btn-primary">${_('subscribe')}</button>
   </form>
 

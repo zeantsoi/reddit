@@ -3233,8 +3233,9 @@ def valid_provider_captcha(
     responder,
     field='g-recaptcha-response',
     error=errors.BAD_CAPTCHA,
+    force_check=False,
 ):
-    if need_provider_captcha():
+    if force_check or need_provider_captcha():
         check_captcha = VProviderCaptcha(field, default='')
         check_captcha({})
         return not responder.has_errors(field, error)
