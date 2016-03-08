@@ -701,7 +701,7 @@ class SponsorListingController(PromoteListingController):
             q = queries.get_underdelivered_campaigns()
             campaigns = PromoCampaign._by_fullname(list(q), data=True,
                                                    return_dict=False)
-            link_ids = [camp.link_id for camp in campaigns]
+            link_ids = {camp.link_id for camp in campaigns}
             return [Link._fullname_from_id36(to36(id)) for id in link_ids]
         elif self.sort == 'reported':
             return queries.get_reported_links(Subreddit.get_promote_srid())
