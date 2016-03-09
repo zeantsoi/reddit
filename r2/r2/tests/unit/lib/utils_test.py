@@ -23,6 +23,7 @@
 
 import collections
 import unittest
+from mock import MagicMock
 
 from r2.lib import utils
 
@@ -175,11 +176,12 @@ class TestTruncString(unittest.TestCase):
         truncated = utils.trunc_string('ThisIsALongWord', 10)
         self.assertEqual(truncated, 'ThisIsA...')
 
+
 class TestOutboundLinks(unittest.TestCase):
     def setUp(self):
         from r2.models import Link
         self.url = "https://www.google.com"
-        self.thing = Link._byID36("1wfh5c", data=True)
+        self.thing = MagicMock(spec=Link, _fullname="t3_a1b2c3")
 
     def test_reddit_url(self):
         # Send a reddit.com url and get back the same url
