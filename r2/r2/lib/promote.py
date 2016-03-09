@@ -1396,7 +1396,7 @@ def get_total_run(thing):
     of the latest campaign.
 
     """
-
+    campaigns = []
     if isinstance(thing, Link):
         campaigns = PromoCampaign._by_link(thing._id)
     elif isinstance(thing, PromoCampaign):
