@@ -1261,7 +1261,9 @@ class FrontController(RedditController):
                 event_target['target_after'] = after._fullname
         extra_js_config = {'event_target': event_target}
 
-        res = SearchPage(_('search results'), query,
+        pagename = _('search results - %(query)s') % {'query': query}
+
+        res = SearchPage(pagename, query,
                          content=content,
                          subreddits=subreddits,
                          nav_menus=nav_menus,
