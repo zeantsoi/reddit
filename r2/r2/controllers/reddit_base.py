@@ -167,26 +167,12 @@ def vary_pagecache_on_experiments(*names):
     Since loid-based experiments will vary the resulting content, this is used
     to accumulate a whitelist of experiments referenced in the decorator below.
     """
-    # we are going to use this to build the cache key, so
-    # consistent ordering at compile time would be nice
-    global_experiments = g.live_config.get("global_loid_experiments")
-    if global_experiments:
-        names = names + tuple(global_experiments)
-    names = sorted(names)
-
     def _vary_pagecache_on_experiments(fn):
         # store this list on the handler itself, since (by the nature of the
         # page cache) we won't actually *call* this handler.  We'll set
         # the whitelist on c in `request_key` and in the decorated body
         fn.whitelisted_loid_experiments = names
-
-        @wraps(fn)
-        def _vary_pagecache_on_experiments_inner(self, *a, **kw):
-            # For checking the whitelist in the feature methods, set it on
-            # the request context.
-            c.whitelisted_loid_experiments = names
-            return fn(self, *a, **kw)
-        return _vary_pagecache_on_experiments_inner
+        return fn
     return _vary_pagecache_on_experiments
 
 
@@ -892,19 +878,8 @@ class MinimalController(BaseController):
         whitelisted_variants = []
         # if there are logged out experiments expected, we need to vary
         # the cache key on them
-        if (
-            g.enable_loggedout_experiments and
-            not c.user_is_loggedin and c.loid
-        ):
-            handler = self._get_action_handler()
-            if hasattr(handler, "whitelisted_loid_experiments"):
-                # pull the whitelist onto `c` as we check there in features
-                whitelist = handler.whitelisted_loid_experiments
-                c.whitelisted_loid_experiments = whitelist
-                for name in whitelist:
-                    whitelisted_variants.append(
-                        (name, feature.variant(name, None))
-                    )
+        for name in c.whitelisted_loid_experiments:
+            whitelisted_variants.append((name, feature.variant(name, None)))
 
         _id = make_key_id(
             c.lang,
@@ -1087,6 +1062,26 @@ class MinimalController(BaseController):
         if not self.defer_ratelimiting:
             self.run_sitewide_ratelimits()
             c.request_timer.intermediate("minimal-ratelimits")
+
+        # Since pre() is always called and immediately before the
+        # pagecache, now is the time to check for logged-out experiments
+        whitelist = []
+        if (
+            g.enable_loggedout_experiments and
+            not c.user_is_loggedin and c.loid
+        ):
+            # grab per-handler whitelisted experiments
+            handler = self._get_action_handler()
+            if hasattr(handler, "whitelisted_loid_experiments"):
+                whitelist.extend(handler.whitelisted_loid_experiments)
+
+            # add global whitelist
+            global_experiments = g.live_config.get("global_loid_experiments")
+            if global_experiments:
+                whitelist.extend(global_experiments)
+
+        # sort the list by name to keep the cache key consistent
+        c.whitelisted_loid_experiments = sorted(whitelist)
 
         hooks.get_hook("reddit.request.minimal_begin").call()
 
