@@ -263,7 +263,7 @@ class Reddit(Templated):
                  header=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
                  show_locationbar=False, auction_announcement=False,
-                 **context):
+                 show_newsletterbar=False, **context):
         Templated.__init__(self, **context)
         self.title = title
         self.short_title = short_title
@@ -280,6 +280,7 @@ class Reddit(Templated):
         self.footer = RedditFooter()
         self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []
+        self.show_newsletterbar = show_newsletterbar
 
         self.auction_announcement = auction_announcement
 
@@ -363,7 +364,7 @@ class Reddit(Templated):
             if not c.user_is_loggedin:
                 if getattr(self, "show_welcomebar", True):
                     self.welcomebar = WelcomeBar()
-                if getattr(self, "show_newsletterbar", True):
+                if self.show_newsletterbar:
                     self.newsletterbar = NewsletterBar()
 
             if (c.render_style == "compact" and 
@@ -2703,7 +2704,6 @@ class InterstitialPage(BoringPage):
             title,
             loginbox=False,
             show_sidebar=False,
-            show_newsletterbar=False,
             show_welcomebar=False,
             robots='noindex,nofollow',
             content=content,
@@ -4128,7 +4128,6 @@ class ModToolsPage(Reddit):
     def __init__(self, **kwargs):
         super(ModToolsPage, self).__init__(
             page_classes=['modtools-page'],
-            show_newsletterbar=False,
             **kwargs
         )
 
@@ -5729,7 +5728,7 @@ class PolicyPage(BoringPage):
 
     def __init__(self, pagename=None, content=None, **kw):
         BoringPage.__init__(self, pagename=pagename, show_sidebar=False,
-            show_newsletterbar=False, content=content, **kw)
+            content=content, **kw)
         self.welcomebar = None
 
     def build_toolbars(self):
