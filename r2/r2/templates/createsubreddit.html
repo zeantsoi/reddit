@@ -320,7 +320,7 @@ try participating in other communities on reddit for a little while first before
         <li>
           <input class="nomargin" type="checkbox"
                  name="show_media" id="show_media"
-                 %if thing.site and thing.site.show_media:
+                 %if not thing.site or thing.site.show_media:
                    checked="checked"
                  %endif
           >
