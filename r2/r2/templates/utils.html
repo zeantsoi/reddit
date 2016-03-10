@@ -443,7 +443,6 @@ ${unsafe(txt)}
         frame.name = JSON.stringify({
           subreddit: r.config.post_site,
           origin: location.origin,
-          userMatching: r.config.feature_ads_user_matching,
         });
         frame.src = '//' + ${scriptsafe_dumps(g.media_domain)} + '/gtm/jail';
 
