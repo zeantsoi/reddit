@@ -173,33 +173,6 @@ def _get_callback_hmac(username, key, expires):
     return hmac.new(secret, data, hashlib.sha256).hexdigest()
 
 
-def _force_images(link, thumbnail, mobile, changed=None):
-    if thumbnail:
-        old_thumbnail_url = getattr(link, "thumbnail_url", None)
-        media.force_thumbnail(link, thumbnail["data"], thumbnail["ext"])
-        new_thumbnail_url = link.thumbnail_url
-
-        if changed is not None and old_thumbnail_url != new_thumbnail_url:
-            changed["thumbnail_url"] = (
-                old_thumbnail_url,
-                new_thumbnail_url,
-            )
-
-    can_target_mobile = (feature.is_enabled("mobile_web_targeting") or
-        feature.is_enabled("mobile_native_targeting"))
-
-    if can_target_mobile and mobile:
-        old_mobile_ad_url = getattr(link, "mobile_ad_url", None)
-        media.force_mobile_ad_image(link, mobile["data"], mobile["ext"])
-        new_mobile_ad_url = link.mobile_ad_url
-
-        if changed is not None and old_mobile_ad_url != new_mobile_ad_url:
-            changed["mobile_ad_url"] = (
-                old_mobile_ad_url,
-                new_mobile_ad_url,
-            )
-
-
 def campaign_has_oversold_error(form, campaign):
     if campaign.priority.inventory_override:
         return
@@ -1178,12 +1151,30 @@ class PromoteApiController(ApiController):
                     l.iframe_embed_url = None
                     l.media_autoplay = False
 
-        _force_images(
-            link=l,
-            thumbnail=thumbnail,
-            mobile=mobile,
-            changed=(changed if is_new_promoted else None),
-        )
+        if thumbnail:
+            old_thumbnail_url = getattr(l, "thumbnail_url", None)
+            media.force_thumbnail(l, thumbnail["data"], thumbnail["ext"])
+            new_thumbnail_url = getattr(l, "thumbnail_url", None)
+
+            if old_thumbnail_url != new_thumbnail_url:
+                changed["thumbnail_url"] = (
+                    old_thumbnail_url,
+                    new_thumbnail_url,
+                )
+
+        can_target_mobile = (feature.is_enabled("mobile_web_targeting") or
+            feature.is_enabled("mobile_native_targeting"))
+
+        if can_target_mobile and mobile:
+            old_mobile_ad_url = getattr(l, "mobile_ad_url", None)
+            media.force_mobile_ad_image(l, mobile["data"], mobile["ext"])
+            new_mobile_ad_url = getattr(l, "mobile_ad_url", None)
+
+            if old_mobile_ad_url != new_mobile_ad_url:
+                changed["mobile_ad_url"] = (
+                    old_mobile_ad_url,
+                    new_mobile_ad_url,
+                )
 
         # comment disabling and sendreplies is free to be changed any time.
         if disable_comments != l.disable_comments:
