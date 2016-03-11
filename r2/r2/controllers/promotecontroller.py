@@ -1221,10 +1221,11 @@ class PromoteApiController(ApiController):
             if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
                 promote.edited_live_promotion(l)
 
-            # ensure plugins are notified of the final edits to the link.
-            # other methods also call this hook earlier in the process.
-            # see: `promote.unapprove_promotion`
-            hooks.get_hook('promote.edit_promotion').call(link=l)
+            # ensure plugins are notified of the final edits to the link
+            # if there are any.
+            if changed:
+                hooks.get_hook('promote.edit_promotion').call(link=l)
+
             g.events.edit_promoted_link_event(
                 link=l,
                 changed_attributes=changed,
