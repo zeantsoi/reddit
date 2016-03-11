@@ -1063,17 +1063,6 @@ class PromoteApiController(ApiController):
                     changed["selftext"] = (l.selftext, selftext)
                     l.selftext = selftext
 
-            requires_approval = any(key in changed for key in (
-                "title",
-                "is_self",
-                "selftext",
-                "url",
-            ))
-
-            # only trips if changed by a non-sponsor
-            if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
-                promote.edited_live_promotion(l)
-
             if c.user_is_sponsor:
                 if (form.has_errors("media_url", errors.BAD_URL) or
                         form.has_errors("iframe_embed_url", errors.BAD_URL)):
@@ -1219,6 +1208,19 @@ class PromoteApiController(ApiController):
         l._commit()
 
         if not is_new_promoted:
+            requires_approval = any(key in changed for key in (
+                "title",
+                "is_self",
+                "selftext",
+                "url",
+                "thumbnail_url",
+                "mobile_ad_url",
+            ))
+
+            # only trips if changed by a non-sponsor
+            if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
+                promote.edited_live_promotion(l)
+
             # ensure plugins are notified of the final edits to the link.
             # other methods also call this hook earlier in the process.
             # see: `promote.unapprove_promotion`
