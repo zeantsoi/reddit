@@ -186,11 +186,11 @@ class TestOutboundLinks(unittest.TestCase):
     def test_reddit_url(self):
         # Send a reddit.com url and get back the same url
         permalink = self.thing.make_permalink_slow(True)
-        outbound_url = utils.outbound_link_url(self.thing, permalink)
-        self.assertEqual(outbound_url, permalink)
+        outbound = utils.generate_outbound_link(self.thing, permalink)
+        self.assertEqual(outbound.url, permalink)
 
     def test_url_query(self):
         # Send a reddit.com url and get back a different url
-        outbound_url = utils.outbound_link_url(self.thing, self.url)
-        urlparser = utils.UrlParser(outbound_url)
+        outbound = utils.generate_outbound_link(self.thing, self.url)
+        urlparser = utils.UrlParser(outbound.url)
         self.assertEqual(urlparser.query_dict["url"], self.url)

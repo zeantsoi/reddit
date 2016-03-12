@@ -31,10 +31,11 @@ import os
 import random
 import re
 import signal
+import time
 import traceback
 
 from baseplate.crypto import MessageSigner
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -1536,9 +1537,13 @@ def extract_user_mentions(text):
 
     return usernames
 
+OutboundLink = namedtuple('OutboundLink', ['url', 'expiration'])
 
-def outbound_link_url(thing, url):
-    """Get the outbound clicktracking url
+
+def generate_outbound_link(thing, url):
+    """Return an outbound clicktracking URL, and its expiration in milli epoch.
+
+    Return an OutboundLink namedtuple, with `url` and `expiration` fields.
 
     The url will be redirected through a service in baseplate which
     will collect events and redirect the user to the original url.
@@ -1549,18 +1554,23 @@ def outbound_link_url(thing, url):
     utf8_url = _force_utf8(url)
     urlparser = UrlParser(utf8_url)
     if urlparser.is_reddit_url():
-        return url
+        return OutboundLink(url, None)
 
+    # Theoretically the expiration we set and the expiration the signature uses
+    # may differ as it is not atomic, so define expiration first so
+    # it's always shorter or the same as the actual expiration
+    max_age = timedelta(hours=1)
+    expiration = int(time.time() + max_age.total_seconds()) * 1000
     signer = MessageSigner(g.secrets["outbound_url_secret"])
-    token = signer.make_signature(_force_unicode(url), max_age=timedelta(hours=1))
+    token = signer.make_signature(_force_unicode(url), max_age=max_age)
 
-    return urlunsplit((
+    return OutboundLink(urlunsplit((
         "https" if c.secure else "http",
         g.outboundtracker_url,
         thing._fullname,
         urlencode({"url": utf8_url, "token": token}),
         None,
-    ))
+    )), expiration)
 
 
 def summarize_markdown(md):

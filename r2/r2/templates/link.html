@@ -63,7 +63,8 @@
      %endif
      %if thing.use_outbound:
        data-href-url="${thing.href_url}"
-       data-outbound-url="${thing.outbound_url}"
+       data-outbound-url="${thing.outbound_link.url}"
+       data-outbound-expiration="${thing.outbound_link.expiration if thing.outbound_link.expiration else 0}"
      %endif
      >
      ${caller.body()}

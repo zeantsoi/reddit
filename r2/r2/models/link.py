@@ -29,7 +29,7 @@ from r2.lib.utils import (
     base_url,
     domain,
     epoch_timestamp,
-    outbound_link_url,
+    generate_outbound_link,
     strip_www,
     timesince,
     title_to_url,
@@ -816,7 +816,7 @@ class Link(Thing, Printable):
                 item.href_url = item.url
                 if feature.is_enabled('outbound_clicktracking'):
                     item.use_outbound = True
-                    item.outbound_url = outbound_link_url(item, item.url)
+                    item.outbound_link = generate_outbound_link(item, item.url)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,

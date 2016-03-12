@@ -6,10 +6,12 @@ $(function() {
 
   function setOutboundURL(elem) {
     /* send outbound links to outbound url when clicked */
+    var $elem = $(elem);
+    var now = Date.now();
 
-    // If it's been over an hour since the page was rendered, don't track links as our hmac has expired.
-    if (Date.now() - startTime < (60 * 60 * 1000)) {
-      elem.href = $(elem).attr('data-outbound-url');
+    // If our outbound link has not expired, use it.
+    if ($elem.attr('data-outbound-expiration') > now) {
+      elem.href = $elem.attr('data-outbound-url');
     }
 
     return true;
