@@ -1,8 +1,22 @@
 /* The ready method */
 $(function() {
-  // Log the time this page was rendered so that we can determine if it's been > our expiration time for links. If so,
-  // don't use the tracking URLs.
-  var startTime = Date.now();
+  var clientTime = Date.now();
+  var serverTime = r.config.server_time * 1000;
+  var disabledDueToDrift = false;
+
+  // if our server time is more than 5 minutes greater than client time, that
+  // means our client clock has future drift. Disable due to hmac signing
+  // expiration not being reliable.
+  if (serverTime > clientTime + (5 * 60 * 1000)) {
+    disabledDueToDrift = true;
+  }
+
+  // if our server time is more than 60 minutes in the past, that means our
+  // client clock has drift or this whole page has been cached for more than
+  // an hour. Disable due to hmac signing expiration not being reliable.
+  if (serverTime < clientTime - (60 * 60 * 1000)) {
+    disabledDueToDrift = true;
+  }
 
   function setOutboundURL(elem) {
     /* send outbound links to outbound url when clicked */
@@ -10,7 +24,7 @@ $(function() {
     var now = Date.now();
 
     // If our outbound link has not expired, use it.
-    if ($elem.attr('data-outbound-expiration') > now) {
+    if (!disabledDueToDrift && $elem.attr('data-outbound-expiration') > now) {
       elem.href = $elem.attr('data-outbound-url');
     }
 
