@@ -3534,7 +3534,7 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("read")
     @validatedForm(
-        link=VByName('link_id'),
+        link=VByName('link_id', thing_cls=Link),
         sort=VMenu('morechildren', CommentSortMenu, remember=False),
         children=VCommentIDs('children'),
         mc_id=nop(
