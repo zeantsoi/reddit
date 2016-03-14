@@ -298,6 +298,7 @@ def js_config(extra_config=None):
         "feature_expando_events": feature.is_enabled('expando_events'),
         "feature_new_report_dialog": feature.is_enabled('new_report_dialog'),
         "feature_ads_user_matching": feature.is_enabled('ads_user_matching'),
+        "feature_flatlist_events": feature.is_enabled('flatlist_events'),
     }
 
     if feature.is_enabled("eu_cookie_policy"):

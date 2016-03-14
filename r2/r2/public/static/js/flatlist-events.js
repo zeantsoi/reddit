@@ -1,4 +1,7 @@
 !function(r) {
+  if (!r.config.feature_flatlist_events) {
+    return;
+  }
 
   var EVENT_TOPIC = 'flatlist_events';
 
