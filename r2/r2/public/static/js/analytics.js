@@ -386,6 +386,13 @@ r.analytics = {
     var hasReplaceState = !!(window.history && window.history.replaceState);
     var params = $.url().param();
     var stripParams = ['ref', 'ref_source', 'ref_campaign'];
+    // strip utm tags as well
+    _.keys(params).forEach(function(paramKey){
+      if (paramKey.indexOf('utm_') === 0){
+        stripParams.push(paramKey);
+      }
+    });
+
     var strippedParams = _.omit(params, stripParams);
 
     if (hasReplaceState && !_.isEqual(params, strippedParams)) {
