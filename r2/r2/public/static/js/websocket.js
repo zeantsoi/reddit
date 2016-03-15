@@ -73,7 +73,7 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
             var baseDelay = this._backoffTime * Math.pow(2, this._connectionAttempts),
                 jitter = (Math.random() * this._retryJitterAmount) - (this._retryJitterAmount / 2),
                 delay = Math.round(baseDelay + jitter)
-            r.debug('websocket: connection lost, reconnecting in ' + delay + 'ms')
+            r.debug('websocket: connection lost (' + ev.code + '), reconnecting in ' + delay + 'ms')
             r.debug("(can't connect? Make sure you've allowed https access in your browser.)")
             this.trigger('reconnecting', delay)
             setTimeout(_.bind(this._connect, this), delay)
