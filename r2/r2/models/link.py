@@ -814,7 +814,8 @@ class Link(Thing, Printable):
                 item.href_url = item.permalink
             else:
                 item.href_url = item.url
-                if feature.is_enabled('outbound_clicktracking'):
+                if (feature.is_enabled('outbound_clicktracking') or
+                        feature.is_enabled('outbound_clicktracking_logged_out')):
                     item.use_outbound = True
                     item.outbound_link = generate_outbound_link(item, item.url)
 
