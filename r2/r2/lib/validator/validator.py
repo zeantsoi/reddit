@@ -985,11 +985,11 @@ class VProviderCaptcha(Validator):
         try:
             if not g.captcha_provider.validate_captcha(captcha):
                 self.set_error(errors.BAD_CAPTCHA)
-        except CaptchaError:
+        except CaptchaError as e:
             # We had a captcha error, which meant we couldn't validate the
             # captcha. Pass silently, as we don't want to turn away valid
             # users due to an outage or something.
-            pass
+            g.log.error("Error from captcha provider: %r", e)
 
 
 class VUser(Validator):
