@@ -733,10 +733,22 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
 
 
 
+def get_utc_offset(date, timezone_name):
+  datetime_today = datetime.datetime(date.year, date.month, date.day)
+  tz = timezone(timezone_name)
+  offset = tz.utcoffset(datetime_today)
+  days_offset, hours_offset = offset.days, offset.seconds // 3600
+
+  # handle negative offsets
+  if days_offset < 1:
+    return (24 - hours_offset) * -1
+  return hours_offset
+
 # dates are referenced to UTC, while we want promos to change at (roughly)
 # midnight eastern-US.
-# TODO: make this a config parameter
-timezone_offset = -5 # hours
+timezone_offset = get_utc_offset(
+    datetime.date.today(),
+    g.live_config.get("ads_timezone", "US/Eastern"))
 timezone_offset = datetime.timedelta(0, timezone_offset * 3600)
 def promo_datetime_now(offset=None):
     now = datetime.datetime.now(g.tz) + timezone_offset

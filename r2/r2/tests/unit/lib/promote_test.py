@@ -14,6 +14,7 @@ from r2.lib.promote import (
     refund_campaign,
     srnames_from_site,
     InapplicableRefundException,
+    get_utc_offset,
 )
 from r2.models import (
     Account,
@@ -398,3 +399,11 @@ class TestPromoteRefunds(unittest.TestCase):
         # Undefined
         campaign = object()
         self.assertFalse(is_pre_cpm(campaign))
+
+
+class TestGetUtcOffset(unittest.TestCase):
+    def test_est(self):
+        self.assertEquals(-5, get_utc_offset(datetime.date(2016,3,1), "US/Eastern"))
+
+    def test_est_dst(self):
+        self.assertEquals(-4, get_utc_offset(datetime.date(2016,4,1), "US/Eastern"))
