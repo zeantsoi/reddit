@@ -780,6 +780,7 @@ class ApiController(RedditController):
             self._login(responder, user, rem)
             _event(error=None)
 
+    @vary_pagecache_on_experiments("registration_captcha")
     @csrf_exempt
     @cross_domain(allow_credentials=True)
     def POST_register(self, *args, **kwargs):
