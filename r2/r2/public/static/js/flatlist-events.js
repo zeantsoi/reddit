@@ -120,7 +120,13 @@
 
     r.actions.on('navigate:success', function(e) {
       sendFlatListEvent(e, function() {
-        window.location = e.target.href;
+        if (r.config.new_window && $(e.target).hasClass('may-blank')) {
+          var newWindow = window.open(e.target.href, '_blank');
+          // not really necessary, but for consistency
+          newWindow.opener = null;
+        } else {
+          window.location = e.target.href;
+        }
       })
     });
   });
