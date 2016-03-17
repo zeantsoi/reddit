@@ -85,7 +85,7 @@
       customFields.target_author_name = thingData.author;
 
       if (thingData.author === r.config.logged) {
-        customFields.is_target_author = True;
+        customFields.is_target_author = true;
       }
     }
 
