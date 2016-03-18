@@ -134,7 +134,6 @@ class TestSRNamesFromSite(unittest.TestCase):
         ])
 
         frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
-        swf_srnames = srnames_from_site(self.logged_in, subreddit)
 
         self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
         self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
