@@ -1253,40 +1253,37 @@ def srnames_from_site(user, site, include_subscriptions=True):
         srnames = srnames | {sr.name for sr in site.srs}
     else:
         srnames.add(Frontpage.name)
+        srs_interested_in = []
 
-        if is_logged_in and include_subscriptions:
-            subscriptions = Subreddit.user_subreddits(
-                user,
-                ids=False,
-            )
+        if include_subscriptions:
+            if is_logged_in:
+                srs_interested_in = srs_interested_in + Subreddit.user_subreddits(
+                    user,
+                    ids=False,
+                )
+
+            # add subreddits recently visited
+            if c.recent_subreddits:
+                srs_interested_in = srs_interested_in + c.recent_subreddits
 
             # only use subreddits that aren't quarantined and have the same
             # age gate as the subreddit being viewed.
-            subscriptions = filter(
+            srs_interested_in = filter(
                 lambda sr: not sr.quarantine and sr.over_18 == over_18,
-                subscriptions,
+                srs_interested_in,
             )
 
-            subscription_srnames = {sr.name for sr in subscriptions}
+            srs_interested_in_srnames = {sr.name for sr in srs_interested_in}
 
-            # remove any subscriptions that may have nsfw ads targeting
+            # remove any subreddits that may have nsfw ads targeting
             # them because they're apart of a nsfw collection.
-            nsfw_collection_srnames = get_nsfw_collections_srnames()
-
             if not over_18:
-                subscription_srnames = (subscription_srnames -
-                    nsfw_collection_srnames)
+                srs_interested_in_srnames = (srs_interested_in_srnames -
+                    get_nsfw_collections_srnames())
 
-            srnames = srnames | subscription_srnames
+            srnames = srnames | srs_interested_in_srnames
 
     return srnames
-
-
-def srnames_from_recent_clicks():
-    if not c.recent_subreddits:
-        return set()
-
-    return {sr.name for sr in c.recent_subreddits}
 
 
 def keywords_from_context(
@@ -1302,12 +1299,6 @@ def keywords_from_context(
         user, site,
         include_subscriptions,
     )
-
-    if is_frontpage and include_subscriptions:
-        # only use recent click data on the frontpage/all to avoid issues
-        # of ads being shown in questionable places. ie. Dewers ad showing
-        # up in /r/TreatmentForAddiction.
-        srnames = srnames | srnames_from_recent_clicks()
 
     if Frontpage.name in srnames:
         srnames.remove(Frontpage.name)

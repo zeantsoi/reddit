@@ -47,6 +47,10 @@ nsfw_collection = Collection(
     sr_names=nsfw_collection_srnames,
     over_18=True
 )
+recent_subreddits = [
+    Subreddit(name=nice_srname),
+    Subreddit(name=nsfw_srname, over_18=True),
+]
 
 class TestSRNamesFromSite(unittest.TestCase):
     def setUp(self):
@@ -134,6 +138,19 @@ class TestSRNamesFromSite(unittest.TestCase):
 
         self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
         self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
+
+    @patch("r2.lib.promote.c")
+    def test_remove_nswf_recent_subreddits_on_frontpage(self, c):
+        c.recent_subreddits = recent_subreddits
+        Subreddit.user_subreddits = MagicMock(return_value=[])
+
+        frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
+
+        self.assertEqual(
+            frontpage_srnames,
+            {nice_srname, Frontpage.name},
+        )
+        self.assertTrue(len(frontpage_srnames & {nsfw_srname}) == 0)
 
 
 class TestPromoteRefunds(unittest.TestCase):
