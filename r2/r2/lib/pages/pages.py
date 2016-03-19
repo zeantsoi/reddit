@@ -22,6 +22,7 @@
 ###############################################################################
 
 from collections import Counter, OrderedDict
+from pytz import timezone
 
 from thrift import Thrift
 
@@ -4669,6 +4670,23 @@ class PromoteLinkEdit(PromoteLinkBase):
             'selfserve': 'https://www.reddit.com/r/selfserve'
         }
         self.infobar = RedditInfoBar(message=message)
+
+        # TODO: revert after 3/23/2016
+        # current_datetime = datetime.datetime.now() - promote.timezone_offset
+        current_datetime = datetime.datetime(2016, 3, 21, 1) - promote.timezone_offset
+        ooo_start = datetime.datetime(2016, 3, 21) - promote.timezone_offset
+        ooo_end = datetime.datetime(2016, 3, 24) - promote.timezone_offset
+        if (current_datetime > ooo_start and
+                current_datetime < ooo_end):
+            ooo_warning_message = (
+                "From the dates March 21st to March 23rd we will be having a " +
+                "delay in our support response times. Sorry for any " +
+                "inconvenience this may cause."
+            )
+            self.ooo_warning = RedditInfoBar(message=ooo_warning_message)
+        else:
+            self.ooo_warning = None
+
         self.price_dict = PromotionPrices.get_price_dict(self.author)
 
         self.frequency_cap_min = g.frequency_cap_min
