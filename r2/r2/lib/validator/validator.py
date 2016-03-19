@@ -3226,6 +3226,12 @@ class VResultTypes(Validator):
 
 def need_provider_captcha():
     # don't show captchas to registered clients (for now)
+
+    # Temporary: Disable captcha for mweb, which uses HTTP Basic to
+    # send their auth
+    if request.headers.get('Authorization'):
+        return False
+
     return not c.oauth2_client and feature.is_enabled("registration_captcha")
 
 
