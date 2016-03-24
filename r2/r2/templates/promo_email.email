@@ -32,16 +32,6 @@
     edit_url =  promote.promo_edit_url(thing.link)
     ref_tags = "?ref_source=email&ref=%(ref)s&ref_campaign=%(campaign)s"
  %>
-<%
-    # TODO: revert after 3/23/2016
-    current_datetime = datetime.now() - promote.timezone_offset
-    ooo_start = datetime(2016, 3, 21) - promote.timezone_offset
-    ooo_end = datetime(2016, 3, 24) - promote.timezone_offset
-    include_ooo_warning = False
-    if (current_datetime > ooo_start and
-            current_datetime < ooo_end):
-        include_ooo_warning = True
- %>
 
 %if thing.kind == Email.Kind.NEW_PROMO:
 This email is to confirm reddit.com's recognition of your submitted self-serve
@@ -224,11 +214,7 @@ ${unsafe(edit_url + ref_tags % dict(ref="promo_void_payment", campaign="edit_pro
 %endif
 
 %endif
-%if include_ooo_warning:
-Please note that from March 21st to March 23rd we will be having a delay in our
-support response times. Sorry for any inconvenience this may cause.
 
-%endif
 Thank you,
 
 The reddit team
