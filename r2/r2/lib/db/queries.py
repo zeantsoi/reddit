@@ -1103,7 +1103,13 @@ def new_link(link):
 
 
 def add_to_commentstree_q(comment):
-    return
+    if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
+        amqp.add_item('commentstree_fastlane_q', comment._fullname)
+    elif g.shard_commentstree_queues:
+        amqp.add_item('commentstree_%d_q' % (comment.link_id % 10),
+                      comment._fullname)
+    else:
+        amqp.add_item('commentstree_q', comment._fullname)
 
 
 def update_comment_notifications(comment, inbox_rels):
