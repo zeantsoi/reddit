@@ -635,6 +635,17 @@ class ApiController(RedditController):
                 request=request,
                 context=c)
 
+        hook_error = hooks.get_hook("account.login").call_until_return(
+            responder=responder,
+            request=request,
+            context=c,
+        )
+        # if any of the hooks returned an error, abort the login.  The
+        # set_error in this case also needs to exist in the hook.
+        if hook_error:
+            _event(error=hook_error)
+            return
+
         exempt_ua = (request.user_agent and
                      any(ua in request.user_agent for ua
                          in g.config.get('exempt_login_user_agents', ())))
