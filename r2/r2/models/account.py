@@ -31,6 +31,7 @@ from r2.lib.memoize      import memoize
 from r2.lib.utils        import randstr, timefromnow
 from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare, canonicalize_email
+from r2.lib.utils        import tup
 from r2.lib import amqp, filters, hooks
 from r2.lib.log import log_text
 from r2.models.bans import TempTimeout
@@ -1085,7 +1086,7 @@ class SubredditParticipationByAccount(tdb_cassandra.DenormalizedRelation):
 
     @classmethod
     def mark_participated(cls, account, subreddit):
-        cls.create(account, [subreddit])
+        cls.create(account, tup(subreddit))
 
 
 class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):

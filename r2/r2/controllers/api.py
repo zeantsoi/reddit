@@ -3788,12 +3788,14 @@ class ApiController(RedditController):
         form.set_text(".status", _("password updated"))
 
     @require_oauth2_scope("subscribe")
-    @noresponse(VUser(),
-                VModhash(),
-                action = VOneOf('action', ('sub', 'unsub')),
-                sr = VSubscribeSR('sr', 'sr_name'))
+    @noresponse(
+        VUser(),
+        VModhash(),
+        action=VOneOf('action', ('sub', 'unsub')),
+        srs=VSubscribeSR('sr', 'sr_name'),
+    )
     @api_doc(api_section.subreddits)
-    def POST_subscribe(self, action, sr):
+    def POST_subscribe(self, action, srs):
         """Subscribe to or unsubscribe from a subreddit.
 
         To subscribe, `action` should be `sub`. To unsubscribe, `action` should
@@ -3804,27 +3806,36 @@ class ApiController(RedditController):
 
         """
 
-        if not sr:
+        error = False
+        for sr in srs:
+            if action == "sub" and not sr.can_view(c.user):
+                error = True
+            if isinstance(sr, FakeSubreddit):
+                error = True
+
+        if not srs:
             return abort(404, 'not found')
-        elif action == "sub" and not sr.can_view(c.user):
-            return abort(403, 'permission denied')
-        elif isinstance(sr, FakeSubreddit):
+        elif error:
             return abort(403, 'permission denied')
 
         Subreddit.subscribe_defaults(c.user)
 
         if action == "sub":
-            SubredditParticipationByAccount.mark_participated(c.user, sr)
+            SubredditParticipationByAccount.mark_participated(c.user, srs)
 
-            if not sr.is_subscriber(c.user):
-                sr.add_subscriber(c.user)
+            for sr in srs:
+                if not sr.is_subscriber(c.user):
+                    sr.add_subscriber(c.user)
         else:
-            if sr.is_subscriber(c.user):
-                sr.remove_subscriber(c.user)
-            else:
-                # tried to unsubscribe but user was not subscribed
-                return abort(404, 'not found')
-        sr.update_search_index(boost_only=True)
+            for sr in srs:
+                if sr.is_subscriber(c.user):
+                    sr.remove_subscriber(c.user)
+                elif len(srs) == 1:
+                    # tried to unsubscribe but user was not subscribed
+                    return abort(404, 'not found')
+
+        for sr in srs:
+            sr.update_search_index(boost_only=True)
 
     @validatedForm(
         VAdmin(),

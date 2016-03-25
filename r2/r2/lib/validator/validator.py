@@ -883,7 +883,7 @@ class VByName(Validator):
         if not multiple and limit is not None:
             raise TypeError('multiple must be True when limit is set')
         self.thing_cls = thing_cls
-        self.re = fullname_regex(thing_cls)
+        self.re = fullname_regex(thing_cls, multiple=multiple)
         self.multiple = multiple
         self.limit = limit
         self._error = error
@@ -1425,17 +1425,23 @@ class VSubmitSR(Validator):
 
 class VSubscribeSR(VByName):
     def __init__(self, srid_param, srname_param):
-        VByName.__init__(self, (srid_param, srname_param))
+        VByName.__init__(self, (srid_param, srname_param), multiple=True)
 
     def run(self, sr_id, sr_name):
+        # Try with the sr_id first
         if sr_id:
-            return VByName.run(self, sr_id)
-        elif not sr_name:
+            try:
+                return VByName.run(self, sr_id)
+            except (NotFound, AttributeError, UnicodeEncodeError):
+                self.set_error(errors.SUBREDDIT_NOEXIST)
+                return
+
+        # Fall back to sr_name
+        if not sr_name:
             return
 
-        try:
-            sr = Subreddit._by_name(str(sr_name).strip())
-        except (NotFound, AttributeError, UnicodeEncodeError):
+        sr = VSRByNames(sr_name).run(sr_name).values()
+        if not sr:
             self.set_error(errors.SUBREDDIT_NOEXIST)
             return
 
@@ -1443,7 +1449,11 @@ class VSubscribeSR(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: "the name of a subreddit",
+            "sr / sr_name": (
+                "A comma-separated list of subreddit [fullnames](#fullname) "
+                "(when using the \"sr\" parameter), or of subreddit names "
+                "(when using the \"sr_name\" parameter)."
+            )
         }
 
 
