@@ -597,10 +597,7 @@ class Subreddit(Thing, Printable, BaseSite):
         try:
             info = c.activity_service.count_activity(self._fullname)
             return info.count
-        except Thrift.TException as exc:
-            g.stats.simple_event("activity_service.read.fail")
-            g.log.warning("failed to fetch activity for %s: %s",
-                self._fullname, exc)
+        except Thrift.TException:
             return 0
 
     @property

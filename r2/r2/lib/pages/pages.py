@@ -1205,10 +1205,8 @@ class SubredditInfoBar(CachedTemplate):
                 info = c.activity_service.count_activity(self.sr._fullname)
                 self.visitor_count = info.count
                 self.visitor_count_is_fuzzed = info.is_fuzzed
-            except Thrift.TException as exc:
-                g.stats.simple_event("activity_service.read.fail")
-                g.log.warning("failed to fetch activity for %s: %s",
-                    self.sr._fullname, exc)
+            except Thrift.TException:
+                pass
 
         if c.user_is_loggedin and c.user.pref_show_flair:
             self.flair_prefs = FlairPrefs()
