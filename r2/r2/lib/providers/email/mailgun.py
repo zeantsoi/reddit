@@ -43,9 +43,14 @@ class MailgunEmailProvider(EmailProvider):
         # This also requires the secret "mailgun_api_key"
     }
 
-    def send_email(self, to_address, from_address, subject, text, reply_to,
-                   parent_email_id=None, other_email_ids=None):
+    def send_email(self, to_address, from_address, subject, text=None, html=None,
+                   reply_to=None, custom_headers=None, parent_email_id=None, 
+                   other_email_ids=None):
         from pylons import app_globals as g
+
+        if not text and not html:
+            msg = "must provide either text or html in email body"
+            raise TypeError(msg)
 
         message_post_url = "/".join((
             g.mailgun_api_base_url, g.mailgun_domain, "messages"))
@@ -53,20 +58,26 @@ class MailgunEmailProvider(EmailProvider):
         to_address = tup(to_address)
         parent_email_id = parent_email_id or ''
         other_email_ids = other_email_ids or []
+        data = {
+            "from": from_address,
+            "to": to_address,
+            "subject": subject,
+            "text": text,
+            "html": html,
+            "o:tracking": False,    # disable link rewriting
+            "h:Reply-To": reply_to,
+            "h:In-Reply-To": parent_email_id,
+            "h:References": " ".join(other_email_ids),
+        }
+
+        if custom_headers:
+            for key, value in custom_headers.iteritems():
+                data['h:' + key] = value
 
         response = requests.post(
             message_post_url,
             auth=("api", g.secrets['mailgun_api_key']),
-            data={
-                "from": from_address,
-                "to": to_address,
-                "subject": subject,
-                "text": text,
-                "o:tracking": False,    # disable link rewriting
-                "h:Reply-To": reply_to,
-                "h:In-Reply-To": parent_email_id,
-                "h:References": " ".join(other_email_ids),
-            },
+            data=data,
         )
 
         if response.status_code != 200:

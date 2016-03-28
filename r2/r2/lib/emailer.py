@@ -271,14 +271,16 @@ def message_notification_email(data):
             'unsubscribe_link': unsubscribe_link,
             'more_unread_messages': more_unread_messages,
         }
-        list_unsubscribe_header = "<%s>" % unsubscribe_link
+        custom_headers = {
+            'List-Unsubscribe': "<%s>" % unsubscribe_link
+        }
 
-        _system_email(user.email,
-            MessageNotificationEmail(**templateData).render(style='email'),
-            Email.Kind.MESSAGE_NOTIFICATION,
+        g.email_provider.send_email(
+            to_address=user.email,
             from_address=g.notification_email,
-            html_body=MessageNotificationEmail(**templateData).render(style='html'),
-            list_unsubscribe_header=list_unsubscribe_header,
+            subject=Email.subjects[Email.Kind.MESSAGE_NOTIFICATION],
+            html=MessageNotificationEmail(**templateData).render(style='html'),
+            custom_headers=custom_headers,
         )
 
         g.stats.simple_event('email.message_notification.queued')

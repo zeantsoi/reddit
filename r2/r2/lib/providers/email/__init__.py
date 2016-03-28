@@ -24,8 +24,9 @@ class EmailProvider(object):
     """Provider for sending emails.
 
     """
-    def send_email(self, to_address, from_address, subject, text, reply_to,
-                       parent_email_id=None, other_email_ids=None):
+    def send_email(self, to_address, from_address, subject, text=None, html=None,
+                   reply_to=None, custom_headers=None, parent_email_id=None, 
+                   other_email_ids=None):
         """Send an email.
 
         `to_address` is a string or list of string email addresses.
