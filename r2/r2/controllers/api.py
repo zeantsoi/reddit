@@ -3806,6 +3806,9 @@ class ApiController(RedditController):
 
         """
 
+        if not srs:
+            return abort(404, 'not found')
+
         error = False
         for sr in srs:
             if action == "sub" and not sr.can_view(c.user):
@@ -3813,9 +3816,7 @@ class ApiController(RedditController):
             if isinstance(sr, FakeSubreddit):
                 error = True
 
-        if not srs:
-            return abort(404, 'not found')
-        elif error:
+        if error:
             return abort(403, 'permission denied')
 
         Subreddit.subscribe_defaults(c.user)
