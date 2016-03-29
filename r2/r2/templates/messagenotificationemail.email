@@ -21,27 +21,48 @@
 ###############################################################################
 
 <%!
-    from r2.lib.filters import unsafe
-    from r2.lib.template_helpers import update_query
+  from r2.lib.filters import unsafe
+  from r2.lib.template_helpers import update_query, static
+  from pylons.i18n import _, ungettext
 %>
 
-%for message in thing.messages:
-  ${_("Received on %(time)s") % dict(time=message["date"])}
+${_("You have {message_count} new {message} in your ").format(message_count=thing.message_count, message=_(ungettext('message', 'messages', thing.message_count)))} Reddit ${_("Inbox")}: ${unsafe(update_query(thing.inbox_url, utm_source="email", utm_medium="message_notification"))}
+
+%for index, message in enumerate(thing.messages):
   %if message["message_type"] == "message":
-    ${_("%(username)s sent you a %(message_type)s!") % dict(username=message["author_name"], message_type=_(message["message_type"]))}
-  %else:
-    ${_("%(username)s made a %(message_type)s!") % dict(username=message["author_name"], message_type=_(message["message_type"]))}
+    ${_("Private message from {author}").format(author=message['author_name'])}
+    ${message["pretty_date"]}
+    ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="private_message", utm_term=index))}
+
+  %elif message["message_type"] == "post reply":
+    ${_("Post reply from {author}").format(author=message['author_name'])}
+    ${message["pretty_date"]}
+    ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="post_reply", utm_term=index, context=3))}
+ 
+  %elif message["message_type"] == "comment reply":
+    ${_("Comment reply from {author}").format(author=message['author_name'])}
+    ${message["pretty_date"]}
+    ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="comment_reply", utm_term=index, context=3))}
+
+  %elif message["message_type"] == "username notification":
+    ${_("{author} mentioned you in a thread").format(author=message['author_name'])}
+    ${message["pretty_date"]}
+    ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="username_mention", utm_term=index, context=3))}
   %endif
 
   ${unsafe(message["body"])}
 
-  ${_("View on the web")}: ${unsafe(update_query(message["permalink"], ref_source="email", ref="message_notification", ref_campaign="permalink"))}
-
 %endfor
 
 %if thing.more_unread_messages:
-  ${_("More unread messages are available in your inbox.")}
+  ${_("An additional {more_message_count} unread {message} from {usernames} are also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)}
 %endif
 
-${_("Unsubscribe")}: ${unsafe(thing.unsubscribe_link + 
+${_("Go to Reddit Inbox")}: ${unsafe(update_query(thing.inbox_url, utm_source="email", utm_medium="message_notification"))}
+
+${_("If you would not like to receive emails from Reddit in the future, ")}
+${_("unsubscribe")}: ${unsafe(thing.unsubscribe_link + 
 "?ref_source=email&ref=message_notification&ref_campaign=unsubscribe")}
+${"Reddit Inc."}: ${unsafe("https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74")}
+
+548 Market St #16093, San Francisco, CA 94104-5401, United States

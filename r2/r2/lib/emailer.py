@@ -212,23 +212,25 @@ def message_notification_email(data):
         messages = []
         message_count = 0
         more_unread_messages = False
+        non_preview_usernames = []
 
         # Batch messages to email starting with older messages
         for inbox_rel, message in inbox_items:
-            if message_count > MAX_MESSAGES_PER_BATCH:
+            # Get sender_name, replacing with display_author if it exists
+            if getattr(message, 'from_sr', False):
+                sender_name = ('/r/%s' %
+                    Subreddit._byID(message.sr_id, data=True).name)
+            else:
+                if getattr(message, 'display_author', False):
+                    sender_id = message.display_author
+                else:
+                    sender_id = message.author_id
+                sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
+
+            if message_count >= MAX_MESSAGES_PER_BATCH:
+                non_preview_usernames.append(sender_name)
                 more_unread_messages = True
             else:
-                # Get sender_name, replacing with display_author if it exists
-                if getattr(message, 'from_sr', False):
-                    sender_name = ('/r/%s' %
-                        Subreddit._byID(message.sr_id, data=True).name)
-                else:
-                    if getattr(message, 'display_author', False):
-                        sender_id = message.display_author
-                    else:
-                        sender_id = message.author_id
-                    sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
-
                 if isinstance(message, Comment):
                     permalink = message.make_permalink_slow(context=1,
                         force_domain=True)
@@ -253,6 +255,7 @@ def message_notification_email(data):
                     "message_type": message_type,
                     "body": message.body,
                     "date": long_datetime(message._date),
+                    "pretty_date": message._date.strftime('%b %d %Y, %I:%M%p'),
                     "permalink": permalink,
                 })
 
@@ -265,11 +268,28 @@ def message_notification_email(data):
                 user_password_hash=user.password)
         base = g.https_endpoint or g.origin
         unsubscribe_link = base + '/mail/unsubscribe/%s/%s' % (datum['to'], mac)
+        base_utm_query = {'utm_source': 'email', 'utm_medium':'message_notification'}
+        inbox_url = base + '/message/inbox'
+        
+        # produces string of usernames for whom a message preview is not displayed
+        # for easy use in template
+        if len(non_preview_usernames) > 1:
+            last_username = non_preview_usernames.pop()
+            non_preview_usernames.append("and " + last_username)
+
+        non_preview_usernames_str = ', '.join(non_preview_usernames)
 
         templateData = {
             'messages': messages,
             'unsubscribe_link': unsubscribe_link,
             'more_unread_messages': more_unread_messages,
+            'message_count': message_count,
+            'max_message_display_count': MAX_MESSAGES_PER_BATCH,
+            'non_preview_usernames_str': non_preview_usernames_str,
+            'base_url': base,
+            'base_utm_query': base_utm_query,
+            'inbox_url': inbox_url,
+
         }
         custom_headers = {
             'List-Unsubscribe': "<%s>" % unsubscribe_link
@@ -279,6 +299,7 @@ def message_notification_email(data):
             to_address=user.email,
             from_address=g.notification_email,
             subject=Email.subjects[Email.Kind.MESSAGE_NOTIFICATION],
+            text=MessageNotificationEmail(**templateData).render(style='email'),
             html=MessageNotificationEmail(**templateData).render(style='html'),
             custom_headers=custom_headers,
         )

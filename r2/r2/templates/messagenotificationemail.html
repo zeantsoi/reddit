@@ -21,57 +21,231 @@
 ###############################################################################
 
 <%!
-    from r2.lib.filters import unsafe
-    from r2.lib.template_helpers import update_query
+    from r2.lib.template_helpers import update_query, static
+    from r2.lib.utils import UrlParser
+    from pylons.i18n import _, ungettext
 %>
-<%namespace file="utils.html" import="md"/>
-<html>
-  <body style="font-family: 'Open Sans', Helvetica, Arial, sans-serif">
-    <table style="background-color: #cee3f8; padding: 20px 0">
-      %for message in thing.messages:
-        <tr>
-          <td style="align:center">
-            <table style="background-color: #fff">
-              <tr>
-                <td colspan="3">
-                  <b>${_("Received on %(time)s") % dict(time=message["date"])}</b>
-                </td>
-              </tr>
-              <tr>
-                <td width="10px"></td>
-                <td colspan="2">
-                  %if message["message_type"] == "message":
-                    ${_("%(username)s sent you a %(message_type)s!") % dict(username=message["author_name"], message_type=_(message["message_type"]))}
-                  %else:
-                    ${_("%(username)s made a %(message_type)s!") % dict(username=message["author_name"], message_type=_(message["message_type"]))}
-                  %endif
-                </td>
-              </tr>
-              <tr>
-                <td width="10px"></td>
-                <td width="10px" style="background-color: #eff7ff"></td>
-                <td>
-                  ${md(message["body"])}
-                </td>
-              </tr>
-              <tr>
-                <td width="10px"></td>
-                <td colspan="2" style="font-size:small">
-                  ${_("View on the web")}: ${unsafe(update_query(message["permalink"], ref_source="email", ref="message_notification", ref_campaign="permalink"))}
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      %endfor
 
-      %if thing.more_unread_messages:
-        <p>
-          ${_("More unread messages are available in your inbox.")}
-        </p>
-      %endif
-    </table>
-    <br>
-    <a class="unsubscribe-link" href="${thing.unsubscribe_link}">${_("Unsubscribe here")}</a>
-  </body>
+<%def name="image(image_name)">
+   <img border="0" 
+        src="${static(image_name, absolute=True)}" 
+        alt="" 
+        width="50" 
+        height="50" />
+</%def>
+
+<%def name="view_notification_link(action_str, message, query)">
+  <span> &bull; ${message["pretty_date"]} &bull;
+    <% 
+      url = UrlParser(message['permalink'])
+      url.update_query(**thing.base_utm_query)
+      url.update_query(**query)
+      url = url.unparse() 
+    %>
+    <a href="${url}"
+       class="link"
+       style="color:#0079d3;
+              text-decoration:none"
+       target="_blank">
+      <span class="link" 
+            style="color:#0079d3;
+                   text-decoration:none">
+        ${_(action_str)}
+      </span>
+    </a>
+  </span>
+
+</%def>
+
+<%def name="author_name_link(username, query)">
+  <%  
+    url = UrlParser(thing.base_url + username)
+    url.update_query(**thing.base_utm_query)
+    url.update_query(**query)
+    url = url.unparse() 
+  %>
+  <a href="${url}" 
+     class="link" 
+     style="color:#0079d3; 
+            text-decoration:none" 
+     target="_blank">
+    <strong class="link" 
+            style="color:#0079d3; 
+                   text-decoration:none">
+      ${username}
+    </strong>
+  </a>
+
+</%def>
+
+<%def name="parse_url(base_url, query)">
+  <% url = UrlParser(base_url) %>
+  <% url.update_query(**query) %>
+  <% url = url.unparse() %>
+  ${url}
+</%def>
+
+<%namespace file="utils.html" import="md"/>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="format-detection" content="date=no" />
+  <meta name="format-detection" content="address=no" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <style type="text/css" media="screen">
+    /* Linked Styles */
+    body { padding:0 !important; margin:0 !important; display:block !important; width:100% !important; background:#ffffff; -webkit-text-size-adjust:none }
+    p { color:#555555; font-family:Arial; font-size:14px; line-height:18px; text-align:left; margin:16px 0 } 
+    h2 { color:#000000; font-family:Arial; font-size:18px; line-height:22px; text-align:left; font-weight:bold; margin:20px 0 }
+    a { color:#0079d3; text-decoration:none }
+    h2 span { font-size: 14px; color: #b5b3ac; font-weight: normal; }
+
+    hr { border: 0; height: 1px; background: #dad9d5; color: #dad9d5; margin: 20px 0; }
+
+    /* Mobile styles */
+    @media only screen and (max-device-width: 620px), only screen and (max-width: 620px) { 
+      div[class='mobile-br-5'] { height: 5px !important; }
+      div[class='mobile-br-10'] { height: 10px !important; }
+      div[class='mobile-br-15'] { height: 15px !important; }
+
+      td[class='m-td'], div[class='hide-for-mobile'], span[class='hide-for-mobile'] { display: none !important; width: 0 !important; height: 0 !important; font-size: 0 !important; line-height: 0 !important; min-height: 0 !important; }
+      span[class='mobile-block'] { display: block !important; }
+      div[class='wgmail'] img { min-width: 320px !important; width: 320px !important; }
+
+      div[class='full-width-img'] img { width: 100% !important; max-width: 480px !important; height: auto !important; }
+      div[class='content-width-img'] img { width: 100% !important; max-width: 480px !important; height: auto !important; }
+
+      table[class='mobile-shell'] { width: 100% !important; }
+      
+      td[class='column'] { float: left !important; width: 100% !important; display: block !important; }
+      td[class='content-spacing'] { width: 15px !important; }
+    } 
+  </style>
+</head>
+<body class="body" style="padding:0 !important; margin:0 !important; display:block !important; width:100% !important; background:#ffffff; -webkit-text-size-adjust:none">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff">
+    <tr>
+      <td align="center" valign="top">
+        <table width="620" border="0" cellspacing="0" cellpadding="0" class="mobile-shell">
+          <tr>
+            <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="20"></td>
+            <td>
+              <!-- Header -->
+              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${image('spacer.gif')}" width="1" height="10" style="height:10px" alt="" /></div>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td valign="middle" width="60" class="img" style="font-size:0pt; line-height:0pt; text-align:left">
+                    <a href="${parse_url(thing.base_url, thing.base_utm_query)}" target="_blank">${image('message_notification_email_logo.png')}</a>
+                  </td>
+                  <td>
+                    <div class="text-header" style="color:#555555; font-family:Arial; font-size:18px; line-height:22px; text-align:left">
+                      ${_("You have {message_count} new {message} in your").format(message_count=thing.message_count, message=_(ungettext('message', 'messages', thing.message_count)))}
+                      <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}"  class="link" style="color:#0079d3; text-decoration:none" target="_blank">
+                        <span class="link" style="color:#0079d3; text-decoration:none">Reddit ${_("Inbox")}</span>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${image('spacer.gif')}" width="1" height="10" style="height:10px" alt="" /></div>
+
+              <div style="font-size:0pt; line-height:0pt; height:1px; background:#b5b3ac; "><img src="${image('spacer.gif')}" width="1" height="1" style="height:1px" alt="" /></div>
+
+              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${image('spacer.gif')}" width="1" height="10" style="height:10px" alt="" /></div>
+
+              <!-- END Header -->
+
+              <!-- Main -->
+              %for index, message in enumerate(thing.messages):
+                %if message["message_type"] == "message":
+                  <h2>${_("Private message from ")}
+                    ${author_name_link(message['author_name'], {"utm_name":"private_message", "utm_term":index})}
+                    ${view_notification_link("view", message, {"utm_name":"private_message", "utm_term":index})}
+                  </h2>
+
+                %elif message["message_type"] == "post reply":
+                  <h2>${_("Post reply from ")}
+                    ${author_name_link(message['author_name'], {"utm_name":"post_reply", "utm_term":index})}
+                    ${view_notification_link("reply", message, {"utm_name":"post_reply", "utm_term":index, "context":3})}
+                  </h2>
+
+                %elif message["message_type"] == "comment reply":
+                  <h2>${_("Comment reply from ")}
+                    ${author_name_link(message['author_name'], {"utm_name":"comment_reply", "utm_term":index})}
+                    ${view_notification_link("reply", message, {"utm_name":"comment_reply", "utm_term":index, "context":3})}
+                  </h2>
+                %elif message["message_type"] == "username notification":
+                  <h2>
+                    ${author_name_link(message['author_name'], {"utm_name":"username_mention", "utm_term":index})}
+                    <span> ${_("mentioned you in")} <span>
+                    <span>
+                      <a href="${message['permalink']}" class="link" style="color:#0079d3; text-decoration:none" target="_blank">
+                        ${_("a thread")}
+                      </a>
+                    <span>
+                    ${view_notification_link("reply", message, {"utm_name":"username_mention", "utm_term":index, "context":3})}
+                  </h2>
+                %endif
+
+                ${md(message["body"])}
+
+                <!-- Separator -->
+                <hr />
+                <!-- END Separator -->
+
+              %endfor
+              %if thing.more_unread_messages:
+                <p><strong>${_("An additional {more_message_count} unread {message} from {usernames} are also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)} </strong></p>
+              %endif
+
+              <!-- Button -->
+              <div style="font-size:0pt; line-height:0pt; height:8px"><img src="${image('spacer.gif')}" width="1" height="8" style="height:8px" alt="" /></div>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="left">
+                    <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
+                      <tr>
+                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${image('spacer.gif')}" width="1" height="40" style="height:40px" alt="" /></div></td>
+                        <td class="text-btn" style="color:#ffffff; font-family:Arial; font-size:14px; line-height:18px; text-align:center">
+                          <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank"><strong class="call-to-action" style="color:#ffffff; text-decoration:none">${_("Go to Reddit Inbox")}</strong></a>
+                        </td>
+                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
+                      </tr>
+                    </table>    
+                  </td>
+                </tr>
+              </table>
+              <!-- END Button -->
+              <!-- END Main -->
+
+              <!-- Footer -->
+              <div style="font-size:0pt; line-height:0pt; height:40px"><img src="${image('spacer.gif')}" width="1" height="40" style="height:40px" alt="" /></div>
+
+              <div style="font-size:0pt; line-height:0pt; height:1px; background:#b5b3ac; "><img src="${image('spacer.gif')}" width="1" height="1" style="height:1px" alt="" /></div>
+
+              <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${image('spacer.gif')}" width="1" height="15" style="height:15px" alt="" /></div>
+
+
+              <div class="text-footer" style="color:#b5b3ac; font-family:Arial; font-size:12px; line-height:16px; text-align:center">
+                ${_("If you would not like to receive emails from Reddit in the future, ")}<a href="${thing.unsubscribe_link}" class="link" style="color:#0079d3; text-decoration:none" target="_blank"><span class="link" style="color:#0079d3; text-decoration:none">${_("unsubscribe")}</span></a>.<br />Reddit Inc. <a href="https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74" class="link-footer" style="color:#b5b3ac; text-decoration:none" target="_blank"><span class="link-footer" style="color:#b5b3ac; text-decoration:none">548 Market St #16093, San Francisco, CA 94104-5401, United States</span></a>
+              </div>
+              <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${image('spacer.gif')}" width="1" height="15" style="height:15px" alt="" /></div>
+
+              <!-- END Footer -->
+            </td>
+            <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="20"></td>
+          </tr>
+        </table>
+        <div class="wgmail" style="font-size:0pt; line-height:0pt; text-align:center"><img src="${image('spacer.gif')}" width="620" height="1" style="min-width:620px" alt="" border="0" /></div>
+      </td>
+    </tr>
+  </table>
+</body>
 </html>
