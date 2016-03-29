@@ -1592,6 +1592,10 @@ class ApiController(RedditController):
         thing.over_18 = True
         thing._commit()
 
+        hooks.get_hook("thing.edit_over_18").call(
+            thing=thing,
+        )
+
         if c.user._id != thing.author_id:
             ModAction.create(thing.subreddit_slow, c.user, target=thing,
                              action='marknsfw')
@@ -1621,6 +1625,10 @@ class ApiController(RedditController):
 
         thing.over_18 = False
         thing._commit()
+
+        hooks.get_hook("thing.edit_over_18").call(
+            thing=thing,
+        )
 
         if c.user._id != thing.author_id:
             ModAction.create(thing.subreddit_slow, c.user, target=thing,
