@@ -1055,6 +1055,9 @@ class MinimalController(BaseController):
 
         g.stats.count_string('user_agents', request.user_agent)
 
+        # Global A/A for stress testing the events system
+        feature.is_enabled('stress_test_a_a')
+
         if is_subdomain(request.host, g.oauth_domain):
             self.check_cors()
 
