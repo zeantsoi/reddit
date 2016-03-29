@@ -363,6 +363,8 @@ class Globals(object):
             'ticket_contact_user_id',
             'ads_popularity_threshold',
             'precomputed_comment_sort_min_comments',
+            'comment_vote_update_threshold',
+            'comment_vote_update_period',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',
