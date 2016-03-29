@@ -660,7 +660,7 @@ class EventQueue(object):
         self.save_event(event)
 
     def login_event(self, action_name, error_msg,
-                    user_name=None, email=None,
+                    user_name=None, email=None, captcha_shown=None,
                     remember_me=None, newsletter=None, email_verified=None,
                     request=None, context=None):
         """Create a 'login' event for event-collector.
@@ -694,6 +694,9 @@ class EventQueue(object):
         event.add('remember_me', remember_me)
         event.add('newsletter', newsletter)
         event.add('email_verified', email_verified)
+
+        if captcha_shown:
+            event.add('captcha_shown', captcha_shown)
 
         self.save_event(event)
 

@@ -695,7 +695,9 @@ class ApiController(RedditController):
                          password, rem, newsletter_subscribe,
                          sponsor):
 
-        def _event(error):
+        # check captcha before login (if any) since its answer might
+        # change once c.user is set.
+        def _event(error, captcha_shown=need_provider_captcha()):
             g.events.login_event(
                 'register_attempt',
                 error_msg=error,
@@ -703,6 +705,7 @@ class ApiController(RedditController):
                 email=request.POST.get('email'),
                 remember_me=rem,
                 newsletter=newsletter_subscribe,
+                captcha_shown=captcha_shown,
                 request=request,
                 context=c)
 
