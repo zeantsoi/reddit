@@ -351,6 +351,7 @@ class Globals(object):
             'frontend_logging',
             'mobile_gild_first_login',
             'precomputed_comment_suggested_sort',
+            'robin_heavy_load',
         ],
         ConfigValue.int: [
             'captcha_exempt_comment_karma',
