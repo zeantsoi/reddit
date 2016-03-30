@@ -1042,12 +1042,6 @@ def live_campaigns_by_link(link, sr=None):
 
 
 def promote_link(link, campaign):
-    if (not link.over_18 and
-        not link.over_18_override and
-        any(sr.over_18 for sr in campaign.target.subreddits_slow)):
-        link.over_18 = True
-        link._commit()
-
     if not is_promoted(link):
         update_promote_status(link, PROMOTE_STATUS.promoted)
         emailer.live_promo(link)
