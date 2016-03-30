@@ -165,6 +165,7 @@ class Account(Thing):
                      last_password_reset_timestamp=None,
                      accepted_promoted_links=0,
                      pref_allow_clicktracking=True,
+                     disable_karma=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
@@ -229,6 +230,12 @@ class Account(Thing):
             return getattr(self, sr.name + suffix, default_karma)
 
     def incr_karma(self, kind, sr, amt):
+        # accounts can (manually) have their ability to gain/lose karma
+        # disabled, to prevent special accounts like AutoModerator from
+        # having a massive number of subreddit-karma attributes
+        if self.disable_karma:
+            return
+
         if sr.name.startswith('_'):
             g.log.info("Ignoring karma increase for subreddit %r" % (sr.name,))
             return
