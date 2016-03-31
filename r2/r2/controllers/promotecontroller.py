@@ -1576,10 +1576,9 @@ class PromoteApiController(ApiController):
         if not frequency_cap and is_auction:
             frequency_cap = g.frequency_cap_default
 
-        dates = (start, end)
-
         campaign_dict = {
-            'dates': dates,
+            'start_date': start,
+            'end_date': end,
             'target': target,
             'frequency_cap': frequency_cap,
             'priority': priority,

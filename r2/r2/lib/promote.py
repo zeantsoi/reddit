@@ -353,17 +353,13 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, target, frequency_cap,
-                 priority, location, platform,
-                 mobile_os, ios_devices, ios_version_range, android_devices,
-                 android_version_range, total_budget_pennies, cost_basis,
-                 bid_pennies):
-    campaign = PromoCampaign.create(link, target, dates[0], dates[1],
-                                    frequency_cap, priority,
-                                    location, platform, mobile_os, ios_devices,
-                                    ios_version_range, android_devices,
-                                    android_version_range, total_budget_pennies,
-                                    cost_basis, bid_pennies)
+def new_campaign(link, requires_approval=True, **attributes):
+
+    campaign = PromoCampaign.create(
+        link=link,
+        **attributes
+    )
+
     PromotionWeights.add(link, campaign)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
