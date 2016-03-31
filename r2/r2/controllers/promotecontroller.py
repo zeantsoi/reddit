@@ -1606,6 +1606,7 @@ class PromoteApiController(ApiController):
         else:
             campaign = promote.new_campaign(
                 link,
+                requires_approval=(not c.user_is_sponsor),
                 **campaign_dict
             )
         rc = RenderableCampaign.from_campaigns(link, campaign)

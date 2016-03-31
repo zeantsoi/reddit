@@ -163,11 +163,6 @@ def is_accepted(link):
             link.promote_status != PROMOTE_STATUS.edited_live and
             link.promote_status >= PROMOTE_STATUS.accepted)
 
-
-def campaign_needs_approval(link, campaign):
-    return not link.managed_promo and campaign.needs_approval
-
-
 def is_unpaid(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.unpaid
 
@@ -368,9 +363,10 @@ def new_campaign(link, requires_approval=True, **attributes):
         if getattr(author, "complimentary_promos", False):
             free_campaign(link, campaign, c.user)
 
-    # force campaigns for approved links to also be approved
+    # force campaigns for approved links to also be approved unless 
+    # otherwise specified.
     if is_accepted(link):
-        set_campaign_approval(link, campaign, False)
+        set_campaign_approval(link, campaign, (not requires_approval))
 
     hooks.get_hook('promote.new_campaign').call(link=link, campaign=campaign)
 
