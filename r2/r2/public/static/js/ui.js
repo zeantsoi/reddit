@@ -104,19 +104,36 @@ r.ui.initMWebBanner = function() {
       return;
     }
 
-    var bannerClosedUntil = new Date(store.safeGet('mweb-beta-banner.closed') || 0);
+    var callout;
+    var optInCookieName;
+    var url;
+    var storeKey;
+    if (r.config.feature_mobile_native_banner) {
+      storeKey = 'native-banner.closed';
+      optInCookieName = null;
+
+      url = 'https://293679.measurementapi.com/serve?' +
+            'action=click&publisher_id=293679&site_id=122129&site_id_ios=121809';
+      callout = r._("get reddit mobile");
+    } else {
+      storeKey = 'mweb-beta-banner.closed';
+      optInCookieName = "__cf_mob_redir";
+
+      var a = document.createElement('a');
+      a.href = window.location;
+      a.host = 'm.' + r.config.cur_domain;
+      a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop';
+
+      url = a.href;
+      callout = r._("switch to mobile version");
+    }
+
+    var bannerClosedUntil = new Date(store.safeGet(storeKey) || 0);
     var now = (new Date()).getTime();
     // We've already closed the banner before
     if (now < bannerClosedUntil) {
       return;
     }
-
-    var mwebOptInCookieName = "__cf_mob_redir";
-    var a = document.createElement('a');
-    a.href = window.location;
-    a.host = 'm.' + r.config.cur_domain;
-    a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop'
-    var url = a.href;
 
     var $bar = $(_.template(
       '<div class="mobile-web-redirect-bar">' +
@@ -125,33 +142,34 @@ r.ui.initMWebBanner = function() {
         '</a>' +
         '<a href="#" class="mobile-web-redirect-optout">&times;</a>' +
       '</div>', {
-        callout: r._("switch to mobile version"),
+        callout: callout,
         url: url,
-        close: r._("no thanks")
       }));
 
     $bar.find('.mobile-web-redirect-optout').on('click', function(e) {
-        e.preventDefault();
+      e.preventDefault();
 
-        // close for 2 weeks
-        var closedUntil = (new Date()).getTime() + (1000 * 60 * 60 * 24 * 14);
-        store.safeSet('mweb-beta-banner.closed', closedUntil);
+      // close for 2 weeks
+      var closedUntil = (new Date()).getTime() + (1000 * 60 * 60 * 24 * 14);
+      store.safeSet(storeKey, closedUntil);
 
-        $bar.fadeOut();
+      $bar.fadeOut();
     });
 
     $bar.find('.mobile-web-redirect').on('click', function() {
-       $.cookie(mwebOptInCookieName, '1', {
-           domain: r.config.cur_domain,
-           path:'/',
-           expires: 90
+      if (!!optInCookieName) {
+        $.cookie(optInCookieName, '1', {
+          domain: r.config.cur_domain,
+          path:'/',
+          expires: 90,
         });
+      }
 
-       // redirect
-       return true;
+      // redirect
+      return true;
     });
 
-    $('#header').before($bar)
+    $('#header').before($bar);
 }
 
 r.ui.initLiveTimestamps = function() {
