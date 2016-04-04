@@ -26,8 +26,6 @@ import unittest
 from r2.lib import js
 
 
-test_wrapper = "<{content}>"
-
 def concat_sources(sources):
     return ";".join(sources)
 
@@ -38,16 +36,12 @@ class TestFileSource(js.FileSource):
 
 
 class TestModule(js.Module):
-    @classmethod
-    def get_wrapped_source(cls, name, class_name, content):
-        return test_wrapper.format(content=content)
-
     def get_default_source(self, source):
         return TestFileSource(source)
 
     def build(self, *args, **kwargs):
         sources = self.get_flattened_sources([])
-        sources = [self.get_source_content(s) for s in sources]
+        sources = [s.get_source() for s in sources]
         return concat_sources(sources)
 
 
@@ -85,19 +79,3 @@ class TestModuleGetFlattenedSources(unittest.TestCase):
         filter_module = TestModule("filter_module", *filtered_files)
         test_module = TestModule("test_module", filter_module=filter_module, *all_files)
         self.assertEqual(test_module.build(), concat_sources(test_files))
-
-    def test_modules_wrap_their_sources(self):
-        test_files = ["foo.js", "bar.js"]
-        wrapped_test_files = [test_wrapper.format(content=f) for f in test_files]
-        test_module = TestModule("test_module", wrap_sources=True, *test_files)
-        self.assertEqual(test_module.build(), concat_sources(wrapped_test_files))
-
-    def test_modules_do_not_wrap_sources_with_allow_wrap_false(self):
-        test_files_a = ["foo.js", "bar.js"]
-        test_files_b = ["baz.js", "qux.js"]
-        test_filesources_b = [TestFileSource(f, allow_wrap=False) for f in test_files_b]
-        wrapped_files_a = [test_wrapper.format(content=f) for f in test_files_a]
-        test_files = test_files_a + test_filesources_b
-        expected = wrapped_files_a + test_files_b
-        test_module = TestModule("test_module", wrap_sources=True, *test_files)
-        self.assertEqual(test_module.build(), concat_sources(expected))
