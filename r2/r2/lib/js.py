@@ -62,8 +62,6 @@ class Uglify(object):
 
 
 class Source(object):
-    allow_wrap = False
-
     """An abstract collection of JavaScript code."""
     def get_source(self, **kwargs):
         """Return the full JavaScript source code."""
@@ -84,9 +82,8 @@ class Source(object):
 
 class FileSource(Source):
     """A JavaScript source file on disk."""
-    def __init__(self, name, allow_wrap=True):
+    def __init__(self, name):
         self.name = name
-        self.allow_wrap = allow_wrap
 
     def __eq__(self, other):
         return type(self) is type(other) and self.name == other.name
@@ -129,7 +126,6 @@ class Module(Source):
         self.name = name
         self.should_compile = kwargs.get('should_compile', True)
         self.wrap = kwargs.get('wrap')
-        self.wrap_sources = kwargs.get('wrap_sources')
         self.sources = []
         filter_module = kwargs.get('filter_module')
         if isinstance(filter_module, Module):
@@ -163,20 +159,9 @@ class Module(Source):
     def get_source(self, use_built_statics=False):
         sources = self.get_flattened_sources([])
         return ";".join(
-            self.get_wrapped_source(s, use_built_statics=use_built_statics)
+            s.get_source(use_built_statics=use_built_statics)
             for s in sources
         )
-
-    def get_wrapped_source(self, source, use_built_statics=False):
-        content = source.get_source(use_built_statics=use_built_statics)
-        if self.wrap_sources and source.allow_wrap:
-            return self.wrap_sources.format(
-                class_name=source.__class__.__name__,
-                name=source.name,
-                content=content,
-            )
-        else:
-            return content
 
     def extend(self, module):
         self.sources.extend(module.sources)
