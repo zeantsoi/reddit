@@ -321,6 +321,7 @@ def set_recent_subreddits():
                     fullnames,
                     data=True,
                     return_dict=False,
+                    stale=True,
                 )
             except NotFound:
                 # bad values, reset it.
