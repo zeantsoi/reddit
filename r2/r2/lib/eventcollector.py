@@ -1203,6 +1203,10 @@ class Event(baseplate.events.Event):
 
     def add_text(self, key, value, obfuscate=False):
         self.add(key, value, obfuscate=obfuscate)
+
+        if value is None:
+            return
+
         for k, v in charset_summary(value).iteritems():
             self.add("{}_{}".format(key, k), v)
 
