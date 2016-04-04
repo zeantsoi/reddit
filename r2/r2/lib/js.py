@@ -45,7 +45,6 @@ from r2.lib.translation import (
 
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>'
-module_source_wrapper = "r.core.wrapSource('{class_name}', '{name}', function(r, $) {{ {content} }});"
 
 
 class Uglify(object):
@@ -130,7 +129,7 @@ class Module(Source):
         self.name = name
         self.should_compile = kwargs.get('should_compile', True)
         self.wrap = kwargs.get('wrap')
-        self.wrap_sources = kwargs.get('wrap_sources', False)
+        self.wrap_sources = kwargs.get('wrap_sources')
         self.sources = []
         filter_module = kwargs.get('filter_module')
         if isinstance(filter_module, Module):
@@ -144,14 +143,6 @@ class Module(Source):
                     source = os.path.join(kwargs['prefix'], source)
                 source = self.get_default_source(source)
             self.sources.append(source)
-
-    @classmethod
-    def get_wrapped_source(cls, name, class_name, content):
-        return module_source_wrapper.format(
-            class_name=class_name,
-            name=name,
-            content=content,
-        )
 
     def get_default_source(self, source):
         return FileSource(source)
@@ -172,14 +163,14 @@ class Module(Source):
     def get_source(self, use_built_statics=False):
         sources = self.get_flattened_sources([])
         return ";".join(
-            self.get_source_content(s, use_built_statics=use_built_statics)
+            self.get_wrapped_source(s, use_built_statics=use_built_statics)
             for s in sources
         )
 
-    def get_source_content(self, source, use_built_statics=False):
+    def get_wrapped_source(self, source, use_built_statics=False):
         content = source.get_source(use_built_statics=use_built_statics)
         if self.wrap_sources and source.allow_wrap:
-            return self.get_wrapped_source(
+            return self.wrap_sources.format(
                 class_name=source.__class__.__name__,
                 name=source.name,
                 content=content,
@@ -199,7 +190,7 @@ class Module(Source):
         with open(self.destination_path, "w") as out:
             source = self.get_source(use_built_statics=True)
             if self.wrap:
-                source = self.wrap.format(content=source, name=self.name, class_name=self.__class__.__name__)
+                source = self.wrap.format(content=source, name=self.name)
 
             if self.should_compile:
                 print >> sys.stderr, "Compiling {0}...".format(self.name),
@@ -233,11 +224,6 @@ class Module(Source):
     @property
     def outputs(self):
         return [self.destination_path]
-
-
-class LibraryModule(Module):
-    def get_default_source(self, source):
-        return FileSource(source, allow_wrap=False)
 
 
 class DataSource(Source):
@@ -459,6 +445,9 @@ class LocalizedModule(Module):
 _submodule = {}
 module = {}
 
+catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err.toString()) }}"
+
+
 _submodule["config"] = Module("_setup.js",
     "base.js",
     "setup.js",
@@ -603,7 +592,7 @@ module["comment-embed"] = Module("comment-embed.js",
 )
 
 
-_submodule["reddit-init-libs"] = LibraryModule("_reddit-init-libs.js",
+module["reddit-init"] = LocalizedModule("reddit-init.js",
     "lib/modernizr.js",
     "lib/json2.js",
     "lib/underscore-1.4.4-1.js",
@@ -616,10 +605,6 @@ _submodule["reddit-init-libs"] = LibraryModule("_reddit-init-libs.js",
     "lib/jquery.cookie.js",
     "lib/event-tracker.js",
     "lib/hmac-sha256.js",
-)
-
-module["reddit-init"] = LocalizedModule("reddit-init.js",
-    _submodule["reddit-init-libs"],
     "do-not-track.js",
     "bootstrap.tooltip.extension.js",
     "base.js",
@@ -647,14 +632,12 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
     "strength-meter.js",
     "toggles.js",
     "actions.js",
-    # Don't wrap this because it defines a ton of globals :(
-    FileSource("reddit.js", allow_wrap=False),
+    "reddit.js",
     "sr-autocomplete.js",
     "spotlight.js",
     localized_appendices=[
         PluralForms(),
     ],
-    wrap_sources=True,
 )
 
 
@@ -665,13 +648,9 @@ module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
     "expando/nsfwflow.js",
 )
 
-_submodule["reddit-libs"] = LibraryModule("_reddit-libs.js",
+module["reddit"] = LocalizedModule("reddit.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
-)
-
-module["reddit"] = LocalizedModule("reddit.js",
-    _submodule["reddit-libs"],
     "custom-event.js",
     "frames.js",
     "embed/utils.js",
@@ -718,7 +697,6 @@ module["reddit"] = LocalizedModule("reddit.js",
         "moderator": ModeratorPermissionSet,
         "moderator_invite": ModeratorPermissionSet,
     }),
-    wrap_sources=True,
     filter_module=module["reddit-init"],
 )
 
@@ -727,7 +705,7 @@ module["modtools"] = Module("modtools.js",
     "models/validators.js",
     "models/subreddit-rule.js",
     "edit-subreddit-rules.js",
-    wrap_sources=True,
+    wrap=catch_errors,
 )
 
 module["admin"] = Module("admin.js",
