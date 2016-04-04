@@ -37,7 +37,7 @@
         <div class="editor-group">
           ${pr.image_field(images=thing.images)}
           %if c.user_is_sponsor:
-            ${pr.username_field()}
+            ${username_field()}
             ${pr.managed_field(None)}
           %endif
           ${pr.title_field(None)}
