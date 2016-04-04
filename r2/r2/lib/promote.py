@@ -203,7 +203,7 @@ def update_query(base_url, query_updates, unset=False):
 
 def update_served(items):
     for item in items:
-        if not item.promoted:
+        if not item.promoted or item.campaign == EXTERNAL_CAMPAIGN:
             continue
 
         campaign = PromoCampaign._by_fullname(item.campaign)
@@ -221,6 +221,7 @@ def get_min_bid_dollars(user):
 
 
 NO_CAMPAIGN = "NO_CAMPAIGN"
+EXTERNAL_CAMPAIGN = "__EXTERNAL_CAMPAIGN__"
 
 def is_valid_click_url(link, click_url, click_hash):
     expected_mac = get_click_url_hmac(link, click_url)
@@ -834,6 +835,10 @@ def accept_promotion(link):
                 promote_link(link, camp)
                 is_live = True
 
+    if link.promoted_externally:
+        promote_link(link)
+        is_live = True
+
     if is_live:
         all_live_promo_srnames(_update=True)
 
@@ -1049,7 +1054,7 @@ def live_campaigns_by_link(link, sr=None):
             if is_live_promo(link, camp)]
 
 
-def promote_link(link, campaign):
+def promote_link(link, campaign=None):
     if not is_promoted(link):
         update_promote_status(link, PROMOTE_STATUS.promoted)
         emailer.live_promo(link)

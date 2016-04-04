@@ -883,13 +883,14 @@ class PromoteApiController(ApiController):
         third_party_tracking=VUrl("third_party_tracking"),
         third_party_tracking_2=VUrl("third_party_tracking_2"),
         is_managed=VBoolean("is_managed"),
+        promoted_externally=VBoolean("promoted_externally", default=False),
     )
     def POST_create_promo(self, form, jquery, username, title, url,
                           selftext, kind, disable_comments, sendreplies,
                           media_url, media_autoplay, media_override,
                           iframe_embed_url, media_url_type, domain_override,
                           third_party_tracking, third_party_tracking_2,
-                          is_managed):
+                          is_managed, promoted_externally):
 
         images = _get_ads_images(c.user, data=True, meta=True)
 
@@ -899,6 +900,7 @@ class PromoteApiController(ApiController):
             media_url, media_autoplay, media_override,
             iframe_embed_url, media_url_type, domain_override,
             third_party_tracking, third_party_tracking_2, is_managed,
+            promoted_externally=promoted_externally,
             thumbnail=images.get("thumbnail", None),
             mobile=images.get("mobile", None),
         )
@@ -955,7 +957,8 @@ class PromoteApiController(ApiController):
                     media_url, media_autoplay, media_override,
                     iframe_embed_url, media_url_type, domain_override,
                     third_party_tracking, third_party_tracking_2,
-                    managed_promo, l=None, thumbnail=None, mobile=None):
+                    managed_promo, promoted_externally=False,
+                    l=None, thumbnail=None, mobile=None):
         should_ratelimit = False
         is_self = (kind == "self")
         is_link = not is_self
@@ -1033,6 +1036,9 @@ class PromoteApiController(ApiController):
                 author=user,
                 ip=request.ip,
             )
+
+            # manage flights in adzerk
+            l.promoted_externally = c.user_is_sponsor and promoted_externally
         elif not promote.is_promo(l):
             return
         # edit only
@@ -1238,6 +1244,10 @@ class PromoteApiController(ApiController):
                 request=request,
                 context=c,
             )
+
+            # auto accept externally managed promos
+            if l.promoted_externally:
+                promote.accept_promotion(l)
 
         # clean up so the same images don't reappear if they create
         # another link

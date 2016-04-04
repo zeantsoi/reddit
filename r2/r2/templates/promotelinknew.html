@@ -39,6 +39,7 @@
           %if c.user_is_sponsor:
             ${username_field()}
             ${pr.managed_field(None)}
+            ${promoted_externally()}
           %endif
           ${pr.title_field(None)}
           ${pr.content_field(None, enable_override=c.user_is_sponsor,
@@ -73,6 +74,19 @@
     ${error_field("USER_DOESNT_EXIST", "username", "div")}
     <div class="infotext rounded">
       <p>${_("Create a promotion on another user's account.")}</p>
+    </div>
+  </%utils:line_field>
+</%def>
+
+<%def name="promoted_externally()">
+  <%utils:line_field title="" id="promoted_externally-field" css_class="rounded">
+    <div class="checkbox-group">
+      <div class="form-group">
+        ${utils.checkbox("promoted_externally", _("manage externally"), False)}
+      </div>
+      <div class="infotext rounded">
+        <p>${_("Create a promotion only and manage the campaign in adzerk.")}</p>
+      </div>
     </div>
   </%utils:line_field>
 </%def>

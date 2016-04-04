@@ -40,33 +40,47 @@
     </div>
   </div>
 
-  <div class="dashboard campaign-dashboard">
-    <header>
-      <h2>${_("campaign dashboard")}</h2>
-      <div class="help" style="${'display:none' if not thing.campaigns else ''}">
-        <p></p>
-      </div>
-      <p class="error"
-         style="${'display:none' if thing.campaigns else ''}">
-        ${_("You don't have any campaigns for this link yet.  You should add one.")}
+  %if thing.link.promoted_externally:
+    <div class="dashboard">
+      <h2>${_("this promotion is managed in adzerk")}</h2>
+      <p>
+        creative id: 
+        %if hasattr(thing.link, "external_creative_id"):
+          ${thing.link.external_creative_id}
+        %else:
+          <a href="javascript: void 0;" onclick="location.reload()">try again</a>
+        %endif
       </p>
-      <%
-        newcamp_title = _("click to create a new campaign.  To edit an existing " 
-                          "campaign in the table below, click the 'edit' button.")
-      %>
-      <button class="new-campaign primary-button"
-          ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK or not thing.campaigns else ''}
-          title="${newcamp_title}"
-          name="new-campaign"
-          onclick="return create_campaign()">+ new campaign</button>
-    </header>
-    <div class="dashboard-content">
-      <div class="new-campaign-container">
-        ${self.campaign_editor()}
-      </div>
-      ${self.campaign_list()}
     </div>
-  </div>
+  %else:
+    <div class="dashboard campaign-dashboard">
+      <header>
+        <h2>${_("campaign dashboard")}</h2>
+        <div class="help" style="${'display:none' if not thing.campaigns else ''}">
+          <p></p>
+        </div>
+        <p class="error"
+           style="${'display:none' if thing.campaigns else ''}">
+          ${_("You don't have any campaigns for this link yet.  You should add one.")}
+        </p>
+        <%
+          newcamp_title = _("click to create a new campaign.  To edit an existing " 
+                            "campaign in the table below, click the 'edit' button.")
+        %>
+        <button class="new-campaign primary-button"
+            ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK or not thing.campaigns else ''}
+            title="${newcamp_title}"
+            name="new-campaign"
+            onclick="return create_campaign()">+ new campaign</button>
+      </header>
+      <div class="dashboard-content">
+        <div class="new-campaign-container">
+          ${self.campaign_editor()}
+        </div>
+        ${self.campaign_list()}
+      </div>
+    </div>
+  %endif
 
   %if c.user_is_sponsor:
     <div class="dashboard admin-dashboard">

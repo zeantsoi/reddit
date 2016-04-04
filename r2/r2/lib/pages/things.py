@@ -156,7 +156,9 @@ class LinkButtons(PrintableButtons):
                 kw["is_awaiting_fraud_review"] = is_awaiting_fraud_review(thing)
                 kw["payment_flagged_reason"] = thing.payment_flagged_reason
                 kw["hide_after_seen"] = getattr(thing, "hide_after_seen", False)
-                kw["show_approval"] = thing.promoted and not thing._deleted
+                kw["show_approval"] = (thing.promoted and
+                  not thing._deleted and
+                  not thing.promoted_externally)
 
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
