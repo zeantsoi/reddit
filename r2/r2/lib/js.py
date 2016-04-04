@@ -153,8 +153,7 @@ class Module(Source):
             content=content,
         )
 
-    @classmethod
-    def get_default_source(cls, source):
+    def get_default_source(self, source):
         return FileSource(source)
 
     def get_flattened_sources(self, flattened_sources):
@@ -237,8 +236,7 @@ class Module(Source):
 
 
 class LibraryModule(Module):
-    @classmethod
-    def get_default_source(cls, source):
+    def get_default_source(self, source):
         return FileSource(source, allow_wrap=False)
 
 
