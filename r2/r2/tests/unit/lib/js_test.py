@@ -42,7 +42,8 @@ class TestModule(js.Module):
     def get_wrapped_source(cls, name, class_name, content):
         return test_wrapper.format(content=content)
 
-    def get_default_source(self, source):
+    @classmethod
+    def get_default_source(cls, source):
         return TestFileSource(source)
 
     def build(self, *args, **kwargs):
