@@ -955,7 +955,7 @@ class PromoteApiController(ApiController):
                     media_url, media_autoplay, media_override,
                     iframe_embed_url, media_url_type, domain_override,
                     third_party_tracking, third_party_tracking_2,
-                    is_managed, l=None, thumbnail=None, mobile=None):
+                    managed_promo, l=None, thumbnail=None, mobile=None):
         should_ratelimit = False
         is_self = (kind == "self")
         is_link = not is_self
@@ -1186,7 +1186,7 @@ class PromoteApiController(ApiController):
 
             if managed_promo != l.managed_promo:
                 changed["managed_promo"] = (l.managed_promo, managed_promo)
-                l.managed_promo = is_managed
+                l.managed_promo = managed_promo
 
         if third_party_tracking_enabled:
             third_party_tracking = third_party_tracking or None
