@@ -87,6 +87,7 @@ def declare_queues(g):
         "del_account_q": MessageQueue(),
         "automoderator_q": MessageQueue(),
         "modmail_email_q": MessageQueue(bind_to_self=True),
+        "keyword_target_q": MessageQueue(),
     })
 
     if g.shard_link_vote_queues:
@@ -117,5 +118,6 @@ def declare_queues(g):
         "link_text_edited",
         "comment_text_edited",
     )
+    queues.keyword_target_q << ("new_link")
 
     return queues
