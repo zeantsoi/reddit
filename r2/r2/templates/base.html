@@ -24,7 +24,7 @@
 <%!
    from r2.lib.template_helpers import static
    from r2.models import Link, Comment, Subreddit
-   from r2.lib import tracking, js
+   from r2.lib import tracking
 %>
 <%namespace file="utils.html" import="js_setup, googleanalytics, googletagmanager, classes"/>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
@@ -42,17 +42,8 @@
     ${self.robots()}
     ${self.pagemeta()}
     ${self.stylesheet()}
-
-    <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('reddit-core'))}
-    <!-- <![endif]-->
-
-    <!--[if lt IE 9]>
-      ${unsafe(js.use('reddit-core-legacy'))}
-    <![endif]-->
-
-    ${js_setup(getattr(thing, "extra_js_config", None))}
     ${self.javascript()}
+    ${js_setup(getattr(thing, "extra_js_config", None))}
 
     ##things here may depend on globals, or included js, so we run them last
     <style type="text/css">
