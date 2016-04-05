@@ -38,6 +38,8 @@ HADOOP_FOLDER_SUFFIX = '_$folder$'
 
 SIGNATURE_V4_ALGORITHM = "AWS4-HMAC-SHA256"
 
+EXPIRES_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
 
 def _to_path(bucket, key):
     if not bucket:
@@ -67,6 +69,10 @@ def _from_path(path):
         raise ValueError('Bad S3 path %s' % path)
 
     return bucket, key
+
+
+def format_expires(expires):
+    return expires.strftime(EXPIRES_DATE_FORMAT)
 
 
 def get_text_from_s3(s3_connection, path):

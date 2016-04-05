@@ -59,6 +59,7 @@ from pylons.i18n import ungettext, _
 from r2.lib.contrib import ipaddress
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.require import require, require_split, RequirementException
+from r2.lib.s3_helpers import format_expires
 from r2.lib.utils._utils import *
 
 iters = (list, tuple, set)
@@ -1531,6 +1532,12 @@ def constant_time_compare(actual, expected):
         for i in xrange(actual_len):
             result |= ord(actual[i]) ^ ord(expected[i % expected_len])
     return result == 0
+
+
+def get_thing_based_hmac(secret, thing_name, key, expires):
+    expires_str = format_expires(expires)
+    data = "|".join([thing_name, key, expires_str])
+    return hmac.new(secret, data, hashlib.sha256).hexdigest()
 
 
 def extract_urls_from_markdown(md):

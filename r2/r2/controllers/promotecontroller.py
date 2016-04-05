@@ -86,6 +86,7 @@ from r2.lib.pages.things import default_thing_wrapper, wrap_links
 from r2.lib.system_messages import user_added_messages
 from r2.lib.utils import (
     constant_time_compare,
+    get_thing_based_hmac,
     is_subdomain,
     exclude_from_logging,
     to_date,
@@ -161,19 +162,7 @@ ANDROID_DEVICES = ('phone', 'tablet',)
 
 ADZERK_URL_MAX_LENGTH = 499
 
-EXPIRES_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 ALLOWED_IMAGE_TYPES = set(["image/jpg", "image/jpeg", "image/png"])
-
-def _format_expires(expires):
-    return expires.strftime(EXPIRES_DATE_FORMAT)
-
-
-def _get_callback_hmac(username, key, expires):
-    secret = g.secrets["s3_direct_post_callback"]
-    expires_str = _format_expires(expires)
-    data = "|".join([username, key, expires_str])
-
-    return hmac.new(secret, data, hashlib.sha256).hexdigest()
 
 
 def campaign_has_oversold_error(form, campaign):
@@ -1908,13 +1897,14 @@ class PromoteApiController(ApiController):
 
         if not ajax:
             now = datetime.now().replace(tzinfo=g.tz)
-            signature = _get_callback_hmac(
-                username=c.user.name,
+            signature = get_thing_based_hmac(
+                secret=g.secrets["s3_direct_post_callback"],
+                thing_name=c.user.name,
                 key=key,
                 expires=now,
             )
             path = ("/api/ad_s3_callback?hmac=%s&ts=%s" %
-                (signature, _format_expires(now)))
+                (signature, s3_helpers.format_expires(now)))
             redirect = add_sr(path, sr_path=False)
 
         return s3_helpers.get_post_args(
@@ -1930,7 +1920,7 @@ class PromoteApiController(ApiController):
 
     @validate(
         VSponsor(),
-        expires=VDate("ts", format=EXPIRES_DATE_FORMAT),
+        expires=VDate("ts", format=s3_helpers.EXPIRES_DATE_FORMAT),
         signature=VPrintable("hmac", 255),
         callback=nop("callback"),
         key=nop("key"),
@@ -1940,8 +1930,9 @@ class PromoteApiController(ApiController):
         if (expires + timedelta(minutes=10) < now):
             self.abort404()
 
-        expected_mac = _get_callback_hmac(
-            username=c.user.name,
+        expected_mac = get_thing_based_hmac(
+            secret=g.secrets["s3_direct_post_callback"],
+            thing_name=c.user.name,
             key=key,
             expires=expires,
         )

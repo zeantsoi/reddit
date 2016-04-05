@@ -22,6 +22,7 @@
 import csv
 from collections import defaultdict
 import hashlib
+import mimetypes
 import re
 import urllib
 import urllib2
@@ -62,6 +63,7 @@ from r2.lib.utils import (
     sanitize_url,
     timefromnow,
     timeuntil,
+    to36,
     tup,
 )
 
@@ -110,6 +112,7 @@ from r2.lib import (
     media,
     newsletter,
     promote,
+    s3_helpers,
     tracking,
 )
 from r2.lib.subreddit_search import search_reddits
@@ -5293,3 +5296,48 @@ class ApiController(RedditController):
         c.user.pref_use_global_defaults = True
         c.user._commit()
         jquery.refresh()
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        filepath=nop("filepath"),
+        ajax=VBoolean("ajax", default=True),
+    )
+    def POST_image_upload_s3(self, responder, filepath, ajax):
+        """
+        Get the parameters needed to upload images to s3.
+        """
+        allowed_image_types = set([
+            "image/gif",
+            "image/jpg",
+            "image/jpeg",
+            "image/png",
+            "video/mp4",
+        ])
+        filename, ext = os.path.splitext(filepath)
+        mime_type, encoding = mimetypes.guess_type(filepath)
+
+        if not mime_type or mime_type not in allowed_image_types:
+            file_type = ", ".join(i.split("/")[1] for i in allowed_image_types)
+            request.environ["extra_error_data"] = {
+                "message": _("image must be of type: %(types)s" %
+                    dict(types=file_type)),
+            }
+            abort(400)
+
+        # Create a base36 string based on the time for a cleaner url to be
+        # used as the ID in the image upload url
+        key_name = to36(time.time()) + randstr(2)
+        keyspace = "%s/%s" % (c.user._fullname, key_name)
+        redirect = None
+
+        return s3_helpers.get_post_args(
+            bucket=g.s3_image_uploads_bucket,
+            key=keyspace,
+            success_action_redirect=redirect,
+            success_action_status="201",
+            content_type=mime_type,
+            meta={
+                "x-amz-meta-ext": ext,
+            },
+        )
