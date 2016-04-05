@@ -115,6 +115,7 @@ class Link(Thing, Printable):
                      media_url=None,
                      iframe_embed_url=None,
                      media_autoplay=False,
+                     media_override=False,
                      domain_override=None,
                      third_party_tracking=None,
                      third_party_tracking_2=None,
