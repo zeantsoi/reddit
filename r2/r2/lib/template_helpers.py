@@ -300,6 +300,7 @@ def js_config(extra_config=None):
         "feature_ads_user_matching": feature.is_enabled('ads_user_matching'),
         "feature_flatlist_events": feature.is_enabled('flatlist_events'),
         "feature_mobile_native_banner": feature.is_enabled('mobile_native_banner'),
+        "is_mobile_native_country": geoip.is_mobile_native_country(request, c),
     }
 
     if feature.is_enabled("eu_cookie_policy"):

@@ -74,6 +74,13 @@ EU_COOKIE_COUNTRIES = {
     "UK",
 }
 
+MOBILE_NATIVE_COUNTRIES = {
+    "AU",
+    "CA",
+    "UK",
+    "US",
+}
+
 def _location_by_ips(ips):
     if not hasattr(g, 'geoip_location'):
         g.log.warning("g.geoip_location not set. skipping GeoIP lookup.")
@@ -180,3 +187,16 @@ def requires_eu_cookie_policy(request, context):
     country_code = get_request_location(request, context)
 
     return (country_code in EU_COOKIE_COUNTRIES)
+
+
+def is_mobile_native_country(request, context):
+    """
+    Check if the request is from a country in which we've launched
+    out native mobile apps.
+    """
+    if g.debug:
+        return True
+
+    country_code = get_request_location(request, context)
+
+    return (country_code in MOBILE_NATIVE_COUNTRIES)
