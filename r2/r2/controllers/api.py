@@ -104,11 +104,14 @@ from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.template_helpers import format_html, header_url
 from r2.lib.filters import _force_unicode, _force_utf8, websafe_json, websafe, spaceCompress
-from r2.lib.db import queries
-from r2.lib import media
-from r2.lib.db import tdb_cassandra
-from r2.lib import promote
-from r2.lib import tracking, emailer, newsletter
+from r2.lib.db import queries, tdb_cassandra
+from r2.lib import (
+    emailer,
+    media,
+    newsletter,
+    promote,
+    tracking,
+)
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
