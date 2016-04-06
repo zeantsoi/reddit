@@ -77,6 +77,7 @@ EU_COOKIE_COUNTRIES = {
 MOBILE_NATIVE_COUNTRIES = {
     "AU",
     "CA",
+    "GB",
     "UK",
     "US",
 }
