@@ -74,6 +74,7 @@ from r2.models import (
     PromotionLog,
     PromotionWeights,
     Subreddit,
+    Thing,
     traffic,
 )
 from r2.models.keyvalue import NamedGlobals
@@ -1296,6 +1297,7 @@ def keywords_from_context(
         user, site,
         include_subscriptions=True,
         live_promos_only=True,
+        displayed_things=[]
     ):
 
     is_frontpage = isinstance(site, FakeSubreddit)
@@ -1334,6 +1336,19 @@ def keywords_from_context(
 
     if c.user.employee:
         keywords.add("s.employee")
+
+    # Add keywords for links that are on the page
+    for fullname in displayed_things:
+        t = Thing._by_fullname(fullname, data=True, stale=True)
+        if hasattr(t, "keyword_targets"):
+            keywords.update(['k.' + word 
+                             for word in t.keyword_targets.split(',')])
+    
+    # Add keywords for recently visited links
+    for link in c.recent_clicks:
+        if (hasattr(link, "keyword_targets")):
+            keywords.update(['k.' + word 
+                             for word in link.keyword_targets.split(',')])            
 
     return keywords
 

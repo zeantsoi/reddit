@@ -396,6 +396,7 @@ class SpotlightListing(Listing):
         self.show_promo = kw.get('show_promo', False)
         self.house_probability = kw.get('house_probability', 1)
         site = kw.get('site', Frontpage)
+        self.displayed_things = ','.join(kw.get('displayed_things', []))
 
         if isinstance(site, MultiReddit):
             self.site = site.path

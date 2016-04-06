@@ -357,15 +357,13 @@ class ListingWithPromos(SubredditListingController):
             return res
 
     def make_single_ad(self):
-        # check for the existance of keywords to ensure an ad exists
-        # targeting them.
-        keywords = promote.keywords_from_context(c.user, c.site)
-        if keywords:
-            return SpotlightListing(
-                show_promo=(not c.site.hide_sponsored_headlines and c.site.allow_ads),
-                site=c.site,
-                navigable=False,
-            ).listing()
+        return SpotlightListing(
+            show_promo=(not c.site.hide_sponsored_headlines and c.site.allow_ads),
+            site=c.site,
+            displayed_things=[link._fullname 
+                              for link in self.listing_obj.things[0:10]],
+            navigable=False,
+        ).listing()
 
     def make_spotlight(self):
         """Build the Spotlight.
@@ -382,6 +380,8 @@ class ListingWithPromos(SubredditListingController):
 
         show_promo = False
         keywords = []
+        displayed_things=[link._fullname 
+                          for link in self.listing_obj.things[0:10]]
         # `pref_hide_ads` doesn't reset after gold expires.
         # need to ensure they still have gold.
         gold_user_ads_off = c.user.gold and c.user.pref_hide_ads
@@ -389,7 +389,8 @@ class ListingWithPromos(SubredditListingController):
         can_show_promo = (not gold_user_ads_off and not site_headlines_off)
 
         if can_show_promo:
-            keywords = promote.keywords_from_context(c.user, c.site)
+            keywords = promote.keywords_from_context(c.user, c.site, 
+                displayed_things=displayed_things)
             if keywords:
                 show_promo = True
 
@@ -420,6 +421,7 @@ class ListingWithPromos(SubredditListingController):
                              show_promo=show_promo,
                              house_probability=house_probability,
                              site=c.site,
+                             displayed_things=displayed_things,
                              max_num = self.listing_obj.max_num,
                              max_score = self.listing_obj.max_score).listing()
         return s

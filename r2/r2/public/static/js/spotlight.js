@@ -31,7 +31,7 @@
       }
     },
 
-    setup: function(organicLinks, interestProb, showPromo, houseProbability, site) {
+    setup: function(organicLinks, interestProb, showPromo, houseProbability, site, displayed_things) {
       this.organics = [];
       this.lineup = [];
       this.adWasClicked = false;
@@ -39,6 +39,7 @@
       this.showPromo = showPromo;
       this.houseProbability = houseProbability;
       this.site = site;
+      this.displayed_things = displayed_things;
       this.loid = $.cookie('loid');
       this.lastTabChangeTimestamp = Date.now();
       this.MIN_PROMO_TIME = 3000;
@@ -169,6 +170,7 @@
         data: {
           site: this.site,
           r: r.config.post_site,
+          dt: this.displayed_things,
           loid: this.loid,
           is_refresh: options.refresh,
         },
