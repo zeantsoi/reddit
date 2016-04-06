@@ -928,7 +928,7 @@ class Globals(object):
         self.transitionalcache = TransitionalCache(
             original_cache=self.cache,
             replacement_cache=self.maincache,
-            read_original=True,
+            read_original=False,
             key_transform=get_new_subreddit_prefix_and_key,
         )
 
