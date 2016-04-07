@@ -402,14 +402,17 @@ def edit_campaign(
 
     changed = {}
 
-    if "dates" in kwargs:
-        dates = kwargs["dates"]
-        if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
-            original = '%s to %s' % (campaign.start_date, campaign.end_date)
-            edited = '%s to %s' % (dates[0], dates[1])
-            changed['dates'] = (original, edited)
-            campaign.start_date = dates[0]
-            campaign.end_date = dates[1]
+    if "start_date" in kwargs:
+        start_date = kwargs["start_date"]
+        if start_date != campaign.start_date:
+            changed['start_date'] = (campaign.start_date, start_date)
+            campaign.start_date = start_date
+
+    if "end_date" in kwargs:
+        end_date = kwargs["end_date"]
+        if end_date != campaign.end_date:
+            changed['end_date'] = (campaign.end_date, end_date)
+            campaign.end_date = end_date
 
     if "target" in kwargs:
         target = kwargs["target"]
