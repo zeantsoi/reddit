@@ -234,6 +234,11 @@ def get_click_url_hmac(link, click_url):
     return hmac.new(secret, data, hashlib.sha256).hexdigest()
 
 
+# currently only supports {{timestamp}}
+def expand_macros(string):
+    return string.replace("{{timestamp}}", str(time.time()))
+
+
 def add_trackers(items, sr, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
@@ -261,9 +266,9 @@ def add_trackers(items, sr, adserver_click_urls=None):
         item.imp_pixel = update_query(g.adtracker_url, pixel_query)
         
         if item.third_party_tracking:
-            item.third_party_tracking_url = item.third_party_tracking
+            item.third_party_tracking_url = expand_macros(item.third_party_tracking)
         if item.third_party_tracking_2:
-            item.third_party_tracking_url_2 = item.third_party_tracking_2
+            item.third_party_tracking_url_2 = expand_macros(item.third_party_tracking_2)
 
         # construct the click redirect url
         item_url = adserver_click_urls.get(item.campaign) or item.url
