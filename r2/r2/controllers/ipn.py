@@ -848,7 +848,7 @@ class GoldPaymentController(RedditController):
             return
 
         gold_recipient = recipient or buyer
-        with gold_lock(gold_recipient):
+        with g.make_lock("thing_commit", 'commit_' + gold_recipient._fullname):
             gold_recipient._sync_latest()
 
             secret_pieces = [goldtype]
@@ -1345,10 +1345,6 @@ def validate_blob(custom):
     return ret
 
 
-def gold_lock(user):
-    return g.make_lock('gold_purchase', 'gold_%s' % user._id)
-
-
 def days_from_months(months):
     if months >= 12:
         assert months % 12 == 0
@@ -1393,7 +1389,7 @@ def reverse_gold_purchase(transaction_id):
         recipient = Account._by_name(recipient_name)
 
     gold_recipient = recipient or buyer
-    with gold_lock(gold_recipient):
+    with g.make_lock("thing_commit", 'commit_' + gold_recipient._fullname):
         gold_recipient._sync_latest()
 
         if goldtype in ('onetime', 'autorenew'):
