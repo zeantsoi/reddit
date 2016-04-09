@@ -1410,8 +1410,6 @@ class Comment(Thing, Printable):
         """return's a comments's subreddit. in most case the subreddit is already
         on the wrapped link (as .subreddit), and that should be used
         when possible. if sr_id does not exist, then use the parent link's"""
-        self._safe_load()
-
         if hasattr(self, 'sr_id'):
             sr_id = self.sr_id
         else:
@@ -2814,9 +2812,6 @@ class Inbox(MultiRelation('inbox',
         i.new = True
         i._commit()
 
-        if not to._loaded:
-            to._load()
-
         if orangered:
             to._incr('inbox_count', 1)
 
@@ -2939,10 +2934,6 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         i = ModeratorInbox(sr, obj, *a, **kw)
         i.new = True
         i._commit()
-
-        if not sr._loaded:
-            sr._load()
-
         return i
 
     @classmethod
