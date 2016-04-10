@@ -3242,6 +3242,17 @@ def need_provider_captcha():
     if request.headers.get('Authorization'):
         return False
 
+    # Temporary: whitelist the mobile apps, because they are not necessarily
+    # sending oauth
+    if (
+        request.user_agent and
+        (
+            request.user_agent.startswith("RedditAndroid 0.3") or
+            request.user_agent.startswith("Reddit/Version 1.0/Build 888/")
+        )
+    ):
+        return False
+
     return not c.oauth2_client and feature.is_enabled("registration_captcha")
 
 
