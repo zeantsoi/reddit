@@ -89,6 +89,7 @@ from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt, get_pageview_pixel_url
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
+    detect_mobile,
     Enum,
     SimpleSillyStub,
     UniqueIterator,
@@ -1568,6 +1569,34 @@ class RedditController(OAuth2ResourceController):
     def disable_admin_mode(user):
         c.cookies[g.admin_cookie] = Cookie(value='', expires=DELETE)
 
+    def is_safe_mobile_web_route(self, path):
+        for regex in g.mweb_whitelist_expressions:
+            if regex.match(path):
+                return True
+
+        return False
+
+    def mweb_redirect(self):
+        # abort redirect to mweb as soon as possible
+        no_redirect = request.cookies.get('mweb-no-redirect')
+
+        with g.stats.get_timer('stats.timers.r2.mweb-redirect'):
+            # the feature check needs to come last so we do not add people
+            # to the test bucket that are not relevant to this test.
+            if (c.render_style == 'html' and 
+                    not no_redirect and 
+                    detect_mobile(request.user_agent) and 
+                    self.is_safe_mobile_web_route(request.path) and
+                    feature.is_enabled('mobileweb_redirect') and
+                    feature.variant('mobileweb_redirect') == 'redirected'):
+
+                url = UrlParser(request.path)
+                url.switch_subdomain_by_extension('mobile')
+                url.update_query(utm_source='mweb_redirect')
+
+                g.stats.simple_event('mweb.redirect')
+                abort(302, location=self.format_output_url(url.unparse()))
+
     def pre(self):
         record_timings = g.admin_cookie in request.cookies or g.debug
         admin_bar_eligible = response.content_type == 'text/html'
@@ -1578,6 +1607,9 @@ class RedditController(OAuth2ResourceController):
         c.js_preload = JSPreload()
 
         MinimalController.pre(self)
+
+        # redirect mobile clients to m.reddit.com conditionally
+        self.mweb_redirect()
 
         # Set IE to always use latest rendering engine
         response.headers["X-UA-Compatible"] = "IE=edge"

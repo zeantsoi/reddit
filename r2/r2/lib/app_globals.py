@@ -29,6 +29,7 @@ import locale
 import json
 import logging
 import os
+import re
 import signal
 import site
 import socket
@@ -286,6 +287,7 @@ class Globals(object):
             'multi_icons',
             'hide_subscribers_srs',
             'mcrouter_addr',
+            'mweb_whitelist_expressions',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [
@@ -721,6 +723,9 @@ class Globals(object):
         # readability.
         self.employee_approved_clients = \
             self.live_config["employee_approved_clients"].values()
+
+        whitelist = self.config["mweb_whitelist_expressions"]
+        self.mweb_whitelist_expressions = [ re.compile(reg) for reg in whitelist ]
 
         self.startup_timer.intermediate("zookeeper")
 

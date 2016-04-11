@@ -88,7 +88,7 @@ def parse_agent(ua):
     return agent_summary
 
 MOBILE_PLATFORMS = {'iOS', 'Windows', 'Android', 'BlackBerry'}
-def detectMobile(ua):
+def detect_mobile(ua):
     parsed = parse_agent(ua)
     platform = parsed.get('platform_name')
 
