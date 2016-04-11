@@ -46,6 +46,7 @@ from urlparse import urlparse, urlunparse, urlunsplit
 import pytz
 import snudown
 import unidecode
+import httpagentparser
 
 from babel.dates import TIMEDELTA_UNITS
 from BeautifulSoup import BeautifulSoup, SoupStrainer
@@ -66,6 +67,42 @@ def randstr(length,
             alphabet='abcdefghijklmnopqrstuvwxyz0123456789'):
     """Return a string made up of random chars from alphabet."""
     return ''.join(random.choice(alphabet) for _ in xrange(length))
+
+
+def parse_agent(ua):
+    agent_summary = {}
+    parsed = httpagentparser.detect(ua)
+    for attr in ("browser", "os", "platform"):
+        d = parsed.get(attr)
+        if d:
+            for subattr in ("name", "version"):
+                if subattr in d:
+                    key = "%s_%s" % (attr, subattr)
+                    agent_summary[key] = d[subattr]
+
+    agent_summary['bot'] = parsed.get('bot')
+    dist = parsed.get('dist')
+    if dist:
+        agent_summary['sub-platform'] = dist.get('name')
+
+    return agent_summary
+
+MOBILE_PLATFORMS = {'iOS', 'Windows', 'Android', 'BlackBerry'}
+def detectMobile(ua):
+    parsed = parse_agent(ua)
+    platform = parsed.get('platform_name')
+
+    if platform in MOBILE_PLATFORMS:
+        if parsed.get('sub-platform') == 'IPad':
+            return False
+
+        if platform == 'Windows' and not parsed.get('sub-platform') == 'Windows Phone':
+            return False
+
+        return True
+    else:
+        return False
+
 
 class Storage(dict):
     """

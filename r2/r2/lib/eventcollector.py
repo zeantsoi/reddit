@@ -21,7 +21,6 @@
 ###############################################################################
 import baseplate.events
 
-import httpagentparser
 from pylons import app_globals as g
 
 from r2.lib import hooks
@@ -34,6 +33,7 @@ from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
     epoch_timestamp,
+    parse_agent,
     sampled,
     squelch_exceptions,
     to36,
@@ -48,22 +48,6 @@ def _epoch_to_millis(timestamp):
 def _datetime_to_millis(dt):
     """Convert a standard datetime to epoch milliseconds."""
     return _epoch_to_millis(epoch_timestamp(dt))
-
-
-def parse_agent(ua):
-    agent_summary = {}
-    parsed = httpagentparser.detect(ua)
-    for attr in ("browser", "os", "platform"):
-        d = parsed.get(attr)
-        if d:
-            for subattr in ("name", "version"):
-                if subattr in d:
-                    key = "%s_%s" % (attr, subattr)
-                    agent_summary[key] = d[subattr]
-
-    agent_summary['bot'] = parsed.get('bot')
-
-    return agent_summary
 
 
 class EventQueue(object):
