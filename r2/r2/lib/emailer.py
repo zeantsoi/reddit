@@ -255,7 +255,6 @@ def message_notification_email(data):
                     "message_type": message_type,
                     "body": message.body,
                     "date": long_datetime(message._date),
-                    "pretty_date": message._date.strftime('%b %d %Y, %I:%M%p'),
                     "permalink": permalink,
                 })
 

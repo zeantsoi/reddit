@@ -31,22 +31,18 @@ ${_("You have {message_count} new {message} in your ").format(message_count=thin
 %for index, message in enumerate(thing.messages):
   %if message["message_type"] == "message":
     ${_("Private message from {author}").format(author=message['author_name'])}
-    ${message["pretty_date"]}
     ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="private_message", utm_term=index))}
 
   %elif message["message_type"] == "post reply":
     ${_("Post reply from {author}").format(author=message['author_name'])}
-    ${message["pretty_date"]}
     ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="post_reply", utm_term=index, context=3))}
  
   %elif message["message_type"] == "comment reply":
     ${_("Comment reply from {author}").format(author=message['author_name'])}
-    ${message["pretty_date"]}
     ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="comment_reply", utm_term=index, context=3))}
 
   %elif message["message_type"] == "username notification":
     ${_("{author} mentioned you in a thread").format(author=message['author_name'])}
-    ${message["pretty_date"]}
     ${_("view")}: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="username_mention", utm_term=index, context=3))}
   %endif
 

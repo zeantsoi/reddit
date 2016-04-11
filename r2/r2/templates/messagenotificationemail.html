@@ -35,7 +35,7 @@
 </%def>
 
 <%def name="view_notification_link(action_str, message, query)">
-  <span> &bull; ${message["pretty_date"]} &bull;
+  <span>
     <% 
       url = UrlParser(message['permalink'])
       url.update_query(**thing.base_utm_query)
