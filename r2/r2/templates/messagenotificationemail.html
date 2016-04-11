@@ -26,14 +26,6 @@
     from pylons.i18n import _, ungettext
 %>
 
-<%def name="image(image_name)">
-   <img border="0" 
-        src="${static(image_name, absolute=True)}" 
-        alt="" 
-        width="50" 
-        height="50" />
-</%def>
-
 <%def name="view_notification_link(action_str, message, query)">
   <span>
     <% 
@@ -136,12 +128,13 @@
             <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="20"></td>
             <td>
               <!-- Header -->
-              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${image('spacer.gif')}" width="1" height="10" style="height:10px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="10" style="height:10px" alt="" /></div>
 
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td valign="middle" width="60" class="img" style="font-size:0pt; line-height:0pt; text-align:left">
-                    <a href="${parse_url(thing.base_url, thing.base_utm_query)}" target="_blank">${image('message_notification_email_logo.png')}</a>
+                    <a href="${parse_url(thing.base_url, thing.base_utm_query)}" target="_blank"><img border="0" src="${static('message_notification_email_logo.png', absolute=True)}" alt="" width="50" height="50" />
+                    </a>
                   </td>
                   <td>
                     <div class="text-header" style="color:#555555; font-family:Arial; font-size:18px; line-height:22px; text-align:left">
@@ -153,11 +146,11 @@
                   </td>
                 </tr>
               </table>
-              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${image('spacer.gif')}" width="1" height="10" style="height:10px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="10" style="height:10px" alt="" /></div>
 
-              <div style="font-size:0pt; line-height:0pt; height:1px; background:#b5b3ac; "><img src="${image('spacer.gif')}" width="1" height="1" style="height:1px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:1px; background:#b5b3ac; "><img src="${static('spacer.gif', absolute=True)}" width="1" height="1" style="height:1px" alt="" /></div>
 
-              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${image('spacer.gif')}" width="1" height="10" style="height:10px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:10px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="10" style="height:10px" alt="" /></div>
 
               <!-- END Header -->
 
@@ -205,14 +198,14 @@
               %endif
 
               <!-- Button -->
-              <div style="font-size:0pt; line-height:0pt; height:8px"><img src="${image('spacer.gif')}" width="1" height="8" style="height:8px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:8px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="8" style="height:8px" alt="" /></div>
 
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="left">
                     <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
                       <tr>
-                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${image('spacer.gif')}" width="1" height="40" style="height:40px" alt="" /></div></td>
+                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
                         <td class="text-btn" style="color:#ffffff; font-family:Arial; font-size:14px; line-height:18px; text-align:center">
                           <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank"><strong class="call-to-action" style="color:#ffffff; text-decoration:none">${_("Go to Reddit Inbox")}</strong></a>
                         </td>
@@ -226,24 +219,24 @@
               <!-- END Main -->
 
               <!-- Footer -->
-              <div style="font-size:0pt; line-height:0pt; height:40px"><img src="${image('spacer.gif')}" width="1" height="40" style="height:40px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div>
 
-              <div style="font-size:0pt; line-height:0pt; height:1px; background:#b5b3ac; "><img src="${image('spacer.gif')}" width="1" height="1" style="height:1px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:1px; background:#b5b3ac; "><img src="${static('spacer.gif', absolute=True)}" width="1" height="1" style="height:1px" alt="" /></div>
 
-              <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${image('spacer.gif')}" width="1" height="15" style="height:15px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="15" style="height:15px" alt="" /></div>
 
 
               <div class="text-footer" style="color:#b5b3ac; font-family:Arial; font-size:12px; line-height:16px; text-align:center">
                 ${_("If you would not like to receive emails from Reddit in the future, ")}<a href="${thing.unsubscribe_link}" class="link" style="color:#0079d3; text-decoration:none" target="_blank"><span class="link" style="color:#0079d3; text-decoration:none">${_("unsubscribe")}</span></a>.<br />Reddit Inc. <a href="https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74" class="link-footer" style="color:#b5b3ac; text-decoration:none" target="_blank"><span class="link-footer" style="color:#b5b3ac; text-decoration:none">548 Market St #16093, San Francisco, CA 94104-5401, United States</span></a>
               </div>
-              <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${image('spacer.gif')}" width="1" height="15" style="height:15px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="15" style="height:15px" alt="" /></div>
 
               <!-- END Footer -->
             </td>
             <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="20"></td>
           </tr>
         </table>
-        <div class="wgmail" style="font-size:0pt; line-height:0pt; text-align:center"><img src="${image('spacer.gif')}" width="620" height="1" style="min-width:620px" alt="" border="0" /></div>
+        <div class="wgmail" style="font-size:0pt; line-height:0pt; text-align:center"><img src="${static('spacer.gif', absolute=True)}" width="620" height="1" style="min-width:620px" alt="" border="0" /></div>
       </td>
     </tr>
   </table>

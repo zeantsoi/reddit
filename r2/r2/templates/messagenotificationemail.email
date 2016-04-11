@@ -22,7 +22,7 @@
 
 <%!
   from r2.lib.filters import unsafe
-  from r2.lib.template_helpers import update_query, static
+  from r2.lib.template_helpers import update_query
   from pylons.i18n import _, ungettext
 %>
 
