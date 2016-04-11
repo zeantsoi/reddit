@@ -194,7 +194,7 @@
 
               %endfor
               %if thing.more_unread_messages:
-                <p><strong>${_("An additional {more_message_count} unread {message} from {usernames} are also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)} </strong></p>
+                <p><strong>${_("An additional {more_message_count} unread {message} from {usernames} {are_or_is} also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, are_or_is=_(ungettext('is', 'are', thing.message_count - thing.max_message_display_count)), message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)} </strong></p>
               %endif
 
               <!-- Button -->

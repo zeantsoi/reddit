@@ -51,7 +51,7 @@ ${_("You have {message_count} new {message} in your ").format(message_count=thin
 %endfor
 
 %if thing.more_unread_messages:
-  ${_("An additional {more_message_count} unread {message} from {usernames} are also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)}
+  ${_("An additional {more_message_count} unread {message} from {usernames} {are_or_is} also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, are_or_is=_(ungettext('is', 'are', thing.message_count - thing.max_message_display_count)), message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)}
 %endif
 
 ${_("Go to Reddit Inbox")}: ${unsafe(update_query(thing.inbox_url, utm_source="email", utm_medium="message_notification"))}
