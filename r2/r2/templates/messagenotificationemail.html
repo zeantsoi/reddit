@@ -23,7 +23,6 @@
 <%!
     from r2.lib.template_helpers import update_query, static
     from r2.lib.utils import UrlParser
-    from pylons.i18n import _, ungettext
 %>
 
 <%def name="view_notification_link(action_str, message, query)">
@@ -42,7 +41,7 @@
       <span class="link" 
             style="color:#0079d3;
                    text-decoration:none">
-        ${_(action_str)}
+        ${action_str}
       </span>
     </a>
   </span>
@@ -142,9 +141,9 @@
                   </td>
                   <td>
                     <div class="text-header" style="color:#555555; font-family:Arial; font-size:18px; line-height:22px; text-align:left">
-                      ${_("You have {message_count} new {message} in your").format(message_count=thing.message_count, message=_(ungettext('message', 'messages', thing.message_count)))}
+                      You have ${thing.message_count} new ${'messages' if thing.message_count > 1 else 'message'} in your
                       <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}"  class="link" style="color:#0079d3; text-decoration:none" target="_blank">
-                        <span class="link" style="color:#0079d3; text-decoration:none">Reddit ${_("Inbox")}</span>
+                        <span class="link" style="color:#0079d3; text-decoration:none">Reddit Inbox</span>
                       </a>
                     </div>
                   </td>
@@ -161,32 +160,29 @@
               <!-- Main -->
               %for index, message in enumerate(thing.messages):
                 %if message["message_type"] == "message":
-                  <h2>${_("Private message from ")}
-                    ${author_name_link(message['author_name'], {"utm_name":"private_message", "utm_term":index})}
-                    ${view_notification_link("view", message, {"utm_name":"private_message", "utm_term":index})}
+                  <h2>Private message from ${author_name_link(message['author_name'], {"utm_name":"private_message", "utm_term":index})}
+                    <span> &bull; ${view_notification_link("view", message, {"utm_name":"private_message", "utm_term":index})} </span>
                   </h2>
 
                 %elif message["message_type"] == "post reply":
-                  <h2>${_("Post reply from ")}
-                    ${author_name_link(message['author_name'], {"utm_name":"post_reply", "utm_term":index})}
-                    ${view_notification_link("reply", message, {"utm_name":"post_reply", "utm_term":index, "context":3})}
+                  <h2>Post reply from ${author_name_link(message['author_name'], {"utm_name":"post_reply", "utm_term":index})}
+                    <span> &bull; ${view_notification_link("reply", message, {"utm_name":"post_reply", "utm_term":index, "context":3})} </span>
                   </h2>
 
                 %elif message["message_type"] == "comment reply":
-                  <h2>${_("Comment reply from ")}
-                    ${author_name_link(message['author_name'], {"utm_name":"comment_reply", "utm_term":index})}
-                    ${view_notification_link("reply", message, {"utm_name":"comment_reply", "utm_term":index, "context":3})}
+                  <h2>Comment reply from ${author_name_link(message['author_name'], {"utm_name":"comment_reply", "utm_term":index})}
+                    <span> &bull; ${view_notification_link("reply", message, {"utm_name":"comment_reply", "utm_term":index, "context":3})} </span>
                   </h2>
                 %elif message["message_type"] == "username notification":
                   <h2>
                     ${author_name_link(message['author_name'], {"utm_name":"username_mention", "utm_term":index})}
-                    <span> ${_("mentioned you in")} <span>
+                    <span>mentioned you in</span>
                     <span>
                       <a href="${message['permalink']}" class="link" style="color:#0079d3; text-decoration:none" target="_blank">
-                        ${_("a thread")}
+                        a thread
                       </a>
-                    <span>
-                    ${view_notification_link("reply", message, {"utm_name":"username_mention", "utm_term":index, "context":3})}
+                    </span>
+                    <span> &bull; ${view_notification_link("reply", message, {"utm_name":"username_mention", "utm_term":index, "context":3})} </span>
                   </h2>
                 %endif
 
@@ -198,7 +194,8 @@
 
               %endfor
               %if thing.more_unread_messages:
-                <p><strong>${_("An additional {more_message_count} unread {message} from {usernames} {are_or_is} also in your Inbox.").format(more_message_count=thing.message_count - thing.max_message_display_count, are_or_is=_(ungettext('is', 'are', thing.message_count - thing.max_message_display_count)), message=_(ungettext('message', 'messages', thing.message_count - thing.max_message_display_count)), usernames=thing.non_preview_usernames_str)} </strong></p>
+                <p><strong>An additional ${thing.message_count - thing.max_message_display_count} unread ${'messages' if (thing.message_count - thing.max_message_display_count > 1) else 'message'} from ${thing.non_preview_usernames_str} ${'are' if (thing.message_count - thing.max_message_display_count > 1) else 'is'} also in your Inbox.
+                </strong></p>
               %endif
 
               <!-- Button -->
@@ -211,7 +208,7 @@
                       <tr>
                         <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
                         <td class="text-btn" style="color:#ffffff; font-family:Arial; font-size:14px; line-height:18px; text-align:center">
-                          <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank"><strong class="call-to-action" style="color:#ffffff; text-decoration:none">${_("Go to Reddit Inbox")}</strong></a>
+                          <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank"><strong class="call-to-action" style="color:#ffffff; text-decoration:none">Go to Reddit Inbox</strong></a>
                         </td>
                         <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
                       </tr>
@@ -231,7 +228,7 @@
 
 
               <div class="text-footer" style="color:#b5b3ac; font-family:Arial; font-size:12px; line-height:16px; text-align:center">
-                ${_("If you would not like to receive emails from Reddit in the future, ")}<a href="${parse_url(thing.unsubscribe_link, thing.base_utm_query, {'utm_name':'unsubscribe'})}" class="link" style="color:#0079d3; text-decoration:none" target="_blank"><span class="link" style="color:#0079d3; text-decoration:none">${_("unsubscribe")}</span></a>.<br />Reddit Inc. <a href="https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74" class="link-footer" style="color:#b5b3ac; text-decoration:none" target="_blank"><span class="link-footer" style="color:#b5b3ac; text-decoration:none">548 Market St #16093, San Francisco, CA 94104-5401, United States</span></a>
+                If you would not like to receive emails from Reddit in the future, <a href="${parse_url(thing.unsubscribe_link, thing.base_utm_query, {'utm_name':'unsubscribe'})}" class="link" style="color:#0079d3; text-decoration:none" target="_blank"><span class="link" style="color:#0079d3; text-decoration:none">unsubscribe</span></a>.<br />Reddit Inc. <a href="https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74" class="link-footer" style="color:#b5b3ac; text-decoration:none" target="_blank"><span class="link-footer" style="color:#b5b3ac; text-decoration:none">548 Market St #16093, San Francisco, CA 94104-5401, United States</span></a>
               </div>
               <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="15" style="height:15px" alt="" /></div>
 
