@@ -373,6 +373,8 @@ class TestEventCollector(RedditTestCase):
                     'message_id': message._id,
                     'message_fullname': message._fullname,
                     'message_kind': "message",
+                    'message_body': message.body,
+                    'message_subject': message.subject,
                     'first_message_fullname': first_message._fullname,
                     'first_message_id': first_message._id,
                     'sender_type': "user",
