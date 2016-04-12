@@ -255,10 +255,13 @@ class TestPromoteRefunds(unittest.TestCase):
         can_refund.return_value = True
         refund_transaction.return_value = (True, "")
 
-        refund_campaign(
-            link=self.link,
-            campaign=self.campaign,
-        )
+        # the refund process attemtps a db lookup. We don't need it for the
+        # purpose of the test.
+        with patch.object(Account, "_byID"):
+            refund_campaign(
+                link=self.link,
+                campaign=self.campaign,
+            )
 
         self.assertTrue(refund_transaction.called)
         self.assertTrue(promotion_log_add.called)
