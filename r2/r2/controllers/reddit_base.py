@@ -1411,6 +1411,10 @@ class OAuth2ResourceController(MinimalController):
                 c.user = UnloggedUser(get_browser_langs())
                 c.user_is_loggedin = False
             c.oauth2_client = OAuth2Client._byID(access_token.client_id)
+            if c.oauth2_client:
+                client = "{}:{}".format(c.oauth2_client._id36,
+                                        c.oauth2_client.name[:100])
+                g.stats.count_string("oauth.clientname", client)
         except RequirementException:
             self._auth_error(401, "invalid_token")
 
