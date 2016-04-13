@@ -47,6 +47,8 @@ from pylons.i18n.translation import LanguageError
 
 from r2.config import feature
 from r2.config.extensions import is_api, set_extension
+from r2.config.extensions import API_TYPES, RSS_TYPES
+
 from r2.lib import (
     baseplate_integration,
     filters,
@@ -345,6 +347,7 @@ def over18():
                 return True
             else:
                 delete_over18_cookie()
+    return False
 
 
 def set_over18_cookie():
@@ -355,9 +358,25 @@ def delete_over18_cookie():
     c.cookies["over18"] = Cookie(value="", expires=DELETE)
 
 
-def set_obey_over18():
-    "querystring parameter for API to obey over18 filtering rules"
-    c.obey_over18 = request.GET.get("obey_over18") == "true"
+def obey_over18():
+    """Should the over-18 restriction always be enforced."""
+    obey_over18 = request.GET.get("obey_over18") == "true"
+
+    is_api = c.render_style in API_TYPES
+    is_rss = c.render_style in RSS_TYPES
+
+    # for the API/RSS (and therefore apps) make the user's over18
+    # settings-enforcement mandatory.
+    if (is_api or is_rss) and obey_over18:
+        return True
+    # allow explicit overrides from feature flags
+    elif feature.is_enabled('safe_search'):
+        return True
+
+    # by default, keep the over18 level where it has been traditionally:
+    # c.over18 changes link display but doesn't affect the feed of content.
+    return False
+
 
 valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
 def set_subreddit():
@@ -572,6 +591,8 @@ def set_content_type():
         c.user_is_loggedin = False
         c.forced_loggedout = True
         response.content_type = "application/javascript"
+
+    # with the content type set
 
 def get_browser_langs():
     browser_langs = []
@@ -1616,8 +1637,11 @@ class RedditController(OAuth2ResourceController):
         self.run_sitewide_ratelimits()
         c.request_timer.intermediate("base-ratelimits")
 
+        # Note: the over18 setting depends on c.user, and c.obey_over18
+        # depends on c.render_style which is set in MinimalController.pre()
+        # via set_content_type.  (Refactor carefully.)
         c.over18 = over18()
-        set_obey_over18()
+        c.obey_over18 = obey_over18()
 
         # looking up the multireddit requires c.user.
         set_multireddit()
