@@ -141,9 +141,12 @@ class Report(MultiRelation('report',
 
             reports = cls.for_thing(wrapped.lookups[0])
 
-            query = SRMember._query(SRMember.c._thing1_id == wrapped.sr_id,
-                                    SRMember.c._name == "moderator")
-            mod_dates = {rel._thing2_id: rel._date for rel in query}
+            q = SRMember._simple_query(
+                ["_thing2_id", "_date"],
+                SRMember.c._thing1_id == wrapped.sr_id,
+                SRMember.c._name == "moderator",
+            )
+            mod_dates = {rel._thing2_id: rel._date for rel in q}
 
             if g.automoderator_account:
                 automoderator = Account._by_name(g.automoderator_account)
