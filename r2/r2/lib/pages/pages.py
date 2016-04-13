@@ -1138,7 +1138,7 @@ class RedditFooter(CachedTemplate):
                         "https://itunes.apple.com/us/app/reddit-the-official-app/id1064216828?mt=8"),
                     OffsiteButton(_("Reddit for Android"),
                         "https://play.google.com/store/apps/details?id=com.reddit.frontpage"),
-                    OffsiteButton(_("mobile website"), "https://m.reddit.com"),
+                    OffsiteButton(_("mobile website"), '#', css_class='mweb-redirect-btn'),
                     NamedButton("buttons", False),
                 ],
                 title = _("apps & tools"),

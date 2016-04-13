@@ -10,6 +10,7 @@ r.ui.init = function() {
     }
 
     r.ui.initMWebBanner();
+    r.ui.initFooterMwebBtn();
 
     $('.help-bubble').each(function(idx, el) {
         $(el).data('HelpBubble', new r.ui.Bubble({el: el}))
@@ -86,6 +87,32 @@ r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
     }
 })
 
+function createMwebRedirectUrl(query) {
+    var a = document.createElement('a');
+    a.href = window.location;
+    a.host = 'm.' + r.config.cur_domain;
+    a.search += (a.search ? '&' : '?') + query;
+
+    if (r.ui.inMobileWebBlacklist()) {
+        a.pathname = '/';
+    }
+
+    return a.href;
+}
+
+r.ui.initFooterMwebBtn = function() {
+    $('.mweb-redirect-btn').on('click', function(e) {
+        var url = createMwebRedirectUrl('ref_source=desktop');
+
+        if ($.cookie('mweb-no-redirect')) {
+            $.cookie('mweb-no-redirect', null, { domain: r.config.cur_domain});
+        }
+
+        url = createMwebRedirectUrl('ref_source=desktop')
+        window.location = url;
+    });
+}
+
 r.ui.initMWebBanner = function() {
     // If we're on mobile web and looking at the desktop site, show a 
     // closeable banner informing the user of the mweb site
@@ -119,12 +146,7 @@ r.ui.initMWebBanner = function() {
       storeKey = 'mweb-beta-banner.closed';
       optInCookieName = "__cf_mob_redir";
 
-      var a = document.createElement('a');
-      a.href = window.location;
-      a.host = 'm.' + r.config.cur_domain;
-      a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop';
-
-      url = a.href;
+      url = createMwebRedirectUrl('ref=mobile_beta_banner&ref_source=desktop');
       callout = r._("switch to mobile version");
     }
 
