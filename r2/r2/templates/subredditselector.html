@@ -31,16 +31,23 @@
   % endif
   <ul id="sr-drop-down">
     <li class="sr-name-row"
-        onmouseover="highlight_reddit(this)"
+        onmouseover="highlight_dropdown_row(this)"
         onmousedown="return sr_dropdown_mdown(this)"
         onmouseup="sr_dropdown_mup(this)">nothin</li>
   </ul>
+  <input type="hidden" id="selected_sr_names" name="selected_sr_names" value="">
 </div>
 <script type="text/javascript">
   r.config.sr_cache = ${unsafe(thing.sr_searches)};
+  $(document).ready(function(){
+    $("#sr-autocomplete-area").on("click", function(){
+      $("#sr-autocomplete").focus();
+    });
+  });
 </script>
 ${error_field("SUBREDDIT_NOEXIST", "sr", "div")}
 ${error_field("SUBREDDIT_NOTALLOWED", "sr", "div")}
+${error_field("SUBREDDIT_DISABLED_ADS", "sr", "div")}
 ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
 
 <div id="suggested-reddits">

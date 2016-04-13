@@ -287,7 +287,7 @@ class System(object):
                 penalty += unassigned
 
         free_impressions = sum(
-            impressions_by_target[target_name] for target_name
+            impressions_by_target.get(target_name, 0) for target_name
                                                in self.priority_target_names)
         return free_impressions - penalty
 
@@ -303,10 +303,10 @@ def get_maximized_pageviews(priority_sr_names, booked_by_target,
                             pageviews_by_sr_name):
     targets = [SimpleTarget(sr_name, pageviews) for sr_name, pageviews
                                                 in pageviews_by_sr_name.iteritems()]
-    campaigns = [
-        SimpleCampaign(', '.join(sr_names), list(sr_names), impressions)
-        for sr_names, impressions in booked_by_target.iteritems()
-    ]
+    campaigns = [] 
+    for sr_names, impressions in booked_by_target.iteritems():
+        s = SimpleCampaign(', '.join(sr_names), list(sr_names), impressions)
+        campaigns.append(s)
     system = System(campaigns, targets, priority_sr_names)
     return system.get_free_impressions()
 

@@ -387,10 +387,10 @@ class SponsorController(PromoteController):
         VSponsorAdmin(),
         start=VDate('startdate'),
         end=VDate('enddate'),
-        sr_name=nop('sr_name'),
+        sr_names=nop('sr_names'),
         collection_name=nop('collection_name'),
     )
-    def GET_promote_inventory(self, start, end, sr_name, collection_name):
+    def GET_promote_inventory(self, start, end, sr_names, collection_name):
         if not start or not end:
             start = promote.promo_datetime_now(offset=1).date()
             end = promote.promo_datetime_now(offset=8).date()
@@ -398,12 +398,17 @@ class SponsorController(PromoteController):
             c.errors.remove((errors.BAD_DATE, 'enddate'))
 
         target = Target(Frontpage.name)
-        if sr_name:
-            try:
-                sr = Subreddit._by_name(sr_name)
-                target = Target(sr.name)
-            except NotFound:
-                c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_name')
+        if sr_names:
+            sr_names = sr_names.split("|")
+            srs = []
+            for sr_name in sr_names:
+                try:
+                    sr = Subreddit._by_name(sr_name)
+                    srs.append(sr)
+                except NotFound:
+                    c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_names')
+            pretty_name = "\n ".join(["/r/%s" % sr_name for sr_name in sr_names])
+            target = Target(Collection(pretty_name, sr_names))
         elif collection_name:
             collection = Collection.by_name(collection_name)
             if not collection:
@@ -753,20 +758,29 @@ class SponsorListingController(PromoteListingController):
         return ListingController.GET_listing(self, **kw)
 
 
-def allowed_location_and_target(location, target):
+def allowed_location_and_targets(location, targets):
     if c.user_is_sponsor or feature.is_enabled('ads_auction'):
         return True
 
     # regular users can only use locations when targeting frontpage
     is_location = location and location.country
-    is_frontpage = (not target.is_collection and
-                    target.subreddit_name == Frontpage.name)
+
+    if isinstance(targets, list):
+        is_frontpage = reduce(lambda x, y: x or y, [t.is_frontpage for t in targets])
+    elif isinstance(targets, Target):
+        is_frontpage = target.is_frontpage
+    else:
+        is_frontpage = False
+
     return not is_location or is_frontpage
 
 
+
 class PromoteApiController(ApiController):
+
+
     @json_validate(
-        sr=VSubmitSR('sr', promotion=True),
+        srs=VSubmitSR('sr', promotion=True),
         collection=VCollection('collection'),
         location=VLocation(),
         start=VDate('startdate'),
@@ -777,22 +791,31 @@ class PromoteApiController(ApiController):
             'desktop',
             'all',
         ], default='all'))
-    def GET_check_inventory(self, responder, sr, collection, location, start,
+    def GET_check_inventory(self, responder, srs, collection, location, start,
                             end, platform):
-        if collection:
-            target = Target(collection)
-            sr = None
-        else:
-            sr = sr or Frontpage
-            target = Target(sr.name)
 
-        if not allowed_location_and_target(location, target):
+        if responder.has_errors("srs", errors.SUBREDDIT_NOEXIST):
+            return {'error': errors.SUBREDDIT_NOEXIST}
+
+        if responder.has_errors("srs", errors.SUBREDDIT_NOTALLOWED):
+            return {'error': errors.SUBREDDIT_NOTALLOWED}
+
+        if responder.has_errors("srs", errors.SUBREDDIT_DISABLED_ADS):
+            return {'error': errors.SUBREDDIT_DISABLED_ADS}
+
+        if collection:
+            targets = [Target(collection)]
+            srs = None
+        else:
+            srs = srs or [Frontpage]
+            targets = [Target(s.name) for s in srs]
+
+        if not allowed_location_and_targets(location, targets):
             return abort(403, 'forbidden')
 
         available = inventory.get_available_pageviews(
-                        target, start, end, location=location, platform=platform,
+                        targets, start, end, location=location, platform=platform,
                         datestr=True)
-
         return {'inventory': available}
 
     @validatedForm(VSponsorAdmin(),
@@ -1281,9 +1304,9 @@ class PromoteApiController(ApiController):
         VModhash(),
         start=VDate('startdate'),
         end=VDate('enddate'),
-        sr=VSubmitSR('sr', promotion=True),
+        srs=VSubmitSR('srs', promotion=True),
     )
-    def POST_add_roadblock(self, form, jquery, start, end, sr):
+    def POST_add_roadblock(self, form, jquery, start, end, srs):
         if (form.has_errors('startdate', errors.BAD_DATE) or
                 form.has_errors('enddate', errors.BAD_DATE)):
             return
@@ -1293,12 +1316,14 @@ class PromoteApiController(ApiController):
             form.has_errors('enddate', errors.BAD_DATE_RANGE)
             return
 
-        if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+        if form.has_errors('srs', errors.SUBREDDIT_NOEXIST,
                            errors.SUBREDDIT_NOTALLOWED,
                            errors.SUBREDDIT_REQUIRED):
             return
 
-        PromotedLinkRoadblock.add(sr, start, end)
+        if srs:
+            for sr in srs:
+                PromotedLinkRoadblock.add(sr, start, end)
         jquery.refresh()
 
     @validatedForm(
@@ -1315,6 +1340,7 @@ class PromoteApiController(ApiController):
             return
 
         if start and end and sr:
+            sr = sr[0] # sr is a list of subreddits
             PromotedLinkRoadblock.remove(sr, start, end)
             jquery.refresh()
 
@@ -1382,7 +1408,7 @@ class PromoteApiController(ApiController):
         if form.has_errors('location', errors.INVALID_LOCATION):
             return
 
-        if not allowed_location_and_target(location, target):
+        if not allowed_location_and_targets(location, target):
             return abort(403, 'forbidden')
 
         if (form.has_errors('startdate', errors.BAD_DATE) or
@@ -1643,7 +1669,6 @@ class PromoteApiController(ApiController):
         if campaign:
             if requires_reapproval and promote.is_accepted(link):
                 campaign_dict['is_approved'] = False
-
             promote.edit_campaign(
                 link,
                 campaign,

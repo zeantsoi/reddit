@@ -1386,6 +1386,8 @@ class VSubmitParent(VByName):
         }
 
 class VSubmitSR(Validator):
+    SR_NAMES_DELIM = '|'
+
     def __init__(self, srname_param, linktype_param=None, promotion=False):
         self.require_linktype = False
         self.promotion = promotion
@@ -1401,33 +1403,37 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_REQUIRED)
             return None
 
-        try:
-            sr_name = sr_path_rx.sub('\g<name>', str(sr_name).strip())
-            sr = Subreddit._by_name(sr_name)
-        except (NotFound, AttributeError, UnicodeEncodeError):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
-            return
-
-        if not c.user_is_loggedin or not sr.can_submit(c.user, self.promotion):
-            self.set_error(errors.SUBREDDIT_NOTALLOWED)
-            return
-
-        if not sr.allow_ads and self.promotion:
-            self.set_error(errors.SUBREDDIT_DISABLED_ADS)
-            return
-
-        if self.require_linktype:
-            if link_type not in ('link', 'self'):
-                self.set_error(errors.INVALID_OPTION)
-                return
-            elif link_type == "link" and not sr.can_submit_link(c.user):
-                self.set_error(errors.NO_LINKS)
-                return
-            elif link_type == "self" and not sr.can_submit_text(c.user):
-                self.set_error(errors.NO_SELFS)
+        sr_names = sr_name.split(self.SR_NAMES_DELIM) \
+                                 if self.SR_NAMES_DELIM in sr_name else [sr_name]
+        sr_list = []
+        for sr_name in sr_names:
+            try:
+                sr_name = sr_path_rx.sub('\g<name>', str(sr_name).strip())
+                sr = Subreddit._by_name(sr_name)
+            except (NotFound, AttributeError, UnicodeEncodeError):
+                self.set_error(errors.SUBREDDIT_NOEXIST)
                 return
 
-        return sr
+            if not c.user_is_loggedin or not sr.can_submit(c.user, self.promotion):
+                self.set_error(errors.SUBREDDIT_NOTALLOWED)
+                return
+
+            if not sr.allow_ads and self.promotion:
+                self.set_error(errors.SUBREDDIT_DISABLED_ADS)
+                return
+
+            if self.require_linktype:
+                if link_type not in ('link', 'self'):
+                    self.set_error(errors.INVALID_OPTION)
+                    return
+                elif link_type == "link" and not sr.can_submit_link(c.user):
+                    self.set_error(errors.NO_LINKS)
+                    return
+                elif link_type == "self" and not sr.can_submit_text(c.user):
+                    self.set_error(errors.NO_SELFS)
+                    return
+            sr_list.append(sr)
+        return sr_list
 
     def param_docs(self):
         return {
@@ -1490,27 +1496,28 @@ class VCollection(Validator):
 
 
 class VPromoTarget(Validator):
-    default_param = ("targeting", "sr", "collection")
+    default_param = ("targeting", "sr", "collection", "selected_sr_names")
+    SR_NAMES_DELIM = '|'
 
-    def run(self, targeting, sr_name, collection_name):
+    def run(self, targeting, sr_name, collection_name, selected_sr_names):
         if targeting == "collection" and collection_name == "none":
             return Target(Frontpage.name)
         elif targeting == "none":
             return Target(Frontpage.name)
         elif targeting == "collection":
             collection = VCollection("collection").run(collection_name)
-            if collection:
-                return Target(collection)
+            # VCollection added errors so no need to do anything
+            return Target(collection) if collection else None
+        elif targeting == "subreddit":
+            # Check to see if target is a single subredddit or
+            # multiple subreddits bundled as a collection
+            if selected_sr_names:
+                srs = VSubmitSR("sr", promotion=True).run(selected_sr_names) 
+                sr_names = [sr.name for sr in srs]
+                pretty_name = "\n ".join(["/r/%s" % sr for sr in sr_names])
+                return Target(Collection(pretty_name, sr_names))
             else:
-                # VCollection added errors so no need to do anything
-                return
-        elif targeting == "one":
-            sr = VSubmitSR("sr", promotion=True).run(sr_name)
-            if sr:
-                return Target(sr.name)
-            else:
-                # VSubmitSR added errors so no need to do anything
-                return
+                return Target(sr_name)
         else:
             self.set_error(errors.INVALID_TARGET, field="targeting")
 
