@@ -585,13 +585,12 @@ def terminate_campaign(link, campaign):
 
     now = promo_datetime_now()
     original_end = campaign.end_date
-    dates = [campaign.start_date, now]
 
     # NOTE: this will delete PromotionWeights after and including now.date()
     edit_campaign(
         link=link,
         campaign=campaign,
-        dates=dates,
+        end_date=now,
         send_event=False,
     )
 
