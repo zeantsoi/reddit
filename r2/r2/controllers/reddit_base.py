@@ -358,6 +358,9 @@ def delete_over18_cookie():
     c.cookies["over18"] = Cookie(value="", expires=DELETE)
 
 
+IOS_re = re.compile(r"\biOS\b")
+
+
 def obey_over18():
     """Should the over-18 restriction always be enforced."""
     obey_over18 = request.GET.get("obey_over18") == "true"
@@ -368,6 +371,17 @@ def obey_over18():
     # for the API/RSS (and therefore apps) make the user's over18
     # settings-enforcement mandatory.
     if (is_api or is_rss) and obey_over18:
+        return True
+    # opt iOS clients into the over18 filter.  Examples:
+    #   AlienBlue/2.9.10.0.2 CFNetwork/758.3.15 Darwin/15.4.0
+    #   Reddit/Version 1.0/Build 888/iOS Version 9.3.1 (Build 13E238)
+    #   McReddit - Reddit Client for iOS
+    # contrast with Mobile Safari:
+    #  	Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13E238 Safari/601.1
+    elif (
+        request.user_agent.startswith("AlienBlue/") or
+        IOS_re.search(request.user_agent)
+    ):
         return True
     # allow explicit overrides from feature flags
     elif feature.is_enabled('safe_search'):
@@ -916,6 +930,7 @@ class MinimalController(BaseController):
             c.secure,
             request.fullpath,
             c.over18,
+            c.obey_over18,
             c.extension,
             c.render_style,
             location,
