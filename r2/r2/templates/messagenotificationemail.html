@@ -136,13 +136,13 @@
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td valign="middle" width="60" class="img" style="font-size:0pt; line-height:0pt; text-align:left">
-                    <a href="${parse_url(thing.base_url, thing.base_utm_query)}" target="_blank"><img border="0" src="${static('message_notification_email_logo.png', absolute=True)}" alt="" width="50" height="50" />
+                    <a href="${parse_url(thing.base_url, thing.base_utm_query, {'utm_term': 'reddit_icon'})}" target="_blank"><img border="0" src="${static('message_notification_email_logo.png', absolute=True)}" alt="" width="50" height="50" />
                     </a>
                   </td>
                   <td>
                     <div class="text-header" style="color:#555555; font-family:Arial; font-size:18px; line-height:22px; text-align:left">
                       You have ${thing.message_count} new ${'messages' if thing.message_count > 1 else 'message'} in your
-                      <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}"  class="link" style="color:#0079d3; text-decoration:none" target="_blank">
+                      <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_link'})}"  class="link" style="color:#0079d3; text-decoration:none" target="_blank">
                         <span class="link" style="color:#0079d3; text-decoration:none">Reddit Inbox</span>
                       </a>
                     </div>
@@ -160,29 +160,31 @@
               <!-- Main -->
               %for index, message in enumerate(thing.messages):
                 %if message["message_type"] == "message":
-                  <h2>Private message from ${author_name_link(message['author_name'], {"utm_name":"private_message", "utm_term":index})}
-                    <span> &bull; ${view_notification_link("view", message, {"utm_name":"private_message", "utm_term":index})} </span>
+                  <h2>Private message from ${author_name_link(message['author_name'], {"utm_content":"private_message", "utm_term":index})}
+                    <span> &bull; ${view_notification_link("view", message, {"utm_content":"private_message", "utm_term":index})} </span>
                   </h2>
 
+                  ${md(message["subject"])}
+
                 %elif message["message_type"] == "post reply":
-                  <h2>Post reply from ${author_name_link(message['author_name'], {"utm_name":"post_reply", "utm_term":index})}
-                    <span> &bull; ${view_notification_link("reply", message, {"utm_name":"post_reply", "utm_term":index, "context":3})} </span>
+                  <h2>Post reply from ${author_name_link(message['author_name'], {"utm_content":"post_reply", "utm_term":index})}
+                    <span> &bull; ${view_notification_link("reply", message, {"utm_content":"post_reply", "utm_term":index, "context":3})} </span>
                   </h2>
 
                 %elif message["message_type"] == "comment reply":
-                  <h2>Comment reply from ${author_name_link(message['author_name'], {"utm_name":"comment_reply", "utm_term":index})}
-                    <span> &bull; ${view_notification_link("reply", message, {"utm_name":"comment_reply", "utm_term":index, "context":3})} </span>
+                  <h2>Comment reply from ${author_name_link(message['author_name'], {"utm_content":"comment_reply", "utm_term":index})}
+                    <span> &bull; ${view_notification_link("reply", message, {"utm_content":"comment_reply", "utm_term":index, "context":3})} </span>
                   </h2>
                 %elif message["message_type"] == "username notification":
                   <h2>
-                    ${author_name_link(message['author_name'], {"utm_name":"username_mention", "utm_term":index})}
+                    ${author_name_link(message['author_name'], {"utm_content":"username_mention", "utm_term":index})}
                     <span>mentioned you in</span>
                     <span>
                       <a href="${message['permalink']}" class="link" style="color:#0079d3; text-decoration:none" target="_blank">
                         a thread
                       </a>
                     </span>
-                    <span> &bull; ${view_notification_link("reply", message, {"utm_name":"username_mention", "utm_term":index, "context":3})} </span>
+                    <span> &bull; ${view_notification_link("reply", message, {"utm_content":"username_mention", "utm_term":index, "context":3})} </span>
                   </h2>
                 %endif
 
@@ -201,21 +203,23 @@
               <!-- Button -->
               <div style="font-size:0pt; line-height:0pt; height:8px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="8" style="height:8px" alt="" /></div>
 
-              <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="left">
-                    <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
-                      <tr>
-                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
-                        <td class="text-btn" style="color:#ffffff; font-family:Arial; font-size:14px; line-height:18px; text-align:center">
-                          <a href="${parse_url(thing.inbox_url, thing.base_utm_query)}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank"><strong class="call-to-action" style="color:#ffffff; text-decoration:none">Go to Reddit Inbox</strong></a>
-                        </td>
-                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
-                      </tr>
-                    </table>    
-                  </td>
-                </tr>
-              </table>
+              <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_button'})}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="left">
+                      <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
+                        <tr>
+                          <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
+                          <td class="text-btn" style="color:#ffffff; font-family:Arial; font-size:14px; line-height:18px; text-align:center">
+                            <strong class="call-to-action" style="color:#ffffff; text-decoration:none">Go to Reddit Inbox</strong>
+                          </td>
+                          <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
+                        </tr>
+                      </table>    
+                    </td>
+                  </tr>
+                </table>
+              </a>
               <!-- END Button -->
               <!-- END Main -->
 
@@ -228,7 +232,7 @@
 
 
               <div class="text-footer" style="color:#b5b3ac; font-family:Arial; font-size:12px; line-height:16px; text-align:center">
-                If you would not like to receive emails from Reddit in the future, <a href="${parse_url(thing.unsubscribe_link, thing.base_utm_query, {'utm_name':'unsubscribe'})}" class="link" style="color:#0079d3; text-decoration:none" target="_blank"><span class="link" style="color:#0079d3; text-decoration:none">unsubscribe</span></a>.<br />Reddit Inc. <a href="https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74" class="link-footer" style="color:#b5b3ac; text-decoration:none" target="_blank"><span class="link-footer" style="color:#b5b3ac; text-decoration:none">548 Market St #16093, San Francisco, CA 94104-5401, United States</span></a>
+                If you would not like to receive emails from Reddit in the future, <a href="${parse_url(thing.unsubscribe_link, thing.base_utm_query, {'utm_term':'unsubscribe'})}" class="link" style="color:#0079d3; text-decoration:none" target="_blank"><span class="link" style="color:#0079d3; text-decoration:none">unsubscribe</span></a>.<br />Reddit Inc. <a href="https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74" class="link-footer" style="color:#b5b3ac; text-decoration:none" target="_blank"><span class="link-footer" style="color:#b5b3ac; text-decoration:none">548 Market St #16093, San Francisco, CA 94104-5401, United States</span></a>
               </div>
               <div style="font-size:0pt; line-height:0pt; height:15px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="15" style="height:15px" alt="" /></div>
 

@@ -23,26 +23,39 @@
 <%!
   from r2.lib.filters import unsafe
   from r2.lib.template_helpers import update_query
+  from r2.lib.utils import UrlParser
 %>
 
-You have ${thing.message_count} new ${'messages' if thing.message_count > 1 else 'message'} in your Reddit Inbox: ${unsafe(update_query(thing.inbox_url, utm_source="email", utm_medium="message_notification"))}
+<%def name="parse_url(base_url, base_query, custom_queries=None)">
+  <% 
+    url = UrlParser(base_url)
+    url.update_query(**base_query)
+    if custom_queries:
+      url.update_query(**custom_queries)
+    url = url.unparse()
+  %>
+  ${url}
+</%def>
+
+You have ${thing.message_count} new ${'messages' if thing.message_count > 1 else 'message'} in your Reddit Inbox: ${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_link'})}
 
 %for index, message in enumerate(thing.messages):
   %if message["message_type"] == "message":
     Private message from ${message['author_name']}
-    View: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="private_message", utm_term=index))}
+    View: ${parse_url(message['permalink'], thing.base_utm_query, {'utm_content': 'private_message', 'utm_term':index})}
+    ${unsafe(message["subject"])}
 
   %elif message["message_type"] == "post reply":
     Post reply from ${message['author_name']}
-    View: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="post_reply", utm_term=index, context=3))}
- 
+    View: ${parse_url(message['permalink'], thing.base_utm_query, {'utm_content': 'post_reply', 'utm_term':index, 'context':3})}
+
   %elif message["message_type"] == "comment reply":
     Comment reply from ${message['author_name']}
-    View: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="comment_reply", utm_term=index, context=3))}
+    View: ${parse_url(message['permalink'], thing.base_utm_query, {'utm_content': 'comment_reply', 'utm_term':index, 'context':3})}
 
   %elif message["message_type"] == "username notification":
     ${message['author_name']} mentioned you in a thread
-    View: ${unsafe(update_query(message['permalink'], utm_source="email", utm_medium="message_notification", utm_name="username_mention", utm_term=index, context=3))}
+    View: ${parse_url(message['permalink'], thing.base_utm_query, {'utm_content': 'username_mention', 'utm_term':index, 'context':3})}
   %endif
 
   ${unsafe(message["body"])}
@@ -53,10 +66,9 @@ You have ${thing.message_count} new ${'messages' if thing.message_count > 1 else
   An additional ${thing.message_count - thing.max_message_display_count} unread ${'messages' if (thing.message_count - thing.max_message_display_count > 1) else 'message'} from ${thing.non_preview_usernames_str} ${'are' if (thing.message_count - thing.max_message_display_count > 1) else 'is'} also in your Inbox.
 %endif
 
-Go to Reddit Inbox: ${unsafe(update_query(thing.inbox_url, utm_source="email", utm_medium="message_notification"))}
+Go to Reddit Inbox: ${parse_url(message['permalink'], thing.base_utm_query, {'utm_term':'inbox_button'})}
 
-If you would not like to receive emails from Reddit in the future, unsubscribe here: ${unsafe(thing.unsubscribe_link + 
-"?utm_source=email&utm_medium=message_notification&utm_name=unsubscribe")}
+If you would not like to receive emails from Reddit in the future, unsubscribe here: ${parse_url(thing.unsubscribe_link, thing.base_utm_query, {'utm_term':'unsubscribe'})}
 Reddit Inc.: ${unsafe("https://www.google.com/maps/place/548+Market+St,+San+Francisco,+CA+94104/@37.790002,-122.4009435,17z/data=!3m1!4b1!4m2!3m1!1s0x808580627b5ea1d1:0x60fd99496057cf74")}
 
 548 Market St #16093, San Francisco, CA 94104-5401, United States

@@ -27,9 +27,11 @@ from email.MIMEMultipart import MIMEMultipart
 from email.errors import HeaderParseError
 import datetime
 import traceback, sys, smtplib
+import hashlib
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
+from pylons import request
 from pylons.i18n import N_
 import simplejson as json
 
@@ -195,11 +197,8 @@ def message_notification_email(data):
         oldest_inbox_rel = inbox_items[0][0]
 
         now = datetime.datetime.now(g.tz)
-        if 'start_date' in datum:
-            start_date = datetime.datetime.strptime(datum['start_date'],
-                "%Y-%m-%d %H:%M:%S").replace(tzinfo=g.tz)
-        else:
-            start_date = now
+        start_date = datetime.datetime.strptime(datum['start_date'],
+                     "%Y-%m-%d %H:%M:%S").replace(tzinfo=g.tz)
 
         # If messages are still being queued within the cooling period or
         # messages have been queued past the max delay, then keep waiting
@@ -212,7 +211,7 @@ def message_notification_email(data):
         messages = []
         message_count = 0
         more_unread_messages = False
-        non_preview_usernames = []
+        non_preview_usernames = set()
 
         # Batch messages to email starting with older messages
         for inbox_rel, message in inbox_items:
@@ -228,7 +227,8 @@ def message_notification_email(data):
                 sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
 
             if message_count >= MAX_MESSAGES_PER_BATCH:
-                non_preview_usernames.append(sender_name)
+                # prevent duplicate usernames for template display
+                non_preview_usernames.add(sender_name)
                 more_unread_messages = True
             else:
                 if isinstance(message, Comment):
@@ -256,6 +256,9 @@ def message_notification_email(data):
                     "body": message.body,
                     "date": long_datetime(message._date),
                     "permalink": permalink,
+                    "id": message._id,
+                    "fullname": message._fullname,
+                    "subject": getattr(message, 'subject', ''),
                 })
 
             inbox_rel.emailed = True
@@ -267,16 +270,20 @@ def message_notification_email(data):
                 user_password_hash=user.password)
         base = g.https_endpoint or g.origin
         unsubscribe_link = base + '/mail/unsubscribe/%s/%s' % (datum['to'], mac)
-        base_utm_query = {'utm_source': 'email', 'utm_medium':'message_notification'}
         inbox_url = base + '/message/inbox'
-        
-        # produces string of usernames for whom a message preview is not displayed
-        # for easy use in template
-        if len(non_preview_usernames) > 1:
-            last_username = non_preview_usernames.pop()
-            non_preview_usernames.append("and " + last_username)
 
-        non_preview_usernames_str = ', '.join(non_preview_usernames)
+        # unique email_hash for emails, to be used in utm tags
+        id_str = ''.join(str(message['id'] for message in messages))
+        email_hash = hashlib.sha1(id_str).hexdigest()
+        
+        base_utm_query = {
+            'utm_name': email_hash, 
+            'utm_source': 'email', 
+            'utm_medium':'message_notification',
+        }
+        
+        non_preview_usernames_str = generate_non_preview_usernames_str(
+                                        non_preview_usernames)
 
         templateData = {
             'messages': messages,
@@ -288,7 +295,6 @@ def message_notification_email(data):
             'base_url': base,
             'base_utm_query': base_utm_query,
             'inbox_url': inbox_url,
-
         }
         custom_headers = {
             'List-Unsubscribe': "<%s>" % unsubscribe_link
@@ -296,17 +302,49 @@ def message_notification_email(data):
 
         g.email_provider.send_email(
             to_address=user.email,
-            from_address=g.notification_email,
+            from_address="Reddit <%s>" % g.notification_email,
             subject=Email.subjects[Email.Kind.MESSAGE_NOTIFICATION],
             text=MessageNotificationEmail(**templateData).render(style='email'),
             html=MessageNotificationEmail(**templateData).render(style='html'),
             custom_headers=custom_headers,
         )
 
+        # report the email event to data pipeline
+        g.events.orangered_email_event(
+            request=request,
+            context=c,
+            user=user,
+            messages=messages,
+            email_hash=email_hash,
+            reply_count=message_count,
+            newest_reply_age=newest_inbox_rel._date,
+            oldest_reply_age=oldest_inbox_rel._date,
+        )
+
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
         g.cache.incr(USER_MESSAGE_THROTTLE_KEY)
 
+def generate_non_preview_usernames_str(usernames):
+    """ produces string of usernames for whom a message preview is not 
+    displayed, for easy use in template
+    """
+
+    if len(usernames) == 0:
+        return
+
+    if len(usernames) == 1:
+        return usernames[0]
+
+    if len(usernames) > 5:
+        # returns "username1, username2, and more"
+        usernames = usernames[:5]
+        usernames.add("and more")
+    else:
+        # returns "username1, username2, and username3"
+        usernames.add("and %s" % usernames.pop())
+
+    return ', '.join(usernames)
 
 def generate_notification_email_unsubscribe_token(user_id36, user_email=None,
                                                   user_password_hash=None):

@@ -73,6 +73,7 @@ from r2.models.trylater import TryLater
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.promo import PROMOTE_STATUS
 from r2.models.vote import Vote
+from r2.models.token import OrangeredOptInToken
 
 from pylons import request
 from pylons import tmpl_context as c
@@ -92,7 +93,7 @@ from pycassa.system_manager import (
 )
 import pytz
 
-NOTIFICATION_EMAIL_COOLING_PERIOD = timedelta(minutes=10)
+NOTIFICATION_EMAIL_COOLING_PERIOD = g.notification_email_cooling_period
 NOTIFICATION_EMAIL_MAX_DELAY = timedelta(hours=1)
 
 
@@ -2827,21 +2828,75 @@ class Inbox(MultiRelation('inbox',
         if orangered:
             to._incr('inbox_count', 1)
 
-        if orangered and to.pref_email_messages:
-            i.emailed = False
-            i._commit()
-            from r2.lib.emailer import message_notification_email
+        if feature.is_enabled('orangereds_as_emails', user=to):
+            if (to.email and orangered and to.pref_email_messages and 
+                    to.email_verified):
+                i.emailed = False
+                i._commit()
 
-            data = {
-                'to': to._id36,
-                'start_date': obj._date.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            data = json.dumps(data)
-
-            TryLater.schedule('message_notification_email', data,
-                              NOTIFICATION_EMAIL_COOLING_PERIOD)
+                data = {
+                    'to': to._id36,
+                    'start_date': obj._date.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                data = json.dumps(data)
+                TryLater.schedule('message_notification_email', data,
+                                  NOTIFICATION_EMAIL_COOLING_PERIOD)
+            else:
+                cls.orangered_call_to_action(to, obj, orangered)
 
         return i
+
+    @classmethod
+    def orangered_call_to_action(cls, to, obj, orangered=True):
+        needs_verify = to.pref_email_messages and not to.email_verified
+        needs_opt_in = to.email_verified and not to.pref_email_messages
+        yesterday = datetime.today() - timedelta(hours=24)
+        user_is_new = (to._date > yesterday.replace(tzinfo=g.tz))
+
+        if not feature.is_enabled('orangereds_as_emails', user=to):
+            return
+
+        # check that sender isn't a system message, since call-to-action 
+        # messages should only be triggered by a "real" orangered.
+        if obj.author_id == Account.system_user()._id:
+            return
+
+        if (not to.email or not orangered or 
+                to.orangered_opt_in_message_timestamp):
+            return
+
+        if needs_verify:
+            if needs_opt_in:
+                # if user does not have feature enabled, 
+                # and their email is NOT verified, 
+                # send a combo verification/opt-in message
+                cls.send_orangered_sys_message(
+                    'verify_email_and_enable_orangered', to)
+            elif not user_is_new:
+                # if user has feature enabled, 
+                # but has not verified their email, then this
+                # user is likely new. allow 24 hours before sending
+                cls.send_orangered_sys_message(
+                    'verification_reminder', to)
+        elif needs_opt_in:
+            # if user does not have feature enabled, 
+            # but their email is verified, send opt-in message
+            cls.send_orangered_sys_message('enable_orangered_email', to)
+
+    @classmethod
+    def send_orangered_sys_message(cls, hook, to):
+        # create token to pass to template
+        token = OrangeredOptInToken._new(to)
+        base = g.https_endpoint or g.origin
+        url = base + '/prefs/orangereds/' + token._id
+
+        # send sys message via wiki templates
+        hooks.get_hook('account.%s' % hook).call(
+            message_type='%s_message' % hook,
+            title_type='%s_title' % hook,
+            user=to,
+            url=url,
+        )
 
     @classmethod
     def possible_recipients(cls, obj):

@@ -1589,6 +1589,16 @@ class ApiController(RedditController):
 
         g.events.delete_event(thing, request=request, context=c)
 
+    @validatedForm(
+        VUser(),
+        VModhash(),
+    )
+    def POST_undo_orangered_email_unsubscribe(self, form):
+        c.user.pref_email_messages = True
+        c.user._commit()
+        form.set_text('.status', 
+                      _("Success! Your preferences have been updated"))
+
     @require_oauth2_scope("modposts")
     @noresponse(VUser(),
                 VModhash(),

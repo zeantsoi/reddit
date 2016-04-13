@@ -359,6 +359,25 @@ def send_welcome_message(user):
     return send_system_message(user, welcome_title, welcome_message)
 
 
+@admintools_hooks.on("account.verification_reminder")
+@admintools_hooks.on("account.enable_orangered_email")
+@admintools_hooks.on("account.verify_email_and_enable_orangered")
+def send_templated_orangered(message_type, title_type, user, url):
+    title_template = wiki_template(title_type)
+    message_template = wiki_template(message_type)
+
+    if not title_template or not message_template:
+        g.log.warning("Unable to send message: invalid wiki templates.")
+        return
+
+    message_template = message_template.format(user_email=user.email, url=url)
+
+    user.orangered_opt_in_message_timestamp = datetime.now(g.tz)
+    user._commit()
+
+    send_system_message(user, title_template, message_template)
+
+
 def send_system_message(user, subject, body, system_user=None,
                         distinguished='admin', repliable=False,
                         add_to_sent=True, author=None, signed=False):

@@ -20,14 +20,35 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="text_with_links"/>
+<%!
+    from r2.lib.template_helpers import format_html
+%>
+<%namespace name="utils" file="utils.html"/>
 
-<div style="text-align: center">
-    <p>${_("Thanks! You're unsubscribed from all message notification emails.")}</p>
-    <form action="/post/undo_orangered_email_unsubscribe" method="post" 
-    onsubmit="return post_form(this, 'undo_orangered_email_unsubscribe')" 
-    id="undo_orangered_email_unsubscribe">
-      <button type="submit" class="btn">Click to Undo</button>
-      <span class="status"></span>
-  </form>
-</div>
+<%def name="button(button_text)">
+  <button onclick="$.redirect('${thing.url}')">
+    ${button_text}
+  </button>
+</%def>
+
+% if c.user.email:
+  % if not c.user.pref_email_messages or not c.user.email_verified:
+    <h1>
+      Almost done! Just click the button below and you're all set!
+    </h1>
+
+      %if not c.user.pref_email_messages and not c.user.email_verified:
+        ${button(_("Resend Verification Email and Start Receiving Messages as Emails"))}
+      %elif c.user.pref_email_messages and not c.user.email_verified:
+        ${button(_("Resend Verification Email"))}
+      %elif c.user.email_verified and not c.user.pref_email_messages:
+        ${button(_("Start Receiving Messages as Emails"))}
+      %endif
+    <span class="status"></span>
+  % else:
+    <h1>
+      This feature is already enabled for you!
+    </h1>
+  %endif
+%endif
+

@@ -27,6 +27,7 @@ from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.db           import tdb_cassandra
+from r2.lib.geoip        import can_auto_optin_email
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import randstr, timefromnow
 from r2.lib.utils        import UrlParser
@@ -154,6 +155,7 @@ class Account(Thing):
                      in_timeout=False,
                      has_used_mobile_app=False,
                      force_password_reset=False,
+                     orangered_opt_in_message_timestamp=None,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
@@ -857,7 +859,13 @@ def register(name, password, registration_ip):
                 pref_no_profanity=True,
                 registration_ip=registration_ip,
             )
+
             account._commit()
+
+            if can_auto_optin_email(request, c):              
+                if feature.is_enabled('orangereds_as_emails', user=account):
+                    account.pref_email_messages = True
+                    account._commit()
 
             # update Account._by_name to pick up this new name->Account
             Account._by_name(name, _update=True)

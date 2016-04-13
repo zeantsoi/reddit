@@ -334,6 +334,7 @@ class Globals(object):
         ConfigValue.timeinterval: [
             'ARCHIVE_AGE',
             "vote_queue_grace_period",
+            'notification_email_cooling_period',
         ],
 
         config_gold_price: [

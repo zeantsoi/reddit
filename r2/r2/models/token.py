@@ -747,6 +747,21 @@ class EmailVerificationToken(ConsumableToken):
     def valid_for_user(self, user):
         return self.email == user.email
 
+class OrangeredOptInToken(ConsumableToken):
+    _use_db = True
+    _connection_pool = "main"
+    _ttl = datetime.timedelta(days=180)
+    token_size = 20
+
+    @classmethod
+    def _new(cls, user):
+        return super(OrangeredOptInToken, cls)._new(user_id=user._fullname,
+                                                    email=user.email)
+
+    def valid_for_user(self, user):
+        return (self.email == user.email and
+            self.user_id == user._fullname)
+
 
 class PasswordResetToken(ConsumableToken):
     _use_db = True

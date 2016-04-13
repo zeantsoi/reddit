@@ -1355,7 +1355,12 @@ class PrefOptions(Templated):
 class PrefFeeds(Templated):
     pass
 
+
 class PrefSecurity(Templated):
+    pass
+
+
+class PrefOrangeReds(Templated):
     pass
 
 
@@ -3694,11 +3699,14 @@ class NewLink(Templated):
 class Share(Templated):
     pass
 
+
 class Mail_Opt(Templated):
     pass
 
+
 class OptOut(Templated):
     pass
+
 
 class OptIn(Templated):
     pass

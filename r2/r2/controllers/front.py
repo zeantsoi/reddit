@@ -36,7 +36,12 @@ from r2.models import *
 from r2.models.recommend import ExploreSettings
 from r2.config import feature
 from r2.config.extensions import is_api, API_TYPES, RSS_TYPES
-from r2.lib import recommender, embeds, pages
+from r2.lib import (
+    emailer,
+    embeds,
+    pages,
+    recommender,
+) 
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
@@ -63,7 +68,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 
-from r2.models.token import EmailVerificationToken
+from r2.models.token import EmailVerificationToken, OrangeredOptInToken
 from r2.controllers.ipn import generate_blob, validate_blob, GoldException
 
 from operator import attrgetter
@@ -2009,6 +2014,55 @@ class FormsController(RedditController):
                           page_classes=["gold-page-ga-tracking"]
                          ).render()
 
+    @validate(
+        VUser(),
+        token=VOneTimeToken(OrangeredOptInToken, "token"),
+    )
+    def GET_orangered_email_optin(self, token):
+        # we need a token here because we want this GET endpoint to be a 
+        # 1-click action from within a system message
+        if not c.user.email:
+            error_msg = _("""You don't have an email address associated 
+                        with your account!""")
+            return BoringPage(_("Error"), infotext=error_msg).render()
+
+        if not token:
+            return self._bad_orangered_token()
+
+        # load up the user and check that things haven't changed
+        user = Account._by_fullname(token.user_id)
+        if not token.valid_for_user(user):
+            return self._bad_orangered_token()
+
+        token.consume()
+
+        message = _("Success!")
+        if not user.pref_email_messages:
+            user.pref_email_messages = True
+            user._commit()
+            ("%s " % message).join(_("You have updated your preferences."))
+        if not user.email_verified:
+            emailer.verify_email(user)
+            ("%s " % message).join(_("""Please check your inbox to verify 
+                       your email address."""))
+        
+        return BoringPage(_("Success!"),
+                            show_sidebar=True,
+                            infotext=message,
+                            ).render()
+            
+    def _bad_orangered_token(self):
+        token = OrangeredOptInToken._new(c.user)
+        base = g.https_endpoint or g.origin
+        url = base + '/prefs/orangereds/' + token._id
+
+        return BoringPage(_("Get messages to my email inbox!"),
+                            show_sidebar=True,
+                            content=PrefOrangeReds(
+                                user=c.user, 
+                                url=url,
+                            ),
+                            ).render()
 
 class FrontUnstyledController(FrontController):
     allow_stylesheets = False

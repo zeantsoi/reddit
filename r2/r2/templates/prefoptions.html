@@ -292,9 +292,12 @@
       </span>
       <br>
       ${checkbox(_("notify me when people say my username"), "monitor_mentions")}
-      %if feature.is_enabled('orangereds_as_emails'):
-        <br>
-        ${checkbox(_("send messages as emails"), "email_messages", disabled=(not c.user.email_verified), disabled_text=_("requires a verified email"))}
+      <br>
+      ${checkbox(_("send messages as emails"), "email_messages", disabled=(not c.user.email_verified), disabled_text=_("requires a verified email"))}
+      %if not feature.is_enabled('orangereds_as_emails'):
+        &#32;<span class="details">
+          ${_("(not available for your account yet! coming soon.)")}
+        </span>
       %endif
       <br>
       ${checkbox(_("enable threaded modmail display"), "threaded_modmail")}

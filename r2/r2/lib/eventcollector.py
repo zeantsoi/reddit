@@ -1276,6 +1276,63 @@ class EventQueue(object):
                 'user_subscription_size': sub_size,
             },
         )
+
+    @squelch_exceptions
+    def orangered_email_event(self, user, messages, email_hash,
+                              reply_count, newest_reply_age, oldest_reply_age,
+                              request=None, context=None):
+        """Create an orangered to email event
+
+        email_hash: unique id hash of the email message being sent. built with 
+            a hash of the set of message_ids displayed in the email
+        reply_count: count of replies included in an orangered to email 
+        newest_reply_age: age of the newest reply (sent as datetime, 
+            we coerce to milli)
+        oldest_reply_age: age of the oldest reply (sent as datetime, 
+            we coerce to milli) 
+        user: user that triggered above actions
+        messages: displayed messages in the email
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+        """
+
+        fullnames = []
+        reply_types = {
+            "comment_reply": 0,
+            "post_reply": 0, 
+            "message": 0, 
+            "username_mention": 0,
+        }
+
+        # get fullnames for displayed messages
+        for message in messages:
+            fullnames.append(message['fullname'])
+            key = message['message_type'].split(' ')
+            key = '_'.join(key)
+            reply_types[key] += 1
+
+        event = Event(
+            topic="email_sending_events",
+            event_type="ss.orangered_email",
+            request=request,
+            context=context,
+            data={
+                'email_address': user.email,
+                'user_id': user._id,
+                'user_name': user.name,
+                'user_age': _datetime_to_millis(user._date),
+                'reply_count': reply_count,
+                'email_hash': email_hash,
+                'newest_reply_age': _datetime_to_millis(newest_reply_age),
+                'oldest_reply_age': _datetime_to_millis(oldest_reply_age),
+                'reply_fullname_listing': fullnames,
+                'reply_type_count': reply_types,
+            }
+        )
+
+        if user.email_verified:
+            event.add('email_verified', user.email_verified)
+
         self.save_event(event)
 
 

@@ -204,6 +204,11 @@ def make_map(config):
     mc('/t/:timereddit/*rest', controller='redirect',
        action='timereddit_redirect')
 
+    mc('/prefs/orangereds/:token', controller='forms', 
+        action='orangered_email_optin')
+    mc('/prefs/orangereds', controller='forms', 
+        action='orangered_email_optin')
+
     # /prefs/friends is also aliased to /api/v1/me/friends
     mc('/prefs/:where', controller='userlistlisting',
         action='user_prefs', requirements=dict(where='blocked|friends'))
