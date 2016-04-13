@@ -1543,6 +1543,8 @@ class ApiController(RedditController):
             queries.unnotify(thing)
             queries.delete(thing)
 
+        g.events.delete_event(thing, request=request, context=c)
+
     @require_oauth2_scope("modposts")
     @noresponse(VUser(),
                 VModhash(),

@@ -944,6 +944,32 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def delete_event(self, thing, request=None, context=None):
+        """Send delete events for when a user removes their own comment
+        or their own post
+        """
+        from r2.models import Comment, Link
+
+        event_type = None
+        event_topic = None
+        if isinstance(thing, Link):
+            event_topic = "submit_events"
+            event_type = "ss.delete_post"
+        elif isinstance(thing, Comment):
+            event_topic = "comment_events"
+            event_type = "ss.delete_comment"
+
+        event = Event(
+            topic=event_topic,
+            event_type=event_type,
+            request=request,
+            context=context
+        )
+        event.add_target_fields(thing)
+
+        self.save_event(event)
+
+
     @squelch_exceptions
     def delete_campaign_event(self, link, campaign,
             request=None, context=None):
