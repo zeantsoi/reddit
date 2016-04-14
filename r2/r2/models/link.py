@@ -398,13 +398,14 @@ class Link(Thing, Printable):
                      wrapped.score < user.pref_min_link_score)):
                 return False
 
-        if c.obey_over18:
-            include_over18 = c.over18
-        else:
-            include_over18 = True
+        # show NSFW to API and RSS users unless obey_over18=true
+        is_api = c.render_style in extensions.API_TYPES
+        is_rss = c.render_style in extensions.RSS_TYPES
+        if (is_api or is_rss) and not c.obey_over18:
+            return True
 
         is_nsfw = wrapped.over_18 or wrapped.subreddit.over_18
-        return include_over18 or not is_nsfw
+        return c.over18 or not is_nsfw
 
     cache_ignore = {
         'subreddit',
