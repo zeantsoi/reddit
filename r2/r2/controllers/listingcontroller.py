@@ -388,6 +388,12 @@ class ListingWithPromos(SubredditListingController):
         site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
         can_show_promo = (not gold_user_ads_off and not site_headlines_off)
 
+        if can_show_promo:
+            keywords = promote.keywords_from_context(c.user, c.site, 
+                displayed_things=displayed_things)
+            if keywords:
+                show_promo = True
+
         def organic_keep_fn(item):
             base_keep_fn = super(ListingWithPromos, self).keep_fn()
             would_keep = base_keep_fn(item)
@@ -412,7 +418,7 @@ class ListingWithPromos(SubredditListingController):
         s = SpotlightListing(organic_links=organic_links,
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
-                             show_promo=can_show_promo,
+                             show_promo=show_promo,
                              house_probability=house_probability,
                              site=c.site,
                              displayed_things=displayed_things,
