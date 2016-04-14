@@ -1075,6 +1075,10 @@ def make_daily_promotions():
     q = Link._query(Link.c.promote_status == PROMOTE_STATUS.promoted, data=True)
     q = q._filter(not_(Link.c._id.in_(link_ids)))
     for link in q:
+        # we don't want to disable externally promoted links ever.
+        if link.promoted_externally:
+            continue
+
         update_promote_status(link, PROMOTE_STATUS.finished)
         emailer.finished_promo(link)
 
