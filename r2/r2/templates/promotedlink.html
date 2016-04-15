@@ -65,6 +65,8 @@ ${unsafe(taglinetext % dict(author=author))}
     %if thing.is_author or c.user_is_sponsor:
       %if not promote.is_promo(thing):
         ${_('deleted sponsored link')}
+      %elif promote.is_external(thing):
+        ${_('external sponsored link')}
       %elif promote.is_unpaid(thing):
         ${_('unpaid sponsored link')}
       %elif promote.is_unapproved(thing):
