@@ -29,6 +29,7 @@ from os.path import abspath, relpath
 from pylons import app_globals as g
 from pylons.i18n import _
 from reddit_base import RedditController
+from r2.config import feature
 from r2.lib.utils import Storage
 from r2.lib.pages import BoringPage, ApiHelp
 from r2.lib.validator import validate, VOneOf
@@ -153,6 +154,10 @@ class ApidocsController(RedditController):
                 # hide parameters that don't need to be public
                 if 'parameters' in api_doc:
                     docs['parameters'].pop('timeout', None)
+                    # hide "image" from kind in POST_submit
+                    if (not feature.is_enabled("image_uploads") and
+                            action == "submit"):
+                        docs["parameters"]["kind"] = "one of (`link`, `self`)"
 
                 # append a message to the docstring if supplied
                 notes = docs.get("notes")
