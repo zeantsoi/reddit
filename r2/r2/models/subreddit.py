@@ -267,6 +267,7 @@ class Subreddit(Thing, Printable, BaseSite):
         hide_sponsored_headlines=False,
         ban_count=0,
         quarantine=False,
+        audience_target='',
     )
 
     # special attributes that shouldn't set Thing data attributes because they

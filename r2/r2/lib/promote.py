@@ -1364,6 +1364,12 @@ def keywords_from_context(
     if additional_keywords is not None:
         keywords.update(additional_keywords)
 
+    # Add keywords for audience targeting
+    for subreddit in c.recent_subreddits:
+        if subreddit.audience_target:
+            keywords.update(['a.' + target 
+                             for target in subreddit.audience_target.split(',')])
+
     return keywords
 
 
