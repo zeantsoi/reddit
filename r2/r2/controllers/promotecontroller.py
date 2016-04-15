@@ -1245,10 +1245,6 @@ class PromoteApiController(ApiController):
                 context=c,
             )
 
-            # auto accept externally managed promos
-            if l.promoted_externally:
-                promote.accept_promotion(l)
-
         # clean up so the same images don't reappear if they create
         # another link
         _clear_ads_images(thing=c.user if is_new_promoted else l)

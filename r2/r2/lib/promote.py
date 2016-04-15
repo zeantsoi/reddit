@@ -107,9 +107,10 @@ def cost_per_click(spend, clicks):
 
 
 def promo_keep_fn(item):
-    return (is_promoted(item) and
+    return ((is_promoted(item) and
             not item.hidden and
-            (c.over18 or not item.over_18))
+            (c.over18 or not item.over_18)) or
+            is_external(item))
 
 
 # attrs
@@ -178,6 +179,9 @@ def is_promoted(link):
 
 def is_edited_live(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.edited_live
+
+def is_external(link):
+    return is_promo(link) and link.promoted_externally
 
 def is_finished(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.finished
@@ -835,10 +839,6 @@ def accept_promotion(link):
                 promote_link(link, camp)
                 is_live = True
 
-    if link.promoted_externally:
-        promote_link(link)
-        is_live = True
-
     if is_live:
         all_live_promo_srnames(_update=True)
 
@@ -1075,10 +1075,6 @@ def make_daily_promotions():
     q = Link._query(Link.c.promote_status == PROMOTE_STATUS.promoted, data=True)
     q = q._filter(not_(Link.c._id.in_(link_ids)))
     for link in q:
-        # we don't want to disable externally promoted links ever.
-        if link.promoted_externally:
-            continue
-
         update_promote_status(link, PROMOTE_STATUS.finished)
         emailer.finished_promo(link)
 
