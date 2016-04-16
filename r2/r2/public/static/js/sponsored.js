@@ -592,7 +592,7 @@ var exports = r.sponsored = {
             }
 
             r.analytics.adsInteractionEvent('select_subreddit', {
-              subreddit_name: $(this).val(),
+              sr_name: $(this).val(),
               target: target,
             });
         });
