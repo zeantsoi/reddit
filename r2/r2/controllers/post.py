@@ -19,6 +19,13 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+from pylons import url
+from pylons.controllers.util import redirect
+from pylons.i18n import _
+
 from r2.lib.pages import *
 from reddit_base import (
     set_over18_cookie,
@@ -26,8 +33,7 @@ from reddit_base import (
     vary_pagecache_on_experiments,
 )
 from api import ApiController
-from r2.lib.errors import BadRequestError, errors
-from r2.lib.utils import Storage, query_string, UrlParser
+from r2.lib.utils import query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
 from r2.lib.validator import *
 from r2.lib.validator.preferences import (
@@ -37,15 +43,8 @@ from r2.lib.validator.preferences import (
 )
 from r2.lib.csrf import csrf_exempt
 from r2.models.recommend import ExploreSettings
-from pylons import request
-from pylons import tmpl_context as c
-from pylons import app_globals as g
-from pylons import url
-from pylons.controllers.util import redirect
-from pylons.i18n import _
+from r2.controllers.login import handle_login, handle_register
 from r2.models import *
-import hashlib
-from r2.lib.base import abort
 from r2.config import feature
 
 class PostController(ApiController):
@@ -182,11 +181,11 @@ class PostController(ApiController):
     @csrf_exempt
     @validate(dest = VDestination(default = "/"))
     def POST_login(self, dest, *a, **kw):
-        ApiController._handle_login(self, *a, **kw)
+        super(PostController, self).POST_login(*a, **kw)
         c.render_style = "html"
         response.content_type = "text/html"
 
-        if c.errors:
+        if not c.user_is_loggedin:
             return LoginPage(user_login = request.POST.get('user'),
                              dest = dest).render()
 
@@ -196,11 +195,11 @@ class PostController(ApiController):
     @csrf_exempt
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
-        ApiController._handle_register(self, *a, **kw)
+        super(PostController, self).POST_register(*a, **kw)
         c.render_style = "html"
         response.content_type = "text/html"
 
-        if c.errors:
+        if not c.user_is_loggedin:
             return LoginPage(user_reg = request.POST.get('user'),
                              dest = dest).render()
 
