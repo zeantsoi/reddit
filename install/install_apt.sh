@@ -111,4 +111,8 @@ optipng
 jpegoptim
 
 libpcre3-dev
+
+python-gevent
+python-gevent-websocket
+python-haigha
 PACKAGES
