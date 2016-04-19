@@ -1498,6 +1498,12 @@ var exports = r.sponsored = {
     fill_campaign_editor: function() {
 
         var $form = $("#campaign");
+
+        // external campaigns don't have an editor.
+        if (!$form.length) {
+          return;
+        }
+
         var platformTargeting = this.getPlatformTargeting();
 
         this.currentPlatform = platformTargeting.platform;
