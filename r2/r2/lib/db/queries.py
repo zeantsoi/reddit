@@ -760,10 +760,11 @@ def set_promote_status(link, promote_status):
     all_queries = [promote_query(link.author_id) for promote_query in 
                    (get_unpaid_links, get_unapproved_links, 
                     get_rejected_links, get_live_links, get_accepted_links,
-                    get_edited_live_links)]
+                    get_edited_live_links, get_external_links)]
     all_queries.extend([get_all_unpaid_links(), get_all_unapproved_links(),
                         get_all_rejected_links(), get_all_live_links(),
-                        get_all_accepted_links(), get_all_edited_live_links()])
+                        get_all_accepted_links(), get_all_edited_live_links(),
+                        get_all_external_links()])
 
     if promote_status == PROMOTE_STATUS.unpaid:
         inserts = [get_unpaid_links(link.author_id), get_all_unpaid_links()]
@@ -779,6 +780,8 @@ def set_promote_status(link, promote_status):
             get_edited_live_links(link.author_id),
             get_all_edited_live_links()
         ]
+    elif promote_status == PROMOTE_STATUS.external:
+        inserts = [get_external_links(link.author_id), get_all_external_links()]
     elif promote_status in (PROMOTE_STATUS.accepted, PROMOTE_STATUS.pending,
                             PROMOTE_STATUS.finished):
         inserts = [get_accepted_links(link.author_id), get_all_accepted_links()]
@@ -805,7 +808,8 @@ def _promoted_link_query(user_id, status):
                     'accepted': (PROMOTE_STATUS.accepted,
                                  PROMOTE_STATUS.pending,
                                  PROMOTE_STATUS.finished),
-                    'edited_live': PROMOTE_STATUS.edited_live}
+                    'edited_live': PROMOTE_STATUS.edited_live,
+                    'external': PROMOTE_STATUS.external}
 
     q = Link._query(Link.c.sr_id == Subreddit.get_promote_srid(),
                     Link.c._spam == (True, False),
@@ -889,6 +893,16 @@ def get_edited_live_links(user_id):
 @cached_query(UserQueryCache)
 def get_all_edited_live_links():
     return _promoted_link_query(None, 'edited_live')
+
+
+@cached_query(UserQueryCache)
+def get_external_links(user_id):
+    return _promoted_link_query(user_id, 'external')
+
+
+@cached_query(UserQueryCache)
+def get_all_external_links():
+    return _promoted_link_query(None, 'external')
 
 
 @cached_query(UserQueryCache)

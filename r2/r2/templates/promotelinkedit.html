@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  %if thing.link.promoted_externally:
+  %if promote.is_external(thing.link):
     <div class="dashboard">
       <h2>${_("this promotion is managed in adzerk")}</h2>
       <p>

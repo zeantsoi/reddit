@@ -190,6 +190,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      pending_promos = _('pending'),
                      rejected_promos = _('rejected'),
                      edited_live_promos = _('edited live'),
+                     external_promos = _('external promos'),
 
                      sitewide = _('sitewide'),
                      languages = _('languages'),

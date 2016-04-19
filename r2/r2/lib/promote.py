@@ -163,6 +163,7 @@ def is_accepted(link):
     return (is_promo(link) and
             link.promote_status != PROMOTE_STATUS.rejected and
             link.promote_status != PROMOTE_STATUS.edited_live and
+            link.promote_status != PROMOTE_STATUS.external and
             link.promote_status >= PROMOTE_STATUS.accepted)
 
 def is_unpaid(link):
@@ -181,7 +182,7 @@ def is_edited_live(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.edited_live
 
 def is_external(link):
-    return is_promo(link) and link.promoted_externally
+    return is_promo(link) and link.promote_status == PROMOTE_STATUS.external
 
 def is_finished(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.finished

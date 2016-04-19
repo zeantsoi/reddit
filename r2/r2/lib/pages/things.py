@@ -158,7 +158,7 @@ class LinkButtons(PrintableButtons):
                 kw["hide_after_seen"] = getattr(thing, "hide_after_seen", False)
                 kw["show_approval"] = (thing.promoted and
                   not thing._deleted and
-                  not thing.promoted_externally)
+                  not is_external(thing))
 
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences

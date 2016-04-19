@@ -120,7 +120,6 @@ class Link(Thing, Printable):
                      third_party_tracking=None,
                      third_party_tracking_2=None,
                      promoted=None,
-                     promoted_externally=False,
                      payment_flagged_reason="",
                      fraud=None,
                      managed_promo=False,

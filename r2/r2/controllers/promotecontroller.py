@@ -148,6 +148,7 @@ from r2.models import (
     PromotionPrices,
     PromotionWeights,
     PromotedLinkRoadblock,
+    PROMOTE_STATUS,
     Subreddit,
     Target,
 )
@@ -435,6 +436,7 @@ class PromoteListingController(ListingController):
     render_cls = PromotePage
     titles = {
         'unapproved_campaigns': N_('unapproved campaigns'),
+        'external_promos': N_('externally promoted links'),
         'future_promos': N_('unapproved promoted links'),
         'pending_promos': N_('accepted promoted links'),
         'unpaid_promos': N_('unpaid promoted links'),
@@ -472,7 +474,15 @@ class PromoteListingController(ListingController):
 
     @property
     def menus(self):
-        return [NavMenu(self.default_filters, base_path=self.base_path, title='show',
+        # copy to prevent modifing the class attribute.
+        filters = self.default_filters[:]
+
+        if c.user_is_sponsor:
+            filters.append(
+                NamedButton('external_promos', use_params=False)
+            )
+
+        return [NavMenu(filters, base_path=self.base_path, title='show',
                          type='lightdrop')]
 
     def builder_wrapper(self, thing):
@@ -499,10 +509,12 @@ class PromoteListingController(ListingController):
         return keep
 
     def query(self):
-        if self.sort == "unapproved_campaigns":
-            return queries.get_unapproved_links
+        if self.sort == "external_promos":
+            return queries.get_external_links(c.user._id)
         elif self.sort == "future_promos":
             return queries.get_unapproved_links(c.user._id)
+        elif self.sort == "external_promos":
+            return queries.get_external_links(c.user._id)
         elif self.sort == "pending_promos":
             return queries.get_accepted_links(c.user._id)
         elif self.sort == "unpaid_promos":
@@ -580,6 +592,9 @@ class SponsorListingController(PromoteListingController):
             # copy to prevent modifing the class attribute.
             filters = self.default_filters[:]
             filters.append(
+                NamedButton('external_promos', use_params=False)
+            )
+            filters.append(
                 NamedButton('unapproved_campaigns',
                             use_params=False)
             )
@@ -656,6 +671,8 @@ class SponsorListingController(PromoteListingController):
     def query(self):
         if self.sort == "unapproved_campaigns":
             return queries.get_all_links_with_unapproved_campaigns()
+        elif self.sort == "external_promos":
+            return queries.get_all_external_links()
         elif self.sort == "future_promos":
             return queries.get_all_unapproved_links()
         elif self.sort == "pending_promos":
@@ -1038,7 +1055,8 @@ class PromoteApiController(ApiController):
             )
 
             # manage flights in adzerk
-            l.promoted_externally = c.user_is_sponsor and promoted_externally
+            if promoted_externally:
+                promote.update_promote_status(l, PROMOTE_STATUS.external)
         elif not promote.is_promo(l):
             return
         # edit only
