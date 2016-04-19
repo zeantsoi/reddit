@@ -22,10 +22,7 @@
 """Utilities for interfacing with the WebSocket server Sutro."""
 
 import datetime
-import hashlib
-import hmac
 import json
-import time
 import urllib
 import urlparse
 
@@ -62,17 +59,11 @@ def make_url(namespace, max_age):
 
     """
 
-    expires = str(int(time.time() + max_age))
-    mac = hmac.new(g.secrets["websocket"], expires + namespace,
-                   hashlib.sha1).hexdigest()
-
     signer = MessageSigner(g.secrets["websocket"])
     signature = signer.make_signature(
         namespace, max_age=datetime.timedelta(seconds=max_age))
 
     query_string = urllib.urlencode({
-        "h": mac,
-        "e": expires,
         "m": signature,
     })
 
