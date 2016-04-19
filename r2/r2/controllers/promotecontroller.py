@@ -509,9 +509,7 @@ class PromoteListingController(ListingController):
         return keep
 
     def query(self):
-        if self.sort == "external_promos":
-            return queries.get_external_links(c.user._id)
-        elif self.sort == "future_promos":
+        if self.sort == "future_promos":
             return queries.get_unapproved_links(c.user._id)
         elif self.sort == "external_promos":
             return queries.get_external_links(c.user._id)
