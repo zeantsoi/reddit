@@ -1173,7 +1173,8 @@ class Subreddit(Thing, Printable, BaseSite):
                 if sr_ids else Subreddit._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT):
+    def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT,
+                        exclude_sr_ids=None):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
@@ -1182,6 +1183,8 @@ class Subreddit(Thing, Printable, BaseSite):
                 (100 for gold users)
                 if it's None, no limit is used
                 if it's an integer, then that many subs will be returned
+
+        exclude_sr_ids - list of subreddit ids to exclude.
 
         Otherwise, return the default set.
         """
@@ -1198,6 +1201,10 @@ class Subreddit(Thing, Printable, BaseSite):
         # has_subscribed == False by default.
         if user and user.has_subscribed:
             sr_ids = Subreddit.subscribed_ids_by_user(user)
+
+            if exclude_sr_ids is not None:
+                sr_ids = set(sr_ids) - set(exclude_sr_ids)
+
             sr_ids = cls.random_reddits(user.name, sr_ids, limit)
 
             return sr_ids if ids else Subreddit._byID(sr_ids,

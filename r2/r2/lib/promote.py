@@ -1255,7 +1255,7 @@ def is_site_over18(site):
     return site.over_18 or site.name in nsfw_collection_srnames
 
 
-def srnames_from_site(user, site, include_subscriptions=True):
+def srnames_from_site(user, site, include_subscriptions=True, limit=50):
     is_logged_in = user and not isinstance(user, FakeAccount)
     over_18 = is_site_over18(site)
     srnames = set()
@@ -1266,18 +1266,22 @@ def srnames_from_site(user, site, include_subscriptions=True):
         srnames = srnames | {sr.name for sr in site.srs}
     else:
         srnames.add(Frontpage.name)
-        srs_interested_in = []
+        srs_interested_in = set()
 
         if include_subscriptions:
-            if is_logged_in:
-                srs_interested_in = srs_interested_in + Subreddit.user_subreddits(
-                    user,
-                    ids=False,
-                )
-
             # add subreddits recently visited
             if c.recent_subreddits:
-                srs_interested_in = srs_interested_in + c.recent_subreddits
+                srs_interested_in = srs_interested_in | set(c.recent_subreddits)
+
+            if is_logged_in:
+                subscriptions = Subreddit.user_subreddits(
+                    user,
+                    ids=False,
+                    exclude_sr_ids=[srs._id for srs in srs_interested_in],
+                    limit=limit,
+                )
+
+                srs_interested_in = srs_interested_in | set(subscriptions)
 
             # only use subreddits that aren't quarantined and have the same
             # age gate as the subreddit being viewed.
@@ -1296,13 +1300,12 @@ def srnames_from_site(user, site, include_subscriptions=True):
 
             srnames = srnames | srs_interested_in_srnames
 
-    return srnames
+    return set(random.sample(srnames, min(len(srnames), limit)))
 
 
 def keywords_from_context(
         user, site,
         include_subscriptions=True,
-        live_promos_only=True,
         displayed_things=[]
     ):
 
@@ -1317,13 +1320,6 @@ def keywords_from_context(
     if Frontpage.name in srnames:
         srnames.remove(Frontpage.name)
         keywords.add("s.frontpage")
-
-    # if the ad was created by selfserve then we know
-    # whether or not there exists an ad for that keyword
-    # and can remove un-targeted srnames accordingly.
-    if live_promos_only:
-        live_srnames = all_live_promo_srnames()
-        srnames = live_srnames.intersection(srnames)
 
     keywords.update(srnames)
 
