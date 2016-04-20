@@ -118,6 +118,7 @@
      * @private
      * @param {string} sr The name of the subreddit.
      * @return {Promise<{
+     *     sr_name: string,
      *     rules: Array<{short_name:string}>|undefined,
      *     site_rules: Array<string>|undefined,
      *  }>}
@@ -151,6 +152,9 @@
         } else if (rulesJson['error']) {
           return $.Deferred().reject(jqXHR, rulesJson, rulesJson['error']);
         }
+
+        // Annotate the rules with the subreddit, so we can reason about them later.
+        rulesJson['sr_name'] = sr;
         return rulesJson;
       });
 
@@ -194,14 +198,17 @@
           // Move the custom subject to the selected rule.
           mc.dom.$rule.val(mc.dom.$subject.val());
         } else if (/\S/.test(mc.dom.$subject.val())
-            || _(mc.dom.$subject).contains(document.activeElement)) {
+            || _(mc.dom.$subject).contains(document.activeElement)
+            || rulesJson['sr_name'] !== 'reddit.com') {
           // Select Other if the user has entered anything in the custom
-          // subject OR if the keyboard focus is already on the subject.
+          // subject OR if the keyboard focus is already on the subject OR if
+          // the subreddit is not reddit.com.
+          //
           // This call happens after a network round trip to load the rules, so
           // there's plenty of time for the user to have started typing.
           mc.dom.$other.prop('selected', true);
         } else {
-          // Select Blank by default.
+          // To reddit.com. Select Blank by default to encourage consistent subjects.
           mc.dom.$blank.show();
           mc.dom.$blank.prop('selected', true);
         }
