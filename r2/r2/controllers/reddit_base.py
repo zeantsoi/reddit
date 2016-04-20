@@ -1580,7 +1580,7 @@ class RedditController(OAuth2ResourceController):
         # abort redirect to mweb as soon as possible
         no_redirect = request.cookies.get('mweb-no-redirect')
 
-        with g.stats.get_timer('stats.timers.r2.mweb-redirect'):
+        with g.stats.get_timer('mweb-redirect'):
             # the feature check needs to come last so we do not add people
             # to the test bucket that are not relevant to this test.
             if (c.render_style == 'html' and 
