@@ -84,9 +84,12 @@
         mc.dom.$form.on('submit', function() {
           var handler = function() {
             $(document).off('ajaxSuccess.messagecompose', handler);
-            mc.customSubject = undefined;
-            mc.onToUpdate();
-            mc.dom.$subject.val('');
+            // If there are no errors marked in the form, reset the subject too.
+            if (mc.dom.$form.find('.error:visible').length == 0) {
+              mc.customSubject = undefined;
+              mc.onToUpdate();
+              mc.dom.$subject.val('');
+            }
           };
           $(document).on('ajaxSuccess.messagecompose', handler);
         });
