@@ -181,8 +181,7 @@
       // Add the new rules.
       rules.forEach(function(r) {
         var rule = document.createElement('option');
-        rule.value = r;
-        rule.innerText = r;
+        $(rule).val(r).text(r);
         rule.className = 'rule';
         mc.dom.$other.before(rule);
       });
