@@ -1407,6 +1407,10 @@ class FrontController(RedditController):
                 c.site.srs
             ))
 
+        extra_stylesheets = []
+        if feature.is_enabled("image_uploads"):
+            extra_stylesheets.append("newlink-image-upload.less")
+
         newlink = NewLink(
             url=url or '',
             title=title or '',
@@ -1424,6 +1428,7 @@ class FrontController(RedditController):
         return FormPage(_("submit"),
                         show_sidebar=True,
                         page_classes=['submit-page'],
+                        extra_stylesheets=extra_stylesheets,
                         content=newlink).render()
 
     def GET_catchall(self):

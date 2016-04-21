@@ -86,7 +86,7 @@ clean_ini:
 	rm $(INIFILES)
 
 #################### CSS file lists
-SPRITED_STYLESHEETS += reddit.less compact.css modtools.less expando.less
+SPRITED_STYLESHEETS += reddit.less compact.css modtools.less expando.less newlink-image-upload.less
 LESS_STYLESHEETS := wiki.less adminbar.less policies.less reddit-embed.less
 OTHER_STYLESHEETS := mobile.css highlight.css
 

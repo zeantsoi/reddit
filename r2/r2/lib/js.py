@@ -701,6 +701,22 @@ module["reddit"] = LocalizedModule("reddit.js",
     filter_module=module["reddit-init-base"],
 )
 
+# used only as a filter
+_submodule["reddit-main"] = Module("_reddit-main.js",
+    module["reddit-init-base"],
+    module["reddit"],
+)
+
+module["newlink-image-upload"] = Module("newlink-image-upload.js",
+    "base.js",
+    "actions.js",
+    "errors.js",
+    _submodule["s3-image-uploader"],
+    _submodule["file-input-actions"],
+    "newlink-image-upload.js",
+    filter_module=_submodule["reddit-main"],
+)
+
 module["modtools"] = Module("modtools.js",
     "errors.js",
     "models/validators.js",

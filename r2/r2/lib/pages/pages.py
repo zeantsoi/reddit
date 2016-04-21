@@ -3657,6 +3657,7 @@ class NewLink(Templated):
                  resubmit=False, default_sr=None,
                  extra_subreddits=None, show_link=True, show_self=True):
 
+        self.allow_image_upload = default_sr and feature.is_enabled("image_uploads", subreddit=default_sr.name)
         self.show_link = show_link
         self.show_self = show_self
 
