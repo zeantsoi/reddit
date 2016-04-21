@@ -1259,13 +1259,14 @@ def srnames_from_site(user, site, include_subscriptions=True, limit=50):
     is_logged_in = user and not isinstance(user, FakeAccount)
     over_18 = is_site_over18(site)
     srnames = set()
+    required_srnames = set()
 
     if not isinstance(site, FakeSubreddit):
-        srnames.add(site.name)
+        required_srnames.add(site.name)
     elif isinstance(site, MultiReddit):
         srnames = srnames | {sr.name for sr in site.srs}
     else:
-        srnames.add(Frontpage.name)
+        required_srnames.add(Frontpage.name)
         srs_interested_in = set()
 
         if include_subscriptions:
@@ -1300,7 +1301,9 @@ def srnames_from_site(user, site, include_subscriptions=True, limit=50):
 
             srnames = srnames | srs_interested_in_srnames
 
-    return set(random.sample(srnames, min(len(srnames), limit)))
+    sample_limit = max(0, min(len(srnames), limit) - len(required_srnames))
+
+    return required_srnames | set(random.sample(srnames, sample_limit))
 
 
 def keywords_from_context(
