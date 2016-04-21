@@ -134,7 +134,7 @@ def get_connection():
 
 def get_key(bucket_name, key, connection=None):
     connection = connection or get_connection()
-    bucket = connection.get_bucket(bucket_name)
+    bucket = connection.get_bucket(bucket_name, validate=False)
 
     return bucket.get_key(key)
 

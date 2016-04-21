@@ -147,6 +147,7 @@ class Link(Thing, Printable):
                      admin_takedown=False,
                      removed_link_child=None,
                      precomputed_sorts=None,
+                     image_upload=False,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)

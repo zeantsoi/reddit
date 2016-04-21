@@ -56,6 +56,7 @@ from r2.lib import hooks
 
 from r2.lib.utils import (
     blockquote_text,
+    domain,
     extract_user_mentions,
     get_title,
     query_string,
@@ -118,7 +119,10 @@ from r2.lib import (
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
-from r2.lib.media import str_to_image
+from r2.lib.media import (
+    make_temp_uploaded_image_permanent,
+    str_to_image,
+)
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope, allow_oauth2_access
 from r2.lib.template_helpers import add_sr, get_domain, make_url_protocol_relative
@@ -457,7 +461,7 @@ class ApiController(RedditController):
         title=VTitle('title'),
         sendreplies=VBoolean('sendreplies'),
         selftext=VMarkdown('text'),
-        kind=VOneOf('kind', ['link', 'self']),
+        kind=VOneOf('kind', ['link', 'self', 'image']),
         extension=VLength("extension", 20,
                           docs={"extension": "extension used for redirects"}),
         resubmit=VBoolean('resubmit'),
@@ -559,6 +563,29 @@ class ApiController(RedditController):
         if not request.POST.get('sendreplies'):
             sendreplies = is_self
 
+        # Check if this is a new image upload
+        s3_uploads_domain = ("%s.%s" %
+            (g.s3_image_uploads_bucket, g.s3_media_domain))
+        image_upload = (
+            kind == "image" and
+            domain(url) == s3_uploads_domain
+        )
+        s3_image_key = None
+
+        if image_upload:
+            filepath = UrlParser(urllib.unquote(url)).path
+            with g.stats.get_timer("providers.s3.get_image_upload_keys"):
+                s3_image_key = s3_helpers.get_key(
+                    g.s3_image_uploads_bucket,
+                    key=filepath,
+                )
+
+            # Make sure the file still exists in the temp bucket
+            if not s3_image_key:
+                c.errors.add(errors.BAD_URL, field='url')
+                form.has_errors('url', errors.BAD_URL)
+                return
+
         # get rid of extraneous whitespace in the title
         cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
@@ -572,6 +599,20 @@ class ApiController(RedditController):
             ip=request.ip,
             sendreplies=sendreplies,
         )
+
+        # Image uploads: move to the permanent bucket and rewrite
+        # the url to the new image url
+        if image_upload:
+            image_url = make_temp_uploaded_image_permanent(
+                image_key=s3_image_key,
+            )
+
+            if image_url:
+                l.url = image_url
+                l.image_upload = True
+                l._commit()
+            else:
+                g.log.warning("moving temp image failed for link %s" % l._id36)
 
         if not is_self:
             ban = is_banned_domain(url)

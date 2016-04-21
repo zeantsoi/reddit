@@ -503,6 +503,22 @@ def force_mobile_ad_image(link, image_data, file_type=".jpg"):
     link._commit()
 
 
+def make_temp_uploaded_image_permanent(image_key):
+    """Copy the image to the permanent bucket.
+
+    Returns the new image url.
+    """
+    file_name = os.path.split(image_key.name)[1]
+    file_type = image_key.get_metadata("ext")
+
+    return g.media_provider.copy(
+        category="images",
+        name=file_name+file_type,
+        src_location=image_key.bucket.name,
+        src_name=image_key.name.lstrip("/"),
+    )
+
+
 def upload_icon(image_data, size):
     image = str_to_image(image_data)
     image.format = 'PNG'

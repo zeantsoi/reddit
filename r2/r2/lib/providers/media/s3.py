@@ -65,6 +65,7 @@ class S3MediaProvider(MediaProvider):
         ConfigValue.tuple: [
             "s3_media_buckets",
             "s3_image_buckets",
+            "s3_image_uploads_perm_bucket",
         ],
     }
 
@@ -73,6 +74,7 @@ class S3MediaProvider(MediaProvider):
         'stylesheets': 's3_media_buckets',
         'icons': 's3_media_buckets',
         'previews': 's3_image_buckets',
+        'images': 's3_image_uploads_perm_bucket',
     }
  
     def _get_bucket(self, bucket_name, validate=False):
@@ -112,11 +114,7 @@ class S3MediaProvider(MediaProvider):
         return True
 
     def put(self, category, name, contents, headers=None):
-        buckets = getattr(g, self.buckets[category])
-        # choose a bucket based on the filename
-        name_without_extension = os.path.splitext(name)[0]
-        index = ord(name_without_extension[-1]) % len(buckets)
-        bucket_name = buckets[index]
+        bucket_name = self.choose_bucket(category, name)
 
         # guess the mime type
         mime_type, encoding = mimetypes.guess_type(name)
@@ -146,10 +144,27 @@ class S3MediaProvider(MediaProvider):
             replace=True,
         )
 
-        if g.s3_media_direct:
-            return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
-        else:
-            return "http://%s/%s" % (bucket_name, name)
+        return self.key_url(bucket_name, name)
+
+    def copy(self, category, name, src_location, src_name):
+        bucket_name = self.choose_bucket(category, name)
+        bucket = self._get_bucket(bucket_name, validate=False)
+        mime_type, encoding = mimetypes.guess_type(name)
+
+        # copy key to the new bucket
+        key = bucket.copy_key(
+            name,
+            src_location,
+            src_name,
+            headers={
+                "Content-Type": mime_type,
+                "Expires": _NEVER,
+            },
+            storage_class="REDUCED_REDUNDANCY",
+        )
+        key.set_acl("public-read")
+
+        return self.key_url(bucket_name, name)
 
     def purge(self, url):
         """Deletes the key as specified by the url"""
@@ -169,3 +184,19 @@ class S3MediaProvider(MediaProvider):
         timer.stop()
 
         return True
+
+    def choose_bucket(self, category, name):
+        buckets = getattr(g, self.buckets[category])
+
+        # choose a bucket based on the filename
+        name_without_extension = os.path.splitext(name)[0]
+        index = ord(name_without_extension[-1]) % len(buckets)
+        bucket_name = buckets[index]
+
+        return bucket_name
+
+    def key_url(self, bucket_name, name):
+        if g.s3_media_direct:
+            return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
+        else:
+            return "http://%s/%s" % (bucket_name, name)

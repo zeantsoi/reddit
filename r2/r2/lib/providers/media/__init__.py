@@ -56,6 +56,21 @@ class MediaProvider(object):
         """
         raise NotImplementedError
 
+    def copy(self, category, name, src_location, src_name):
+        """Copy a media object on the media server and return its HTTP URL.
+
+        `name` must be a local filename including an extension.
+
+        `src_location` is the current file path or bucket name.
+
+        `src_name` is the current filename.
+
+        The return value should be an absolute URL with the `http` scheme but
+        should also work if accessed with `https`.
+
+        """
+        raise NotImplementedError
+
     def purge(self, url):
         """Remove the content. Content can not be recovered."""
         raise NotImplementedError

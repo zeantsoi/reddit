@@ -1418,10 +1418,11 @@ class VSubmitSR(Validator):
             return
 
         if self.require_linktype:
-            if link_type not in ('link', 'self'):
+            if link_type not in ('link', 'self', 'image'):
                 self.set_error(errors.INVALID_OPTION)
                 return
-            elif link_type == "link" and not sr.can_submit_link(c.user):
+            elif (link_type in ("link", "image") and
+                    not sr.can_submit_link(c.user)):
                 self.set_error(errors.NO_LINKS)
                 return
             elif link_type == "self" and not sr.can_submit_text(c.user):
