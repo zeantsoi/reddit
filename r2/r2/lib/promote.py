@@ -1266,7 +1266,6 @@ def srnames_from_site(user, site, include_subscriptions=True, limit=50):
     elif isinstance(site, MultiReddit):
         srnames = srnames | {sr.name for sr in site.srs}
     else:
-        required_srnames.add(Frontpage.name)
         srs_interested_in = set()
 
         if include_subscriptions:
@@ -1320,11 +1319,10 @@ def keywords_from_context(
         include_subscriptions,
     )
 
-    if Frontpage.name in srnames:
-        srnames.remove(Frontpage.name)
-        keywords.add("s.frontpage")
-
     keywords.update(srnames)
+
+    if is_frontpage:
+        keywords.add("s.frontpage")
 
     if not is_frontpage and site._downs > g.live_config["ads_popularity_threshold"]:
         keywords.add("s.popular")

@@ -61,14 +61,14 @@ class TestSRNamesFromSite(unittest.TestCase):
     def test_frontpage_logged_out(self):
         srnames = srnames_from_site(self.logged_out, Frontpage)
 
-        self.assertEqual(srnames, {Frontpage.name})
+        self.assertEqual(srnames, set())
 
     @patch("r2.models.Subreddit.user_subreddits")
     def test_frontpage_logged_in(self, user_subreddits):
         user_subreddits.return_value = subscriptions
         srnames = srnames_from_site(self.logged_in, Frontpage)
 
-        self.assertEqual(srnames, set(subscriptions_srnames) | {Frontpage.name})
+        self.assertEqual(srnames, set(subscriptions_srnames))
 
     def test_multi_logged_out(self):
         multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_subreddits)
@@ -103,10 +103,9 @@ class TestSRNamesFromSite(unittest.TestCase):
     @patch("r2.models.Subreddit.user_subreddits")
     def test_quarantined_subscriptions_are_never_included(self, user_subreddits):
         user_subreddits.return_value = naughty_subscriptions
-        subreddit = Frontpage
-        srnames = srnames_from_site(self.logged_in, subreddit)
+        srnames = srnames_from_site(self.logged_in, Frontpage)
 
-        self.assertEqual(srnames, {subreddit.name} | {nice_srname})
+        self.assertEqual(srnames, {nice_srname})
         self.assertTrue(len(srnames & {quarantined_srname}) == 0)
 
     @patch("r2.models.Subreddit.user_subreddits")
@@ -114,7 +113,7 @@ class TestSRNamesFromSite(unittest.TestCase):
         user_subreddits.return_value = naughty_subscriptions
         srnames = srnames_from_site(self.logged_in, Frontpage)
 
-        self.assertEqual(srnames, {Frontpage.name} | {nice_srname})
+        self.assertEqual(srnames, {nice_srname})
         self.assertTrue(len(srnames & {nsfw_srname}) == 0)
 
     @patch("r2.models.Collection.get_all")
@@ -136,7 +135,7 @@ class TestSRNamesFromSite(unittest.TestCase):
 
         frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
 
-        self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
+        self.assertEqual(frontpage_srnames, {nice_srname})
         self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
 
     @patch("r2.lib.promote.c")
@@ -148,7 +147,7 @@ class TestSRNamesFromSite(unittest.TestCase):
 
         self.assertEqual(
             frontpage_srnames,
-            {nice_srname, Frontpage.name},
+            {nice_srname},
         )
         self.assertTrue(len(frontpage_srnames & {nsfw_srname}) == 0)
 
