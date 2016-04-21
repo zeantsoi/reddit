@@ -524,6 +524,13 @@ _submodule["res-event"] = Module("_res_event.js",
     "res-event.js",
 )
 
+_submodule["s3-image-uploader"] = Module("_s3-image-uploader.js",
+    "base.js",
+    "errors.js",
+    "models/validators.js",
+    "s3-image-uploader.js",
+)
+
 module["gtm-jail"] = Module("gtm-jail.js",
     "lib/json2.js",
     "custom-event.js",
