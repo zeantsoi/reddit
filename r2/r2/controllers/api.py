@@ -121,6 +121,7 @@ from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
 from r2.lib.media import (
     make_temp_uploaded_image_permanent,
+    set_media,
     str_to_image,
 )
 from r2.controllers.api_docs import api_doc, api_section
@@ -611,6 +612,10 @@ class ApiController(RedditController):
                 l.url = image_url
                 l.image_upload = True
                 l._commit()
+
+                # Generate thumbnails and preview objects for image uploads
+                with g.stats.get_timer("image_upload.set_media"):
+                    set_media(l)
             else:
                 g.log.warning("moving temp image failed for link %s" % l._id36)
 

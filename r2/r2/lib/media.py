@@ -431,7 +431,7 @@ def _get_scrape_url(link):
     return second_choice
 
 
-def _set_media(link, force=False, **kwargs):
+def set_media(link, force=False, **kwargs):
     sr = link.subreddit_slow
     
     # Do not process thumbnails for quarantined subreddits
@@ -1032,7 +1032,7 @@ def run():
         link = Link._by_fullname(fname, data=True)
 
         try:
-            TimeoutFunction(_set_media, 30)(link, use_cache=True)
+            TimeoutFunction(set_media, 30)(link, use_cache=True)
         except TimeoutFunctionException:
             print "Timed out on %s" % fname
         except KeyboardInterrupt:
