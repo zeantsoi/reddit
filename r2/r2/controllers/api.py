@@ -1400,6 +1400,15 @@ class ApiController(RedditController):
         Called by /prefs/update on the site.
 
         """
+        def _event(action_name):
+            g.events.email_update_event(
+                action_name=action_name,
+                user=c.user,
+                base_url=request.fullpath,
+                dnt=feature.is_enabled("do_not_track"),
+                new_email=email,
+                request=request,
+                context=c)
 
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
@@ -1407,7 +1416,10 @@ class ApiController(RedditController):
         if not form.has_errors("email", errors.BAD_EMAILS) and email:
             if (not hasattr(c.user, 'email') or c.user.email != email):
                 if c.user.email:
+                    _event("update_email")
                     emailer.email_change_email(c.user)
+                else:
+                    _event("add_email")
 
                 c.user.set_email(email)
                 c.user.email_verified = None
@@ -1416,6 +1428,7 @@ class ApiController(RedditController):
                 Award.take_away("verified_email", c.user)
 
             if verify:
+                _event("verify_email")
                 if dest == '/':
                     dest = None
 
@@ -1429,6 +1442,7 @@ class ApiController(RedditController):
         # user is removing their email
         if (not email and c.user.email and 
             (errors.NO_EMAILS, 'email') in c.errors):
+            _event("remove_email")
             c.errors.remove((errors.NO_EMAILS, 'email'))
             if c.user.email:
                 emailer.email_change_email(c.user)

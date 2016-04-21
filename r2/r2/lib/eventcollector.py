@@ -1170,6 +1170,50 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    @squelch_exceptions
+    def email_update_event(self, action_name, user, base_url=None,
+                           dnt=None, new_email=None, request=None,
+                           context=None):
+
+        """Create an 'Email Update Event' for event-collector.
+
+        action_name: add_email, remove_email, update_email, verify_email
+        user: user that triggered above actions
+        base_url: URL of the page from where the event is sent, relative
+            to "reddit.com"
+        dnt: do not track feature enabled or not
+        new_email: the email added
+        prev_email: previous email address if any
+        prev_email_verified: whether previous email verified or not
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+        """
+        event = Event(
+            topic="email_update_events",
+            event_type='ss.%s' % action_name,
+            request=request,
+            context=context,
+        )
+
+        event.add('base_url', base_url)
+        event.add('dnt', dnt)
+
+        # if the user is adding or verifying emails
+        if new_email:
+            event.add('new_email', new_email)
+            event.add('new_email_domain', new_email.split("@")[-1])
+            event.add('new_email_tld', "." + new_email.split(".")[-1])
+
+        # if the user is updating or removing emails
+        if user.email and action_name != "verify_email":
+            event.add('prev_email', user.email)
+            event.add('prev_email_verified', user.email_verified)
+
+        event.add('user_age_seconds', user._age.total_seconds())
+        event.add_target_fields(user)
+
+        self.save_event(event)
+
 
 class Event(baseplate.events.Event):
     def __init__(self, topic, event_type,
