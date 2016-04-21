@@ -531,6 +531,12 @@ _submodule["s3-image-uploader"] = Module("_s3-image-uploader.js",
     "s3-image-uploader.js",
 )
 
+_submodule["file-input-actions"] = Module("_file-input-actions.js",
+    "base.js",
+    "actions.js",
+    "file-input-actions.js",
+)
+
 module["gtm-jail"] = Module("gtm-jail.js",
     "lib/json2.js",
     "custom-event.js",
