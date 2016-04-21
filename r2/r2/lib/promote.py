@@ -1317,6 +1317,7 @@ def keywords_from_context(
     srnames = srnames_from_site(
         user, site,
         include_subscriptions,
+        limit=15
     )
 
     keywords.update(srnames)
