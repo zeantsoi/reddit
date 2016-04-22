@@ -187,6 +187,9 @@ def is_external(link):
 def is_finished(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.finished
 
+def is_votable(link):
+    return is_promo(link) and (is_promoted(link) or is_external(link))
+
 def is_live_on_sr(link, sr):
     return bool(live_campaigns_by_link(link, sr=sr))
 

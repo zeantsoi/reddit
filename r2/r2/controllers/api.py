@@ -2415,9 +2415,10 @@ class ApiController(RedditController):
 
         hooks.get_hook("vote.validate").call(thing=thing)
 
-        if isinstance(thing, Link) and promote.is_promo(thing):
-            if not promote.is_promoted(thing):
-                return abort(400, "Bad Request")
+        if (isinstance(thing, Link) and
+                promote.is_promo(thing) and
+                not promote.is_votable(thing)):
+            return abort(400, "Bad Request")
 
         subreddit = thing.subreddit_slow
 

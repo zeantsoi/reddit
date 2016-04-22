@@ -1716,7 +1716,7 @@ class LinkInfoPage(Reddit):
 
         self.disable_comments = disable_comments
 
-        if promote.is_promo(self.link) and not promote.is_promoted(self.link):
+        if promote.is_promo(self.link) and not promote.is_votable(self.link):
             self.link.votable = False
 
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
