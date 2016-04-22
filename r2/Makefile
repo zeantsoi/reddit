@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-SHELL=/bin/sh
+SHELL=/bin/sh -l
 PYTHON=python
 SED=sed
 CAT=cat
