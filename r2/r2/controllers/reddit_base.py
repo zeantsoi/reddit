@@ -1608,9 +1608,6 @@ class RedditController(OAuth2ResourceController):
 
         MinimalController.pre(self)
 
-        # redirect mobile clients to m.reddit.com conditionally
-        self.mweb_redirect()
-
         # Set IE to always use latest rendering engine
         response.headers["X-UA-Compatible"] = "IE=edge"
 
@@ -1669,6 +1666,9 @@ class RedditController(OAuth2ResourceController):
                 if not isinstance(c.user.pref_lang, basestring):
                     c.user.pref_lang = g.lang
                     c.user._commit()
+
+        # redirect mobile clients to m.reddit.com conditionally
+        self.mweb_redirect()
 
         if c.user_is_loggedin:
             self.set_up_user_context()
