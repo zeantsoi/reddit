@@ -299,6 +299,10 @@ class Reddit(Templated):
             feature.is_enabled("inline_image_previews_logged_out")):
             self.feature_expando_nsfw_flow = True
 
+        if (feature.is_enabled('register_email_text') and 
+            feature.variant('test_group')):
+            self.register_email_text_test = True
+
         # generate a canonical link for google
         self.canonical_link = request.fullpath
         if c.render_style != "html":
