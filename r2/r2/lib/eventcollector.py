@@ -683,6 +683,10 @@ class EventQueue(object):
         event.add('newsletter', newsletter)
         event.add('email_verified', email_verified)
 
+        if context.loid:
+            for k, v in context.loid.to_dict().iteritems():
+                event.add(k, v)
+
         if captcha_shown:
             event.add('captcha_shown', captcha_shown)
 
