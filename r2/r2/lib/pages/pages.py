@@ -1550,7 +1550,7 @@ class Login(Templated):
                            is_popup=is_popup,
                            registration_info=RegistrationInfo())
         if (feature.is_enabled('register_email_text_v2') and 
-            feature.variant('test_group')):
+            feature.variant('register_email_text_v2') == 'test_group'):
             self.register_email_text_test = True
 
 class Register(Login):
