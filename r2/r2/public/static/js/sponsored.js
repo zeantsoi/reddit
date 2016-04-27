@@ -615,6 +615,11 @@ var exports = r.sponsored = {
     },
 
     setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor, forceAuction) {
+        // external campaigns don't have an editor, skip setup.
+        if (!$('#campaign').length) {
+            return;
+        }
+
         if (forceAuction) {
             this.isAuction = true;
         }
