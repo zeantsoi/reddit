@@ -103,8 +103,9 @@ PROMOTE_PRIORITIES = OrderedDict((p.name, p) for p in (HIGH, MEDIUM, REMNANT,
                                                        HOUSE, AUCTION,))
 
 
-def PROMOTE_DEFAULT_PRIORITY():
-    if c.user_is_sponsor or not feature.is_enabled('ads_auction'):
+def PROMOTE_DEFAULT_PRIORITY(context=None):
+    if (not feature.is_enabled('ads_auction') or
+            (context and context.user_is_sponsor)):
         return MEDIUM
     else:
         return AUCTION
