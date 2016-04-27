@@ -5,6 +5,7 @@ import unittest
 from mock import MagicMock, Mock, patch
 from pylons import app_globals as g
 
+from r2.tests import RedditTestCase
 from r2.lib.authorize.api import Transaction
 from r2.lib import promote
 from r2.lib.promote import (
@@ -64,8 +65,10 @@ recent_subreddits = [
     Subreddit(name=nsfw_srname, over_18=True, id=2),
 ]
 
-class TestSRNamesFromSite(unittest.TestCase):
+
+class TestSRNamesFromSite(RedditTestCase):
     def setUp(self):
+        super(TestSRNamesFromSite, self).setUp()
         self.logged_in = Account(name="test")
         self.logged_out = FakeAccount()
 
@@ -137,34 +140,31 @@ class TestSRNamesFromSite(unittest.TestCase):
     @patch("r2.lib.promote.get_nsfw_collections_srnames")
     def test_remove_nsfw_collection_srnames_on_frontpage(self, get_nsfw_collections_srnames):
         get_nsfw_collections_srnames.return_value = set(nsfw_collection.sr_names)
-        srname = "test1"
-        subreddit = Subreddit(name=srname)
-        Subreddit.user_subreddits = MagicMock(return_value=[
+        with patch.object(Subreddit, "user_subreddits", return_value=[
             Subreddit(name=nice_srname),
             Subreddit(name=questionably_nsfw),
-        ])
+        ]):
+            frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
 
-        frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
-
-        self.assertEqual(frontpage_srnames, {nice_srname})
-        self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
+            self.assertEqual(frontpage_srnames, {nice_srname})
+            self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
 
     @patch("r2.lib.promote.c")
-    def test_remove_nswf_recent_subreddits_on_frontpage(self, c):
+    def test_remove_nsfw_recent_subreddits_on_frontpage(self, c):
         c.recent_subreddits = recent_subreddits
-        Subreddit.user_subreddits = MagicMock(return_value=[])
+        with patch.object(Subreddit, "user_subreddits", return_value=[]):
+            frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
 
-        frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
-
-        self.assertEqual(
-            frontpage_srnames,
-            {nice_srname},
-        )
-        self.assertTrue(len(frontpage_srnames & {nsfw_srname}) == 0)
+            self.assertEqual(
+                frontpage_srnames,
+                {nice_srname},
+            )
+            self.assertTrue(len(frontpage_srnames & {nsfw_srname}) == 0)
 
 
-class TestPromoteRefunds(unittest.TestCase):
+class TestPromoteRefunds(RedditTestCase):
     def setUp(self):
+        super(TestPromoteRefunds, self).setUp()
         self.link = Mock()
         self.campaign = MagicMock(spec=PromoCampaign)
         self.campaign._id = 1
@@ -414,7 +414,7 @@ class TestPromoteRefunds(unittest.TestCase):
         self.assertFalse(is_pre_cpm(campaign))
 
 
-class TestGetUtcOffset(unittest.TestCase):
+class TestGetUtcOffset(RedditTestCase):
     def test_est(self):
         self.assertEquals(-5, get_utc_offset(datetime.date(2016,3,1), "US/Eastern"))
 
