@@ -23,8 +23,9 @@
 import collections
 import itertools
 import math
+from mock import MagicMock
 
-from pylons import app_globals as g, tmpl_context as c
+from pylons import app_globals as g
 
 from r2.config.feature.state import FeatureState
 from . feature_test import TestFeatureBase, MockAccount
@@ -44,6 +45,8 @@ class TestExperiment(TestFeatureBase):
         self.world.is_user_loggedin = bool
         # test by default with the logged out functionality enabled.
         self.patch_g(enable_loggedout_experiments=True)
+        self.world.is_whitelisted_experiment = MagicMock()
+        self.world.is_whitelisted_experiment.return_value = False
 
     def get_loggedin_users(self, num_users):
         users = []
@@ -246,7 +249,7 @@ class TestExperiment(TestFeatureBase):
 
     def test_loggedout_experiment(self, num_users=2000):
         """Test variant distn for logged out users."""
-        c.whitelisted_loid_experiments = ['test_state']
+        self.world.is_whitelisted_experiment.return_value = True
         self.do_experiment_simulation(
             self.get_loggedout_users(num_users),
             experiment={
@@ -278,7 +281,7 @@ class TestExperiment(TestFeatureBase):
 
     def test_loggedout_experiment_explicit_enable(self, num_users=2000):
         """Test variant distn for logged out users with explicit enable."""
-        c.whitelisted_loid_experiments = ['test_state']
+        self.world.is_whitelisted_experiment.return_value = True
         self.do_experiment_simulation(
             self.get_loggedout_users(num_users),
             experiment={
@@ -304,7 +307,7 @@ class TestExperiment(TestFeatureBase):
         # we already patch this attr in setUp, so we can just explicitly change
         # it and rely on *that* cleanup
         g.enable_loggedout_experiments = False
-        c.whitelist_loid_experiments = ['test_state']
+        self.world.is_whitelisted_experiment.return_value = True
         self.assert_no_experiment(
             self.get_loggedout_users(num_users),
             experiment={
@@ -316,6 +319,7 @@ class TestExperiment(TestFeatureBase):
 
     def test_mixed_experiment(self, num_users=2000):
         """Test a combination of loggedin/out users balances variants."""
+        self.world.is_whitelisted_experiment.return_value = True
         self.do_experiment_simulation(
             (
                 self.get_loggedin_users(num_users / 2) +
