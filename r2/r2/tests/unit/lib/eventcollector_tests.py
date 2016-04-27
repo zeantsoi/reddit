@@ -406,3 +406,54 @@ class TestEventCollector(RedditTestCase):
                 },
             }
         )
+
+    def test_subreddit_subscribe_event(self):
+        context = MagicMock(name="context")
+        context.user._age.total_seconds.return_value = 1000
+        request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
+        
+        subreddit = MagicMock(name="subreddit")
+        subreddit._age.total_seconds.return_value = 1000
+        subreddit._id = 1
+        subreddit.name = 'cats'
+        subreddit.path = '/r/cats/'
+
+        g.events.subreddit_subscribe_event(
+            True, False, subreddit, context.user, 1, request, context
+        )
+
+        g.events.queue_production.assert_event_item(
+            {
+                'event_type': "ss.subscribe",
+                'event_topic': "subscribe_events",
+                "payload": {
+                    'base_url': subreddit.path,
+                    'is_first_subscription': False,
+                    'sr_age': 1000000,
+                    'sr_id': subreddit._id,
+                    'sr_name': subreddit.name,
+                    'user_age': 1000000,
+                    'user_subscription_size': 1,
+                    'domain': request.host,
+                    'referrer_domain': self.domain_mock(),
+                    'user_id': context.user._id,
+                    'user_name': context.user.name,
+                    'referrer_url': request.headers.get(),
+                    'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
+                    'oauth2_client_id': context.oauth2_client._id,
+                    'oauth2_client_app_type': context.oauth2_client.app_type,
+                    'oauth2_client_name': context.oauth2_client.name,
+                    'geoip_country': context.location,
+                    'obfuscated_data': {
+                        'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
+                    },
+                },
+            }
+        )

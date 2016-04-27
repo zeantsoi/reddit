@@ -3886,9 +3886,11 @@ class ApiController(RedditController):
         if not srs:
             return abort(404, 'not found')
 
+        is_subscribing = action == 'sub'
+
         error = False
         for sr in srs:
-            if action == "sub" and not sr.can_view(c.user):
+            if is_subscribing and not sr.can_view(c.user):
                 error = True
             if isinstance(sr, FakeSubreddit):
                 error = True
@@ -3896,9 +3898,12 @@ class ApiController(RedditController):
         if error:
             return abort(403, 'permission denied')
 
+        # subscribe_defaults has the side effect of setting has_subscribed to
+        # True if it isn't already, so capture its value before that happens
+        is_first_sub = not c.user.has_subscribed
         Subreddit.subscribe_defaults(c.user)
 
-        if action == "sub":
+        if is_subscribing:
             SubredditParticipationByAccount.mark_participated(c.user, srs)
 
             for sr in srs:
@@ -3914,6 +3919,9 @@ class ApiController(RedditController):
 
         for sr in srs:
             sr.update_search_index(boost_only=True)
+
+            g.events.subreddit_subscribe_event(is_subscribing, is_first_sub, 
+                                               sr, c.user, len(srs), request, c)
 
     @validatedForm(
         VAdmin(),

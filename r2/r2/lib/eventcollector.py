@@ -1218,6 +1218,40 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    @squelch_exceptions
+    def subreddit_subscribe_event(self, is_subscribing, is_first_sub, 
+                                  subreddit, user, sub_size, request=None, 
+                                  context=None):
+        """Create a subreddit subscribe event
+
+        is_subscribing: whether user is suscribing or unsubscribing
+        is_first_sub: whether this is the user's first time subscribing
+        subreddit: subreddit object to track
+        user: user that triggered above actions
+        sub_size: the number of subreddits being subscribed or unsubscribed to
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+        """
+
+        event_type = 'subscribe' if is_subscribing else 'unsubscribe'
+
+        event = Event(
+            topic="subscribe_events",
+            event_type="ss.%s" % event_type,
+            request=request,
+            context=context,
+            data={
+                'base_url': subreddit.path,
+                'is_first_subscription': is_first_sub,
+                'sr_age': subreddit._age.total_seconds() * 1000,
+                'sr_id': subreddit._id,
+                'sr_name': subreddit.name,
+                'user_age': user._age.total_seconds() * 1000,
+                'user_subscription_size': sub_size,
+            },
+        )
+        self.save_event(event)
+
 
 class Event(baseplate.events.Event):
     def __init__(self, topic, event_type,
