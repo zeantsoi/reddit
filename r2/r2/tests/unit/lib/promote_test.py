@@ -1,11 +1,15 @@
 import datetime
+import pytz
 import unittest
 
 from mock import MagicMock, Mock, patch
+from pylons import app_globals as g
 
 from r2.lib.authorize.api import Transaction
+from r2.lib import promote
 from r2.lib.promote import (
     can_refund,
+    free_campaign,
     get_nsfw_collections_srnames,
     get_refund_amount,
     get_spent_amount,
@@ -25,6 +29,7 @@ from r2.models import (
     Subreddit,
     MultiReddit,
 )
+from r2.tests import RedditTestCase
 
 # use the original function to avoid going out to memcached.
 get_nsfw_collections_srnames = get_nsfw_collections_srnames.memoized_fn
@@ -409,3 +414,69 @@ class TestGetUtcOffset(unittest.TestCase):
 
     def test_est_dst(self):
         self.assertEquals(-4, get_utc_offset(datetime.date(2016,4,1), "US/Eastern"))
+
+
+class TestFreebies(RedditTestCase):
+    def setUp(self):
+        self.link = Mock()
+        self.user = Mock()
+
+        self.transaction_id = MagicMock()
+
+        # Functions that should run unconditionally
+        self.auth_campaign = self.autopatch(promote, 'auth_campaign',
+            return_value=(self.transaction_id, Mock()))
+        self.campaign_freebie_event = self.autopatch(g.events,
+            'campaign_freebie_event')
+
+        # Functions that should run conditionally
+        self.promote_link = self.autopatch(promote, 'promote_link')
+        self.charge_campaign = self.autopatch(promote, 'charge_campaign')
+        self.all_live_promo_srnames = self.autopatch(promote,
+            'all_live_promo_srnames')
+
+    def test_current_campaign_start_date(self):
+        """
+        When the campaign being freebied has a start_date that is right now,
+        assert that `auth_campaign` and `campaign_freebie_event are called;
+        also assert that the charge and link update functions are not run.
+        """
+        campaign = MagicMock(start_date=datetime.datetime.now(pytz.utc))
+
+        free_campaign(self.link, campaign, self.user)
+
+        self.auth_campaign.assert_called_once_with(
+            self.link,
+            campaign,
+            self.user,
+            freebie=True
+        )
+
+        self.campaign_freebie_event.assert_called_once_with(
+            link=self.link,
+            campaign=campaign,
+            amount_pennies=campaign.total_budget_pennies,
+            transaction_id=self.transaction_id,
+        )
+
+        # Assert that none of these are called because this will take place
+        # when make_daily_promotions run
+        self.assertEqual(self.all_live_promo_srnames.call_count, 0)
+        self.assertEqual(self.promote_link.call_count, 0)
+        self.assertEqual(self.charge_campaign.call_count, 0)
+
+    def test_past_campaign_start_date(self):
+        """
+        When the campaign being freebied has a start_date that is in the past,
+        assert that the campaign charged and link update functions are run.
+        """
+        current_date = datetime.datetime.now(pytz.utc)
+        past_date = current_date - datetime.timedelta(days=1)
+        campaign = MagicMock(start_date=past_date)
+
+        free_campaign(self.link, campaign, self.user)
+
+        # Assert these are called becase the link needs to be updated
+        self.charge_campaign.assert_called_once_with(self.link, campaign)
+        self.promote_link.assert_called_once_with(self.link, campaign)
+        self.all_live_promo_srnames.called_once_with(_update=True)
