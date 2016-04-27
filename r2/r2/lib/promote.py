@@ -397,6 +397,12 @@ def new_campaign(link, requires_approval=True, **attributes):
 
 def free_campaign(link, campaign, user):
     transaction_id, reason = auth_campaign(link, campaign, user, freebie=True)
+
+    if promo_datetime_now() >= campaign.start_date:
+        charge_campaign(link, campaign)
+        promote_link(link, campaign)
+        all_live_promo_srnames(_update=True)
+
     g.events.campaign_freebie_event(
         link=link,
         campaign=campaign,
