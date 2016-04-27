@@ -566,7 +566,7 @@ class ApiController(RedditController):
 
         # Check if this is a new image upload
         s3_uploads_domain = ("%s.%s" %
-            (g.s3_image_uploads_bucket, g.s3_media_domain))
+            (g.s3_image_uploads_bucket, g.s3_media_accelerate_domain))
         image_upload = (
             kind == "image" and
             domain(url) == s3_uploads_domain
@@ -5386,4 +5386,5 @@ class ApiController(RedditController):
             meta={
                 "x-amz-meta-ext": ext,
             },
+            accelerate=True,
         )

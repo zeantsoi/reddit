@@ -58,6 +58,7 @@ class S3MediaProvider(MediaProvider):
             "S3KEY_ID",
             "S3SECRET_KEY",
             "s3_media_domain",
+            "s3_media_accelerate_domain",
         ],
         ConfigValue.bool: [
             "s3_media_direct",

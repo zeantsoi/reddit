@@ -262,6 +262,7 @@ def get_post_args(
         region_name="us-east-1",
         meta=None,
         connection=None,
+        accelerate=False,
         **kwargs
     ):
 
@@ -365,8 +366,13 @@ def get_post_args(
         "value": connection.provider.security_token,
     })
 
+    if accelerate:
+        url = "//%s.%s" % (bucket, g.s3_media_accelerate_domain)
+    else:
+        url = "//%s.%s" % (bucket, g.s3_media_domain)
+
     return {
-        "action": "//%s.%s" % (bucket, g.s3_media_domain),
+        "action": url,
         "fields": fields,
     }
 
