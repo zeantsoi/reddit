@@ -54,6 +54,7 @@ from r2.lib import amqp
 from r2.lib import recommender
 from r2.lib import hooks
 
+from r2.lib.contrib import simpleflake
 from r2.lib.utils import (
     blockquote_text,
     domain,
@@ -5376,9 +5377,9 @@ class ApiController(RedditController):
             }
             abort(400)
 
-        # Create a base36 string based on the time for a cleaner url to be
-        # used as the ID in the image upload url
-        key_name = to36(time.time()) + randstr(2)
+        # Simpleflake is largely time based, so reverse the string
+        # for more efficient sharding in S3
+        key_name = to36(simpleflake.simpleflake())[::-1]
         keyspace = "%s/%s" % (c.user._fullname, key_name)
         redirect = None
 
