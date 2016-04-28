@@ -5382,8 +5382,11 @@ class ApiController(RedditController):
         keyspace = "%s/%s" % (c.user._fullname, key_name)
         redirect = None
 
-        # Allow 20 MB to be passed for images
-        max_content_length = ((1024**2) * 20)
+        # Allow 20 MB to be passed for images and 50 MB for gifs
+        if mime_type == "image/gif":
+            max_content_length = ((1024**2) * 50)
+        else:
+            max_content_length = ((1024**2) * 20)
 
         return s3_helpers.get_post_args(
             bucket=g.s3_image_uploads_bucket,
