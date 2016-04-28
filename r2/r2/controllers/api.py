@@ -587,6 +587,20 @@ class ApiController(RedditController):
                 form.has_errors('url', errors.BAD_URL)
                 return
 
+        # Image uploads: move to the permanent bucket and rewrite
+        # the url to the new image url
+        if image_upload:
+            image_url = make_temp_uploaded_image_permanent(
+                image_key=s3_image_key,
+            )
+
+            if not image_url:
+                c.errors.add(errors.BAD_FILE_TYPE, field='url')
+                form.has_errors('url', errors.BAD_FILE_TYPE)
+                return
+            else:
+                url = image_url
+
         # get rid of extraneous whitespace in the title
         cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
@@ -601,23 +615,14 @@ class ApiController(RedditController):
             sendreplies=sendreplies,
         )
 
-        # Image uploads: move to the permanent bucket and rewrite
-        # the url to the new image url
+        # Get preview and thumbnail media for image uploads
         if image_upload:
-            image_url = make_temp_uploaded_image_permanent(
-                image_key=s3_image_key,
-            )
+            l.image_upload = True
+            l._commit()
 
-            if image_url:
-                l.url = image_url
-                l.image_upload = True
-                l._commit()
-
-                # Generate thumbnails and preview objects for image uploads
-                with g.stats.get_timer("image_upload.set_media"):
-                    set_media(l)
-            else:
-                g.log.warning("moving temp image failed for link %s" % l._id36)
+            # Generate thumbnails and preview objects for image uploads
+            with g.stats.get_timer("image_upload.set_media"):
+                set_media(l)
 
         if not is_self:
             ban = is_banned_domain(url)

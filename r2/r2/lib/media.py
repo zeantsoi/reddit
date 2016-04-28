@@ -539,6 +539,9 @@ def make_temp_uploaded_image_permanent(image_key):
     file_type = image.format.lower().replace("jpeg", "jpg")
     full_filename = "%s.%s" % (file_name, file_type)
 
+    if file_type not in ("jpg", "jpeg", "png"):
+        return False
+
     exif_tags = _get_exif_tags(image)
     if exif_tags:
         # Strip exif data after applying orientation

@@ -137,6 +137,7 @@ error_list = dict((
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
         ('OTP_ALREADY_ENABLED', _('two-factor authentication is already enabled')),
         ('BAD_IMAGE', _('image problem')),
+        ('BAD_FILE_TYPE', _('That file type is not allowed')),
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
         ('DEVELOPER_FIRST_PARTY_APP', _('this app can not be modified from this interface')),
