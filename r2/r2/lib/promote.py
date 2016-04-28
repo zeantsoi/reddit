@@ -1361,7 +1361,14 @@ def keywords_from_context(
     if additional_keywords is not None:
         keywords.update(additional_keywords)
 
-    # Add keywords for audience targeting
+    # Add topics for current set of subreddits
+    for sn in srnames:
+        subreddit = Subreddit._by_name(sn)
+        if subreddit.audience_target:
+            keywords.update(['t.' + target 
+                             for target in subreddit.audience_target.split(',')])        
+
+    # Add keywords for audience targeting (recently visited subreddits)
     for subreddit in c.recent_subreddits:
         if subreddit.audience_target:
             keywords.update(['a.' + target 
