@@ -49,8 +49,8 @@ nsfw_collection = Collection(
     over_18=True
 )
 recent_subreddits = [
-    Subreddit(name=nice_srname),
-    Subreddit(name=nsfw_srname, over_18=True),
+    Subreddit(name=nice_srname, id=1),
+    Subreddit(name=nsfw_srname, over_18=True, id=2),
 ]
 
 class TestSRNamesFromSite(unittest.TestCase):
