@@ -127,12 +127,27 @@ def _square_image(img):
     return _crop_image_vertically(img, width)
 
 
-def _apply_exif_orientation(image):
-    """Update the image's orientation if it has the relevant EXIF tag."""
+def _strip_exif_data(image, image_file):
+    """Remove exif data by saving the image."""
+    image_file.seek(0)
+    image.save(image_file.name, optimize=True, format=image.format)
+
+
+def _get_exif_tags(image):
+    """Return exif_tags if they exist, else None."""
     try:
         exif_tags = image._getexif() or {}
     except AttributeError:
-        # image format with no EXIF tags
+        # Image format with no EXIF tags
+        return None
+
+    return exif_tags
+
+
+def _apply_exif_orientation(image):
+    """Update the image's orientation if it has the relevant EXIF tag."""
+    exif_tags = _get_exif_tags(image)
+    if not exif_tags:
         return image
 
     # constant from EXIF spec
@@ -506,11 +521,16 @@ def force_mobile_ad_image(link, image_data, file_type=".jpg"):
 def make_temp_uploaded_image_permanent(image_key):
     """Move the image to the permanent bucket.
 
-    Returns the new image url.
+    The temp image is converted into an image to determine
+    the image format. If the image has exif data, the image
+    has the exif orientation applied and then strips the
+    exif data. The image is then uploaded to the permanent
+    bucket and returns the new image url.
     """
-    image_data = image_key.get_contents_as_string()
+    f = tempfile.NamedTemporaryFile(delete=False)
+    image_key.get_contents_to_file(f)
     try:
-        image = str_to_image(image_data)
+        image = Image.open(f.name)
     except IOError:
         # Not an image file
         return False
@@ -519,7 +539,16 @@ def make_temp_uploaded_image_permanent(image_key):
     file_type = image.format.lower().replace("jpeg", "jpg")
     full_filename = "%s.%s" % (file_name, file_type)
 
-    return g.media_provider.put("images", full_filename, image_data)
+    exif_tags = _get_exif_tags(image)
+    if exif_tags:
+        # Strip exif data after applying orientation
+        image = _apply_exif_orientation(image)
+        _strip_exif_data(image, f)
+
+    f.seek(0)
+    image_url = g.media_provider.put("images", full_filename, f)
+    os.unlink(f.name)
+    return image_url
 
 
 def upload_icon(image_data, size):
