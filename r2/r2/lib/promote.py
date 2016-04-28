@@ -1363,7 +1363,11 @@ def keywords_from_context(
 
     # Add topics for current set of subreddits
     for sn in srnames:
-        subreddit = Subreddit._by_name(sn)
+        try:
+            subreddit = Subreddit._by_name(sn, stale=True)
+        except NotFound:
+            g.log.info("Request for invalid subreddit %s" % sn)
+            continue
         if subreddit.audience_target:
             keywords.update(['t.' + target 
                              for target in subreddit.audience_target.split(',')])        
