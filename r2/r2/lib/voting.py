@@ -127,6 +127,14 @@ def consume_vote_queue(queue):
         timer.start()
 
         vote_data = json.loads(msg.body)
+        hook = hooks.get_hook('vote.validate_vote_data')
+        if hook.call_until_return(msg=msg, vote_data=vote_data) is False:
+            # Corrupt records in the queue. Ignore them.
+            print "Ignoring invalid vote by %s on %s %s" % (
+                    vote_data.get('user_id', '<unknown>'),
+                    vote_data.get('thing_fullname', '<unknown>'),
+                    vote_data)
+            return
 
         # if it's an old-style vote, convert to the new format
         if "uid" in vote_data:
