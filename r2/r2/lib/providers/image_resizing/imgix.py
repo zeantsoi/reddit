@@ -35,6 +35,10 @@ from r2.lib.utils import UrlParser, query_string
 class ImgixImageResizingProvider(ImageResizingProvider):
     """A provider that uses imgix to create on-the-fly resizings."""
     config = {
+        ConfigValue.bool: [
+            'imgix_signing',
+        ],
+
         ConfigValue.str: [
             'imgix_domain',
         ],
@@ -46,6 +50,15 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         # Let's encourage HTTPS; it's cool, works just fine on HTTP pages, and
         # will prevent insecure content warnings on HTTPS pages.
         url.scheme = 'https'
+
+        # g.s3_media_direct affects how preview image urls are stored
+        # True: http://{s3_media_domain}/mybucket/helloworld.jpg
+        # False: http://mybucket/helloworld.jpg
+        # If it's True, we'll need to strip the bucket out of the path
+        if g.s3_media_direct:
+            path_parts = url.path.split('/')
+            path_parts.pop(1)
+            url.path = '/'.join(path_parts)
 
         if max_ratio:
             url.update_query(fit='crop')
