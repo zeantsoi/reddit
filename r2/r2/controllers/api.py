@@ -2420,10 +2420,8 @@ class ApiController(RedditController):
                 not promote.is_votable(thing)):
             return abort(400, "Bad Request")
 
-        subreddit = thing.subreddit_slow
-
         # Don't allow users in timeout to vote
-        VNotInTimeout().run(target=thing, subreddit=subreddit)
+        VNotInTimeout().run(target=thing)
 
         if thing.archived:
             return abort(400,
