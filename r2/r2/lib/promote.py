@@ -517,6 +517,12 @@ def edit_campaign(
             changed["paused"] = (campaign.paused, paused)
             campaign.paused = paused
 
+    if 'terminated' in kwargs:
+        terminated = kwargs['terminated']
+        if terminated != campaign.is_terminated:
+            changed['is_terminated'] = (campaign.is_terminated, terminated)
+            campaign.is_terminated = terminated
+
     if "is_approved" in kwargs:
         is_approved = kwargs["is_approved"]
         if is_approved != campaign.is_approved:
@@ -607,6 +613,7 @@ def terminate_campaign(link, campaign):
         link=link,
         campaign=campaign,
         end_date=now,
+        terminated=True,
         send_event=False,
     )
 

@@ -365,6 +365,7 @@ class PromoCampaign(Thing):
         bid_pennies=g.default_bid_pennies,
         adserver_spent_pennies=0,
         is_approved=None,
+        is_terminated=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
