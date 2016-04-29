@@ -584,6 +584,19 @@ r.analytics = {
     r.events.track(eventTopic, eventType, payload).send();
   },
 
+  registerAdvanceEvent: function(email) {
+    // An event that is fired when an email is entered into the 
+    // email field in the experiment.
+    var eventTopic = 'login_events';
+    var eventType = 'cs.register_step_advance';
+    var payload = this.addContextData([]);
+
+    payload['step_name'] = 'enter_email';
+    payload.email = email;
+
+    r.events.track(eventTopic, eventType, payload).send();
+  },
+
   expandoEvent: function(actionName, targetData) {
     if (!r.config.feature_expando_events) { return; }
 

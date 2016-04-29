@@ -1584,6 +1584,9 @@ class Login(Templated):
                            dest = dest, captcha = Captcha(),
                            is_popup=is_popup,
                            registration_info=RegistrationInfo())
+        if (feature.is_enabled('register_email_flow_test') and 
+                feature.variant('register_email_flow_test') == 'test_group'):
+            self.register_email_flow_test = True
 
 class Register(Login):
     pass
