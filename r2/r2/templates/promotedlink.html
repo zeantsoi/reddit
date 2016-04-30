@@ -26,6 +26,7 @@
    from r2.lib import promote
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
+   from r2.models import Account
 %>
 
 <%inherit file="link.html"/>
@@ -37,6 +38,8 @@
 <%
    if (c.user_is_sponsor or thing.is_author) and not promote.is_promoted(thing):
      taglinetext = _("to be promoted by %(author)s") 
+   elif thing.promoted_by:
+     taglinetext = _("submitted by %(author)s")
    else:
      taglinetext = _("promoted by %(author)s") 
    taglinetext = conditional_websafe(taglinetext).replace(" ", "&#32;")
@@ -61,6 +64,11 @@ ${unsafe(taglinetext % dict(author=author))}
 
 <%def name="entry()">
   ${parent.entry()}
+  <%
+     if thing.promoted_by:
+       promo_account = Account._byID(thing.promoted_by, data=True, stale=True)
+       promoter = WrappedUser(promo_account, thing.attribs, thing, force_show_flair=False).render()
+  %>
   <p class="sponsored-tagline">
     %if thing.is_author or c.user_is_sponsor:
       %if not promote.is_promo(thing):
@@ -73,6 +81,8 @@ ${unsafe(taglinetext % dict(author=author))}
         ${_('waiting approval')}
       %elif promote.is_rejected(thing):
         ${_('rejected sponsored link')}
+      %elif promote.is_promoted(thing) and thing.promoted_by:
+        ${_('promoted by')}&nbsp;${unsafe(promoter)}
       %elif promote.is_promoted(thing):
         ${_('sponsored link')}
       %elif promote.is_accepted(thing):
@@ -80,6 +90,8 @@ ${unsafe(taglinetext % dict(author=author))}
       %elif promote.is_edited_live(thing):
         ${_('edited live sponsored link')}
       %endif
+    %elif thing.promoted_by:
+      ${_('promoted by')}&nbsp;${unsafe(promoter)}
     %else:
       ${_('sponsored link')}
     %endif

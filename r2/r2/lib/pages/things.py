@@ -189,6 +189,7 @@ class LinkButtons(PrintableButtons):
                                   show_share=show_share,
                                   # promotion
                                   promoted = thing.promoted,
+                                  original_link = thing.original_link,
                                   is_link = True,
                                   **kw)
 

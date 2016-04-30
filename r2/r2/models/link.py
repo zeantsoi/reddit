@@ -123,6 +123,8 @@ class Link(Thing, Printable):
                      payment_flagged_reason="",
                      fraud=None,
                      managed_promo=False,
+                     promoted_by=None, # id (base 10) of post promoter
+                     original_link=None, # Used for promoted posts
                      pending=False,
                      disable_comments=False,
                      locked=False,
