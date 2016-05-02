@@ -1514,6 +1514,7 @@ class SelfServeEvent(Event):
         self.add("priority", campaign.priority_name)
         self.add("cost_basis", PROMOTE_COST_BASIS.name[campaign.cost_basis])
         self.add("platform", campaign.platform)
+        self.add("auto_extend", campaign.auto_extend)
 
         self.add_location_fields(campaign.location)
 
@@ -1562,6 +1563,7 @@ class SelfServeEvent(Event):
             self.add("prev_priority",
                 prev_attrs.get("priority_name"))
             self.add("prev_platform", prev_attrs.get("platform"))
+            self.add("prev_auto_extend", prev_attrs.get("auto_extend"))
 
             prev_cost_basis = prev_attrs.get("cost_basis")
             if prev_cost_basis is not None:

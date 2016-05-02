@@ -2165,7 +2165,7 @@ function edit_campaign($campaign_row) {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
                     'frequency_cap', 'total_budget_dollars',
-                    'bid_dollars', 'no_daily_budget'],
+                    'bid_dollars', 'no_daily_budget', 'auto_extend'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]');
@@ -2373,6 +2373,7 @@ function create_campaign() {
                 .find('#frequency_capped_false').prop('checked', 'checked').end()
                 .find('.frequency-cap-field').hide().end()
                 .find('input[name="is_new"]').val('true').end()
+                .find('input[name="auto_extend"]').prop('checked', true).end()
                 .slideDown();
             r.sponsored.render();
         });

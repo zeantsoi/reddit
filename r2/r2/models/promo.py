@@ -367,6 +367,8 @@ class PromoCampaign(Thing):
         is_approved=None,
         is_terminated=False,
         no_daily_budget=False,
+        extensions_remaining=30,
+        auto_extend=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -443,6 +445,10 @@ class PromoCampaign(Thing):
     def needs_approval(self):
         return not (self.is_approved or self.is_house)
 
+    @property
+    def is_extended(self):
+        return self.extensions_remaining < self._defaults["extensions_remaining"]
+
     def priority_name_from_priority(self, priority):
         if not priority in PROMOTE_PRIORITIES.values():
             raise ValueError("%s is not a valid priority" % priority.name)
@@ -466,7 +472,7 @@ class PromoCampaign(Thing):
                frequency_cap, priority, location,
                platform, mobile_os, ios_devices, ios_version_range,
                android_devices, android_version_range, total_budget_pennies,
-               cost_basis, bid_pennies, no_daily_budget):
+               cost_basis, bid_pennies, no_daily_budget, auto_extend):
         pc = PromoCampaign(
             link_id=link._id,
             start_date=start_date,
@@ -477,6 +483,7 @@ class PromoCampaign(Thing):
             total_budget_pennies=total_budget_pennies,
             cost_basis=cost_basis,
             bid_pennies=bid_pennies,
+            auto_extend=auto_extend,
         )
         pc.frequency_cap = frequency_cap
         pc.priority = priority

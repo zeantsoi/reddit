@@ -23,7 +23,7 @@
 <%!
     from datetime import datetime, timedelta
     from pylons.i18n import ungettext
-    from r2.models import Email
+    from r2.models import Email, PromoCampaign
     from r2.lib import promote
     from r2.lib.filters import unsafe
     from r2.lib.template_helpers import get_domain
@@ -155,6 +155,16 @@ considered preliminary until 24 hours after the ad has ended.
 Remember to log in to reddit.com using the username and password you used when
 you bought this self-serve ad. Please let us know if you have any questions by
 responding to this email.
+
+%elif thing.kind == Email.Kind.AUTO_EXTEND_PROMO:
+This email is to inform you that your self-serve ad on reddit.com has been
+automatically extended due to unspent budget.  The campaign will be extended
+everyday for up to ${unsafe(PromoCampaign._defaults["extensions_remaining"])} days.
+
+Your can adjust your bid or expand your targeting to improve delivery by
+editing your campaign.
+
+    ${unsafe(edit_url + ref_tags % dict(ref="promo_auto_extend", campaign="edit_promo"))}
 
 %elif thing.kind == Email.Kind.FINISHED_PROMO:
 This email is to inform you that your self-serve ad on reddit.com has concluded.

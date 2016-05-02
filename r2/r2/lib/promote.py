@@ -21,7 +21,7 @@
 ###############################################################################
 
 import calendar
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 import datetime
 from decimal import Decimal, ROUND_DOWN, ROUND_UP
 import hashlib
@@ -535,6 +535,12 @@ def edit_campaign(
         if no_daily_budget != campaign.no_daily_budget:
             changed["no_daily_budget"] = (campaign.no_daily_budget, no_daily_budget)
             campaign.no_daily_budget = no_daily_budget
+
+    if "auto_extend" in kwargs:
+        auto_extend = kwargs["auto_extend"]
+        if auto_extend != campaign.auto_extend:
+            changed["auto_extend"] = (campaign.auto_extend, auto_extend)
+            campaign.auto_extend = auto_extend
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
@@ -1083,23 +1089,69 @@ def promote_link(link, campaign=None):
         emailer.live_promo(link)
 
 
+def can_extend(campaign):
+    return (campaign.auto_extend and
+        campaign.extensions_remaining > 0 and
+        is_underdelivered(campaign))
+
+
+def extend_campaign(link, campaign):
+    if campaign.extensions_remaining < 1:
+        raise ValueError("campaign can no longer be extended")
+
+    if not campaign.is_extended:
+        emailer.auto_extend_promo(link, campaign)
+
+    edit_campaign(
+        link, campaign,
+        end_date=(campaign.end_date + datetime.timedelta(days=1))
+    )
+
+    campaign.extensions_remaining = campaign.extensions_remaining - 1
+
+
 def make_daily_promotions():
     # charge campaigns so they can go live
     charge_pending(offset=0)
     charge_pending(offset=1)
 
     # promote links and record ids of promoted links
-    link_ids = set()
+    scheduled_link_ids = set()
     for campaign, link in get_scheduled_promos(offset=0):
-        link_ids.add(link._id)
+        scheduled_link_ids.add(link._id)
         promote_link(link, campaign)
 
-    # expire finished links
-    q = Link._query(Link.c.promote_status == PROMOTE_STATUS.promoted, data=True)
-    q = q._filter(not_(Link.c._id.in_(link_ids)))
-    for link in q:
-        update_promote_status(link, PROMOTE_STATUS.finished)
-        emailer.finished_promo(link)
+    currently_promoted_links = Link._query(
+        Link.c.promote_status == PROMOTE_STATUS.promoted,
+        data=True,
+    )
+    currently_promoted_link_ids = [l._id for l in currently_promoted_links]
+    currently_promoted_campaigns = PromoCampaign._query(
+        PromoCampaign.c.link_id.in_(currently_promoted_link_ids),
+        data=True,
+        return_dict=False,
+    )
+    campaigns_by_link = defaultdict(list)
+    for campaign in currently_promoted_campaigns:
+        campaigns_by_link[campaign.link_id].append(campaign)
+
+    # expire finished links and extend any that can be
+    for link in currently_promoted_links:
+        # if it's not scheduled to run it either needs to be
+        # auto extended or marked as finished
+        if link._id not in scheduled_link_ids:
+            campaigns = campaigns_by_link[link._id]
+            any_extended = False
+            # check each campaign to see if we want to extend it
+            for campaign in campaigns:
+                if can_extend(campaign):
+                    extend_campaign(link, campaign)
+                    any_extended = True
+
+            # if no campaigns were extended then the link is done
+            if not any_extended:
+                update_promote_status(link, PROMOTE_STATUS.finished)
+                emailer.finished_promo(link)
 
     # update subreddits with promos
     all_live_promo_srnames(_update=True)
@@ -1536,6 +1588,12 @@ def get_spent_amount(campaign):
     else:
         # pre-CPM campaigns are charged in full regardless of impressions
         return campaign.total_budget_dollars
+
+
+def is_underdelivered(campaign):
+    spent = get_spent_amount(campaign)
+
+    return spent < campaign.total_budget_dollars
 
 
 def successful_payment(link, campaign, ip, address):

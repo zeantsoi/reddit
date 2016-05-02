@@ -4536,6 +4536,7 @@ class PromoteLinkBase(Templated):
     min_start = None
     max_start = None
     max_end = None
+    max_extensions = PromoCampaign._defaults["extensions_remaining"]
 
     def __init__(self, **kw):
         self.third_party_tracking_enabled = feature.is_enabled("third_party_tracking")

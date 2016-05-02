@@ -8,23 +8,28 @@ from pylons import app_globals as g
 from r2.lib.authorize.api import Transaction
 from r2.lib import promote
 from r2.lib.promote import (
+    can_extend,
     can_refund,
     free_campaign,
+    extend_campaign,
     get_nsfw_collections_srnames,
     get_refund_amount,
     get_spent_amount,
     is_pre_cpm,
+    is_underdelivered,
     RefundProviderException,
     refund_campaign,
     srnames_from_site,
     InapplicableRefundException,
     get_utc_offset,
+    make_daily_promotions,
 )
 from r2.models import (
     Account,
     Collection,
     FakeAccount,
     Frontpage,
+    Link,
     PromoCampaign,
     Subreddit,
     MultiReddit,
@@ -480,3 +485,309 @@ class TestFreebies(RedditTestCase):
         self.charge_campaign.assert_called_once_with(self.link, campaign)
         self.promote_link.assert_called_once_with(self.link, campaign)
         self.all_live_promo_srnames.called_once_with(_update=True)
+
+
+class TestIsUnderdelivered(unittest.TestCase):
+    @patch("r2.lib.promote.get_spent_amount")
+    def test_is_underdelivered_is_true_if_spend_is_less_than_budget(
+        self,
+        get_spent_amount,
+    ):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.total_budget_dollars = 500
+        get_spent_amount.return_value = 100
+
+        self.assertTrue(is_underdelivered(campaign))
+
+    @patch("r2.lib.promote.get_spent_amount")
+    def test_is_underdelivered_is_false_if_spend_is_greater_or_equal_to_budget(
+        self,
+        get_spent_amount,
+    ):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.total_budget_dollars = 500
+        get_spent_amount.return_value = 500
+
+        self.assertFalse(is_underdelivered(campaign))
+
+
+@patch("r2.lib.promote.emailer.auto_extend_promo")
+@patch("r2.lib.promote.edit_campaign")
+class TestExtendCampaign(unittest.TestCase):
+    def setUp(self):
+        self.link = MagicMock(spec=Link)
+        self.campaign = PromoCampaign(
+            end_date=datetime.datetime.now(),
+        )
+
+    def test_user_is_only_emailed_on_first_extension(
+        self,
+        edit_campaign,
+        auto_extend_promo,
+    ):
+        extend_campaign(self.link, self.campaign)
+
+        self.assertEqual(auto_extend_promo.call_count, 1)
+
+        extend_campaign(self.link, self.campaign)
+
+        self.assertEqual(auto_extend_promo.call_count, 1)
+
+    def test_campaign_can_be_extended_only_30_times(
+        self,
+        edit_campaign,
+        auto_extend_promo,
+    ):
+        for i in range(0, 30):
+            extend_campaign(self.link, self.campaign)
+
+        with self.assertRaises(ValueError):
+            extend_campaign(self.link, self.campaign)
+
+    def test_campaign_is_extended_1_day_at_a_time(
+        self,
+        edit_campaign,
+        auto_extend_promo,
+    ):
+        end_after = self.campaign.end_date + datetime.timedelta(days=1)
+        extend_campaign(self.link, self.campaign)
+
+        edit_campaign.assert_called_once_with(
+            self.link, self.campaign,
+            end_date=end_after,
+        )
+
+    def test_decrements_extensions_remaining(
+        self,
+        edit_campaign,
+        auto_extend_promo,
+    ):
+        before = self.campaign.extensions_remaining
+        extend_campaign(self.link, self.campaign)
+        after = self.campaign.extensions_remaining
+
+        self.assertEqual(before - 1, after)
+
+
+class TestCanExtend(unittest.TestCase):
+    def test_can_extend_is_false_if_auto_extend_is_off(self):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = False
+        self.assertFalse(can_extend(campaign))
+
+    def test_can_extend_is_false_if_no_extensions_remain(self):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = True
+        campaign.extensions_remaining = 0
+        self.assertFalse(can_extend(campaign))
+
+    @patch("r2.lib.promote.is_underdelivered")
+    def test_can_extend_is_false_if_not_undelivered(self, is_underdelivered):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = True
+        campaign.extensions_remaining = 1
+        is_underdelivered.return_value = False
+        self.assertFalse(can_extend(campaign))
+
+    @patch("r2.lib.promote.is_underdelivered")
+    def test_can_extend_is_true(self, is_underdelivered):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = True
+        campaign.extensions_remaining = 1
+        is_underdelivered.return_value = True
+        self.assertTrue(can_extend(campaign))
+
+
+@patch("r2.lib.promote.charge_pending")
+@patch("r2.lib.promote.all_live_promo_srnames")
+@patch("r2.lib.promote._mark_promos_updated")
+@patch("r2.lib.promote.finalize_completed_campaigns")
+@patch("r2.lib.promote.hooks.get_hook")
+@patch("r2.lib.promote.get_scheduled_promos")
+@patch("r2.lib.promote.promote_link")
+@patch("r2.lib.promote.Link._query")
+@patch("r2.lib.promote.PromoCampaign._query")
+@patch("r2.lib.promote.can_extend")
+@patch("r2.lib.promote.extend_campaign")
+@patch("r2.lib.promote.update_promote_status")
+@patch("r2.lib.promote.emailer.finished_promo")
+class TestMakeDailyPromotions(unittest.TestCase):
+    def setUp(self):
+        self.link_1 = MagicMock(spec=Link)
+        self.link_1._id = 1
+        self.link_2 = MagicMock(spec=Link)
+        self.link_2._id = 2
+        self.link_3 = MagicMock(spec=Link)
+        self.link_3._id = 3
+        self.link_4 = MagicMock(spec=Link)
+        self.link_4._id = 4
+        self.link_5 = MagicMock(spec=Link)
+        self.link_5._id = 5
+
+        self.campaign_1 = MagicMock(spec=PromoCampaign)
+        self.campaign_1._id = 1
+        self.campaign_1.link_id = 1
+        self.campaign_2 = MagicMock(spec=PromoCampaign)
+        self.campaign_2._id = 2
+        self.campaign_2.link_id = 2
+        self.campaign_3 = MagicMock(spec=PromoCampaign)
+        self.campaign_3._id = 3
+        self.campaign_3.link_id = 3
+        self.campaign_4 = MagicMock(spec=PromoCampaign)
+        self.campaign_4._id = 4
+        self.campaign_4.link_id = 4
+        self.campaign_5 = MagicMock(spec=PromoCampaign)
+        self.campaign_5._id = 5
+        self.campaign_5.link_id = 5
+
+    def test_scheduled_campaigns_are_promoted(
+        self,
+        finished_promo,
+        update_promote_status,
+        extend_campaign,
+        can_extend,
+        PromoCampaign_query,
+        Link_query,
+        promote_link,
+        get_scheduled_promos,
+        get_hook,
+        finalize_completed_campaigns,
+        _mark_promos_updated,
+        all_live_promo_srnames,
+        charge_pending,
+    ):
+        get_scheduled_promos.return_value = [
+            (self.link_1, self.campaign_1),
+            (self.link_2, self.campaign_2),
+            (self.link_3, self.campaign_3),
+        ]
+
+        make_daily_promotions()
+
+        self.assertEqual(promote_link.call_count, 3)
+
+    def test_unscheduled_campaigns_are_marked_finished(
+        self,
+        finished_promo,
+        update_promote_status,
+        extend_campaign,
+        can_extend,
+        PromoCampaign_query,
+        Link_query,
+        promote_link,
+        get_scheduled_promos,
+        get_hook,
+        finalize_completed_campaigns,
+        _mark_promos_updated,
+        all_live_promo_srnames,
+        charge_pending,
+    ):
+        scheduled = [
+            (self.link_1, self.campaign_1),
+            (self.link_2, self.campaign_2),
+            (self.link_3, self.campaign_3),
+        ]
+        live = [t[0] for t in scheduled] + [
+            self.link_4,
+            self.link_5,
+        ]
+
+        get_scheduled_promos.return_value = scheduled
+        Link_query.return_value = live
+
+        make_daily_promotions()
+
+        self.assertEqual(promote_link.call_count, 3)
+        self.assertEqual(update_promote_status.call_count, 2)
+
+    def test_underdelivered_campaigns_that_can_be_are_extended(
+        self,
+        finished_promo,
+        update_promote_status,
+        extend_campaign,
+        can_extend,
+        PromoCampaign_query,
+        Link_query,
+        promote_link,
+        get_scheduled_promos,
+        get_hook,
+        finalize_completed_campaigns,
+        _mark_promos_updated,
+        all_live_promo_srnames,
+        charge_pending,
+    ):
+        scheduled = [
+            (self.link_1, self.campaign_1),
+            (self.link_2, self.campaign_2),
+            (self.link_3, self.campaign_3),
+        ]
+
+        live_links = [t[0] for t in scheduled] + [
+            self.link_4,
+            self.link_5,
+        ]
+
+        live_campaigns = [
+            self.campaign_1,
+            self.campaign_2,
+            self.campaign_3,
+            self.campaign_4,
+            self.campaign_5,
+        ]
+
+        get_scheduled_promos.return_value = scheduled
+        Link_query.return_value = live_links
+        PromoCampaign_query.return_value = live_campaigns
+        can_extend.return_value = True
+
+        make_daily_promotions()
+
+        self.assertEqual(promote_link.call_count, 3)
+        self.assertEqual(update_promote_status.call_count, 0)
+        self.assertEqual(extend_campaign.call_count, 2)
+
+    def test_underdelivered_campaigns_cannot_be_extended_are_marked_finished(
+        self,
+        finished_promo,
+        update_promote_status,
+        extend_campaign,
+        can_extend,
+        PromoCampaign_query,
+        Link_query,
+        promote_link,
+        get_scheduled_promos,
+        get_hook,
+        finalize_completed_campaigns,
+        _mark_promos_updated,
+        all_live_promo_srnames,
+        charge_pending,
+    ):
+        scheduled = [
+            (self.link_1, self.campaign_1),
+            (self.link_2, self.campaign_2),
+            (self.link_3, self.campaign_3),
+        ]
+
+        live_links = [t[0] for t in scheduled] + [
+            self.link_4,
+            self.link_5,
+        ]
+
+        live_campaigns = [
+            self.campaign_1,
+            self.campaign_2,
+            self.campaign_3,
+            self.campaign_4,
+            self.campaign_5,
+        ]
+
+        get_scheduled_promos.return_value = scheduled
+        Link_query.return_value = live_links
+        PromoCampaign_query.return_value = live_campaigns
+        can_extend.return_value = False
+
+        make_daily_promotions()
+
+        self.assertEqual(promote_link.call_count, 3)
+        self.assertEqual(update_promote_status.call_count, 2)
+        self.assertEqual(extend_campaign.call_count, 0)

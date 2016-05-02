@@ -1345,13 +1345,15 @@ class PromoteApiController(ApiController):
         total_budget_dollars=VFloat('total_budget_dollars', coerce=False),
         cost_basis=VOneOf('cost_basis', ('cpc', 'cpm',), default=None),
         bid_dollars=VFloat('bid_dollars', coerce=True),
+        auto_extend=VBoolean('auto_extend', default=False)
     )
     def POST_edit_campaign(self, form, jquery, is_auction, link, campaign_id36,
                            start, end, target, frequency_cap,
                            priority, location, platform, mobile_os,
                            os_versions, ios_devices, ios_versions,
                            android_devices, android_versions, no_daily_budget,
-                           total_budget_dollars, cost_basis, bid_dollars):
+                           total_budget_dollars, cost_basis, bid_dollars,
+                           auto_extend):
         if not link:
             return
 
@@ -1625,6 +1627,7 @@ class PromoteApiController(ApiController):
             'android_devices': android_devices,
             'android_version_range': android_versions,
             'no_daily_budget': is_auction and no_daily_budget,
+            'auto_extend': is_auction and auto_extend,
         }
 
         if campaign:

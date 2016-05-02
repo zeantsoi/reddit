@@ -360,6 +360,11 @@
     <div>
       ${error_field("BAD_DATE_RANGE", "enddate", "div")}
     </div>
+    <div class="checkbox-group auction-field">
+      <div class="form-group">
+        ${checkbox("auto_extend", _("automatically extend up to %(days)s days if unspent budget remains") % dict(days=thing.max_extensions), True)}
+      </div>
+    </div>
     ${make_weekend_warning()}
   </%utils:line_field>
 </%def>

@@ -506,6 +506,10 @@ def finished_promo(thing):
     return _promo_email(thing, Email.Kind.FINISHED_PROMO)
 
 
+def auto_extend_promo(thing, campaign):
+    return _promo_email(thing, Email.Kind.AUTO_EXTEND_PROMO, campaign=campaign)
+
+
 def refunded_promo(thing):
     return _promo_email(thing, Email.Kind.REFUNDED_PROMO)
 
