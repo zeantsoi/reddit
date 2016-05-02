@@ -46,6 +46,7 @@ import requests
 from pylons import app_globals as g
 
 from r2 import models
+from r2.config import feature
 from r2.lib import amqp, hooks
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.lib.memoize import memoize
@@ -441,7 +442,8 @@ def upload_stylesheet(content):
 
 
 def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
-                  save_thumbnail=True, use_cache=False, max_cache_age=None):
+                  save_thumbnail=True, use_cache=False, max_cache_age=None,
+                  use_image_scraper=False):
     media = None
     autoplay = bool(autoplay)
     maxwidth = int(maxwidth)
@@ -460,7 +462,8 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
         media_object = secure_media_object = None
         thumbnail_image = thumbnail_url = thumbnail_size = None
 
-        scraper = Scraper.for_url(url, autoplay=autoplay)
+        scraper = Scraper.for_url(url, autoplay=autoplay,
+                                  use_image_scraper=use_image_scraper)
         try:
             thumbnail_image, preview_object, media_object, secure_media_object = (
                 scraper.scrape())
@@ -514,8 +517,13 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
     return media
 
 
-def _get_scrape_url(link):
+def _get_scrape_url(link, use_image_scraper=False):
     if not link.is_self:
+        # If the _ImageScraper is being used, we'll scrape direct links to gifs
+        # and generate our own previews, and gifv links will fall back to
+        # embedly.
+        if use_image_scraper:
+            return link.url
         sr_name = link.subreddit_slow.name
         p = UrlParser(link.url)
         # If it's a gif link on imgur, replacing it with gifv should
@@ -556,7 +564,8 @@ def set_media(link, force=False, **kwargs):
     if not force and link.promoted:
         return
 
-    scrape_url = _get_scrape_url(link)
+    use_image_scraper = feature.is_enabled("image_scraper", subreddit=sr.name)
+    scrape_url = _get_scrape_url(link, use_image_scraper=use_image_scraper)
 
     if not scrape_url:
         if link.preview_object:
@@ -566,7 +575,8 @@ def set_media(link, force=False, **kwargs):
             link._commit()
         return
 
-    media = _scrape_media(scrape_url, force=force, **kwargs)
+    media = _scrape_media(scrape_url, force=force,
+                          use_image_scraper=use_image_scraper, **kwargs)
 
     if media and not link.promoted:
         # While we want to add preview images to self posts for the new apps,
@@ -657,9 +667,13 @@ def upload_icon(image_data, size):
     return g.media_provider.put('icons', file_name + ".png", icon_data)
 
 
-def allowed_media_preview_url(url):
+def allowed_media_preview_url(url, sr_name=None):
     p = UrlParser(url)
     if p.has_image_extension():
+        if sr_name and feature.is_enabled('image_scraper', subreddit=sr_name):
+            return True
+        if p.path_extension().lower() == 'gif':
+            return False
         return True
     for allowed_domain in g.media_preview_domain_whitelist:
         if is_subdomain(p.hostname, allowed_domain):
@@ -800,12 +814,12 @@ class MediaEmbed(object):
 
 class Scraper(object):
     @classmethod
-    def for_url(cls, url, autoplay=False, maxwidth=600):
+    def for_url(cls, url, autoplay=False, maxwidth=600, use_image_scraper=False):
         scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
         if scraper:
             return scraper
 
-        if _ImageScraper.matches(url):
+        if use_image_scraper and _ImageScraper.matches(url):
             return _ImageScraper(url)
 
         if _YouTubeScraper.matches(url):

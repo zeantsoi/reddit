@@ -794,7 +794,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
             if thing.nsfw:
                 images['variants']['nsfw'] = self.generate_image_links(
                     preview_object, censor_nsfw=True, file_type="png")
-            if preview_is_gif:
+            sr = thing.subreddit_slow
+            if (preview_is_gif and
+                    feature.is_enabled('image_scraper', subreddit=sr.name)):
                 images['variants']['gif'] = self.generate_image_links(preview_object)
                 images['variants']['mp4'] = self.generate_image_links(preview_object, file_type="mp4")
             d['preview']['images'] = [images]
