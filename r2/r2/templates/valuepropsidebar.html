@@ -1,0 +1,66 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+from r2.lib.template_helpers import static
+%>
+
+<%def name="render_value_prop(prop)">
+  <div class="value-prop__bullet">
+    <div class="value-prop__bullet-icon"
+      style="background-image: url(${static(prop['icon'])});">
+    </div>
+    <div class="value-prop__bullet-content">
+      <div class="value-prop__bullet-content-title">
+        ${prop['title']}
+      </div>
+      <div class="value-prop__bullet-content-text">
+        ${prop['text']}
+      </div>
+    </div>
+  </div>
+</%def>
+
+<div class="relevancy-sidebar value-prop">
+  <div class="value-prop__header">
+    <div class="value-prop__header-text">What is Reddit?</div>
+  </div>
+  % for prop in thing.value_props:
+    ${render_value_prop(prop)}
+  % endfor
+  <div class="value-prop__cta">
+    <a
+      href="/login" class="login-required"
+      data-action_name="cta_sidebar_click"
+      data-target_fullname="${thing.subreddit._fullname}"
+      data-target_name="${thing.subreddit.name}"
+      data-target_type="subreddit"
+      data-link_name="value_prop_cta"
+      data-page_type="${thing.page_type}"
+    >
+
+      <div class="value-prop__cta-text">
+        FOLLOW ${thing.subreddit.name.upper()}
+      </div>
+    </a>
+  </div>
+</div>
