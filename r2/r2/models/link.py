@@ -388,16 +388,10 @@ class Link(Thing, Printable):
             if wrapped.hidden:
                 return False
 
-            # determine if the post can be auto-hidden due to voting/score
-            if self.author_id == user._id:
-                # not if it's the user's own post
-                allow_auto_hide = False
-            elif wrapped.sticked and not wrapped.different_sr:
-                # not if it's stickied and we're inside the subreddit
-                allow_auto_hide = False
-            else:
-                allow_auto_hide = True
-
+            # never automatically hide user's own posts or stickies
+            allow_auto_hide = (not wrapped.stickied and
+                               self.author_id != user._id and
+                               getattr(wrapped, "distinguished", "no") != "no")
             if (allow_auto_hide and
                     ((user.pref_hide_ups and wrapped.likes == True) or
                      (user.pref_hide_downs and wrapped.likes == False) or
