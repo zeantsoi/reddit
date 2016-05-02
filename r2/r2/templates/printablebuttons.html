@@ -26,7 +26,7 @@
    from r2.config import feature
    from r2.lib.filters import conditional_websafe, jssafe
    from r2.lib.strings import strings
-   from r2.models import Link
+   from r2.models import Link, Subreddit
    from r2.models.promo import PROMOTE_STATUS
  %>
 
@@ -335,11 +335,12 @@
     <li class="first">
     <%
       original_link = Link._by_fullname(thing.original_link, stale=True)
+      original_subreddit = Subreddit._byID(original_link.sr_id, stale=True)
       comment_text = "%d comments" % original_link.num_comments
     %>
     ${self.bylink_button(
         comment_text,
-        original_link.make_permalink(c.site, force_domain=True),
+        original_link.make_permalink(original_subreddit),
         sr_path=True,
         event_action="comments")}
     </li>    

@@ -124,7 +124,7 @@ class Link(Thing, Printable):
                      fraud=None,
                      managed_promo=False,
                      promoted_by=None, # id (base 10) of post promoter
-                     original_link=None, # Used for promoted posts
+                     original_link=None, # fullname of link to be used for comments (for promoted posts)
                      pending=False,
                      disable_comments=False,
                      locked=False,
