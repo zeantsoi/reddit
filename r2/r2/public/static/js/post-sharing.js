@@ -207,6 +207,9 @@
         case 'tumblr':
           return this.shareToTumblr();
 
+        case 'embed':
+          return this.shareEmbed();
+
         default:
           this.close();
       }
@@ -219,6 +222,19 @@
       };
 
       return r.utils.replaceUrlParams(this.thingData.link, refParams);
+    },
+
+    shareEmbed: function() {
+      var embedUrl = 'https://embed.redditmedia.com/widgets/embed';
+      var redditUrl = this.getShareLink('embed');
+
+      var shareParams = {
+        url: redditUrl
+      };
+
+      var shareUrl = r.utils.replaceUrlParams(embedUrl, shareParams);
+
+      this.openWebIntent(shareUrl, 'embed');
     },
 
     shareToFacebook: function() {
@@ -449,7 +465,10 @@
         {
           name: 'tumblr',
           tooltip: r._('Share to %(name)s').format({name: 'Tumblr'}),
-        },
+        }, {
+          name: 'embed',
+          tooltip: r._('Embed Post'),
+        }
       ];
 
       if (r.config.logged && !r.config.user_in_timeout
