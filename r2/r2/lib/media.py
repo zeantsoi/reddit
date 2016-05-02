@@ -45,7 +45,6 @@ import requests
 from pylons import app_globals as g
 
 from r2 import models
-from r2.config import feature
 from r2.lib import amqp, hooks
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.lib.memoize import memoize
@@ -417,8 +416,6 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 def _get_scrape_url(link):
     if not link.is_self:
         sr_name = link.subreddit_slow.name
-        if not feature.is_enabled("imgur_gif_conversion", subreddit=sr_name):
-            return link.url
         p = UrlParser(link.url)
         # If it's a gif link on imgur, replacing it with gifv should
         # give us the embedly friendly video url
