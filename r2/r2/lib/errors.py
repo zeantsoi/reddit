@@ -167,6 +167,7 @@ error_list = dict((
         ('FREQUENCY_CAP_TOO_LOW', _('frequency cap must be at least %(min)d')),
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
         ('IN_TIMEOUT', _("You can't do that while suspended.")),
+        ('RESET_PASSWORD', _("You must reset your password before doing that.")),
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
         ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),
         ('GILDING_NOT_ALLOWED', _("gilding is not allowed in this subreddit")),

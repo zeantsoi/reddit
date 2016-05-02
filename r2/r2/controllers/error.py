@@ -233,6 +233,14 @@ class ErrorController(RedditController):
             if request.GET.has_key('allow_framing'):
                 c.allow_framing = bool(request.GET['allow_framing'] == '1')
 
+            if (error_name == 'RESET_PASSWORD' and
+                    not 'usable_error_content' in request.environ):
+                errpage = pages.InterstitialPage(
+                    _("reset password"),
+                    content=pages.ResetPasswordInterstitial(),
+                )
+                request.environ['usable_error_content'] = errpage.render()
+
             if (error_name == 'IN_TIMEOUT' and
                     not 'usable_error_content' in request.environ):
                 timeout_days_remaining = c.user.days_remaining_in_timeout

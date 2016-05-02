@@ -291,6 +291,7 @@ class Reddit(Templated):
         self.infobar = None
         self.mobilewebredirectbar = None
         self.show_timeout_modal = False
+        self.show_reset_password_modal = False
 
         if feature.is_enabled("new_expando_icons"):
             self.feature_new_expando_icons = True
@@ -325,21 +326,11 @@ class Reddit(Templated):
                 elif g.live_config.get("announcement_message"):
                     infotext = g.live_config["announcement_message"]
             if c.user_is_loggedin and c.user.in_timeout:
-                timeout_days_remaining = c.user.days_remaining_in_timeout
-
-                if timeout_days_remaining:
-                    days = ungettext('day', 'days', timeout_days_remaining)
-                    days_str = '%(num)s %(days)s' % {
-                        'num': timeout_days_remaining,
-                        'days': days,
-                    }
-                    message = strings.in_temp_timeout_msg % {'days': days_str}
-                else:
-                    message = strings.in_perma_timeout_msg
+                extra_class, message = self.get_timeout_bar_info(c.user)
 
                 self.infobar = RedditInfoBar(
                     message=message,
-                    extra_class='timeout-infobar',
+                    extra_class=extra_class,
                     show_icon=True,
                 )
             elif infotext:
@@ -417,8 +408,11 @@ class Reddit(Templated):
                 panes.append(FraudForm())
 
         if c.user_is_loggedin and c.user.in_timeout:
-            self.show_timeout_modal = True
-            self.timeout_days_remaining = c.user.days_remaining_in_timeout
+            if c.user.force_password_reset and not c.user.timeout_expiration:
+                self.show_reset_password_modal = True
+            else:
+                self.show_timeout_modal = True
+                self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
         self.popup_panes = self.build_popup_panes()
         panes.append(self.popup_panes)
@@ -477,6 +471,31 @@ class Reddit(Templated):
                     return sr.stylesheet_url
                 elif sr.stylesheet_url_http:
                     return sr.stylesheet_url_http
+
+    # get timeout bar information for different timeout reasons
+    def get_timeout_bar_info(self, user):
+        if not user.in_timeout:
+            return
+        extra_class = 'timeout-infobar'
+        if (user.force_password_reset and
+                not user.timeout_expiration):
+            message = strings.force_password_reset_msg
+            extra_class = 'reset-password-infobar'
+        else:
+            timeout_days_remaining = user.days_remaining_in_timeout
+
+            if timeout_days_remaining:
+                days = ungettext('day', 'days', timeout_days_remaining)
+                days_str = '%(num)s %(days)s' % {
+                    'num': timeout_days_remaining,
+                    'days': days,
+                }
+                message = (strings.in_temp_timeout_msg
+                           % {'days': days_str})
+            else:
+                message = strings.in_perma_timeout_msg
+
+        return extra_class, message
 
     def wiki_actions_menu(self, moderator=False):
         data_attrs = lambda event: (
@@ -1033,7 +1052,11 @@ class Reddit(Templated):
                 hide_message=True,
             )
             panes.append(Popup('access-popup', popup_content))
-        
+
+        if self.show_reset_password_modal:
+            popup_content = ResetPasswordInterstitial()
+            panes.append(Popup('access-popup', popup_content))
+
         return HtmlPaneStack(panes)
 
     def is_gold_page(self):
@@ -2754,6 +2777,11 @@ class InTimeoutInterstitial(BannedInterstitial):
         self.timeout_days_remaining = timeout_days_remaining
         self.hide_message = hide_message
         super(InTimeoutInterstitial, self).__init__()
+
+
+class ResetPasswordInterstitial(BannedInterstitial):
+    """The message shown to a user in ato modal."""
+    pass
 
 
 class PrivateInterstitial(Interstitial):

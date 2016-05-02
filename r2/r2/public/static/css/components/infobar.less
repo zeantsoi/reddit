@@ -117,6 +117,21 @@
   }
 }
 
+.reset-password-infobar {
+  @reset-password-infobar-color: #fff0f0;
+  @reset-password-infobar-color-border: #e70028;
+  background-color: @reset-password-infobar-color;
+  border-color: @reset-password-infobar-color-border;
+
+  &.with-icon:before {
+    @1x: url('../infobar-icon-lock.png');
+    @2x: url('../infobar-icon-lock_2x.png');
+    @2x-bg-size: 20px 27px;
+    .hdpi-bg-image(@1x: @1x, @2x: @2x, @2x-bg-size);
+    background-color: @reset-password-infobar-color-border;
+  }
+}
+
 .infobar-btn-container {
   position: absolute;
   top: 50%;

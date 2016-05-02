@@ -1015,8 +1015,13 @@ class VNotInTimeout(Validator):
                 context=c,
             )
             if fatal:
-                request.environ['REDDIT_ERROR_NAME'] = 'IN_TIMEOUT'
-                abort(403, errors.IN_TIMEOUT)
+                if (c.user.force_password_reset and
+                        not c.user.timeout_expiration):
+                    request.environ['REDDIT_ERROR_NAME'] = 'RESET_PASSWORD'
+                    abort(403, errors.RESET_PASSWORD)
+                else:
+                    request.environ['REDDIT_ERROR_NAME'] = 'IN_TIMEOUT'
+                    abort(403, errors.IN_TIMEOUT)
             return False
 
 

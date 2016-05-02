@@ -495,6 +495,7 @@ class ApiController(RedditController):
                 errors.NO_SELFS,
                 errors.NO_LINKS,
                 errors.IN_TIMEOUT,
+                errors.RESET_PASSWORD,
         ):
             return
 
@@ -1410,7 +1411,7 @@ class ApiController(RedditController):
                 request=request,
                 context=c)
 
-        if form.has_errors("curpass", errors.WRONG_PASSWORD):
+        if not c.user.force_password_reset and form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
 
         if not form.has_errors("email", errors.BAD_EMAILS) and email:
@@ -1419,6 +1420,8 @@ class ApiController(RedditController):
                     _event("update_email")
                     emailer.email_change_email(c.user)
                 else:
+                    if c.user.force_password_reset:
+                        form.redirect("/prefs/update")
                     _event("add_email")
 
                 c.user.set_email(email)
@@ -3831,6 +3834,17 @@ class ApiController(RedditController):
         # Prevent banned users from resetting, and thereby logging in
         if user._banned:
             return
+
+        # Clean force password reset and in timeout flags with no expiration.
+        if user.force_password_reset:
+            user.force_password_reset = False
+            if not user.timeout_expiration:
+                user.in_timeout = False
+
+        # passwordresettoken already verified the email address and password,
+        # so here give verified_email award
+        user.email_verified = True
+        Award.give_if_needed("verified_email", user)
 
         # successfully entered user name and valid new password
         change_password(user, password)

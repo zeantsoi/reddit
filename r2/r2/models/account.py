@@ -153,6 +153,7 @@ class Account(Thing):
                      pref_threaded_modmail=False,
                      in_timeout=False,
                      has_used_mobile_app=False,
+                     force_password_reset=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
