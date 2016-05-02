@@ -1587,12 +1587,15 @@ class RedditController(OAuth2ResourceController):
                     not no_redirect and 
                     detect_mobile(request.user_agent) and 
                     self.is_safe_mobile_web_route(request.fullpath) and
-                    feature.is_enabled('mobileweb_redirect') and
-                    feature.variant('mobileweb_redirect') == 'redirected'):
+                    feature.is_enabled('mobileweb_redirect_v2') and
+                    feature.variant('mobileweb_redirect_v2') in ('card', 'compact')
+            ):
 
                 url = UrlParser(request.fullpath)
                 url.switch_subdomain_by_extension('mobile')
                 url.update_query(utm_source='mweb_redirect')
+                if feature.variant('mobileweb_redirect_v2') == 'compact':
+                    url.update_query(compact='true')
 
                 g.stats.simple_event('mweb.redirect')
                 abort(302, location=self.format_output_url(url.unparse()))
