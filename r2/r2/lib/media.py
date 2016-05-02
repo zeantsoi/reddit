@@ -341,8 +341,7 @@ def upload_stylesheet(content):
 
 
 def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
-                  save_thumbnail=True, use_cache=False, max_cache_age=None,
-                  use_youtube_scraper=False):
+                  save_thumbnail=True, use_cache=False, max_cache_age=None):
     media = None
     autoplay = bool(autoplay)
     maxwidth = int(maxwidth)
@@ -361,8 +360,7 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
         media_object = secure_media_object = None
         thumbnail_image = thumbnail_url = thumbnail_size = None
 
-        scraper = Scraper.for_url(url, autoplay=autoplay,
-                                  use_youtube_scraper=use_youtube_scraper)
+        scraper = Scraper.for_url(url, autoplay=autoplay)
         try:
             thumbnail_image, preview_object, media_object, secure_media_object = (
                 scraper.scrape())
@@ -470,9 +468,7 @@ def set_media(link, force=False, **kwargs):
             link._commit()
         return
 
-    youtube_scraper = feature.is_enabled("youtube_scraper", subreddit=sr.name)
-    media = _scrape_media(scrape_url, force=force,
-                          use_youtube_scraper=youtube_scraper, **kwargs)
+    media = _scrape_media(scrape_url, force=force, **kwargs)
 
     if media and not link.promoted:
         # While we want to add preview images to self posts for the new apps,
@@ -692,12 +688,12 @@ class MediaEmbed(object):
 
 class Scraper(object):
     @classmethod
-    def for_url(cls, url, autoplay=False, maxwidth=600, use_youtube_scraper=False):
+    def for_url(cls, url, autoplay=False, maxwidth=600):
         scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
         if scraper:
             return scraper
 
-        if use_youtube_scraper and _YouTubeScraper.matches(url):
+        if _YouTubeScraper.matches(url):
             return _YouTubeScraper(url, maxwidth=maxwidth)
 
         embedly_services = _fetch_embedly_services()
