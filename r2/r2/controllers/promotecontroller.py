@@ -1627,7 +1627,8 @@ class PromoteApiController(ApiController):
             'android_devices': android_devices,
             'android_version_range': android_versions,
             'no_daily_budget': is_auction and no_daily_budget,
-            'auto_extend': is_auction and auto_extend,
+            'auto_extend': (feature.is_enabled("ads_auto_extend") and
+                is_auction and auto_extend),
         }
 
         if campaign:
