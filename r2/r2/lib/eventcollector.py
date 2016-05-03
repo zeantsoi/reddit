@@ -1509,6 +1509,7 @@ class SelfServeEvent(Event):
         self.add("end_date_ts", _datetime_to_millis(campaign.end_date))
         self.add("target_name", campaign.target.pretty_name)
         self.add("subreddit_targets", campaign.target.subreddit_names)
+        self.add("no_daily_budget", campaign.no_daily_budget)
         self.add("total_budget_pennies", campaign.total_budget_pennies)
         self.add("priority", campaign.priority_name)
         self.add("cost_basis", PROMOTE_COST_BASIS.name[campaign.cost_basis])
@@ -1554,6 +1555,8 @@ class SelfServeEvent(Event):
                 prefix="prev_",
             )
 
+            self.add("prev_no_daily_budget",
+                prev_attrs.get("no_daily_budget"))
             self.add("prev_total_budget_pennies",
                 prev_attrs.get("total_budget_pennies"))
             self.add("prev_priority",

@@ -649,6 +649,8 @@ var exports = r.sponsored = {
                 .find("button[name=save]").hide().end()
         }
         this.userIsSponsor = userIsSponsor
+
+        $('[name=no_daily_budget]').on('change', render);
     },
 
     setupAuctionFields: function($form, targeting, timing) {
@@ -1686,6 +1688,11 @@ var exports = r.sponsored = {
         if ($form.find('#is_new').val() === 'true') {
             this.setupLiveEditing(false);
         }
+
+        var $noDailyBudget = $('[name="no_daily_budget"]');
+        var $budgetDetails = $('.budget-details');
+
+        $budgetDetails.toggle(!$noDailyBudget.is(':checked'));
     },
 
     disable_geotargeting: function() {
@@ -2158,11 +2165,18 @@ function edit_campaign($campaign_row) {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
                     'frequency_cap', 'total_budget_dollars',
-                    'bid_dollars'],
+                    'bid_dollars', 'no_daily_budget'],
                 function(input) {
                     var val = $campaign_row.data(input),
-                        $input = campaign.find('*[name="' + input + '"]')
-                    $input.val(val)
+                        $input = campaign.find('*[name="' + input + '"]');
+
+                    switch ($input.attr('type')) {
+                      case 'checkbox':
+                        $input.prop('checked', val === 'True');
+                        break;
+                      default:
+                        $input.val(val)
+                    }
             })
 
             if ($campaign_row.data('is_auction') === 'True') {

@@ -530,6 +530,12 @@ def edit_campaign(
             campaign.is_approved = is_approved
             queries.update_unapproved_campaigns_listing(link)
 
+    if "no_daily_budget" in kwargs:
+        no_daily_budget = kwargs["no_daily_budget"]
+        if no_daily_budget != campaign.no_daily_budget:
+            changed["no_daily_budget"] = (campaign.no_daily_budget, no_daily_budget)
+            campaign.no_daily_budget = no_daily_budget
+
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
     change_text = ', '.join(change_strs)

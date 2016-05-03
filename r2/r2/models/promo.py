@@ -366,6 +366,7 @@ class PromoCampaign(Thing):
         adserver_spent_pennies=0,
         is_approved=None,
         is_terminated=False,
+        no_daily_budget=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -465,13 +466,14 @@ class PromoCampaign(Thing):
                frequency_cap, priority, location,
                platform, mobile_os, ios_devices, ios_version_range,
                android_devices, android_version_range, total_budget_pennies,
-               cost_basis, bid_pennies):
+               cost_basis, bid_pennies, no_daily_budget):
         pc = PromoCampaign(
             link_id=link._id,
             start_date=start_date,
             end_date=end_date,
             trans_id=NO_TRANSACTION,
             owner_id=link.author_id,
+            no_daily_budget=no_daily_budget,
             total_budget_pennies=total_budget_pennies,
             cost_basis=cost_basis,
             bid_pennies=bid_pennies,

@@ -51,6 +51,7 @@
     data-android_versions="${json.dumps(thing.android_versions) if thing.android_versions else ''}"
     data-paid="${json.dumps(thing.paid)}"
     data-has-served="${json.dumps(thing.campaign.has_served or thing.is_live or thing.is_complete)}"
+    data-no_daily_budget="${thing.campaign.no_daily_budget}"
     data-total_budget_dollars="${'%.2f' % thing.total_budget_dollars}"
     data-cost_basis="${thing.cost_basis}"
     data-bid_dollars="${'%.2f' % (thing.bid_pennies / 100.)}"

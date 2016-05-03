@@ -751,7 +751,13 @@
       </div>
     </div>
 
-    <div>
+    <div class="checkbox-group auction-field">
+      <div class="form-group">
+        ${checkbox("no_daily_budget", _("deliver as fast as possible"), False)}
+      </div>
+    </div>
+
+    <div class="budget-details">
       <div class="budget-message auction-field">
         Your daily spend will not exceed <span class="display-text daily-max-spend"></span>.
       </div>

@@ -1341,6 +1341,7 @@ class PromoteApiController(ApiController):
         android_devices=VList('android_device', choices=ANDROID_DEVICES),
         ios_versions=VOSVersion('ios_version_range', 'ios'),
         android_versions=VOSVersion('android_version_range', 'android'),
+        no_daily_budget=VBoolean('no_daily_budget', default=False),
         total_budget_dollars=VFloat('total_budget_dollars', coerce=False),
         cost_basis=VOneOf('cost_basis', ('cpc', 'cpm',), default=None),
         bid_dollars=VFloat('bid_dollars', coerce=True),
@@ -1349,7 +1350,7 @@ class PromoteApiController(ApiController):
                            start, end, target, frequency_cap,
                            priority, location, platform, mobile_os,
                            os_versions, ios_devices, ios_versions,
-                           android_devices, android_versions,
+                           android_devices, android_versions, no_daily_budget,
                            total_budget_dollars, cost_basis, bid_dollars):
         if not link:
             return
@@ -1623,6 +1624,7 @@ class PromoteApiController(ApiController):
             'ios_version_range': ios_versions,
             'android_devices': android_devices,
             'android_version_range': android_versions,
+            'no_daily_budget': is_auction and no_daily_budget,
         }
 
         if campaign:
