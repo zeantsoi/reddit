@@ -65,7 +65,10 @@ ${unsafe(taglinetext % dict(author=author))}
 <%def name="entry()">
   ${parent.entry()}
   <%
-     if thing.promoted_by:
+     promoter = None
+     if thing.promoted_url and thing.promoted_display_name:
+       promoter = '<a href="%s">%s</a>' % (thing.promoted_url, thing.promoted_display_name)
+     elif thing.promoted_by:
        promo_account = Account._byID(thing.promoted_by, data=True, stale=True)
        promoter = WrappedUser(promo_account, thing.attribs, thing, force_show_flair=False).render()
   %>
@@ -81,7 +84,7 @@ ${unsafe(taglinetext % dict(author=author))}
         ${_('waiting approval')}
       %elif promote.is_rejected(thing):
         ${_('rejected sponsored link')}
-      %elif promote.is_promoted(thing) and thing.promoted_by:
+      %elif promote.is_promoted(thing) and promoter:
         ${_('promoted by')}&nbsp;${unsafe(promoter)}
       %elif promote.is_promoted(thing):
         ${_('sponsored link')}
@@ -90,7 +93,7 @@ ${unsafe(taglinetext % dict(author=author))}
       %elif promote.is_edited_live(thing):
         ${_('edited live sponsored link')}
       %endif
-    %elif thing.promoted_by:
+    %elif promoter:
       ${_('promoted by')}&nbsp;${unsafe(promoter)}
     %else:
       ${_('sponsored link')}
