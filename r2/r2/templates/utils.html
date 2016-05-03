@@ -223,10 +223,10 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="checkbox(name, text, val)">
-  <input type="checkbox" ${'checked="checked"' if val else ''}
-    name="${name}">
+  <label>
+    <input type="checkbox" ${'checked="checked"' if val else ''} name="${name}">
     ${text}
-  </input>
+  </label>
 </%def>
 
 <%def name="ajax_upload(target, form_id)">
