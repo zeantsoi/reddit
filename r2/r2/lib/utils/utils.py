@@ -96,6 +96,9 @@ def detect_mobile(ua):
         if parsed.get('sub-platform') == 'IPad':
             return False
 
+        if platform == 'Android' and not 'Mobile' in ua:
+            return False
+
         if platform == 'Windows' and not parsed.get('sub-platform') == 'Windows Phone':
             return False
 
