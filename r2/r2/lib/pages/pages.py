@@ -4855,7 +4855,7 @@ class RefundPage(Reddit):
 class Roadblocks(PromoteLinkBase):
     def __init__(self):
         self.roadblocks = PromotedLinkRoadblock.get_roadblocks()
-        Templated.__init__(self)
+        PromoteLinkBase.__init__(self)
         # reference "now" to what we use for promtions
         now = promote.promo_datetime_now()
 
@@ -5163,7 +5163,7 @@ class Bookings(object):
 
 class PromoteInventory(PromoteLinkBase):
     def __init__(self, start, end, target):
-        Templated.__init__(self)
+        PromoteLinkBase.__init__(self)
         self.start = start
         self.end = end
         self.default_start = start.strftime('%m/%d/%Y')
@@ -5303,7 +5303,7 @@ class PromoteReport(PromoteLinkBase):
             self.campaign_report = []
             self.csv_url = None
 
-        Templated.__init__(self, link_text=link_text, owner_name=owner_name,
+        PromoteLinkBase.__init__(self, link_text=link_text, owner_name=owner_name,
                            bad_links=bad_links)
 
     def as_csv(self):
