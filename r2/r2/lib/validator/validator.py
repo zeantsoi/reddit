@@ -868,7 +868,10 @@ class VFriendOfMine(VAccountByName):
 
 def fullname_regex(thing_cls = None, multiple = False):
     pattern = "[%s%s]" % (Relation._type_prefix, Thing._type_prefix)
-    if thing_cls:
+    # This was originally `is thing_cls:`; the condition was changed
+    # to satisfy unit tests in which an `AttributeError` was being
+    # thrown on `_type_id`
+    if thing_cls and hasattr(thing_cls, '_type_id'):
         pattern += utils.to36(thing_cls._type_id)
     else:
         pattern += r"[0-9a-z]+"
