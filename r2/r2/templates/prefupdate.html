@@ -38,43 +38,36 @@
       <p>${_("click 'email me' button below and we'll email you a link to reset your password")}</p>
     %endif
   </h1>
+  ## add email address first as no email address for that account
+  %if not c.user.email:
   <form action="/post/update_email" method="post"
         onsubmit="return post_form(this, 'update_email')" id="pref-update-pwreset-email">
     <div class="spacer">
       <%utils:round_field title="${_('email')}">
-        ## readonly if account already added email address
-        <input type="text" name="email" value="${getattr(c.user, 'email', '')}"
-          %if c.user.email:
-            readonly
-          %endif
-        >
+        <input type="text" name="email" value="${getattr(c.user, 'email', '')}">
       ${error_field("BAD_EMAILS", "email")}
       </%utils:round_field>
     </div>
-    ## add email address first as no email address for that account
-    %if not c.user.email:
       <br>
       <button type="submit" class="btn">${_('save')}</button>
       <span class="status error"></span>
-    %endif
   </form>
+  ## send email account password reset link
+  %else:
   <form id="passform" action="/api/password" method="post"
         class="content"
         onsubmit="return post_form(this, 'password');">
-    <div class="spacer" hidden>
-      <%utils:round_field title="${_('username')}">
-        <input type="text" name="name" value="${getattr(c.user, 'name', '')}" maxlength="20"/>
-        ${error_field("USER_DOESNT_EXIST", "name")}
-        ${error_field("NO_EMAIL_FOR_USER", "name")}
-        ${error_field("RATELIMIT", "ratelimit")}
+    <div class="spacer">
+        <input type="text" name="name" value="${getattr(c.user, 'name', '')}" hidden/>
+      <%utils:round_field title="${_('email')}">
+        <input type="text" name="email" value="${getattr(c.user, 'email', '')}" readonly>
+      ${error_field("RATELIMIT", "ratelimit")}
       </%utils:round_field>
     </div>
-    ## email account password reset link
-    %if c.user.email:
       <button type="submit" class="btn">${_("email me")}</button>
       <span class="status error"></span>
-    %endif
   </form>
+  %endif
 %else:
 ## normal UI
   %if thing.email:

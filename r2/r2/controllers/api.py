@@ -1420,9 +1420,35 @@ class ApiController(RedditController):
                     _event("update_email")
                     emailer.email_change_email(c.user)
                 else:
-                    if c.user.force_password_reset:
-                        form.redirect("/prefs/update")
                     _event("add_email")
+
+                    # if user is in ATO status, adding new email would also
+                    # send password reset link
+                    if c.user.force_password_reset:
+                        VRatelimit.ratelimit(rate_ip=True,
+                                             prefix="rate_password_")
+                        if emailer.password_email(c.user):
+                            g.events.login_event(
+                                'password_reset',
+                                error_msg=None,
+                                user_name=request.POST.get('name'),
+                                email=email,
+                                email_verified=False,
+                                request=request,
+                                context=c)
+                            form.set_text(".status",
+                                          _("an email will be sent "
+                                            "to the email address shortly"))
+                        else:
+                            form.set_text(".status",
+                                          _("email address added, try again "
+                                            "tomorrow to reset your password"))
+
+                        # hide add email button as email was already added
+                        form.find('button').hide()
+
+                        # disable email input
+                        form.find('input').attr('disabled', 'disabled').end()
 
                 c.user.set_email(email)
                 c.user.email_verified = None
@@ -1440,7 +1466,8 @@ class ApiController(RedditController):
                 form.set_text('.status',
                      _("you should be getting a verification email shortly."))
             else:
-                form.set_text('.status', _('your email has been updated'))
+                if not c.user.force_password_reset:
+                    form.set_text('.status', _('your email has been updated'))
 
         # user is removing their email
         if (not email and c.user.email and 
