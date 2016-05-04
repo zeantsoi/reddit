@@ -3944,11 +3944,12 @@ class ApiController(RedditController):
                     # tried to unsubscribe but user was not subscribed
                     return abort(404, 'not found')
 
+        sub_size = len(Subreddit.subscribed_ids_by_user(c.user))
         for sr in srs:
             sr.update_search_index(boost_only=True)
 
             g.events.subreddit_subscribe_event(is_subscribing, is_first_sub, 
-                                               sr, c.user, len(srs), request, c)
+                                               sr, c.user, sub_size, request, c)
 
     @validatedForm(
         VAdmin(),
