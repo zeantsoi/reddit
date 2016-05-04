@@ -61,8 +61,14 @@
 
       var $thing = $el.thing();
       var id = $thing.thing_id();
+      var sr = $thing.data("subreddit");
       var dir = $el.hasClass(UP_CLS) ? 1 : $el.hasClass(DOWN_CLS) ? -1 : 0;
       var isTrusted;
+      var qs = $.param({
+         "dir": dir,
+         "id": id,
+         "sr": sr || "",
+      });
 
       if (!e || !e.originalEvent) {
         isTrusted = false;
@@ -88,7 +94,7 @@
         voteData.rank = parseInt(rank);
       }
 
-      $.request("vote", voteData);
+      $.request("vote?" + qs, voteData);
       $thing.updateThing({ voted: dir });
     });
   });
