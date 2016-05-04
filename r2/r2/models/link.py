@@ -170,7 +170,7 @@ class Link(Thing, Printable):
 
     @property
     def affects_karma_type(self):
-        if self.is_self:
+        if self.is_self or self.is_promoted_post:
             return None
 
         return "link"
@@ -201,6 +201,10 @@ class Link(Thing, Printable):
     def get_legal_block_for_country(self, country):
         return getattr(self, "legal_blocks", {}).get(country, None)
 
+    @property   
+    def is_promoted_post(self):
+        return bool(self.promoted) and bool(self.original_link)
+        
     @classmethod
     def _by_url(cls, url, sr):
         if isinstance(sr, FakeSubreddit):

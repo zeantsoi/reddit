@@ -1,0 +1,64 @@
+<%namespace name="pr" file="promotelinkbase.html" />
+<%namespace file="utils.html" import="error_field" />
+<%namespace name="utils" file="utils.html"/>
+
+<div class="sponsored-page">
+  <div class="dashboard">
+    <header>
+      <h2>promote an existing post</h2>
+    </header>
+    <div class="dashboard-content">
+      <div class="editor">
+        <div class="editor-group" id="promo-form"">
+            <%utils:line_field title="${_('link id')}" id="linkid-field" css_class="rounded">
+                <input id="linkid" name="linkid" type="text" class="rounded">
+                <div class="infotext rounded">
+                <p>${_("Original ID of link to promote, e.g. 4clncr")}</p>
+                </div>
+            </%utils:line_field>
+            <%utils:line_field title="${_('promoter text')}" id="ptext-field" css_class="rounded">
+                <input id="ptext" name="ptext" type="text" class="rounded">
+                <div class="infotext rounded">
+                <p>${_("Text to show for 'promoted by'")}</p>
+                </div>
+            </%utils:line_field>
+            <%utils:line_field title="${_('promoter url')}" id="purl-field" css_class="rounded">
+                <input id="purl" name="purl" type="text" class="rounded">
+                <div class="infotext rounded">
+                <p>${_("URL for 'promoted by'")}</p>
+                </div>
+            </%utils:line_field>            
+            
+            <%utils:line_field title="" id="discussion-link-field" css_class="rounded">
+                <div class="checkbox-group">
+                <div class="form-group">
+                    ${utils.checkbox("discussion_link", _("Link directly to discussion"), True)}
+                </div>
+                <div class="infotext rounded">
+                    <p>${_("Override the link with link to the comments page")}</p>
+                </div>
+                </div>
+            </%utils:line_field>
+                        
+            <%utils:line_field title="" id="promoted_externally-field" css_class="rounded">
+                <div class="checkbox-group">
+                <div class="form-group">
+                    ${utils.checkbox("promoted_externally", _("manage externally"), True)}
+                </div>
+                <div class="infotext rounded">
+                    <p>${_("Create a promotion only and manage the campaign in adzerk.")}</p>
+                </div>
+                </div>
+            </%utils:line_field>            
+        </div>
+        <footer class="buttons">
+          <span class="status error"></span>
+          <button name="create"
+                  onclick="return post_pseudo_form('#promo-form', 'promote_post_submit')">
+             create
+           </button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</div>

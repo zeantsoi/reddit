@@ -207,8 +207,10 @@ ${pr.javascript_setup()}
         %endif
         <% is_link = not thing.link.is_self %>
         ${pr.title_field(thing.link)}
-        ${pr.content_field(thing.link, enable_override=c.user_is_sponsor,
-                           tracker_access=thing.third_party_tracking_enabled)}
+        %if not thing.link.is_promoted_post:
+          ${pr.content_field(thing.link, enable_override=c.user_is_sponsor,
+                            tracker_access=thing.third_party_tracking_enabled)}
+        %endif
         ${utils.error_field("NO_CHANGE_KIND", "kind", "div")}
         
         ${pr.commenting_field(thing.link)}

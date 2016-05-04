@@ -38,7 +38,7 @@
 <%
    if (c.user_is_sponsor or thing.is_author) and not promote.is_promoted(thing):
      taglinetext = _("to be promoted by %(author)s") 
-   elif thing.promoted_by:
+   elif thing.promoted_by or thing.promoted_display_name:
      taglinetext = _("submitted by %(author)s")
    else:
      taglinetext = _("promoted by %(author)s") 

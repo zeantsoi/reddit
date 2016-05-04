@@ -74,6 +74,7 @@ from r2.lib.pages import (
     PromotePage,
     PromoteLinkEdit,
     PromoteLinkNew,
+    PromotePost,
     PromoteReport,
     Reddit,
     RefundPage,
@@ -288,6 +289,9 @@ class PromoteController(RedditController):
     def GET_edit_promo(self, link):
         if not link or link.promoted is None:
             return self.abort404()
+        # Only sponsored accounts can manage promoted posts            
+        if link.is_promoted_post and not c.user_is_sponsor:
+            return self.abort404()            
         rendered = wrap_links(link, skip=False)
         form = PromoteLinkEdit(link, rendered)
         page = PromotePage(title=_("edit sponsored link"), content=form,
@@ -425,7 +429,13 @@ class SponsorController(PromoteController):
         content = SponsorLookupUser(
             id_user=id_user, email=email, email_users=email_users)
         return PromotePage(title="look up user", content=content).render()
-
+    
+    @validate(
+        VSponsorAdmin(),
+    )
+    def GET_promote_post(self):
+        content = PromotePost()
+        return PromotePage(title="promote a post", content=content).render()
 
 class PromoteListingController(ListingController):
     where = 'promoted'
@@ -1948,3 +1958,61 @@ class PromoteApiController(ApiController):
         }
 
         return format_html(template, response)
+
+    @validatedForm(
+        VSponsorAdmin(),
+        VModhash(),
+        original_link=VLink("linkid"),
+        promoter_text=VTitle('ptext'),
+        promoter_url=VUrl('purl', allow_self=False),
+        discussion_link=VBoolean('discussion_link'),
+        promoted_externally=VBoolean('promoted_externally'),
+    )
+    def POST_promote_post_submit(self, form, jquery, original_link, 
+                                 promoter_text, promoter_url, 
+                                 discussion_link, promoted_externally):
+        
+        # Create the promoted link
+        if discussion_link:
+            original_subreddit = Subreddit._byID(original_link.sr_id, stale=True)
+            link_url = original_link.make_permalink(original_subreddit)
+        else:
+            link_url = original_link.url
+        
+        sr = Subreddit._byID(Subreddit.get_promote_srid())
+        l = Link._submit(
+            is_self=False,
+            title=original_link.title,
+            content=link_url,
+            author=Account._byID(original_link.author_id),
+            sr=sr,
+            ip=request.ip,
+        )
+        l.promoted = True
+        l.disable_comments = True
+        if discussion_link:
+            l.domain_override = "self." + original_subreddit.name
+                
+        # Add additional properties
+        l._ups = original_link._ups
+        l._downs = original_link._downs
+        l.original_link = original_link._fullname
+        l.promoted_display_name = promoter_text
+        l.promoted_url = promoter_url
+        
+        if hasattr(original_link, 'thumbnail_url') and hasattr(original_link, 'thumbnail_size'):
+            l.thumbnail_url = original_link.thumbnail_url
+            l.thumbnail_size = original_link.thumbnail_size
+        
+        if original_link.mobile_ad_url and hasattr(original_link, 'mobile_ad_size'):
+            l.mobile_ad_url = original_link.mobile_ad_url
+            l.mobile_ad_size = original_link.mobile_ad_size
+
+        # manage flights in adzerk
+        if promoted_externally:
+            promote.update_promote_status(l, PROMOTE_STATUS.external)
+        else:
+            promote.update_promote_status(l, PROMOTE_STATUS.promoted)
+            
+        l._commit()
+        form.redirect(promote.promo_edit_url(l))            

@@ -4517,6 +4517,7 @@ class PromotePage(Reddit):
                 NavButton('reported links', '/sponsor/promoted/reported'),
                 NavButton('fraud', '/sponsor/promoted/fraud'),
                 NavButton('lookup user', '/sponsor/lookup_user'),
+                NavButton('promote post', '/sponsor/promote_post'),
             ]
             return NavMenu(buttons, type='flatlist')
         else:
@@ -4861,6 +4862,9 @@ class RefundPage(Reddit):
         self.traffic_url = '/traffic/%s/%s' % (link._id36, campaign._id36)
         Reddit.__init__(self, title="refund", show_sidebar=False)
 
+class PromotePost(PromoteLinkBase):
+    def __init__(self):
+        PromoteLinkBase.__init__(self)
 
 class Roadblocks(PromoteLinkBase):
     def __init__(self):
