@@ -71,11 +71,20 @@ function post_form(form, where, statusfunc, nametransformfunc, block) {
     }
 };
 
+
+/**
+*   Consolidates the form's inputs for submission
+*   
+*   @param {String} form: jQuery selector for where the form is
+*   @param {Object} fields: fields to extract
+*   @param {Function} filter_func: filter function
+*
+*/
+
 function get_form_fields(form, fields, filter_func) {
     fields = fields || {};
     if (!filter_func)
         filter_func = function(x) { return true; };
-    /* consolidate the form's inputs for submission */
     $(form).find("select, input, textarea").not(".gray, :disabled").each(function() {
             var $el = $(this),
                 type = $el.attr("type");
@@ -112,6 +121,16 @@ function simple_post_form(form, where, fields, block, callback) {
     return false;
 };
 
+/**
+
+Makes a POST request to the reddit API (path: /api/)
+
+@params {String} form: jQuery selector that locates
+@params {String} where: function to call
+@params {Boolean} block: we have a lock if we are not blocking or if we have gotten a lock
+
+@return {Boolean} False 
+*/
 function post_pseudo_form(form, where, block) {
     var filter_func = function(x) {
         var parent = $(x).parents("form:first");
@@ -639,40 +658,6 @@ function fetch_title() {
         status.hide();
         error.show().text("a url is required");
     }
-}
-
-
-
-function highlight_reddit(item) {
-    $("#sr-drop-down").children('.sr-selected').removeClass('sr-selected');
-    if (item) {
-        $(item).addClass('sr-selected');
-    }
-}
-
-function update_dropdown(sr_names) {
-    var drop_down = $("#sr-drop-down");
-    if (!sr_names.length) {
-        drop_down.hide();
-        return;
-    }
-
-    var first_row = drop_down.children(":first");
-    first_row.removeClass('sr-selected');
-    drop_down.children().remove();
-
-    $.each(sr_names, function(i) {
-            if (i > 10) return;
-            var name = sr_names[i];
-            var new_row = first_row.clone();
-            new_row.text(name);
-            drop_down.append(new_row);
-        });
-
-
-    var height = $("#sr-autocomplete").outerHeight();
-    drop_down.css('top', height);
-    drop_down.show();
 }
 
 /*** tabbed pane stuff ***/
