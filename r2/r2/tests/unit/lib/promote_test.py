@@ -552,23 +552,25 @@ class TestExtendCampaign(unittest.TestCase):
         edit_campaign,
         auto_extend_promo,
     ):
+        default_extensions = PromoCampaign._defaults["extensions_remaining"]
+        self.campaign.extensions_remaining = default_extensions
         extend_campaign(self.link, self.campaign)
 
         self.assertEqual(auto_extend_promo.call_count, 1)
 
+        self.campaign.extensions_remaining = default_extensions - 1
         extend_campaign(self.link, self.campaign)
 
         self.assertEqual(auto_extend_promo.call_count, 1)
 
-    def test_campaign_can_be_extended_only_30_times(
+    def test_campaign_can_be_extended_if_there_are_extensions_remaining(
         self,
         PromotionLog_add,
         extend_campaign_event,
         edit_campaign,
         auto_extend_promo,
     ):
-        for i in range(0, 30):
-            extend_campaign(self.link, self.campaign)
+        self.campaign.extensions_remaining = 0
 
         with self.assertRaises(ValueError):
             extend_campaign(self.link, self.campaign)
@@ -586,21 +588,9 @@ class TestExtendCampaign(unittest.TestCase):
         edit_campaign.assert_called_once_with(
             self.link, self.campaign,
             end_date=end_after,
+            extensions_remaining=29,
             send_event=False,
         )
-
-    def test_decrements_extensions_remaining(
-        self,
-        PromotionLog_add,
-        extend_campaign_event,
-        edit_campaign,
-        auto_extend_promo,
-    ):
-        before = self.campaign.extensions_remaining
-        extend_campaign(self.link, self.campaign)
-        after = self.campaign.extensions_remaining
-
-        self.assertEqual(before - 1, after)
 
     def test_sends_an_event(
         self,

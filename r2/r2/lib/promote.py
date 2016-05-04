@@ -487,7 +487,8 @@ def free_campaign(link, campaign, user):
 
 
 def edit_campaign(
-        link, campaign, send_event=True,
+        link, campaign,
+        send_event=True,
         **kwargs
     ):
 
@@ -502,8 +503,41 @@ def edit_campaign(
     if "end_date" in kwargs:
         end_date = kwargs["end_date"]
         if end_date != campaign.end_date:
-            changed['end_date'] = (campaign.end_date, end_date)
+            original_end = campaign.end_date
+            changed['end_date'] = (original_end, end_date)
             campaign.end_date = end_date
+
+            # handle auto extensions
+            if "extensions_remaining" in kwargs:
+                extensions_remaining = kwargs["extensions_remaining"]
+                if extensions_remaining != campaign.extensions_remaining:
+                    changed["extensions_remaining"] = (
+                        campaign.extensions_remaining,
+                        extensions_remaining
+                    )
+                    campaign.extensions_remaining = extensions_remaining
+
+                changed["pre_extension_end_date"] = (
+                    campaign.pre_extension_end_date,
+                    original_end
+                )
+                campaign.pre_extension_end_date = original_end
+            elif campaign.is_auto_extending:
+                # if the user changes the end date during the auto extension period
+                # then reset the `pre_extension_end_date` and `extensions_remaining`.
+                default_pre_extension_end_date = campaign._defaults["pre_extension_end_date"]
+                changed["pre_extension_end_date"] = (
+                    campaign.pre_extension_end_date,
+                    default_pre_extension_end_date
+                )
+                campaign.pre_extension_end_date = default_pre_extension_end_date
+
+                default_extensions_remaining = campaign._defaults["extensions_remaining"]
+                changed["extensions_remaining"] = (
+                    campaign.extensions_remaining,
+                    default_extensions_remaining
+                )
+                campaign.extensions_remaining = default_extensions_remaining
 
     if "target" in kwargs:
         target = kwargs["target"]
@@ -1180,11 +1214,10 @@ def extend_campaign(link, campaign):
 
     new_end = campaign.end_date + datetime.timedelta(days=1)
 
-    campaign.extensions_remaining = campaign.extensions_remaining - 1
-
     edit_campaign(
         link, campaign,
         end_date=new_end,
+        extensions_remaining=(campaign.extensions_remaining - 1),
         send_event=False,
     )
 
@@ -1196,7 +1229,7 @@ def extend_campaign(link, campaign):
     )
 
     PromotionLog.add(link, "extended campaign until %s, %d extensions remaining" %
-        (new_end.date(), campaign.extensions_remaining))
+        (campaign.end_date.date(), campaign.extensions_remaining))
 
 
 def make_daily_promotions():

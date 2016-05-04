@@ -56,6 +56,9 @@
     data-cost_basis="${thing.cost_basis}"
     data-bid_dollars="${'%.2f' % (thing.bid_pennies / 100.)}"
     data-is_live="${thing.is_live}"
+    data-is_auto_extending="${thing.campaign.is_auto_extending}"
+    data-pre_extension_end_date="${thing.campaign.pre_extension_end_date.strftime('%m/%d/%Y') if thing.campaign.is_auto_extending else ''}"
+    data-extensions_remaining="${thing.campaign.extensions_remaining}"
     data-auto_extend="${thing.campaign.auto_extend}">
   <td class="campaign-start-date">
     ${thing.campaign.start_date.strftime("%m/%d/%Y")}

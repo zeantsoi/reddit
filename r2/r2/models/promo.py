@@ -369,6 +369,7 @@ class PromoCampaign(Thing):
         no_daily_budget=False,
         extensions_remaining=30,
         auto_extend=False,
+        pre_extension_end_date=None,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -448,6 +449,24 @@ class PromoCampaign(Thing):
     @property
     def is_extended(self):
         return self.extensions_remaining < self._defaults["extensions_remaining"]
+
+    @property
+    def use_daily_budget_cap(self):
+        if not self.is_auction:
+            return False
+
+        if self.no_daily_budget:
+            return False
+
+        if not self.is_auto_extending:
+            return False
+
+        return True
+
+    @property
+    def is_auto_extending(self):
+        return (self.auto_extend and
+            self.pre_extension_end_date is not None)
 
     def priority_name_from_priority(self, priority):
         if not priority in PROMOTE_PRIORITIES.values():

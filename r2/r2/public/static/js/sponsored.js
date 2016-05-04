@@ -2185,6 +2185,28 @@ function edit_campaign($campaign_row) {
               r.sponsored.isAuction = false;
             }
 
+            var autoExtending = $campaign_row.data('is_auto_extending') == 'True';
+
+            if (autoExtending) {
+              var originalEnd = $campaign_row.data('pre_extension_end_date');
+              var extensionsRemaining = $campaign_row.data('extensions_remaining');
+
+              $('[name=no_daily_budget]')
+                .prop('checked', true)
+                .attr('disabled', 'disabled');
+
+              $('[name=auto_extend]')
+                .closest('label')
+                .append(
+                  $('<span class="auto-extend-status"></span>')
+                    .text(' (original end: ' + originalEnd +
+                    ', days left: ' + extensionsRemaining + ')')
+                );
+            } else {
+              $('[name=no_daily_budget]').removeAttr('disabled');
+              $('.auto-extend-status').remove();
+            }
+
             var platform = $campaign_row.data('platform');
             campaign.find('*[name="platform"][value="' + platform + '"]').prop("checked", "checked");
 
