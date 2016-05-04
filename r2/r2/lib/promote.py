@@ -1165,7 +1165,8 @@ def promote_link(link, campaign=None):
 
 
 def can_extend(campaign):
-    return (campaign.auto_extend and
+    return (not campaign.is_terminated and
+        campaign.auto_extend and
         campaign.extensions_remaining > 0 and
         is_underdelivered(campaign))
 

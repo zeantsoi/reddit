@@ -569,31 +569,45 @@ class TestExtendCampaign(unittest.TestCase):
         self.assertEqual(before - 1, after)
 
 
+@patch("r2.lib.promote.is_underdelivered")
 class TestCanExtend(unittest.TestCase):
-    def test_can_extend_is_false_if_auto_extend_is_off(self):
+    def test_can_extend_is_false_if_auto_extend_is_off(self, is_underdelivered):
         campaign = MagicMock(spec=PromoCampaign)
         campaign.auto_extend = False
-        self.assertFalse(can_extend(campaign))
-
-    def test_can_extend_is_false_if_no_extensions_remain(self):
-        campaign = MagicMock(spec=PromoCampaign)
-        campaign.auto_extend = True
-        campaign.extensions_remaining = 0
-        self.assertFalse(can_extend(campaign))
-
-    @patch("r2.lib.promote.is_underdelivered")
-    def test_can_extend_is_false_if_not_undelivered(self, is_underdelivered):
-        campaign = MagicMock(spec=PromoCampaign)
-        campaign.auto_extend = True
         campaign.extensions_remaining = 1
+        campaign.is_terminated = False
         is_underdelivered.return_value = False
         self.assertFalse(can_extend(campaign))
 
-    @patch("r2.lib.promote.is_underdelivered")
+    def test_can_extend_is_false_if_no_extensions_remain(self, is_underdelivered):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = True
+        campaign.extensions_remaining = 0
+        campaign.is_terminated = False
+        is_underdelivered.return_value = False
+        self.assertFalse(can_extend(campaign))
+
+    def test_can_extend_is_false_if_not_underdelivered(self, is_underdelivered):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = True
+        campaign.extensions_remaining = 1
+        campaign.is_terminated = False
+        is_underdelivered.return_value = False
+        self.assertFalse(can_extend(campaign))
+
+    def test_can_extend_is_false_if_the_campaign_was_terminated(self, is_underdelivered):
+        campaign = MagicMock(spec=PromoCampaign)
+        campaign.auto_extend = True
+        campaign.extensions_remaining = 1
+        campaign.is_terminated = True
+        is_underdelivered.return_value = False
+        self.assertFalse(can_extend(campaign))
+
     def test_can_extend_is_true(self, is_underdelivered):
         campaign = MagicMock(spec=PromoCampaign)
         campaign.auto_extend = True
         campaign.extensions_remaining = 1
+        campaign.is_terminated = False
         is_underdelivered.return_value = True
         self.assertTrue(can_extend(campaign))
 
