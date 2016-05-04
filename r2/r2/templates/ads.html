@@ -33,6 +33,15 @@
   %>
   r.hooks.get('reddit').register(function() {
     var timeout, adLoaded = false;
+    var age;
+
+    if (!r.config.logged) {
+      var loidcreated = $.cookie('loidcreated');
+
+      if (loidcreated) {
+        age = Math.floor((new Date() - new Date(loidcreated)) / (1000 * 60 * 60));
+      }
+    }
 
     function loadAd() {
       if (timeout) {
@@ -46,10 +55,17 @@
 
       var $ad = $('#' + ${scriptsafe_dumps(thing.frame_id)});
       var iframe = document.createElement('iframe');
+      var parser = document.createElement('a');
+      parser.href = ${scriptsafe_dumps(thing.ad_url)};
+      var data = JSON.parse(parser.hash.replace(/^#/, ''));
+      data.properties = data.properties || {};
+      data.properties.age_hours = age;
+      parser.hash = JSON.stringify(data);
+
       iframe.frameborder = 0;
       iframe.scolling = 'no';
       iframe.name = ${scriptsafe_dumps(thing.frame_id)};
-      iframe.src = ${scriptsafe_dumps(thing.ad_url)};
+      iframe.src = parser.href;
       iframe.style.border = '0';
       iframe.style.height = '100%';
       iframe.style.width = '100%';
