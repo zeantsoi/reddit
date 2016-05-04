@@ -5175,18 +5175,13 @@ class PromoteInventory(PromoteLinkBase):
         p = request.GET.copy()
         self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
         if target.is_collection:
-            if "/r/" in target.collection.name:
-                self.targeting_type = "subreddit"
-                self.sr_input = target.subreddit_names
-                self.collection_input = None
-            else:
-                self.targeting_type = "collection"
-                self.sr_input = None
-                self.collection_input = target.collection.name
+            self.sr_input = None
+            self.collection_input = target.collection.name
+            self.targeting_type = "collection"
         else:
             self.sr_input = target.subreddit_name
             self.collection_input = None
-            self.targeting_type = "collection" if target.subreddit_name == Frontpage.name else "subreddit"
+            self.targeting_type = "collection" if target.subreddit_name == Frontpage.name else "one"
         self.setup()
 
     def as_csv(self):

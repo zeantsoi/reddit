@@ -320,10 +320,6 @@ class Target(object):
         self._subreddits = srs
         return srs
 
-    @property
-    def is_frontpage(self):
-        return self.is_collection and self.subreddit_name == Frontpage.name
-    
     def __eq__(self, other):
         if self.is_collection != other.is_collection:
             return False
@@ -336,10 +332,7 @@ class Target(object):
     @property
     def pretty_name(self):
         if self.is_collection:
-            if "/r/" in self.collection.name:
-                return self.collection.name
-            else:
-                return _("collection: %(name)s") % {'name': self.collection.name}
+            return _("collection: %(name)s") % {'name': self.collection.name}
         elif self.subreddit_name == Frontpage.name:
             return _("frontpage")
         else:

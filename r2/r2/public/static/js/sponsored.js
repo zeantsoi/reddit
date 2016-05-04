@@ -69,6 +69,7 @@ var CampaignFormattedProps = {
   },
 };
 
+
 var CampaignButton = React.createClass({
   displayName: 'CampaignButton',
 
@@ -110,17 +111,16 @@ var CampaignButton = React.createClass({
   },
 });
 
-/*
-React class that displays information and text
-*/
+
 var InfoText = React.createClass({
   displayName: 'InfoText',
 
   mixins: [UseDefaultClassName, CampaignFormattedProps],
 
   render: function() {
-    var text = Array.isArray(this.props.children) ?
-               this.props.children.join('\n') : this.props.children;
+    var text = Array.isArray(this.props.children)
+             ? this.props.children.join('\n')
+             : this.props.children;
     return React.DOM.span({ className: this.getClassName() },
       text.format(this.formattedProps)
     );
@@ -129,10 +129,6 @@ var InfoText = React.createClass({
 });
 
 var CampaignOptionTable = React.createClass({
-  /**
-  UI: Option that displays a CampaignOption object
-  */
-
   displayName: 'CampaignOptionTable',
 
   mixins: [UseDefaultClassName],
@@ -142,7 +138,7 @@ var CampaignOptionTable = React.createClass({
       React.DOM.tbody(null, this.props.children)
     );
   }
-});
+})
 
 var CampaignOption = React.createClass({
   displayName: 'CampaignOption',
@@ -151,7 +147,7 @@ var CampaignOption = React.createClass({
 
   getDefaultProps: function() {
     return {
-      primary: false, // determines whether someone is able to create a new campaign
+      primary: false,
       start: '',
       end: '',
       bid: '',
@@ -159,6 +155,7 @@ var CampaignOption = React.createClass({
       isNew: true,
       costBasis: '',
       totalBudgetDollars: '',
+      costBasis: '',
       bidDollars: '',
     };
   },
@@ -185,9 +182,7 @@ var CampaignOption = React.createClass({
       )
     );
   },
-  /**
-  * Handles the click and sends the form to server
-  */
+
   handleClick: function(close) {
     var $startdate = $('#startdate');
     var $enddate = $('#enddate');
@@ -299,87 +294,58 @@ var CampaignCreator = React.createClass({
     );
   },
 
-  /**
-  UI function that renders the campaign creation option based on user options and 
-  available inventory.
-  */
   getCampaignSets: function() {
     if (r.sponsored.isAuction) {
-      var auction = this.getAuctionOption();
-      var formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
-      var formattedMaxBidDollars = parseFloat(auction.maxBidDollars).toFixed(2);
-      var MESSAGES = {
-            CONFIRM_MSG: r._('Please confirm the details of your campaign'),
-            MIN_BUDGET_MSG: r._('your budget must be at least $%(minBudgetDollars)s'),
-            MAX_BUDGET_MSG: r._('your budget must not exceed $%(maxBudgetDollars)s'),
-            MIN_IMPRESSIONS_PER_DAY_MSG: r._('Your campaign must be capable of claiming at least' +
-                                             ' 1,000 impressions per day. Please adjust your bid, ' +
-                                             ' budget, or schedule in order to enable this.'),
-            MIN_BID_MSG: r._('your bid must be at least $%(minBid)s'),
-            MAX_BID_MSG: r._('your bid must not exceed $%(maxBid)s')
-          };
-      var INFOTEXT_ATTRS = {
-            CONFIRM_MSG: null,
-            MIN_BUDGET_MSG: {className: 'error', minBudgetDollars: auction.minBudgetDollars},
-            MAX_BUDGET_MSG: {className: 'error', maxBudgetDollars: auction.maxBudgetDollars},
-            MIN_IMPRESSIONS_PER_DAY_MSG: {className: 'error', minBid: formattedMinBidDollars},
-            MIN_BID_MSG: {className: 'error', minBid: formattedMinBidDollars},
-            MAX_BID_MSG: {className: 'error', maxBid: formattedMaxBidDollars}
-          };
-      var messageKey = "CONFIRM_MSG";
+      var auction = this.getAuctionOption(),
+          cssClass = null,
+          message = r._('Please confirm the details of your campaign');
       if (auction.totalBudgetDollars < this.props.minBudgetDollars) {
-        messageKey = "CONFIRM_MSG";
+        cssClass = {className: 'error', minBudgetDollars: auction.minBudgetDollars};
+        message = r._('your budget must be at least $%(minBudgetDollars)s');
       } else if (auction.totalBudgetDollars > this.props.maxBudgetDollars &&
                  this.props.maxBudgetDollars > 0) {
-        messageKey = "MIN_BUDGET_MSG";
+        cssClass = {className: 'error', maxBudgetDollars: auction.maxBudgetDollars};
+        message = r._('your budget must not exceed $%(maxBudgetDollars)s');
       } else {
         if (r.sponsored.userIsSponsor) {
           auction.primary = true;
         } else if (auction.maxBidDollars < auction.minBidDollars) {
-          messageKey = "MIN_IMPRESSIONS_PER_DAY_MSG";
+          formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
+          cssClass = {className: 'error', minBid: formattedMinBidDollars};
+          message = r._('Your campaign must be capable of claiming at least \
+                         1,000 impressions per day. Please adjust your bid, \
+                         budget, or schedule in order to enable this.');
         } else if (auction.bidDollars < auction.minBidDollars) {
-          messageKey = "MIN_BID_MSG";
+          formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
+          cssClass = {className: 'error', minBid: formattedMinBidDollars};
+          message = r._('your bid must be at least $%(minBid)s');
         } else if (auction.bidDollars > auction.maxBidDollars) {
-          messageKey = "MAX_BID_MSG";
+          formattedMaxBidDollars = parseFloat(auction.maxBidDollars).toFixed(2);
+          cssClass = {className: 'error', maxBid: formattedMaxBidDollars};
+          message = r._('your bid must not exceed $%(maxBid)s');
         } else {
           auction.primary = true;
         }
       }
       return [CampaignSet(null,
-          InfoText(INFOTEXT_ATTRS[messageKey], MESSAGES[messageKey]),
+          InfoText(cssClass, message),
           CampaignOptionTable(null, CampaignOption(auction))
         ),
       ];      
     } else {
-      var requested = this.getRequestedOption(); // Options the user is asking for 
-      var maximized = this.getMaximizedOption(); // Options the maximum available
+      var requested = this.getRequestedOption();
       requested.primary = true;
-      var MESSAGES = {
-        IS_AVAILABLE_MSG: r._('the campaign you requested is available!'),
-        MAX_BUDGET_AVAILABLE_MSG: r._('the maximum budget available is ' + 
-                                      '$%(totalBudgetDollars)s (%(impressions)s impressions)'),
-        MIGHT_NOT_DELIVER_MSG: r._('we expect to only have %(available)s impressions on %(target)s. ' +
-                                    'we may not fully deliver.'),
-        ADD_DIFFERENCE_MSG: r._('want to maximize your campaign? for only $%(difference)s more ' +
-                                'you can buy all available inventory for your selected dates!'),
-        CAMPAIGN_TOO_SMALL_MSG: r._('the campaign you requested is too small!'),
-        CAMPAIGN_TOO_SMALL_OTHER_CAMPAIGN_MSG: r._('the campaign you requested is too small!' +
-                                                  ' this campaign is available:'),
-        CAMPAIGN_TOO_BIG_MSG: r._('the campaign you requested is too big! the largest campaign available is:'),
-        INSUFFICIENT_INVENTORY_MSG: r._('we have insufficient available inventory targeting %(target)s to fulfill ' +
-                                      'your requested dates. the following campaigns are available:'),
-        NO_SUBREDDITS_SELECTED: r._('please select at least one subreddit'),
-        SOLD_OUT_MSG: r._('inventory for %(target)s is sold out for your requested dates. ' +
-                 'please try a different target or different dates.')
-      };
+      var maximized = this.getMaximizedOption();
       
       if (this.props.override) {
         if (requested.impressions <= this.state.available) {
           return [CampaignSet(null,
-              InfoText(null, MESSAGES.IS_AVAILABLE_MSG),
+              InfoText(null, r._('the campaign you requested is available!')),
               CampaignOptionTable(null, CampaignOption(requested))
             ),
-            InfoText(maximized, MESSAGES.MAX_BUDGET_AVAILABLE_MSG)
+            InfoText(maximized,
+                r._('the maximum budget available is $%(totalBudgetDollars)s (%(impressions)s impressions)')
+            )
           ];
         }
         else {
@@ -388,32 +354,36 @@ var CampaignCreator = React.createClass({
                 className: 'error',
                 available: this.state.available,
                 target: this.props.targetName
-              }, MESSAGES.MIGHT_NOT_DELIVER_MSG),
+              },
+              r._('we expect to only have %(available)s impressions on %(target)s. ' +
+                   'we may not fully deliver.')
+            ),
             CampaignOptionTable(null, CampaignOption(requested))
           );
         }
       }
-      // I don't think this else if statement is ever caught.
-      // because of (requested.impressions <= this.state.available) 
-      // the conditional below is a strict subset of the conditional above
-      // might consider changing the logic or deleting this conditional branch
-      // completely
       else if (requested.totalBudgetDollars >= this.props.minBudgetDollars &&
                requested.impressions <= this.state.available) {
         var result = CampaignSet(null,
-          InfoText(null, MESSAGES.IS_AVAILABLE_MSG),
+          InfoText(null, r._('the campaign you requested is available!')),
           CampaignOptionTable(null, CampaignOption(requested))
         );
-        var difference = maximized.totalBudgetDollars - requested.totalBudgetDollars;
         if (maximized.totalBudgetDollars > requested.totalBudgetDollars &&
             requested.totalBudgetDollars * 1.2 >= maximized.totalBudgetDollars &&
             this.state.available === this.state.totalAvailable) {
+          var difference = maximized.totalBudgetDollars - requested.totalBudgetDollars;
           result = [result, CampaignSet(null,
-            InfoText({ difference: difference.toFixed(2) }, MESSAGES.ADD_DIFFERENCE_MSG),
+            InfoText({ difference: difference.toFixed(2) },
+              r._('want to maximize your campaign? for only $%(difference)s more ' +
+                   'you can buy all available inventory for your selected dates!')
+            ),
             CampaignOptionTable(null, CampaignOption(maximized))
           )];
-        } else {
-          result = [result, InfoText(maximized, MESSAGES.MAX_BUDGET_AVAILABLE_MSG)];
+        }
+        else {
+          result = [result, InfoText(maximized,
+            r._('the maximum budget available is $%(totalBudgetDollars)s (%(impressions)s impressions)')
+          )];
         }
         return result;
       }
@@ -422,33 +392,36 @@ var CampaignCreator = React.createClass({
         if (minimal.impressions <= this.state.available) {
           if (r.sponsored.userIsSponsor) {
             return CampaignSet(null,
-              InfoText(null, MESSAGES.IS_AVAILABLE_MSG),
+              InfoText(null, r._('the campaign you requested is available!')),
               CampaignOptionTable(null, CampaignOption(requested))
             );
           } else {
             return CampaignSet(null,
-              InfoText({ className: 'error'}, MESSAGES.CAMPAIGN_TOO_SMALL_OTHER_CAMPAIGN_MSG),
+              InfoText({ className: 'error' },
+                r._('the campaign you requested is too small! this campaign is available:')
+              ),
               CampaignOptionTable(null, CampaignOption(minimal))
             );
           }
         }
         else {
-          return InfoText({ className: 'error' }, MESSAGES.CAMPAIGN_TOO_SMALL_MSG);
+          return InfoText({ className: 'error' },
+            r._('the campaign you requested is too small!')
+          );
         }
       }
       else if (requested.impressions > this.state.available &&
                this.state.totalAvailable > this.state.available &&
                maximized.totalBudgetDollars > this.props.minBudgetDollars) {
         return CampaignSet(null,
-          InfoText(null, MESSAGES.CAMPAIGN_TOO_BIG_MSG),
+          InfoText(null, 
+            r._('the campaign you requested is too big! the largest campaign ' +
+                 'available is:')
+          ),
           CampaignOptionTable(null, CampaignOption(maximized))
         );
       }
       else if (requested.impressions > this.state.available) {
-        /* Handles when impressions are greater than available
-        Rather than let advertisers get frustrated, we display the best 
-        options we could still sell them
-        */
         r.analytics.fireFunnelEvent('ads', 'inventory-error');
 
         var options = [];
@@ -468,13 +441,21 @@ var CampaignCreator = React.createClass({
             InfoText({
                 className: 'error',
                 target: this.props.targetName,
-              }, MESSAGES.INSUFFICIENT_INVENTORY_MSG),
+              },
+              r._('we have insufficient available inventory targeting %(target)s to fulfill ' +
+                   'your requested dates. the following campaigns are available:')
+            ),
             CampaignOptionTable(null, options)
           );
         }
         else {
-          return InfoText({ className: 'error', target: this.props.targetName},
-                             MESSAGES.SOLD_OUT_MSG);
+          return InfoText({
+              className: 'error',
+              target: this.props.targetName
+            },
+            r._('inventory for %(target)s is sold out for your requested dates. ' +
+                 'please try a different target or different dates.')
+          );
         }
       }
     }
@@ -499,16 +480,13 @@ var CampaignCreator = React.createClass({
   },
 
   getOptionDates: function(startDate, duration) {
-    if(!startDate){
-      return {};
-    }
     var endDate = new Date();
     endDate.setTime(startDate.getTime());
     endDate.setDate(startDate.getDate() + duration);
     return {
       start: this.formatDate(startDate),
       end: this.formatDate(endDate),
-    };
+    }
   },
 
   getFixedCPMOptionData: function(startDate, duration, impressions, requestedBudget) {
@@ -620,11 +598,10 @@ var exports = r.sponsored = {
         });
 
         this.targetValid = true;
-        this.budgetValid = true;
         this.bidValid = true;
-        this.inventory = {};
-        this.campaignListColumns = $('.existing-campaigns thead th').length;
-        $("input[name='media_url_type']").on("change", this.mediaInputChange);
+        this.inventory = {}
+        this.campaignListColumns = $('.existing-campaigns thead th').length
+        $("input[name='media_url_type']").on("change", this.mediaInputChange)
 
         this.initUploads();
     },
@@ -646,8 +623,8 @@ var exports = r.sponsored = {
         if (forceAuction) {
             this.isAuction = true;
         }
-        this.inventory = inventory_by_sr;
-        this.priceDict = priceDict;
+        this.inventory = inventory_by_sr
+        this.priceDict = priceDict
 
         var $platformField = $('.platform-field');
         this.$platformInputs = $platformField.find('input[name=platform]');
@@ -666,31 +643,31 @@ var exports = r.sponsored = {
 
         if (isEmpty) {
             this.render();
-            init_startdate();
-            init_enddate();
+            init_startdate()
+            init_enddate()
             $("#campaign").find("button[name=create]").show().end()
-                .find("button[name=save]").hide().end();
+                .find("button[name=save]").hide().end()
         }
-
-        this.userIsSponsor = userIsSponsor;
+        this.userIsSponsor = userIsSponsor
 
         $('[name=no_daily_budget]').on('change', render);
     },
 
-    // UI. Counterpart is showCPMFields
-    showAuctionFields: function() {
-      $('.auction-field').show();
-      $('.fixed-cpm-field').hide();
-      $('.priority-field').hide();
-      $('#is_auction_true').prop('checked', true);
-    },
+    setupAuctionFields: function($form, targeting, timing) {
+        if (this.isAuction) {
+            $('.auction-field').show();
+            $('.fixed-cpm-field').hide();
+            $('.priority-field').hide();
+            $('#is_auction_true').prop('checked', true);
 
-    // UI. Counterpart is setup AuctionFields:
-    showCPMFields: function(){
-      $('.auction-field').hide();
-      $('.fixed-cpm-field').show();
-      $('.priority-field').show();
-      $('#is_auction_false').prop('checked', true);
+            this.setup_auction($form, targeting, timing);
+            this.check_bid_dollars($form);
+        } else {
+            $('.auction-field').hide();
+            $('.fixed-cpm-field').show();
+            $('.priority-field').show();
+            $('#is_auction_false').prop('checked', true);
+        }
     },
 
     setupLiveEditing: function(isLive) {
@@ -775,7 +752,7 @@ var exports = r.sponsored = {
 
         function get_selected() {
             return $collectionList.find('input[type=radio]:checked')
-                .siblings('.label-group');
+                .siblings('.label-group')
         }
 
         $collectionSelector
@@ -840,16 +817,12 @@ var exports = r.sponsored = {
     },
 
     setup_geotargeting: function(regions, metros) {
-        this.regions = regions;
-        this.metros = metros;
+        this.regions = regions
+        this.metros = metros
     },
 
     setup_collections: function(collections, defaultValue) {
         defaultValue = defaultValue || 'none';
-        if(defaultValue.indexOf("/r/") > -1){
-          // it's a multi subreddit disguising as a collection
-          defaultValue = 'none';
-        }
 
         this.collections = [{
             name: 'none', 
@@ -869,8 +842,7 @@ var exports = r.sponsored = {
           + '<input type="radio" name="collection" value="<%= name %>"'
           + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
           + '  <div class="label-group">'
-          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'           
-          + '    <small class="description"><%= description %></small>'
+          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'           + '    <small class="description"><%= description %></small>'
           + '  </div>'
           + '</label>');
 
@@ -879,105 +851,65 @@ var exports = r.sponsored = {
             $('.collection-selector .form-group-list').html(rendered);
             this.setup_collection_selector();
             this.render_campaign_dashboard_header();
-        }, this));
-    },
-
-    // Sets up the subreddits on initialization
-    setup_subreddits: function(srInput){
-      if(typeof srInput === 'string'){
-        if(srInput !== " reddit.com"){
-          sr_add_sr(srInput);
-        }
-      } else if(typeof srInput === 'object'){
-        // check to make sure it's not the frontpage
-        _.map(srInput, sr_add_sr);
-      }
+        }, this))
     },
 
     get_dates: function(startdate, enddate) {
         var start = $.datepicker.parseDate('mm/dd/yy', startdate),
             end = $.datepicker.parseDate('mm/dd/yy', enddate),
             ndays = Math.round((end - start) / (1000 * 60 * 60 * 24)),
-            dates = [];
+            dates = []
 
         for (var i=0; i < ndays; i++) {
-            var d = new Date(start.getTime());
-            d.setDate(start.getDate() + i);
-            dates.push(d);
+            var d = new Date(start.getTime())
+            d.setDate(start.getDate() + i)
+            dates.push(d)
         }
-        return dates;
+        return dates
     },
 
-    get_inventory_keys: function(srNames, collection, geotarget, platform) {
-        var inventoryKeys = collection ? ['#' + collection] : srNames;
-        if(inventoryKeys.length === 0){
-          // frontpage
-          inventoryKeys = [" reddit.com"];
+    get_inventory_key: function(srname, collection, geotarget, platform) {
+        var inventoryKey = collection ? '#' + collection : srname
+        inventoryKey += "/" + platform
+        if (geotarget.country != "") {
+            inventoryKey += "/" + geotarget.country
         }
-
-        inventoryKeys = inventoryKeys.map(function(s){
-          return r.sponsored.append_geotarget_and_platform(s, geotarget, platform);
-        });
-        return inventoryKeys;
+        if (geotarget.metro != "") {
+            inventoryKey += "/" + geotarget.metro
+        }
+        return inventoryKey
     },
 
-    append_geotarget_and_platform: function(inventoryKey, geotarget, platform) {
-      inventoryKey += "/" + platform;
-      var c = "";
-      if (geotarget.country !== "") {
-        inventoryKey += "/" + geotarget.country;
-      }
-      if (geotarget.metro !== "") {
-        inventoryKey += "/" + geotarget.metro;
-      }
-      return inventoryKey;
-    },
-
-    /**
-    Determines whether to fetch inventory
-
-    @param {String} targeting: type of targeting ('one', 'collection')
-    @param {Object} timing: object with the timings of campaign. 
-      @reference function get_timing
-
-
-    @returns {Boolean}: whether there needs an API call to inventory 
-      @reference function get_check_inventory
-
-    */
     needs_to_fetch_inventory: function(targeting, timing) {
         var dates = timing.dates,
-            inventoryKeys = targeting.inventoryKeys;
-        return this.targetDirty && _.some(inventoryKeys, function(inventoryKey){ 
-            return _.some(dates, function(date) {
-              var datestr = $.datepicker.formatDate('mm/dd/yy', date);
-              if (_.has(r.sponsored.inventory, inventoryKey) && 
-                  _.has(r.sponsored.inventory[inventoryKey], datestr)) {
-                  return false;
-              }
-              else {
-                  r.debug('need to fetch ' + datestr + ' for ' + inventoryKey);
-                  return true;
-              }
-          }, this);
-        });
+            inventoryKey = targeting.inventoryKey;
+        return _.some(dates, function(date) {
+            var datestr = $.datepicker.formatDate('mm/dd/yy', date);
+            if (_.has(this.inventory, inventoryKey) && _.has(this.inventory[inventoryKey], datestr)) {
+                return false;
+            }
+            else {
+                r.debug('need to fetch ' + datestr + ' for ' + inventoryKey);
+                return true;
+            }
+        }, this);
     },
 
-    get_check_inventory: function(targeting, timing) {
-        if (this.needs_to_fetch_inventory(targeting, timing)) {
-            var srname = targeting.srString,
-                collection = targeting.collection,
-                geotarget = targeting.geotarget,
-                platform = targeting.platform,
-                inventoryKeys = targeting.inventoryKeys,
-                dates = timing.dates;
+    fetch_inventory: function(targeting, timing) {
+        var srname = targeting.sr,
+            collection = targeting.collection,
+            geotarget = targeting.geotarget, 
+            platform = targeting.platform,
+            inventoryKey = targeting.inventoryKey,
+            dates = timing.dates;
 
-            dates.sort(function(d1,d2){return d1 - d2;});
-            var end = new Date(dates[dates.length-1].getTime());
-            end.setDate(end.getDate() + 5);
-            return $.request(
-              "check_inventory.json",
-              {
+        dates.sort(function(d1,d2){return d1 - d2})
+        var end = new Date(dates[dates.length-1].getTime())
+        end.setDate(end.getDate() + 5)
+        return $.ajax({
+            type: 'GET',
+            url: '/api/check_inventory.json',
+            data: {
                 sr: srname,
                 collection: collection,
                 country: geotarget.country,
@@ -986,38 +918,27 @@ var exports = r.sponsored = {
                 startdate: $.datepicker.formatDate('mm/dd/yy', dates[0]),
                 enddate: $.datepicker.formatDate('mm/dd/yy', end),
                 platform: platform
-              },
-              // worker
-              function(data) {
-                  data = data.inventory;
-                  for (var dataKey in data) {
-                      // skip loop if the property is from prototype
-                      if (!data.hasOwnProperty(dataKey)) continue;
+            },
+        });
+    },
 
-                      // data comes from controller and is platform blind
-                      // inventory comes from r.sponsored.inventory and is 
-                      // platform specific
-                      var inventoryKey = r.sponsored.append_geotarget_and_platform(
-                            dataKey.toLowerCase(),
-                            targeting.geotarget,
-                            targeting.platform);
-                      if (!r.sponsored.inventory[inventoryKey]) {
-                        r.sponsored.inventory[inventoryKey] = {};
-                      }
-                      for (var datestr in data[dataKey]) {
+    get_check_inventory: function(targeting, timing) {
+        var inventoryKey = targeting.inventoryKey;
+        if (this.needs_to_fetch_inventory(targeting, timing)) {
+            return this.fetch_inventory(targeting, timing).then(
+                function(data) {
+                    if (!r.sponsored.inventory[inventoryKey]) {
+                        r.sponsored.inventory[inventoryKey] = {}
+                    }
+
+                    for (var datestr in data.inventory) {
                         if (!r.sponsored.inventory[inventoryKey][datestr]) {
-                          r.sponsored.inventory[inventoryKey][datestr] = data[dataKey][datestr];
+                            r.sponsored.inventory[inventoryKey][datestr] = data.inventory[datestr]
                         }
-                      }
-                  }
-                  r.sponsored.lastFetchedTarget = targeting;
-                  r.sponsored.targetDirty = false;
-                  // Intended to rerender the campaign to update info
-                  r.sponsored.render();
-              }, true, "json", true
-            );
+                    }
+                });
         } else {
-            return true;
+            return true
         }
     },
 
@@ -1074,29 +995,11 @@ var exports = r.sponsored = {
 
     },
 
-    /**
-    Returns an array of available impressions by day
-
-    @params {Array} dates: dates to query
-    @params {Object} booked: amount of booked impressions
-    @params {String} inventoryKeys: key of the subreddit/collection and dates we're targeting
-
-    @returns {Array} array of available impressions ordered by day
-
-    */
-    getAvailableImpsByDay: function(dates, booked, inventoryKeys) {
+    getAvailableImpsByDay: function(dates, booked, inventoryKey) {
         return _.map(dates, function(date) {
             var datestr = $.datepicker.formatDate('mm/dd/yy', date);
-            var total = 0;
-            // iterate through 
-            for (var i = 0; i < inventoryKeys.length; i++) {
-              var daily_booked = booked[datestr] || 0;
-              var inventoryKey = inventoryKeys[i];
-              if(r.sponsored.inventory[inventoryKey]){
-                total += r.sponsored.inventory[inventoryKey][datestr] + daily_booked;
-              }
-            }
-            return total;
+            var daily_booked = booked[datestr] || 0;
+            return r.sponsored.inventory[inventoryKey][datestr] + daily_booked;
         });
     },
 
@@ -1128,16 +1031,13 @@ var exports = r.sponsored = {
         );
     },
 
-    /**
-      Sets up campaigns for house ads
-    */
     setup_house: function($form, targeting, timing, isOverride) {
       $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
         function() {
           var booked = this.get_booked_inventory($form, targeting.sr,
                                                  targeting.geotarget, isOverride);
           var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
-                                                           targeting.inventoryKeys);
+                                                           targeting.inventoryKey);
           var totalImpsAvailable = _.reduce(availableByDate, sum, 0);
 
           React.renderComponent(
@@ -1171,7 +1071,7 @@ var exports = r.sponsored = {
             cpm = budget.cpm,
             requested = budget.impressions,
             daily_request = Math.floor(requested / timing.duration),
-            inventoryKeys = targeting.inventoryKeys,
+            inventoryKey = targeting.inventoryKey,
             booked = this.get_booked_inventory($form, targeting.sr, 
                     targeting.geotarget, isOverride),
             minBudgetDollars = r.sponsored.get_min_budget_dollars(),
@@ -1180,7 +1080,7 @@ var exports = r.sponsored = {
         $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
             function() {
                 var dates = timing.dates;
-                var availableByDay = this.getAvailableImpsByDay(dates, booked, inventoryKeys);
+                var availableByDay = this.getAvailableImpsByDay(dates, booked, inventoryKey)
                 React.renderComponent(
                   CampaignCreator({
                     totalBudgetDollars: totalBudgetDollars,
@@ -1209,15 +1109,15 @@ var exports = r.sponsored = {
                   document.getElementById('campaign-creator')
                 );
             }
-        );
+        )
     },
 
     duration_from_dates: function(start, end) {
-        return Math.round((Date.parse(end) - Date.parse(start)) / (86400*1000));
+        return Math.round((Date.parse(end) - Date.parse(start)) / (86400*1000))
     },
 
     get_total_budget: function($form) {
-        return parseFloat($form.find('*[name="total_budget_dollars"]').val()) || 0;
+        return parseFloat($form.find('*[name="total_budget_dollars"]').val()) || 0
     },
 
     get_cpm: function($form) {
@@ -1225,7 +1125,7 @@ var exports = r.sponsored = {
         var metro = $('#metro').val();
         var country = $('#country').val();
         var isGeotarget = country !== '' && !$('#country').is(':disabled');
-        var isSubreddit = $form.find('input[name="targeting"][value="subreddit"]').is(':checked');
+        var isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked');
         var collectionVal = $form.find('input[name="collection"]:checked').val();
         var isFrontpage = !isSubreddit && collectionVal === 'none';
         var isCollection = !isSubreddit && !isFrontpage;
@@ -1304,33 +1204,28 @@ var exports = r.sponsored = {
     },
 
     get_targeting: function($form) {
-        var isSubreddit = $form.find('input[name="targeting"][value="subreddit"]').is(':checked'),
+        var isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked'),
             collectionVal = $form.find('input[name="collection"]:checked').val(),
             isFrontpage = !isSubreddit && collectionVal === 'none',
             isCollection = !isSubreddit && !isFrontpage,
             type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'subreddit',
-            srString = $form.find("#selected_sr_names").val(),
-            sr = isSubreddit && !!srString ? srString.split(SR_NAMES_DELIM) : [],
+            sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
             collection = isCollection ? collectionVal : null,
             canGeotarget = isFrontpage || this.userIsSponsor || this.isAuction,
             country = canGeotarget && $('#country').val() || '',
             region = canGeotarget && $('#region').val() || '',
             metro = canGeotarget && $('#metro').val() || '',
             geotarget = {'country': country, 'region': region, 'metro': metro},
-            inventoryKeys = this.get_inventory_keys(sr, collection, geotarget, platform),
-            isValid = isFrontpage || 
-                      (isSubreddit && (sr.length > 0) 
-                        && !$("#sr-autocomplete").prop("disabled")) || 
-                      (isCollection && collection);
+            inventoryKey = this.get_inventory_key(sr, collection, geotarget, platform),
+            isValid = isFrontpage || (isSubreddit && sr) || (isCollection && collection);
 
         var displayName;
         switch(type) {
             case 'frontpage':
-                displayName = 'the frontpage';
+                displayName = 'the frontpage'
                 break;
             case 'subreddit':
-                displayName = sr.length == 1 ? 
-                              '/r/' + sr : sr.map(function(s){return '/r/' + s;}).join("\n");
+                displayName = '/r/' + sr
                 break;
             default:
                 displayName = collection
@@ -1360,11 +1255,10 @@ var exports = r.sponsored = {
             }
         }
 
-        var target = {
+        var targets = {
             'type': type,
             'displayName': displayName,
             'isValid': isValid,
-            'srString': srString,
             'sr': sr,
             'collection': collection,
             'canGeotarget': canGeotarget,
@@ -1388,23 +1282,15 @@ var exports = r.sponsored = {
                                    'androidVersionRange',];
 
             platformTargetsList.forEach(function(platformStr) {
-              target[platformStr] = eval(platformStr)
+              targets[platformStr] = eval(platformStr)
             });
 
-            target.inventoryKeys = this.get_inventory_keys(sr, collection, geotarget, platform);
+            targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget, platform);
         } else {
-            target.inventoryKeys = this.get_inventory_keys(sr, collection, geotarget);
+            targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget);
         }
 
-        if(this.lastFetchedTarget === undefined){
-          this.lastFetchedTarget = {};
-        }
-        
-        if(!_.isEqual(this.lastFetchedTarget, target)){
-          // check inventory if target has changed
-          this.targetDirty = true;
-        }
-        return target;
+        return targets;
     },
 
     get_timing: function($form) {
@@ -1476,27 +1362,26 @@ var exports = r.sponsored = {
 
         function mapCollection(name, subreddits) {
             var subredditNames = getSubredditsByCollection(name);
-            if(!subredditNames){
-              subredditNames = extract_subreddits_from_str(name);
+            if (subredditNames) {
+                _.each(subredditNames, function(subredditName) {
+                    mapSubreddit(subredditName, subreddits);
+                });
             }
-            _.each(subredditNames, function(subredditName) {
-                mapSubreddit(subredditName, subreddits);
-            });
         }
 
         _.each(campaignRows, function(row) {
             var data = $(row).data();
             var isCollection = (data.targetingCollection === 'True');
-            var countSubredditsFn = isCollection ? mapCollection : mapSubreddit;
+            var mappingFunction = isCollection ? mapCollection : mapSubreddit;
             var budget = parseFloat(data.total_budget_dollars, 10);
 
             if (data.is_auction === 'True') {
                 auctionCampaigns++;
-                countSubredditsFn(data.targeting, auctionSubreddits);
+                mappingFunction(data.targeting, auctionSubreddits);
                 totalAuctionBudgetDollars += budget;
             } else {
                 fixedCPMCampaigns++;
-                countSubredditsFn(data.targeting, fixedCPMSubreddits);
+                mappingFunction(data.targeting, fixedCPMSubreddits);
                 totalFixedCPMBudgetDollars += budget;
                 var bid = data.bid_dollars;
                 var impressions = Math.floor(budget / bid * 1000);
@@ -1617,13 +1502,8 @@ var exports = r.sponsored = {
               'versionError': versionError}
     },
 
-    /** 
-    * render function for promotelinkbase.html
-    * 
-    * render() is called every time something is changed
-    *
-    */
     fill_campaign_editor: function() {
+
         var $form = $("#campaign");
 
         // external campaigns don't have an editor.
@@ -1642,9 +1522,7 @@ var exports = r.sponsored = {
             budget = this.get_budget($form),
             cpm = budget.cpm,
             impressions = budget.impressions,
-            isValidForm = false; // Checks to see if we would let user submit form
-
-        this.targetValid = targeting.isValid;
+            validTargeting = targeting.isValid;
 
         var durationInDays = ndays + " " + ((ndays > 1) ? r._("days") : r._("day"))
         $(".duration").text(durationInDays)
@@ -1757,26 +1635,25 @@ var exports = r.sponsored = {
           $OSDeviceGroup.hide();
         }
 
+        if (targeting.isValid) {
+            this.targetValid = true;
+            this.enable_form($form);
+        } else {
+            this.targetValid = false;
+            this.disable_form($form);
+        }
+
         if (priority.isHouse) {
             this.hide_budget()
-            this.budgetValid = true;
         } else {
             this.show_budget()
-            this.budgetValid = this.check_budget($form);
+            this.check_budget($form)
         }
 
-        if(this.isAuction){
-          this.showAuctionFields();
-          this.setup_auction($form, targeting, timing);
-          this.bidValid = this.check_bid_dollars($form);
-        } else {
-          this.bidValid = true;
-          this.showCPMFields();
-        }
-
-        if (priority.isHouse && this.targetValid) {
+        this.setupAuctionFields($form, targeting, timing);
+        if (priority.isHouse && validTargeting) {
             this.setup_house($form, targeting, timing, priority.isOverride);
-        } else if (!this.isAuction && this.targetValid) {
+        } else if (!this.isAuction && validTargeting) {
             this.check_inventory($form, targeting, timing, budget, priority.isOverride)
         }
             
@@ -1800,29 +1677,13 @@ var exports = r.sponsored = {
 
             if (frequencyCapValue < frequencyCapMin || _.isNaN(parseInt(frequencyCapValue, 10))) {
                 $frequencyCapError.show();
-                isValidForm = false;
+                this.disable_form($form);
             } else {
                 $frequencyCapError.hide();
+                this.enable_form($form);
             }
         }
 
-        if(this.targetValid && this.budgetValid && this.bidValid){
-          isValidForm = true;
-        }
-
-        if(isValidForm){ 
-          this.enable_form($form);
-        } else if(!this.targetValid){
-          // target is not valid
-          React.renderComponent(
-            CampaignSet(null,
-              InfoText({className: 'error'},
-                r._("Please select a valid subreddit or collection"))
-            ),
-            document.getElementById('campaign-creator')
-          );
-          this.disable_form($form);
-        } 
         // If campaign is new, don't set up live editing fields
         if ($form.find('#is_new').val() === 'true') {
             this.setupLiveEditing(false);
@@ -1851,10 +1712,11 @@ var exports = r.sponsored = {
     },
 
     enable_form: function($form) {
-
-        $form.find('button[class*="campaign-button"]')
-            .prop("disabled", false)
-            .removeClass("disabled");
+        if (this.bidValid && this.targetValid) {
+            $form.find('button[class*="campaign-button"]')
+                .prop("disabled", false)
+                .removeClass("disabled");
+        }
     },
 
     hide_budget: function() {
@@ -1873,7 +1735,7 @@ var exports = r.sponsored = {
 
     collection_targeting: function() {
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
-        $('.collection-targeting').find('*[name="collection"]').prop("disabled",  false).end().slideDown();
+        $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
         this.render()
     },
 
@@ -1937,15 +1799,11 @@ var exports = r.sponsored = {
     },
 
     get_min_bid_dollars: function() {
-        return parseFloat($('#bid_dollars').data('min_bid_dollars'));
+        return $('#bid_dollars').data('min_bid_dollars');
     },
 
     get_max_bid_dollars: function() {
-        return parseFloat($('#bid_dollars').data('max_bid_dollars'));
-    },
-
-    get_bid_dollars: function() {
-        return parseFloat($('#bid_dollars').val());
+        return $('#bid_dollars').data('max_bid_dollars');
     },
 
     get_lowest_max_bid_dollars: function($form) {
@@ -1968,11 +1826,6 @@ var exports = r.sponsored = {
         return $('#total_budget_dollars').data('max_budget_dollars');
     },
 
-    /**
-    Checks budget 
-
-    @returns {Boolean}
-    */
     check_budget: function($form) {
         var budget = this.get_budget($form),
             minBudgetDollars = this.get_min_budget_dollars(),
@@ -1993,46 +1846,39 @@ var exports = r.sponsored = {
 
         if (!this.userIsSponsor) {
             if (budget.totalBudgetDollars < minBudgetDollars) {
-                this.budgetValid = false;
+                this.bidValid = false;
                 $(".minimum-spend").addClass("error");
             } else if (budget.totalBudgetDollars > maxBudgetDollars) {
-                this.budgetValid = false;
+                this.bidValid = false;
             } else {
-                this.budgetValid = true;
+                this.bidValid = true;
                 $(".minimum-spend").removeClass("error");
             }
         } else {
-            this.budgetValid = true;
+            this.bidValid = true;
             $(".minimum-spend").removeClass("error");
         }
 
-        return this.budgetValid;
+        if (this.bidValid) {
+            this.enable_form($form);
+        } else {
+            this.disable_form($form);
+        }
     },
 
-    /*
-    Checks if bid dollars are valid
-
-    TODO: Maybe add error messages. Check function check_budget for reference
-
-    @returns true if so, else false
-    */
     check_bid_dollars: function($form) {
       var maxBidDollars = r.sponsored.get_lowest_max_bid_dollars($form);
       var minBidDollars = r.sponsored.get_min_bid_dollars();
-      var bidDollars = r.sponsored.get_bid_dollars();
+      var bidDollars = $form.find('#bid_dollars').val() || 0.;
 
       $form.find('.daily-max-spend').text(maxBidDollars.toFixed(2));
 
       // Form validation
-      if (isNaN(maxBidDollars) || 
-          isNaN(minBidDollars) || 
-          isNaN(bidDollars) ||
-          (maxBidDollars < minBidDollars) ||
-          (bidDollars < minBidDollars) ||
-          (bidDollars > maxBidDollars)) {
-          return false;
+      if ((maxBidDollars < minBidDollars) ||
+              (bidDollars < minBidDollars) ||
+              (bidDollars > maxBidDollars)) {
+          this.disable_form($form);
       }
-      return true;
     },
 
     calc_impressions: function(bid, cpm_pennies) {
@@ -2070,7 +1916,7 @@ var exports = r.sponsored = {
             data.collection_name = targeting.collection;
         }
         else if (targeting.type === 'subreddit') {
-            data.sr_names = targeting.sr.join("|");
+            data.sr_name = targeting.sr;
         }
 
         this.reload_with_params(data);
@@ -2105,18 +1951,6 @@ var exports = r.sponsored = {
             timing = this.get_timing($form);
 
         this.render_timing_duration($form, timing.duration);
-    },
-
-    submit_roadblock_form: function() {
-        var $form = $('.roadblock-dashboard');
-        var timing = this.get_timing($form)
-        var selected_sr_names = $('#selected_sr_names').val();
-        var data = {
-          startdate: timing.startdate,
-          enddate: timing.enddate,
-          srs: selected_sr_names
-        };
-        $.request("add_roadblock", data, null);
     },
 
     reload_with_params: function(data) {
@@ -2205,17 +2039,6 @@ function check_enddate(startdate, enddate) {
   $("#datepicker-" + enddate.attr("id")).datepicker("destroy");
 }
 
-function extract_subreddits_from_str(str) {
-  if(str.substring(0,3) !== "/r/"){
-    // means this is a collection and not a list of subreddits
-    return []
-  }
-  var srs = str.split(" ");
-  //remove the "/r/" in from of the subreddits
-  srs = srs.map(function(s){return s.substring(3)});
-  return srs;
-}
-
 (function($) {
     $.update_campaign = function(campaign_name, campaign_html) {
         cancel_edit(function() {
@@ -2259,7 +2082,6 @@ function cancel_edit(callback) {
     var $campaign = $('#campaign');
     var isEditingExistingCampaign = !!$campaign.parents('tr:first').length;
 
-    sr_reset(); // resets the subreddit autocomplete
     if (isEditingExistingCampaign) {
         var tr = $campaign.parents("tr:first").prev();
         /* copy the campaign element */
@@ -2441,35 +2263,20 @@ function edit_campaign($campaign_row) {
                 radios = campaign.find('*[name="targeting"]'),
                 isCollection = ($campaign_row.data("targeting-collection") === "True"),
                 collectionTargeting = isCollection ? targeting : 'none';
-
-            // functions to support multisubreddit handling
             if (targeting && !isCollection) {
-                radios.filter('*[value="subreddit"]')
+                radios.filter('*[value="one"]')
                     .prop("checked", "checked");
-                sr_add_sr(targeting);
-                campaign.find('*[name="sr"]').prop("disabled", false).end()
-                    .find(".subreddit-targeting").show();
+                campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
+                    .find(".subreddit-targeting").show();    
                 $(".collection-targeting").hide();
             } else {
-                var srs = extract_subreddits_from_str(targeting);
-                if(srs.length > 0){
-                  // Multisubreddits
-                  radios.filter('*[value="subreddit"]')
+                radios.filter('*[value="collection"]')
                     .prop("checked", "checked");
-                  srs.forEach(sr_add_sr);
-                  campaign.find('*[name="sr"]').prop("disabled", false).end()
-                      .find(".subreddit-targeting").show();
-                  $(".collection-targeting").hide();
-                } else {
-                  // Plain old collection
-                  radios.filter('*[value="collection"]')
-                      .prop("checked", "checked");
-                  $('.collection-targeting input[value="' + collectionTargeting + '"]')
-                      .prop("checked", "checked");
-                  campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
-                      .find(".subreddit-targeting").hide();
-                  $('.collection-targeting').show();
-                }
+                $('.collection-targeting input[value="' + collectionTargeting + '"]')
+                    .prop("checked", "checked");
+                campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
+                    .find(".subreddit-targeting").hide();
+                $('.collection-targeting').show();
             }
 
             r.sponsored.collapse_collection_selector();

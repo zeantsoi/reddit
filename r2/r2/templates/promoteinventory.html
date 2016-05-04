@@ -89,16 +89,8 @@
     r.sponsored.set_form_render_fnc(r.sponsored.fill_inventory_form);
     r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
                                    ${unsafe(simplejson.dumps(thing.metros))});
-    
     r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))},
                                   ${unsafe(simplejson.dumps(thing.collection_input))});
-    r.sponsored.setup_subreddits(${unsafe(simplejson.dumps(thing.sr_input))});
-    
-    %if thing.targeting_type == "collection":
-      r.sponsored.collection_targeting();
-    %else:
-      r.sponsored.subreddit_targeting();
-    %endif
 
     $(function() {
       init_startdate();
