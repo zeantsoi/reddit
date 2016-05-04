@@ -15,6 +15,7 @@ from r2.lib.promote import (
     get_nsfw_collections_srnames,
     get_refund_amount,
     get_spent_amount,
+    get_unspent_budget,
     is_pre_cpm,
     is_underdelivered,
     RefundProviderException,
@@ -487,9 +488,9 @@ class TestFreebies(RedditTestCase):
         self.all_live_promo_srnames.called_once_with(_update=True)
 
 
-class TestIsUnderdelivered(unittest.TestCase):
+class TestGetUnspentBudget(unittest.TestCase):
     @patch("r2.lib.promote.get_spent_amount")
-    def test_is_underdelivered_is_true_if_spend_is_less_than_budget(
+    def test_unspent_budget(
         self,
         get_spent_amount,
     ):
@@ -497,22 +498,46 @@ class TestIsUnderdelivered(unittest.TestCase):
         campaign.total_budget_dollars = 500
         get_spent_amount.return_value = 100
 
-        self.assertTrue(is_underdelivered(campaign))
+        self.assertEqual(get_unspent_budget(campaign), 400)
 
     @patch("r2.lib.promote.get_spent_amount")
-    def test_is_underdelivered_is_false_if_spend_is_greater_or_equal_to_budget(
+    def test_unspent_budget_cannot_be_negative(
         self,
         get_spent_amount,
     ):
         campaign = MagicMock(spec=PromoCampaign)
         campaign.total_budget_dollars = 500
-        get_spent_amount.return_value = 500
+        get_spent_amount.return_value = 600
+
+        self.assertEqual(get_unspent_budget(campaign), 0)
+
+
+class TestIsUnderdelivered(unittest.TestCase):
+    @patch("r2.lib.promote.get_unspent_budget")
+    def test_is_underdelivered_is_true_if_unspent_budget_remains(
+        self,
+        get_unspent_budget,
+    ):
+        campaign = MagicMock(spec=PromoCampaign)
+        get_unspent_budget.return_value = 1
+
+        self.assertTrue(is_underdelivered(campaign))
+
+    @patch("r2.lib.promote.get_unspent_budget")
+    def test_is_underdelivered_is_false_if_no_budget_remains(
+        self,
+        get_unspent_budget,
+    ):
+        campaign = MagicMock(spec=PromoCampaign)
+        get_unspent_budget.return_value = 0
 
         self.assertFalse(is_underdelivered(campaign))
 
 
 @patch("r2.lib.promote.emailer.auto_extend_promo")
 @patch("r2.lib.promote.edit_campaign")
+@patch("r2.lib.promote.g.events.extend_campaign_event")
+@patch("r2.lib.promote.PromotionLog.add")
 class TestExtendCampaign(unittest.TestCase):
     def setUp(self):
         self.link = MagicMock(spec=Link)
@@ -522,6 +547,8 @@ class TestExtendCampaign(unittest.TestCase):
 
     def test_user_is_only_emailed_on_first_extension(
         self,
+        PromotionLog_add,
+        extend_campaign_event,
         edit_campaign,
         auto_extend_promo,
     ):
@@ -535,6 +562,8 @@ class TestExtendCampaign(unittest.TestCase):
 
     def test_campaign_can_be_extended_only_30_times(
         self,
+        PromotionLog_add,
+        extend_campaign_event,
         edit_campaign,
         auto_extend_promo,
     ):
@@ -546,6 +575,8 @@ class TestExtendCampaign(unittest.TestCase):
 
     def test_campaign_is_extended_1_day_at_a_time(
         self,
+        PromotionLog_add,
+        extend_campaign_event,
         edit_campaign,
         auto_extend_promo,
     ):
@@ -555,10 +586,13 @@ class TestExtendCampaign(unittest.TestCase):
         edit_campaign.assert_called_once_with(
             self.link, self.campaign,
             end_date=end_after,
+            send_event=False,
         )
 
     def test_decrements_extensions_remaining(
         self,
+        PromotionLog_add,
+        extend_campaign_event,
         edit_campaign,
         auto_extend_promo,
     ):
@@ -567,6 +601,28 @@ class TestExtendCampaign(unittest.TestCase):
         after = self.campaign.extensions_remaining
 
         self.assertEqual(before - 1, after)
+
+    def test_sends_an_event(
+        self,
+        PromotionLog_add,
+        extend_campaign_event,
+        edit_campaign,
+        auto_extend_promo,
+    ):
+        extend_campaign(self.link, self.campaign)
+
+        self.assertTrue(extend_campaign_event.called)
+
+    def test_writes_to_promotion_log(
+        self,
+        PromotionLog_add,
+        extend_campaign_event,
+        edit_campaign,
+        auto_extend_promo,
+    ):
+        extend_campaign(self.link, self.campaign)
+
+        self.assertTrue(PromotionLog_add.called)
 
 
 @patch("r2.lib.promote.is_underdelivered")

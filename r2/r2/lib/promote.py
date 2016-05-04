@@ -1178,12 +1178,25 @@ def extend_campaign(link, campaign):
     if not campaign.is_extended:
         emailer.auto_extend_promo(link, campaign)
 
-    edit_campaign(
-        link, campaign,
-        end_date=(campaign.end_date + datetime.timedelta(days=1))
-    )
+    new_end = campaign.end_date + datetime.timedelta(days=1)
 
     campaign.extensions_remaining = campaign.extensions_remaining - 1
+
+    edit_campaign(
+        link, campaign,
+        end_date=new_end,
+        send_event=False,
+    )
+
+    g.events.extend_campaign_event(
+        link=link,
+        campaign=campaign,
+        request=request,
+        context=c,
+    )
+
+    PromotionLog.add(link, "extended campaign until %s, %d extensions remaining" %
+        (new_end.date(), campaign.extensions_remaining))
 
 
 def make_daily_promotions():
@@ -1666,10 +1679,16 @@ def get_spent_amount(campaign):
         return campaign.total_budget_dollars
 
 
+def get_unspent_budget(campaign):
+    spent = get_spent_amount(campaign)
+
+    return max(0, campaign.total_budget_dollars - spent)
+
+
 def is_underdelivered(campaign):
     spent = get_spent_amount(campaign)
 
-    return spent < campaign.total_budget_dollars
+    return get_unspent_budget(campaign) > 0
 
 
 def successful_payment(link, campaign, ip, address):

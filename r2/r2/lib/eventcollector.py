@@ -910,6 +910,32 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    def extend_campaign_event(self, link, campaign,
+            request=None, context=None):
+        """Send an event recording when a campaign is automatically extended.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            topic="selfserve_events",
+            event_type="ss.auto_extend_campaign",
+            request=request,
+            context=context,
+            data=dict(
+                extensions_remaining=campaign.extensions_remaining,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
     def terminate_campaign_event(self, link, campaign, original_end,
             request=None, context=None):
         """Send an event recording when a campaign is terminated.
