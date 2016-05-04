@@ -1502,6 +1502,7 @@ class SelfServeEvent(Event):
                 prev_attrs.get("third_party_tracking_2"))
 
     def add_campaign_fields(self, campaign, changed=None):
+        from r2.lib import promote
         from r2.models.promo import PROMOTE_COST_BASIS
 
         self.add("campaign_id", campaign._id)
@@ -1511,6 +1512,7 @@ class SelfServeEvent(Event):
         self.add("subreddit_targets", campaign.target.subreddit_names)
         self.add("no_daily_budget", campaign.no_daily_budget)
         self.add("total_budget_pennies", campaign.total_budget_pennies)
+        self.add("spent_budget_pennies", int(promote.get_spent_amount(campaign) * 100))
         self.add("priority", campaign.priority_name)
         self.add("cost_basis", PROMOTE_COST_BASIS.name[campaign.cost_basis])
         self.add("platform", campaign.platform)
