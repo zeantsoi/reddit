@@ -1419,9 +1419,11 @@ class ApiController(RedditController):
                 if c.user.email:
                     _event("update_email")
                     emailer.email_change_email(c.user)
+                    c.user.set_email(email)
                 else:
                     _event("add_email")
 
+                    c.user.set_email(email)
                     # if user is in ATO status, adding new email would also
                     # send password reset link
                     if c.user.force_password_reset:
@@ -1450,7 +1452,6 @@ class ApiController(RedditController):
                         # disable email input
                         form.find('input').attr('disabled', 'disabled').end()
 
-                c.user.set_email(email)
                 c.user.email_verified = None
                 c.user.pref_email_messages = False
                 c.user._commit()
