@@ -1277,6 +1277,8 @@ class EventQueue(object):
             },
         )
 
+        self.save_event(event)
+
     @squelch_exceptions
     def orangered_email_event(self, user, messages, email_hash,
                               reply_count, newest_reply_age, oldest_reply_age,
