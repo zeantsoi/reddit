@@ -1814,7 +1814,16 @@ var exports = r.sponsored = {
           React.renderComponent(
             CampaignSet(null,
               InfoText({className: 'error'},
-                r._("Please select a valid subreddit or collection"))
+                r._("Please select a valid subreddit or collection")),
+              CampaignOptionTable(null, CampaignOption({
+                bidDollars: cpm/100,
+                totalBudgetDollars: budget.totalBudgetDollars, 
+                end: timing.enddate,
+                impressions: impressions,
+                isNew: $form.find('#is_new').val() === 'true',
+                primary: false,
+                start: timing.startdate,
+              }))
             ),
             document.getElementById('campaign-creator')
           );
@@ -2254,7 +2263,6 @@ function cancel_edit(callback) {
     var $campaign = $('#campaign');
     var isEditingExistingCampaign = !!$campaign.parents('tr:first').length;
 
-    sr_reset(); // resets the subreddit autocomplete
     if (isEditingExistingCampaign) {
         var tr = $campaign.parents("tr:first").prev();
         /* copy the campaign element */
@@ -2271,6 +2279,7 @@ function cancel_edit(callback) {
                             });
                     });
             });
+        sr_reset(); // resets the subreddit autocomplete
     } else {
         var keep_open = $campaign.hasClass('keep-open');
         
@@ -2289,6 +2298,8 @@ function cancel_edit(callback) {
                 .fadeOut();
 
             r.sponsored.render();
+        } else {
+            sr_reset(); // resets the subreddit autocomplete
         }
     }
 }

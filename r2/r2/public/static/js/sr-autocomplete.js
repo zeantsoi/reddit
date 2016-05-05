@@ -192,7 +192,6 @@ function sr_name_down(e) {
     } else if (e.keyCode == KEYS.BACKSPACE){
         if(!e.target.value && Object.keys(r.srAutocomplete.selected_sr).length !== 0){
             e.preventDefault();
-            $("#sr-autocomplete").trigger("sr-changed");
             var child = $("#sr-autocomplete-area > span").last();
             if (child){
                 var text = child.text();
@@ -200,6 +199,7 @@ function sr_name_down(e) {
                 child.remove();
                 sr_update_selected_sr_input();
             }
+            $("#sr-autocomplete").trigger("sr-changed");
         }
     }
 }
@@ -295,9 +295,9 @@ Assumes the event only occurs when the close button is clicked
 */
 function sr_remove_sr(e){
     $(e.target).parent().remove();
-    $("#sr-autocomplete").trigger("sr-changed");
     delete r.srAutocomplete.selected_sr[e.target.previousSibling.nodeValue];
     sr_update_selected_sr_input();
+    $("#sr-autocomplete").trigger("sr-changed");
 }
 
 /**
