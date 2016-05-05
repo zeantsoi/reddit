@@ -159,7 +159,6 @@ def message_notification_email(data):
     """Queues a system email for a new message notification."""
     from r2.lib.pages import MessageNotificationEmail
 
-    MAX_EMAILS_PER_DAY = 1000
     MAX_EMAILS_PER_USER = 30
     MAX_MESSAGES_PER_BATCH = 5
     MESSAGE_THROTTLE_KEY = 'message_notification_emails'
@@ -176,10 +175,6 @@ def message_notification_email(data):
         # user because we're not in the context of an HTTP request from them.
         if not feature.is_enabled('orangereds_as_emails', user=user):
             continue
-
-        if g.cache.get(MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_DAY:
-            raise Exception(
-                    'Message notification emails: safety limit exceeded!')
 
         # Don't send more than MAX_EMAILS_PER_USER per user per day
         USER_MESSAGE_THROTTLE_KEY = "email-message_notification_%s" % user._id
