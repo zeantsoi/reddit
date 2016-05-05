@@ -23,6 +23,7 @@
 import sys
 
 import base64
+import contextlib
 import cStringIO
 import hashlib
 import json
@@ -237,6 +238,62 @@ def _fetch_url(url, referer=None):
     return response.headers.get("Content-Type"), response_data
 
 
+@contextlib.contextmanager
+def _request_image(url, timeout, max_size, referer=None):
+    url = _clean_url(url)
+
+    p = UrlParser(url)
+    if not (p.is_web_safe_url() and p.scheme.startswith("http")):
+        yield None
+        return
+
+    try:
+        headers = dict()
+        if g.useragent:
+            headers["User-Agent"] = g.useragent
+        if referer:
+            headers["Referer"] = referer
+
+        res = requests.get(
+            url,
+            timeout=timeout,
+            stream=True,
+            headers=headers,
+        )
+        yield res
+    finally:
+        res.close()
+
+
+def _fetch_image_url(url, timeout, max_size, referer=None):
+    _error_response = None, None
+
+    with _request_image(url, timeout, max_size, referer=referer) as res:
+        if not res:
+            return _error_response
+
+        content_type = res.headers.get("Content-Type", "").lower()
+        if not content_type.startswith("image/"):
+            return _error_response
+
+        try:
+            expressed_size = int(res.headers.get('Content-Length', 0))
+            if expressed_size > max_size:
+                return _error_response
+        except ValueError:
+            pass
+
+        content = []
+        content_size = 0
+        for chunk in res.iter_content(4096):
+            content.append(chunk)
+            content_size += len(chunk)
+            if content_size > max_size:
+                return _error_response
+        content = "".join(content)
+        return content_type, content
+
+
 @memoize('media.fetch_size', time=3600)
 def _fetch_image_size(url, referer):
     """Return the size of an image by URL downloading as little as possible."""
@@ -269,6 +326,15 @@ def optimize_jpeg(filename):
     with open(os.path.devnull, 'w') as devnull:
         subprocess.check_call(("/usr/bin/jpegoptim", filename), stdout=devnull)
 
+def optimize_gif(filename):
+    with open(os.path.devnull, 'w') as devnull:
+        args = ("/usr/bin/gifsicle",
+                "--optimize",
+                "--no-comments",
+                "--no-names",
+                "--batch",
+                filename)
+        subprocess.check_call(args, stdout=devnull)
 
 def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
@@ -297,6 +363,20 @@ def _filename_from_content(contents):
     return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
 
 
+def _flatten_alpha(img):
+    """Given an image, flatten alpha channels."""
+    if img.format == "JPG":
+        return img
+
+    # convert to rgba because PIL doesn't handle non-rgba in paste
+    rgba_img = img.convert("RGBA")
+
+    # paste into white background because PIL defaults to a black
+    background = Image.new('RGBA', img.size, (255, 255, 255))
+    background.paste(rgba_img, rgba_img)
+    return background.convert('RGB')
+
+
 def upload_media(image, file_type='jpg', category='thumbs'):
     """Upload an image to the media provider."""
     f = tempfile.NamedTemporaryFile(suffix=".{}".format(file_type), delete=False)
@@ -305,27 +385,28 @@ def upload_media(image, file_type='jpg', category='thumbs'):
         do_convert = True
         if isinstance(img, basestring):
             img = str_to_image(img)
-            if img.format == "PNG" and file_type == "png":
+            img_format = img.format.lower()
+            if img_format == file_type and img_format in ("png", "gif"):
                 img.verify()
                 f.write(image)
                 f.close()
                 do_convert = False
 
         if do_convert:
-            img = img.convert('RGBA')
+            # if the requested type was jpg, convert and flatten alpha chanels
+            # before saving
             if file_type == "jpg":
-                # PIL does not play nice when converting alpha channels to jpg
-                background = Image.new('RGBA', img.size, (255, 255, 255))
-                background.paste(img, img)
-                img = background.convert('RGB')
-                img.save(f, quality=85) # Bug in the JPG encoder with the optimize flag, even if set to false
+                img = _flatten_alpha(img)
+                img.save(f, quality=85)
             else:
-                img.save(f, optimize=True)
+                img.save(f)
 
         if file_type == "png":
             optimize_png(f.name)
         elif file_type == "jpg":
             optimize_jpeg(f.name)
+        if file_type == "gif":
+            optimize_gif(f.name)
         contents = open(f.name).read()
         file_name = "{file_name}.{file_type}".format(
             file_name=_filename_from_content(contents),
@@ -335,6 +416,15 @@ def upload_media(image, file_type='jpg', category='thumbs'):
     finally:
         os.unlink(f.name)
     return ""
+
+
+def upload_media_raw(image_bytes, file_type='jpg', category='thumbs'):
+    """Given an image, upload it, without alterations."""
+    file_name = "{file_name}.{file_type}".format(
+        file_name=_filename_from_content(image_bytes),
+        file_type=file_type,
+    )
+    return g.media_provider.put(category, file_name, image_bytes)
 
 
 def upload_stylesheet(content):
@@ -693,6 +783,9 @@ class Scraper(object):
         if scraper:
             return scraper
 
+        if _ImageScraper.matches(url):
+            return _ImageScraper(url)
+
         if _YouTubeScraper.matches(url):
             return _YouTubeScraper(url, maxwidth=maxwidth)
 
@@ -947,6 +1040,70 @@ class _EmbedlyScraper(Scraper):
             height=height,
             content=html,
             public_thumbnail_url=public_thumbnail_url,
+        )
+
+
+class _ImageScraper(Scraper):
+    """Given a URL that looks like an image, scrape it directly. This includes
+       support for both static files and gifs."""
+
+    FETCH_TIMEOUT = 10
+    MAXIMUM_IMAGE_SIZE = 1024 * 1024 * 20 # 20MB
+
+    def __init__(self, url):
+        self.url = url
+
+    @classmethod
+    def matches(cls, url):
+        p = UrlParser(url)
+        return p.has_image_extension()
+
+    def scrape(self):
+        # should return a 4-tuple of:
+        #     thumbnail, preview_object, media_object, secure_media_obj
+        content_type, content = _fetch_image_url(
+            self.url,
+            timeout=self.FETCH_TIMEOUT,
+            max_size=self.MAXIMUM_IMAGE_SIZE,
+            referer=self.url,
+        )
+
+        if not content:
+            return None, None, None, None
+
+        uid = _filename_from_content(content)
+        image = str_to_image(content)
+        file_type = image.format.lower()
+        upload_input = image
+
+        if file_type == "gif":
+            # PIL does not support writing gifs, so we instead use it solely to
+            # read and verify the GIF spec and pass in the content raw.
+            # upload_media sanitizes all images via external optimizers
+            upload_input = content
+        elif file_type not in ("png", "jpg"):
+            file_type = "jpg"
+
+        storage_url = upload_media(upload_input,
+                                   file_type=file_type,
+                                   category='previews',
+                                   )
+
+        width, height = image.size
+        preview_object = {
+            'uid': uid,
+            'url': storage_url,
+            'width': width,
+            'height': height,
+        }
+
+        thumbnail = _prepare_image(image)
+
+        return (
+            thumbnail,
+            preview_object,
+            None,
+            None,
         )
 
 

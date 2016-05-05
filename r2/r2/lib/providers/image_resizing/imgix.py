@@ -44,7 +44,8 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         ],
     }
 
-    def resize_image(self, image, width=None, censor_nsfw=False, max_ratio=None):
+    def resize_image(self, image, width=None, file_type=None, censor_nsfw=False,
+                     max_ratio=None):
         url = UrlParser(image['url'])
         url.hostname = g.imgix_domain
         # Let's encourage HTTPS; it's cool, works just fine on HTTP pages, and
@@ -71,6 +72,10 @@ class ImgixImageResizingProvider(ImageResizingProvider):
                 raise NotLargeEnough()
             # http://www.imgix.com/docs/reference/size#param-w
             url.update_query(w=width)
+
+        if file_type and file_type in ('gif', 'jpg', 'png', 'mp4'):
+            url.update_query(fm=file_type)
+
         if censor_nsfw:
             # Do an initial blur to make sure we're getting rid of icky
             # details.
