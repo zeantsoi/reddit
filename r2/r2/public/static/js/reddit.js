@@ -758,6 +758,7 @@ $(function() {
 });
 
 function cancel_usertext(elem) {
+    $(window).off('beforeunload');
     var t = $(elem);
     t.thing().find(".edit-usertext:first").parent("li").addBack().show(); 
     hide_edit_usertext(t.closest(".usertext"));
@@ -805,7 +806,10 @@ $(function() {
         //re-show the whole form if required
         form.show();
         //update the cancel button to call the toggle button's click
-        form.find(".cancel").get(0).onclick = function() {form.hide()};
+        form.find(".cancel").get(0).onclick = function() {
+          $(window).off('beforeunload');
+          form.hide();
+        };
         $(e.target).thing().find(".showreplies:visible").click();
     });
 });
