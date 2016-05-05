@@ -51,7 +51,7 @@ for sr in fetch_things2(all_subreddits):
         url = "http://%s/%s_%d.png" % (g.s3_old_thumb_bucket,
                                        sr._fullname, image_url)
         image_data = urllib2.urlopen(url).read()
-        new_url = upload_media(image_data, file_type=".png")
+        new_url = upload_media(image_data, file_type="png")
         images[name] = new_url
 
     # use a timestamp of zero to make sure that we don't overwrite any changes

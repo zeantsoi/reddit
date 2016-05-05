@@ -1883,6 +1883,7 @@ class PromoteApiController(ApiController):
     )
     def POST_ad_s3_params(self, responder, link, kind, filepath, ajax):
         filename, ext = os.path.splitext(filepath)
+        ext = ext[1:]
         mime_type, encoding = mimetypes.guess_type(filepath)
 
         if not mime_type or mime_type not in ALLOWED_IMAGE_TYPES:

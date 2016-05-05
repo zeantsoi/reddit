@@ -2724,7 +2724,7 @@ class ApiController(RedditController):
             return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
         else:
             try:
-                new_url = media.upload_media(file, file_type="." + img_type)
+                new_url = media.upload_media(file, file_type=img_type)
             except Exception as e:
                 g.log.warning("error uploading subreddit image: %s", e)
                 errors['IMAGE_ERROR'] = _("Invalid image or general image error")
@@ -5368,6 +5368,7 @@ class ApiController(RedditController):
             "video/mp4",
         ])
         filename, ext = os.path.splitext(filepath)
+        ext = ext[1:]
         mime_type, encoding = mimetypes.guess_type(filepath)
 
         if not mime_type or mime_type not in allowed_image_types:

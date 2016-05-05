@@ -297,15 +297,15 @@ def _filename_from_content(contents):
     return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
 
 
-def upload_media(image, file_type='.jpg', category='thumbs'):
+def upload_media(image, file_type='jpg', category='thumbs'):
     """Upload an image to the media provider."""
-    f = tempfile.NamedTemporaryFile(suffix=file_type, delete=False)
+    f = tempfile.NamedTemporaryFile(suffix=".{}".format(file_type), delete=False)
     try:
         img = image
         do_convert = True
         if isinstance(img, basestring):
             img = str_to_image(img)
-            if img.format == "PNG" and file_type == ".png":
+            if img.format == "PNG" and file_type == "png":
                 img.verify()
                 f.write(image)
                 f.close()
@@ -313,7 +313,7 @@ def upload_media(image, file_type='.jpg', category='thumbs'):
 
         if do_convert:
             img = img.convert('RGBA')
-            if file_type == ".jpg":
+            if file_type == "jpg":
                 # PIL does not play nice when converting alpha channels to jpg
                 background = Image.new('RGBA', img.size, (255, 255, 255))
                 background.paste(img, img)
@@ -322,12 +322,15 @@ def upload_media(image, file_type='.jpg', category='thumbs'):
             else:
                 img.save(f, optimize=True)
 
-        if file_type == ".png":
+        if file_type == "png":
             optimize_png(f.name)
-        elif file_type == ".jpg":
+        elif file_type == "jpg":
             optimize_jpeg(f.name)
         contents = open(f.name).read()
-        file_name = _filename_from_content(contents) + file_type
+        file_name = "{file_name}.{file_type}".format(
+            file_name=_filename_from_content(contents),
+            file_type=file_type,
+        )
         return g.media_provider.put(category, file_name, contents)
     finally:
         os.unlink(f.name)
@@ -487,7 +490,7 @@ def set_media(link, force=False, **kwargs):
             amqp.add_item("new_media_embed", link._fullname)
 
 
-def force_thumbnail(link, image_data, file_type=".jpg"):
+def force_thumbnail(link, image_data, file_type="jpg"):
     image = str_to_image(image_data)
     image = _prepare_image(image)
     thumb_url = upload_media(image, file_type=file_type)
@@ -497,7 +500,7 @@ def force_thumbnail(link, image_data, file_type=".jpg"):
     link._commit()
 
 
-def force_mobile_ad_image(link, image_data, file_type=".jpg"):
+def force_mobile_ad_image(link, image_data, file_type="jpg"):
     image = str_to_image(image_data)
     image_width = image.size[0]
     x,y = g.mobile_ad_image_size
