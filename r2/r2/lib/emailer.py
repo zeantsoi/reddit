@@ -319,6 +319,7 @@ def generate_non_preview_usernames_str(usernames):
     """ produces string of usernames for whom a message preview is not 
     displayed, for easy use in template
     """
+    usernames = list(usernames)
 
     if len(usernames) == 0:
         return
@@ -329,10 +330,10 @@ def generate_non_preview_usernames_str(usernames):
     if len(usernames) > 5:
         # returns "username1, username2, and more"
         usernames = usernames[:5]
-        usernames.add("and more")
+        usernames.append("and more")
     else:
         # returns "username1, username2, and username3"
-        usernames.add("and %s" % usernames.pop())
+        usernames.append("and %s" % usernames.pop())
 
     return ', '.join(usernames)
 
