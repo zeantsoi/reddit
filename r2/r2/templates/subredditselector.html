@@ -43,6 +43,12 @@
     $("#sr-autocomplete-area").on("click", function(){
       $("#sr-autocomplete").focus();
     });
+    % if thing.multiple:
+      r.srAutocomplete.is_multiple = true;
+    % else:
+      r.srAutocomplete.is_multiple = false;
+    % endif
+
   });
 </script>
 ${error_field("SUBREDDIT_NOEXIST", "sr", "div")}

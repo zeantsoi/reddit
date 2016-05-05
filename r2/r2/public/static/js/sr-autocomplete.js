@@ -184,7 +184,9 @@ function sr_name_down(e) {
             e.target.value, 
             sr_add_sr_then_trigger(), 
             sr_show_error_msg);
-        e.target.value = "";
+        if (r.srAutocomplete.is_multiple){
+            e.target.value = "";
+        }
         hide_sr_name_list();
         return false;
     } else if (e.keyCode == KEYS.BACKSPACE){
@@ -220,7 +222,9 @@ function sr_dropdown_mup(row) {
             name, 
             sr_add_sr_then_trigger({is_autocomplete: true}), 
             sr_show_error_msg);
-        $("#sr-autocomplete").val("");
+        if (r.srAutocomplete.is_multiple){
+            $("#sr-autocomplete").val("");
+        }
         $("#sr-drop-down").hide();
     }
 }
@@ -238,11 +242,15 @@ function set_sr_name(link) {
 /* UI: Adds a subreddit to the list of subreddits posted */
 function sr_add_sr(sr_name){
     // Checks if sr_name is defined and doesn't exist in selected_sr yet
-    if (sr_name && !(sr_name.toLowerCase() in r.srAutocomplete.selected_sr)){
+    if (sr_name && 
+        !(sr_name.toLowerCase() in r.srAutocomplete.selected_sr) &&
+        r.srAutocomplete.is_multiple){
         var new_sr_span = sr_span(sr_name);
         $("#sr-autocomplete").before(new_sr_span);
         r.srAutocomplete.selected_sr[sr_name] = true;
         sr_update_selected_sr_input();
+    } else if(sr_name && !r.srAutocomplete.is_multiple){
+        $("#sr-autocomplete").val(sr_name);
     }
 }
 

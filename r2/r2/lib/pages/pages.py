@@ -4704,7 +4704,10 @@ class PromoteLinkEdit(PromoteLinkBase):
         top_srs = sorted(user_srs, key=lambda sr: sr._ups, reverse=True)[:20]
         extra_subreddits = [(_("suggestions:"), top_srs)]
         self.subreddit_selector = SubredditSelector(
-            extra_subreddits=extra_subreddits, include_user_subscriptions=False)
+            extra_subreddits=extra_subreddits,
+            include_user_subscriptions=False,
+            multiple=True,
+        )
         self.inventory = {}
         message = _("Create your ad on this page. Have questions? "
                     "Check out the [Help Center](%(help_center)s) "
@@ -5291,8 +5294,10 @@ class PromoteInventory(PromoteLinkBase):
         if not self.target.is_collection and self.sr_input:
             default_sr = Subreddit._by_name(self.sr_input)
         self.subreddit_selector = SubredditSelector(
-                default_sr=default_sr,
-                include_user_subscriptions=False)
+            default_sr=default_sr,
+            include_user_subscriptions=False,
+            multiple=True,
+        )
 
         self.get_locations()
         self.get_collections()
@@ -5840,12 +5845,13 @@ class QuarantineOptoutButton(Templated):
 class SubredditSelector(Templated):
     def __init__(self, default_sr=None, extra_subreddits=None, required=False,
                  include_searches=True, include_user_subscriptions=True, class_name=None,
-                 placeholder=None, show_add=False):
+                 placeholder=None, show_add=False, multiple=False):
         Templated.__init__(self)
 
         self.placeholder = placeholder
         self.class_name = class_name
         self.show_add = show_add
+        self.multiple = multiple
 
         if extra_subreddits:
             self.subreddits = extra_subreddits
