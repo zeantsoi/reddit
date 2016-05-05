@@ -1583,15 +1583,15 @@ class RedditController(OAuth2ResourceController):
         with g.stats.get_timer('mweb-redirect'):
             # the feature check needs to come last so we do not add people
             # to the test bucket that are not relevant to this test.
+            url = UrlParser(request.fullpath)
             if (c.render_style == 'html' and 
                     not no_redirect and 
                     detect_mobile(request.user_agent) and 
-                    self.is_safe_mobile_web_route(request.fullpath) and
+                    self.is_safe_mobile_web_route(url.path) and
                     feature.is_enabled('mobileweb_redirect_v2') and
                     feature.variant('mobileweb_redirect_v2') in ('card', 'compact')
             ):
 
-                url = UrlParser(request.fullpath)
                 url.switch_subdomain_by_extension('mobile')
                 url.update_query(utm_source='mweb_redirect')
                 if feature.variant('mobileweb_redirect_v2') == 'compact':
