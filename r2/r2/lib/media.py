@@ -76,6 +76,14 @@ _IMAGE_PREVIEW_TEMPLATE = """
 <img class="%(css_class)s" src="%(url)s" width="%(width)s" height="%(height)s">
 """
 
+_MP4_PREVIEW_TEMPLATE = """
+<video class="%(css_class)s" poster="%(poster_url)s"
+    preload="auto" autoplay="autoplay" muted="muted" loop="loop"
+    webkit-playsinline="" style="width: %(width)spx; height: %(height)spx;">
+    <source src="%(url)s" type="video/mp4">
+</video>
+"""
+
 
 def _image_to_str(image):
     s = cStringIO.StringIO()
@@ -651,7 +659,7 @@ def upload_icon(image_data, size):
 
 def allowed_media_preview_url(url):
     p = UrlParser(url)
-    if p.has_static_image_extension():
+    if p.has_image_extension():
         return True
     for allowed_domain in g.media_preview_domain_whitelist:
         if is_subdomain(p.hostname, allowed_domain):
@@ -659,7 +667,7 @@ def allowed_media_preview_url(url):
     return False
 
 
-def get_preview_image(preview_object, include_censored=False):
+def get_preview_media_object(preview_object, include_censored=False):
     """Returns a media_object for rendering a media preview image"""
     min_width, min_height = g.preview_image_min_size
     max_width, max_height = g.preview_image_max_size
@@ -682,20 +690,34 @@ def get_preview_image(preview_object, include_censored=False):
     if width < min_width and height < min_height:
         return None
 
-    url = g.image_resizing_provider.resize_image(preview_object, width)
-    img_html = format_html(
-        _IMAGE_PREVIEW_TEMPLATE,
-        css_class="preview",
-        url=url,
-        width=width,
-        height=height,
-    )
+    is_gif = preview_object["url"].endswith('.gif')
+    static_url = g.image_resizing_provider.resize_image(preview_object, width)
+
+    if not is_gif:
+        img_html = format_html(
+            _IMAGE_PREVIEW_TEMPLATE,
+            css_class="preview",
+            url=static_url,
+            width=width,
+            height=height,
+        )
+    else:
+        mp4_url = g.image_resizing_provider.resize_image(preview_object, width, file_type="mp4")
+        img_html = format_html(
+            _MP4_PREVIEW_TEMPLATE,
+            css_class="preview",
+            url=mp4_url,
+            poster_url=static_url,
+            width=width,
+            height=height,
+        )
 
     if include_censored:
         censored_url = g.image_resizing_provider.resize_image(
             preview_object,
             width,
             censor_nsfw=True,
+            file_type="png",
         )
         censored_img_html = format_html(
             _IMAGE_PREVIEW_TEMPLATE,

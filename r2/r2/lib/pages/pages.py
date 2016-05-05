@@ -4988,7 +4988,7 @@ def make_link_child(item, show_media_preview=False):
            feature.is_enabled("inline_image_previews_logged_out")) and
             item.preview_object and
             media.allowed_media_preview_url(item.url)):
-        media_object = media.get_preview_image(
+        media_object = media.get_preview_media_object(
             item.preview_object,
             include_censored=item.nsfw,
         )
