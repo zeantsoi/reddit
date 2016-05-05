@@ -21,8 +21,6 @@
 ###############################################################################
 import csv
 from collections import defaultdict
-from datetime import datetime, timedelta
-from urlparse import urlparse
 import hashlib
 import re
 import urllib
@@ -132,6 +130,11 @@ from r2.models.rules import SubredditRules
 from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
 
+# NOTE: the '*' imports above mean that we can give ourselves a bad day
+# if these are moved to the top (r2.models, for example, imports the
+# module datetime and not the class)
+from datetime import datetime, timedelta
+from urlparse import urlparse
 
 
 class ApiminimalController(MinimalController):
