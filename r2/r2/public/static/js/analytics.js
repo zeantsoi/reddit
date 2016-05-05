@@ -548,6 +548,42 @@ r.analytics = {
     r.events.track(eventTopic, eventType, payload).send();
   },
 
+  imageUploadEvent: function(mimetype, size, source, key, unsuccessful) {
+    var eventTopic = 'image_upload_events';
+    var eventType = 'cs.upload_image';
+    var payload = this.addContextData([
+      'referrer_domain',
+      'referrer_url',
+      'sr_name',
+      'sr_id',
+    ]);
+
+    if (unsuccessful) {
+      payload['process_notes'] = unsuccessful;
+    } else {
+      payload['successful'] = true;
+    }
+
+    if (mimetype) {
+      payload['image_mimetype'] = mimetype;
+    }
+
+    if (size) {
+      payload['image_size'] = size;
+    }
+
+    if (source) {
+      payload['image_source'] = source;
+    }
+
+    if (key) {
+      payload['image_key'] = key;
+    }
+
+    // event collector
+    r.events.track(eventTopic, eventType, payload).send();
+  },
+
   expandoEvent: function(actionName, targetData) {
     if (!r.config.feature_expando_events) { return; }
 

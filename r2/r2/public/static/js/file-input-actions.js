@@ -20,7 +20,7 @@
 
       r.actions.trigger(ACTION_NAME, {
         target: eventTarget,
-        eventDetail: 'input',
+        eventDetail: 'file selector',
         file: file,
       });
     });
@@ -54,7 +54,7 @@
 
       r.actions.trigger(ACTION_NAME, {
         target: eventTarget,
-        eventDetail: 'paste',
+        eventDetail: 'clipboard',
         file: file,
       });
       e.preventDefault();
@@ -86,7 +86,7 @@
 
       r.actions.trigger(ACTION_NAME, {
         target: eventTarget,
-        eventDetail: 'drop',
+        eventDetail: 'drag and drop',
         file: file,
       });
       e.preventDefault();

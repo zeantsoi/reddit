@@ -17,6 +17,8 @@
     _leaseReq: null,
     _uploader: null,
     _mimetype: null,
+    _fileType: null,
+    _fileSource: null,
 
     isSupported: function() {
       return (
@@ -106,6 +108,7 @@
           if (this._isValidAction(e)) {
             // file validation is async because it goes through a FileReader to
             // verify the file's extension matches it's actual mime type
+            this._fileSource = e.eventDetail;
             this._validateFileType(e.file)
             .done(function(file) {
               this._renderErrors(null);
@@ -275,6 +278,7 @@
     _requestS3Upload: function(uploader, file) {
       this._uploader = uploader;
       this._file = file;
+      var key = this._uploader.attributes.key;
 
       uploader.on('request', function(uploader) {
         if (uploader !== this._uploader) { return; }
@@ -294,13 +298,15 @@
 
       uploader.on('invalid error', function(uploader, errs) {
         if (uploader !== this._uploader) { return; }
-
+        r.analytics.imageUploadEvent(this._fileType, this._file.size, this._fileSource, key, errs[0].displayName);
         this._handleFileClear();
         this._renderErrors(errs);
       }.bind(this));
 
       uploader.on('success', function(uploader, imageUrl) {
         if (uploader !== this._uploader) { return; }
+
+        r.analytics.imageUploadEvent(this._fileType, this._file.size, this._fileSource, key, false);
 
         this.$throbber.hide();
         this.$urlInput.val(imageUrl);
@@ -353,10 +359,17 @@
       // http://stackoverflow.com/questions/18299806/how-to-check-file-mime-type-with-javascript-before-upload
       var d = $.Deferred();
       var fileReader = new FileReader();
+      var fileType = file.type.split('/');
+      if (fileType.length > 1) {
+        fileType = fileType[1];
+      } else {
+        fileType = fileType[0];
+      }
 
       if (!this._isValidFile(file)) {
         var err = r.errors.create('BAD_FILE_TYPE', r._('That is not a valid file.'), 'image-upload');
         d.reject(err);
+        r.analytics.imageUploadEvent(fileType, file.size, this._fileSource, null, err.displayName);
         return;
       }
 
@@ -369,6 +382,11 @@
         }
 
         this._mimetype = _getMimeTypeFromFileHeaderBytes(headerHex);
+        if (this._mimetype) {
+          this._fileType = this._mimetype.split('/')[1]
+        } else {
+          this._fileType = fileType;
+        }
         var isGif = this._mimetype === 'image/gif';
         var err;
 
@@ -379,15 +397,18 @@
             maxSize: MAX_GIF_UPLOAD_SIZE_MB + 'mb',
           });
           err = r.errors.create('BAD_FILE_SIZE', errStr);
+          r.analytics.imageUploadEvent(this._fileType, file.size, this._imageSource, null, err.displayName);
         } else if (!isGif && file.size > MAX_STATIC_UPLOAD_SIZE_MB * MB_TO_BYTES) {
           var errStr = r._('Image is too big. Maximum image size is %(maxSize)s.').format({
             maxSize: MAX_STATIC_UPLOAD_SIZE_MB + 'mb',
           });
           err = r.errors.create('BAD_FILE_SIZE', errStr);
+          r.analytics.imageUploadEvent(this._fileType, file.size, this._imageSource, null, err.displayName);
         }
 
         if (err) {
           d.reject(err);
+          r.analytics.imageUploadEvent(this._fileType, file.size, this._imageSource, null, err.displayName);
         } else {
           d.resolve(file);
         }
