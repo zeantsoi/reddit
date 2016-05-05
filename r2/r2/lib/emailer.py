@@ -161,10 +161,6 @@ def message_notification_email(data):
 
     MAX_EMAILS_PER_USER = 30
     MAX_MESSAGES_PER_BATCH = 5
-    MESSAGE_THROTTLE_KEY = 'message_notification_emails'
-
-    # If our counter's expired, initialize it again.
-    g.cache.add(MESSAGE_THROTTLE_KEY, 0, time=24*60*60)
 
     for datum in data.itervalues():
         datum = json.loads(datum)
@@ -317,7 +313,6 @@ def message_notification_email(data):
         )
 
         g.stats.simple_event('email.message_notification.queued')
-        g.cache.incr(MESSAGE_THROTTLE_KEY)
         g.cache.incr(USER_MESSAGE_THROTTLE_KEY)
 
 def generate_non_preview_usernames_str(usernames):
