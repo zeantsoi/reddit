@@ -4,7 +4,7 @@
   r.newlinkController = {
     VALID_DROP_STATE: 'image-upload-drop-active',
     DROP_TARGET_CLASS: 'image-upload-drop-target',
-    VALID_FILE_TYPES: /^image\/(png|jpe?g)$/,
+    VALID_FILE_TYPES: /^image\/(png|jpe?g|gif)$/,
     VALID_URL: /^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
     IS_LOCAL_PREVIEW_SUPPORTED: URL && URL.createObjectURL && URL.revokeObjectURL,
     SUGGEST_TITLE_DEBOUNCE_RATE: 500,
