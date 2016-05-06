@@ -1350,7 +1350,7 @@ def finalize_completed_campaigns(daysago=1):
         elif (camp.is_auction and can_refund(link, camp) and
                 feature.is_enabled('ads_auto_refund')):
             try:
-                refund_campaign(link, camp)
+                refund_campaign(link, camp, reason="underdelivered")
             # Something went wrong, throw it in the queue for a manual refund.
             except RefundProviderException:
                 underdelivered_campaigns.append(camp)
@@ -1385,7 +1385,7 @@ def can_refund(link, campaign):
 class InapplicableRefundException(Exception): pass
 class RefundProviderException(Exception): pass
 
-def refund_campaign(link, campaign):
+def refund_campaign(link, campaign, issued_by=None, reason=None):
     if not can_refund(link, campaign):
         raise InapplicableRefundException()
 
@@ -1419,6 +1419,14 @@ def refund_campaign(link, campaign):
     campaign._commit()
     queries.unset_underdelivered_campaigns(campaign)
     emailer.refunded_promo(link)
+
+    g.events.campaign_payment_refund_event(
+        link=link,
+        campaign=campaign,
+        amount_pennies=int(refund_amount * 100),
+        issued_by=issued_by,
+        reason=reason,
+    )
 
 
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])

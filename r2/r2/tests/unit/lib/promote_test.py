@@ -238,10 +238,11 @@ class TestPromoteRefunds(RedditTestCase):
     @patch('r2.models.PromotionLog.add')
     @patch("r2.lib.promote.can_refund")
     @patch("r2.lib.promote.get_refund_amount")
+    @patch("r2.lib.promote.g.events.campaign_payment_refund_event")
     @patch("r2.lib.authorize.refund_transaction")
     def test_refund_campaign_throws_if_refund_fails(
-            self, refund_transaction, get_refund_amount,
-            can_refund, account_by_id, promo_log_add):
+            self, refund_transaction, campaign_payment_refund_event,
+            get_refund_amount, can_refund, account_by_id, promo_log_add):
         error_message = "because we're testing errors!"
         refund_transaction.return_value = (False, error_message)
         can_refund.return_value = True
@@ -250,6 +251,7 @@ class TestPromoteRefunds(RedditTestCase):
         with self.assertRaisesRegexp(RefundProviderException, error_message):
             refund_campaign(self.link, self.campaign)
 
+    @patch("r2.lib.promote.g.events.campaign_payment_refund_event")
     @patch("r2.lib.authorize.refund_transaction")
     @patch('r2.models.PromotionLog.add')
     @patch('r2.lib.db.queries.unset_underdelivered_campaigns')
@@ -258,7 +260,8 @@ class TestPromoteRefunds(RedditTestCase):
     @patch("r2.lib.promote.get_refund_amount")
     def test_refund_campaign_success(
             self, get_refund_amount, can_refund, emailer_refunded_promo,
-            queries_unset, promotion_log_add, refund_transaction):
+            queries_unset, promotion_log_add, refund_transaction,
+            campaign_payment_refund_event):
         """Assert return value and that correct calls are made on success."""
         refund_amount = 100.
         get_refund_amount.return_value = refund_amount
@@ -278,6 +281,7 @@ class TestPromoteRefunds(RedditTestCase):
         queries_unset.assert_called_once_with(self.campaign)
         emailer_refunded_promo.assert_called_once_with(self.link)
         self.assertEqual(self.campaign.refund_amount, refund_amount)
+        self.assertTrue(campaign_payment_refund_event.called)
 
     @patch("r2.lib.promote.get_billable_amount")
     def test_get_refund_amount_with_no_existing_refund(self, get_billable_amount):

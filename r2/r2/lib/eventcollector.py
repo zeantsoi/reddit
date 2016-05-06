@@ -1037,6 +1037,44 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    def campaign_payment_refund_event(
+            self, link, campaign,
+            amount_pennies, issued_by=None, reason=None,
+            request=None, context=None):
+        """Send an event recording when a campaign payment is voided.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        amount_pennies: Transaction amount in pennies.
+        issued_by: The user that issued the refund (None == system)
+        reason: The reason the refund was issued.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+        event = SelfServeEvent(
+            event_type="ss.campaign_payment_refunded",
+            request=request,
+            context=context,
+            data=dict(
+                reason=reason,
+                amount_pennies=amount_pennies,
+            ),
+        )
+
+        is_system = issued_by is None
+        event.add("is_system", is_system)
+
+        if not is_system:
+            event.add("issued_by_id", issued_by._id)
+            event.add("issued_by_name", issued_by.name)
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
     def campaign_freebie_event(
             self, link, campaign, amount_pennies,
             transaction_id=None,

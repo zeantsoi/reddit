@@ -887,7 +887,7 @@ class PromoteApiController(ApiController):
             return abort(404, 'not found')
 
         try:
-            promote.refund_campaign(link, campaign)
+            promote.refund_campaign(link, campaign, issued_by=c.user)
             form.set_text('.status', _("refund succeeded"))
         except promote.InapplicableRefundException:
             form.set_text('.status', _("refund not needed"))
