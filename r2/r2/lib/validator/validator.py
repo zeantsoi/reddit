@@ -23,6 +23,7 @@
 import cgi
 import json
 import math
+import dateutil.parser
 from collections import OrderedDict
 from decimal import Decimal
 
@@ -946,6 +947,32 @@ class VByName(Validator):
             return {
                 self.param: "[fullname](#fullnames) of a %s" % thingtype,
             }
+
+
+class VModConversation(Validator):
+    def __init__(self, param, required=True, **kw):
+        self.param = param
+        self.required = required
+        Validator.__init__(self, param, **kw)
+
+    def run(self, param):
+        if not param and not self.required:
+            return None
+        elif not param:
+            return self.set_error(errors.NO_CONVERSATION_ID, code=422)
+
+        try:
+            return ModmailConversation._byID(int(param), current_user=c.user)
+        except NotFound:
+            return self.set_error(errors.CONVERSATION_NOT_FOUND, code=404)
+        except:
+            return self.set_error('Unknown Error', code=500)
+
+    def param_docs(self):
+        return {
+            self.param: ("a modmail conversation id")
+        }
+
 
 class VByNameIfAuthor(VByName):
     def run(self, fullname):
