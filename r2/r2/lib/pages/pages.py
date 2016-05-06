@@ -90,6 +90,7 @@ from r2.models.promo import (
     PromotedLinkRoadblock,
     PromotionLog,
     Collection,
+    SelfServeNotices,
 )
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
@@ -4735,6 +4736,13 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.frequency_cap_min = g.frequency_cap_min
 
         self.ads_auction_enabled = feature.is_enabled('ads_auction')
+
+        notices = SelfServeNotices.get_all(return_dict=True)
+        announcement = notices.get('announcement')
+        if announcement:
+            announcement_text = getattr(announcement, 'text', '')
+            if announcement_text:
+                self.announcement = RedditInfoBar(message=announcement_text)
 
 
 class RenderableCampaign(Templated):

@@ -37,6 +37,7 @@ from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum, to_datetime, to_date
 from r2.models.subreddit import Subreddit, Frontpage
+from r2.models.wiki import WikiPageIniItem
 
 
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
@@ -981,3 +982,16 @@ class PromotionPrices(tdb_cassandra.View):
                 r["METRO"][name] = cpm
 
         return r
+
+
+class SelfServeNotices(WikiPageIniItem):
+
+    @classmethod
+    def _get_wiki_config(cls):
+        return Frontpage, g.wiki_page_selfserve_notices
+
+    def __init__(self, id, title=None, text=None, is_enabled=True):
+        self.id = id
+        self.title = title
+        self.text = text
+        self.is_enabled = is_enabled

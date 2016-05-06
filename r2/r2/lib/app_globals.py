@@ -311,6 +311,7 @@ class Globals(object):
             'wiki_page_privacy_policy',
             'wiki_page_user_agreement',
             'wiki_page_gold_bottlecaps',
+            'wiki_page_selfserve_notices',
             'fraud_email',
             'feedback_email',
             'share_reply',
