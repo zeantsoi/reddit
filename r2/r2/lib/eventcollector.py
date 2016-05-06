@@ -22,6 +22,7 @@
 import baseplate.events
 
 from pylons import app_globals as g
+from collections import defaultdict
 
 from r2.lib import hooks
 from r2.lib.language import charset_summary
@@ -1303,12 +1304,7 @@ class EventQueue(object):
         """
 
         fullnames = []
-        reply_types = {
-            "comment_reply": 0,
-            "post_reply": 0, 
-            "message": 0, 
-            "username_mention": 0,
-        }
+        reply_types = defaultdict(int)
 
         # get fullnames for displayed messages
         for message in messages:
@@ -1316,6 +1312,8 @@ class EventQueue(object):
             key = message['message_type'].split(' ')
             key = '_'.join(key)
             reply_types[key] += 1
+
+        reply_types = dict(reply_types)
 
         event = Event(
             topic="email_sending_events",
