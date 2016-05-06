@@ -152,11 +152,52 @@ class EventQueue(object):
             event.add("post_type", "self")
             event.add_text("post_body", new_post.selftext)
         else:
-            event.add("post_type", "link")
+            if new_post.image_upload:
+                event.add("post_type", "image")
+            else:
+                event.add("post_type", "link")
             event.add("post_target_url", new_post.url)
             event.add("post_target_domain", new_post.link_domain())
 
         event.add_subreddit_fields(new_post.subreddit_slow)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    def image_upload_event(self, key_name=None, mimetype=None,
+            size=None, px_size=None, url=None,
+            successful=True, request=None, context=None):
+        """Create an event for submitting an image upload.
+
+        key_name: Random ID that the image will take on as the filename
+            when uploaded to S3
+        mimetype: Type of image taken from the file extension
+        size: Size in bytes of the file
+        px_size: Tuple of (width, height) of image in pixels
+        url: Image url
+        successful: True if the image is moved to the permanent bucket
+        request, context: Should be pylons.request & pylons.c respectively
+        """
+        event = Event(
+            topic="image_upload_events",
+            event_type="ss.upload_image",
+            request=request,
+            context=context,
+        )
+
+        event.add("image_key", key_name)
+        event.add("image_mimetype", mimetype)
+        event.add("image_size", size)
+        event.add("image_url", url)
+
+        if successful:
+            event.add("successful", successful)
+        else:
+            event.add("process_notes", "BAD_FILETYPE")
+
+        if px_size:
+            event.add("image_width", px_size[0])
+            event.add("image_height", px_size[1])
 
         self.save_event(event)
 

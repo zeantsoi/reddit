@@ -641,32 +641,46 @@ def make_temp_uploaded_image_permanent(image_key):
     In a try/finally block so that the file is always deleted.
     """
     try:
+        key_name = image_key.name
+        data = {
+            "successful": False,
+            "key_name": key_name,
+            "mimetype": image_key.content_type,
+            "size": image_key.size,
+            "px_size": None,
+            "image_url": None,
+        }
+
         f = tempfile.NamedTemporaryFile(delete=True)
         image_key.get_contents_to_file(f)
         image = Image.open(f.name)
 
-        file_name = os.path.split(image_key.name)[1]
+        file_name = os.path.split(key_name)[1]
         file_type = image.format.lower().replace("jpeg", "jpg")
         full_filename = "%s.%s" % (file_name, file_type)
+        data["mimetype"] = file_type
 
         if file_type not in ("jpg", "jpeg", "png", "gif"):
-            return False
+            return data
 
         exif_tags = _get_exif_tags(image)
         if exif_tags:
             # Strip exif data after applying orientation
             image = _apply_exif_orientation(image)
             _strip_exif_data(image, f)
+        data["px_size"] = image.size
 
         f.seek(0)
         image_url = g.media_provider.put("images", full_filename, f)
-        os.unlink(f.name)
+        data["successful"] = bool(image_url)
+        data["image_url"] = image_url
     except IOError:
         # Not an image file
-        return False
+        successful = False
     finally:
         f.close()
-    return image_url
+
+    return data
 
 
 def upload_icon(image_data, size):

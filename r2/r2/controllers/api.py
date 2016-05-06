@@ -590,8 +590,19 @@ class ApiController(RedditController):
         # Image uploads: move to the permanent bucket and rewrite
         # the url to the new image url
         if image_upload:
-            image_url = make_temp_uploaded_image_permanent(
+            data = make_temp_uploaded_image_permanent(
                 image_key=s3_image_key,
+            )
+            image_url = data["image_url"]
+            g.events.image_upload_event(
+                successful=data["successful"],
+                key_name=data["key_name"],
+                mimetype=data["mimetype"],
+                size=data["size"],
+                px_size=data["px_size"],
+                url=image_url,
+                request=request,
+                context=c,
             )
 
             if not image_url:
