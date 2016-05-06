@@ -1535,6 +1535,7 @@ class SelfServeEvent(Event):
             return
 
         from r2.lib import media
+        from r2.models.promo import PROMOTE_STATUS
 
         author = link.author_slow
 
@@ -1545,6 +1546,7 @@ class SelfServeEvent(Event):
         self.add("author_neutered", author._spam)
         self.add("author_email_verified", author.email_verified)
         self.add("is_managed", link.managed_promo)
+        self.add("promote_status", PROMOTE_STATUS.name[link.promote_status])
 
         if link.is_self:
             self.truncatable_field = "post_body"
@@ -1587,6 +1589,11 @@ class SelfServeEvent(Event):
                 prev_attrs.get("third_party_tracking"))
             self.add("prev_third_party_tracking_2",
                 prev_attrs.get("third_party_tracking_2"))
+
+            prev_promote_status = prev_attrs.get("promote_status")
+            if prev_promote_status is not None:
+                self.add("prev_promote_status",
+                    PROMOTE_STATUS.name[prev_promote_status])
 
     def add_campaign_fields(self, campaign, changed=None):
         from r2.lib import promote
