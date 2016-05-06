@@ -3296,7 +3296,7 @@ def need_provider_captcha():
         request.user_agent and
         (
             request.user_agent.startswith("RedditAndroid 0.3") or
-            request.user_agent.startswith("Reddit/Version 1.0/Build 888/")
+            request.user_agent.startswith("Reddit/Version 1")
         )
     ):
         return False
