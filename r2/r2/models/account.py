@@ -40,6 +40,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.geoip import can_auto_optin_email
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
+from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import (
     randstr,
     UrlParser,
@@ -404,6 +405,35 @@ class Account(Thing):
         #   - False: the user is a mod somewhere and has no unread modmail
         #   - None: (the default) the user is not a mod anywhere
         return self.modmsgtime is not None
+
+    def moderated_subreddits(self, permissions=None):
+        """Yield an iterator of Subreddits the user moderates.
+
+        The `permissions` argument is optional, but can be a string or
+        list of strings specifying moderator permissions. If specified,
+        subreddits will only be yielded if the user has those
+        permissions in that subreddit.
+
+        """
+        from r2.models.subreddit import SRMember
+
+        if permissions:
+            permissions = tup(permissions)
+
+        mod_rels = SRMember._query(
+            SRMember.c._thing2_id == self._id,
+            SRMember.c._name == "moderator",
+            data=True,
+        )
+
+        for rel in mod_rels:
+            if permissions:
+                rel._permission_class = ModeratorPermissionSet
+                # skip any where the user doesn't have the right perms
+                if not all(rel.has_permission(perm) for perm in permissions):
+                    continue
+
+            yield rel._thing1
 
     def is_mutable(self, subreddit):
         # Don't allow muting of other mods in the subreddit

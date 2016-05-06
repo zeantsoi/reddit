@@ -194,6 +194,8 @@ error_list = dict((
         ('COMMENT_NOT_STICKYABLE', _("This comment is not stickyable. Ensure that it is a top level comment.")),
         ('COMMENT_NOT_ACCESSIBLE', _("Cannot access this comment.")),
         ('POST_NOT_ACCESSIBLE', _("Cannot access this post.")),
+        ('NO_CONVERSATION_ID', _("No conversation id passed.")),
+        ('CONVERSATION_NOT_FOUND', _("No conversation found.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
