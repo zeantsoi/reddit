@@ -5,7 +5,11 @@
   $("#sr-autocomplete").bind("sr-changed", function() { dostuff; })
 </%doc>
 
-<div id="sr-autocomplete-area">
+<div id="sr-autocomplete-area"
+  % if thing.multiple:
+    class="multiple-subreddit"
+  % endif  
+>
   <input id="sr-autocomplete" name="sr" type="text"
          autocomplete="off"
          %if thing.include_searches:
@@ -56,6 +60,9 @@ ${error_field("SUBREDDIT_NOTALLOWED", "sr", "div")}
 ${error_field("SUBREDDIT_DISABLED_ADS", "sr", "div")}
 ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
 
+% if thing.multiple:
+    <div class="info-text"> Type in a subreddit and hit "Enter." Press backspace to delete </div>
+% endif
 <div id="suggested-reddits">
   % for title, subreddits in thing.subreddit_names:
     <h3>${title}</h3>

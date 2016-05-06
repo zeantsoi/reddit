@@ -4706,6 +4706,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.subreddit_selector = SubredditSelector(
             extra_subreddits=extra_subreddits,
             include_user_subscriptions=False,
+            class_name="multiple",
             multiple=True,
         )
         self.inventory = {}
@@ -5296,6 +5297,7 @@ class PromoteInventory(PromoteLinkBase):
         self.subreddit_selector = SubredditSelector(
             default_sr=default_sr,
             include_user_subscriptions=False,
+            class_name="multiple",
             multiple=True,
         )
 

@@ -4975,6 +4975,43 @@ ul#image-preview-list .description pre {
     z-index: 100;
  }
 
+ #sr-autocomplete-area.multiple-subreddit{
+    // Make the div look like an input box
+    position: relative;
+    z-index: 100;
+    background-color: #FFFFFF;
+    box-shadow: #F2F2F2 0px 1px 0px 1px inset;
+    border-color: #BFBFBF #CCCCCC #d9d9d9;
+    border-radius: 2px;
+    padding: 5px 5px 0px 5px;
+
+    #sr-autocomplete, #sr-autocomplete:focus {
+        // Make the input look invisible
+        display: inline-block;
+        width: 150px;
+        min-width: 20%;
+        border: none;
+        padding: 0px;
+        margin-left: 3px;
+        line-height: 175%;
+        box-shadow: none;
+        background: none;
+     }
+
+     .sr-span {
+        background-color: aliceblue;
+        display: inline-block;
+        border-radius: 4px;
+        margin: 1.5px 3px;
+        padding: 0px 3px;
+        word-wrap: break-word;
+        max-width: 97%;
+        img {
+            margin: 0px 4px;
+        }
+    }
+}
+
 #sr-drop-down {
     position: absolute;
     width: 100%;
@@ -4983,23 +5020,18 @@ ul#image-preview-list .description pre {
     background: white;
     display: none;
     left: 0;
+    z-index: 10;
 }
 
 #sr-drop-down  table {
     width: 100%;
 }
 
-.sr-span {
-    background-color: aliceblue;
-    display: inline-block;
-    border-radius: 4px;
-    margin: 1.5px 3px;
-    padding: 0px 3px;
-    word-wrap: break-word;
-    max-width: 97%;
-    img {
-        margin: 0px 4px;
-    }
+.info-text {
+    //position: absolute;
+    color: #888;
+    font-size: x-small;
+    margin-bottom: 10px;
 }
 
 .sr-name-row {

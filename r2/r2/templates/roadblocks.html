@@ -38,7 +38,7 @@
       <div class="editor">
         <div class="editor-group">
           ${p.scheduling_field()}
-          ${p.subreddit_targeting_field(SubredditSelector())}
+          ${p.subreddit_targeting_field(SubredditSelector(multiple=True))}
         </div>
         <footer class="buttons">
           <span class="status error"></span>
