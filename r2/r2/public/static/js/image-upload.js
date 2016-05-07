@@ -102,7 +102,7 @@
       overrides.fields.forEach(function(field) {
         var name = field.name;
         var value = field.value;
-        var unset = value === '' || value === null
+        var unset = value === '' || value === null;
         var $input = this.$el.find('[name="' + name + '"]');
 
         if (!$input.length) {
@@ -280,7 +280,7 @@
         data[option].apply(data, args);
       }
     });
-  };
+  }
 
   $.fn.imageUpload = Plugin;
   $.fn.imageUpload.Constructor = ImageUpload;
