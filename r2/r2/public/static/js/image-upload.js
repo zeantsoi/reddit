@@ -32,22 +32,43 @@
 
     _bindEvents: function() {
       this.$file.on('change', this._handleChange.bind(this));
+      this.$file.on('click', this._handleOpenDialog.bind(this));
       this.$el.find('.c-image-upload-btn')
         .on('click',this._triggerDialog.bind(this));
     },
 
+    _handleOpenDialog: function(e, data) {
+      var source = data && data.source || 'image-click';
+
+      this._triggerEvent('openDialog', {
+        source: source,
+      });
+    },
+
     _triggerDialog: function() {
-      this.$file.click();
+      this.$file.trigger('click', { source: 'button-click' });
     },
 
     _handleChange: function() {
       if (this.file.value) {
         var files = this.file.files;
 
-        if (files && files.length && files[0].size > this.options.maxSize) {
-          this.$el.trigger('failed.imageUpload', [{
-            message: r._('too big. keep it under ' + r.utils.formatFileSize(this.options.maxSize)),
-          }]);
+        if (!(files && files.length)) {
+          return true;
+        }
+
+        var file = files[0];
+
+        this._triggerEvent('attempt', {
+          fileSize: file.size,
+        });
+
+        if (file.size > this.options.maxSize) {
+          var error = r._('too big. keep it under ' + r.utils.formatFileSize(this.options.maxSize));
+
+          this._triggerEvent('failed', {
+            message: error,
+          });
 
           this._reset();
         } else {
@@ -56,7 +77,7 @@
             type: 'POST',
             dataType: 'json',
             data: _.extend({}, this.options.params, {
-              filepath: files[0].name,
+              filepath: file.name,
               uh: r.config.modhash,
               ajax: this.ajax,
               raw_json: '1',
@@ -64,16 +85,24 @@
           })
           .fail(function(xhr) {
             var resp = xhr.responseJSON;
+            var error = resp && resp.message || this.options.errors.unknown;
 
-            this.$el.trigger('failed.imageUpload', [{
-              message: resp.message || this.options.errors.unknown,
-            }]);
+            this._triggerEvent('failed', {
+              message: error,
+            });
           }.bind(this))
           .done(this._submit.bind(this));
         }
       }
 
       return true;
+    },
+
+    _triggerEvent: function(eventName, data) {
+      this.$el.trigger(
+        [eventName, 'imageUpload'].join('.'),
+        [_.extend({}, data, this.options.params)]
+      );
     },
 
     _updateProgress: function(percentage) {
@@ -224,11 +253,7 @@
       var $xml = $(xml);
       var url = $xml.find('Location').text();
 
-      this._updatePreview(url, this._hideProgress);
-      this._updateProgress(100);
-      this.$el.trigger('success.imageUpload', [{
-        url: url,
-      }]);
+      this._handleSuccess(url);
     },
 
     _ajaxError: function(xhr) {
@@ -240,19 +265,26 @@
       }
 
       this._hideProgress();
-      this.$el.trigger('failed.imageUpload', [{
+      this._triggerEvent('failed', {
         message: message,
-      }]);
+      });
+    },
+
+    _handleSuccess: function(imageUrl) {
+      this._updateProgress(100);
+      this._updatePreview(imageUrl, this._hideProgress);
+      this._triggerEvent('success', {
+        url: imageUrl,
+      });
     },
 
     _iframeComplete: function(data) {
-      this._updateProgress(100);
-      this._updatePreview(data.url, this._hideProgress);
+      this._handleSuccess(data.url);
     },
 
     _reset: function() {
       this.$file.resetInput();
-      this.$el.trigger('reset.imageUpload');
+      this._triggerEvent('reset');
     },
 
   });

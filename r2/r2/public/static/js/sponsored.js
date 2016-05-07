@@ -629,10 +629,36 @@ var exports = r.sponsored = {
     },
 
     initUploads: function() {
+      function getEventData(payload, data) {
+        return _.extend({}, payload, {
+          kind: data.kind,
+          link_id: data.link && parseInt(data.link, 36),
+        });
+      }
+
       $('.c-image-upload')
         .imageUpload()
+        .on('attempt.imageUpload', function(e, data) {
+          r.analytics.adsInteractionEvent('image_upload_attempt', getEventData({
+            file_size: data.fileSize,
+          }, data));
+        })
+        .on('success.imageUpload', function(e, data) {
+          r.analytics.adsInteractionEvent('image_upload_success', getEventData({
+            image_url: data.url,
+          }, data));
+        })
         .on('failed.imageUpload', function(e, data) {
+          r.analytics.adsInteractionEvent('image_upload_failed', getEventData({
+            reason: data.message,
+          }, data));
+
           alert(data.message);
+        })
+        .on('openDialog.imageUpload', function(e, data) {
+          r.analytics.adsInteractionEvent('image_open_dialog', getEventData({
+            target: data.source,
+          }, data));
         });
     },
 
