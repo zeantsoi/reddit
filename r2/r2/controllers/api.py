@@ -648,6 +648,7 @@ class ApiController(RedditController):
             form=form,
             responder=responder,
             user=user,
+            rem=rem,
         ))
         return handle_login(**kwargs)
 
