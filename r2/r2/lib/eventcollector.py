@@ -736,7 +736,6 @@ class EventQueue(object):
             return
 
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.new_promoted_link",
             time=link._date,
             request=request,
@@ -764,7 +763,6 @@ class EventQueue(object):
             return
 
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.edit_promoted_link",
             request=request,
             context=context,
@@ -790,7 +788,6 @@ class EventQueue(object):
             return
 
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.approve_promoted_link",
             request=request,
             context=context,
@@ -818,7 +815,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.approve_campaign",
             request=request,
             context=context,
@@ -847,7 +843,6 @@ class EventQueue(object):
             return
 
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.new_campaign",
             time=campaign._date,
             request=request,
@@ -877,7 +872,6 @@ class EventQueue(object):
             return
 
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.edit_campaign",
             request=request,
             context=context,
@@ -900,7 +894,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.pause_campaign",
             request=request,
             context=context,
@@ -926,7 +919,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.auto_extend_campaign",
             request=request,
             context=context,
@@ -953,7 +945,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.terminate_campaign",
             request=request,
             context=context,
@@ -1005,7 +996,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.delete_campaign",
             request=request,
             context=context,
@@ -1032,7 +1022,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.campaign_payment_voided",
             request=request,
             context=context,
@@ -1063,7 +1052,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.campaign_freebie",
             request=request,
             context=context,
@@ -1099,7 +1087,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.campaign_payment_attempt",
             request=request,
             context=context,
@@ -1141,7 +1128,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.campaign_payment_failed",
             request=request,
             context=context,
@@ -1184,7 +1170,6 @@ class EventQueue(object):
 
         """
         event = SelfServeEvent(
-            topic="selfserve_events",
             event_type="ss.campaign_payment_success",
             request=request,
             context=context,
@@ -1512,6 +1497,13 @@ class Event(baseplate.events.Event):
 
 
 class SelfServeEvent(Event):
+    def __init__(self, event_type, **kwargs):
+        super(Event, self).__init__(
+            topic="selfserve_event",
+            event_type=event_type,
+            **kwargs
+        )
+
     def add_payment_fields(self, payment, address, request=None):
         if request:
             location = location_by_ips(request.ip)
