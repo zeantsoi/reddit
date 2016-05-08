@@ -626,6 +626,7 @@ var exports = r.sponsored = {
         $("input[name='media_url_type']").on("change", this.mediaInputChange);
 
         this.initUploads();
+        this.instrumentContentFields();
     },
 
     initUploads: function() {
@@ -827,6 +828,53 @@ var exports = r.sponsored = {
             });
 
         collapse();
+    },
+
+    instrumentCreativeFields: function() {
+      var link_id36 = $('#promo-form [name=link_id36]').val();
+      var link_id = link_id36 && parseInt(link_id36, 36);
+
+      $('#kind-selector [name=kind]').on('change', function(e) {
+        r.analytics.adsInteractionEvent('change_post_type', {
+          link_id: link_id,
+          post_type: $(e.target).val(),
+        });
+      });
+
+      $('#title-field [name=title]').on('change', function(e) {
+        r.analytics.adsInteractionEvent('change_title', {
+          link_id: link_id,
+          post_title: $(e.target).val(),
+        });
+      });
+
+      $('#text-field [name=text]').on('change', function(e) {
+        r.analytics.adsInteractionEvent('change_text', {
+          link_id: link_id,
+          post_text: $(e.target).val(),
+        });
+      });
+
+      $('#url-field [name=url]').on('change', function(e) {
+        r.analytics.adsInteractionEvent('change_url', {
+          link_id: link_id,
+          post_url: $(e.target).val(),
+        });
+      });
+
+      $('#commenting-field [name="disable_comments"]').on('change', function(e) {
+        r.analytics.adsInteractionEvent('change_disable_comments', {
+          link_id: link_id,
+          disable_comments: $(e.target).is(':checked'),
+        });
+      });
+
+      $('#commenting-field [name="sendreplies"]').on('change', function(e) {
+        r.analytics.adsInteractionEvent('change_sendreplies', {
+          link_id: link_id,
+          sendreplies: $(e.target).is(':checked'),
+        });
+      });
     },
 
     toggleFrequency: function() {
