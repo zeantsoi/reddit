@@ -3763,7 +3763,7 @@ class ApiController(RedditController):
         Award.give_if_needed("verified_email", user)
 
         # set last_password_reset_timestamp attr
-        c.user.last_password_reset_timestamp = datetime.now(g.tz)
+        user.last_password_reset_timestamp = datetime.now(g.tz)
 
         # successfully entered user name and valid new password
         change_password(user, password)
