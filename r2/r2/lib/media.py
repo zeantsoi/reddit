@@ -637,31 +637,35 @@ def make_temp_uploaded_image_permanent(image_key):
     has the exif orientation applied and then strips the
     exif data. The image is then uploaded to the permanent
     bucket and returns the new image url.
+
+    In a try/finally block so that the file is always deleted.
     """
-    f = tempfile.NamedTemporaryFile(delete=False)
-    image_key.get_contents_to_file(f)
     try:
+        f = tempfile.NamedTemporaryFile(delete=True)
+        image_key.get_contents_to_file(f)
         image = Image.open(f.name)
+
+        file_name = os.path.split(image_key.name)[1]
+        file_type = image.format.lower().replace("jpeg", "jpg")
+        full_filename = "%s.%s" % (file_name, file_type)
+
+        if file_type not in ("jpg", "jpeg", "png", "gif"):
+            return False
+
+        exif_tags = _get_exif_tags(image)
+        if exif_tags:
+            # Strip exif data after applying orientation
+            image = _apply_exif_orientation(image)
+            _strip_exif_data(image, f)
+
+        f.seek(0)
+        image_url = g.media_provider.put("images", full_filename, f)
+        os.unlink(f.name)
     except IOError:
         # Not an image file
         return False
-
-    file_name = os.path.split(image_key.name)[1]
-    file_type = image.format.lower().replace("jpeg", "jpg")
-    full_filename = "%s.%s" % (file_name, file_type)
-
-    if file_type not in ("jpg", "jpeg", "png", "gif"):
-        return False
-
-    exif_tags = _get_exif_tags(image)
-    if exif_tags:
-        # Strip exif data after applying orientation
-        image = _apply_exif_orientation(image)
-        _strip_exif_data(image, f)
-
-    f.seek(0)
-    image_url = g.media_provider.put("images", full_filename, f)
-    os.unlink(f.name)
+    finally:
+        f.close()
     return image_url
 
 
