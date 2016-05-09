@@ -1,5 +1,8 @@
 !function(r) {
   var URL = window.URL || window.webkitURL;
+  var MAX_STATIC_UPLOAD_SIZE_MB = 20;
+  var MAX_GIF_UPLOAD_SIZE_MB = 50;
+  var MB_TO_BYTES = Math.pow(1024, 2);
 
   r.newlinkController = {
     VALID_DROP_STATE: 'image-upload-drop-active',
@@ -338,7 +341,7 @@
     },
 
     _isValidFile: function(file) {
-      return file && (file instanceof File || file instanceof Blob);
+      return file && (file instanceof File || file instanceof Blob) && file.size > 0;
     },
 
     _isValidUrl: function(url) {
@@ -365,12 +368,26 @@
         }
 
         var type = _getMimeTypeFromFileHeaderBytes(headerHex);
+        var err;
 
-        if (type && this.VALID_FILE_TYPES.test(type)) {
-          d.resolve(file);
-        } else {
-          var err = r.errors.create('BAD_FILE_TYPE', r._('That file type is not allowed'), 'image-upload');
+        if (!type || !this.VALID_FILE_TYPES.test(type)) {
+          err = r.errors.create('BAD_FILE_TYPE', r._('That file type is not allowed'), 'image-upload');
+        } else if (type === "image/gif" && file.size > MAX_GIF_UPLOAD_SIZE_MB * MB_TO_BYTES) {
+          var errStr = r._('Gif is too big. Maximum gif size is %(maxSize)s.').format({
+            maxSize: MAX_GIF_UPLOAD_SIZE_MB + 'mb',
+          });
+          err = r.errors.create('BAD_FILE_SIZE', errStr);
+        } else if (file.size > MAX_STATIC_UPLOAD_SIZE_MB * MB_TO_BYTES) {
+          var errStr = r._('Image is too big. Maximum image size is %(maxSize)s.').format({
+            maxSize: MAX_STATIC_UPLOAD_SIZE_MB + 'mb',
+          });
+          err = r.errors.create('BAD_FILE_SIZE', errStr);
+        }
+
+        if (err) {
           d.reject(err);
+        } else {
+          d.resolve(file);
         }
       }.bind(this);
 

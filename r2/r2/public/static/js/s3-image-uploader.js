@@ -1,10 +1,8 @@
 !function(r) {
-  var MAX_UPLOAD_SIZE_MB = 20;
   var UPLOAD_LEASE_ENDPOINT = '/api/image_upload_s3.json';
 
   var DEFAULT_ERROR_NAME = 'BAD_IMAGE_UPLOAD';
   var LEASE_REQ_FAILED_ERROR = 'BAD_LEASE_REQUEST';
-  var BAD_FILE_SIZE_ERR = 'BAD_FILE_SIZE';
   var DEFAULT_ERROR_MESSAGE = r._('something went wrong.');
 
   /**
@@ -28,7 +26,6 @@
 
     validators: [
       _IsFormDataSupported(),
-      _IsValidFileSize('file', MAX_UPLOAD_SIZE_MB),
     ],
 
     validate: function(attrs) {
@@ -185,21 +182,6 @@
       return d.promise();
     },
   });
-
-  function _IsValidFileSize(attrName, maxSizeMb) {
-    var maxSizeBytes = maxSizeMb * Math.pow(1024, 2);
-    return function(model) {
-      var value = model.get(attrName);
-      if (!value || !value.size) {
-        return r.errors.create(BAD_FILE_SIZE_ERR, r._('No file.'));
-      } else if (value.size > maxSizeBytes) {
-        var errStr = r._('File is too big. Maximum file size is %(maxSize)s.').format({
-          maxSize: maxSizeMb + 'mb',
-        });
-        return r.errors.create(BAD_FILE_SIZE_ERR, errStr);
-      }
-    }
-  }
 
   function _IsFormDataSupported() {
     return function() {
