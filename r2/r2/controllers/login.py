@@ -92,7 +92,7 @@ def handle_register(
 
     # check captcha before login (if any) since its answer might
     # change once c.user is set.
-    def _event(error, captcha_shown=need_provider_captcha()):
+    def _event(error, captcha_shown=not signature and need_provider_captcha()):
         g.events.login_event(
             'register_attempt',
             error_msg=error,
@@ -133,7 +133,7 @@ def handle_register(
     elif responder.has_errors('ratelimit', errors.RATELIMIT):
         _event(error='RATELIMIT')
 
-    elif (not g.disable_captcha and
+    elif (not signature and not g.disable_captcha and
             responder.has_errors('captcha', errors.BAD_CAPTCHA)):
         _event(error='BAD_CAPTCHA')
 
@@ -148,7 +148,7 @@ def handle_register(
         _event(error='SPONSOR_NO_EMAIL')
 
     # last but not least, we have to check the captcha
-    elif not valid_provider_captcha(responder):
+    elif not signature and not valid_provider_captcha(responder):
         _event(error='BAD_CAPTCHA')
 
     else:
