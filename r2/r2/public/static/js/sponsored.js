@@ -626,7 +626,7 @@ var exports = r.sponsored = {
         $("input[name='media_url_type']").on("change", this.mediaInputChange);
 
         this.initUploads();
-        this.instrumentContentFields();
+        this.instrumentCreativeFields();
     },
 
     initUploads: function() {
