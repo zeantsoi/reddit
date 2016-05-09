@@ -302,6 +302,7 @@ def js_config(extra_config=None):
         "feature_mobile_native_banner": feature.is_enabled('mobile_native_banner'),
         "is_mobile_native_country": geoip.is_mobile_native_country(request, c),
         "email_verified": logged and c.user.email and c.user.email_verified,
+        "feature_post_embed": feature.is_enabled('post_embed'),
     }
 
     if feature.is_enabled("eu_cookie_policy"):
