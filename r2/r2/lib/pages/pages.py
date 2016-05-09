@@ -475,7 +475,7 @@ class Reddit(Templated):
     # get timeout bar information for different timeout reasons
     def get_timeout_bar_info(self, user):
         if not user.in_timeout:
-            return
+            return None, None
         extra_class = 'timeout-infobar'
         if (user.force_password_reset and
                 not user.timeout_expiration):

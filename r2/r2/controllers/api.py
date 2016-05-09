@@ -1379,6 +1379,10 @@ class ApiController(RedditController):
         if (password and
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
+
+            # set last_password_reset_timestamp attr
+            c.user.last_password_reset_timestamp = datetime.now(g.tz)
+
             change_password(c.user, password)
 
             if c.user.email:
@@ -3757,6 +3761,9 @@ class ApiController(RedditController):
         # so here give verified_email award
         user.email_verified = True
         Award.give_if_needed("verified_email", user)
+
+        # set last_password_reset_timestamp attr
+        c.user.last_password_reset_timestamp = datetime.now(g.tz)
 
         # successfully entered user name and valid new password
         change_password(user, password)
