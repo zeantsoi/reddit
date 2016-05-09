@@ -27,6 +27,7 @@ import re
 import boto
 
 from pylons import app_globals as g
+from urlparse import urlunsplit
 
 from r2.lib.configparse import ConfigValue
 from r2.lib.providers.media import MediaProvider
@@ -55,6 +56,8 @@ class S3MediaProvider(MediaProvider):
     """
     config = {
         ConfigValue.str: [
+            "gif_hosting_domain",
+            "image_hosting_domain",
             "S3KEY_ID",
             "S3SECRET_KEY",
             "s3_media_domain",
@@ -145,7 +148,7 @@ class S3MediaProvider(MediaProvider):
             replace=True,
         )
 
-        return self.key_url(bucket_name, name)
+        return self.key_url(bucket_name, name, mime_type=mime_type)
 
     def copy(self, category, name, src_location, src_name):
         bucket_name = self.choose_bucket(category, name)
@@ -196,7 +199,20 @@ class S3MediaProvider(MediaProvider):
 
         return bucket_name
 
-    def key_url(self, bucket_name, name):
+    def key_url(self, bucket_name, name, mime_type=None):
+        # if permanent image bucket, redirect to image hosting domain
+        if (bucket_name in g.s3_image_uploads_perm_bucket):
+            domain = g.image_hosting_domain
+            if mime_type == "image/gif":
+                domain = g.gif_hosting_domain
+            return urlunsplit(
+                "https" if c.secure else "http",
+                domain,
+                name,
+                None,
+                None,
+            )
+
         if g.s3_media_direct:
             return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
         else:
