@@ -1498,7 +1498,7 @@ class Event(baseplate.events.Event):
 
 class SelfServeEvent(Event):
     def __init__(self, event_type, **kwargs):
-        super(Event, self).__init__(
+        super(SelfServeEvent, self).__init__(
             topic="selfserve_event",
             event_type=event_type,
             **kwargs
