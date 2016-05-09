@@ -2861,8 +2861,8 @@ class Inbox(MultiRelation('inbox', _AccountCommentInbox, _AccountMessageInbox)):
 
     @classmethod
     def orangered_call_to_action(cls, to, obj, orangered=True):
-        needs_verify = to.pref_email_messages and not to.email_verified
-        needs_opt_in = to.email_verified and not to.pref_email_messages
+        needs_verify = not to.email_verified
+        needs_opt_in = not to.pref_email_messages
         yesterday = datetime.today() - timedelta(hours=24)
         user_is_new = (to._date > yesterday.replace(tzinfo=g.tz))
 
@@ -2878,22 +2878,17 @@ class Inbox(MultiRelation('inbox', _AccountCommentInbox, _AccountMessageInbox)):
                 to.orangered_opt_in_message_timestamp):
             return
 
-        if needs_verify:
-            if needs_opt_in:
-                # if user does not have feature enabled, 
-                # and their email is NOT verified, 
-                # send a combo verification/opt-in message
-                cls.send_orangered_sys_message(
-                    'verify_email_and_enable_orangered', to)
-            elif not user_is_new:
-                # if user has feature enabled, 
-                # but has not verified their email, then this
-                # user is likely new. allow 24 hours before sending
-                cls.send_orangered_sys_message(
-                    'verification_reminder', to)
+        # don't message new users right away
+        if user_is_new:
+            return
+
+        if needs_verify and needs_opt_in:
+            cls.send_orangered_sys_message(
+                'verify_email_and_enable_orangered', to)
+        elif needs_verify:
+            cls.send_orangered_sys_message(
+                'verification_reminder', to)
         elif needs_opt_in:
-            # if user does not have feature enabled, 
-            # but their email is verified, send opt-in message
             cls.send_orangered_sys_message('enable_orangered_email', to)
 
     @classmethod
