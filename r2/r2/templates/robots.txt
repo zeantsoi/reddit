@@ -60,6 +60,7 @@ Disallow: /login
 Disallow: /reddits/search
 Disallow: /search
 Disallow: /r/*/search
+Disallow: /gold?
 Allow: /
 
 Sitemap: ${add_sr('sitemap', sr_path=False, force_https=True)}
