@@ -205,13 +205,13 @@ class S3MediaProvider(MediaProvider):
             domain = g.image_hosting_domain
             if mime_type == "image/gif":
                 domain = g.gif_hosting_domain
-            return urlunsplit(
+            return urlunsplit((
                 "https" if c.secure else "http",
                 domain,
                 name,
                 None,
                 None,
-            )
+            ))
 
         if g.s3_media_direct:
             return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
