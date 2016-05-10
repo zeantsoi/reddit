@@ -5220,22 +5220,24 @@ class ApiController(RedditController):
         c.user._commit()
 
     @require_oauth2_scope("read")
-    @validate(srs=VSRByNames("srnames"),
-              to_omit=VSRByNames("omit", required=False))
+    @validate(
+        srs=VSRByNames("srnames"),
+        to_omit=VSRByNames("omit", required=False),
+        over_18=VBoolean("over_18", default=False),
+    )
     @api_doc(api_section.subreddits, uri='/api/recommend/sr/{srnames}')
-    def GET_subreddit_recommendations(self, srs, to_omit):
+    def GET_subreddit_recommendations(self, srs, to_omit, over_18):
         """Return subreddits recommended for the given subreddit(s).
 
         Gets a list of subreddits recommended for `srnames`, filtering out any
         that appear in the optional `omit` param.
 
         """
-
         srs = [sr for sr in srs.values() if not isinstance(sr, FakeSubreddit)]
         to_omit = [sr for sr in to_omit.values() if not isinstance(sr, FakeSubreddit)]
 
         omit_id36s = [sr._id36 for sr in to_omit]
-        rec_srs = recommender.get_recommendations(srs, to_omit=omit_id36s)
+        rec_srs = recommender.get_recommendations(srs, to_omit=omit_id36s, over18=over_18)
         sr_data = [{'sr_name': sr.name} for sr in rec_srs]
         return json.dumps(sr_data)
 

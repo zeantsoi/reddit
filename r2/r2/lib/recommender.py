@@ -48,6 +48,9 @@ from pylons.i18n import _
 # recommendation sources
 SRC_MULTIREDDITS = 'mr'
 SRC_EXPLORE = 'e'  # favors lesser known srs
+SRC_CORRELATION = 'c'
+
+ALL_RECOMMENDATION_SOURCES = set([SRC_MULTIREDDITS, SRC_EXPLORE, SRC_CORRELATION])
 
 # explore item types
 TYPE_RISING = _("rising")
@@ -76,25 +79,36 @@ def get_recommendations(srs,
         is over18
 
     """
-    srs = tup(srs)
+    original_srs = tup(srs)
+    # don't recommend adult srs unless one of the originals was over_18
+    filter_over18 = not over18 or (not any(sr.over_18 for sr in original_srs))
     to_omit = tup(to_omit) if to_omit else []
 
-    # fetch more recs than requested because some might get filtered out
-    rec_id36s = SRRecommendation.for_srs([sr._id36 for sr in srs],
-                                          to_omit,
-                                          count * 2,
-                                          source,
-                                          match_set=match_set)
+    def fetch_recommendations(source, to_omit):
+        # fetch more recs than requested because some might get filtered out
+        rec_id36s = SRRecommendation.for_srs([sr._id36 for sr in srs],
+                                              to_omit,
+                                              count * 2,
+                                              source,
+                                              match_set=match_set)
 
-    # always check for private subreddits at runtime since type might change
-    rec_srs = Subreddit._byID36(rec_id36s, return_dict=False)
-    filtered = [sr for sr in rec_srs if is_visible(sr)]
+        # always check for private subreddits at runtime since type might change
+        rec_srs = Subreddit._byID36(rec_id36s, return_dict=False)
+        filtered = [sr for sr in rec_srs if is_visible(sr)]
 
-    # don't recommend adult srs unless one of the originals was over_18
-    if not over18 and not any(sr.over_18 for sr in srs):
-        filtered = [sr for sr in filtered if not sr.over_18]
+        if filter_over18:
+            filtered = [sr for sr in filtered if not sr.over_18]
 
-    return filtered[:count]
+        return filtered
+
+    sources = ALL_RECOMMENDATION_SOURCES.copy()
+    sources.remove(source)
+    srs = set(fetch_recommendations(source, to_omit))
+    while len(srs) < count and len(sources) > 0:
+        source = sources.pop()
+        srs |= set(fetch_recommendations(source, list(srs)))
+
+    return list(srs)[:count]
 
 
 def get_recommended_content_for_user(account,

@@ -608,6 +608,19 @@ var exports = r.sponsored = {
               target = 'suggestion';
             }
 
+            // get new suggestions when new subreddits are added
+            if(r.srAutocomplete.dynamic_suggestions &&
+                !data.delete_subreddit &&
+                !data.no_new_suggestions){
+              sr_get_new_suggestions(undefined, true);
+            }
+
+            // reset the suggestions to default when there are no selected subreddits
+            if(r.srAutocomplete.dynamic_suggestions &&
+                Object.keys(r.srAutocomplete.selected_sr).length === 0){
+              sr_suggestions_reset();
+            }
+
             r.analytics.adsInteractionEvent('select_subreddit', {
               sr_name: $(this).val(),
               target: target,

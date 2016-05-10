@@ -2,12 +2,15 @@
 this file is a quick fix to help detangle frontend dependencies
 
 Describes the r.srAutocomplete UI class that queries the database 
-to search autocomplete subreddit queries
- */
+to search autocomplete subreddit queries.
+
+consult subredditselector.html for config variables
+*/
 
 r.srAutocomplete = {
     selected_sr: {},
-    orig_sr: ""
+    orig_sr: "",
+    NUM_SEED: 10 // number of subreddits to send as data for recommendations
 };
 
 /* Mapping from keyname to keycode */
@@ -24,11 +27,11 @@ KEYS = {
 
 SR_NAMES_DELIM = ',';
 
-/* 
+/*
 @params {String} sr_name: text that goes inside
 @returns {jQuery} a jQuery span for a button
 */
-function sr_span(sr_name){
+function sr_token(sr_name){
     var remove_button = $('<img src="/static/kill.png"/>')
                         .on('click', sr_remove_sr);
 
@@ -36,6 +39,21 @@ function sr_span(sr_name){
             .attr({class: 'sr-span'})
             .html(sr_name)
             .append(remove_button);
+}
+
+/**
+@params {String}
+*/
+function sr_suggestion(sr_name){
+    var link = $('<a />')
+                .attr({
+                    href: '#',
+                    'tabindex': '100',
+                    onclick: 'set_sr_name(this); return false'
+                })
+                .text(sr_name);
+    return  $('<li />')
+            .append(link);
 }
 
 /**** sr completing ****/
@@ -182,7 +200,7 @@ function sr_name_down(e) {
     else if (e.keyCode == KEYS.ENTER) {
         sr_is_valid_subreddit(
             e.target.value, 
-            sr_add_sr_then_trigger(), 
+            sr_add_sr(),
             sr_show_error_msg);
         if (r.srAutocomplete.is_multiple){
             e.target.value = "";
@@ -199,7 +217,7 @@ function sr_name_down(e) {
                 child.remove();
                 sr_update_selected_sr_input();
             }
-            $("#sr-autocomplete").trigger("sr-changed");
+            $("#sr-autocomplete").trigger("sr-changed", {delete_subreddit: true});
         }
     }
 }
@@ -220,7 +238,7 @@ function sr_dropdown_mup(row) {
         var name = $(row).text();
         sr_is_valid_subreddit(
             name, 
-            sr_add_sr_then_trigger({is_autocomplete: true}), 
+            sr_add_sr(undefined, {is_autocomplete: true}),
             sr_show_error_msg);
         if (r.srAutocomplete.is_multiple){
             $("#sr-autocomplete").val("");
@@ -235,30 +253,34 @@ function set_sr_name(link) {
     $("#sr-autocomplete").trigger('focus');
     sr_is_valid_subreddit(
         name, 
-        sr_add_sr_then_trigger({is_suggestion: true}),
+        sr_add_sr(undefined, {is_suggestion: true}),
         sr_show_error_msg);
 }
 
 /* UI: Adds a subreddit to the list of subreddits posted */
-function sr_add_sr(sr_name){
+function sr_add_sr(sr_name, trigger_params){
     // Checks if sr_name is defined and doesn't exist in selected_sr yet
     if (sr_name && 
         !(sr_name.toLowerCase() in r.srAutocomplete.selected_sr) &&
         r.srAutocomplete.is_multiple){
-        var new_sr_span = sr_span(sr_name);
-        $("#sr-autocomplete").before(new_sr_span);
+        var new_sr_token = sr_token(sr_name);
+        $("#sr-autocomplete").before(new_sr_token);
         r.srAutocomplete.selected_sr[sr_name] = true;
         sr_update_selected_sr_input();
     } else if(sr_name && !r.srAutocomplete.is_multiple){
         $("#sr-autocomplete").val(sr_name);
+    } else if(!$.defined(sr_name)){
+        // partially fill the function. essentially the bind functionality
+        return function(sr_name){
+            sr_add_sr(sr_name, trigger_params);
+        };
     }
-}
 
-function sr_add_sr_then_trigger(trigger_params){
-    return function(sr_name){
-        sr_add_sr(sr_name);
+    if($.defined(trigger_params)){
         $("#sr-autocomplete").trigger("sr-changed", trigger_params);
-    };
+    } else {
+        $("#sr-autocomplete").trigger("sr-changed");
+    }
 }
 
 function sr_reset(){
@@ -269,6 +291,7 @@ function sr_reset(){
         child = $("#sr-autocomplete-area > span").last();
     }
     sr_update_selected_sr_input();
+    $("#sr-autocomplete").trigger("sr-changed", {delete_subreddit: true});
 }
 
 /**
@@ -297,7 +320,7 @@ function sr_remove_sr(e){
     $(e.target).parent().remove();
     delete r.srAutocomplete.selected_sr[e.target.previousSibling.nodeValue];
     sr_update_selected_sr_input();
-    $("#sr-autocomplete").trigger("sr-changed");
+    $("#sr-autocomplete").trigger("sr-changed",{delete_subreddit: true});
 }
 
 /**
@@ -354,4 +377,114 @@ function highlight_dropdown_row(item) {
     if (item) {
         $(item).addClass('sr-selected');
     }
+}
+
+/** sr suggesting **/
+
+/**
+
+returns the current set of suggested subreddits. If none exist, instantiate it
+using jquery by finding the current ones
+
+**/
+function sr_get_suggestions(){
+    if(!$.defined(r.srAutocomplete.suggested_sr)){
+        r.srAutocomplete.suggested_sr = {};
+        r.srAutocomplete.default_suggested_sr = {};
+        var suggestions = $("#suggested-reddits")
+                                        .find("ul")
+                                        .find("a")
+                                        .map(function(index, val){
+                                            return val.innerText;
+                                        });
+        for(var i=0; i<suggestions.length; i++){
+            var suggestion = suggestions[i].toLowerCase();
+            r.srAutocomplete.default_suggested_sr[suggestion] = true;
+            r.srAutocomplete.suggested_sr[suggestion] = true;
+        }
+    }
+    return r.srAutocomplete.suggested_sr;
+}
+
+/**
+Clears the suggestion div
+*/
+function sr_suggestions_clear(){
+    $("#suggested-reddits").find("ul").empty();
+    r.srAutocomplete.suggested_sr = {};
+}
+
+/**
+Resets the suggestions to the default subreddit suggestions
+*/
+function sr_suggestions_reset(){
+    var suggestions = sr_get_suggestions();
+    sr_suggestions_clear();
+    for(var sr in r.srAutocomplete.default_suggested_sr){
+        sr_add_suggestion(sr);
+    }
+}
+
+/**
+Gets new suggestions and updates the UI with the data retrieved
+
+@params {Array} sr_names: array of subreddit names to query
+@params {Boolean} reset: if true, clears the current suggestions before filling
+*/
+function sr_get_new_suggestions(sr_names, reset){
+    var selected_sr = $.map(r.srAutocomplete.selected_sr, function(i, v){return v;});
+    sr_names = $.with_default(sr_names, selected_sr);
+    // Only want to seed the last NUM_SEED subreddits the user selected
+    sr_names = sr_names.slice(Math.max(sr_names.length - r.srAutocomplete.NUM_SEED, 0));
+    reset = $.with_default(reset, true);
+    $.when(sr_fetch_suggestions(sr_names)).then(function(data){
+        if(reset){sr_suggestions_clear();}
+        for(var i=0; i<data.length;i++){
+            sr_add_suggestion(data[i].sr_name);
+        }
+    });
+}
+
+
+/**
+Adds one subreddit to the subreddit list
+*/
+function sr_add_suggestion(sr_name){
+    var sr_suggestions = sr_get_suggestions();
+    if(!sr_suggestions[sr_name]){
+        var new_suggestion = sr_suggestion(sr_name);
+        $("#suggested-reddits").find("ul").append(new_suggestion);
+        sr_suggestions[sr_name] = true;
+    }
+}
+
+
+/**
+Adds all subreddits to the tokenizer
+*/
+function sr_add_all_suggestions(){
+    var sr_suggestions = sr_get_suggestions();
+    for(var suggestion in sr_suggestions){
+        sr_add_sr(suggestion,{no_new_suggestions: true});
+    }
+    $("#sr-autocomplete").trigger("sr-changed");
+}
+
+/**
+Makes the API call to fetch suggestions
+*/
+function sr_fetch_suggestions(sr_names){
+    if(typeof sr_names === "string"){
+        sr_names = [sr_names];
+    }
+    return $.ajax(
+        "/api/recommend/sr/" + sr_names.join(","),
+        {
+            type: 'GET',
+            data: {
+                over_18: false
+            },
+            dataType: 'json'
+        }
+    );
 }

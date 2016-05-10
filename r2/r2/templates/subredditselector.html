@@ -53,6 +53,11 @@
       r.srAutocomplete.is_multiple = false;
     % endif
 
+    % if thing.dynamic_suggestions:
+      r.srAutocomplete.dynamic_suggestions = true;
+    % else:
+      r.srAutocomplete.dynamic_suggestions = false;
+    % endif
   });
 </script>
 ${error_field("SUBREDDIT_NOEXIST", "sr", "div")}
@@ -73,5 +78,10 @@ ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
       </li>
       %endfor
     </ul>
+    % if thing.multiple:
+    <li>
+      <a href="#" onclick="sr_add_all_suggestions(); return false">add all suggestions</a>
+    </li>
+    % endif
   % endfor
 </div>

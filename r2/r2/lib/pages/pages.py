@@ -4714,6 +4714,7 @@ class PromoteLinkEdit(PromoteLinkBase):
             include_user_subscriptions=False,
             class_name="multiple",
             multiple=True,
+            dynamic_suggestions=True,
         )
         self.inventory = {}
         message = _("Create your ad on this page. Have questions? "
@@ -5862,13 +5863,15 @@ class QuarantineOptoutButton(Templated):
 class SubredditSelector(Templated):
     def __init__(self, default_sr=None, extra_subreddits=None, required=False,
                  include_searches=True, include_user_subscriptions=True, class_name=None,
-                 placeholder=None, show_add=False, multiple=False):
+                 placeholder=None, show_add=False, multiple=False,
+                 dynamic_suggestions=False):
         Templated.__init__(self)
 
         self.placeholder = placeholder
         self.class_name = class_name
         self.show_add = show_add
-        self.multiple = multiple
+        self.multiple = multiple # whether to allow multiple subreddit selection
+        self.dynamic_suggestions = dynamic_suggestions
 
         if extra_subreddits:
             self.subreddits = extra_subreddits
