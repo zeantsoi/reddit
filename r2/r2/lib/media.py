@@ -705,9 +705,9 @@ def get_preview_media_object(preview_object, include_censored=False):
         return None
 
     is_gif = preview_object["url"].endswith('.gif')
-    static_url = g.image_resizing_provider.resize_image(preview_object, width)
 
     if not is_gif:
+        static_url = g.image_resizing_provider.resize_image(preview_object, width)
         img_html = format_html(
             _IMAGE_PREVIEW_TEMPLATE,
             css_class="preview",
@@ -716,6 +716,7 @@ def get_preview_media_object(preview_object, include_censored=False):
             height=height,
         )
     else:
+        static_url = g.image_resizing_provider.resize_image(preview_object, width, file_type="jpg")
         mp4_url = g.image_resizing_provider.resize_image(preview_object, width, file_type="mp4")
         img_html = format_html(
             _MP4_PREVIEW_TEMPLATE,
