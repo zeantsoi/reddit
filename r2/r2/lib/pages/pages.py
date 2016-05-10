@@ -1522,6 +1522,17 @@ class FormPage(BoringPage):
         BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,
                             *a, **kw)
 
+
+class NewLinkPage(FormPage):
+    def __init__(self, pagename, show_sidebar=False, default_sr=None, *a, **kw):
+        self.allow_image_upload = default_sr and feature.is_enabled("image_uploads", subreddit=default_sr.name)
+        FormPage.__init__(self,
+                          pagename,
+                          show_sidebar=show_sidebar,
+                          *a,
+                          **kw)
+
+
 class LoginPage(BoringPage):
     enable_login_cover = False
     short_title = "log in"

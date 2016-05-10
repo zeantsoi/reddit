@@ -1425,10 +1425,11 @@ class FrontController(RedditController):
                       and not request.GET.get('no_self')),
         )
 
-        return FormPage(_("submit"),
+        return NewLinkPage(_("submit"),
                         show_sidebar=True,
                         page_classes=['submit-page'],
                         extra_stylesheets=extra_stylesheets,
+                        default_sr=c.site if not c.default_sr else None,
                         content=newlink).render()
 
     def GET_catchall(self):
