@@ -426,6 +426,13 @@ class EventQueue(object):
         event.add_subreddit_fields(subreddit)
         event.add_target_fields(target)
 
+        hooks.get_hook("eventcollector.mod_event").call(
+            event=event,
+            user=mod,
+            request=request,
+            context=context,
+        )
+
         self.save_event(event)
 
     @squelch_exceptions
