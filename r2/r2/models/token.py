@@ -627,12 +627,9 @@ class OAuth2AccessToken(Token):
         return OAuth2AccessTokensByUser
 
     def _on_create(self):
-        hooks.get_hook("oauth2.create_token").call(token=self)
-
-        # update the by-user view
+        """Updates the by-user view upon creation."""
         if self.user_id:
             self._by_user_view()._set_values(str(self.user_id), {self._id: ''})
-
         return super(OAuth2AccessToken, self)._on_create()
 
     def check_valid(self):
@@ -716,13 +713,6 @@ class OAuth2RefreshToken(OAuth2AccessToken):
 
     _type_prefix = None
     _ttl = None
-
-    def _on_create(self):
-        if self.user_id:
-            self._by_user_view()._set_values(str(self.user_id), {self._id: ''})
-
-        # skip OAuth2AccessToken._on_create to avoid "oauth2.create_token" hook
-        return Token._on_create(self)
 
     @classmethod
     def _by_user_view(cls):
