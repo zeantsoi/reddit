@@ -176,14 +176,14 @@ def message_notification_email(data):
         USER_MESSAGE_THROTTLE_KEY = "email-message_notification_%s" % user._id
         g.cache.add(USER_MESSAGE_THROTTLE_KEY, 0, time=24*60*60)
         if g.cache.get(USER_MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_USER:
-            return False
+            continue
 
         # Get all new messages that haven't been emailed
         inbox_items = Inbox.get_unread_and_unemailed(user._id)
         inbox_items = sorted(inbox_items, key=lambda x: x[1]._date)
 
         if not inbox_items:
-            return
+            continue
         newest_inbox_rel = inbox_items[-1][0]
         oldest_inbox_rel = inbox_items[0][0]
 
@@ -197,7 +197,7 @@ def message_notification_email(data):
         if (start_date != newest_inbox_rel._date and
                 now < newest_inbox_rel._date + NOTIFICATION_EMAIL_COOLING_PERIOD and
                 now < oldest_inbox_rel._date + NOTIFICATION_EMAIL_MAX_DELAY):
-            return
+            continue
 
         messages = []
         message_count = 0
