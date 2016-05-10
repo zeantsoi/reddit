@@ -41,13 +41,18 @@ class ImgixImageResizingProvider(ImageResizingProvider):
 
         ConfigValue.str: [
             'imgix_domain',
+            'imgix_gif_domain',
         ],
     }
 
     def resize_image(self, image, width=None, file_type=None, censor_nsfw=False,
                      max_ratio=None):
         url = UrlParser(image['url'])
-        url.hostname = g.imgix_domain
+
+        if url.path.endswith('.gif') and (file_type == 'mp4' or not file_type):
+            url.hostname = g.imgix_gif_domain
+        else:
+            url.hostname = g.imgix_domain
         # Let's encourage HTTPS; it's cool, works just fine on HTTP pages, and
         # will prevent insecure content warnings on HTTPS pages.
         url.scheme = 'https'
