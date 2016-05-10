@@ -250,7 +250,7 @@ def _fetch_url(url, referer=None):
 @contextlib.contextmanager
 def _request_image(url, timeout, max_size, referer=None):
     url = _clean_url(url)
-
+    res = None
     p = UrlParser(url)
     if not (p.is_web_safe_url() and p.scheme.startswith("http")):
         yield None
@@ -271,7 +271,8 @@ def _request_image(url, timeout, max_size, referer=None):
         )
         yield res
     finally:
-        res.close()
+        if res:
+            res.close()
 
 
 def _fetch_image_url(url, timeout, max_size, referer=None):
