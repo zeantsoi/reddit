@@ -55,6 +55,7 @@
       ${_("This comment was deleted.")}
     %else:
       <header class="reddit-embed-comment-header">
+        <span class="child-icon"></span>
         %if thing.author._deleted:
           <span class="reddit-embed-author reddit-embed-author-deleted">
             ${_("[account deleted]")}

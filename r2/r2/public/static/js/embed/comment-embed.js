@@ -82,11 +82,7 @@
       iframe.style.maxWidth = '800px';
       iframe.style.minWidth = '220px';
       iframe.style.margin = '10px 0';
-      iframe.style.borderRadius = '5px';
       iframe.style.boxShadow = '0 0 5px 0.5px rgba(0, 0, 0, 0.05)';
-      iframe.style.borderColor = 'rgba(199,199,199, 0.55)';
-      iframe.style.borderWidth = '1px';
-      iframe.style.borderStyle = 'solid';
       iframe.style.boxSizing = 'border-box';
       iframe.src = getEmbedUrl(commentUrl, embed);
 

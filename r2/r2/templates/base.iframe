@@ -48,16 +48,12 @@
         <div class="reddit-embed">
           <div class="reddit-embed-content">
             ${next.body()}
+            ${plain_link(_("More comments"), thing.link.permalink, _sr_path=False, _class="reddit-embed-more-link")}
           </div>
           <footer class="reddit-embed-footer" role="contentinfo">
-            <p>
-                ${text_with_links(
-                    _("from discussion %(link)s on %(subreddit)s"),
-                    link=dict(link_text=thing.link.title, path=thing.link.permalink, data=link_data),
-                    subreddit=dict(link_text=("/r/%s" % c.site.name), path=c.site.path, data=sr_data),
-                )}
-            </p>
-            ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img", data=reddit_data)}
+                ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img", data=reddit_data)}
+                <span class="reddit-embed-footer-link-title">${thing.link.title}</span>
+                <p class="reddit-embed-link-meta">/r/${c.site.name} • ${thing.link.score} ${_("points")} • ${thing.link.num_comments} ${_("comments")}</p>
           </footer>
         </div>
         <script>

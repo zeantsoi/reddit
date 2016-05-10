@@ -47,6 +47,18 @@
       '</h4>' +
       '<textarea class="c-form-control" id="embed-code" rows="3" readonly>' +
           '<%- html %>' +
+      '</textarea>' +
+      '<h4 class="modal-title embed-modal-facebook-code" id="facebook-embed">' +
+          '<label for="embed-code">' +
+              _.escape(r._('Show Facebook Instant Article Embed code')) +
+          '</label>' +
+      '</h4>' +
+      '<textarea class="c-form-control" id="facebook-embed-code" rows="3" readonly hidden>' +
+        '<figure>' +
+          '<iframe>' +
+            '<%- html %>' +
+          '</iframe>' +
+        '</figure>' +
       '</textarea>'
     );
 
@@ -70,7 +82,7 @@
 
     function getEmbedOptions(data) {
       var defaults = {
-        live: true,
+        live: false,
         parent: false,
         media: location.host,
         created: (new Date()).toISOString(),
@@ -138,8 +150,10 @@
         content: embedBodyTemplate(embedOptions),
         footer: embedFooterTemplate(embedOptions),
       });
-      var $textarea = popup.$.find('textarea');
+      var $textarea = popup.$.find('#embed-code');
+      var $facebookEmbed = popup.$.find('#facebook-embed-code');
       var $preview = popup.$.find('#embed-preview');
+      var $facebookLink = popup.$.find('#facebook-embed');
       var created = false;
 
       popup.$.find('[data-toggle]').togglable();
@@ -162,6 +176,7 @@
         var height = $preview.height();
 
         $textarea.val(html);
+        $facebookEmbed.val('<figure><iframe>' + html + '</iframe></figure>');
 
         if ($option.data('rerender') !== false) {
           var selector = '[data-options="' + r.utils.escapeSelector(serializedOptions) + '"]';
@@ -177,7 +192,7 @@
         }
       });
 
-      $textarea.on('focus', function(e) {
+      function handleFocus(e) {
         $(this).select().one('mouseup', function(e) {
           e.preventDefault();
         });
@@ -208,6 +223,14 @@
 
           created = true;
         }
+      }
+
+      $facebookEmbed.on('focus', handleFocus);
+      $textarea.on('focus', handleFocus);
+
+      $facebookLink.on('click', function(e) {
+        e.preventDefault();
+        popup.$.find('#facebook-embed-code').show();
       });
 
       popup.on('closed.r.popup', function() {

@@ -283,7 +283,7 @@ class FrontController(RedditController):
             return self.intermediate_redirect("/over18", sr_path=False)
 
         # Determine if we should show the embed link for comments
-        c.can_embed = bool(comment) and article.is_embeddable
+        c.can_embed = article.is_embeddable
 
         is_embed = embeds.prepare_embed_request()
         if is_embed and comment:
