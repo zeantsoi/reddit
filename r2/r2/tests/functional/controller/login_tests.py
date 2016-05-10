@@ -25,7 +25,7 @@ from mock import patch, MagicMock
 from routes.util import url_for
 from pylons import app_globals as g
 
-from r2.lib.validator import VThrottledLogin, VUname
+from r2.lib.validator import VThrottledLogin, VUname, validator
 from r2.models import Account, NotFound
 from r2.tests import RedditControllerTestCase, MockEventQueue
 
@@ -93,3 +93,23 @@ class LoginRegTests(RedditControllerTestCase):
             self.assertEqual(res.status, 200)
             self.assertTrue("error" in res)
             self.assertTrue("USERNAME_TAKEN" in res)
+
+    def test_captcha_blocking(self):
+        body = "user=test&passwd=test123&passwd2=test123"
+
+        with contextlib.nested(
+            # ensure this user does not currently exist
+            patch.object(Account, "_by_name", side_effect=NotFound),
+            # ensure that a captcha is needed
+            patch.object(
+                validator, "need_provider_captcha", return_value=True
+            ),
+            # ensure that the captcha is invalid
+            patch.object(
+                g.captcha_provider, "validate_captcha", return_value=False
+            ),
+        ):
+            res = self.do_post("register", body)
+            self.assertEqual(res.status, 200)
+            self.assertTrue("error" in res)
+            self.assertTrue("BAD_CAPTCHA" in res)
