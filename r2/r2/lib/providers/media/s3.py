@@ -26,7 +26,7 @@ import re
 
 import boto
 
-from pylons import app_globals as g
+from pylons import app_globals as g, tmpl_context as c
 from urlparse import urlunsplit
 
 from r2.lib.configparse import ConfigValue
