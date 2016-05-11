@@ -5101,6 +5101,7 @@ class UserText(CachedTemplate):
                  admin_takedown=False,
                  source=None,
                  data_attrs={},
+                 affiliate=False,
                 ):
 
         css_class = "usertext"
@@ -5142,6 +5143,7 @@ class UserText(CachedTemplate):
                                 admin_takedown=admin_takedown,
                                 source=source,
                                 data_attrs=data_attrs,
+                                affiliate=affiliate,
                                )
 
 class MediaEmbedBody(CachedTemplate):
