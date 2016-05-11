@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 from r2.tests import RedditControllerTestCase
+from r2.lib.errors import error_list
 from common import LoginRegBase
 
 
@@ -49,6 +50,8 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
         raise AssertionError("No matching %s header found" % name)
 
     def assert_success(self, res):
+        # On sucess, we redirect the user to the provided "dest" parameter
+        # that has been added in make_qs
         self.assertEqual(res.status, 302)
         self.assert_headers(
             res,
@@ -65,6 +68,9 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
         # counterintuitively, failure to login will return a 200
         # (compared to a redirect).
         self.assertEqual(res.status, 200)
+        # recaptcha is done entirely in JS
+        if code != "BAD_CAPTCHA":
+            self.assertTrue(error_list[code] in res.body)
 
     def make_qs(self, **kw):
         kw['dest'] = self.dest
