@@ -2441,7 +2441,7 @@ class ApiController(RedditController):
         css_errors, parsed = c.site.parse_css(stylesheet_contents)
 
         # The hook passes errors back by setting them on the form.
-        r.hooks.get('subreddit.css.validate').call(
+        hooks.get_hook('subreddit.css.validate').call(
             request=request, form=form, op=op,
             stylesheet_contents=stylesheet_contents,
             parsed_stylesheet=parsed,
