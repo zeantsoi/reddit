@@ -132,7 +132,7 @@
   %if not thing.creating:
     <div class="usertext-body may-blank-within md-container ${'admin_takedown' if thing.admin_takedown else ''}">
       % if not thing.expunged:
-      ${md(thing.text, nofollow=thing.nofollow, target=thing.target, wrap=True)}
+      ${md(thing.text, nofollow=thing.nofollow, target=thing.target, wrap=True, affiliate=getattr(thing, 'affiliate', False))}
       % else:
       <em>${_("[removed]")}</em>&#32;
       % endif
