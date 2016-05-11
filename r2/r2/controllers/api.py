@@ -2434,21 +2434,10 @@ class ApiController(RedditController):
 
         """
 
+        css_errors, parsed = c.site.parse_css(stylesheet_contents)
 
         if g.css_killswitch:
             return abort(403, 'forbidden')
-
-        css_errors, parsed = c.site.parse_css(stylesheet_contents)
-
-        # The hook passes errors back by setting them on the form.
-        r.hooks.get('subreddit.css.validate').call(
-            request=request, form=form, op=op,
-            stylesheet_contents=stylesheet_contents,
-            parsed_stylesheet=parsed,
-            css_errors=css_errors,
-            subreddit=c.site,
-            user=c.user
-        )
 
         if css_errors:
             error_items = [CssError(x).render(style='html') for x in css_errors]
@@ -2466,7 +2455,7 @@ class ApiController(RedditController):
         VNotInTimeout().run(action_name="editsettings",
             details_text="%s_stylesheet" % op, target=c.site)
 
-        if op == 'save' and not form.has_error():
+        if op == 'save':
             wr = c.site.change_css(stylesheet_contents, parsed, reason=reason)
             form.find('.errors').hide()
             form.set_text(".status", _('saved'))
