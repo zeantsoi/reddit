@@ -4977,13 +4977,14 @@ ul#image-preview-list .description pre {
 
  #sr-autocomplete-area.multiple-subreddit{
     // Make the div look like an input box
+    @white: @color-white;
+    @alice-blue: lighten(@color-light-blue, 42%);
+
     position: relative;
     z-index: 100;
-    background-color: #FFFFFF;
-    box-shadow: #F2F2F2 0px 1px 0px 1px inset;
-    border-color: #BFBFBF #CCCCCC #d9d9d9;
-    border-radius: 2px;
-    padding: 5px 5px 0px 5px;
+    background-color: @white;
+    border-radius: 5px;
+    padding: 5px;
 
     #sr-autocomplete, #sr-autocomplete:focus {
         // Make the input look invisible
@@ -4999,7 +5000,7 @@ ul#image-preview-list .description pre {
      }
 
      .sr-span {
-        background-color: aliceblue;
+        background-color: @alice-blue;
         display: inline-block;
         border-radius: 4px;
         margin: 1.5px 3px;
@@ -5028,8 +5029,9 @@ ul#image-preview-list .description pre {
 }
 
 .info-text {
-    //position: absolute;
-    color: #888;
+    @info-text-color: @color-grey;
+
+    color: @info-text-color;
     font-size: x-small;
     margin-bottom: 10px;
 }
