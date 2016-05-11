@@ -260,8 +260,8 @@ class Reddit(Templated):
                  robots=None, show_sidebar=True, show_chooser=False,
                  header=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
-                 show_locationbar=False, auction_announcement=False,
-                 show_newsletterbar=False, **context):
+                 show_locationbar=False, show_newsletterbar=False,
+                 **context):
         Templated.__init__(self, **context)
         self.title = title
         self.short_title = short_title
@@ -279,8 +279,6 @@ class Reddit(Templated):
         self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []
         self.show_newsletterbar = show_newsletterbar
-
-        self.auction_announcement = auction_announcement
 
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
@@ -4549,9 +4547,7 @@ class PromotePage(Reddit):
             nav_menus = [menu]
 
         kw['show_sidebar'] = False
-        auction_announcement = not feature.is_enabled('ads_auction')
-        Reddit.__init__(self, nav_menus=nav_menus,
-            auction_announcement=auction_announcement, *a, **kw)
+        Reddit.__init__(self, nav_menus=nav_menus, *a, **kw)
 
 
 class PromoteLinkBase(Templated):
