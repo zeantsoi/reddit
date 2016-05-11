@@ -75,6 +75,7 @@ PREFS_VALIDATORS = dict(
     pref_email_messages=VBoolean("email_messages"),
     pref_private_feeds=VBoolean("private_feeds"),
     pref_store_visits=VBoolean('store_visits'),
+    pref_affiliate_links=VBoolean("affiliate_links"),
     pref_hide_ads=VBoolean("hide_ads"),
     pref_show_trending=VBoolean("show_trending"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
@@ -115,6 +116,10 @@ def filter_prefs(prefs, user):
         if not prefs["pref_default_theme_sr"]:
             if prefs.get("pref_other_theme", False):
                 prefs["pref_default_theme_sr"] = prefs["pref_other_theme"]
+
+    if (not feature.is_enabled('affiliate_links', user=user) and
+            'affiliate_links' in prefs):
+        del prefs['affiliate_links']
 
     for pref_key in prefs.keys():
         if pref_key not in user._preference_attrs:

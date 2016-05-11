@@ -338,6 +338,10 @@
         ${checkbox(_("enable private RSS feeds"), "private_feeds")} 
        &#32;<span class="details">
         ${_("(available from the 'RSS feed' tab in prefs)")}</span>
+      %if feature.is_enabled("affiliate_links"):
+        <br/>
+        ${checkbox(_("replace affiliate links"), "affiliate_links")}
+      %endif
     </td>
   <tr>
     <th>${_("privacy options")}</th>
