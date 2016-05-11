@@ -403,9 +403,13 @@
         return "image/png";
       case "47494638":
         return "image/gif";
+      // JPEG support is a lot messier than the other formats
+      // https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format
       case "ffd8ffe0":
       case "ffd8ffe1":
       case "ffd8ffe2":
+      case "ffd8ffda":
+      case "ffd8ffdb":
         return "image/jpeg";
     }
   }
