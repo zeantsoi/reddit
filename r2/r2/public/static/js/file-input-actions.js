@@ -48,7 +48,7 @@
       if (!file) { return; }
 
       if (!file.name && file.type) {
-        var ext = file.type.split('/');
+        var ext = file.type.split('/')[1];
         file.name = 'untitled.' + ext;
       }
 
