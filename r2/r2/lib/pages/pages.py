@@ -1589,8 +1589,8 @@ class Login(Templated):
                            dest = dest, captcha = Captcha(),
                            is_popup=is_popup,
                            registration_info=RegistrationInfo())
-        if (feature.is_enabled('register_email_text_v3') and 
-            feature.variant('register_email_text_v3') == 'test_group'):
+        if (feature.is_enabled('register_email_text_v4') and 
+            feature.variant('register_email_text_v4') == 'test_group'):
             self.register_email_text_test = True
 
 class Register(Login):
