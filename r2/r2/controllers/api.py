@@ -1531,7 +1531,7 @@ class ApiController(RedditController):
         VUser(),
         VModhash(),
     )
-    def POST_undo_orangered_email_unsubscribe(self, form):
+    def POST_undo_orangered_email_unsubscribe(self, form, jquery):
         c.user.pref_email_messages = True
         c.user._commit()
         form.set_text('.status', 
