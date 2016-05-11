@@ -203,25 +203,11 @@ def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
     return smd
 
 def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
-    from r2.lib.utils import generate_affiliate_link, domain
     if not text:
         return None
 
     target = kwargs.get("target", None)
     text = snudown.markdown(_force_utf8(text), nofollow, target)
-    to_affiliate = kwargs.get("affiliate", False)
-    if to_affiliate:
-        soup = BeautifulSoup(text.decode('utf-8'))
-        links = soup.findAll('a')
-        update_text = False
-        for link in filter(lambda x: domain(x.get('href')) in g.merchant_affiliate_domains , links):
-            update_text = True
-            link['class'] = 'affiliate'
-            link['data-href-url'] = link.get('href')
-            link['data-affiliate-url'] = generate_affiliate_link(link.get('href'))
-
-        if update_text:
-            text = str(soup)
 
     if wrap:
         return SC_OFF + MD_START + text + MD_END + SC_ON

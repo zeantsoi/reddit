@@ -34,7 +34,6 @@
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.strings import Score, strings
-   from r2.lib.utils import generate_affiliate_link
 %>
  
 <%inherit  file="printable.html"/>
@@ -53,8 +52,7 @@
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }
-            ${'outbound' if thing.use_outbound else '' }
-            ${'affiliate' if thing.affiliatize_link and not thing.use_outbound else '' }"
+            ${'outbound' if thing.use_outbound else '' }"
 
      href="${thing.href_url}"
      %if tabindex:
@@ -67,10 +65,6 @@
        data-href-url="${thing.href_url}"
        data-outbound-url="${thing.outbound_link.url}"
        data-outbound-expiration="${thing.outbound_link.expiration if thing.outbound_link.expiration else 0}"
-     %endif
-     %if thing.affiliatize_link and not thing.use_outbound:
-       data-href-url="${thing.href_url}"
-       data-affiliate-url="${generate_affiliate_link(thing.href_url)}"
      %endif
      >
      ${caller.body()}

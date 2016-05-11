@@ -30,7 +30,6 @@ from r2.lib.utils import (
     domain,
     epoch_timestamp,
     generate_outbound_link,
-    generate_affiliate_link,
     strip_www,
     timesince,
     title_to_url,
@@ -149,7 +148,6 @@ class Link(Thing, Printable):
                      removed_link_child=None,
                      precomputed_sorts=None,
                      image_upload=False,
-                     affiliatize_link=True,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
@@ -287,7 +285,6 @@ class Link(Thing, Printable):
             comment_tree_version=cls._choose_comment_tree_version(),
             is_self=is_self,
             over_18=over_18,
-            affiliatize_link=author.allow_affiliates_replacing,
         )
 
         l._commit()
@@ -834,21 +831,11 @@ class Link(Thing, Printable):
             item.use_outbound = False
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink
-                item.affiliatize_link = False
             else:
                 item.href_url = item.url
-                if feature.is_enabled('affiliate_links') \
-                        and item.post_hint == 'link' \
-                        and domain(item.domain) in g.merchant_affiliate_domains:
-                    if item.affiliatize_link and not c.user.allow_affiliates_replacing:
-                        item.affiliatize_link = False
-                else:
-                    item.affiliatize_link = False
-
                 if feature.is_enabled('outbound_clicktracking'):
                     item.use_outbound = True
-                    outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
-                    item.outbound_link = generate_outbound_link(item, outbound_url)
+                    item.outbound_link = generate_outbound_link(item, item.url)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
@@ -1312,7 +1299,6 @@ class Comment(Thing, Printable):
                      ignore_reports=False,
                      sendreplies=True,
                      admin_takedown=False,
-                     affiliatize_links=True,
                      )
     _essentials = ('link_id', 'author_id')
 
@@ -1367,7 +1353,6 @@ class Comment(Thing, Printable):
                     author_id=author._id,
                     ip=ip,
                     _spam=spam,
-                    affiliatize_links=author.allow_affiliates_replacing,
                     **kw)
 
         # these props aren't relations
@@ -1885,9 +1870,6 @@ class Comment(Thing, Printable):
             if item.is_author:
                 item.inbox_replies_enabled = item.sendreplies
 
-            affiliate = feature.is_enabled('affiliate_links') \
-                    and item.affiliatize_links \
-                    and c.user.allow_affiliates_replacing
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
             item.usertext = UserText(item, item.body,
@@ -1895,8 +1877,7 @@ class Comment(Thing, Printable):
                                      nofollow=item.nofollow,
                                      target=item.target,
                                      extra_css=extra_css,
-                                     have_form=item.have_form,
-                                     affiliate=affiliate)
+                                     have_form=item.have_form)
 
             item.lastedited = CachedVariable("lastedited")
 
