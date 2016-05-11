@@ -27,6 +27,8 @@ from mock import MagicMock, patch
 
 from r2.models.link import Link, Comment
 
+from r2.models.account import Account
+
 TINY_COMMENT = 'rekt'
 SHORT_COMMENT = 'What is your favorite car from a rival brand?'
 MEDIUM_COMMENT = '''I'm humbled by how many of you were interested in talking
@@ -193,7 +195,27 @@ class ThingMock():
         return _mock_id(self)
 
 
-class AccountMock(ThingMock):
+class AccountMock(Account):
+    _nodb = True
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+    def __setattr__(self, attr, val):
+        self.__dict__[attr] = val
+
+    def __getattr__(self, attr):
+        return getattr(
+            self.__dict__,
+            attr,
+            getattr(self._defaults, attr, None),
+        )
+
+    @property
+    def _id(self):
+        return _mock_id(self)
+
     @property
     def _spam(self):
         return False
