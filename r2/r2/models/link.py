@@ -100,8 +100,9 @@ NOTIFICATION_EMAIL_MAX_DELAY = timedelta(hours=1)
 
 class LinkExists(Exception): pass
 
-# defining types
+
 class Link(Thing, Printable):
+    _cache = g.link_transitionalcache
     _data_int_props = Thing._data_int_props + (
         'num_comments', 'reported', 'comment_tree_id', 'gildings')
     _defaults = dict(is_self=False,
