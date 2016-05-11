@@ -1609,6 +1609,15 @@ def generate_outbound_link(thing, url):
     )), expiration)
 
 
+def generate_affiliate_link(url):
+    """Return an affiliate link with parameterized url encoded for redirect. """
+
+    if not g.affiliate_redirect_url:
+        return url
+
+    return '%s?%s' % (g.affiliate_redirect_url, urlencode({"u" : url, "key" : g.affiliate_redirect_key}))
+
+
 def summarize_markdown(md):
     """Get the first paragraph of some Markdown text, potentially truncated."""
 
