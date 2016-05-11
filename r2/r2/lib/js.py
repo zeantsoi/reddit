@@ -692,6 +692,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "eu-cookie-policy.js",
     "recent-subreddits.js",
     "outbound-link-tracking.js",
+    "affiliate-linking.js",
     "warn-on-unload.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,
