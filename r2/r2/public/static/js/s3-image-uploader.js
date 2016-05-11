@@ -145,7 +145,7 @@
      *                          other default values
      * @return {$.Promise}
      */
-    request: function(options) {
+    request: function(options, mimetype) {
       var d = $.Deferred();
 
       if (!options.file) {
@@ -160,7 +160,7 @@
 
         data: {
           filepath: options.file.name,
-          ajax: true,
+          mimetype: mimetype,
           raw_json: '1',
         },
 

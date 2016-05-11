@@ -16,6 +16,7 @@
     _suggestedTitle: '',
     _leaseReq: null,
     _uploader: null,
+    _mimetype: null,
 
     isSupported: function() {
       return (
@@ -251,7 +252,7 @@
     },
 
     _requestS3Lease: function(file) {
-      var leaseReq = r.S3ImageUploader.request({ file: file });
+      var leaseReq = r.S3ImageUploader.request({ file: file}, this._mimetype);
       this._leaseReq = leaseReq;
       this.$throbber.show();
 
@@ -367,11 +368,11 @@
           headerHex += arr[i].toString(16);
         }
 
-        var type = _getMimeTypeFromFileHeaderBytes(headerHex);
-        var isGif = type === 'image/gif';
+        this._mimetype = _getMimeTypeFromFileHeaderBytes(headerHex);
+        var isGif = this._mimetype === 'image/gif';
         var err;
 
-        if (!type || !this.VALID_FILE_TYPES.test(type)) {
+        if (!this._mimetype || !this.VALID_FILE_TYPES.test(this._mimetype)) {
           err = r.errors.create('BAD_FILE_TYPE', r._('That file type is not allowed'), 'image-upload');
         } else if (isGif && file.size > MAX_GIF_UPLOAD_SIZE_MB * MB_TO_BYTES) {
           var errStr = r._('Gif is too big. Maximum gif size is %(maxSize)s.').format({

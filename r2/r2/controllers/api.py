@@ -22,7 +22,6 @@
 import csv
 from collections import defaultdict
 import hashlib
-import mimetypes
 import re
 import urllib
 import urllib2
@@ -5365,30 +5364,14 @@ class ApiController(RedditController):
         VUser(),
         VModhash(),
         filepath=nop("filepath"),
-        ajax=VBoolean("ajax", default=True),
+        mimetype=nop("mimetype"),
     )
-    def POST_image_upload_s3(self, responder, filepath, ajax):
+    def POST_image_upload_s3(self, responder, filepath, mimetype):
         """
         Get the parameters needed to upload images to s3.
         """
-        allowed_image_types = set([
-            "image/gif",
-            "image/jpg",
-            "image/jpeg",
-            "image/png",
-            "video/mp4",
-        ])
         filename, ext = os.path.splitext(filepath)
         ext = ext[1:]
-        mime_type, encoding = mimetypes.guess_type(filepath)
-
-        if not mime_type or mime_type not in allowed_image_types:
-            file_type = ", ".join(i.split("/")[1] for i in allowed_image_types)
-            request.environ["extra_error_data"] = {
-                "message": _("image must be of type: %(types)s" %
-                    dict(types=file_type)),
-            }
-            abort(400)
 
         # Simpleflake is largely time based, so reverse the string
         # for more efficient sharding in S3
@@ -5397,7 +5380,7 @@ class ApiController(RedditController):
         redirect = None
 
         # Allow 20 MB to be passed for images and 100 MB for gifs
-        if mime_type == "image/gif":
+        if mimetype == "image/gif":
             max_content_length = ((1024**2) * 100)
         else:
             max_content_length = ((1024**2) * 20)
@@ -5407,7 +5390,7 @@ class ApiController(RedditController):
             key=keyspace,
             success_action_redirect=redirect,
             success_action_status="201",
-            content_type=mime_type,
+            content_type=mimetype,
             max_content_length=max_content_length,
             meta={
                 "x-amz-meta-ext": ext,
