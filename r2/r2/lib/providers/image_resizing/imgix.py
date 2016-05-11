@@ -48,11 +48,13 @@ class ImgixImageResizingProvider(ImageResizingProvider):
     def resize_image(self, image, width=None, file_type=None, censor_nsfw=False,
                      max_ratio=None):
         url = UrlParser(image['url'])
+        is_gif = url.path.endswith('.gif') and (file_type == 'mp4' or not file_type)
 
-        if url.path.endswith('.gif') and (file_type == 'mp4' or not file_type):
+        if is_gif:
             url.hostname = g.imgix_gif_domain
         else:
             url.hostname = g.imgix_domain
+
         # Let's encourage HTTPS; it's cool, works just fine on HTTP pages, and
         # will prevent insecure content warnings on HTTPS pages.
         url.scheme = 'https'
@@ -92,7 +94,10 @@ class ImgixImageResizingProvider(ImageResizingProvider):
             # http://www.imgix.com/docs/reference/stylize#param-px
             url.update_query(px=32)
         if g.imgix_signing:
-            url = self._sign_url(url, g.secrets['imgix_signing_token'])
+            if is_gif:
+                url = self._sign_url(url, g.secrets['imgix_gif_signing_token'])
+            else:
+                url = self._sign_url(url, g.secrets['imgix_signing_token'])
         return url.unparse()
 
     def _sign_url(self, url, token):
