@@ -5385,9 +5385,9 @@ class ApiController(RedditController):
         keyspace = "%s/%s" % (c.user._fullname, key_name)
         redirect = None
 
-        # Allow 20 MB to be passed for images and 50 MB for gifs
+        # Allow 20 MB to be passed for images and 100 MB for gifs
         if mime_type == "image/gif":
-            max_content_length = ((1024**2) * 50)
+            max_content_length = ((1024**2) * 100)
         else:
             max_content_length = ((1024**2) * 20)
 

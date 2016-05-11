@@ -1,7 +1,7 @@
 !function(r) {
   var URL = window.URL || window.webkitURL;
   var MAX_STATIC_UPLOAD_SIZE_MB = 20;
-  var MAX_GIF_UPLOAD_SIZE_MB = 50;
+  var MAX_GIF_UPLOAD_SIZE_MB = 100;
   var MB_TO_BYTES = Math.pow(1024, 2);
 
   r.newlinkController = {
