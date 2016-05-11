@@ -368,16 +368,17 @@
         }
 
         var type = _getMimeTypeFromFileHeaderBytes(headerHex);
+        var isGif = type === 'image/gif';
         var err;
 
         if (!type || !this.VALID_FILE_TYPES.test(type)) {
           err = r.errors.create('BAD_FILE_TYPE', r._('That file type is not allowed'), 'image-upload');
-        } else if (type === "image/gif" && file.size > MAX_GIF_UPLOAD_SIZE_MB * MB_TO_BYTES) {
+        } else if (isGif && file.size > MAX_GIF_UPLOAD_SIZE_MB * MB_TO_BYTES) {
           var errStr = r._('Gif is too big. Maximum gif size is %(maxSize)s.').format({
             maxSize: MAX_GIF_UPLOAD_SIZE_MB + 'mb',
           });
           err = r.errors.create('BAD_FILE_SIZE', errStr);
-        } else if (file.size > MAX_STATIC_UPLOAD_SIZE_MB * MB_TO_BYTES) {
+        } else if (!isGif && file.size > MAX_STATIC_UPLOAD_SIZE_MB * MB_TO_BYTES) {
           var errStr = r._('Image is too big. Maximum image size is %(maxSize)s.').format({
             maxSize: MAX_STATIC_UPLOAD_SIZE_MB + 'mb',
           });
