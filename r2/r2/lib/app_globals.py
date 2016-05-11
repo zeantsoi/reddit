@@ -351,6 +351,10 @@ class Globals(object):
         ConfigValue.baseplate(baseplate_config.Optional(baseplate_config.Endpoint)): [
             "activity_endpoint",
         ],
+
+        ConfigValue.set: [
+            'merchant_affiliate_domains',
+        ],
     }
 
     live_config_spec = {
