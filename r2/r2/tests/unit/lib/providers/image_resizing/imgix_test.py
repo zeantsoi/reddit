@@ -37,6 +37,7 @@ class TestImgixResizer(RedditTestCase):
         self.patch_g(
             imgix_domain='example.com',
             imgix_signing=False,
+            s3_media_direct=False,
         )
 
     def test_no_resize(self):
