@@ -653,6 +653,7 @@ def make_temp_uploaded_image_permanent(image_key):
 
         f = tempfile.NamedTemporaryFile(delete=True)
         image_key.get_contents_to_file(f)
+        f.seek(0)
         image = Image.open(f.name)
 
         file_name = os.path.split(key_name)[1]
