@@ -40,9 +40,10 @@ sprite_line = re.compile(
      """, re.X)
 
 
-def optimize_png(filename):
+def optimize_png(filename, optimize_level=2):
     with open(os.path.devnull, 'w') as devnull:
-        subprocess.check_call(("/usr/bin/optipng", filename), stdout=devnull)
+        o_option = "-o%i" % optimize_level
+        subprocess.check_call(("/usr/bin/optipng", o_option, filename), stdout=devnull)
 
 
 def _extract_css_info(match):

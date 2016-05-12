@@ -417,7 +417,8 @@ def upload_media(image, file_type='jpg', category='thumbs'):
                 img.save(f)
 
         if file_type == "png":
-            optimize_png(f.name)
+            optimize_level = 0 if category == 'previews' else 2
+            optimize_png(f.name, optimize_level=optimize_level)
         elif file_type == "jpg":
             optimize_jpeg(f.name)
         if file_type == "gif":
