@@ -22,13 +22,10 @@
 import contextlib
 from mock import patch, MagicMock
 
-from routes.util import url_for
 from pylons import app_globals as g
 
 from r2.lib.validator import VThrottledLogin, VUname, validator
-from r2.lib.utils import query_string
 from r2.models import Account, NotFound
-from r2.tests import MockEventQueue
 
 
 class LoginRegBase(object):
@@ -45,34 +42,6 @@ class LoginRegBase(object):
     Included are base test cases that should be common to all controllers
     which use r2.lib.controlers.login as part of the flow.
     """
-
-    def setUp(self):
-        self.autopatch(g.events, "queue_production", MockEventQueue())
-        self.autopatch(g.events, "queue_test", MockEventQueue())
-
-        self.simple_event = self.autopatch(g.stats, "simple_event")
-
-        self.user_agent = "Hacky McBrowser/1.0"
-        self.device_id = None
-
-    def do_post(self, action, params, headers=None, expect_errors=False):
-        body = self.make_qs(**params)
-
-        headers = headers or {}
-        headers.setdefault('User-Agent', self.user_agent)
-        if self.device_id:
-            headers.setdefault('Client-Vendor-ID', self.device_id)
-        for k, v in self.additional_headers(headers, body).iteritems():
-            headers.setdefault(k, v)
-        headers = {k: v for k, v in headers.iteritems() if v is not None}
-        return self.app.post(
-            url_for(controller=self.CONTROLLER, action=self.ACTIONS[action]),
-            extra_environ={"REMOTE_ADDR": "1.2.3.4"},
-            headers=headers,
-            params=body,
-            expect_errors=expect_errors,
-        )
-
     def do_login(self, user="test", passwd="test123", **kw):
         return self.do_post("login", {"user": user, "passwd": passwd}, **kw)
 
@@ -84,16 +53,6 @@ class LoginRegBase(object):
             "passwd": passwd,
             "passwd2": passwd2,
         }, **kw)
-
-    def additional_headers(self, headers, body):
-        """Additional generated headers to be added to the request.
-
-        """
-        return {}
-
-    def make_qs(self, **kw):
-        """Convert the provided kw into a kw string sutable for app.post."""
-        return query_string(kw).lstrip("?")
 
     def mock_login(self, name="test", cookie="cookievaluehere"):
         """Context manager for mocking login.

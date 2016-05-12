@@ -25,10 +25,6 @@ from common import LoginRegBase
 
 class LoginRegTests(LoginRegBase, RedditControllerTestCase):
     CONTROLLER = "api"
-    ACTIONS = {
-        "login": "login",
-        "register": "register",
-    }
 
     def setUp(self):
         RedditControllerTestCase.setUp(self)

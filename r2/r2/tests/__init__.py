@@ -36,6 +36,9 @@ import paste.fixture
 import paste.script.appinstall
 from paste.deploy import loadapp
 
+from routes.util import url_for
+from r2.lib.utils import query_string
+
 
 __all__ = ['RedditTestCase', 'RedditControllerTestCase']
 
@@ -205,6 +208,8 @@ class NonCache(object):
 
 
 class RedditControllerTestCase(RedditTestCase):
+    CONTROLLER = None
+    ACTIONS = {}
 
     def setUp(self):
         super(RedditControllerTestCase, self).setUp()
@@ -231,6 +236,47 @@ class RedditControllerTestCase(RedditTestCase):
             cache=NonCache(),
         )
 
+        # mock out for controllers UTs which use
+        # r2.lib.controllers as part of the flow.
+        self.autopatch(g.events, "queue_production", MockEventQueue())
+        self.autopatch(g.events, "queue_test", MockEventQueue())
+
+        self.simple_event = self.autopatch(g.stats, "simple_event")
+
+        self.user_agent = "Hacky McBrowser/1.0"
+        self.device_id = None
+
         # Lastly, pull the app out of test mode so it'll load controllers on
         # first use
         RedditApp.test_mode = False
+
+    def do_post(self, action, params, headers=None, expect_errors=False):
+
+        assert self.CONTROLLER is not None
+
+        body = self.make_qs(**params)
+
+        headers = headers or {}
+        headers.setdefault('User-Agent', self.user_agent)
+        if self.device_id:
+            headers.setdefault('Client-Vendor-ID', self.device_id)
+        for k, v in self.additional_headers(headers, body).iteritems():
+            headers.setdefault(k, v)
+        headers = {k: v for k, v in headers.iteritems() if v is not None}
+        return self.app.post(
+            url_for(controller=self.CONTROLLER,
+                    action=self.ACTIONS.get(action, action)),
+            extra_environ={"REMOTE_ADDR": "1.2.3.4"},
+            headers=headers,
+            params=body,
+            expect_errors=expect_errors,
+        )
+
+    def make_qs(self, **kw):
+        """Convert the provided kw into a kw string suitable for app.post."""
+        return query_string(kw).lstrip("?")
+
+    def additional_headers(self, headers, body):
+        """Additional generated headers to be added to the request.
+        """
+        return {}
