@@ -275,7 +275,7 @@ def _request_image(url, timeout, referer=None):
             res.close()
 
 
-def _fetch_image_url(url, timeout, max_size, referer=None):
+def _fetch_image_url(url, timeout, max_image_size, max_gif_size, referer=None):
     _error_response = None, None
 
     with _request_image(url, timeout, referer=referer) as res:
@@ -285,6 +285,11 @@ def _fetch_image_url(url, timeout, max_size, referer=None):
         content_type = res.headers.get("Content-Type", "").lower()
         if not content_type.startswith("image/"):
             return _error_response
+
+        if content_type == "image/gif":
+            max_size = max_gif_size
+        else:
+            max_size = max_image_size
 
         try:
             expressed_size = int(res.headers.get('Content-Length', 0))
@@ -1087,6 +1092,7 @@ class _ImageScraper(Scraper):
 
     FETCH_TIMEOUT = 10
     MAXIMUM_IMAGE_SIZE = 1024 * 1024 * 20 # 20MB
+    MAXIMUM_GIF_SIZE = 1024 * 1024 * 100 # 100MB
 
     def __init__(self, url):
         self.url = url
@@ -1102,7 +1108,8 @@ class _ImageScraper(Scraper):
         content_type, content = _fetch_image_url(
             self.url,
             timeout=self.FETCH_TIMEOUT,
-            max_size=self.MAXIMUM_IMAGE_SIZE,
+            max_image_size=self.MAXIMUM_IMAGE_SIZE,
+            max_gif_size=self.MAXIMUM_GIF_SIZE,
             referer=self.url,
         )
 
