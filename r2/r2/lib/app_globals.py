@@ -919,7 +919,7 @@ class Globals(object):
         self.transitionalcache = TransitionalCache(
             original_cache=self.cache,
             replacement_cache=self.maincache,
-            read_original=False,
+            read_original=True,
             key_transform=rewrite_subreddit_key,
         )
 
