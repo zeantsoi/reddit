@@ -355,6 +355,10 @@ class Globals(object):
         ConfigValue.set: [
             'merchant_affiliate_domains',
         ],
+
+        ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
+            'emr_traffic_tags',
+        ],
     }
 
     live_config_spec = {
