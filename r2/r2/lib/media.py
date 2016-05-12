@@ -665,8 +665,12 @@ def make_temp_uploaded_image_permanent(image_key):
 
         exif_tags = _get_exif_tags(image)
         if exif_tags:
+            # When saving the image again (after applying orientation),
+            # the image format prop is lost.
+            original_format = image.format
             # Strip exif data after applying orientation
             image = _apply_exif_orientation(image)
+            image.format = original_format
             _strip_exif_data(image, f)
         data["px_size"] = image.size
 
