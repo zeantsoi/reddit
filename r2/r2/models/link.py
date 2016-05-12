@@ -837,6 +837,18 @@ class Link(Thing, Printable):
                 item.affiliatize_link = False
             else:
                 item.href_url = item.url
+                media_preview_experiment_enabled = (
+                    feature.is_enabled('media_preview_redirect') and 
+                    feature.variant('media_preview_redirect') == 'test_group')
+
+                # check media preview pref &
+                # only change href for listing pages (not comment pages)
+                if (media_preview_experiment_enabled and
+                        getattr(item, 'preview_image', False) and
+                        show_media_preview and
+                        request.route_dict['action_name'] != 'comments'):
+                    item.href_url = item.permalink
+
                 if feature.is_enabled('affiliate_links') \
                         and item.post_hint == 'link' \
                         and domain(item.domain) in g.merchant_affiliate_domains:
@@ -853,7 +865,10 @@ class Link(Thing, Printable):
                         request.route_dict['action_name'] != 'comments'
                 ):
                     item.href_url = item.permalink
-                elif feature.is_enabled('outbound_clicktracking') and not g.debug:
+                elif (feature.is_enabled('outbound_clicktracking') and 
+                        # don't do outbound click tracking for internal links
+                        not media_preview_experiment_enabled and
+                        not g.debug):
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
                     item.outbound_link = generate_outbound_link(item, outbound_url)
