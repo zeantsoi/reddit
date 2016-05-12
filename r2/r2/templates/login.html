@@ -54,9 +54,6 @@
       op = "reg" if register else "login"
       base = g.https_endpoint
       tabindex = 2 if register else 3
-      email_string = _('email (optional)')
-      if getattr(thing, "register_email_text_test", False):
-          email_string = _('email')
     %>
     <form id="${'register' if register else 'login'}-form" method="post" 
           action="${add_sr(base + '/post/' + op)}"
@@ -106,7 +103,7 @@
           </i></label>
           <input value="" name="email" id="email_${op}" class="c-form-control"
                  type="text" tabindex="${tabindex}"
-                 placeholder="${email_string}"
+                 placeholder="${_('email')}"
                  data-validate-url="/api/check_email.json"
                  data-validate-on="change blur">
         </%call>
