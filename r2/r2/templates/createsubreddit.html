@@ -336,7 +336,7 @@ try participating in other communities on reddit for a little while first before
           <li>
             <input class="nomargin" type="checkbox"
                    name="show_media_preview" id="show_media_preview"
-                   %if thing.site and thing.site.show_media_preview:
+                   %if not thing.site or thing.site.show_media_preview:
                      checked="checked"
                    %endif
             >
