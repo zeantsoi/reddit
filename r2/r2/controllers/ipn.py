@@ -197,6 +197,8 @@ def check_txn_type(txn_type, psl):
         return (None, None)
     elif txn_type == "paypal_here":
         return ("Ok", None)
+    elif txn_type == "cart" and psl == "completed":
+        return (None, None)
     else:
         raise ValueError("Unknown IPN txn_type / psl %r" %
                          ((txn_type, psl),))
