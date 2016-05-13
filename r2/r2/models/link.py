@@ -845,7 +845,15 @@ class Link(Thing, Printable):
                 else:
                     item.affiliatize_link = False
 
-                if feature.is_enabled('outbound_clicktracking'):
+                # If an image upload, link to the image only if on the comments page,
+                # else link to the comments page permalink.
+                # If the subreddit or user has disabled previews, link to the image.
+                if (item.image_upload and
+                        show_media_preview and
+                        request.route_dict['action_name'] != 'comments'
+                ):
+                    item.href_url = item.permalink
+                elif feature.is_enabled('outbound_clicktracking'):
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
                     item.outbound_link = generate_outbound_link(item, outbound_url)
