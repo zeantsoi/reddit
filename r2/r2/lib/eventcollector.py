@@ -743,6 +743,14 @@ class EventQueue(object):
         if captcha_shown:
             event.add('captcha_shown', captcha_shown)
 
+        if not error_msg and context and context.user_is_loggedin:
+            hooks.get_hook("eventcollector.login_event").call(
+                event=event,
+                user=context.user,
+                request=request,
+                context=context,
+            )
+
         self.save_event(event)
 
     def bucketing_event(
