@@ -514,6 +514,15 @@ class ApiController(RedditController):
         ):
             return
 
+        if (kind == "image" and
+                not feature.is_enabled('image_uploads', subreddit=sr.name)
+        ):
+            # this could happen if they actually typed "self" into the
+            # URL box and we helpfully translated it for them
+            c.errors.add(errors.SUBREDDIT_NOTALLOWED, field='sr')
+            form.has_errors('sr', errors.SUBREDDIT_NOTALLOWED)
+            return
+
         if not sr.can_submit_text(c.user) and is_self:
             # this could happen if they actually typed "self" into the
             # URL box and we helpfully translated it for them
