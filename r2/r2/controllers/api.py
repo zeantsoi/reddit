@@ -659,6 +659,7 @@ class ApiController(RedditController):
         form._send_data(url=path)
         form._send_data(id=l._id36)
         form._send_data(name=l._fullname)
+        form.set_inputs(url="", text="", title=" ")
 
     @csrf_exempt
     @validatedForm(VRatelimit(rate_ip = True,
