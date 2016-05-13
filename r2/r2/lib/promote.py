@@ -355,7 +355,7 @@ def queue_change_promo_author(link, author):
     """
 
     # queue the job to update the promotionweights author
-    g.log.debug('queuing queue_change_promo_author for %s, %s' %
+    g.log.info('queuing queue_change_promo_author for %s, %s' %
         (link, author))
     msg = json.dumps({
         'action': 'queue_change_promo_author',
@@ -368,6 +368,8 @@ def _change_promo_author(link, author):
     """
     NOTE/WARNING: Bid ownership won't be changed.
     """
+
+    g.log.info('changing promo author for %s to %s' % (link, author))
 
     user_queries = (
         queries.get_unpaid_links,
