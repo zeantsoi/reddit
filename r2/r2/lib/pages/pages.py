@@ -1127,14 +1127,16 @@ class RedditFooter(CachedTemplate):
         ]
 
     def __init__(self):
+        ABOUT_BASE = "https://about.reddit.com/"
+
         self.nav = [
             NavMenu([
                     NamedButton("blog", False, dest="/blog"),
-                    NamedButton("about", False),
-                    NamedButton("values", False, dest="/about/values"),
+                    OffsiteButton("about", ABOUT_BASE),
+                    OffsiteButton("values", ABOUT_BASE + "values"),
                     NamedButton("source_code", False, dest="/code"),
-                    NamedButton("advertising", False),
-                    NamedButton("jobs", False),
+                    OffsiteButton("advertising", ABOUT_BASE + "advertise"),
+                    OffsiteButton("jobs", ABOUT_BASE + "careers"),
                 ],
                 title = _("about"),
                 type = "flat_vert",
