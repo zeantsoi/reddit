@@ -1963,15 +1963,14 @@ class PromoteApiController(ApiController):
     def POST_promote_post_submit(self, form, jquery, original_link, 
                                  promoter_text, promoter_url, 
                                  discussion_link, promoted_externally):
-        
         # Create the promoted link
         if discussion_link:
             original_subreddit = Subreddit._byID(original_link.sr_id, stale=True)
             link_url = original_link.make_permalink(original_subreddit)
         else:
             link_url = original_link.url
-        
-        sr = Subreddit._byID(Subreddit.get_promote_srid())
+
+        sr = Subreddit._by_name(g.promo_sr_name, stale=True)
         l = Link._submit(
             is_self=False,
             title=original_link.title,
@@ -1984,18 +1983,18 @@ class PromoteApiController(ApiController):
         l.disable_comments = True
         if discussion_link:
             l.domain_override = "self." + original_subreddit.name
-                
+
         # Add additional properties
         l._ups = original_link._ups
         l._downs = original_link._downs
         l.original_link = original_link._fullname
         l.promoted_display_name = promoter_text
         l.promoted_url = promoter_url
-        
+
         if hasattr(original_link, 'thumbnail_url') and hasattr(original_link, 'thumbnail_size'):
             l.thumbnail_url = original_link.thumbnail_url
             l.thumbnail_size = original_link.thumbnail_size
-        
+
         if original_link.mobile_ad_url and hasattr(original_link, 'mobile_ad_size'):
             l.mobile_ad_url = original_link.mobile_ad_url
             l.mobile_ad_size = original_link.mobile_ad_size
@@ -2005,6 +2004,6 @@ class PromoteApiController(ApiController):
             promote.update_promote_status(l, PROMOTE_STATUS.external)
         else:
             promote.update_promote_status(l, PROMOTE_STATUS.promoted)
-            
+
         l._commit()
         form.redirect(promote.promo_edit_url(l))            
