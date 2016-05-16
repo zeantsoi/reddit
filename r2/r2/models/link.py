@@ -571,7 +571,12 @@ class Link(Thing, Printable):
         # is in a loop that calls it 30 times on 25-200 things.
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
-        pref_media = user.pref_media
+        if (feature.is_enabled("hidden_thumbnails") and
+                feature.variant("hidden_thumbnails") == "test_group"):
+            pref_media = "off"
+        else:
+            pref_media = user.pref_media
+
         pref_media_preview = user.pref_media_preview
         site = c.site
 
