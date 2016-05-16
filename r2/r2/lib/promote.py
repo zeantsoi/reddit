@@ -1284,7 +1284,7 @@ def make_daily_promotions():
 
 
 def adserver_reports_pending(campaigns):
-    pending = []
+    pending = set()
 
     for campaign in campaigns:
         # we only run reports on campaigns that have served.
@@ -1293,12 +1293,12 @@ def adserver_reports_pending(campaigns):
 
         last_run = getattr(campaign, "last_lifetime_report_run", None)
         if last_run is None:
-            pending.append(campaign._fullname)
+            pending.add(campaign._fullname)
 
         # check that the report was run at least 24 hours after the
         # campaign completed since results are preliminary beforehand.
         elif last_run < (campaign.end_date + datetime.timedelta(hours=24)):
-            pending.append(campaign._fullname)
+            pending.add(campaign._fullname)
 
     return pending
 
@@ -1322,14 +1322,16 @@ def finalize_completed_campaigns(daysago=1):
     reports_pending = adserver_reports_pending(campaigns)
 
     if reports_pending:
-        raise ValueError("Can't finalize campaigns finished on %s."
+        g.log.warning("Can't finalize some campaigns finished on %s."
                          "Missing adserver reports from %s" % (date, str(reports_pending)))
+        campaigns = filter(lambda camp: camp._fullname not in reports_pending, campaigns)
 
     links = Link._byID([camp.link_id for camp in campaigns], data=True)
     underdelivered_campaigns = []
 
     for camp in campaigns:
-        if hasattr(camp, 'refund_amount'):
+        if (hasattr(camp, 'refund_amount') or
+                getattr(camp, 'finalized', False)):
             continue
 
         link = links[camp.link_id]
@@ -1356,6 +1358,10 @@ def finalize_completed_campaigns(daysago=1):
                 underdelivered_campaigns.append(camp)
         elif charged_or_not_needed(camp):
             underdelivered_campaigns.append(camp)
+
+        # So we don't process the same campaign twice.
+        camp.finalized = True
+        camp._commit()
 
     if underdelivered_campaigns:
         queries.set_underdelivered_campaigns(underdelivered_campaigns)
