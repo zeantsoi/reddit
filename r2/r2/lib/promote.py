@@ -1293,12 +1293,12 @@ def adserver_reports_pending(campaigns):
 
         last_run = getattr(campaign, "last_lifetime_report_run", None)
         if last_run is None:
-            pending.add(campaign._fullname)
+            pending.add(campaign)
 
         # check that the report was run at least 24 hours after the
         # campaign completed since results are preliminary beforehand.
         elif last_run < (campaign.end_date + datetime.timedelta(hours=24)):
-            pending.add(campaign._fullname)
+            pending.add(campaign)
 
     return pending
 
@@ -1309,10 +1309,19 @@ def finalize_completed_campaigns(daysago=1):
     date = now - datetime.timedelta(days=daysago)
     date = date.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    q = PromoCampaign._query(PromoCampaign.c.end_date == date,
-                             # exclude no transaction
-                             PromoCampaign.c.trans_id != NO_TRANSACTION,
-                             data=True)
+    q_ended = PromoCampaign._query(
+        PromoCampaign.c.end_date == date,
+        # exclude no transaction
+        PromoCampaign.c.trans_id != NO_TRANSACTION,
+        data=True,
+    )
+    q_pending = PromoCampaign._query(
+        PromoCampaign.c.reports_pending == True,
+        # exclude no transaction
+        PromoCampaign.c.trans_id != NO_TRANSACTION,
+        data=True,
+    )
+    q = itertools.chain(q_ended, q_pending)
     # filter out freebies
     campaigns = filter(lambda camp: camp.trans_id > NO_TRANSACTION, q)
 
@@ -1322,14 +1331,24 @@ def finalize_completed_campaigns(daysago=1):
     reports_pending = adserver_reports_pending(campaigns)
 
     if reports_pending:
+        fullnames_pending = []
+        for campaign in reports_pending:
+            campaign.reports_pending = True
+            campaign._commit()
+            fullnames_pending.append(campaign._fullname)
+
         g.log.warning("Can't finalize some campaigns finished on %s."
-                         "Missing adserver reports from %s" % (date, str(reports_pending)))
-        campaigns = filter(lambda camp: camp._fullname not in reports_pending, campaigns)
+                         "Missing adserver reports from %s" % (date, str(fullnames_pending)))
+        campaigns = filter(lambda camp: camp not in reports_pending, campaigns)
 
     links = Link._byID([camp.link_id for camp in campaigns], data=True)
     underdelivered_campaigns = []
 
     for camp in campaigns:
+        if getattr(camp, "reports_pending", False):
+            camp.reports_pending = False
+            camp._commit()
+
         if (hasattr(camp, 'refund_amount') or
                 getattr(camp, 'finalized', False)):
             continue
