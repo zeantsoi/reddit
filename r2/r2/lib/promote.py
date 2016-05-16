@@ -1769,11 +1769,15 @@ def successful_payment(link, campaign, ip, address):
     location = location_by_ips(ip)
 
     if location:
-        campaign.trans_ip_country = location.get("country_name")
+        ip_country_name = location.get("country_name")
+        if ip_country_name:
+            campaign.trans_ip_country = ip_country_name
 
-        countries_match = (campaign.trans_billing_country.lower() ==
-            campaign.trans_ip_country.lower())
-        campaign.trans_country_match = countries_match
+            countries_match = (campaign.trans_billing_country.lower() ==
+                campaign.trans_ip_country.lower())
+            campaign.trans_country_match = countries_match
+        else:
+            campaign.trans_country_match = False
 
     campaign._commit()
 
