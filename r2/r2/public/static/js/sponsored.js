@@ -286,7 +286,8 @@ var CampaignCreator = React.createClass({
       return _.reduce(props.inventory, sum, 0);
     }
     else {
-      return _.min(props.inventory) * props.dates.length;
+      var inventory = _.filter(props.inventory, function(num){ return _.isFinite(num);});
+      return _.min(inventory) * props.dates.length;
     }
   },
 
@@ -371,7 +372,7 @@ var CampaignCreator = React.createClass({
         SOLD_OUT_MSG: r._('inventory for %(target)s is sold out for your requested dates. ' +
                  'please try a different target or different dates.')
       };
-      
+
       if (this.props.override) {
         if (requested.impressions <= this.state.available) {
           return [CampaignSet(null,
@@ -392,11 +393,6 @@ var CampaignCreator = React.createClass({
           );
         }
       }
-      // I don't think this else if statement is ever caught.
-      // because of (requested.impressions <= this.state.available) 
-      // the conditional below is a strict subset of the conditional above
-      // might consider changing the logic or deleting this conditional branch
-      // completely
       else if (requested.totalBudgetDollars >= this.props.minBudgetDollars &&
                requested.impressions <= this.state.available) {
         var result = CampaignSet(null,
@@ -1038,6 +1034,7 @@ var exports = r.sponsored = {
 
     get_check_inventory: function(targeting, timing) {
         if (this.needs_to_fetch_inventory(targeting, timing)) {
+            this.render_disabled_form("Fetching Inventory ...");
             var srname = targeting.srString,
                 collection = targeting.collection,
                 geotarget = targeting.geotarget,
@@ -1162,7 +1159,7 @@ var exports = r.sponsored = {
             var total = 0;
             // iterate through 
             for (var i = 0; i < inventoryKeys.length; i++) {
-              var daily_booked = booked[datestr] || 0;
+              var daily_booked = $.with_default(booked[datestr], 0);
               var inventoryKey = inventoryKeys[i];
               if(r.sponsored.inventory[inventoryKey]){
                 total += r.sponsored.inventory[inventoryKey][datestr] + daily_booked;
@@ -1389,6 +1386,7 @@ var exports = r.sponsored = {
             region = canGeotarget && $('#region').val() || '',
             metro = canGeotarget && $('#metro').val() || '',
             geotarget = {'country': country, 'region': region, 'metro': metro},
+            timing = this.get_timing($form),
             inventoryKeys = this.get_inventory_keys(sr, collection, geotarget, platform),
             isValid = isFrontpage || 
                       (isSubreddit && (sr.length > 0) 
@@ -1441,6 +1439,7 @@ var exports = r.sponsored = {
             'collection': collection,
             'canGeotarget': canGeotarget,
             'geotarget': geotarget,
+            'timing': timing,
         };
 
         if (this.$platformInputs) {
@@ -1885,22 +1884,7 @@ var exports = r.sponsored = {
           this.enable_form($form);
         } else if(!this.targetValid){
           // target is not valid
-          React.renderComponent(
-            CampaignSet(null,
-              InfoText({className: 'error'},
-                r._("Please select a valid subreddit or collection")),
-              CampaignOptionTable(null, CampaignOption({
-                bidDollars: cpm/100,
-                totalBudgetDollars: budget.totalBudgetDollars, 
-                end: timing.enddate,
-                impressions: impressions,
-                isNew: $form.find('#is_new').val() === 'true',
-                primary: false,
-                start: timing.startdate,
-              }))
-            ),
-            document.getElementById('campaign-creator')
-          );
+          this.render_disabled_form("Please select a valid subreddit or collection");
           this.disable_form($form);
         } 
         // If campaign is new, don't set up live editing fields
@@ -1912,6 +1896,30 @@ var exports = r.sponsored = {
         var $budgetDetails = $('.budget-details');
 
         $budgetDetails.toggle(!$noDailyBudget.is(':checked'));
+    },
+
+    render_disabled_form: function(msg){
+      var $form = $("#campaign");
+      if($form.length === 0){return;}
+      var timing = this.get_timing($form);
+      var budget = this.get_budget($form);
+
+      React.renderComponent(
+        CampaignSet(null,
+          InfoText({className: 'error'},
+            r._(msg)),
+          CampaignOptionTable(null, CampaignOption({
+            bidDollars: budget.cpm/100,
+            totalBudgetDollars: budget.totalBudgetDollars,
+            end: timing.enddate,
+            impressions: budget.impressions,
+            isNew: $form.find('#is_new').val() === 'true',
+            primary: false,
+            start: timing.startdate,
+          }))
+        ),
+        document.getElementById('campaign-creator')
+      );
     },
 
     disable_geotargeting: function() {
