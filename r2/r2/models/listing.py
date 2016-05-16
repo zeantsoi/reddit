@@ -397,6 +397,7 @@ class SpotlightListing(Listing):
         self.house_probability = kw.get('house_probability', 1)
         site = kw.get('site', Frontpage)
         self.displayed_things = ','.join(kw.get('displayed_things', []))
+        self.new_ads_styles_enabled = feature.is_enabled("new_ads_styles")
 
         if isinstance(site, MultiReddit):
             self.site = site.path

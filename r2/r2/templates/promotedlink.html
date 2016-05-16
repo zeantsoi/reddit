@@ -26,6 +26,7 @@
    from r2.lib import promote
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
+   from r2.lib.template_helpers import static
    from r2.models import Account
 %>
 
@@ -62,6 +63,17 @@ ${unsafe(taglinetext % dict(author=author))}
   %endif
 </%def>
 
+<%def name="numcol()">
+  %if thing.new_ads_styles_enabled:
+    <span class="sponsored-indicator rank">
+      <img src="${static('icon-sponsored-rank.png')}"/>
+    </span>
+  %else:
+    <span class="rank">
+    </span>
+  %endif
+</%def>
+
 <%def name="entry()">
   ${parent.entry()}
   <%
@@ -72,7 +84,12 @@ ${unsafe(taglinetext % dict(author=author))}
        promo_account = Account._byID(thing.promoted_by, data=True, stale=True)
        promoter = WrappedUser(promo_account, thing.attribs, thing, force_show_flair=False).render()
   %>
-  <p class="sponsored-tagline">
+  %if thing.new_ads_styles_enabled:
+   <p class="sponsored-tagline new-ad-style">
+      <img class="sponsored-tagline-icon" src="${static('icon-sponsored-tiny.png')}"/>
+  %else:
+   <p class="sponsored-tagline"> 
+  %endif 
     %if thing.is_author or c.user_is_sponsor:
       %if not promote.is_promo(thing):
         ${_('deleted sponsored link')}

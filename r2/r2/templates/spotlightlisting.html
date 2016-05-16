@@ -24,6 +24,7 @@
 <%namespace file="utils.html" import="tags, text_with_links, classes"/>
 <%
    import json
+   from r2.config import feature
    from r2.lib.template_helpers import static, format_html
    from r2.lib.wrapped import Templated
 %>
@@ -32,7 +33,11 @@
    from babel.numbers import format_currency
 %>
 
+%if thing.new_ads_styles_enabled:
+<div id="siteTable_organic" ${classes('organic-listing', 'loading', 'new-ad-style')}>
+%else:
 <div id="siteTable_organic" ${classes('organic-listing', 'loading')}>
+%endif
   %if thing.things:
     %for link in thing.things:
       ${unsafe(link.render(display=False))}

@@ -524,11 +524,18 @@ class HotController(ListingWithPromos):
             elif isinstance(c.site, DefaultSR) and not self.listing_obj.prev:
                 trending_info = self.trending_info()
                 if trending_info:
-                    stack = [
-                        self.spotlight,
-                        TrendingSubredditsBar(**trending_info),
-                        self.listing_obj,
-                    ]
+                    if feature.is_enabled("new_ads_styles"):
+                        stack = [
+                            TrendingSubredditsBar(**trending_info),
+                            self.spotlight,
+                            self.listing_obj,
+                        ]
+                    else:
+                        stack = [
+                            self.spotlight,
+                            TrendingSubredditsBar(**trending_info),
+                            self.listing_obj,
+                        ]
 
             if stack:
                 return PaneStack(filter(None, stack), css_class='spacer')

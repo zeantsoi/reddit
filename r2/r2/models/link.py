@@ -1299,7 +1299,10 @@ class PromotedLink(Link):
                 except (AttributeError, IndexError):
                     pass
 
+            item.new_ads_styles_enabled = feature.is_enabled("new_ads_styles")
             item.rowstyle_cls = "link %s" % status
+            if item.new_ads_styles_enabled:
+                item.rowstyle_cls += " new-ad-style"
 
         # Run this last
         Printable.add_props(user, wrapped)
