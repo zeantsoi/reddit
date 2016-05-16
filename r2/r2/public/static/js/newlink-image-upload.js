@@ -306,8 +306,6 @@
       uploader.on('success', function(uploader, imageUrl) {
         if (uploader !== this._uploader) { return; }
 
-        r.analytics.imageUploadEvent(this._fileType, this._file.size, this._fileSource, key, false);
-
         this.$throbber.hide();
         this.$urlInput.val(imageUrl);
         this.$typeInput.val('image');
@@ -315,6 +313,8 @@
         this.$submitButton.prop('disabled', false);
         this._uploader = null;
         $('.local-preview-image')[0].className = 'uploaded-preview-image';
+
+        r.analytics.imageUploadEvent(this._fileType, this._file.size, this._fileSource, key, false);
       }.bind(this));
 
       uploader.upload();
