@@ -709,6 +709,25 @@ class Account(Thing):
     def incr_admin_takedown_strikes(self, amt=1):
         return self._incr('admin_takedown_strikes', amt)
 
+    def get_style_override(self):
+        """Return the subreddit selected for reddit theme.
+
+        If the user has a theme selected and enabled and also has
+        the feature flag enabled, return the subreddit name.
+        Otherwise, return None.
+        """
+        # Reddit themes is not enabled for this user
+        if not feature.is_enabled('stylesheets_everywhere'):
+            return None
+
+        # Make sure they have a theme selected and enabled
+        if not self.pref_default_theme_sr:
+            return None
+        if not self.pref_enable_default_themes:
+            return None
+
+        return self.pref_default_theme_sr
+
 
 class FakeAccount(Account):
     _nodb = True

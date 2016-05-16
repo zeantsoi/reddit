@@ -430,10 +430,7 @@ class Reddit(Templated):
 
         self.toolbars = self.build_toolbars()
 
-        has_style_override = (c.user_is_loggedin and
-                c.user.pref_default_theme_sr and
-                feature.is_enabled('stylesheets_everywhere') and
-                c.user.pref_enable_default_themes)
+        user_style_sr = c.user.get_style_override()
         # if there is no style or the style is disabled for this subreddit
         self.no_sr_styles = (isinstance(c.site, DefaultSR) or
             (not self.get_subreddit_stylesheet_url(c.site) and not c.site.header) or
@@ -448,8 +445,8 @@ class Reddit(Templated):
         else:
             self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(c.site)
 
-        if has_style_override and self.no_sr_styles:
-            sr = Subreddit._by_name(c.user.pref_default_theme_sr)
+        if user_style_sr and self.no_sr_styles:
+            sr = Subreddit._by_name(user_style_sr)
             # make sure they can still view their override subreddit
             if sr.can_view(c.user) and sr.stylesheet_url:
                 self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(sr)
