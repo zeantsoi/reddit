@@ -853,7 +853,7 @@ class Link(Thing, Printable):
                         request.route_dict['action_name'] != 'comments'
                 ):
                     item.href_url = item.permalink
-                elif feature.is_enabled('outbound_clicktracking'):
+                elif feature.is_enabled('outbound_clicktracking') and not g.debug:
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
                     item.outbound_link = generate_outbound_link(item, outbound_url)
