@@ -313,12 +313,8 @@
         this.$typeInput.val('image');
         this.$form.prop('disabled', false);
         this.$submitButton.prop('disabled', false);
-        this._makePreviewImage(imageUrl, 'uploaded-preview-image', function(img) {
-          if (uploader === this._uploader) {
-            this._uploader = null;
-            this.$previewImageDisplayGroup.empty().append(img).show();
-          }
-        }.bind(this));
+        this._uploader = null;
+        $('.local-preview-image')[0].className = 'uploaded-preview-image';
       }.bind(this));
 
       uploader.upload();
