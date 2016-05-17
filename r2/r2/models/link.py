@@ -2064,7 +2064,6 @@ class Message(Thing, Printable):
                      display_to=None,
                      email_id=None,
                      sent_via_email=False,
-                     del_on_recipient=False,
                      )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
@@ -2519,13 +2518,7 @@ class Message(Thing, Printable):
         return s
 
     def keep_item(self, wrapped):
-        if c.user_is_admin:
-            return True
-        # do not keep message which were deleted on recipient
-        if (isinstance(self, Message) and
-                self.to_id == c.user._id and self.del_on_recipient):
-            return False
-        return not wrapped.enemy
+        return c.user_is_admin or not wrapped.enemy
 
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):

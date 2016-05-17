@@ -27,6 +27,7 @@ from common import LoginRegBase
 class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
     CONTROLLER = "post"
     ACTIONS = {
+        "login": "login",
         "register": "reg",
     }
 

@@ -31,6 +31,10 @@ from common import LoginRegBase
 
 class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
     CONTROLLER = "apiv1login"
+    ACTIONS = {
+        "login": "login",
+        "register": "register",
+    }
 
     def setUp(self):
         RedditControllerTestCase.setUp(self)
