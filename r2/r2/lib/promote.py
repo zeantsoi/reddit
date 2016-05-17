@@ -325,7 +325,7 @@ def new_promotion(is_self, title, content, author, ip):
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    sr = Subreddit._by_name(g.promo_sr_name, stale=True)
+    sr = Subreddit._byID(Subreddit.get_promote_srid(), stale=True)
     l = Link._submit(
         is_self=is_self,
         title=title,

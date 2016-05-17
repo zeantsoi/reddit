@@ -1975,7 +1975,7 @@ class PromoteApiController(ApiController):
         else:
             link_url = original_link.url
 
-        sr = Subreddit._by_name(g.promo_sr_name, stale=True)
+        sr = Subreddit._byID(Subreddit.get_promote_srid(), stale=True)
         l = Link._submit(
             is_self=False,
             title=original_link.title,

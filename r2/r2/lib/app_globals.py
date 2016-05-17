@@ -222,6 +222,7 @@ class Globals(object):
             'frequency_cap_default',
             'eu_cookie_max_attempts',
             'mobile_auth_gild_time',
+            'promo_sr_id',
         ],
 
         ConfigValue.float: [

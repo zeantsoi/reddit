@@ -1324,10 +1324,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def get_promote_srid(cls):
-        try:
-            return cls._by_name(g.promo_sr_name, stale=True)._id
-        except NotFound:
-            return None
+        return g.promo_sr_id or cls._by_name(g.promo_sr_name, stale=True)._id
 
     def is_subscriber(self, user):
         try:
