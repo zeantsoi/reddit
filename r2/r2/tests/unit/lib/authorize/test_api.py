@@ -96,7 +96,7 @@ class SimpleXMLObjectTest(RedditTestCase):
                          "Constructed does not match expected")
 
     def test_address(self):
-        from r2.lib.authorize import Address
+        from r2.lib.authorize.api import Address
         address = Address(firstName="Bob",
                           lastName="Smith",
                           company="Reddit Inc.",
@@ -126,7 +126,7 @@ class SimpleXMLObjectTest(RedditTestCase):
         self.assertEqual(address.toXML(), expected)
 
     def test_credit_card(self):
-        from r2.lib.authorize import CreditCard
+        from r2.lib.authorize.api import CreditCard
         card = CreditCard(cardNumber="1111222233334444",
                           expirationDate="11/22/33",
                           cardCode="123"
@@ -316,7 +316,7 @@ class ApiFunctionTest(TestCase):
         self.assertTrue(CreateRequest.called)
         args, kwargs = CreateRequest.call_args
         self.assertEqual(kwargs['extraOptions'], {'x_customer_ip': '127.0.0.1'})
-        self.assertEqual(return_value, self.transaction_id)
+        self.assertEqual(return_value, _response)
 
         # Scenario: call raises transaction_error
         _request.make_request.return_value = (False, _response)
@@ -346,7 +346,7 @@ class ApiFunctionTest(TestCase):
                                                   self.transaction_id)
         self.assertTrue(CreateRequest.called)
         self.assertTrue(_request.make_request.called)
-        self.assertEqual(return_value, None)
+        self.assertEqual(return_value, _response)
 
         # Scenario: call raises TransactionError
         _request.make_request.return_value = (False, _response)
@@ -374,7 +374,7 @@ class ApiFunctionTest(TestCase):
                                                self.transaction_id)
         self.assertTrue(CreateRequest.called)
         self.assertTrue(_request.make_request.called)
-        self.assertEqual(return_value, self.transaction_id)
+        self.assertEqual(return_value, _response)
 
         # Scenario: call raises TransactionError
         _request.make_request.return_value = (False, _response)

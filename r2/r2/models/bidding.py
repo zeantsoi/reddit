@@ -21,6 +21,7 @@
 ###############################################################################
 
 import datetime
+from functools import partial
 
 from pylons import request
 from pylons import app_globals as g
@@ -452,6 +453,57 @@ class PromotionWeights(Sessionized, Base):
         query = cls.session.query(distinct(cls.thing_name))
         query = cls._filter_query(query, start, end, link, author_id, sr_names)
         return {i[0] for i in query}
+
+
+class AuthorizeTransaction(Sessionized, Base):
+    __tablename__ = "authorize_transactions"
+
+    NotNullColumn = partial(Column, nullable=False)
+
+    # auto-incrementing primary key to avoid composite pkey collisions
+    transaction_internal_id      = Column(BigInteger, primary_key=True)
+
+    # will be unique from authorize
+    authnet_response_code        = NotNullColumn(Integer, index=True)
+    authnet_response_subcode     = NotNullColumn(Integer)
+    authnet_response_reason_code = NotNullColumn(Integer)
+    authnet_response_reason_text = NotNullColumn(String)
+    authnet_authorization_code   = NotNullColumn(String)
+    authnet_avs_response         = NotNullColumn(String, index=True)
+    authnet_trans_id             = NotNullColumn(BigInteger)
+    authnet_invoice_number       = NotNullColumn(String)
+    authnet_description          = NotNullColumn(String)
+    authnet_amount               = NotNullColumn(String)
+    authnet_method               = NotNullColumn(String)
+    authnet_transaction_type     = NotNullColumn(String, index=True)
+    authnet_customerid           = NotNullColumn(String)
+    authnet_country              = NotNullColumn(String, index=True)
+    authnet_md5                  = NotNullColumn(String)
+    authnet_cav_response         = NotNullColumn(String)
+
+    # identifying characteristics
+    account_id                   = NotNullColumn(BigInteger)
+    account_username             = NotNullColumn(String, index=True)
+    pay_id                       = Column(BigInteger, index=True)
+    link_id                      = NotNullColumn(BigInteger, index=True)
+    campaign_id                  = NotNullColumn(BigInteger, index=True)
+
+    # breadcrumbs
+    date                         = NotNullColumn(DateTime(timezone=True),
+                                                 default=safunc.now())
+
+    @classmethod
+    def _new(cls, authorize_response, **references):
+        transaction_data = {}
+
+        for key in authorize_response.iterkeys():
+            transaction_data['authnet_' + key.lower()] = authorize_response[key]
+
+        for key in references:
+            transaction_data[key] = references[key]
+
+        authorize_transaction = cls(**transaction_data)
+        authorize_transaction._commit()
 
 
 # do all the leg work of creating/connecting to tables

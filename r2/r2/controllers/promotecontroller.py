@@ -47,12 +47,11 @@ from r2.lib import (
     promote,
     s3_helpers,
 )
-from r2.lib.authorize import (
+from r2.lib.authorize.interaction import (
     get_or_create_customer_profile,
     add_or_update_payment_method,
-    PROFILE_LIMIT,
 )
-from r2.lib.authorize.api import AuthorizeNetException
+from r2.lib.authorize.api import AuthorizeNetException, PROFILE_LIMIT
 from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors

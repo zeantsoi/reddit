@@ -901,3 +901,8 @@ class TestMakeDailyPromotions(unittest.TestCase):
         self.assertEqual(promote_link.call_count, 3)
         self.assertEqual(update_promote_status.call_count, 2)
         self.assertEqual(extend_campaign.call_count, 0)
+
+
+# class TestAuthorizeInteraction(RedditTestCase):
+
+    

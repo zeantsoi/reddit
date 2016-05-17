@@ -28,6 +28,7 @@ from r2.lib.authorize.api import (AuthorizationHoldNotFound,
                                   DuplicateTransactionError,
                                   TRANSACTION_NOT_FOUND,
                                   TransactionError,)
+from r2.lib.authorize import interaction
 from r2.lib.authorize.interaction import (get_or_create_customer_profile,
                                           add_payment_method,
                                           update_payment_method,
@@ -50,6 +51,10 @@ class InteractionTest(RedditTestCase):
         self.user._id = 1
         self.user.name = 'name'
         self.user._fullname = 'fullname'
+        self.link = Mock(spec=Link)
+        self.link._id = 99
+
+        self.autopatch(interaction, 'AuthorizeTransaction')
 
     @patch('r2.lib.authorize.interaction.api.get_customer_profile')
     @patch('r2.lib.authorize.interaction.api.create_customer_profile')
@@ -166,65 +171,71 @@ class InteractionTest(RedditTestCase):
             auth_freebie_transaction(amount, self.user, link, campaign_id)
             self.assertTrue(one_mock.auth.called)
 
+    @patch('r2.models.bidding.request')
     @patch('r2.lib.authorize.interaction.request')
     @patch('r2.lib.authorize.interaction.api.create_authorization_hold')
     @patch('r2.lib.authorize.interaction.CustomerID.get_id')
     @patch('r2.lib.authorize.interaction.PayID.get_ids')
     def test_auth_transaction(self, get_ids, get_id, create_authorization_hold,
-                              request):
+                              request, bidding_request):
         """Test auth_transaction"""
         link = Mock(spec=Link)
         link._id = 99
         amount = 100
         payment_method_id = 50
         campaign_id = 99
-        request.ip = '127.0.0.1'
-        transaction_id = 123
+        request.ip = bidding_request.ip = '127.0.0.1'
+        authorize_response = Mock()
+        authorize_response.trans_id = 123
 
         # If get_ids is empty, assert that the proper value is returned
         get_ids.return_value = []
-        return_value = auth_transaction(amount, self.user, payment_method_id,
-                                        link, campaign_id)
+        return_value = auth_transaction(self.user, campaign_id, link._id,
+                                        amount, payment_method_id)
         self.assertEqual(return_value, (None, 'invalid payment method'))
 
         # Make get_ids return a valid payment_method_id
         get_ids.return_value.append(payment_method_id)
         # Assign arbitrary CustomerID, which comes from Authorize
         get_id.return_value = 1000
-        create_authorization_hold.return_value = transaction_id
+        create_authorization_hold.return_value = (authorize_response.trans_id,
+            authorize_response)
 
         # Scenario: create_authorization_hold raises DuplicateTransactionError
-        duplicate_transaction_error = DuplicateTransactionError(transaction_id=transaction_id)
+        duplicate_transaction_error = DuplicateTransactionError(
+            transaction_id=authorize_response.trans_id)
         create_authorization_hold.side_effect = duplicate_transaction_error
         # Why does patch.multiple return an AttributeError?
         with patch('r2.lib.authorize.interaction.Bid.one') as one:
             one.side_effect = NotFound()
-            return_value = auth_transaction(amount, self.user,
-                                            payment_method_id, link,
-                                            campaign_id)
+            return_value = auth_transaction(self.user, campaign_id, link._id,
+                                            amount, payment_method_id)
             # If create_authorization_hold raises NotFound, assert return value
-            self.assertEqual(return_value, (transaction_id, None))
+            self.assertEqual(return_value,
+                (authorize_response.trans_id, None))
 
         # Scenario: create_authorization_hold successfully returns
         with patch('r2.lib.authorize.interaction.Bid._new') as _new:
-            return_value = auth_transaction(amount, self.user,
-                                            payment_method_id, link,
-                                            campaign_id)
+            return_value = auth_transaction(self.user, campaign_id, link._id,
+                                            amount, payment_method_id)
             self.assertTrue(_new.called)
             # If create_authorization_hold works, assert return value
-            self.assertEqual(return_value, (transaction_id, None))
+            self.assertEqual(return_value,
+                (authorize_response.trans_id, None))
 
-        # Scenario: creat_authorization_hold raises TransactionError
-        create_authorization_hold.side_effect = TransactionError('')
-        return_value = auth_transaction(amount, self.user, payment_method_id,
-                                        link, campaign_id)
+        # Scenario: create_authorization_hold raises TransactionError
+        create_authorization_hold.side_effect = TransactionError('',
+            authorize_response)
+        return_value = auth_transaction(self.user, campaign_id, link._id,
+                                        amount, payment_method_id)
         # If create_authorization_hold raises TransactionError, assert return
         self.assertEqual(return_value[0], None)
 
     @patch('r2.lib.authorize.interaction.api.capture_authorization_hold')
     @patch('r2.lib.authorize.interaction.Bid.one')
     def test_charge_transaction(self, one, capture_authorization_hold):
-        transaction_id = 123
+        authorize_response = Mock()
+        authorize_response.trans_id = 123
         campaign_id = 99
         bid = Mock()
 
@@ -232,90 +243,98 @@ class InteractionTest(RedditTestCase):
 
         # Scenario: bid.is_charged() return True
         bid.is_charged.return_value = True
-        return_value = charge_transaction(self.user, transaction_id,
-                                          campaign_id)
+        return_value = charge_transaction(self.user, campaign_id, self.link._id,
+                                          authorize_response.trans_id)
         self.assertEqual(return_value, (True, None))
 
         # Scenario: transaction_id < 0
         bid.is_charged.return_value = False
-        return_value = charge_transaction(self.user, -transaction_id,
-                                          campaign_id)
+        return_value = charge_transaction(self.user, campaign_id, self.link._id,
+                                          -authorize_response.trans_id)
         self.assertTrue(bid.charged.called)
         self.assertEqual(return_value, (True, None))
 
         # Scenario: capture_authorization_hold is successful
-        return_value = charge_transaction(self.user, transaction_id,
-                                          campaign_id)
+        return_value = charge_transaction(self.user, campaign_id, self.link._id,
+                                          authorize_response.trans_id)
         self.assertTrue(bid.charged.called)
         self.assertEqual(return_value, (True, None))
 
         # Scenario: capture_authorization_hold raises AuthorizationHoldNotFound
         capture_authorization_hold.side_effect = AuthorizationHoldNotFound('')
-        return_value = charge_transaction(self.user, transaction_id,
-                                          campaign_id)
+        return_value = charge_transaction(self.user, campaign_id, self.link._id,
+                                          authorize_response.trans_id)
         self.assertTrue(bid.void.called)
         self.assertEqual(return_value, (False, TRANSACTION_NOT_FOUND))
 
         # Scenario: capture_authorization_hold raises TransactionError
-        capture_authorization_hold.side_effect = TransactionError('')
-        return_value = charge_transaction(self.user, transaction_id,
-                                          campaign_id)
+        capture_authorization_hold.side_effect = TransactionError('',
+            authorize_response)
+        return_value = charge_transaction(self.user, campaign_id, self.link._id,
+                                          authorize_response.trans_id)
         self.assertEqual(return_value[0], False)
 
     @patch('r2.lib.authorize.interaction.Bid.one')
     def test_void_transaction(self, one):
         bid = Mock()
         bid.pay_id = 111
-        transaction_id = 123
+        authorize_response = Mock()
+        authorize_response.trans_id = 123
         campaign_id = 99
 
         one.return_value = bid
 
         # Scenario: transaction_id < 0
-        return_value = void_transaction(self.user, -transaction_id, campaign_id)
+        return_value = void_transaction(self.user, campaign_id, self.link._id,
+                                        -authorize_response.trans_id)
         self.assertTrue(bid.void.called)
         self.assertEqual(return_value, (True, None))
 
         with patch('r2.lib.authorize.interaction.api.void_authorization_hold') as void:
             # Scenario: void_authorization_hold is successful
-            return_value = void_transaction(self.user, transaction_id,
-                                            campaign_id)
+            return_value = void_transaction(self.user, campaign_id,
+                                            self.link._id,
+                                            authorize_response.trans_id)
             self.assertTrue(bid.void.called)
             self.assertEqual(return_value, (True, None))
 
             # Scenario: void_authorization_hold raises TransactionError
-            void.side_effect = TransactionError('')
-            return_value = void_transaction(self.user, transaction_id,
-                                            campaign_id)
+            void.side_effect = TransactionError('', authorize_response)
+            return_value = void_transaction(self.user, campaign_id,
+                                            self.link._id,
+                                            authorize_response.trans_id)
             self.assertEqual(return_value[0], False)
 
     @patch('r2.lib.authorize.interaction.Bid.one')
     def test_refund_transaction(self, one):
         bid = Mock()
         bid.pay_id = 111
-        transaction_id = 123
+        authorize_response = Mock()
+        authorize_response.trans_id = 123
         campaign_id = 99
         amount = 100
 
         one.return_value = bid
 
         # Scenario: transaction_id < 0
-        return_value = refund_transaction(self.user, -transaction_id,
-                                          campaign_id, amount)
+        return_value = refund_transaction(self.user, campaign_id, self.link._id,
+                                          amount, -authorize_response.trans_id)
         bid.refund.assert_called_once_with(amount)
         self.assertEqual(return_value, (True, None))
 
         with patch('r2.lib.authorize.interaction.api.refund_transaction') as refund:
             # Scenario: refund_transaction is successful
             bid.reset_mock()
-            return_value = refund_transaction(self.user, transaction_id,
-                                              campaign_id, amount)
+            return_value = refund_transaction(self.user, campaign_id,
+                                              self.link._id, amount,
+                                              authorize_response.trans_id)
             bid.refund.assert_called_once_with(amount)
             self.assertEqual(return_value, (True, None))
 
             # Scenario: refund_transaction raises TransactionError
             bid.reset_mock()
-            refund.side_effect = TransactionError('')
-            return_value = refund_transaction(self.user, transaction_id,
-                                              campaign_id, amount)
+            refund.side_effect = TransactionError('', authorize_response)
+            return_value = refund_transaction(self.user, campaign_id,
+                                              self.link._id, amount,
+                                              authorize_response.trans_id)
             self.assertEqual(return_value[0], False)

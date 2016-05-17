@@ -28,7 +28,7 @@ from pylons import app_globals as g
 from r2.lib.db.thing import NotFound
 from r2.lib.utils import Storage
 from r2.lib.export import export
-from r2.models.bidding import Bid, CustomerID, PayID
+from r2.models.bidding import AuthorizeTransaction, Bid, CustomerID, PayID
 from r2.lib.authorize import api
 
 
@@ -36,6 +36,22 @@ __all__ = []
 
 
 FREEBIE_PAYMENT_METHOD_ID = -1
+
+
+def add_references(func):
+    """Add to decorated functions a kwarg named references
+    that includes all the reference IDs needed to join across models.
+    """
+    def wrap_func(user, campaign_id, link_id, *args):
+        references = dict(
+            account_id=user._id,
+            account_username=user.name,
+            campaign_id=campaign_id,
+            link_id=link_id,
+        )
+        return func(user, campaign_id, link_id, *args, references=references)
+
+    return wrap_func
 
 
 @export
@@ -125,35 +141,43 @@ def auth_freebie_transaction(amount, user, link, campaign_id):
 
 
 @export
-def auth_transaction(amount, user, payment_method_id, link, campaign_id):
+@add_references
+def auth_transaction(user, campaign_id, link_id, amount, payment_method_id,
+        references):
     if payment_method_id not in PayID.get_ids(user._id):
         return None, "invalid payment method"
 
     profile_id = CustomerID.get_id(user._id)
-    invoice = "T%dC%d" % (link._id, campaign_id)
+    invoice = "T%dC%d" % (link_id, campaign_id)
+
+    references['pay_id'] = payment_method_id
 
     try:
-        transaction_id = api.create_authorization_hold(
+        authorize_response = api.create_authorization_hold(
             profile_id, payment_method_id, amount, invoice, request.ip)
+        AuthorizeTransaction._new(authorize_response, **references)
     except api.DuplicateTransactionError as e:
         transaction_id = e.transaction_id
         try:
             bid = Bid.one(transaction_id, campaign=campaign_id)
         except NotFound:
-            bid = Bid._new(transaction_id, user, payment_method_id, link._id,
+            bid = Bid._new(transaction_id, user, payment_method_id, link_id,
                            amount, campaign_id)
         g.log.error("%s on campaign %d" % (e.message, campaign_id))
         return transaction_id, None
     except api.TransactionError as e:
+        authorize_response = e.authorize_response
+        AuthorizeTransaction._new(authorize_response, **references)
         return None, e.message
 
-    bid = Bid._new(transaction_id, user, payment_method_id, link._id, amount,
-                   campaign_id)
-    return transaction_id, None
+    bid = Bid._new(authorize_response.trans_id, user, payment_method_id,
+                   link_id, amount, campaign_id)
+    return authorize_response.trans_id, None
 
 
 @export
-def charge_transaction(user, transaction_id, campaign_id):
+@add_references
+def charge_transaction(user, campaign_id, link_id, transaction_id, references):
     bid = Bid.one(transaction=transaction_id, campaign=campaign_id)
     if bid.is_charged():
         return True, None
@@ -162,20 +186,24 @@ def charge_transaction(user, transaction_id, campaign_id):
         bid.charged()
         return True, None
 
-    profile_id = CustomerID.get_id(user._id)
+    references['pay_id'] = bid.pay_id
 
+    profile_id = CustomerID.get_id(user._id)
     try:
-        api.capture_authorization_hold(
+        authorize_response = api.capture_authorization_hold(
             customer_id=profile_id,
             payment_profile_id=bid.pay_id,
             amount=bid.bid,
             transaction_id=transaction_id,
         )
+        AuthorizeTransaction._new(authorize_response, **references)
     except api.AuthorizationHoldNotFound:
         # authorization hold has expired
         bid.void()
         return False, api.TRANSACTION_NOT_FOUND
     except api.TransactionError as e:
+        authorize_response = e.authorize_response
+        AuthorizeTransaction._new(authorize_response, **references)
         return False, e.message
 
     bid.charged()
@@ -183,17 +211,24 @@ def charge_transaction(user, transaction_id, campaign_id):
 
 
 @export
-def void_transaction(user, transaction_id, campaign_id):
+@add_references
+def void_transaction(user, campaign_id, link_id, transaction_id, references):
     bid = Bid.one(transaction=transaction_id, campaign=campaign_id)
 
     if transaction_id <= 0:
         bid.void()
         return True, None
 
+    references['pay_id'] = bid.pay_id
+
     profile_id = CustomerID.get_id(user._id)
     try:
-        api.void_authorization_hold(profile_id, bid.pay_id, transaction_id)
+        authorize_response = api.void_authorization_hold(profile_id, bid.pay_id,
+            transaction_id)
+        AuthorizeTransaction._new(authorize_response, **references)
     except api.TransactionError as e:
+        authorize_response = e.authorize_response
+        AuthorizeTransaction._new(authorize_response, **references)
         return False, e.message
 
     bid.void()
@@ -201,21 +236,28 @@ def void_transaction(user, transaction_id, campaign_id):
 
 
 @export
-def refund_transaction(user, transaction_id, campaign_id, amount):
+@add_references
+def refund_transaction(user, campaign_id, link_id, amount, transaction_id,
+        references):
     bid =  Bid.one(transaction=transaction_id, campaign=campaign_id)
     if transaction_id < 0:
         bid.refund(amount)
         return True, None
 
+    references['pay_id'] = bid.pay_id
+
     profile_id = CustomerID.get_id(user._id)
     try:
-        api.refund_transaction(
+        authorize_response = api.refund_transaction(
             customer_id=profile_id,
             payment_profile_id=bid.pay_id,
             amount=amount,
             transaction_id=transaction_id,
         )
+        AuthorizeTransaction._new(authorize_response, **references)
     except api.TransactionError as e:
+        authorize_response = e.authorize_response
+        AuthorizeTransaction._new(authorize_response, **references)
         return False, e.message
 
     bid.refund(amount)

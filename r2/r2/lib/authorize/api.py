@@ -85,16 +85,18 @@ class AuthorizeNetException(Exception):
 
 
 class TransactionError(Exception):
-    def __init__(self, message):
+    def __init__(self, message, authorize_response):
         self.message = message
+        self.authorize_response = authorize_response
 
 
 class DuplicateTransactionError(TransactionError):
-    def __init__(self, transaction_id):
+    def __init__(self, transaction_id, authorize_response=None):
         self.transaction_id = transaction_id
         message = ('DuplicateTransactionError with transaction_id %d' %
                    transaction_id)
-        super(DuplicateTransactionError, self).__init__(message)
+        super(DuplicateTransactionError, self).__init__(message,
+            authorize_response)
 
 
 class AuthorizationHoldNotFound(Exception): pass
@@ -626,9 +628,9 @@ def create_authorization_hold(customer_id, payment_profile_id, amount, invoice,
         raise DuplicateTransactionError(res.trans_id)
 
     if success:
-        return res.trans_id
+        return res
     else:
-        raise TransactionError(res.response_reason_text)
+        raise TransactionError(res.response_reason_text, res)
 
 
 def capture_authorization_hold(customer_id, payment_profile_id, amount,
@@ -646,11 +648,11 @@ def capture_authorization_hold(customer_id, payment_profile_id, amount,
     response_reason_code = res.get("response_reason_code")
 
     if success:
-        return
+        return res
     elif response_reason_code == TRANSACTION_NOT_FOUND:
         raise AuthorizationHoldNotFound()
     else:
-        raise TransactionError(res.response_reason_text)
+        raise TransactionError(res.response_reason_text, res)
 
 
 def void_authorization_hold(customer_id, payment_profile_id, transaction_id):
@@ -666,9 +668,9 @@ def void_authorization_hold(customer_id, payment_profile_id, transaction_id):
     success, res = request.make_request()
 
     if success:
-        return res.trans_id
+        return res
     else:
-        raise TransactionError(res.response_reason_text)
+        raise TransactionError(res.response_reason_text, res)
 
 
 def refund_transaction(customer_id, payment_profile_id, amount, transaction_id):
@@ -682,5 +684,7 @@ def refund_transaction(customer_id, payment_profile_id, amount, transaction_id):
         transaction=transaction)
     success, res = request.make_request()
 
-    if not success:
-        raise TransactionError(res.response_reason_text)
+    if success:
+        return res
+    else:
+        raise TransactionError(res.response_reason_text, res)

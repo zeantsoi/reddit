@@ -41,10 +41,10 @@ from pytz import timezone
 from r2.config import feature
 from r2.lib import (
     amqp,
-    authorize,
     emailer,
     hooks,
 )
+from r2.lib.authorize import interaction, api
 from r2.lib.db.operators import not_
 from r2.lib.db import queries
 from r2.lib.cache import sgm
@@ -827,7 +827,8 @@ def void_campaign(link, campaign, reason):
     bid_record = transactions.get(campaign._id)
     if bid_record:
         a = Account._byID(link.author_id)
-        authorize.void_transaction(a, bid_record.transaction, campaign._id)
+        interaction.void_transaction(a, campaign._id, link._id,
+            bid_record.transaction)
         campaign.trans_id = NO_TRANSACTION
         campaign._commit()
         text = ('voided transaction for %s: (trans_id: %d)'
@@ -871,11 +872,11 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
     void_campaign(link, campaign, reason='changed_payment')
 
     if freebie:
-        trans_id, reason = authorize.auth_freebie_transaction(
+        trans_id, reason = interaction.auth_freebie_transaction(
             campaign.total_budget_dollars, user, link, campaign._id)
     else:
-        trans_id, reason = authorize.auth_transaction(
-            campaign.total_budget_dollars, user, pay_id, link, campaign._id)
+        trans_id, reason = interaction.auth_transaction(user, campaign._id,
+            link._id, campaign.total_budget_dollars, pay_id)
 
     if trans_id and not reason:
         text = ('updated payment and/or budget for campaign %s: '
@@ -1121,7 +1122,7 @@ def authed_or_not_needed(campaign):
 
 def charged_or_not_needed(campaign):
     # True if a campaign has a charged transaction or doesn't need one
-    charged = authorize.is_charged_transaction(campaign.trans_id, campaign._id)
+    charged = interaction.is_charged_transaction(campaign.trans_id, campaign._id)
     needs_charge = not campaign.is_house
     return charged or not needs_charge
 
@@ -1206,11 +1207,12 @@ def charge_campaign(link, campaign, freebie=False, manual=False):
         return
 
     user = Account._byID(link.author_id)
-    success, reason = authorize.charge_transaction(user, campaign.trans_id,
-                                                   campaign._id)
+    success, reason = interaction.charge_transaction(user, campaign._id,
+                                                     link._id,
+                                                     campaign.trans_id)
 
     if not success:
-        if reason == authorize.TRANSACTION_NOT_FOUND:
+        if reason == api.TRANSACTION_NOT_FOUND:
             # authorization hold has expired
             original_trans_id = campaign.trans_id
             campaign.trans_id = NO_TRANSACTION
@@ -1488,8 +1490,8 @@ def refund_campaign(link, campaign, issued_by=None, reason=None):
 
     owner = Account._byID(campaign.owner_id, data=True)
     refund_amount = get_refund_amount(campaign)
-    success, reason = authorize.refund_transaction(
-        owner, campaign.trans_id, campaign._id, refund_amount)
+    success, reason = interaction.refund_transaction(
+        owner, campaign._id, link._id, refund_amount, campaign.trans_id)
 
     if not success:
         text = ('%s $%s refund failed: %s' % (campaign, refund_amount, reason))

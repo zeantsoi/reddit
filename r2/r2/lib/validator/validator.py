@@ -51,7 +51,7 @@ from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
 from r2.models.rules import MAX_RULES_PER_SUBREDDIT
 from r2.models.promo import Location
-from r2.lib.authorize import Address, CreditCard
+from r2.lib.authorize.api import Address, CreditCard
 from r2.lib.utils import constant_time_compare
 from r2.lib.require import require, require_split, RequirementException
 from r2.lib import signing

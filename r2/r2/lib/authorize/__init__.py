@@ -20,5 +20,3 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from api import *
-from interaction import *
