@@ -99,6 +99,8 @@ class ListingController(RedditController):
     show_chooser = False
     suppress_reply_buttons = False
 
+    show_promo_in_listing = False
+
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
 
@@ -223,7 +225,11 @@ class ListingController(RedditController):
         if (getattr(c.site, "_id", -1) == Subreddit.get_promote_srid() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
-        model = LinkListing(self.builder_obj, show_nums=self.show_nums)
+        model = LinkListing(
+            self.builder_obj,
+            show_nums=self.show_nums,
+            show_promo_in_listing=self.show_promo_in_listing,
+        )
         suggestions = None
         if self.next_suggestions_cls:
             suggestions = self.next_suggestions_cls()
@@ -347,6 +353,7 @@ class SubredditListingController(ListingController):
 
 class ListingWithPromos(SubredditListingController):
     show_organic = False
+    show_promo_in_listing = True
 
     def make_requested_ad(self, requested_ad):
         try:
@@ -374,7 +381,7 @@ class ListingWithPromos(SubredditListingController):
             navigable=False,
         ).listing()
 
-    def make_spotlight(self):
+    def make_spotlight(self, can_show_promo):
         """Build the Spotlight.
 
         The frontpage gets a Spotlight box that contains promoted and organic
@@ -390,11 +397,6 @@ class ListingWithPromos(SubredditListingController):
         keywords = []
         displayed_things=[link._fullname 
                           for link in self.listing_obj.things[0:10]]
-        # `pref_hide_ads` doesn't reset after gold expires.
-        # need to ensure they still have gold.
-        gold_user_ads_off = c.user.gold and c.user.pref_hide_ads
-        site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
-        can_show_promo = (not gold_user_ads_off and not site_headlines_off)
 
         def organic_keep_fn(item):
             base_keep_fn = super(ListingWithPromos, self).keep_fn()
@@ -441,10 +443,18 @@ class ListingWithPromos(SubredditListingController):
                 self.extra_page_classes = \
                     self.extra_page_classes + ['front-page']
 
-            if requested_ad:
+            # `pref_hide_ads` doesn't reset after gold expires.
+            # need to ensure they still have gold.
+            gold_user_ads_off = c.user.gold and c.user.pref_hide_ads
+            site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
+            can_show_promo = (not gold_user_ads_off and not site_headlines_off)
+
+            if feature.is_enabled('promoted_links_in_feed') and can_show_promo:
+                spotlight = None
+            elif requested_ad:
                 spotlight = self.make_requested_ad(requested_ad)
             elif on_frontpage and show_organic:
-                spotlight = self.make_spotlight()
+                spotlight = self.make_spotlight(can_show_promo)
             elif show_sponsors:
                 spotlight = self.make_single_ad()
 

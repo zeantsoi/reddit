@@ -22,6 +22,11 @@
 
 ## a kooky hack to make ranks and voting arrows in the spotlight box line up
 ## without late rendering or blasting style attributes everywhere
+<%!
+  from r2.config import feature
+  from r2.lib.filters import scriptsafe_dumps
+%>
+
 <style>
   body > .content .link .rank, .rank-spacer {
     width: ${thing.rank_width}ex
@@ -37,3 +42,12 @@
   }
 </style>
 <%include file="listing.html"/>
+<script>
+%if feature.is_enabled('promoted_links_in_feed') and thing.show_promo_in_listing:
+  r.listing.setup(
+    ${scriptsafe_dumps(",".join([link._fullname for link in thing.things[:10]]))},
+    ${scriptsafe_dumps(thing.path_for_promo_request)},
+    ${scriptsafe_dumps(thing.show_promo_in_listing)}
+  );
+%endif
+</script>

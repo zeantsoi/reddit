@@ -327,7 +327,14 @@ class LinkListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)
 
+        self.show_promo_in_listing = kw.get("show_promo_in_listing", False)
         self.show_nums = kw.get('show_nums', False)
+        if isinstance(c.site, MultiReddit):
+            self.path_for_promo_request = c.site.path
+        elif not isinstance(c.site, FakeSubreddit):
+            self.path_for_promo_request = c.site.name
+        else:
+            self.path_for_promo_request = Frontpage.name
 
     def listing(self, *args, **kwargs):
         wrapped = Listing.listing(self, *args, **kwargs)

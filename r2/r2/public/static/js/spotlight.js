@@ -52,6 +52,11 @@
         this.showPromo = false;
       }
 
+      // ensure that r.promo is initialized
+      if(!r.promo || !r.promo._initialized){
+        r.promo.setup(this.displayed_things, this.site, this.showPromo);
+      }
+
       this._bindEvents();
 
       organicLinks.forEach(function(name) {
@@ -163,18 +168,8 @@
     requestPromo: function(options) {
       options = options || {};
 
-      return $.ajax({
-        type: 'POST',
-        url: '/api/request_promo',
-        timeout: 1000,
-        data: {
-          site: this.site,
-          r: r.config.post_site,
-          dt: this.displayed_things,
-          loid: this.loid,
-          is_refresh: options.refresh,
-        },
-      }).pipe(function(promo) {
+      var newPromo = r.promo.requestPromo(options);
+      return newPromo.pipe(function(promo) {
         var prevPromo = this.$listing.find('.promotedlink')
         if (promo) {
           var $item = $(promo);
