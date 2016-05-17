@@ -837,17 +837,24 @@ class Link(Thing, Printable):
                 item.affiliatize_link = False
             else:
                 item.href_url = item.url
+                variant = feature.variant('media_preview_redirect')
                 media_preview_experiment_enabled = (
-                    feature.is_enabled('media_preview_redirect') and 
-                    feature.variant('media_preview_redirect') == 'test_group')
+                    feature.is_enabled('media_preview_redirect') and
+                    (variant == 'redirect_to_comments_page' or
+                        variant == 'expand_inline'))
 
-                # check media preview pref &
-                # only change href for listing pages (not comment pages)
-                if (media_preview_experiment_enabled and
+                # check media preview pref, and only change behavior for 
+                # listing pages (not comment pages)
+                if (media_preview_experiment_enabled and 
                         getattr(item, 'preview_image', False) and
                         show_media_preview and
+                        item.link_child and
                         request.route_dict['action_name'] != 'comments'):
-                    item.href_url = item.permalink
+                    if variant == 'redirect_to_comments_page': 
+                        item.href_url = item.permalink
+                    elif variant == 'expand_inline':
+                        item.expand_inline = True
+                        item.href_url = 'javascript:void(0)'
 
                 if feature.is_enabled('affiliate_links') \
                         and item.post_hint == 'link' \
