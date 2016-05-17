@@ -4556,6 +4556,7 @@ class PromoteLinkBase(Templated):
         self.mobile_native_targeting_enabled = feature.is_enabled("mobile_native_targeting")
         self.mobile_targeting_enabled = (self.mobile_web_targeting_enabled or
             self.mobile_native_targeting_enabled)
+        self.mobile_device_version_targeting_enabled = feature.is_enabled("mobile_device_version_targeting")
         self.auto_extend_enabled = feature.is_enabled("ads_auto_extend")
         Templated.__init__(self, **kw)
 

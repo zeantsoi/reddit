@@ -1409,6 +1409,7 @@ class PromoteApiController(ApiController):
         can_target_mobile_web = feature.is_enabled('mobile_web_targeting')
         can_target_mobile_native = feature.is_enabled('mobile_native_targeting')
         can_target_mobile = can_target_mobile_web or can_target_mobile_native
+        can_target_mobile_device_version = feature.is_enabled('mobile_device_version_targeting')
 
         if ((not can_target_mobile_web and platform == "mobile_web") or
                 (not can_target_mobile_native and platform == "mobile_native") or
@@ -1490,7 +1491,7 @@ class PromoteApiController(ApiController):
                 c.errors.add(errors.BAD_PROMO_MOBILE_OS, field='mobile_os')
                 form.set_error(errors.BAD_PROMO_MOBILE_OS, 'mobile_os')
                 return
-            elif os_versions == 'filter':
+            elif can_target_mobile_device_version and os_versions == 'filter':
                 # check if OS is selected, but OS devices are not
                 if (('iOS' in mobile_os and not ios_devices) or
                         ('Android' in mobile_os and not android_devices)):
@@ -1644,14 +1645,18 @@ class PromoteApiController(ApiController):
             'bid_pennies': bid_pennies,
             'platform': platform,
             'mobile_os': mobile_os,
-            'ios_devices': ios_devices,
-            'ios_version_range': ios_versions,
-            'android_devices': android_devices,
-            'android_version_range': android_versions,
             'no_daily_budget': is_auction and no_daily_budget,
             'auto_extend': (feature.is_enabled("ads_auto_extend") and
                 is_auction and auto_extend),
         }
+
+        if can_target_mobile_device_version:
+            campaign_dict.update({
+                'ios_devices': ios_devices,
+                'ios_version_range': ios_versions,
+                'android_devices': android_devices,
+                'android_version_range': android_versions,
+            })
 
         if campaign:
             if requires_reapproval and promote.is_accepted(link):

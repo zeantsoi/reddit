@@ -497,9 +497,10 @@ class PromoCampaign(Thing):
     @classmethod
     def create(cls, link, target, start_date, end_date,
                frequency_cap, priority, location,
-               platform, mobile_os, ios_devices, ios_version_range,
-               android_devices, android_version_range, total_budget_pennies,
-               cost_basis, bid_pennies, no_daily_budget, auto_extend):
+               platform, mobile_os, total_budget_pennies,
+               cost_basis, bid_pennies, no_daily_budget, auto_extend,
+               ios_devices=None, ios_version_range=None,
+               android_devices=None, android_version_range=None):
         pc = PromoCampaign(
             link_id=link._id,
             start_date=start_date,
