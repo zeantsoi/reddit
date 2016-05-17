@@ -125,6 +125,11 @@ class ListingController(RedditController):
         """uses the query() method to define the contents of the
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
+
+        if (feature.is_enabled('more_links') and 
+                feature.variant('more_links') == 'test_group'):
+            num = 100
+
         self.num = num
         self.count = count
         self.after = after
