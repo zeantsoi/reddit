@@ -46,15 +46,20 @@
     </head>
     <body>
         <div class="reddit-embed">
-          <div class="reddit-embed-content">
-            ${next.body()}
-            ${plain_link(_("More comments"), thing.link.permalink, _sr_path=False, _class="reddit-embed-more-link")}
-          </div>
-          <footer class="reddit-embed-footer" role="contentinfo">
-                ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img", data=reddit_data)}
+            <div class="reddit-embed-content">
+                ${next.body()}
+                ${plain_link(_("More comments"), thing.link.permalink, _sr_path=False, _class="reddit-embed-more-link")}
+            </div>
+          <a href="${thing.link.permalink}" class="reddit-embed-comment-link-wrap">
+            <footer class="reddit-embed-footer" role="contentinfo">
+
+                <span class="reddit-embed-footer-img"></span>
+                
                 <span class="reddit-embed-footer-link-title">${thing.link.title}</span>
                 <p class="reddit-embed-link-meta">/r/${c.site.name} • ${thing.link.score} ${_("points")} • ${thing.link.num_comments} ${_("comments")}</p>
-          </footer>
+
+            </footer>
+          </a>
         </div>
         <script>
             window.REDDIT_EMBED_CONFIG = ${unsafe(json.dumps(c.embed_config))};

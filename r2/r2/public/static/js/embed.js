@@ -54,7 +54,7 @@
           '</label>' +
       '</h4>' +
       '<textarea class="c-form-control" id="facebook-embed-code" rows="3" readonly hidden>' +
-        '<figure>' +
+        '<figure class="op-interactive">' +
           '<iframe>' +
             '<%- html %>' +
           '</iframe>' +
@@ -176,7 +176,7 @@
         var height = $preview.height();
 
         $textarea.val(html);
-        $facebookEmbed.val('<figure><iframe>' + html + '</iframe></figure>');
+        $facebookEmbed.val('<figure class="op-interactive"><iframe>' + html + '</iframe></figure>');
 
         if ($option.data('rerender') !== false) {
           var selector = '[data-options="' + r.utils.escapeSelector(serializedOptions) + '"]';

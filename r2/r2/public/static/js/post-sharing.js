@@ -468,18 +468,18 @@
         },
       ];
 
-      if (r.config.feature_post_embed) {
-        shareOptions.push({
-          name: 'embed',
-          tooltip: r._('Embed Post'),
-        });
-      }
-
       if (r.config.logged && !r.config.user_in_timeout
           && r.config.email_verified) {
         shareOptions.push({
           name: 'email',
           tooltip: r._('Email to a Friend'),
+        });
+      }
+
+      if (r.config.feature_post_embed) {
+        shareOptions.push({
+          name: 'embed',
+          tooltip: r._('Embed Post'),
         });
       }
 
