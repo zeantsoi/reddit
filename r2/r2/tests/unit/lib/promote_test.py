@@ -9,8 +9,10 @@ from r2.tests import RedditTestCase
 from r2.lib.authorize.api import Transaction
 from r2.lib import promote
 from r2.lib.promote import (
+    auth_campaign,
     can_extend,
     can_refund,
+    charge_campaign,
     free_campaign,
     extend_campaign,
     get_nsfw_collections_srnames,
@@ -25,6 +27,7 @@ from r2.lib.promote import (
     InapplicableRefundException,
     get_utc_offset,
     make_daily_promotions,
+    void_campaign,
 )
 from r2.models import (
     Account,
@@ -239,7 +242,7 @@ class TestPromoteRefunds(RedditTestCase):
     @patch("r2.lib.promote.can_refund")
     @patch("r2.lib.promote.get_refund_amount")
     @patch("r2.lib.promote.g.events.campaign_payment_refund_event")
-    @patch("r2.lib.authorize.refund_transaction")
+    @patch("r2.lib.authorize.interaction.refund_transaction")
     def test_refund_campaign_throws_if_refund_fails(
             self, refund_transaction, campaign_payment_refund_event,
             get_refund_amount, can_refund, account_by_id, promo_log_add):
@@ -252,7 +255,7 @@ class TestPromoteRefunds(RedditTestCase):
             refund_campaign(self.link, self.campaign)
 
     @patch("r2.lib.promote.g.events.campaign_payment_refund_event")
-    @patch("r2.lib.authorize.refund_transaction")
+    @patch("r2.lib.authorize.interaction.refund_transaction")
     @patch('r2.models.PromotionLog.add')
     @patch('r2.lib.db.queries.unset_underdelivered_campaigns')
     @patch('r2.lib.emailer.refunded_promo')
@@ -903,6 +906,100 @@ class TestMakeDailyPromotions(unittest.TestCase):
         self.assertEqual(extend_campaign.call_count, 0)
 
 
-# class TestAuthorizeInteraction(RedditTestCase):
+@patch('r2.lib.promote.PromotionLog')
+class TestAuthorizeInteraction(RedditTestCase):
+    """Assert that authorize.interaction functions are called
+    with args passed in the following order:
 
-    
+    1. user (object)
+    2. campaign_id (int)
+    3. link_id(int)
+    4. Remaining args
+
+    This is important because the `add_references` decorator
+    expects the first three args to be passed in this sequence.
+    """
+
+    def setUp(self):
+        self.user = Mock()
+        self.campaign = Mock()
+        self.campaign._id = 10
+        self.campaign.total_budget_dollars = 100
+        self.campaign.trans_id = 123
+        self.link = Mock()
+        self.link._id = 1
+        self.pay_id = 999
+
+
+    @patch('r2.lib.promote.interaction.auth_transaction')
+    def test_auth_campaign(self, auth_transaction, PromotionLog):
+        # Force a quick return
+        auth_transaction.return_value = (False, True)
+
+        # Assert that auth_transaction called with pay_id=None
+        auth_campaign(self.link, self.campaign, self.user)
+        auth_transaction.assert_called_once_with(self.user, self.campaign._id,
+            self.link._id, self.campaign.total_budget_dollars, None)
+
+        # Assert that auth_transaction called with pay_id=self.pay_id
+        auth_transaction.reset_mock()
+        auth_campaign(self.link, self.campaign, self.user, self.pay_id)
+        auth_transaction.assert_called_once_with(self.user, self.campaign._id,
+            self.link._id, self.campaign.total_budget_dollars, self.pay_id)
+
+    @patch('r2.lib.promote.Account')
+    @patch('r2.lib.promote.interaction.charge_transaction')
+    def test_charge_transaction(self, charge_transaction, Account,
+            PromotionLog):
+        # Force a quick return
+        charge_transaction.return_value = (False, True)
+
+        Account._byID.return_value = self.user
+
+        # Assert auth_transaction called with final arg self.campaign.trans_id
+        self.campaign.is_house = False
+        charge_campaign(self.link, self.campaign)
+        charge_transaction.assert_called_once_with(self.user, self.campaign._id,
+            self.link._id, self.campaign.trans_id)
+
+    @patch('r2.lib.promote.g.events.campaign_payment_void_event')
+    @patch('r2.lib.promote.get_transactions')
+    @patch('r2.lib.promote.Account')
+    @patch('r2.lib.promote.interaction.void_transaction')
+    def test_charge_transaction(self, void_transaction, Account,
+            get_transactions, event, PromotionLog):
+        bid_record = Mock()
+        bid_record.transaction = 0
+        transactions = Mock()
+        transactions.get.return_value = bid_record
+        get_transactions.return_value = transactions
+        Account._byID.return_value = self.user
+
+        # Assert oid_transaction called with final arg bid_record.transaction
+        void_campaign(self.link, self.campaign, 'some fake reason')
+        void_transaction.assert_called_once_with(self.user, self.campaign._id,
+            self.link._id, bid_record.transaction)
+
+    @patch('r2.lib.promote.get_refund_amount')
+    @patch('r2.lib.promote.can_refund')
+    @patch('r2.lib.promote.Account')
+    @patch('r2.lib.promote.interaction.refund_transaction')
+    def test_charge_transaction(self, refund_transaction, Account,
+            can_refund, get_refund_amount, PromotionLog):
+        # Force a quick return
+        refund_transaction.return_value = (False, True)
+
+        can_refund.return_value = True
+        refund_amount = 100.
+        get_refund_amount.return_value = refund_amount
+        Account._byID.return_value = self.user
+
+        # Assert that calling refund_campaign with success=False throws an
+        # exception
+        with self.assertRaises(RefundProviderException):
+            refund_campaign(self.link, self.campaign)
+
+        # Assert refund_transaction called with final args refund_amount and
+        # self.campaign.trans_id
+        refund_transaction.assert_called_once_with(self.user, self.campaign._id,
+            self.link._id, refund_amount, self.campaign.trans_id)
