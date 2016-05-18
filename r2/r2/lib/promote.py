@@ -476,7 +476,7 @@ def free_campaign(link, campaign, user):
     transaction_id, reason = auth_campaign(link, campaign, user, freebie=True)
 
     if promo_datetime_now() >= campaign.start_date:
-        charge_campaign(link, campaign)
+        charge_campaign(link, campaign, freebie=True)
         promote_link(link, campaign)
         all_live_promo_srnames(_update=True)
 
@@ -974,7 +974,7 @@ def accept_promotion(link):
         if is_accepted_promo(now, link, camp):
             # if link was edited live, do not check against Authorize.net
             if not was_edited_live:
-                charge_campaign(link, camp)
+                charge_campaign(link, camp, manual=True)
             if charged_or_not_needed(camp):
                 promote_link(link, camp)
                 is_live = True
@@ -1146,7 +1146,7 @@ def get_served_promos(offset=0):
             yield camp, link
 
 
-def charge_campaign(link, campaign):
+def charge_campaign(link, campaign, freebie=False, manual=False):
     if charged_or_not_needed(campaign):
         return
 
@@ -1177,6 +1177,15 @@ def charge_campaign(link, campaign):
             (campaign._id, campaign.trans_id))
     PromotionLog.add(link, text)
 
+    if not freebie:
+        g.events.campaign_payment_charge_event(
+            link=link,
+            campaign=campaign,
+            amount_pennies=int(campaign.total_budget_dollars * 100.),
+            is_system=not manual,
+            request=request,
+            context=c,
+        )
 
 def charge_pending(offset=1):
     for camp, link in get_accepted_promos(offset=offset):

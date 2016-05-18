@@ -487,7 +487,8 @@ class TestFreebies(RedditTestCase):
         free_campaign(self.link, campaign, self.user)
 
         # Assert these are called becase the link needs to be updated
-        self.charge_campaign.assert_called_once_with(self.link, campaign)
+        self.charge_campaign.assert_called_once_with(self.link, campaign,
+            freebie=True)
         self.promote_link.assert_called_once_with(self.link, campaign)
         self.all_live_promo_srnames.called_once_with(_update=True)
 

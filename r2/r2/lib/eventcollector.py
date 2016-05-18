@@ -1064,6 +1064,34 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    def campaign_payment_charge_event(self, link, campaign, amount_pennies,
+            is_system=True, request=None, context=None):
+        """Send an event recording when a campaign payment is charged.
+
+        link: A promoted r2.models.Link object
+        campaign: A r2.models.PromoCampaign object
+        amount_pennies: Transaction amount in pennies.
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+        is_system: Bool whether event was system triggered
+
+        """
+        event = SelfServeEvent(
+            event_type='ss.campaign_payment_charged',
+            request=request,
+            context=context,
+            data=dict(
+                amount_pennies=amount_pennies,
+                is_system=is_system,
+            ),
+        )
+
+        event.add_promoted_link_fields(link)
+        event.add_campaign_fields(campaign)
+
+        self.save_event(event)
+
+    @squelch_exceptions
     def campaign_payment_void_event(
             self, link, campaign,
             reason, amount_pennies,
