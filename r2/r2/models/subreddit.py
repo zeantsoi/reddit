@@ -1324,6 +1324,8 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def get_promote_srid(cls):
+        # If g.promo_sr_id is 0, force the lookup of the
+        # promo subreddit by name
         return g.promo_sr_id or cls._by_name(g.promo_sr_name, stale=True)._id
 
     def is_subscriber(self, user):
