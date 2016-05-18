@@ -1219,8 +1219,18 @@ class Subreddit(Thing, Printable, BaseSite):
                                                       data=True,
                                                       return_dict=False,
                                                       stale=True)
-        else:
-            return cls.default_subreddits(ids=ids)
+        elif (not user and
+                len(c.recent_subreddits) == 10 and
+                feature.is_enabled("subreddit_cookie_frontpage") and
+                feature.variant("subreddit_cookie_frontpage") == "test_group"):
+            # Experiment: use the _recent_srs cookie to create the front page
+            # if it has 10 subreddits for logged out users
+            if ids:
+                return [sr._id for sr in c.recent_subreddits]
+            else:
+                return c.recent_subreddits
+
+        return cls.default_subreddits(ids=ids)
 
 
     # Used to pull all of the SRs a given user moderates or is a contributor
