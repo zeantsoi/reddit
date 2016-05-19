@@ -127,11 +127,14 @@ class EventQueue(object):
 
     @squelch_exceptions
     @sampled("events_collector_submit_sample_rate")
-    def submit_event(self, new_post, request=None, context=None):
+    def submit_event(self, new_post, request=None, context=None,
+            context_data=None):
         """Create a 'submit' event for event-collector
 
         new_post: An r2.models.Link object
         request, context: Should be pylons.request & pylons.c respectively
+        context_data: The context_data processed from request and c. Used
+            when request and c aren't accessible (from the image_upload_q)
 
         """
         event = Event(
@@ -140,6 +143,7 @@ class EventQueue(object):
             time=new_post._date,
             request=request,
             context=context,
+            data=context_data,
         )
 
         event.add("post_id", new_post._id)
@@ -166,7 +170,7 @@ class EventQueue(object):
     @squelch_exceptions
     def image_upload_event(self, key_name=None, mimetype=None,
             size=None, px_size=None, url=None,
-            successful=True, request=None, context=None):
+            successful=True, context_data=None):
         """Create an event for submitting an image upload.
 
         key_name: Random ID that the image will take on as the filename
@@ -176,13 +180,13 @@ class EventQueue(object):
         px_size: Tuple of (width, height) of image in pixels
         url: Image url
         successful: True if the image is moved to the permanent bucket
-        request, context: Should be pylons.request & pylons.c respectively
+        context_data: The context_data processed from request and c. Used
+            when request and c aren't accessible (from the image_upload_q)
         """
         event = Event(
             topic="image_upload_events",
             event_type="ss.upload_image",
-            request=request,
-            context=context,
+            data=context_data,
         )
 
         event.add("image_key", key_name)

@@ -22,6 +22,7 @@
 import csv
 from collections import defaultdict
 import hashlib
+import json
 import re
 import urllib
 import urllib2
@@ -110,6 +111,7 @@ from r2.lib.filters import _force_unicode, _force_utf8, websafe_json, websafe, s
 from r2.lib.db import queries, tdb_cassandra
 from r2.lib import (
     emailer,
+    eventcollector,
     media,
     newsletter,
     promote,
@@ -600,35 +602,37 @@ class ApiController(RedditController):
                 form.has_errors('url', errors.BAD_URL)
                 return
 
-        # Image uploads: move to the permanent bucket and rewrite
-        # the url to the new image url
-        if image_upload:
-            data = make_temp_uploaded_image_permanent(
-                image_key=s3_image_key,
-            )
-            image_url = data["image_url"]
-            g.events.image_upload_event(
-                successful=data["successful"],
-                key_name=data["key_name"],
-                mimetype=data["mimetype"],
-                size=data["size"],
-                px_size=data["px_size"],
-                url=image_url,
-                request=request,
-                context=c,
-            )
-
-            if not image_url:
-                c.errors.add(errors.BAD_FILE_TYPE, field='url')
-                form.has_errors('url', errors.BAD_FILE_TYPE)
-                return
-            else:
-                url = image_url
-
         # get rid of extraneous whitespace in the title
         cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
 
+        if sr.should_ratelimit(c.user, 'link'):
+            VRatelimit.ratelimit(rate_user=True, rate_ip=True,
+                prefix="rate_submit_")
+
+        # Processing image uploads in image_upload_q, so don't create
+        # the link until the image is done processing.
+        # This mostly involves moving the image from the temp bucket
+        # to the permanent bucket and setting thumbnails and previews.
+        # The client will poll to see if it's done so that it can
+        # redirect the user to the new link
+        if image_upload:
+            context_data = eventcollector.Event.get_context_data(request, c)
+            amqp.add_item("image_upload_q",
+                json.dumps({
+                    "s3_key": s3_image_key.name,
+                    "title": cleaned_title,
+                    "author_id36": c.user._id36,
+                    "sr_id36": sr._id36,
+                    "ip": request.ip,
+                    "sendreplies": sendreplies,
+                    "context_data": context_data,
+                })
+            )
+            return
+
+        # Note: Link._submit is also called in image_upload_q, so any changes
+        # made to this might be needed there as well
         l = Link._submit(
             is_self=is_self,
             title=cleaned_title,
@@ -639,15 +643,6 @@ class ApiController(RedditController):
             sendreplies=sendreplies,
         )
 
-        # Get preview and thumbnail media for image uploads
-        if image_upload:
-            l.image_upload = True
-            l._commit()
-
-            # Generate thumbnails and preview objects for image uploads
-            with g.stats.get_timer("image_upload.set_media"):
-                set_media(l)
-
         if not is_self:
             ban = is_banned_domain(url)
             if ban:
@@ -655,10 +650,6 @@ class ApiController(RedditController):
                 admintools.spam(l, banner = "domain (%s)" % ban.banmsg)
                 hooks.get_hook('banned_domain.submit').call(item=l, url=url,
                                                             ban=ban)
-
-        if sr.should_ratelimit(c.user, 'link'):
-            VRatelimit.ratelimit(rate_user=True, rate_ip = True,
-                                 prefix = "rate_submit_")
 
         queries.new_link(l)
         l.update_search_index()
@@ -5435,7 +5426,7 @@ class ApiController(RedditController):
         # Simpleflake is largely time based, so reverse the string
         # for more efficient sharding in S3
         key_name = to36(simpleflake.simpleflake())[::-1]
-        keyspace = "%s/%s" % (c.user._fullname, key_name)
+        keyspace = "images/%s/%s" % (c.user._fullname, key_name)
         redirect = None
 
         # Allow 20 MB to be passed for images and 100 MB for gifs

@@ -47,11 +47,16 @@ from pylons import app_globals as g
 
 from r2 import models
 from r2.config import feature
-from r2.lib import amqp, hooks
+from r2.lib import (
+    amqp,
+    hooks,
+    s3_helpers,
+)
+from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
-from r2.lib.template_helpers import format_html
+from r2.lib.template_helpers import add_sr, format_html
 from r2.lib.utils import (
     TimeoutFunction,
     TimeoutFunctionException,
@@ -68,6 +73,7 @@ from r2.models.media_cache import (
     Media,
     MediaByURL,
 )
+from r2.models import Account, NotFound, Subreddit
 from urllib2 import (
     HTTPError,
     URLError,
@@ -1299,3 +1305,90 @@ def run():
             print traceback.format_exc()
 
     amqp.consume_items('scraper_q', process_link)
+
+
+def process_image_upload():
+    """
+    Process images in image_upload_q for image hosting.
+
+    Move images to the permanent bucket and strip exif data.
+    Create the link with the new image url and then fetch the
+    thumbnail and preview images.
+    """
+    @g.stats.amqp_processor('image_upload_q')
+    def process_image(msg):
+        msg_dict = json.loads(msg.body)
+        s3_image_key = s3_helpers.get_key(
+            g.s3_image_uploads_bucket,
+            key=msg_dict["s3_key"],
+        )
+
+        # Move to the permanent bucket and rewrite
+        # the url to the new image url
+        try:
+            data = TimeoutFunction(
+                make_temp_uploaded_image_permanent, 60)(s3_image_key)
+        except TimeoutFunctionException:
+            print "Timed out on %s" % s3_image_key.name
+            return
+        except KeyboardInterrupt:
+            raise
+
+        image_url = data["image_url"]
+        g.events.image_upload_event(
+            successful=data["successful"],
+            key_name=data["key_name"],
+            mimetype=data["mimetype"],
+            size=data["size"],
+            px_size=data["px_size"],
+            url=image_url,
+            context_data=msg_dict["context_data"],
+        )
+
+        # Most likely failed because bad file type,
+        # so don't create the link
+        if not image_url:
+            return
+
+        sr = Subreddit._byID36(msg_dict["sr_id36"])
+        # If this link has already been submitted, redirect the
+        # user to this link rather than creating a new Link.
+        # Can't check if the link exists before this point since
+        # the final file extension isn't known until PIL reads the
+        # image, so the final url hasn't been determined.
+        try:
+            existing_link = Link._by_url(image_url, sr)
+            if len(existing_link) > 1:
+                existing_link = existing_link[0]
+        except NotFound:
+            existing_link = []
+
+        if existing_link:
+            url = add_sr(existing_link[0].make_permalink_slow())
+            return
+
+        l = Link._submit(
+            is_self=False,
+            title=msg_dict["title"],
+            content=image_url,
+            author=Account._byID36(msg_dict["author_id36"]),
+            sr=sr,
+            ip=msg_dict["ip"],
+            sendreplies=msg_dict["sendreplies"],
+            image_upload=True,
+        )
+        g.events.submit_event(l, context_data=msg_dict["context_data"])
+
+        # Update listings to include this new link
+        queries.new_link(l)
+        l.update_search_index()
+
+        # Generate thumbnails and preview objects for image uploads
+        try:
+            TimeoutFunction(set_media, 30)(l, use_cache=True)
+        except TimeoutFunctionException:
+            print "Timed out on %s" % l._fullname
+        except KeyboardInterrupt:
+            raise
+
+    amqp.consume_items('image_upload_q', process_image)

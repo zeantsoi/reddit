@@ -254,7 +254,7 @@ class Link(Thing, Printable):
 
     @classmethod
     def _submit(cls, is_self, title, content, author, sr, ip,
-                sendreplies=True):
+                sendreplies=True, image_upload=False):
         from r2.models import admintools
         from r2.models.comment_tree import CommentTree
 
@@ -293,6 +293,7 @@ class Link(Thing, Printable):
             is_self=is_self,
             over_18=over_18,
             affiliatize_link=author.allow_affiliates_replacing,
+            image_upload=image_upload,
         )
 
         l._commit()
