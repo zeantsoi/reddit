@@ -126,7 +126,9 @@ class ListingController(RedditController):
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
 
-        if (feature.is_enabled('more_links') and 
+        # desktop only
+        if (not is_api() and 
+                feature.is_enabled('more_links') and
                 feature.variant('more_links') == 'test_group'):
             num = 100
 
