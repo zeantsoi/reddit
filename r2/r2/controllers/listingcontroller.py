@@ -531,7 +531,8 @@ class HotController(ListingWithPromos):
             elif isinstance(c.site, DefaultSR) and not self.listing_obj.prev:
                 trending_info = self.trending_info()
                 if trending_info:
-                    if feature.is_enabled("new_ads_styles"):
+                    if feature.is_enabled("new_ads_styles") and \
+                       feature.variant("new_ads_styles") == 'test_group':
                         stack = [
                             TrendingSubredditsBar(**trending_info),
                             self.spotlight,

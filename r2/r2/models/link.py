@@ -1303,7 +1303,8 @@ class PromotedLink(Link):
                 except (AttributeError, IndexError):
                     pass
 
-            item.new_ads_styles_enabled = feature.is_enabled("new_ads_styles")
+            item.new_ads_styles_enabled = feature.is_enabled("new_ads_styles") and \
+                                          feature.variant('new_ads_styles') == 'test_group'
             item.rowstyle_cls = "link %s" % status
             if item.new_ads_styles_enabled:
                 item.rowstyle_cls += " new-ad-style"
