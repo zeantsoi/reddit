@@ -367,6 +367,13 @@ class FrontController(RedditController):
                                                    g.max_comments_gold))))
             num = g.max_comments
 
+        # only do this experiment for desktop users
+        if not is_api() and feature.is_enabled('fewer_comments_shown'):
+            if feature.variant('fewer_comments_shown') == '1_comment':
+                num = 1
+            elif feature.variant('fewer_comments_shown') == '3_comments':
+                num = 3
+
         page_classes = ['comments-page']
 
         # if permalink page, add that message first to the content
