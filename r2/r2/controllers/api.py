@@ -117,6 +117,7 @@ from r2.lib import (
     promote,
     s3_helpers,
     tracking,
+    websockets,
 )
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
@@ -618,6 +619,7 @@ class ApiController(RedditController):
         # redirect the user to the new link
         if image_upload:
             context_data = eventcollector.Event.get_context_data(request, c)
+            websocket_url = websockets.make_url(s3_image_key.name, max_age=600)
             amqp.add_item("image_upload_q",
                 json.dumps({
                     "s3_key": s3_image_key.name,
@@ -629,6 +631,7 @@ class ApiController(RedditController):
                     "context_data": context_data,
                 })
             )
+            form._send_data(websocket_url=websocket_url)
             return
 
         # Note: Link._submit is also called in image_upload_q, so any changes

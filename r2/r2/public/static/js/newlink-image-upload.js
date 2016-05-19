@@ -28,12 +28,32 @@
       );
     },
 
+    websocketEvents: {
+      'message:already_created': function(message) {
+        $(window).off('beforeunload');
+        document.getElementById('newlink').reset();
+        window.location = message.redirect;
+      },
+      'message:success': function(message) {
+        $(window).off('beforeunload');
+        document.getElementById('newlink').reset();
+        window.location = message.redirect;
+      },
+      'message:failed': function() {
+        var msg = r._("The image upload failed");
+        $('#newlink').find('.status').text(msg);
+      },
+    },
+
     init: function() {
       this._debouncedRequestSuggestTitle = _.debounce(this._requestSuggestTitle, this.SUGGEST_TITLE_DEBOUNCE_RATE);
 
       this.form = document.getElementById('newlink');
 
       if (!this.form) { return; }
+
+      this.defaultSubmitHandler = this.form.onsubmit;
+      this.form.onsubmit = this._handleSubmit.bind(this);
 
       this.$form = $(this.form);
       this.$submitButton = this.$form.find('button[name=submit]');
@@ -143,6 +163,40 @@
         this.$fileInputDisplayGroup.empty();
       }
     },
+
+    _handleSubmit: function(e) {
+      var form = this.form;
+
+      if (this.$typeInput.val() !== "image") {
+        return this.defaultSubmitHandler.call(form, e);
+      }
+
+      if (form.disabled) {
+        return false;
+      }
+
+      try {
+        simple_post_form(form, 'submit', { api_type: 'json' }, true, this._handleSubmitStatus.bind(this))
+        this._setFormDisabled(true);
+        $(form).find(".error").not(".status").hide();
+        $(form).find(".status").html(linkstatus(form)).show();
+        return false;
+      } catch(e) {
+        return false;
+      }
+    },
+
+    _handleSubmitStatus: function(req) {
+      // listen for the status of the image upload process
+      this.websocket = new r.WebSocket(req.json.data['websocket_url']);
+      this.websocket.on(this.websocketEvents);
+      this.websocket.start();
+    },
+
+    _setFormDisabled: function(val) {
+      this.$form.prop('disabled', val);
+      this.$submitButton.prop('disabled', val);
+    },
     
     _handleUrlInput: function(url) {
       this.$fileInputDisplayGroup.hide();
@@ -174,8 +228,7 @@
       this.$fileInputDisplayGroup.hide();
       this.$imageNameDisplayGroup.show();
       this.$imageNameDisplayText.text(file.name);
-      this.$form.prop('disabled', true);
-      this.$submitButton.prop('disabled', true);
+      this._setFormDisabled(true);
       this._requestS3Lease(file);
     },
 
@@ -192,8 +245,7 @@
       this.$imageNameDisplayText.text('');
       this.$previewImageDisplayGroup.hide().empty();
       this.$typeInput.val('link');
-      this.$form.prop('disabled', false);
-      this.$submitButton.prop('disabled', false);
+      this._setFormDisabled(false);
     },
 
     _renderErrors: function(errors) {
@@ -309,8 +361,7 @@
         this.$throbber.hide();
         this.$urlInput.val(imageUrl);
         this.$typeInput.val('image');
-        this.$form.prop('disabled', false);
-        this.$submitButton.prop('disabled', false);
+        this._setFormDisabled(false);
         this._uploader = null;
         $('.local-preview-image')[0].className = 'uploaded-preview-image';
 

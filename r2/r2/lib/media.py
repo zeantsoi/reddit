@@ -51,6 +51,7 @@ from r2.lib import (
     amqp,
     hooks,
     s3_helpers,
+    websockets,
 )
 from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import NotFound
@@ -1313,7 +1314,9 @@ def process_image_upload():
 
     Move images to the permanent bucket and strip exif data.
     Create the link with the new image url and then fetch the
-    thumbnail and preview images.
+    thumbnail and preview images. Websockets broadcast either
+    the failure of link creation or redirect to the submitted
+    image url.
     """
     @g.stats.amqp_processor('image_upload_q')
     def process_image(msg):
@@ -1348,6 +1351,11 @@ def process_image_upload():
         # Most likely failed because bad file type,
         # so don't create the link
         if not image_url:
+            websockets.send_broadcast(
+                namespace=msg_dict["s3_key"],
+                type="failed",
+                payload={},
+            )
             return
 
         sr = Subreddit._byID36(msg_dict["sr_id36"])
@@ -1358,13 +1366,19 @@ def process_image_upload():
         # image, so the final url hasn't been determined.
         try:
             existing_link = Link._by_url(image_url, sr)
-            if len(existing_link) > 1:
-                existing_link = existing_link[0]
         except NotFound:
             existing_link = []
 
         if existing_link:
             url = add_sr(existing_link[0].make_permalink_slow())
+            websockets.send_broadcast(
+                namespace=msg_dict["s3_key"],
+                type="already_created",
+                payload={
+                    "redirect": url,
+                },
+            )
+
             return
 
         l = Link._submit(
@@ -1390,5 +1404,13 @@ def process_image_upload():
             print "Timed out on %s" % l._fullname
         except KeyboardInterrupt:
             raise
+
+        websockets.send_broadcast(
+            namespace=msg_dict["s3_key"],
+            type="success",
+            payload={
+                "redirect": add_sr(l.make_permalink_slow()),
+            },
+        )
 
     amqp.consume_items('image_upload_q', process_image)
