@@ -159,6 +159,7 @@ class Account(Thing):
                      force_password_reset=False,
                      orangered_opt_in_message_timestamp=None,
                      last_password_reset_timestamp=None,
+                     accepted_promoted_links=0,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

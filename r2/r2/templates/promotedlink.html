@@ -37,8 +37,11 @@
 
 <%def name="tagline()">
 <%
+   acceptance_count = None
    if (c.user_is_sponsor or thing.is_author) and not promote.is_promoted(thing):
      taglinetext = _("to be promoted by %(author)s") 
+     if c.user_is_sponsor:
+        acceptance_count = thing.author.accepted_promoted_links
    elif thing.promoted_by or thing.promoted_display_name:
      taglinetext = _("submitted by %(author)s")
    else:
@@ -48,6 +51,9 @@
                         force_show_flair=False).render()
  %>
 ${unsafe(taglinetext % dict(author=author))}
+  %if acceptance_count:
+    (${acceptance_count} ${_('accepted link')}${'s' if acceptance_count != 1 else ''})
+  %endif
 </%def>
 
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">

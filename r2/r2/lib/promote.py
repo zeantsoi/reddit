@@ -252,6 +252,11 @@ def expand_macros(string):
     return string.replace("{{timestamp}}", str(time.time()))
 
 
+def set_previously_accepted(link):
+    link.previously_accepted = True
+    link._commit()
+
+
 def add_trackers(items, sr, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
@@ -338,6 +343,7 @@ def new_promotion(is_self, title, content, author, ip):
     l.promoted = True
     l.disable_comments = False
     l.sendreplies = True
+    l.previously_accepted = False
     PromotionLog.add(l, 'promotion created')
 
     update_promote_status(l, PROMOTE_STATUS.unpaid)
@@ -968,6 +974,16 @@ def accept_promotion(link, quality):
     link.promo_quality = quality
     link._commit()
 
+    # If a link does not have previously_accepted attr, it is not accepted
+    # and the user should be credited for accepting it; same for links that
+    # are previously_accepted==False
+    if not getattr(link, 'previously_accepted', False):
+        account = Account._byID(link.author_id)
+        account.accepted_promoted_links += 1
+        account._commit()
+
+        set_previously_accepted(link)
+
     if not was_edited_live:
         emailer.accept_promo(link)
 
@@ -1051,6 +1067,8 @@ def reject_promotion(link, reason=None, notify_why=True):
 
 
 def unapprove_promotion(link):
+    set_previously_accepted(link)
+
     if is_unpaid(link):
         return
     elif is_finished(link):
@@ -1063,6 +1081,7 @@ def unapprove_promotion(link):
 
 
 def edited_live_promotion(link):
+    set_previously_accepted(link)
     update_promote_status(link, PROMOTE_STATUS.edited_live)
     emailer.edited_live_promo(link)
 
