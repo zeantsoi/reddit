@@ -2092,7 +2092,7 @@ class MoreChildren(MoreComments):
 
 
 class Message(Thing, Printable):
-    _cache = g.message_transitionalcache
+    _cache = g.thingcache
     _defaults = dict(reported=0,
                      was_comment=False,
                      parent_id=None,
@@ -2112,6 +2112,10 @@ class Message(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "message:"
 
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
