@@ -1564,25 +1564,41 @@ class RedditController(OAuth2ResourceController):
         return False
 
     def mweb_redirect(self):
+        """ Determine if a user should be redirected to the mweb experience.
+
+        We don't want users to end up on mweb based on the following
+        conditions:
+            1. They're not on mobile.
+            2. They've opted out of it.
+            3. The path they're on is not mweb compatible.
+
+        Additionally, some special logic is applied to SEO and experiment
+        users. If they're SEO users and they meet the above logic, they get
+        the mweb experience with the 'card' view. If they're not SEO users,
+        it's safe to try to bucket them into either the mweb experience or the
+        desktop experience.
+        """
+
         # abort redirect to mweb as soon as possible
         no_redirect = request.cookies.get('mweb-no-redirect')
 
         with g.stats.get_timer('mweb-redirect'):
-            # the feature check needs to come last so we do not add people
-            # to the test bucket that are not relevant to this test.
             url = UrlParser(request.fullpath)
-            if (c.render_style == 'html' and 
-                    not no_redirect and 
-                    detect_mobile(request.user_agent) and 
-                    self.is_safe_mobile_web_route(url.path) and
-                    feature.is_enabled('mobileweb_redirect_v2') and
-                    feature.variant('mobileweb_redirect_v2') in ('card', 'compact')
-            ):
+            if (c.render_style == 'html' and
+                    not no_redirect and
+                    detect_mobile(request.user_agent) and
+                    self.is_safe_mobile_web_route(url.path)):
+
+                compact = 'true'
+                if utils.is_seo_referrer():
+                    compact = 'false'
+                elif (feature.is_enabled('mweb_redirect_holdout') and
+                        feature.variant('mweb_redirect_holdout') == 'holdout'):
+                    return
 
                 url.switch_subdomain_by_extension('mobile')
                 url.update_query(utm_source='mweb_redirect')
-                if feature.variant('mobileweb_redirect_v2') == 'compact':
-                    url.update_query(compact='true')
+                url.update_query(compact=compact)
 
                 g.stats.simple_event('mweb.redirect')
                 abort(302, location=self.format_output_url(url.unparse()))
