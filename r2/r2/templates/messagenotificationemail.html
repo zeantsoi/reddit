@@ -201,12 +201,13 @@
               %endif
 
               <!-- Button -->
-              <div style="font-size:0pt; line-height:0pt; height:8px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="8" style="height:8px" alt="" /></div>
+              <div style="font-size:0pt; line-height:0pt; height:8px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="8" style="height:8px" alt="" />
+              </div>
 
-              <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_button'})}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td align="left">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="left">
+                    <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_button'})}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank">
                       <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
                         <tr>
                           <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
@@ -215,11 +216,12 @@
                           </td>
                           <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
                         </tr>
-                      </table>    
-                    </td>
-                  </tr>
-                </table>
-              </a>
+                      </table>
+                    </a> 
+                  </td>
+                </tr>
+              </table>
+              
               <!-- END Button -->
               <!-- END Main -->
 
