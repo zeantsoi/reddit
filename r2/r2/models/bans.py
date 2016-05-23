@@ -70,3 +70,17 @@ class TempTimeout(UserTempBan):
     @classmethod
     def schedule_rowkey(cls):
         return "untimeout"
+
+
+# ATO status will last for 30 days. After that duration, if user still
+# did not reset the password, would auto hardban the account.
+class AtoTimeout(UserTempBan):
+    HARDBAN = "hardban"
+
+    @classmethod
+    def cancel_rowkey(cls):
+        return cls.HARDBAN
+
+    @classmethod
+    def schedule_rowkey(cls):
+        return cls.HARDBAN

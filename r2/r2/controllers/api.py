@@ -139,6 +139,8 @@ from r2.models.ip import set_account_ip
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
 from r2.models.rules import SubredditRules
 from r2.models.vote import Vote
+from r2.models.bans import AtoTimeout
+from r2.models.admin_notes import AdminNotesBySystem
 from r2.lib.merge import ConflictException
 
 # NOTE: the '*' imports above mean that we can give ourselves a bad day
@@ -3871,6 +3873,14 @@ class ApiController(RedditController):
         # Clean force password reset and in timeout flags with no expiration.
         if user.force_password_reset:
             user.force_password_reset = False
+            AdminNotesBySystem.add(
+                system_name="user",
+                subject=user.name,
+                note="User responded to ATO as of: %s" % datetime.now(g.tz),
+                author=user.name,
+                when=datetime.now(g.tz),
+            )
+            AtoTimeout.unschedule(user)
             if not user.timeout_expiration:
                 user.in_timeout = False
 
@@ -5282,7 +5292,6 @@ class ApiController(RedditController):
             return
 
         if note:
-            from r2.models.admin_notes import AdminNotesBySystem
             AdminNotesBySystem.add(system, subject, note, author)
         form.refresh()
 
