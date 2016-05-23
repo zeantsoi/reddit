@@ -99,16 +99,15 @@ class S3MediaProvider(MediaProvider):
 
         return bucket_name, key_name
      
-    def make_inaccessible(self, url):
+    def make_inaccessible(self, url=None, key=None):
         """Make the content unavailable, but do not remove."""
-        bucket_name, key_name = self._get_bucket_key_from_url(url)
-
         timer = g.stats.get_timer("providers.s3.key_set_private")
         timer.start()
+        if not key:
+            bucket_name, key_name = self._get_bucket_key_from_url(url)
+            bucket = self._get_bucket(bucket_name, validate=False)
+            key = bucket.get_key(key_name)
 
-        bucket = self._get_bucket(bucket_name, validate=False)
-
-        key = bucket.get_key(key_name)
         if key:
             # set the file as private, but don't delete it, if it exists
             key.set_acl('private')

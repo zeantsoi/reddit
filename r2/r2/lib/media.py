@@ -1337,6 +1337,9 @@ def process_image_upload():
         except KeyboardInterrupt:
             raise
 
+        # Make the image in the temp bucket inaccessible
+        g.media_provider.make_inaccessible(key=s3_image_key)
+
         image_url = data["image_url"]
         g.events.image_upload_event(
             successful=data["successful"],

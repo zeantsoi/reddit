@@ -29,11 +29,12 @@ class MediaProvider(object):
 
     """
 
-    def make_inaccessible(self, url):
-        """Make the content unavaiable, but do not remove. Content could
+    def make_inaccessible(self, url=None, key=None):
+        """Make the content unavailable, but do not remove. Content could
         be recovered at a later time.
 
         `url` must be a url linking to the content
+        `key` is the s3_image_key
 
         The return value should be a 
         """
