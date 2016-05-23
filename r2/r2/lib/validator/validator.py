@@ -1607,6 +1607,22 @@ class VPasswordChange(VPassword):
 MIN_USERNAME_LENGTH = 3
 MAX_USERNAME_LENGTH = 20
 
+
+class VNewPasswordIsNew(Validator):
+    def run(self, new_pass, old_pass):
+        if self.has_errors:
+            return
+
+        if new_pass == old_pass:
+            self.set_error(errors.OLD_PASSWORD_MATCH)
+
+    def param_docs(self):
+        return {
+            self.param[0]: 'the new password',
+            self.param[1]: 'the existing password',
+        }
+
+
 user_rx = re.compile(r"\A[\w-]+\Z", re.UNICODE)
 
 def chkuser(x):

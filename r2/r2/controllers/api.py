@@ -1439,6 +1439,7 @@ class ApiController(RedditController):
         VUser(),
         VModhash(),
         VVerifyPassword("curpass", fatal=False),
+        VNewPasswordIsNew(['newpass', 'curpass']),
         password=VPasswordChange(['newpass', 'verpass']),
     )
     def POST_update_password(self, form, jquery, password):
@@ -1449,28 +1450,33 @@ class ApiController(RedditController):
         to succeed.
 
         """
-
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
 
-        if (password and
-            not (form.has_errors("newpass", errors.BAD_PASSWORD) or
-                 form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
+        if (form.has_errors("newpass", errors.SHORT_PASSWORD) or
+            form.has_errors("newpass", errors.BAD_PASSWORD) or
+            form.has_errors("verpass", errors.BAD_PASSWORD_MATCH) or
+            form.has_errors("newpass", errors.OLD_PASSWORD_MATCH)):
+            return
 
-            # set last_password_reset_timestamp attr
-            c.user.last_password_reset_timestamp = datetime.now(g.tz)
+        if not password:
+            return
 
-            change_password(c.user, password)
+        # set last_password_reset_timestamp attr
+        c.user.last_password_reset_timestamp = datetime.now(g.tz)
 
-            if c.user.email:
-                emailer.password_change_email(c.user)
+        change_password(c.user, password)
 
-            form.set_text('.status', _('your password has been updated'))
-            form.set_inputs(curpass="", newpass="", verpass="")
+        if c.user.email:
+           emailer.password_change_email(c.user)
 
-            # the password has changed, so the user's cookie has been
-            # invalidated.  drop a new cookie.
-            self.login(c.user)
+        form.set_text('.status', _('your password has been updated'))
+        form.set_inputs(curpass="", newpass="", verpass="")
+
+        # the password has changed, so the user's cookie has been
+        # invalidated.  drop a new cookie.
+        self.login(c.user)
+
 
     @validatedForm(VUser(),
                    VModhash(),

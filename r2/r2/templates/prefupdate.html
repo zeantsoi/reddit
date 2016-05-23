@@ -169,6 +169,8 @@
     <div class="spacer">
       <%utils:round_field title="${_('new password')}">
         <input type="password" name="newpass">
+        ${error_field("SHORT_PASSWORD", "newpass")}
+        ${error_field("OLD_PASSWORD_MATCH", "newpass")}
         ${error_field("BAD_PASSWORD", "newpass")}
       </%utils:round_field>
     </div>
