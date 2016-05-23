@@ -30,11 +30,8 @@ from mock import MagicMock
 
 from r2.tests import RedditTestCase
 from r2.models import Link
-from r2.lib import eventcollector
 from r2.lib import hooks
 from r2 import models
-
-from ... import MockEventQueue
 
 
 FAKE_DATE = datetime.datetime(2005, 6, 23, 3, 14, 0, tzinfo=pytz.UTC)
@@ -43,16 +40,8 @@ FAKE_DATE = datetime.datetime(2005, 6, 23, 3, 14, 0, tzinfo=pytz.UTC)
 class TestEventCollector(RedditTestCase):
 
     def setUp(self):
-        self.autopatch(g.events, "queue_production", MockEventQueue())
-        self.autopatch(g.events, "queue_test", MockEventQueue())
-
-        self.domain_mock = self.autopatch(eventcollector, "domain")
-
-        self.created_ts_mock = MagicMock(name="created_ts")
-        self._datetime_to_millis = self.autopatch(
-            eventcollector, "_datetime_to_millis",
-            return_value=self.created_ts_mock)
-
+        super(TestEventCollector, self).setUp()
+        self.mock_eventcollector()
         self.autopatch(hooks, "get_hook")
 
     def test_vote_event(self):
@@ -412,7 +401,7 @@ class TestEventCollector(RedditTestCase):
         context.user._age.total_seconds.return_value = 1000
         request = MagicMock(name="request")
         request.ip = "1.2.3.4"
-        
+
         subreddit = MagicMock(name="subreddit")
         subreddit._age.total_seconds.return_value = 1000
         subreddit._id = 1

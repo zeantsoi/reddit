@@ -38,6 +38,7 @@ from paste.deploy import loadapp
 
 from routes.util import url_for
 from r2.lib.utils import query_string
+from r2.lib import eventcollector
 
 
 __all__ = ['RedditTestCase', 'RedditControllerTestCase']
@@ -122,8 +123,10 @@ class MockEventQueue(object):
         if count is None:
             assert self.queue, "no events in queue"
         else:
-            assert len(self.queue) == count, \
-                "expected %d events in queue, saw %d" % (count, len(self.queue))
+            err = "expected %d events in queue, saw %d" % (
+                count, len(self.queue)
+            )
+            assert len(self.queue) == count, err
 
     def assert_event_item(self, expected_data):
         self.assert_item_count(count=1)
@@ -167,6 +170,22 @@ class RedditTestCase(TestCase):
         self.app.post_request_hook = lambda self: \
             paste.registry.restorer.restoration_begin(request_id)
         paste.registry.restorer.restoration_begin(request_id)
+
+    def mock_eventcollector(self):
+        """Mock out the parts of the event collector which write to the queue.
+
+        Also mocks `domain` and `_datetime_to_millis` as it makes writing tests
+        easier since we pass in mock data to the events as well.
+        """
+        self.autopatch(g.events, "queue_production", MockEventQueue())
+        self.autopatch(g.events, "queue_test", MockEventQueue())
+
+        self.domain_mock = self.autopatch(eventcollector, "domain")
+
+        self.created_ts_mock = MagicMock(name="created_ts")
+        self._datetime_to_millis = self.autopatch(
+            eventcollector, "_datetime_to_millis",
+            return_value=self.created_ts_mock)
 
     assert_same_dict = staticmethod(assert_same_dict)
 
@@ -236,10 +255,7 @@ class RedditControllerTestCase(RedditTestCase):
             cache=NonCache(),
         )
 
-        # mock out for controllers UTs which use
-        # r2.lib.controllers as part of the flow.
-        self.autopatch(g.events, "queue_production", MockEventQueue())
-        self.autopatch(g.events, "queue_test", MockEventQueue())
+        self.mock_eventcollector()
 
         self.simple_event = self.autopatch(g.stats, "simple_event")
 
@@ -277,6 +293,5 @@ class RedditControllerTestCase(RedditTestCase):
         return query_string(kw).lstrip("?")
 
     def additional_headers(self, headers, body):
-        """Additional generated headers to be added to the request.
-        """
+        """Additional generated headers to be added to the request."""
         return {}
