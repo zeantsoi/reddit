@@ -1769,8 +1769,6 @@ def get_unspent_budget(campaign):
 
 
 def is_underdelivered(campaign):
-    spent = get_spent_amount(campaign)
-
     return get_unspent_budget(campaign) > 0
 
 
