@@ -627,7 +627,7 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = False
         campaign.extensions_remaining = 1
         campaign.is_terminated = False
-        is_underdelivered.return_value = False
+        is_underdelivered.return_value = True
         self.assertFalse(can_extend(campaign))
 
     def test_can_extend_is_false_if_no_extensions_remain(self, is_underdelivered):
@@ -635,7 +635,7 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = True
         campaign.extensions_remaining = 0
         campaign.is_terminated = False
-        is_underdelivered.return_value = False
+        is_underdelivered.return_value = True
         self.assertFalse(can_extend(campaign))
 
     def test_can_extend_is_false_if_not_underdelivered(self, is_underdelivered):
@@ -651,7 +651,8 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = True
         campaign.extensions_remaining = 1
         campaign.is_terminated = True
-        is_underdelivered.return_value = False
+        is_underdelivered.return_value = True
+        is_underdelivered.return_value = True
         self.assertFalse(can_extend(campaign))
 
     def test_can_extend_is_true(self, is_underdelivered):
