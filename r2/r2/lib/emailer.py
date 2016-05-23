@@ -298,6 +298,7 @@ def message_notification_email(data):
             text=MessageNotificationEmail(**templateData).render(style='email'),
             html=MessageNotificationEmail(**templateData).render(style='html'),
             custom_headers=custom_headers,
+            email_type='message_notification_email',
         )
 
         # report the email event to data pipeline

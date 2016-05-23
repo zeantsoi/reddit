@@ -46,7 +46,7 @@ class MailgunEmailProvider(EmailProvider):
 
     def send_email(self, to_address, from_address, subject, text=None, html=None,
                    reply_to=None, custom_headers=None, parent_email_id=None, 
-                   other_email_ids=None):
+                   other_email_ids=None, email_type=None):
         from pylons import app_globals as g
 
         if not text and not html:
@@ -80,6 +80,7 @@ class MailgunEmailProvider(EmailProvider):
             "h:Reply-To": reply_to,
             "h:In-Reply-To": parent_email_id,
             "h:References": " ".join(other_email_ids),
+            "h:X-Mailgun-Campaign-Id": email_type,
         }
 
         if custom_headers:
