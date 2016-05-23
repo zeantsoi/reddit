@@ -1318,6 +1318,34 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    def password_update_event(self, user, base_url=None,
+                              request=None, context=None):
+
+        """Create a 'Password Update Event' for the event-collector.
+
+        user: user that triggered above actions
+        base_url: URL of the page from where the event is sent, relative
+            to "reddit.com"
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+        """
+        event = Event(
+            topic="password_update_events",
+            event_type='ss.change_password',
+            request=request,
+            context=context,
+        )
+
+        event.add('base_url', base_url)
+        event.add('user_age_seconds', user._age.total_seconds())
+        event.add_target_fields(user)
+
+        hooks.get_hook("eventcollector.password_update_event").call(
+            user=user, request=request, context=context,
+        )
+        self.save_event(event)
+
+    @squelch_exceptions
     def email_update_event(self, action_name, user, base_url=None,
                            dnt=None, new_email=None, request=None,
                            context=None):
@@ -1359,6 +1387,13 @@ class EventQueue(object):
         event.add('user_age_seconds', user._age.total_seconds())
         event.add_target_fields(user)
 
+        hooks.get_hook("eventcollector.email_update_event").call(
+            user=user,
+            action_name=action_name,
+            new_email=new_email,
+            request=request,
+            context=context,
+        )
         self.save_event(event)
 
     @squelch_exceptions

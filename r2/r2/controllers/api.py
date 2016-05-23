@@ -1477,6 +1477,11 @@ class ApiController(RedditController):
         # invalidated.  drop a new cookie.
         self.login(c.user)
 
+        g.events.password_update_event(
+            user=c.user,
+            base_url=request.fullpath,
+            request=request,
+            context=c)
 
     @validatedForm(VUser(),
                    VModhash(),
