@@ -1339,12 +1339,31 @@ class PromotedLink(Link):
                 except (AttributeError, IndexError):
                     pass
 
-            item.new_ads_styles_enabled = promote.ads_feature_enabled(
-                "new_ads_styles"
+            new_ads_styles = promote.ads_feature_enabled(
+                "new_ads_style"
             )
+            promoted_links_in_feed = promote.ads_feature_enabled(
+                "promoted_links_in_feed"
+            )
+
+            if new_ads_styles:
+                item.ad_style = 'new-ad-style'
+            elif (promoted_links_in_feed and
+                  feature.variant("promoted_links_in_feed") in
+                    ("random_pos_transparent", "top_pos_transparent")):
+                item.ad_style = 'new-ad-style-transparent'
+            elif (promoted_links_in_feed and
+                  feature.variant("promoted_links_in_feed") in
+                    ("random_pos_grey", "top_pos_grey")):
+                item.ad_style = 'new-ad-style-grey'
+            elif (promoted_links_in_feed and
+                  feature.variant("promoted_links_in_feed") in
+                    ("random_pos_blue", "top_pos_blue")):
+                item.ad_style = 'new-ad-style-blue'
+
             item.rowstyle_cls = "link %s" % status
-            if item.new_ads_styles_enabled:
-                item.rowstyle_cls += " new-ad-style"
+            if hasattr(item, 'ad_style'):
+                item.rowstyle_cls += " %s" % item.ad_style
 
             item.moat_tracking_enabled = (
                 moat_tracking_enabled and

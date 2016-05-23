@@ -53,7 +53,7 @@ from r2.lib.utils import (
     trunc_string,
     precise_format_timedelta,
 )
-from r2.lib import hooks, organic, trending, geoip
+from r2.lib import hooks, organic, trending, promote
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
 import socket
@@ -473,7 +473,7 @@ class ListingWithPromos(SubredditListingController):
 
             if requested_ad:
                 spotlight = self.make_requested_ad(requested_ad)
-            elif feature.is_enabled('promoted_links_in_feed'):
+            elif promote.ads_feature_enabled("promoted_links_in_feed"):
                 spotlight = None
             elif on_frontpage and show_organic:
                 spotlight = self.make_spotlight(show_promo)

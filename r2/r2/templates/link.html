@@ -30,6 +30,7 @@
        get_linkflair_css_classes,
        js_timestamp,
        make_url_protocol_relative,
+       static,
    )
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
@@ -77,6 +78,16 @@
 
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
+    %if getattr(thing, "ad_style", "") in ("new-ad-style-transparent", "new-ad-style-grey", "new-ad-style-blue"):
+      <li>
+        <span class="${thing.ad_style} promoted-tag">
+          <img class="sponsored-button-icon" src="${static('icon-sponsored-tiny.png')}"/>
+          <span class="promoted-span" title="${_('Sponsored: content promoted by our advertisers')}">
+            ${_("sponsored")}
+          </span>
+        </span>
+      </li>
+    %endif
     %if thing.quarantine:
       <li>
         <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>

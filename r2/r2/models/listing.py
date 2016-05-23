@@ -40,6 +40,7 @@ from r2.models import (
 
 from collections import namedtuple
 from copy import deepcopy, copy
+from random import randint
 import time
 
 
@@ -329,12 +330,28 @@ class LinkListing(Listing):
 
         # circular if imported on the module level
         from r2.lib import promote
+        FEED_RAND_VARIANTS = (
+            "random_pos_transparent",
+            "random_pos_grey",
+            "random_pos_blue"
+        )
+        FEED_TOP_VARIANTS = (
+            "top_pos_transparent",
+            "top_pos_grey",
+            "top_pos_blue"
+        )
 
         self.in_feed_ads_enabled = (promote.ads_feature_enabled(
             "promoted_links_in_feed"
         ) and promote.headlines_enabled(site=c.site, user=c.user))
         self.show_nums = kw.get('show_nums', False)
         self.promo_site_path = promote.get_site_path(c.site)
+
+        feed_variant = feature.variant("promoted_links_in_feed")
+        if self.in_feed_ads_enabled and feed_variant in FEED_RAND_VARIANTS:
+            self.promo_pos = randint(1, 6)
+        elif self.in_feed_ads_enabled and feed_variant in FEED_TOP_VARIANTS:
+            self.promo_pos = 0
 
     def listing(self, *args, **kwargs):
         wrapped = Listing.listing(self, *args, **kwargs)

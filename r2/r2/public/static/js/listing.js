@@ -5,11 +5,14 @@
   */
   r.listing = {
     _initialized: false,
-    setup: function(displayedThings, site, showPromo){
+    FOLD_LINE: 6, //the average number of links before the screen fold
+
+    setup: function(displayedThings, site, showPromo, pos){
       this.displayedThings = displayedThings;
       this.site = site;
       this.showPromo = showPromo;
       this.loid = $.cookie('loid');
+      this.pos = $.with_default(pos, 0);
 
       // ensure that r.promo is initialized
       if(!r.promo || !r.promo._initialized){
@@ -24,29 +27,32 @@
     },
 
     insertPromo: function(){
-      var FOLD_LINE = 6; //the average number of links before the screen fold
       var newPromo = r.promo.requestPromo();
+      var self = this;
       newPromo.pipe(function(promo){
-        var numThings = $(".sitetable").find(".thing").length;
+        var numThings = $('.sitetable').find('.thing').length;
         // if too few items displayed, don't display ad
-        if(numThings < FOLD_LINE){
+        if(numThings < self.FOLD_LINE){
           return;
         }
-        var randomInt = Math.floor(Math.random() * FOLD_LINE); // randomInt[0,5]
-        var randomSibling = $(".sitetable").find('.thing').eq(randomInt);
+
+        var $sibling = self.getSibling(self.pos);
         if(promo){
           var $item = $(promo);
-          var isHouse = $item.data('house');
           // adsense will throw error if inserted while hidden
           if (!$item.hasClass('adsense-wrap')) {
-            $item.hide().insertAfter(randomSibling);
+            $item.hide().insertBefore($sibling);
             $item.show();
           } else {
-            $item.insertAfter(randomSibling);
+            $item.insertBefore($sibling);
           }
           return $item;
         }
       });
+    },
+
+    getSibling: function(pos){
+      return $('.sitetable').find('.thing').eq(pos);
     }
   };
 }(r, _, jQuery);

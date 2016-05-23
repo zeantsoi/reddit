@@ -1773,11 +1773,15 @@ def keywords_from_context(
         if subreddit.audience_target:
             keywords.update(['a.' + target 
                              for target in subreddit.audience_target.split(',')])
-                             
+
     # Pass experiment flags to ad server for reporting
     ads_styles_variant = feature.variant("new_ads_styles")
     if ads_styles_variant is not None:
         keywords.add("exp.new_ads_styles.%s" % ads_styles_variant)
+
+    in_feed_variant = feature.variant("promoted_links_in_feed")
+    if in_feed_variant is not None:
+        keywords.add("exp.promoted_link_in_feed.%s" % in_feed_variant)
 
     return keywords
 

@@ -70,7 +70,7 @@ ${unsafe(taglinetext % dict(author=author))}
 </%def>
 
 <%def name="numcol()">
-  %if thing.new_ads_styles_enabled:
+  %if hasattr(thing, "ad_style"):
     <span class="sponsored-indicator rank">
       <img src="${static('icon-sponsored-rank.png')}"/>
     </span>
@@ -96,8 +96,14 @@ ${unsafe(taglinetext % dict(author=author))}
      elif thing.promoted_by:
        promo_account = Account._byID(thing.promoted_by, data=True, stale=True)
        promoter = WrappedUser(promo_account, thing.attribs, thing, force_show_flair=False).render()
+
+     hide_tagline = False
+     if (promote.is_promoted(thing) and getattr(thing, "ad_style", "") in
+         ("new-ad-style-grey", "new-ad-style-transparent",
+          "new-ad-style-blue")):
+       hide_tagline = True
   %>
-  %if thing.new_ads_styles_enabled:
+  %if getattr(thing, "ad_style", "") == "new-ad-style":
    <p class="sponsored-tagline new-ad-style">
       <img class="sponsored-tagline-icon" src="${static('icon-sponsored-tiny.png')}"/>
   %else:
@@ -126,7 +132,9 @@ ${unsafe(taglinetext % dict(author=author))}
     %elif promoter:
       ${_('promoted by')}&nbsp;${unsafe(promoter)}
     %else:
-      ${_('sponsored link')}
+      %if not hide_tagline:
+        ${_('sponsored link')}
+      %endif
     %endif
   </p>
 
