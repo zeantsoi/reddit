@@ -74,12 +74,16 @@ EU_COOKIE_COUNTRIES = {
     "UK",
 }
 
-MOBILE_NATIVE_COUNTRIES = {
-    "AU",
-    "CA",
-    "GB",
-    "UK",
-    "US",
+# List of countries in which Mobile Native is not available
+NON_MOBILE_NATIVE_COUNTRIES = {
+    "BR",
+    "CU",
+    "DE",
+    "FR",
+    "ID",
+    "IR",
+    "MM",
+    "SD",
 }
 
 EMAIL_OPTIN_COUNTRIES = {
@@ -215,4 +219,4 @@ def is_mobile_native_country(request, context):
 
     country_code = get_request_location(request, context)
 
-    return (country_code in MOBILE_NATIVE_COUNTRIES)
+    return (country_code not in NON_MOBILE_NATIVE_COUNTRIES)
