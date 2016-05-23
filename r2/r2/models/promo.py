@@ -466,7 +466,7 @@ class PromoCampaign(Thing):
         if self.no_daily_budget:
             return False
 
-        if not self.is_auto_extending:
+        if self.is_auto_extending:
             return False
 
         return True
