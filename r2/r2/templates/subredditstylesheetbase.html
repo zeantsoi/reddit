@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%namespace file="printablebuttons.html" import="ynbutton"/>
+<%namespace file="utils.html" import="timestamp"/>
 
 <%def name="make_li(name='', img=None, prototype=False, mod=True)">
   <li ${"style='display:none'" if img is None else ""}>
@@ -43,8 +44,40 @@
         <br/>
         ${ynbutton(_("delete this image"), _("deleted"),
                    "delete_sr_img", callback = "delete_img",
-                    hidden_data = dict(img_name = name))}
+                   hidden_data = dict(img_name = name))}
       %endif
+    </div>
+  </li>
+</%def>
+
+<%def name="make_li_deleted(entry, site, page='config/stylesheet')">
+  ## an entry in the history of deleted images from subreddit stylesheets. only
+  ## admins can do this
+  <%
+    uuid = entry['uuid']
+    img = entry['url']
+    name = entry['image_name']
+  %>
+  <li>
+    <a href="${img}" class="preview">
+      <img id="img-preview-${name}" src="${img}"
+           alt="Image ${name}" title="click to preview"/>
+    </a>
+    <div class="description">
+      <b class="img-name">
+        ${name}
+      </b>
+      <br/>
+      <p>
+        <span>${_("deleted")}:</span>
+        ${timestamp(entry['timestamp'], include_tense=True)}
+      </p>
+
+      <br/>
+      ${ynbutton(_("undelete this image"), _("undeleted"),
+                 "undelete_sr_img",
+                 hidden_data = dict(page=page,
+                                    uuid=uuid))}
     </div>
   </li>
 </%def>

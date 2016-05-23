@@ -96,7 +96,7 @@ from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
-from r2.models.wiki import WikiPage, ImagesByWikiPage
+from r2.models.wiki import WikiPage, ImagesByWikiPage, DeletedImagesByWikiPage
 from r2.lib.db import tdb_cassandra, queries
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
@@ -3096,8 +3096,12 @@ class CreateSubreddit(Templated):
 
 class SubredditStylesheetBase(Templated):
     """Base subreddit stylesheet page."""
+
+    # stylesheets are stored in the wiki system in this location
+    wiki_address = "config/stylesheet"
+
     def __init__(self, stylesheet_contents, **kwargs):
-        raw_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
+        raw_images = ImagesByWikiPage.get_images(c.site, self.wiki_address)
         images = {name: make_url_protocol_relative(url)
                   for name, url in raw_images.iteritems()}
         super(SubredditStylesheetBase, self).__init__(
@@ -3111,8 +3115,17 @@ class SubredditStylesheet(SubredditStylesheetBase):
     """form for editing or creating subreddit stylesheets"""
     def __init__(self, site=None, stylesheet_contents=''):
         allow_image_upload = site and not site.quarantine
+
+        if c.user_is_admin:
+            image_history = DeletedImagesByWikiPage.get_recent(c.site,
+                                                               self.wiki_address)
+        else:
+            image_history = []
+
         super(SubredditStylesheet, self).__init__(
             stylesheet_contents=stylesheet_contents,
+            image_history=image_history,
+            wiki_address=self.wiki_address,
             site=site,
             allow_image_upload=allow_image_upload,
         )

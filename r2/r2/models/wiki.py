@@ -20,23 +20,29 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from ConfigParser import SafeConfigParser
 from datetime import datetime, timedelta
-from r2.lib.db import tdb_cassandra
-from r2.lib.db.thing import NotFound
-from r2.lib.merge import *
-from r2.models.last_modified import LastModified
+from collections import OrderedDict
+from StringIO import StringIO
+from uuid import uuid1, UUID
+import json
+
+import pytz
+import pycassa.types
 from pycassa.system_manager import TIME_UUID_TYPE
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.controllers.util import abort
+
+from ConfigParser import SafeConfigParser
+from r2.lib.db import tdb_cassandra
+from r2.lib.db.thing import NotFound
+from r2.lib.utils import epoch_timestamp
+from r2.lib.merge import *
+from r2.models.last_modified import LastModified
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.models.printable import Printable
 from r2.models.account import Account
-from collections import OrderedDict
-from StringIO import StringIO
 
-import pycassa.types
 
 # Used for the key/id for pages,
 PAGE_ID_SEP = '\t'
@@ -478,6 +484,13 @@ class ImagesByWikiPage(tdb_cassandra.View):
     @classmethod
     def add_image(cls, sr, page_name, image_name, url):
         rowkey = WikiPage.id_for(sr, page_name)
+
+        # if we're overwriting an existing image, log the old version
+        existing_url = cls.get_image(sr, page_name, image_name)
+        if existing_url:
+            DeletedImagesByWikiPage.log_deletion(sr, page_name,
+                                                 image_name, existing_url)
+
         cls._set_values(rowkey, {image_name: url})
 
     @classmethod
@@ -489,6 +502,15 @@ class ImagesByWikiPage(tdb_cassandra.View):
             return {}
 
     @classmethod
+    def get_image(cls, sr, page_name, image_name):
+        try:
+            rowkey = WikiPage.id_for(sr, page_name)
+            existing = cls._byID(rowkey, properties=[image_name])
+            return existing._get(image_name, None)
+        except tdb_cassandra.NotFound:
+            return None
+
+    @classmethod
     def get_image_count(cls, sr, page_name):
         rowkey = WikiPage.id_for(sr, page_name)
         return cls._cf.get_count(rowkey,
@@ -497,7 +519,69 @@ class ImagesByWikiPage(tdb_cassandra.View):
     @classmethod
     def delete_image(cls, sr, page_name, image_name):
         rowkey = WikiPage.id_for(sr, page_name)
+
+        existing_url = cls.get_image(sr, page_name, image_name)
+        if not existing_url:
+            # it didn't exist. we've been hoodwinked!
+            return
+
+        DeletedImagesByWikiPage.log_deletion(sr, page_name,
+                                             image_name, existing_url)
         cls._remove(rowkey, [image_name])
+
+    @classmethod
+    def restore_deleted(cls, sr, page_name, deleted_uuid):
+        found = DeletedImagesByWikiPage.get_deletion(sr, page_name,
+                                                     deleted_uuid)
+        return cls.add_image(sr, page_name,
+                             found['image_name'], found['url'])
+
+
+class DeletedImagesByWikiPage(tdb_cassandra.View):
+    _value_type = 'json'
+    _compare_with = TIME_UUID_TYPE
+    _ttl = timedelta(days=WIKI_RECENT_DAYS)
+    _use_db = True
+
+    @classmethod
+    def log_deletion(cls, sr, page_name, image_name, old_url):
+        rowkey = WikiPage.id_for(sr, page_name)
+        ts = datetime.now(pytz.UTC)
+        colkey = uuid1()
+        colval = {'image_name': image_name,
+                  'url': old_url,
+                  'timestamp': epoch_timestamp(ts)}
+        cls._set_values(rowkey, {colkey: colval})
+
+    @classmethod
+    def get_deletion(cls, sr, page_name, deleted_uuid_str):
+        rowkey = WikiPage.id_for(sr, page_name)
+        uuid = UUID(deleted_uuid_str)
+        partial = cls._byID(rowkey, properties=[uuid])
+        return partial[uuid]
+
+    @classmethod
+    def get_recent(cls, sr, page_name, count=20):
+        rowkey = WikiPage.id_for(sr, page_name)
+        q = tdb_cassandra.ColumnQuery(cls,
+                                      (rowkey,),
+                                      column_count=count)
+        q = list(q)
+        if not q:
+            return []
+
+        ret = []
+        for col in q:
+            for uuid, entry in col.iteritems():
+                entry = json.loads(entry)
+                entry['uuid'] = str(uuid)
+                ts = datetime.fromtimestamp(entry['timestamp'])
+                ts = pytz.UTC.localize(ts)
+                entry['timestamp'] = ts
+
+                ret.append(entry)
+
+        return ret
 
 
 class WikiPageIniItem(object):

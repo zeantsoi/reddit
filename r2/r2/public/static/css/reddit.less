@@ -4658,21 +4658,21 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .image-upload span  { padding-left: 5px; }
 
 
-ul#image-preview-list {
+ul.image-preview-list {
     margin: 20px 320px 20px 20px;
     font-size:larger;
 }
-ul#image-preview-list li {
+ul.image-preview-list li {
     padding-bottom: 10px; 
     margin-bottom: 20px; 
     vertical-align: top; 
     width: 45%; 
     height: 100px; 
-    float: left;
-    position: relative; 
+    display: inline-block;
+    position: relative;
 }
 
-ul#image-preview-list .preview {
+ul.image-preview-list .preview {
     width: 100px;                                     
     float: left;
     display: block;
@@ -4680,15 +4680,15 @@ ul#image-preview-list .preview {
     max-height: 100px;
     overflow: hidden;
 }
-ul#image-preview-list .preview img {
+ul.image-preview-list .preview img {
     max-width: 100px; 
     padding: auto;
 }
-ul#image-preview-list .description {
+ul.image-preview-list .description {
     vertical-align: top;
     margin-left: 105px; 
 }
-ul#image-preview-list .description pre {
+ul.image-preview-list .description pre {
     display: inline;
     padding: 5px;
     color: #000;

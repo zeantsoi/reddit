@@ -28,6 +28,7 @@
 %>
 <%namespace file="utils.html" import="error_field, image_upload"/>
 <%namespace file="subredditstylesheetbase.html" import="make_li"/>
+<%namespace file="subredditstylesheetbase.html" import="make_li_deleted"/>
 
 <div class="stylesheet-customize-container">
   <form
@@ -187,7 +188,7 @@
           }
       /* ]]> */
       </script>
-      <ul id="image-preview-list" class="image-list">
+      <ul class="image-preview-list image-list">
         ${make_li(prototype=True)}
         %for name, url in thing.images.iteritems():
            ${make_li(name=name, img=url)}
@@ -199,5 +200,20 @@
       
     </div>
   %endif
-</div>
 
+  %if thing.image_history:
+    ## this will be empty unless c.user_is_admin
+    <hr />
+    <div>
+      <h2 class="error">recently deleted images</h2>
+
+      <ul class="image-preview-list image-list">
+        %for deleted_image in thing.image_history:
+          ${make_li_deleted(deleted_image,
+                            site=thing.site,
+                            page=thing.wiki_address)}
+        %endfor
+      </ul>
+    </div>
+  %endif
+</div>

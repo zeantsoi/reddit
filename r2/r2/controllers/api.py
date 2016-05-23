@@ -2599,6 +2599,15 @@ class ApiController(RedditController):
         ModAction.create(c.site, c.user, action='editsettings', 
                          details='del_image', description=name)
 
+    @validatedForm(VAdmin(),
+                   VModhash(),
+                   page = nop('page'),
+                   uuid = nop('uuid'))
+    def POST_undelete_sr_img(self, form, jquery, page, uuid):
+        wiki.ImagesByWikiPage.restore_deleted(c.site,
+                                              page,
+                                              uuid)
+
     @require_oauth2_scope("modconfig")
     @validatedForm(
         VSrModerator(perms='config'),
