@@ -23,6 +23,8 @@
 
 import collections
 from mock import MagicMock
+from pylons import request
+from pylons import app_globals as g
 
 from r2.lib import utils
 from r2.tests import RedditTestCase
@@ -194,3 +196,43 @@ class TestOutboundLinks(RedditTestCase):
         outbound = utils.generate_outbound_link(self.thing, self.url)
         urlparser = utils.UrlParser(outbound.url)
         self.assertEqual(urlparser.query_dict["url"], self.url)
+
+
+class TestIsSeoReferrer(RedditTestCase):
+    def setUp(self):
+        g.seo_domains = [
+            'google.com',
+            'yahoo.com',
+            'bing.com',
+            'aol.com',
+        ]
+
+    def test_seo_referrer(self):
+        request.referer = 'https://google.com/'
+        self.assertEqual(utils.is_seo_referrer(), True)
+
+        request.referer = 'http://google.com/'
+        self.assertEqual(utils.is_seo_referrer(), True)
+
+        request.referer = 'http://yahoo.com'
+        self.assertEqual(utils.is_seo_referrer(), True)
+
+        request.referer = 'http://bing.com'
+        self.assertEqual(utils.is_seo_referrer(), True)
+
+        request.referer = 'http://aol.com'
+        self.assertEqual(utils.is_seo_referrer(), True)
+
+        request.referer = 'http://aol.com/whatever?param=someparam'
+        self.assertEqual(utils.is_seo_referrer(), True)
+
+    def test_non_seo_referrer(self):
+        request.referer = 'https://reddit.com/'
+        self.assertEqual(utils.is_seo_referrer(), False)
+
+    def test_no_referrer(self):
+        request.referer = ''
+        self.assertEqual(utils.is_seo_referrer(), False)
+
+        request.referer = None
+        self.assertEqual(utils.is_seo_referrer(), False)
