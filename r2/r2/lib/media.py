@@ -1519,7 +1519,7 @@ def purge_image(url):
     purge_from_cdn(url)
 
 
-def purge_associated_images(link):
+def purge_associated_images(link, delete_thumbs=True):
     thumbnail_url = getattr(link, 'thumbnail_url', None)
     preview_url = None
     has_preview = (
@@ -1533,7 +1533,10 @@ def purge_associated_images(link):
     if getattr(link, 'image_upload', False):
         purge_image(link.url)
 
-    if thumbnail_url:
+    # Thumbnails are content-hashed, so uploading an image
+    # and deleting it could delete the thumbnails for
+    # other sources of the same image.
+    if thumbnail_url and delete_thumbs:
         purge_image(thumbnail_url)
 
     if preview_url:
