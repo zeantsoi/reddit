@@ -1535,7 +1535,8 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             queries.delete(thing)
             thing.subreddit_slow.remove_sticky(thing)
-            purge_associated_images(thing)
+            if thing.image_upload:
+                purge_associated_images(thing)
         elif isinstance(thing, Comment):
             link = thing.link_slow
 
