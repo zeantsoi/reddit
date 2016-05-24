@@ -303,6 +303,15 @@ class Reddit(Templated):
             feature.is_enabled("inline_image_previews_logged_out")):
             self.feature_expando_nsfw_flow = True
 
+        has_adblock_test = feature.is_enabled("adblock_test")
+
+        if has_adblock_test:
+            self.adblock_test_class = g.live_config.get("adblock_test_class", "")
+            # ensure test is configured properly.
+            has_adblock_test = bool(self.adblock_test_class)
+
+        self.has_adblock_test = has_adblock_test
+
         # generate a canonical link for google
         self.canonical_link = request.fullpath
         if c.render_style != "html":

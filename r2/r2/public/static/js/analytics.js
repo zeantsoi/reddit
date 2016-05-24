@@ -37,6 +37,10 @@ r.analytics = {
       user_in_beta: r.config.pref_beta,
     };
 
+    if (r.config.feature_adblock_test) {
+      r.analytics.contextData.adblock = r.analytics.testAdblock();
+    }
+
     if (r.config.user_id) {
       r.analytics.contextData.user_id = r.config.user_id;
       r.analytics.contextData.user_name = r.config.logged;
@@ -82,6 +86,12 @@ r.analytics = {
 
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
+  },
+
+  testAdblock: function() {
+    var $el = $('#adblock-test');
+
+    return (!$el.length || $el.is(':hidden'));
   },
 
   _eventPredicates: {},
@@ -456,6 +466,7 @@ r.analytics = {
       'referrer_domain',
       'referrer_url',
       'user_in_beta',
+      'adblock',
     ]);
 
     if (r.config.event_target) {
