@@ -124,6 +124,7 @@ from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
 from r2.lib.media import (
     make_temp_uploaded_image_permanent,
+    purge_associated_images,
     set_media,
     str_to_image,
 )
@@ -1534,6 +1535,7 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             queries.delete(thing)
             thing.subreddit_slow.remove_sticky(thing)
+            purge_associated_images(thing)
         elif isinstance(thing, Comment):
             link = thing.link_slow
 
