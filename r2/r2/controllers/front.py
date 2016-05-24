@@ -216,6 +216,7 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
         return self.abort404()
 
+    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(article=VLink('article',
                   docs={"article": "ID36 of a link"}),
