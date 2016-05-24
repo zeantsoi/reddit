@@ -1209,16 +1209,11 @@ def promote_link(link, campaign=None):
         emailer.live_promo(link)
 
 
-def is_refunded(campaign):
-    return getattr(campaign, "refund_amount", 0.) > 0.
-
-
 def can_extend(campaign):
     return (not campaign.is_terminated and
         campaign.auto_extend and
         campaign.extensions_remaining > 0 and
-        is_underdelivered(campaign) and
-        not is_refunded(campaign))
+        is_underdelivered(campaign))
 
 
 def extend_campaign(link, campaign):
@@ -1275,19 +1270,21 @@ def make_daily_promotions():
 
     # expire finished links and extend any that can be
     for link in currently_promoted_links:
-        campaigns = campaigns_by_link[link._id]
-        any_extended = False
-        # check each campaign to see if we want to extend it
-        for campaign in campaigns:
-            if can_extend(campaign):
-                extend_campaign(link, campaign)
-                any_extended = True
+        # if it's not scheduled to run it either needs to be
+        # auto extended or marked as finished
+        if link._id not in scheduled_link_ids:
+            campaigns = campaigns_by_link[link._id]
+            any_extended = False
+            # check each campaign to see if we want to extend it
+            for campaign in campaigns:
+                if can_extend(campaign):
+                    extend_campaign(link, campaign)
+                    any_extended = True
 
-        # if it's not scheduled to run and wasn't extended mark it
-        # as finished
-        if link._id not in scheduled_link_ids and not any_extended:
-            update_promote_status(link, PROMOTE_STATUS.finished)
-            emailer.finished_promo(link)
+            # if no campaigns were extended then the link is done
+            if not any_extended:
+                update_promote_status(link, PROMOTE_STATUS.finished)
+                emailer.finished_promo(link)
 
     # update subreddits with promos
     all_live_promo_srnames(_update=True)
@@ -1363,7 +1360,7 @@ def finalize_completed_campaigns(daysago=1):
             camp.reports_pending = False
             camp._commit()
 
-        if (is_refunded(camp) or
+        if (hasattr(camp, 'refund_amount') or
                 getattr(camp, 'finalized', False)):
             continue
 

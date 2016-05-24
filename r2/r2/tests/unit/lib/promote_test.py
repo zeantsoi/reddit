@@ -627,7 +627,6 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = False
         campaign.extensions_remaining = 1
         campaign.is_terminated = False
-        campaign.refund_amount = 0
         is_underdelivered.return_value = True
         self.assertFalse(can_extend(campaign))
 
@@ -636,7 +635,6 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = True
         campaign.extensions_remaining = 0
         campaign.is_terminated = False
-        campaign.refund_amount = 0
         is_underdelivered.return_value = True
         self.assertFalse(can_extend(campaign))
 
@@ -645,7 +643,6 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = True
         campaign.extensions_remaining = 1
         campaign.is_terminated = False
-        campaign.refund_amount = 0
         is_underdelivered.return_value = False
         self.assertFalse(can_extend(campaign))
 
@@ -654,16 +651,7 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = True
         campaign.extensions_remaining = 1
         campaign.is_terminated = True
-        campaign.refund_amount = 0
         is_underdelivered.return_value = True
-        self.assertFalse(can_extend(campaign))
-
-    def test_can_extend_is_false_if_the_campaign_was_refunded(self, is_underdelivered):
-        campaign = MagicMock(spec=PromoCampaign)
-        campaign.auto_extend = True
-        campaign.extensions_remaining = 1
-        campaign.is_terminated = False
-        campaign.refund_amount = 10
         is_underdelivered.return_value = True
         self.assertFalse(can_extend(campaign))
 
@@ -672,7 +660,6 @@ class TestCanExtend(unittest.TestCase):
         campaign.auto_extend = True
         campaign.extensions_remaining = 1
         campaign.is_terminated = False
-        campaign.refund_amount = 0
         is_underdelivered.return_value = True
         self.assertTrue(can_extend(campaign))
 
@@ -823,7 +810,7 @@ class TestMakeDailyPromotions(unittest.TestCase):
 
         self.assertEqual(promote_link.call_count, 3)
         self.assertEqual(update_promote_status.call_count, 0)
-        self.assertEqual(extend_campaign.call_count, 5)
+        self.assertEqual(extend_campaign.call_count, 2)
 
     def test_underdelivered_campaigns_cannot_be_extended_are_marked_finished(
         self,
