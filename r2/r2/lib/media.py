@@ -382,8 +382,18 @@ def mobile_ad_url(link):
         return ''
 
 
-def _filename_from_content(contents):
-    hash_bytes = hashlib.sha256(contents).digest()
+def _filename_from_content(contents, image_key=None):
+    """Generate the filename based on the contents.
+
+    If an image upload, hash on the image_key to separate the
+    preview and thumbnail objects in case they get crossposted,
+    so they can all be deleted when the original image upload is
+    deleted, but leave the other versions of the image intact.
+    """
+    hash_bytes = hashlib.sha256(contents)
+    if image_key:
+        hash_bytes.update(image_key)
+    hash_bytes = hash_bytes.digest()
     return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
 
 
@@ -401,7 +411,8 @@ def _flatten_alpha(img):
     return background.convert('RGB')
 
 
-def upload_media(image, file_type='jpg', category='thumbs'):
+def upload_media(image, file_type='jpg', category='thumbs',
+        filename_hash=None):
     """Upload an image to the media provider."""
     f = tempfile.NamedTemporaryFile(suffix=".{}".format(file_type), delete=False)
     try:
@@ -434,7 +445,7 @@ def upload_media(image, file_type='jpg', category='thumbs'):
             optimize_gif(f.name)
         contents = open(f.name).read()
         file_name = "{file_name}.{file_type}".format(
-            file_name=_filename_from_content(contents),
+            file_name=_filename_from_content(contents, filename_hash),
             file_type=file_type,
         )
         return g.media_provider.put(category, file_name, contents)
@@ -515,7 +526,9 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 
         if thumbnail_image and save_thumbnail:
             thumbnail_size = thumbnail_image.size
-            thumbnail_url = upload_media(thumbnail_image)
+            parsed_url = UrlParser(url)
+            thumbnail_url = upload_media(thumbnail_image,
+                filename_hash=parsed_url.path)
         else:
             # don't cache if thumbnail is absent
             use_cache = False
@@ -1149,7 +1162,18 @@ class _ImageScraper(Scraper):
         if not content:
             return None, None, None, None
 
-        uid = _filename_from_content(content)
+        filename_hash = None
+        # If this is scraping an image upload, use the s3 key as part of
+        # the hash for thumbnails and previews. This associates all of the
+        # thumbnails and previews with this one s3 key so they can be 
+        # deleted together when the original image has been deleted, rather
+        # than deleting all previews and thumbnails for any link to this
+        # specific image (whether on another site or not) since it's
+        # hashed on content.
+        parsed_url = UrlParser(self.url)
+        if parsed_url.hostname in (g.image_hosting_domain, g.gif_hosting_domain):
+            filename_hash = parsed_url.path
+        uid = _filename_from_content(content, filename_hash)
         image = str_to_image(content)
         file_type = image.format.lower()
         upload_input = image
@@ -1162,10 +1186,12 @@ class _ImageScraper(Scraper):
         elif file_type not in ("png", "jpg"):
             file_type = "jpg"
 
-        storage_url = upload_media(upload_input,
-                                   file_type=file_type,
-                                   category='previews',
-                                   )
+        storage_url = upload_media(
+            upload_input,
+            file_type=file_type,
+            category='previews',
+            filename_hash=filename_hash,
+        )
 
         width, height = image.size
         preview_object = {
