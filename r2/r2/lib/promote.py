@@ -519,11 +519,14 @@ def edit_campaign(
                     )
                     campaign.extensions_remaining = extensions_remaining
 
-                changed["pre_extension_end_date"] = (
-                    campaign.pre_extension_end_date,
-                    original_end
-                )
-                campaign.pre_extension_end_date = original_end
+                # only update the pre_extension date the first time.
+                if (campaign.pre_extension_end_date ==
+                        campaign._defaults["pre_extension_end_date"]):
+                    changed["pre_extension_end_date"] = (
+                        campaign.pre_extension_end_date,
+                        original_end
+                    )
+                    campaign.pre_extension_end_date = original_end
             elif campaign.is_auto_extending:
                 # if the user changes the end date during the auto extension period
                 # then reset the `pre_extension_end_date` and `extensions_remaining`.
@@ -1219,15 +1222,15 @@ def is_refunded(campaign):
     return getattr(campaign, "refund_amount", 0.) > 0.
 
 
-def can_extend(campaign, offset=0):
-    date = promo_datetime_now(offset=offset)
+def can_extend(campaign):
+    date = promo_datetime_now(offset=0)
 
     return (not campaign.is_terminated and
-        campaign.auto_extend and
-        campaign.extensions_remaining > 0 and
-        is_underdelivered(campaign) and
-        not is_refunded(campaign) and
-        campaign.end_date <= date)
+            campaign.auto_extend and
+            campaign.extensions_remaining > 0 and
+            is_underdelivered(campaign) and
+            not is_refunded(campaign) and
+            campaign.end_date <= date)
 
 
 def extend_campaign(link, campaign):
@@ -1288,7 +1291,7 @@ def make_daily_promotions():
         any_extended = False
         # check each campaign to see if we want to extend it
         for campaign in campaigns:
-            if can_extend(campaign, offset=0):
+            if can_extend(campaign):
                 extend_campaign(link, campaign)
                 any_extended = True
 
