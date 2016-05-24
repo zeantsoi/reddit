@@ -22,13 +22,13 @@
 ###############################################################################
 
 import collections
-import unittest
 from mock import MagicMock
 
 from r2.lib import utils
+from r2.tests import RedditTestCase
 
 
-class UtilsTest(unittest.TestCase):
+class UtilsTest(RedditTestCase):
     def test_weighted_lottery_errors(self):
         self.assertRaises(ValueError, utils.weighted_lottery, {})
         self.assertRaises(ValueError, utils.weighted_lottery, {'x': 0})
@@ -123,7 +123,7 @@ class UtilsTest(unittest.TestCase):
         )
 
 
-class TestCanonicalizeEmail(unittest.TestCase):
+class TestCanonicalizeEmail(RedditTestCase):
     def test_empty_string(self):
         canonical = utils.canonicalize_email("")
         self.assertEquals(canonical, "")
@@ -155,7 +155,7 @@ class TestCanonicalizeEmail(unittest.TestCase):
         self.assertEquals(canonical, "\xe2\x9c\x93@example.com")
 
 
-class TestTruncString(unittest.TestCase):
+class TestTruncString(RedditTestCase):
     def test_empty_string(self):
         truncated = utils.trunc_string('', 80)
         self.assertEqual(truncated, '')
@@ -177,7 +177,7 @@ class TestTruncString(unittest.TestCase):
         self.assertEqual(truncated, 'ThisIsA...')
 
 
-class TestOutboundLinks(unittest.TestCase):
+class TestOutboundLinks(RedditTestCase):
     def setUp(self):
         from r2.models import Link
         self.url = "https://www.google.com"
