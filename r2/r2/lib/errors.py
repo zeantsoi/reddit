@@ -190,6 +190,7 @@ error_list = dict((
         ('SR_RULE_TOO_MANY', _("This subreddit already has the maximum number of rules.")),
         ('COMMENT_NOT_STICKYABLE', _("This comment is not stickyable. Ensure that it is a top level comment.")),
         ('COMMENT_NOT_ACCESSIBLE', _("Cannot access this comment.")),
+        ('POST_NOT_ACCESSIBLE', _("Cannot access this post.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
