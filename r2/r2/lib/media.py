@@ -40,6 +40,7 @@ import gzip
 
 import BeautifulSoup
 from PIL import Image, ImageFile
+from time import sleep
 import lxml.html
 import requests
 
@@ -1417,3 +1418,117 @@ def process_image_upload():
         )
 
     amqp.consume_items('image_upload_q', process_image)
+
+
+def purge_imgix_images(preview_object):
+    """Purge the image from imgix and copies on the CDN.
+
+    This is quite ugly overall but seems to be necessary since the CDN
+    gets a copy of each size of the image.
+    """
+    from r2.lib.jsontemplates import LinkJsonTemplate
+
+    # get the nested dict that contains all the urls that we need to purge
+    template_dict = LinkJsonTemplate.generate_image_links(preview_object)
+
+    # extract all the urls from that dict
+    base_url = template_dict["source"]["url"]
+    urls = [base_url]
+    for resolution in template_dict["resolutions"]:
+        urls.append(resolution["url"])
+
+    # purge the base url from imgix
+    g.image_resizing_provider.purge_url(base_url)
+
+    # purge the base url and all resized versions from the CDN
+    for url in urls:
+        purge_from_cdn(url, verify=False)
+
+
+def purge_from_cdn(url, verify=True, max_retries=10, pause=3):
+    """Purge the url from the CDN.
+
+    Supports optional verification/retrying due to inconsistency.
+    If the purging still can't be verified despite all the retries,
+    a notification will be sent to the #takedown-tool channel.
+    """
+    g.cdn_provider.purge_content(url)
+
+    if not verify:
+        return
+
+    try_count = 1
+    while try_count <= max_retries:
+        sleep(pause)
+        response = requests.head(url)
+
+        if response.status_code in (401, 403, 404):
+            return
+
+        # the purge didn't take effect, try again
+        g.cdn_provider.purge_content(url)
+        try_count += 1
+
+    hooks.get_hook("cdn_purge.failed").call(url=url)
+
+
+def purge_image(url):
+    parsed_url = UrlParser(url)
+
+    # imgix hosted image (previews)
+    if parsed_url.hostname == g.imgix_domain:
+        # convert the url back to the one used for the image on S3
+        s3_url = "http://{bucket}{path}".format(
+            bucket=g.s3_image_buckets[0],
+            path=parsed_url.path,
+        )
+        g.media_provider.make_inaccessible(s3_url)
+        g.image_resizing_provider.purge_url(url)
+
+    # imgix hosted gif (previews)
+    elif parsed_url.hostname == g.imgix_gif_domain:
+        # convert the url back to the one used for the image on S3
+        s3_url = "http://{bucket}{path}".format(
+            bucket=g.s3_image_buckets[0],
+            path=parsed_url.path,
+        )
+        g.media_provider.make_inaccessible(s3_url)
+        g.image_resizing_provider.purge_url(url)
+
+    # uploaded image (or gif) submitted as a link
+    elif (parsed_url.hostname == g.image_hosting_domain or
+            parsed_url.hostname == g.gif_hosting_domain):
+        # convert the url back to the one used for the image on S3
+        s3_url = "http://{bucket}{path}".format(
+            bucket=g.s3_image_uploads_perm_bucket[0],
+            path=parsed_url.path,
+        )
+        g.media_provider.make_inaccessible(s3_url)
+
+    # s3 url of an image (thumbnails)
+    else:
+        g.media_provider.make_inaccessible(url)
+
+    purge_from_cdn(url)
+
+
+def purge_associated_images(link):
+    thumbnail_url = getattr(link, 'thumbnail_url', None)
+    preview_url = None
+    has_preview = (
+        getattr(link, 'preview_object', None)
+        and getattr(link.preview_object, 'url', None)
+    )
+
+    if has_preview:
+        preview_url = link.preview_object['url']
+
+    if getattr(link, 'image_upload', False):
+        purge_image(link.url)
+
+    if thumbnail_url:
+        purge_image(thumbnail_url)
+
+    if preview_url:
+        purge_image(preview_url)
+        purge_imgix_images(link.preview_object)
