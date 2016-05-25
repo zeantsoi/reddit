@@ -26,6 +26,7 @@ import hashlib
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
+from pylons import request
 
 
 class FeatureState(object):
@@ -348,6 +349,8 @@ class FeatureState(object):
                         variant=variant,
                         user=user,
                         loid=self.world.current_loid_obj(),
+                        request=request,
+                        context=c,
                     )
                     key = (self.name, bucketing_id)
                     c.have_sent_bucketing_event[key] = True

@@ -759,7 +759,8 @@ class EventQueue(object):
         self.save_event(event)
 
     def bucketing_event(
-        self, experiment_id, experiment_name, variant, user, loid
+        self, experiment_id, experiment_name, variant, user, loid,
+        request=None, context=None
     ):
         """Send an event recording an experiment bucketing.
 
@@ -771,6 +772,8 @@ class EventQueue(object):
         event = Event(
             topic='bucketing_events',
             event_type='bucket',
+            request=request,
+            context=context,
         )
         event.add('experiment_id', experiment_id)
         event.add('experiment_name', experiment_name)
@@ -782,6 +785,8 @@ class EventQueue(object):
         if loid:
             for k, v in loid.to_dict().iteritems():
                 event.add(k, v)
+        if request:
+            event.add('url', request.url)
         self.save_event(event)
 
     @squelch_exceptions
