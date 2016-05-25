@@ -1684,6 +1684,26 @@ class FormsController(RedditController):
             )
         ).render()
 
+    @validate(token=VOneTimeToken(AccountRecoveryToken, "key"),
+              key=nop("key"))
+    def GET_accountrecovery(self, token, key):
+        """Account recovery page.
+
+        Hit once a user has been sent an account recovery email
+        to verify the identity before allowing to recover the account.
+        """
+        if not token or request.params.get('expired'):
+            return BoringPage(_("account recovery token expired"),
+                              content=AccountRecoveryExpired()).render()
+
+        token_user = Account._by_fullname(token.user_id, data=True)
+
+        return BoringPage(_("recover account"),
+                          content=AccountRecovery(key=key,
+                                                  username=token_user.name,
+                                                  )
+                          ).render()
+
     @validate(
         user_id36=nop('user'),
         provided_mac=nop('key')

@@ -776,6 +776,36 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def account_recovery_event(self, user_name, base_url, new_email,
+                               error_msg=None, request=None, context=None):
+        """Create an 'account_recovery' event for event-collector.
+
+        user_name: name of user who tried to recover the account
+        base_url: base url where the account recovery triggered
+        new_email: original email address to recover account
+        error_msg: error message string if there was an error
+        request, context: Should be pylons.request & pylons.c respectively
+
+        """
+        event = Event(
+            topic="account_recovery_events",
+            event_type='ss.account_recovery',
+            request=request,
+            context=context,
+        )
+
+        if error_msg:
+            event.add('successful', False)
+            event.add('process_notes', error_msg)
+        else:
+            event.add('successful', True)
+
+        event.add('user_name', user_name)
+        event.add('new_email', new_email)
+        event.add('base_url', base_url)
+
+        self.save_event(event)
+
     def bucketing_event(
         self, experiment_id, experiment_name, variant, user, loid,
         request=None, context=None

@@ -19,21 +19,9 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-<%!
-    from r2.lib.filters import safemarkdown
-%>
-
-<%namespace file="trophycase.html" import="trophy_info" />
-<%namespace file="utils.html" import="_mdf" />
-
-<form action="${thing.token.make_token_url(relative=True)}" method="post"
-    class="centered confirm-award-claim">
-
-${_mdf("# Claim this award for /u/%(user)s? #", wrap=True, user=thing.user)}
-
-${trophy_info(thing.trophy, False)}
-
-<input type="hidden" name="uh" value="${c.modhash}">
-<button class="btn" type="submit">${_("Yes, please!")}</button>
-
-</form>
+<h1>${_("Account recovery link expired")}</h1>
+<p>
+  <span class="error">
+    ${_("Your token has expired. Please forward your email to %(support_email)s for assistance.") % dict(support_email=g.support_email)}
+  </span>
+</p>

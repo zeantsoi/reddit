@@ -3676,9 +3676,11 @@ class PasswordChangeEmail(Templated):
     """Notification e-mail that a user's password has changed."""
     pass
 
-class EmailChangeEmail(Templated):
-    """Notification e-mail that a user's e-mail has changed."""
+
+class EmailPasswordChangeEmail(Templated):
+    """Notification e-mail that a user's e-mail/password has changed."""
     pass
+
 
 class VerifyEmail(Templated):
     pass
@@ -3699,9 +3701,28 @@ class SuspiciousPaymentEmail(Templated):
 
 
 class ResetPassword(Templated):
-    """Form for actually resetting a lost password, after the user has
-    clicked on the link provided to them in the Password_Reset email
-    (step 3 of password recovery.)"""
+    """Form for actually resetting a lost password.
+
+    After the user has clicked on the link provided to them
+    in the Password_Reset email (step 3 of password recovery.)
+    """
+    pass
+
+
+class AccountRecovery(Templated):
+    """Form for actually recovering a hacked account.
+
+    After the user has clicked on the link provided to them
+    in the Email_Change email (step of account recovery.)
+    """
+    pass
+
+
+class AccountRecoveryExpired(Templated):
+    """Form for token expired to recover a hacked account.
+
+    Static form showing that the token was expired.
+    """
     pass
 
 

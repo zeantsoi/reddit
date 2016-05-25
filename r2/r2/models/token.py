@@ -31,10 +31,11 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _
 
-from r2.lib import hooks
+from r2.lib import hooks, ratelimit
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
-from r2.models.account import Account
+from r2.models.account import Account, valid_password
+
 
 def generate_token(size):
     return urlsafe_b64encode(urandom(size)).rstrip("=")
@@ -100,6 +101,16 @@ class ConsumableToken(Token):
     def consume(self):
         self.used = True
         self._commit()
+
+    def make_token_url(self, relative=False):
+        if not hasattr(self, 'path'):
+            raise TypeError
+
+        return "{prefix}/{path}/{token_id}".format(
+            prefix="" if relative else (g.https_endpoint or g.origin),
+            path=self.path.strip("/"),
+            token_id=self._id,
+        )
 
 
 class OAuth2Scope:
@@ -824,9 +835,11 @@ class PasswordResetToken(ConsumableToken):
     _connection_pool = "main"
     _ttl = datetime.timedelta(hours=12)
     token_size = 20
+    path = "/resetpassword/"
 
     @classmethod
     def _new(cls, user):
+        user.add_note("Issued password reset token.")
         return super(PasswordResetToken, cls)._new(user_id=user._fullname,
                                                    email_address=user.email,
                                                    password=user.password)
@@ -834,6 +847,34 @@ class PasswordResetToken(ConsumableToken):
     def valid_for_user(self, user):
         return (self.email_address == user.email and
                 self.password == user.password)
+
+
+class AccountRecoveryToken(ConsumableToken):
+    _use_db = True
+    _connection_pool = "main"
+    _ttl = datetime.timedelta(hours=24)
+    token_size = 20
+    path = "/accountrecovery/"
+
+    @classmethod
+    def _new(cls, user):
+        user.add_note("Issued account recovery token.")
+        return super(AccountRecoveryToken, cls)._new(user_id=user._fullname,
+                                                     email_address=user.email,
+                                                     password=user.password)
+
+    def valid_for_credentials(self, email, password):
+        user = Account._by_fullname(self.user_id)
+        return (self.email_address.lower() == email.lower() and
+                valid_password(user, password, self.password))
+
+    def ratelimit_expired(self, limit=3):
+        key = "ratelimit:%s:%s" % (self.__class__.__name__, self.user_id)
+        time_slice = ratelimit.get_timeslice(60 * 60)
+        usage = ratelimit.record_usage(key, time_slice)
+        if usage > limit:
+            self.consume()
+            return True
 
 
 class AwardClaimToken(ConsumableToken):
@@ -846,6 +887,7 @@ class AwardClaimToken(ConsumableToken):
                          ("uid", "")])
     _use_db = True
     _connection_pool = "main"
+    path = "/awards/confirm/"
 
     @classmethod
     def _new(cls, uid, award, description, url):
@@ -872,11 +914,37 @@ class AwardClaimToken(ConsumableToken):
             uid=uid,
         )
 
-    def post_url(self):
-        # Relative URL; should be used on an on-site form
-        return "/awards/claim/%s" % self._id
 
-    def confirm_url(self):
-        # Full URL; for emailing, PM'ing, etc.
-        base = g.https_endpoint or g.origin
-        return "%s/awards/confirm/%s" % (base, self._id)
+def make_reset_token(token_cls, user, issue_limit=3):
+    """Generate a password reset token or account recovery token.
+
+    Checks a ratelimit to ensure that the token isn't being reset too often.
+    There is also a global check on resets, such that more than 1000 per hour
+    will trigger obvious and loud breakage via a ValueError.
+
+    Issuing (or failing to issue) a token are added to user's notes.
+    """
+
+    # check if we've hit the ratelimit
+    reset_count_key = "token:%s_count:%s" % (token_cls.__name__, user._id)
+    time_slice = ratelimit.get_timeslice(int(token_cls._ttl))
+    usage = ratelimit.record_usage(reset_count_key, time_slice)
+    if usage > issue_limit:
+        user.add_note("Exceeded password/email reset max attempts.")
+        return None
+
+    # check if we've hit the global rate limit and fail badly
+    reset_count_global = "token:%s_count_global" % (token_cls.__name__,)
+    global_time_slice = ratelimit.get_timeslice(60 * 60)
+    global_usage = ratelimit.record_usage(reset_count_global,
+                                          global_time_slice)
+
+    if global_usage > 1000:
+        raise ValueError(
+            "Somebody's beating the hell out of the password reset endpoint"
+        )
+
+    # all is well.  issue the token.
+    token = token_cls._new(user)
+
+    return token

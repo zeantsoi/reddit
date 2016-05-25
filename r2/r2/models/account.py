@@ -746,6 +746,18 @@ class Account(Thing):
         """
         return 'force_password_reset' in self._t
 
+    def add_note(self, note, author="<automated>"):
+        """Add an admin note about the user."""
+        from r2.models.admin_notes import AdminNotesBySystem
+
+        AdminNotesBySystem.add(
+            system_name="user",
+            subject=self.name,
+            note=note,
+            author=author,
+            when=datetime.now(g.tz),
+        )
+
 
 class FakeAccount(Account):
     _nodb = True
@@ -1060,12 +1072,8 @@ def deleted_account_cleanup(data):
 
         # add the note with info about the major changes to the account
         if notes:
-            AdminNotesBySystem.add(
-                system_name="user",
-                subject=account.name,
+            account.add_note(
                 note="Account deletion cleanup summary:\n\n%s" % notes,
-                author="<automated>",
-                when=datetime.now(g.tz),
             )
 
         account._commit()

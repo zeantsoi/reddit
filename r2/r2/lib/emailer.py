@@ -19,12 +19,13 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-
+from datetime import timedelta
 from email import encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from email.errors import HeaderParseError
+import base64
 import datetime
 import traceback, sys, smtplib
 import hashlib
@@ -35,9 +36,10 @@ from pylons import request
 from pylons.i18n import N_
 import simplejson as json
 
+from baseplate.crypto import MessageSigner
 from r2.config import feature
 from r2.lib import hooks
-from r2.lib.ratelimit import SimpleRateLimit
+from r2.lib.filters import _force_unicode
 from r2.lib.utils import timeago, long_datetime
 from r2.models import (
     Account,
@@ -53,15 +55,21 @@ from r2.models.link import (
     NOTIFICATION_EMAIL_COOLING_PERIOD,
     NOTIFICATION_EMAIL_MAX_DELAY,
 )
-from r2.models.token import EmailVerificationToken, PasswordResetToken
+from r2.models.token import (
+    AccountRecoveryToken,
+    EmailVerificationToken,
+    make_reset_token,
+    PasswordResetToken,
+)
 
 
 trylater_hooks = hooks.HookRegistrar()
 
-def _system_email(email, plaintext_body, kind, reply_to="",
-        thing=None, from_address=g.feedback_email,
-        html_body="", list_unsubscribe_header="", user=None,
-        suppress_username=False):
+
+def _system_email(email, plaintext_body, kind, reply_to="", thing=None,
+                  from_address=g.feedback_email, html_body="",
+                  list_unsubscribe_header="", user=None,
+                  suppress_username=False):
     """
     For sending email from the system to a user (reply address will be
     feedback and the name will be reddit.com)
@@ -123,43 +131,41 @@ def verify_email(user, dest=None):
 
     _system_email(user.email,
                   VerifyEmail(user=user,
-                              emaillink = emaillink).render(style='email'),
+                              emaillink=emaillink).render(style='email'),
                   Email.Kind.VERIFY_EMAIL)
 
-def password_email(user):
-    """
-    For resetting a user's password.
-    """
-    from r2.lib.pages import PasswordReset
 
-    user_reset_ratelimit = SimpleRateLimit(
-        name="email_reset_count_%s" % user._id36,
-        seconds=int(datetime.timedelta(hours=12).total_seconds()),
-        limit=3,
-    )
-    if not user_reset_ratelimit.record_and_check():
+def password_email(user):
+    """For resetting a user's password."""
+    from r2.lib.pages import PasswordReset
+    token = make_reset_token(PasswordResetToken, user, issue_limit=3)
+    if not token:
         return False
 
-    global_reset_ratelimit = SimpleRateLimit(
-        name="email_reset_count_global",
-        seconds=int(datetime.timedelta(hours=1).total_seconds()),
-        limit=1000,
-    )
-    if not global_reset_ratelimit.record_and_check():
-        raise ValueError("password reset ratelimit exceeded")
+    passlink = token.make_token_url()
+    if not passlink:
+        return False
 
-    token = PasswordResetToken._new(user)
-    base = g.https_endpoint or g.origin
-    passlink = base + '/resetpassword/' + token._id
-    g.log.info("Generated password reset link: " + passlink)
-    _system_email(user.email,
-                  PasswordReset(user=user,
-                                passlink=passlink).render(style='email'),
-                  Email.Kind.RESET_PASSWORD,
-                  reply_to=g.support_email,
-                  user=user,
-                  )
+    g.log.info("Generated %s: %s", PasswordResetToken.__name__, passlink)
+    signer = MessageSigner(g.secrets["outbound_url_secret"])
+    signature = base64.urlsafe_b64encode(
+        signer.make_signature(
+            _force_unicode(passlink),
+            max_age=timedelta(days=180))
+    )
+    _system_email(
+        user.email,
+        PasswordReset(
+            user=user,
+            passlink=passlink,
+            signature=signature,
+        ).render(style='email'),
+        Email.Kind.RESET_PASSWORD,
+        reply_to=g.support_email,
+        user=user,
+    )
     return True
+
 
 @trylater_hooks.on('trylater.message_notification_email')
 def message_notification_email(data):
@@ -373,6 +379,7 @@ def generate_notification_email_unsubscribe_token(user_id36, user_email=None,
         user_id36 + user_email + user_password_hash,
         hashlib.sha256).hexdigest()
 
+
 def password_change_email(user):
     """Queues a system email for a password change notification."""
     from r2.lib.pages import PasswordChangeEmail
@@ -384,15 +391,42 @@ def password_change_email(user):
                          user=user,
                          )
 
-def email_change_email(user):
-    """Queues a system email for a email change notification."""
-    from r2.lib.pages import EmailChangeEmail
 
-    return _system_email(user.email,
-                         EmailChangeEmail(user=user).render(style='email'),
-                         Email.Kind.EMAIL_CHANGE,
-                         reply_to=g.support_email,
-                         )
+def email_password_change_email(user, new_email=None, password_change=False):
+    """Queues a system email for email or password change notification."""
+    from r2.lib.pages import EmailPasswordChangeEmail
+    token = make_reset_token(AccountRecoveryToken, user, issue_limit=1)
+    if not token:
+        return False
+
+    passlink = token.make_token_url()
+    if not passlink:
+        return False
+
+    g.log.info("Generated %s: %s", AccountRecoveryToken.__name__, passlink)
+    signer = MessageSigner(g.secrets["outbound_url_secret"])
+    signature = base64.urlsafe_b64encode(
+        signer.make_signature(
+            _force_unicode(passlink),
+            max_age=timedelta(days=180))
+    )
+    email_kind = Email.Kind.EMAIL_CHANGE
+    if password_change:
+        email_kind = Email.Kind.PASSWORD_CHANGE
+    _system_email(
+        user.email,
+        EmailPasswordChangeEmail(
+            user=user,
+            new_email=new_email,
+            passlink=passlink,
+            email_kind=email_kind,
+            signature=signature,
+        ).render(style='email'),
+        email_kind,
+        reply_to=g.support_email,
+    )
+    return True
+
 
 def community_email(body, kind):
     return _community_email(body, kind)

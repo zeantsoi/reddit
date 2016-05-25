@@ -230,7 +230,7 @@ class AdminTools(object):
         '''
         award = Award._by_codename(award_codename)
         token = AwardClaimToken._new(unique_award_id, award, description, url)
-        return token.confirm_url()
+        return token.make_token_url()
 
 admintools = AdminTools()
 

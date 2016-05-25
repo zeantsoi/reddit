@@ -378,6 +378,10 @@ def make_map(config):
        action='verify_email')
     mc('/resetpassword', controller='forms',
        action='resetpassword')
+    mc('/accountrecovery/:key', controller='forms',
+       action='accountrecovery')
+    mc('/accountrecovery', controller='forms',
+       action='accountrecovery')
 
     mc('/modify_hsts_grant', controller='front', action='modify_hsts_grant')
 

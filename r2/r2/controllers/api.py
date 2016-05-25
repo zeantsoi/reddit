@@ -1362,17 +1362,20 @@ class ApiController(RedditController):
 
         form.set_text('.status',
                       _('all other sessions have been logged out'))
-        form.set_inputs(curpass = "")
+        form.set_inputs(curpass="")
+        self.revoke_sessions_and_login(c.user, password)
 
+    def revoke_sessions_and_login(self, user, password):
         # deauthorize all access tokens
-        OAuth2AccessToken.revoke_all_by_user(c.user)
-        OAuth2RefreshToken.revoke_all_by_user(c.user)
+        OAuth2AccessToken.revoke_all_by_user(user)
+        OAuth2RefreshToken.revoke_all_by_user(user)
 
         # run the change password command to get a new salt
-        change_password(c.user, password)
+        change_password(user, password)
+
         # the password salt has changed, so the user's cookie has been
         # invalidated.  drop a new cookie.
-        self.login(c.user)
+        self.login(user)
 
     @validatedForm(
         VUser(),
@@ -1407,7 +1410,8 @@ class ApiController(RedditController):
                 if user_email:
                     # don't email on case-changes.  It's worrisome to the user.
                     if user_email.lower() != email.lower():
-                        emailer.email_change_email(c.user)
+                        emailer.email_password_change_email(user=c.user,
+                                                            new_email=email)
                     _event("update_email")
                     c.user.set_email(email)
                 else:
@@ -1466,7 +1470,7 @@ class ApiController(RedditController):
             _event("remove_email")
             c.errors.remove((errors.NO_EMAILS, 'email'))
             if c.user.email:
-                emailer.email_change_email(c.user)
+                emailer.email_password_change_email(user=c.user)
             c.user.set_email('')
             c.user.email_verified = None
             c.user.pref_email_messages = False
@@ -1504,10 +1508,11 @@ class ApiController(RedditController):
         # set last_password_reset_timestamp attr
         c.user.last_password_reset_timestamp = datetime.now(g.tz)
 
-        change_password(c.user, password)
-
         if c.user.email:
-           emailer.password_change_email(c.user)
+            emailer.email_password_change_email(user=c.user,
+                                                password_change=True)
+
+        change_password(c.user, password)
 
         form.set_text('.status', _('your password has been updated'))
         form.set_inputs(curpass="", newpass="", verpass="")
@@ -3906,6 +3911,98 @@ class ApiController(RedditController):
                 form.set_text(".status", _("try again tomorrow"))
 
     @csrf_exempt
+    @validatedForm(
+        VNewPasswordIsNew(['newpass', 'curpass']),
+        token=VOneTimeToken(AccountRecoveryToken, "key"),
+        password=VPasswordChange(['newpass', 'verpass']),
+        email=ValidEmail("email"),
+        curpass=nop("curpass"),
+    )
+    def POST_accountrecovery(
+        self, form, jquery, token, password, email, curpass
+    ):
+        """Recover user account based on original email account and password.
+
+        Called by /accountrecovery on the site with a valid
+        AccountRecoveryToken. `email` and `curpass` have to
+        match original email account and password. For frontend
+        form verification purposes, `newpass` and `verpass`
+        must be equal for a password change to succeed.
+
+        """
+        def _event(error=None):
+            g.events.account_recovery_event(
+                user_name=token.user_id if token else None,
+                base_url=request.fullpath,
+                new_email=email,
+                request=request,
+                error_msg=error,
+                context=c,
+            )
+
+        destination = "/accountrecovery?expired=true"
+
+        # was the token invalid or has it expired?
+        if not token:
+            form.redirect(destination)
+            _event("expired_token")
+            return
+
+        if (
+            form.has_errors("newpass", errors.SHORT_PASSWORD) or
+            form.has_errors("newpass", errors.BAD_PASSWORD) or
+            form.has_errors("verpass", errors.BAD_PASSWORD_MATCH) or
+            form.has_errors("newpass", errors.OLD_PASSWORD_MATCH)
+        ):
+            _event("invalid_new_password")
+            return
+
+        if form.has_errors("email", errors.BAD_EMAIL) or not email:
+            _event("bad_email")
+            return
+
+        if not token.valid_for_credentials(email, curpass):
+            # Limit attempts.
+            if token.ratelimit_expired():
+                form.redirect(destination)
+                _event("ratelimited_token")
+            else:
+                c.errors.add(errors.WRONG_PASSWORD, field='curpass')
+                form.set_error(errors.WRONG_PASSWORD, 'curpass')
+                c.errors.add(errors.BAD_EMAIL, field='email')
+                form.set_error(errors.BAD_EMAIL, 'email')
+                _event("invalid_credentials")
+            return
+
+        # load up the user from the token
+        user = Account._by_fullname(token.user_id)
+        # the token is valid and has been used.  Destroy it.
+        token.consume()
+
+        # set the email but don't email the old account!  This is an
+        # ATO-recovery!
+        user.set_email(email)
+        # finish the "normal" password reset flow
+        self.reset_user_password_after_token(user, password, token._id)
+
+        form.set_text('.status', _('your account has been recovered'))
+        form.set_inputs(curpass="", newpass="", verpass="")
+
+        # kill all other sessions and log the user in
+        self.revoke_sessions_and_login(user, password)
+        # success!
+        _event()
+        # also mark this with a special login event
+        g.events.login_event(
+            'account_recovery',
+            error_msg=None,
+            user_name=user.name,
+            email=email,
+            request=request,
+            context=c,
+        )
+
+    @csrf_exempt
     @validatedForm(token=VOneTimeToken(PasswordResetToken, "key"),
                    password=VPasswordChange(["passwd", "passwd2"]))
     def POST_resetpassword(self, form, jquery, token, password):
@@ -3934,21 +4031,28 @@ class ApiController(RedditController):
         if user._banned:
             return
 
+        self.reset_user_password_after_token(user, password, token._id)
+
+        # if the token is for the current user, their cookies will be
+        # invalidated and they'll have to log in again.
+        if not c.user_is_loggedin or c.user._fullname == token.user_id:
+            jquery.redirect('/login')
+
+        form.set_text(".status", _("password updated"))
+
+    def reset_user_password_after_token(self, user, password, token_id):
         # Clean force password reset and in timeout flags with no expiration.
         if user.force_password_reset:
             user.force_password_reset = False
-            AdminNotesBySystem.add(
-                system_name="user",
-                subject=user.name,
-                note="User responded to ATO as of: %s" % datetime.now(g.tz),
+            user.add_note(
+                "User responded to ATO as of: %s" % datetime.now(g.tz),
                 author=user.name,
-                when=datetime.now(g.tz),
             )
             AtoTimeout.unschedule(user)
             if not user.timeout_expiration:
                 user.in_timeout = False
 
-        # passwordresettoken already verified the email address and password,
+        # the token already verified the email address and password,
         # so here give verified_email award
         user.email_verified = True
         Award.give_if_needed("verified_email", user)
@@ -3961,18 +4065,11 @@ class ApiController(RedditController):
         if user.email:
             emailer.password_change_email(user)
         g.log.warning("%s did a password reset for %s via %s",
-                      request.ip, user.name, token._id)
+                      request.ip, user.name, token_id)
 
         # add this ip to the user's account so they can sign in even if
         # their account is being brute forced by a third party.
         set_account_ip(user._id, request.ip, c.start_time)
-
-        # if the token is for the current user, their cookies will be
-        # invalidated and they'll have to log in again.
-        if not c.user_is_loggedin or c.user._fullname == token.user_id:
-            jquery.redirect('/login')
-
-        form.set_text(".status", _("password updated"))
 
     @require_oauth2_scope("subscribe")
     @noresponse(
