@@ -69,6 +69,10 @@ class EventQueue(object):
         except baseplate.events.EventQueueFullError as exc:
             g.log.warning("%s", exc)
             g.stats.simple_event("eventcollector.queue_full")
+        except UnicodeDecodeError as exc:
+            # When including request data in the event payload, we sometimes
+            # encounter invalid utf-8 strings in the Referer header or path.
+            g.log.error("Got weird unicode in the event data: %s", exc)
 
     @squelch_exceptions
     @sampled("events_collector_vote_sample_rate")
