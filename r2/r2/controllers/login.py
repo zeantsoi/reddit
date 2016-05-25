@@ -148,7 +148,8 @@ def handle_register(
         _event(error='SPONSOR_NO_EMAIL')
 
     # last but not least, we have to check the captcha
-    elif not signature and not valid_provider_captcha(responder):
+    elif (not signature and not g.disable_captcha and
+          not valid_provider_captcha(responder)):
         _event(error='BAD_CAPTCHA')
 
     else:
