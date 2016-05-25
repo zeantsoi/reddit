@@ -30,6 +30,7 @@ NOTE: This is using the Customer Information Manager (CIM) API
 http://developer.authorize.net/api/cim/
 """
 
+from datetime import datetime
 import re
 from httplib import HTTPSConnection
 from urlparse import urlparse
@@ -508,14 +509,22 @@ class CreateCustomerProfileTransactionRequest(AuthorizeNetRequest):
 
 
 class GetSettledBatchListRequest(AuthorizeNetRequest):
-    _keys = AuthorizeNetRequest._keys + ["includeStatistics", 
-                                         "firstSettlementDate", 
+    _keys = AuthorizeNetRequest._keys + ["includeStatistics",
+                                         "firstSettlementDate",
                                          "lastSettlementDate"]
-    def __init__(self, start_date, end_date, **kw):
-        AuthorizeNetRequest.__init__(self, 
+
+    def __init__(self, start_date=None, end_date=None, **kw):
+        if start_date:
+            start_time = datetime.combine(start_date, datetime.min.time())
+            start_date = start_time.isoformat()
+        if end_date:
+            end_time = datetime.combine(end_date, datetime.min.time())
+            end_date = end_time.isoformat()
+
+        AuthorizeNetRequest.__init__(self,
                                      includeStatistics=1,
-                                     firstSettlementDate=start_date.isoformat(),
-                                     lastSettlementDate=end_date.isoformat(),
+                                     firstSettlementDate=start_date,
+                                     lastSettlementDate=end_date,
                                      **kw)
 
     def process_response(self, res):
@@ -523,6 +532,22 @@ class GetSettledBatchListRequest(AuthorizeNetRequest):
 
     def process_error(self, res):
         message_text = res.find("text").contents[0]
+        raise AuthorizeNetException(message_text)
+
+
+class GetTransactionListRequest(AuthorizeNetRequest):
+    """Returns all transactions settled by batch."""
+
+    _keys = AuthorizeNetRequest._keys + ['batchId']
+
+    def __init__(self, batch_id, **kw):
+        super(GetTransactionListRequest, self).__init__(batchId=batch_id, **kw)
+
+    def process_response(self, res):
+        return res
+
+    def process_error(self, res):
+        message_text = res.find('text').contents[0]
         raise AuthorizeNetException(message_text)
 
 
