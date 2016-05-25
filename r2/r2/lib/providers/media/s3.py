@@ -94,7 +94,10 @@ class S3MediaProvider(MediaProvider):
         else:
             r_bucket = re.compile('.*\://?([^\/]+)')
 
-        bucket_name = r_bucket.findall(url)[0]
+        bucket_match = r_bucket.match(url)
+        if not bucket_match:
+            raise ValueError("Invalid url")
+        bucket_name = bucket_match.group(1)
         key_name = url.split('/')[-1]
 
         return bucket_name, key_name
@@ -104,7 +107,10 @@ class S3MediaProvider(MediaProvider):
         timer = g.stats.get_timer("providers.s3.key_set_private")
         timer.start()
         if not key:
-            bucket_name, key_name = self._get_bucket_key_from_url(url)
+            try:
+                bucket_name, key_name = self._get_bucket_key_from_url(url)
+            except ValueError:
+                return False
             bucket = self._get_bucket(bucket_name, validate=False)
             key = bucket.get_key(key_name)
 
@@ -171,7 +177,10 @@ class S3MediaProvider(MediaProvider):
 
     def purge(self, url):
         """Deletes the key as specified by the url"""
-        bucket_name, key_name = self._get_bucket_key_from_url(url)
+        try:
+            bucket_name, key_name = self._get_bucket_key_from_url(url)
+        except ValueError:
+            return False
 
         timer = g.stats.get_timer("providers.s3.key_set_private")
         timer.start()
