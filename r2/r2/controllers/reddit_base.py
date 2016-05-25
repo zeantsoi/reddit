@@ -1128,21 +1128,7 @@ class MinimalController(BaseController):
         hooks.get_hook("reddit.request.minimal_begin").call()
 
     def can_use_pagecache(self):
-        # Don't allow using pagecache if redirecting from an endpoint
-        # that disallowed it (for ex. redirecting from one that caches loggedin
-        # responses to one that doesn't)
-        if not request.environ.get("CAN_USE_PAGECACHE", True):
-            return False
-
-        handler = self._get_action_handler()
-        policy = getattr(handler, "pagecache_policy",
-                         PAGECACHE_POLICY.LOGGEDOUT_ONLY)
-
-        if policy == PAGECACHE_POLICY.LOGGEDIN_AND_LOGGEDOUT:
-            return True
-        elif policy == PAGECACHE_POLICY.LOGGEDOUT_ONLY:
-            return not c.user_is_loggedin
-
+        # experiment: does the pagecache even give us any benefit?
         return False
 
     def try_pagecache(self):
