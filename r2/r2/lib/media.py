@@ -1519,12 +1519,12 @@ def purge_image(url):
     purge_from_cdn(url)
 
 
-def purge_associated_images(link, delete_thumbs=True):
+def purge_associated_images(link, delete_thumbs=True, delete_preview=True):
     thumbnail_url = getattr(link, 'thumbnail_url', None)
     preview_url = None
     has_preview = (
         getattr(link, 'preview_object', None)
-        and getattr(link.preview_object, 'url', None)
+        and link.preview_object.get('url')
     )
 
     if has_preview:
@@ -1539,6 +1539,12 @@ def purge_associated_images(link, delete_thumbs=True):
     if thumbnail_url and delete_thumbs:
         purge_image(thumbnail_url)
 
-    if preview_url:
-        purge_image(preview_url)
+    # preview objects are content-hashed as well, so uploading an image
+    # and deleting it could delete the preview objects for
+    # other sources of the same image.
+    if preview_url and delete_preview:
+        static_preview_url = g.image_resizing_provider.resize_image(
+                link.preview_object, link.preview_object['width'])
+        purge_image(static_preview_url)
+
         purge_imgix_images(link.preview_object)
