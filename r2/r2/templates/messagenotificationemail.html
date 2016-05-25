@@ -23,6 +23,7 @@
 <%!
     from r2.lib.template_helpers import update_query, static
     from r2.lib.utils import UrlParser
+    from r2.lib.filters import unsafe, emailmarkdown
 %>
 
 <%def name="view_notification_link(action_str, message, query)">
@@ -79,8 +80,6 @@
   %>
   ${url}
 </%def>
-
-<%namespace file="utils.html" import="md"/>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -188,7 +187,7 @@
                   </h2>
                 %endif
 
-                ${md(message["body"])}
+                ${unsafe(emailmarkdown(message["body"]))}
 
                 <!-- Separator -->
                 <hr />
@@ -207,17 +206,17 @@
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="left">
-                    <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_button'})}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank">
-                      <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
-                        <tr>
-                          <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
+                    <table width="200" border="0" cellspacing="0" cellpadding="0" class="container-1" bgcolor="#24a0ed">
+                      <tr>
+                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"><div style="font-size:0pt; line-height:0pt; height:40px"><img src="${static('spacer.gif', absolute=True)}" width="1" height="40" style="height:40px" alt="" /></div></td>
                           <td class="text-btn" style="color:#ffffff; font-family:Arial; font-size:14px; line-height:18px; text-align:center">
-                            <strong class="call-to-action" style="color:#ffffff; text-decoration:none">Go to Reddit Inbox</strong>
+                            <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_button'})}" class="call-to-action" style="color:#ffffff; text-decoration:none" target="_blank">
+                              <strong class="call-to-action" style="color:#ffffff; text-decoration:none">Go to Reddit Inbox</strong>
+                            </a>
                           </td>
-                          <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
-                        </tr>
-                      </table>
-                    </a> 
+                        <td class="img" style="font-size:0pt; line-height:0pt; text-align:left" width="10"></td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>

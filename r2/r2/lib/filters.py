@@ -31,6 +31,7 @@ import snudown
 from BeautifulSoup import BeautifulSoup, Tag
 from pylons import tmpl_context as c
 from pylons import app_globals as g
+from urlparse import urljoin
 
 from r2.lib.souptest import (
     souptest_fragment,
@@ -227,6 +228,34 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         return SC_OFF + MD_START + text + MD_END + SC_ON
     else:
         return SC_OFF + text + SC_ON
+
+
+def emailmarkdown(text, nofollow=False, wrap=True, **kwargs):
+    if not text:
+        return None
+
+    target = kwargs.get("target", None)
+    text = snudown.markdown(_force_utf8(text), nofollow, target)
+
+    soup = BeautifulSoup(text.decode('utf-8'))
+    links = soup.findAll('a')
+    update_text = False
+    base = g.https_endpoint or g.origin
+
+    for link in links:
+        # if link is relative
+        if link['href'].startswith('/'):
+            update_text = True
+            link['href'] = urljoin(base, link['href'])
+
+    if update_text:
+        text = str(soup)
+
+    if wrap:
+        return SC_OFF + MD_START + text + MD_END + SC_ON
+    else:
+        return SC_OFF + text + SC_ON
+
 
 def wikimarkdown(text, include_toc=True, target=None):
     from r2.lib.template_helpers import make_url_protocol_relative
