@@ -592,41 +592,6 @@ var exports = r.sponsored = {
     render: function() {},
 
     init: function() {
-        $("#sr-autocomplete").on("sr-changed blur", function(e, data) {
-            data = data || {};
-            r.sponsored.render();
-
-            if (e.type !== 'sr-changed') {
-              return;
-            }
-
-            var target = null;
-
-            if (data.is_autocomplete) {
-              target = 'autocomplete';
-            } else if (data.is_suggestion) {
-              target = 'suggestion';
-            }
-
-            // get new suggestions when new subreddits are added
-            if(r.srAutocomplete.dynamic_suggestions &&
-                !data.delete_subreddit &&
-                !data.no_new_suggestions){
-              sr_get_new_suggestions(undefined, true);
-            }
-
-            // reset the suggestions to default when there are no selected subreddits
-            if(r.srAutocomplete.dynamic_suggestions &&
-                Object.keys(r.srAutocomplete.selected_sr).length === 0){
-              sr_suggestions_reset();
-            }
-
-            r.analytics.adsInteractionEvent('select_subreddit', {
-              sr_name: $(this).val(),
-              target: target,
-            });
-        });
-
         this.targetValid = true;
         this.budgetValid = true;
         this.bidValid = true;
@@ -1392,7 +1357,7 @@ var exports = r.sponsored = {
             isCollection = !isSubreddit && !isFrontpage,
             type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'subreddit',
             srString = $form.find("#selected_sr_names").val(),
-            sr = isSubreddit && !!srString ? srString.split(SR_NAMES_DELIM) : [],
+            sr = isSubreddit && !!srString ? r.srAutocomplete.getSelectedSubreddits() : [],
             collection = isCollection ? collectionVal : null,
             canGeotarget = isFrontpage || this.userIsSponsor || this.isAuction,
             country = canGeotarget && $('#country').val() || '',
@@ -2169,7 +2134,7 @@ var exports = r.sponsored = {
             data.collection_name = targeting.collection;
         }
         else if (targeting.type === 'subreddit') {
-            data.sr_names = targeting.sr.join(SR_NAMES_DELIM);
+            data.sr_names = targeting.sr.join(',');
         }
 
         this.reload_with_params(data);
@@ -2374,7 +2339,7 @@ function cancel_edit(callback) {
                             });
                     });
             });
-        sr_reset(); // resets the subreddit autocomplete
+        r.srAutocomplete.srReset(); // resets the subreddit autocomplete
     } else {
         var keep_open = $campaign.hasClass('keep-open');
         
@@ -2394,7 +2359,7 @@ function cancel_edit(callback) {
 
             r.sponsored.render();
         } else {
-            sr_reset(); // resets the subreddit autocomplete
+            r.srAutocomplete.srReset(); // resets the subreddit autocomplete
         }
     }
 }
