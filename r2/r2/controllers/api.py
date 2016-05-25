@@ -1367,10 +1367,13 @@ class ApiController(RedditController):
             return
 
         if not form.has_errors("email", errors.BAD_EMAILS) and email:
-            if (not hasattr(c.user, 'email') or c.user.email != email):
-                if c.user.email:
+            user_email = getattr(c.user, "email", "")
+            if user_email != email:
+                if user_email:
+                    # don't email on case-changes.  It's worrisome to the user.
+                    if user_email.lower() != email.lower():
+                        emailer.email_change_email(c.user)
                     _event("update_email")
-                    emailer.email_change_email(c.user)
                     c.user.set_email(email)
                 else:
                     _event("add_email")
