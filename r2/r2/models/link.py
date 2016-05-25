@@ -878,7 +878,7 @@ class Link(Thing, Printable):
                 # If an image upload, link to the image only if on the comments page,
                 # else link to the comments page permalink.
                 # If the subreddit or user has disabled previews, link to the image.
-                if (item.image_upload and
+                if (item.domain in g.image_hosting_domain and
                         show_media_preview and
                         request.route_dict['action_name'] != 'comments'
                 ):
