@@ -263,6 +263,7 @@ class Reddit(Templated):
                  header=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
                  show_locationbar=False, show_newsletterbar=False,
+                 canonical_link=None,
                  **context):
         Templated.__init__(self, **context)
         self.title = title
@@ -313,7 +314,9 @@ class Reddit(Templated):
         self.has_adblock_test = has_adblock_test
 
         # generate a canonical link for google
-        self.canonical_link = request.fullpath
+        canonical_url = UrlParser(canonical_link or request.url)
+        canonical_url.canonicalize()
+        self.canonical_link = canonical_url.unparse()
         if c.render_style != "html":
             u = UrlParser(request.fullpath)
             u.set_extension("")
@@ -322,6 +325,7 @@ class Reddit(Templated):
             if g.domain_prefix:
                 u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
             self.canonical_link = u.unparse()
+
         # Generate a mobile link for Google.
         u = UrlParser(request.fullpath)
         u.switch_subdomain_by_extension('mobile')
