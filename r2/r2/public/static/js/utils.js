@@ -20,6 +20,28 @@ r.utils = {
       return a.href;
     },
 
+    parseQueryString: function(search) {
+      if (search[0] === '?') {
+        search = search.substr(1);
+      }
+
+      var kvps = search.split('&');
+
+      return kvps.reduce(function(parsed, kvp) {
+        var parts = kvp.split('=');
+        var key = parts[0];
+        var value = parts[1];
+
+        if (key in parsed) {
+          parsed[key] = [].concat(parsed[key], value);
+        } else {
+          parsed[key] = value;
+        }
+
+        return parsed;
+      }, {});
+    },
+
     // Returns human readable file sizes
     // http://stackoverflow.com/a/25613067/704286
     formatFileSize: function(size) {

@@ -15,9 +15,17 @@
 
     requestPromo: function(options){
       options = options || {};
+
+      var params = r.utils.parseQueryString(location.search);
+      var url = '/api/request_promo';
+
+      if (params.feature) {
+        url += '?' + $.param({ feature: params.feature }, true)
+      }
+
       return $.ajax({
         type: 'POST',
-        url: '/api/request_promo',
+        url: url,
         timeout: 1000,
         data: {
           site: this.site,
