@@ -410,9 +410,16 @@
         %endif
         %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected, PROMOTE_STATUS.edited_live):
           <li>
-            ${ynbutton(_("accept"), \
+            ${ynbutton(_("low quality"), \
                        _("accepted"), "promote", \
-                       callback="hide_thing" if getattr(thing, "hide_after_seen", False) else "null")}
+                       callback="hide_thing" if getattr(thing, "hide_after_seen", False) else "null", \
+                       hidden_data={"quality": "low"})}
+          </li>
+          <li>
+            ${ynbutton(_("high quality"), \
+                       _("accepted"), "promote", \
+                       callback="hide_thing" if getattr(thing, "hide_after_seen", False) else "null", \
+                       hidden_data={"quality": "high"})}
           </li>
         %endif
       %endif

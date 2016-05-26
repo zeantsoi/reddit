@@ -955,13 +955,15 @@ def get_date_limits(link, is_sponsor=False):
     return min_start, max_start, max_end
 
 
-def accept_promotion(link):
+def accept_promotion(link, quality):
     was_edited_live = is_edited_live(link)
     update_promote_status(link, PROMOTE_STATUS.accepted)
 
     if link._spam:
         link._spam = False
-        link._commit()
+
+    link.promo_quality = quality
+    link._commit()
 
     if not was_edited_live:
         emailer.accept_promo(link)
@@ -985,6 +987,7 @@ def accept_promotion(link):
     g.events.approve_promoted_link_event(
         link=link,
         is_approved=True,
+        quality=quality,
         request=request,
         context=c,
     )
@@ -1025,6 +1028,9 @@ def reject_promotion(link, reason=None, notify_why=True):
     if reason:
         PromotionLog.add(link, "rejected: %s" % reason)
 
+    link.promo_quality = None
+    link._commit()
+    
     # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
         emailer.reject_promo(link, reason=(reason if notify_why else None))

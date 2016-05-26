@@ -849,10 +849,11 @@ class PromoteApiController(ApiController):
 
     @noresponse(VSponsorAdmin(),
                 VModhash(),
-                thing=VByName('id'))
-    def POST_promote(self, thing):
+                thing=VByName('id'),
+                quality=VOneOf('quality', options=('low', 'high')))
+    def POST_promote(self, thing, quality):
         if promote.is_promo(thing):
-            promote.accept_promotion(thing)
+            promote.accept_promotion(thing, quality)
             if isinstance(thing, Link):
                 promote.approve_all_campaigns(thing)
 

@@ -840,7 +840,7 @@ class EventQueue(object):
 
     @squelch_exceptions
     def approve_promoted_link_event(self, link, is_approved,
-            reason=None, request=None, context=None):
+            reason=None, quality=None, request=None, context=None):
         """Send an event recording a promo link's approval status.
 
         link: A promoted r2.models.Link object
@@ -859,6 +859,7 @@ class EventQueue(object):
             context=context,
             data=dict(
                 is_approved=is_approved,
+                quality=quality,
             ),
         )
 
