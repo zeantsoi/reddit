@@ -52,6 +52,7 @@ POST_EMBED_TEMPLATE = """
     <script async src="%(embedly_script)s" charset="UTF-8"></script>
 """
 
+
 def _oembed_for(thing, **embed_options):
     """Given a Thing, return a dict of oEmbed data for that thing.
 
@@ -129,9 +130,11 @@ def _oembed_comment(thing, **embed_options):
         author_name = ""
         title = ""
 
+    parent = "true" if embed_options.get('parent') else "false"
+
     html = format_html(embeds.get_inject_template(),
                        media=g.media_domain,
-                       parent="true" if embed_options.get('parent') else "false",
+                       parent=parent,
                        live="true" if embed_options.get('live') else "false",
                        created=datetime.now(g.tz).isoformat(),
                        comment=thing.make_permalink_slow(force_domain=True),
