@@ -10,6 +10,9 @@
 # this, style checks also only run on non-master branches.
 ###############################################################################
 
+# Don't let the pipe to pep8 eat exit(1) thrown by git diff.
+set -o pipefail
+
 if [[ ${CI_BRANCH} = "master" ]]; then
     echo "Skipping style checks on commit(s) to the master branch."
     exit 0
@@ -21,8 +24,13 @@ if [[ ${CI_REPO:=} = "" ]]; then
     git diff --cached | pep8 --diff
 else
     echo "Running style checks within Drone..."
-    git fetch --no-tags --depth=10 origin master
-    git diff origin/${CI_BRANCH} origin/master | pep8 --diff
+    # Get repo name without org and slash so we place nicely with forks.
+    repo_name=${CI_REPO#*/}
+    git remote add upstream "https://github.com/reddit/${repo_name}.git"
+    git fetch --no-tags --depth=10 upstream master
+    # Find the point at which the branch and the canonical repo diverged.
+    # Catches cases where the submitter hasn't rebased recently.
+    git diff --cached $(git merge-base HEAD upstream/master) | pep8 --diff
 fi
 error_encountered=$?
 
