@@ -47,7 +47,7 @@ from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.csrf import csrf_exempt
-from r2.lib.utils import to36, sanitize_url, title_to_url
+from r2.lib.utils import to36, sanitize_url, title_to_url, is_seo_referrer
 from r2.lib.utils import query_string, UrlParser, url_links_builder
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode, _force_utf8
@@ -367,8 +367,10 @@ class FrontController(RedditController):
                                                    g.max_comments_gold))))
             num = g.max_comments
 
-        # only do this experiment for desktop users
-        if not is_api() and feature.is_enabled('fewer_comments_shown'):
+        # only do this experiment for SEO desktop users
+        if (not is_api() and
+                is_seo_referrer() and
+                feature.is_enabled('fewer_comments_shown')):
             if feature.variant('fewer_comments_shown') == '1_comment':
                 num = 1
             elif feature.variant('fewer_comments_shown') == '3_comments':
