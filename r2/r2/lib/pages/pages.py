@@ -1337,14 +1337,14 @@ class ValuePropSidebar(Templated):
             {
                 'icon': 'value_prop_vote.png',
                 'title': 'VOTE',
-                'text': "The global Reddit community then chooses which " \
-                    "stories and discussions to upvote or downvote."
+                'text': "The global Reddit community then chooses which "
+                        "stories and discussions to upvote or downvote."
             },
             {
-                'icon': 'value_prop_share.png',
-                'title': 'SHARE',
-                'text': "Comments provide more info, conversation, context, " \
-                    "and often humor."
+                'icon': 'value_prop_discuss.png',
+                'title': 'DISCUSS',
+                'text': "Comments provide more info, conversation, context, "
+                        "and often humor."
             },
         ]
         page_type = "self" if current_page.is_self else "link"
@@ -2106,13 +2106,13 @@ class LinkInfoPage(Reddit):
 
                     variant = feature.variant('relevancy_sidebar')
                     if variant == 'current_subreddit':
-                        rb.insert(1, TopPostsWithinSubreddit(link))
+                        rb.insert(1, TopPostsWithinSubreddit(self.link))
                     elif variant == 'default_subreddits':
-                        rb.insert(1, TopDefaultPosts(link))
+                        rb.insert(1, TopDefaultPosts(self.link))
                     elif variant == 'recent_subreddits':
-                        rb.insert(1, RecentSubredditPosts(link))
+                        rb.insert(1, RecentSubredditPosts(self.link))
                     elif variant == 'value_prop':
-                        rb.insert(1, ValuePropSidebar(link))
+                        rb.insert(1, ValuePropSidebar(self.link))
 
         return rb
 
