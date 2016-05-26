@@ -44,6 +44,15 @@
     .button-variant(@text-color: #fff, @bg-color: #c6c6c6, @bevel-color: #b8b8b8);
 }
 
+.c-btn-white {
+    border: 1px solid #b8b8b8;
+    .button-variant(@text-color: #b8b8b8 , @bg-color: #fff , @bevel-color: #b8b8b8);
+
+    &:focus {
+        color: #c6c6c6;
+    }
+}
+
 .c-btn-highlight {
     .button-variant(@text-color: #fff; @bg-color: #DC6431; @bevel-color: #C9532B);
 }

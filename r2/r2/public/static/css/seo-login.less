@@ -1,0 +1,89 @@
+.seo-login {
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 200px;
+    transition: height 0.5s cubic-bezier(0.26, 0.87, 0.74, 0.93);
+    background: url(../subscription_requests_bg.png) repeat;
+    background-size: cover;
+    border-top: 2px solid @color-pale-grey;
+
+    &.full-screen {
+        height: 100%;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 9999;
+    }
+
+    &.half-screen {
+        height: 50%;
+
+        .seo-login__box {
+            margin-top: 60px;
+        }
+    }
+
+    .seo-login__close {
+        font-size: 4em;
+        border: none;
+        background-color: transparent;
+        color: @color-grey;
+        padding: 10px;
+        position: absolute;
+        top: -10px;
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    .seo-login__box {
+        width: 400px;
+        padding: 10px;
+        margin: 0 auto 2em;
+        text-align: center;
+        transition: margin 0.5s cubic-bezier(0.26, 0.87, 0.74, 0.93);
+    }
+
+    .seo-login__heading {
+        padding: 10px 10px 20px;
+        border-bottom: 2px solid @color-pale-grey;
+        font-size: 1.8em;
+    }
+
+    .seo-login__btn {
+        width: 60%;
+    }
+
+    .seo-login__forms-h2 {
+        font-size: 2em;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .seo-login__forms-wrap {
+        width: 300px;
+        padding: 40px;
+        margin: 12% auto;
+        border-radius: 5px;
+        background-color: @modal-content-bg;
+        .box-shadow(0 0 5px @color-grey);
+
+        button {
+            width: 100%;
+            padding: 5px;
+        }
+    }
+
+    .seo-login__btn-wrap {
+        margin-top: 10px;
+    }
+
+    .seo-login__dismiss-wrap {
+        margin-top: 20px;
+        border-top: 1px solid @color-grey;
+        padding-top: 20px;
+    }
+}

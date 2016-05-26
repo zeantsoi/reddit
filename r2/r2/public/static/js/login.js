@@ -105,6 +105,9 @@ r.login.ui = {
             })
 
             this.popup = new r.ui.LoginPopup();
+            if ($('.seo-login').length > 0) {
+              this.seoLoginOverlay = new r.ui.seoLoginOverlay();
+            }
 
             $(document).delegate('.login-required', 'click', $.proxy(this, 'loginRequiredAction'))
         }
@@ -526,3 +529,97 @@ r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
     },
 
 });
+
+r.ui.seoLoginOverlay = function() {
+    this.states = {
+        login: 'log in',
+        register: 'sign up'
+    };
+
+    this.$wrapper = $('.seo-login');
+    this.$formsWrap = $('.seo-login__forms-wrap');
+    this.$startBox = $('.seo-login__box');
+    this.$loginForm = $('#login-form');
+    this.$registerForm = $('#register-form');
+    this.$switchBtn = $('#seo-login-switch');
+
+    this.state = this.states.register;
+    this.fullScreen = 'full-screen';
+    this.halfScreen = 'half-screen';
+
+    this.login = new r.ui.LoginForm(this.$loginForm);
+    this.register = new r.ui.RegisterForm(this.$registerForm);
+
+    $('#seo-exp-continue').on('click', function() {
+        this.state = this.states.register;
+        this.show();
+    }.bind(this));
+
+    $('#seo-exp-login').on('click', function() {
+        this.state = this.states.login;
+        this.show();
+    }.bind(this));
+
+    $('#seo-login-close').on('click', function() {
+        this.$wrapper.removeClass('full-screen half-screen')
+        this.$loginForm.hide();
+        this.$registerForm.hide();
+        this.$startBox.show();
+        this.$wrapper.hide();
+    }.bind(this));
+
+    $('#passwd_reg').on('change', function(e) {
+        if (this.state === this.states.register) {
+            $('#passwd2_reg').val(e.target.value);    
+        }
+    }.bind(this));
+
+    document.addEventListener('scroll', _.throttle(this.handleScroll.bind(this), 100));
+
+    this.$switchBtn.on('click', function() {
+        var oldState = this.state;
+        var newState = this.state === this.states.login ? 
+                       this.states.register : this.states.login;
+        this.state = newState;
+        this.$registerForm.toggle();
+        this.$loginForm.toggle();
+        this.$switchBtn.text(oldState);
+    }.bind(this));
+}
+
+r.ui.seoLoginOverlay.prototype = {
+  show: function() {
+    this.$wrapper.addClass(this.fullScreen);
+    this.$wrapper.removeClass(this.halfScreen);
+    this.$startBox.fadeOut('slow', 'linear', function(){
+        this.$formsWrap.show();
+        if (this.state === this.states.login) {
+            this.$registerForm.hide();
+            this.$switchBtn.text(this.states.register);
+            this.$loginForm.fadeIn(500, 'linear');
+        } else {
+            this.$loginForm.hide();
+            this.$switchBtn.text(this.states.login);
+            this.$registerForm.fadeIn(500, 'linear');
+        }
+    }.bind(this));
+  },
+
+  handleScroll: function(e) {
+        var scroll = window.scrollY;
+        if (scroll < 200) {
+            this.$wrapper.removeClass('full-screen half-screen');
+            this.$startBox.show();
+            this.$formsWrap.hide();
+        } else if (window.scrollY > 200 && window.scrollY < 500) {
+            this.$wrapper.addClass(this.halfScreen);
+            this.$wrapper.removeClass(this.fullScreen);
+            this.$startBox.show();
+            this.$formsWrap.hide();
+        } else if (window.scrollY > 500) {
+            this.$wrapper.addClass(this.fullScreen);
+            this.$wrapper.removeClass(this.halfScreen);
+            this.show();
+        }
+    }
+} 

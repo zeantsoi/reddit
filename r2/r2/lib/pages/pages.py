@@ -155,7 +155,7 @@ from r2.lib.template_helpers import (
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
-from r2.lib.utils import trunc_string as _truncate, to_date
+from r2.lib.utils import trunc_string as _truncate, to_date, is_seo_referrer
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage, tup, url_is_embeddable_image
 from r2.lib.utils import precise_format_timedelta
@@ -298,6 +298,20 @@ class Reddit(Templated):
         self.mobilewebredirectbar = None
         self.show_timeout_modal = False
         self.show_reset_password_modal = False
+
+        test_groups = ('test_group', 'dismiss', 'x')
+        action_name = request.route_dict['action_name']
+        if (not is_api() and is_seo_referrer() and
+                action_name in ('listing', 'comments') and
+                isinstance(c.site, Subreddit) and
+                feature.is_enabled('seo_overlay') and
+                feature.variant('seo_overlay') in test_groups):
+            if feature.variant('seo_overlay') == 'dismiss':
+                self.seo_show_dismiss = True
+            elif feature.variant('seo_overlay') == 'x':
+                self.seo_show_x = True
+
+            self.show_seo_login_overlay = True
 
         if feature.is_enabled("new_expando_icons"):
             self.feature_new_expando_icons = True
@@ -3344,6 +3358,8 @@ class Thanks(Templated):
     def __init__(self, secret=None):
         if secret and secret.startswith("cr_"):
             status = "creddits"
+        elif g.cache.get("recent-gold-" + c.user.name):
+            status = "recent"
         elif c.user.gold:
             status = "gold"
         else:

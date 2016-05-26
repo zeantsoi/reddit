@@ -40,6 +40,7 @@
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="tags, classes"/>
 <%namespace file="adminbar.html" import="adminbar_stylesheet"/>
+<%namespace file="login.html" import="login_form, seo_login_overlay"/>
 <%inherit file="base.html"/>
 
 <%def name="Title()">
@@ -162,6 +163,9 @@
     <div ${tags(id=thing.content_id)} ${classes("content", thing.css_class)} role="main">
       ${content()}
     </div>
+    %if getattr(thing, "show_seo_login_overlay", False):
+      ${seo_login_overlay()}
+    %endif
   %endif
 
   ${thing.footer}
