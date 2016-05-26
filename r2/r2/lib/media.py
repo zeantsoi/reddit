@@ -1233,7 +1233,12 @@ class _YouTubeScraper(Scraper):
         with g.stats.get_timer("providers.youtube.oembed"):
             content = requests.get(self.OEMBED_ENDPOINT, params=params).content
 
-        return json.loads(content)
+        oembed = None
+        try:
+            oembed = json.loads(content)
+        except ValueError:
+            g.log.error("No JSON object for content of: {0}".format(self.url))
+        return oembed
 
     def _make_media_object(self, oembed):
         if oembed.get("type") == "video":
