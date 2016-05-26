@@ -252,6 +252,33 @@ def expand_macros(string):
     return string.replace("{{timestamp}}", str(time.time()))
 
 
+def calculate_accepted_promolinks(account):
+    accepted_statuses = (
+        'accepted',
+        'pending',
+        'promoted',
+        'finished',
+        'edited_live',
+    )
+
+    status_ids = [PROMOTE_STATUS[status] for status in accepted_statuses]
+    links = list(Link._query(
+        Link.c.promote_status.in_(status_ids),
+        Link.c.author_id == account._id
+    ))
+
+    for link in links:
+        set_previously_accepted(link)
+
+    return len(links)
+
+
+# Run manually to recalculate and assign accepted_promoted_links to account
+def set_accepted_promolinks(account):
+    account.accepted_promoted_links = calculate_accepted_promolinks(account)
+    account._commit()
+
+
 def set_previously_accepted(link):
     link.previously_accepted = True
     link._commit()
