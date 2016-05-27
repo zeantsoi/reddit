@@ -1451,25 +1451,43 @@ def process_image_upload():
     amqp.consume_items('image_upload_q', process_image)
 
 
-def purge_imgix_images(preview_object):
+def purge_imgix_images(preview_object, purge_nsfw=False):
     """Purge the image from imgix and copies on the CDN.
 
     This is quite ugly overall but seems to be necessary since the CDN
     gets a copy of each size of the image.
     """
+    preview_is_gif = preview_object.get('url', '').endswith('.gif')
+
+    # First, purge the desktop preview url from imgix and cdn
+    static_preview_url = g.image_resizing_provider.resize_image(
+            preview_object, preview_object['width'])
+    purge_image(static_preview_url)
+
+    # Second, purge all permutations of the image available through the API
+    _purge_preview_links(preview_object)
+    if preview_is_gif:
+        _purge_preview_links(preview_object, file_type="jpg")
+        _purge_preview_links(preview_object, file_type="mp4")
+    if purge_nsfw:
+        _purge_preview_links(preview_object, censor_nsfw=True, file_type="png")
+
+
+def _purge_preview_links(preview_object, censor_nsfw=False, file_type=None):
     from r2.lib.jsontemplates import LinkJsonTemplate
 
     # get the nested dict that contains all the urls that we need to purge
-    template_dict = LinkJsonTemplate.generate_image_links(preview_object)
+    template_dict = LinkJsonTemplate.generate_image_links(
+        preview_object=preview_object,
+        censor_nsfw=censor_nsfw,
+        file_type=file_type,
+    )
 
     # extract all the urls from that dict
     base_url = template_dict["source"]["url"]
     urls = [base_url]
     for resolution in template_dict["resolutions"]:
         urls.append(resolution["url"])
-
-    # purge the base url from imgix
-    g.image_resizing_provider.purge_url(base_url)
 
     # purge the base url and all resized versions from the CDN
     for url in urls:
@@ -1561,8 +1579,4 @@ def purge_associated_images(link):
         purge_image(thumbnail_url)
 
     if preview_url:
-        static_preview_url = g.image_resizing_provider.resize_image(
-                link.preview_object, link.preview_object['width'])
-        purge_image(static_preview_url)
-
-        purge_imgix_images(link.preview_object)
+        purge_imgix_images(link.preview_object, purge_nsfw=link.nsfw)
