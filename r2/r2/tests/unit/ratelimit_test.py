@@ -23,6 +23,7 @@
 import unittest
 from mock import patch
 
+import pylibmc
 from pylons import app_globals as g
 
 from r2.lib import ratelimit
@@ -90,6 +91,59 @@ class RateLimitStandaloneFunctionsTest(unittest.TestCase):
         ts = ratelimit.get_timeslice(3600)
         ratelimit.record_usage('a', ts)
         self.assertEquals(1, self.cache['a-050000'])
+
+    def test_record_usage_across_slice_expiration(self):
+        self.now = 24 * 3600 + 5
+        ts = ratelimit.get_timeslice(3600)
+        real_incr = self.cache.incr
+        evicted = False
+
+        def fake_incr(key, delta=1):
+            if evicted:
+                del self.cache[key]
+                raise pylibmc.NotFound()
+            return real_incr(key)
+
+        with patch.object(self.cache, 'incr', fake_incr):
+            # Forcibly evict the key before incr is called, but after the
+            # initial add call inside record_usage.
+            evicted = True
+            ratelimit.record_usage('a', ts)
+            self.assertEquals(1, self.cache['a-000000'])
+
+    def test_record_usage_multi(self):
+        self.now = 24 * 3600 + 5
+        tsa = ratelimit.get_timeslice(3600)
+        tsb = ratelimit.get_timeslice(700)
+        ratelimit.record_usage_multi([('a', tsa), ('b', tsb)])
+        self.assertEquals(1, self.cache['a-000000'])
+        self.assertEquals(1, self.cache['b-235500'])
+
+        ratelimit.record_usage_multi([('a', tsa), ('b', tsb)])
+        self.assertEquals(2, self.cache['a-000000'])
+        self.assertEquals(2, self.cache['b-235500'])
+
+    def test_record_usage_multi_across_slice_expiration(self):
+        self.now = 24 * 3600 + 5
+        tsa = ratelimit.get_timeslice(3600)
+        tsb = ratelimit.get_timeslice(700)
+        real_incr = self.cache.incr
+        evicted = False
+
+        def fake_incr_multi(keys, delta=1):
+            if evicted:
+                for key in keys:
+                    del self.cache[key]
+                raise pylibmc.NotFound()
+            return real_incr(key)
+
+        with patch.object(self.cache, 'incr_multi', fake_incr_multi):
+            # Forcibly evict the key before incr is called, but after the
+            # initial add call inside record_usage.
+            evicted = True
+            ratelimit.record_usage_multi([('a', tsa), ('b', tsb)])
+            self.assertEquals(1, self.cache['a-000000'])
+            self.assertEquals(1, self.cache['b-235500'])
 
     def test_get_usage(self):
         self.now = 24 * 3600 + 5 * 3600

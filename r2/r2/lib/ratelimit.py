@@ -40,12 +40,13 @@ import pylibmc
 
 from pylons import app_globals as g
 
+
 # AKA, a half open interval.
 class TimeSlice(collections.namedtuple("TimeSlice", ["beginning", "end"])):
 
-  @property
-  def remaining(self):
-      return self.end - int(time.time())
+    @property
+    def remaining(self):
+        return self.end - int(time.time())
 
 
 class RatelimitError(Exception):
@@ -95,16 +96,15 @@ def record_usage(key_prefix, time_slice):
         g.ratelimitcache.add(key, 0, time=time_slice.remaining)
 
         try:
-            recent_usage = g.ratelimitcache.incr(key)
+            return g.ratelimitcache.incr(key)
         except pylibmc.NotFound:
             # Previous round of ratelimiting fell out in the
             # time between calling `add` and calling `incr`.
             now = int(time.time())
             if now < time_slice.end:
                 g.ratelimitcache.add(key, 1, time=time_slice.end - now + 1)
-                recent_usage = 1
                 g.stats.simple_event("ratelimit.eviction")
-        return recent_usage
+            return 1
     except pylibmc.Error as e:
         raise RatelimitError(e)
 
@@ -116,11 +116,10 @@ def record_usage_multi(prefix_slices):
     function, the usage counts may be inaccurate and it is not defined
     which, if any, of the keys have been updated in the underlying cache.
 
+    Unlike record_usage, this does not return the new values.
+
     Arguments:
         prefix_slices: A list of (prefix, timeslice)
-
-    Returns:
-        A list of the usage counts in the same order as prefix_slices.
 
     Raises:
         RateLimitError if anything goes wrong.
@@ -138,21 +137,16 @@ def record_usage_multi(prefix_slices):
             g.ratelimitcache.add(key, 0, time=time_slice.end - now + 1)
 
         try:
-            recent_usage = g.ratelimitcache.incr_multi(keys)
+            g.ratelimitcache.incr_multi(keys)
         except pylibmc.NotFound:
             # Some part of the previous round of ratelimiting fell out in the
             # time between calling `add` and calling `incr`.
             now = int(time.time())
-            if now < time_slice.end:
-                recent_usage = []
-                for key, (_, time_slice) in zip(keys, prefix_slices):
+            for key, (_, time_slice) in zip(keys, prefix_slices):
+                if now < time_slice.end:
                     if g.ratelimitcache.add(key, 1,
                                             time=time_slice.end - now + 1):
-                        recent_usage.append(1)
                         g.stats.simple_event("ratelimit.eviction")
-                    else:
-                        recent_usage.append(g.ratelimitcache.get(key))
-        return recent_usage
     except pylibmc.Error as e:
         raise RatelimitError(e)
 
@@ -276,7 +270,7 @@ class RateLimit(object):
         """
         for r in ratelimits:
             r._record_event('set_{event_type}_limit')
-        return record_usage_multi([(r.key, r.timeslice) for r in ratelimits])
+        record_usage_multi([(r.key, r.timeslice) for r in ratelimits])
 
 
 class LiveConfigRateLimit(RateLimit):
