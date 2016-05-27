@@ -41,7 +41,9 @@ class ImgixImageResizingProvider(ImageResizingProvider):
 
         ConfigValue.str: [
             'imgix_domain',
+            'imgix_purge_domain',
             'imgix_gif_domain',
+            'imgix_gif_purge_domain',
         ],
     }
 
@@ -136,6 +138,16 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         removing the image from our source, or imgix will just re-fetch
         and replace the image with a new copy even after purging.
         """
+
+        p = UrlParser(url)
+
+        if p.hostname == g.imgix_domain:
+            p.hostname = g.imgix_purge_domain
+        elif p.hostname == g.imgix_gif_domain:
+            p.hostname = g.imgix_gif_purge_domain
+
+        url = p.unparse()
+
         requests.post(
             "https://api.imgix.com/v2/image/purger",
             auth=(g.secrets["imgix_api_key"], ""),
