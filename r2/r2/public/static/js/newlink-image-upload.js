@@ -8,7 +8,8 @@
     VALID_DROP_STATE: 'image-upload-drop-active',
     DROP_TARGET_CLASS: 'image-upload-drop-target',
     VALID_FILE_TYPES: /^image\/(png|jpe?g|gif)$/,
-    VALID_URL: /^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+    VALID_URL: /^https?:\/\//,
+    MIN_URL_LENGTH_TO_SUGGEST: 15,
     IS_LOCAL_PREVIEW_SUPPORTED: URL && URL.createObjectURL && URL.revokeObjectURL,
     SUGGEST_TITLE_DEBOUNCE_RATE: 500,
 
@@ -399,7 +400,11 @@
     },
 
     _isValidUrl: function(url) {
-      return url && this.VALID_URL.test(url);
+      return (
+        url &&
+        url.length > this.MIN_URL_LENGTH_TO_SUGGEST &&
+        this.VALID_URL.test(url)
+      );
     },
 
     _validateFileType: function(file) {
