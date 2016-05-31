@@ -23,10 +23,19 @@ consult subredditselector.html for config variables
     SR_NAMES_DELIM: ',',
     selectedSr: {},
     origSr: '',
+    MAX_DESCRIPTION_LENGTH: 200,
+    hoverCardTemplate: _.template(
+      '<div class="hovercard"> ' +
+        '<h5> <%- title %> </h5>' +
+        '<small> Description: <%- description %>\n</small>' +
+        '<small> Subscribers: <%- subscribers %>\n</small>' +
+      '</div>'
+    ),
     _initialized: false,
 
     setup: function(srSearches, includeSearches, isMultiple, dynamicSuggestions) {
-      this.srCache = $.with_default(srSearches, {});
+      this.srSearchCache = $.with_default(srSearches, {});
+      this.srHovercardCache = {};
       this.includeSearches = includeSearches;
       this.isMultiple = isMultiple;
       this.dynamicSuggestions = dynamicSuggestions;
@@ -68,8 +77,11 @@ consult subredditselector.html for config variables
         .on('mouseup', this.srDropdownMup.bind(this));
 
       $('#suggested-reddits').find('.sr-suggestion').each(function(index, elem) {
-        var suggestion = $(elem);
-        suggestion.on('click', r.srAutocomplete.setSrName.bind(this));
+        var $suggestion = $(elem);
+        $suggestion.on('click', this.setSrName.bind(this));
+        if (this.isMultiple) {
+          this._bindHovercard($suggestion);
+        }
       }.bind(this));
 
       $('#add-all-suggestions-btn').on('click', this.srAddAllSuggestions.bind(this));
@@ -115,6 +127,12 @@ consult subredditselector.html for config variables
       }.bind(this));
     },
 
+    _bindHovercard: function($link) {
+      return $link
+        .on('mouseenter', this.srGetHovercard.bind(this))
+        .on('mouseleave', this.srRemoveHovercard.bind(this));
+    },
+
     /**
     @return the current selected subreddits
     */
@@ -143,7 +161,7 @@ consult subredditselector.html for config variables
     */
     srToken: function(srName) {
       var removeButton = $('<img src="/static/kill.png"/>')
-                .on('click', this.srRemoveSr.bind(this));
+                        .on('click', this.srRemoveSr.bind(this));
 
       return $('<span />')
             .attr({class: 'sr-span'})
@@ -158,7 +176,7 @@ consult subredditselector.html for config variables
     @returns {jQuery} element that represents a subreddit suggestion
     */
     srSuggestion: function(srName) {
-      var link = $('<a />')
+      var $link = $('<a />')
                 .attr({
                   href: '#',
                   class: 'sr-suggestion',
@@ -166,7 +184,32 @@ consult subredditselector.html for config variables
                 })
                 .on('click', this.setSrName.bind(this))
                 .text(srName);
-      return  $('<li />').append(link);
+
+      if (this.isMultiple) {
+        this._bindHovercard($link);
+      }
+      return  $('<li />').append($link);
+    },
+
+    /**
+    Creates a new hovercard
+
+    @params {object} info JSON
+    @returns {jQuery} element that represents a hovercard
+    */
+    srHovercard: function(info) {
+      var description = info.public_description || 'none';
+      if (description.length > this.MAX_DESCRIPTION_LENGTH) {
+        description = description.substring(0, this.MAX_DESCRIPTION_LENGTH) + '...';
+      }
+      var subscribers = info.subscribers || 'unknown';
+      var title = info.display_name;
+
+      return this.hoverCardTemplate({
+        title: title,
+        description: description,
+        subscribers: subscribers,
+      });
     },
 
     /*
@@ -179,7 +222,7 @@ consult subredditselector.html for config variables
     */
     srSearch: function(query) {
       query = query.toLowerCase();
-      var cache = this.srCache;
+      var cache = this.srSearchCache;
       if (!cache[query]) {
         $.request(
           'search_reddit_names.json', 
@@ -264,7 +307,7 @@ consult subredditselector.html for config variables
       if (newSrName === '') {
         this.hideSrNameList();
       } else if (e.keyCode == this.KEYS.UP || 
-          e.keyCode == this.KEYS.DOWN || 
+          e.keyCode == this.KEYS.DOWN ||
           e.keyCode == this.KEYS.TAB) {
         // prevents the input value change from triggering srSearch
       } else if (e.keyCode == this.KEYS.ESCAPE && this.origSr) {
@@ -584,6 +627,43 @@ consult subredditselector.html for config variables
           dataType: 'json',
         }
       );
+    },
+
+    /** Subreddit Hovercards **/
+
+    /** Fetches a hovercard **/
+    srGetHovercard: function(e) {
+      var $link = $(e.target);
+      var sr_name = $link.text();
+      $.when(this.srFetchSubredditInfo(sr_name)).then(function(data) {
+        this.srRemoveHovercard();
+        var $hovercard = $(this.srHovercard(data));
+        $link.before($hovercard);
+        var top = 10 - $hovercard.height();
+        $hovercard.css('top', top);
+      }.bind(this));
+    },
+
+    /** Removes all hovercards **/
+    srRemoveHovercard: function() {
+      $('#suggested-reddits').find('.hovercard').remove();
+    },
+
+    srFetchSubredditInfo: function(sr_name) {
+      if (this.srHovercardCache[sr_name]) {
+        return this.srHovercardCache[sr_name];
+      } else {
+        return $.ajax(
+          '/r/' + sr_name + '/about.json',
+          {
+            type: 'GET',
+            dataType: 'json',
+          }
+          ).then(function(resp) {
+            r.srAutocomplete.srHovercardCache[sr_name] = resp.data;
+            return resp.data;
+          });
+      }
     },
   };
 }(r, _, jQuery);

@@ -5053,6 +5053,18 @@ ul.image-preview-list .description pre {
     margin-bottom: 10px;
 }
 
+.hovercard {
+    position: absolute;
+    z-index: 100;
+    pointer-events: none;
+    background-color: #FFF;
+    padding: 5px;
+    line-height: 1.2em;
+    border-radius: 5px;
+    white-space: pre-line;
+    .box-shadow(1px 2px 4px -1px rgba(0, 0, 0, 0.75));
+}
+
 .sr-name-row {
     cursor: default;
  }
@@ -5068,6 +5080,7 @@ ul.image-preview-list .description pre {
 }
 
 #suggested-reddits {
+    position: relative;
     margin-top: 5px;
     font-size: small;
 }
