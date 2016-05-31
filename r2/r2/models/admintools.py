@@ -28,7 +28,7 @@ from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.hooks import HookRegistrar
 from r2.lib.log import log_text
-from r2.models import Account, Message, Report, Subreddit
+from r2.models import Account, Message, NotFound, Report, Subreddit
 from r2.models.award import Award
 from r2.models.gold import append_random_bottlecap_phrase, creddits_lock
 from r2.models.token import AwardClaimToken
@@ -334,7 +334,15 @@ def ip_span(ip):
 def wiki_template(template_slug, sr=None):
     """Pull content from a subreddit's wiki page for internal use."""
     if not sr:
-        sr = Subreddit._by_name(g.default_sr)
+        try:
+            sr = Subreddit._by_name(g.default_sr)
+        except NotFound:
+            # a freshly-build dev instance with no pre-populated data
+            # will die on account creation (and other user actions) if a
+            # default is not set.  Guard against that for testing.
+            if g.debug:
+                return
+            raise
 
     try:
         wiki = WikiPage.get(sr, "templates/%s" % template_slug)
