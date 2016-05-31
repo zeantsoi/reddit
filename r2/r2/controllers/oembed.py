@@ -160,6 +160,7 @@ class OEmbedController(MinimalController):
         pass
 
     def pre(self):
+        MinimalController.pre(self)
         c.user = g.auth_provider.get_authenticated_account()
         if c.user and c.user._deleted:
             c.user = None
