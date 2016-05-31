@@ -201,6 +201,10 @@ class CMemcache(CacheUtils):
         if not self.validate(key=key, value=val):
             return None
 
+        # pylibmc converts this number to an unsigned integer without warning
+        if time < 0:
+            raise ValueError("Rejecting negative TTL for key %s" % key)
+
         with self.clients.reserve() as mc:
             return mc.set(str(key), val, time=time,
                             min_compress_len = self.min_compress_len)
@@ -209,6 +213,10 @@ class CMemcache(CacheUtils):
         str_keys = ((str(k), v) for k, v in keys.iteritems())
         validated_keys = {k: v for k, v in str_keys
                           if self.validate(prefix=prefix, key=k, value=v)}
+
+        # pylibmc converts this number to an unsigned integer without warning
+        if time < 0:
+            raise ValueError("Rejecting negative TTL for key %s" % key)
 
         with self.clients.reserve() as mc:
             return mc.set_multi(validated_keys, key_prefix = prefix,
@@ -219,6 +227,10 @@ class CMemcache(CacheUtils):
         str_keys = ((str(k), v) for k, v in keys.iteritems())
         validated_keys = {k: v for k, v in str_keys
                           if self.validate(prefix=prefix, key=k, value=v)}
+
+        # pylibmc converts this number to an unsigned integer without warning
+        if time < 0:
+            raise ValueError("Rejecting negative TTL for key %s" % key)
 
         with self.clients.reserve() as mc:
             return mc.add_multi(validated_keys, key_prefix = prefix,
@@ -237,6 +249,10 @@ class CMemcache(CacheUtils):
         if not self.validate(key=key, value=val):
             return None
 
+        # pylibmc converts this number to an unsigned integer without warning
+        if time < 0:
+            raise ValueError("Rejecting negative TTL for key %s" % key)
+
         with self.clients.reserve() as mc:
             return mc.append(str(key), val, time=time)
 
@@ -251,6 +267,10 @@ class CMemcache(CacheUtils):
     def add(self, key, val, time=0):
         if not self.validate(key=key, value=val):
             return None
+
+        # pylibmc converts this number to an unsigned integer without warning
+        if time < 0:
+            raise ValueError("Rejecting negative TTL for key %s" % key)
 
         try:
             with self.clients.reserve() as mc:
