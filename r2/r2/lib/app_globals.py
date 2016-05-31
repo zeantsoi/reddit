@@ -390,6 +390,7 @@ class Globals(object):
             'gold_revenue_goal',
             'invalid_key_sample_rate',
             'events_collector_vote_sample_rate',
+            'events_collector_loid_sample_rate',
             'events_collector_poison_sample_rate',
             'events_collector_mod_sample_rate',
             'events_collector_quarantine_sample_rate',

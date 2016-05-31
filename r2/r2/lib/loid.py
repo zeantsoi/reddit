@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import string
-from urllib import quote, unquote
+from urllib import unquote
+
+from pylons import app_globals as g
 
 from .utils import randstr
 
@@ -45,20 +47,26 @@ class LoId(object):
         self._new = False
 
     @classmethod
-    def _create(cls):
+    def _create(cls, request, context):
         """Create and return a new logged out id and timestamp."""
         louser = cls()
         louser._new = True
         louser.loid = randstr(LOID_LENGTH, LOID_CHARSPACE)
         louser.created = utcnow_isodate()
+        g.events.loid_event(
+            loid=louser,
+            action_name="create_loid",
+            request=request,
+            context=context,
+        )
         return louser
 
     @classmethod
-    def load(cls, request, create=True):
+    def load(cls, request, context, create=True):
         """Load loid (and timestamp) from cookie or optionally create one."""
         loid = request.cookies.get(LOID_COOKIE)
         if create and not loid:
-            return cls._create()
+            return cls._create(request, context)
         elif loid:
             louser = cls()
             louser.loid = unquote(loid)
