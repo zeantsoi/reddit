@@ -230,12 +230,11 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         return SC_OFF + text + SC_ON
 
 
-def emailmarkdown(text, nofollow=False, wrap=True, **kwargs):
+def emailmarkdown(text, wrap=True):
     if not text:
         return None
 
-    target = kwargs.get("target", None)
-    text = snudown.markdown(_force_utf8(text), nofollow, target)
+    text = snudown.markdown(_force_utf8(text))
 
     soup = BeautifulSoup(text.decode('utf-8'))
     links = soup.findAll('a')

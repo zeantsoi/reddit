@@ -26,11 +26,11 @@ from r2.tests import RedditTestCase
 from r2.lib.filters import emailmarkdown
 
 
-class TestFilters(RedditTestCase):
+class TestEmailMarkdownFilter(RedditTestCase):
     def setUp(self):
         g.https_endpoint = 'https://reddit.com'
 
-    def test_emailmarkdown(self):
+    def test_leading_slash__sr(self):
         # test subreddit with leading slash (/r/)
         orig_message = 'Visit /r/test'
         body = emailmarkdown(orig_message)
@@ -39,6 +39,7 @@ class TestFilters(RedditTestCase):
                              '</p>\n</div><!-- SC_ON -->'
         self.assertEquals(comparison_message, body)
 
+    def test_no_leading_slash__sr(self):
         # test subreddit with no leading slash (r/)
         orig_message = 'Visit r/test'
         body = emailmarkdown(orig_message)
@@ -47,6 +48,7 @@ class TestFilters(RedditTestCase):
                              '</p>\n</div><!-- SC_ON -->'
         self.assertEquals(comparison_message, body)
 
+    def test_punctuation(self):
         # test subreddit with punctuation
         orig_message = 'Visit r/test.'
         body = emailmarkdown(orig_message)
@@ -55,6 +57,7 @@ class TestFilters(RedditTestCase):
                              '.</p>\n</div><!-- SC_ON -->'
         self.assertEquals(comparison_message, body)
 
+    def test_leading_slash__username(self):
         # test user with leading slash
         orig_message = 'Visit /u/test'
         body = emailmarkdown(orig_message)
@@ -63,6 +66,7 @@ class TestFilters(RedditTestCase):
                              '</p>\n</div><!-- SC_ON -->'
         self.assertEquals(comparison_message, body)
 
+    def test_no_leading_slash__username(self):
         # test user with no leading slash
         orig_message = 'Visit u/test'
         body = emailmarkdown(orig_message)
@@ -71,6 +75,7 @@ class TestFilters(RedditTestCase):
                              '</p>\n</div><!-- SC_ON -->'
         self.assertEquals(comparison_message, body)
 
+    def test_two_autolinks(self):
         # test two links
         orig_message = 'hey u/sam you should visit r/test'
         body = emailmarkdown(orig_message)
@@ -81,3 +86,19 @@ class TestFilters(RedditTestCase):
                              '</div><!-- SC_ON -->'
         self.assertEquals(comparison_message, body)
 
+    def test_no_autolinks(self):
+        orig_message = 'This is a message with no autolinks'
+        body = emailmarkdown(orig_message)
+        comparison_message = '<!-- SC_OFF --><div class="md"><p>'\
+                             'This is a message with no autolinks</p>\n'\
+                             '</div><!-- SC_ON -->'
+        self.assertEquals(comparison_message, body)
+
+    def test_regular_link(self):
+        orig_message = 'You should visit https://reddit.com/r/test'
+        body = emailmarkdown(orig_message)
+        comparison_message = '<!-- SC_OFF --><div class="md"><p>You should '\
+                             'visit <a href="https://reddit.com/r/test">'\
+                             'https://reddit.com/r/test</a></p>\n</div>'\
+                             '<!-- SC_ON -->'
+        self.assertEquals(comparison_message, body)

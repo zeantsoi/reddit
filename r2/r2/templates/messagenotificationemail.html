@@ -26,46 +26,20 @@
     from r2.lib.filters import unsafe, emailmarkdown
 %>
 
+<%namespace file="utils.html" import="md" />
+
 <%def name="view_notification_link(action_str, message, query)">
-  <span>
-    <% 
-      url = UrlParser(message['permalink'])
-      url.update_query(**thing.base_utm_query)
-      url.update_query(**query)
-      url = url.unparse() 
-    %>
-    <a href="${url}"
-       class="link"
-       style="color:#0079d3;
-              text-decoration:none"
-       target="_blank">
-      <span class="link" 
-            style="color:#0079d3;
-                   text-decoration:none">
-        ${action_str}
-      </span>
-    </a>
-  </span>
-
-</%def>
-
-<%def name="author_name_link(username, query)">
-  <%  
-    url = UrlParser(thing.base_url + username)
+  <% 
+    url = UrlParser(message['permalink'])
     url.update_query(**thing.base_utm_query)
     url.update_query(**query)
     url = url.unparse() 
   %>
-  <a href="${url}" 
-     class="link" 
-     style="color:#0079d3; 
-            text-decoration:none" 
-     target="_blank">
-    <strong class="link" 
-            style="color:#0079d3; 
-                   text-decoration:none">
-      ${username}
-    </strong>
+  <a href="${url}"
+     class="link"
+     style="color:#0079d3;
+            text-decoration:none"
+     target="_blank">${action_str}
   </a>
 
 </%def>
@@ -159,31 +133,23 @@
               <!-- Main -->
               %for index, message in enumerate(thing.messages):
                 %if message["message_type"] == "message":
-                  <h2>Private message from ${author_name_link(message['author_name'], {"utm_content":"private_message", "utm_term":index})}
-                    <span> &bull; ${view_notification_link("view", message, {"utm_content":"private_message", "utm_term":index})} </span>
+                  <h2>Private message from ${message['author_name']} &bull; ${view_notification_link("view", message, {"utm_content":"private_message", "utm_term":index})}
                   </h2>
 
                   ${md(message["subject"])}
 
                 %elif message["message_type"] == "post reply":
-                  <h2>Post reply from ${author_name_link(message['author_name'], {"utm_content":"post_reply", "utm_term":index})}
-                    <span> &bull; ${view_notification_link("reply", message, {"utm_content":"post_reply", "utm_term":index, "context":3})} </span>
+                  <h2>Post reply from ${message['author_name']} &bull; ${view_notification_link("reply", message, {"utm_content":"post_reply", "utm_term":index, "context":3})}
                   </h2>
 
                 %elif message["message_type"] == "comment reply":
-                  <h2>Comment reply from ${author_name_link(message['author_name'], {"utm_content":"comment_reply", "utm_term":index})}
-                    <span> &bull; ${view_notification_link("reply", message, {"utm_content":"comment_reply", "utm_term":index, "context":3})} </span>
+                  <h2>Comment reply from ${message['author_name']} &bull; ${view_notification_link("reply", message, {"utm_content":"comment_reply", "utm_term":index, "context":3})}
                   </h2>
                 %elif message["message_type"] == "username notification":
                   <h2>
-                    ${author_name_link(message['author_name'], {"utm_content":"username_mention", "utm_term":index})}
-                    <span>mentioned you in</span>
-                    <span>
-                      <a href="${message['permalink']}" class="link" style="color:#0079d3; text-decoration:none" target="_blank">
-                        a thread
-                      </a>
-                    </span>
-                    <span> &bull; ${view_notification_link("reply", message, {"utm_content":"username_mention", "utm_term":index, "context":3})} </span>
+                    ${message['author_name']} mentioned you in <a href="${message['permalink']}" class="link" style="color:#0079d3; text-decoration:none" target="_blank">a thread</a>
+                    &bull; ${view_notification_link("reply", message,
+                    {"utm_content":"username_mention", "utm_term":index, "context":3})}
                   </h2>
                 %endif
 
