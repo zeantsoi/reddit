@@ -591,7 +591,7 @@ def set_content_type():
 
     # allow content and api calls to set an loid
     if is_api() or c.render_style in ("html", "mobile", "compact"):
-        c.loid = LoId.load(request, c)
+        c.loid = LoId.load(request)
 
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these
