@@ -32,7 +32,18 @@ install/install_services.sh
 pushd r2
 python setup.py develop
 make pyx
-ln -sf example.ini test.ini
+
+# Let plugins patch in any configuration they need by adding a test.update file
+# in their root directory.
+cp -f example.ini test.ini
+for update in ../../*/test.update ; do
+  if [[ -r $update ]] ; then
+    echo "Adding $update to test.ini"
+    tmp=$(mktemp test_update.ini.XXXXXX)
+    ./updateini.py test.ini $update > $tmp && mv $tmp test.ini
+  fi
+done
+
 popd
 
 ###############################################################################
