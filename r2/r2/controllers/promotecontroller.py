@@ -850,7 +850,7 @@ class PromoteApiController(ApiController):
     @noresponse(VSponsorAdmin(),
                 VModhash(),
                 thing=VByName('id'),
-                quality=VOneOf('quality', options=('low', 'high')))
+                quality=VOneOf('quality', options=(None, 'low', 'high')))
     def POST_promote(self, thing, quality):
         if promote.is_promo(thing):
             promote.accept_promotion(thing, quality)
