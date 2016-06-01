@@ -411,6 +411,7 @@ class Globals(object):
             'mweb_blacklist_expressions',
             'global_loid_experiments',
             'precomputed_comment_sorts',
+            'mailgun_domains',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',
