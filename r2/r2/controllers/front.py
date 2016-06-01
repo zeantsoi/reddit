@@ -360,11 +360,10 @@ class FrontController(RedditController):
                 num = g.max_comments_gold
         elif num > g.max_comments:
             if limit:
-                displayPane.append(InfoBar(message =
-                                       strings.over_comment_limit
-                                       % dict(max=max(0, g.max_comments),
-                                              goldmax=max(0,
-                                                   g.max_comments_gold))))
+                message = strings.over_comment_limit % dict(
+                            max=max(0, g.max_comments),
+                            goldmax=max(0, g.max_comments_gold))
+                displayPane.append(InfoBar(message=message))
             num = g.max_comments
 
         # only do this experiment for SEO desktop users
