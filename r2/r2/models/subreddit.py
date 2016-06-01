@@ -1327,7 +1327,9 @@ class Subreddit(Thing, Printable, BaseSite):
         # If g.promo_sr_id is 0, force the lookup of the
         # promo subreddit by name
         try:
-            return g.promo_sr_id or cls._by_name(g.promo_sr_name, stale=True)._id
+            return (
+                g.promo_sr_id or cls._by_name(g.promo_sr_name, stale=True)._id
+            )
         except NotFound:
             if not g.debug:
                 raise
