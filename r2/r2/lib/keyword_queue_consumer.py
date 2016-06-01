@@ -29,6 +29,22 @@ from r2.lib import amqp, hooks
 from r2.models.link import Link
 
 alphanum_split = re.compile(r"[^a-zA-Z0-9]")
+MAX_PHRASE_LENGTH = 4
+
+
+def get_phrases(text, max_length=MAX_PHRASE_LENGTH):
+    phrases = []
+    words = re.split(alphanum_split, text)
+    words = [word.strip() for word in words if word != '']
+
+    # Generate phrases from length 1 to MAX_PHRASE_LENGTH
+    for i in range(0, max_length):
+        phrase_iter = range(0, i + 1)
+        phrases += [
+            " ".join([words[h + j] for j in phrase_iter])
+            for h in range(len(words) - i)
+        ]
+    return phrases
 
 def extract_keywords(link):
     if link._spam or link._deleted:
@@ -45,10 +61,9 @@ def extract_keywords(link):
 
     # Split words in the title
     matches = set()
-    words = re.split(alphanum_split, link.title.lower())
-    # Also allow two word phrases
-    phrases = [words[i] + ' ' + words[i+1] for i in range(len(words)-1)]
-    for word in words + phrases:
+    phrases = get_phrases(link.title.lower())
+
+    for word in phrases:
         if word in kwset:
             matches.add(word)
             # Limit to ten keywords
