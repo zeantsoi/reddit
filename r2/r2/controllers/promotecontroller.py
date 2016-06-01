@@ -1566,6 +1566,15 @@ class PromoteApiController(ApiController):
             form.has_errors('enddate', errors.DATE_TOO_LATE)
             return
 
+        # Ensure end date isn't in the past.
+        today = promote.promo_datetime_now()
+        if end < today:
+            c.errors.add(errors.DATE_TOO_EARLY,
+                         msg_params={'day': today.strftime("%m/%d/%Y")},
+                         field='enddate')
+            form.has_errors('enddate', errors.DATE_TOO_EARLY)
+            return
+
         if end < start:
             c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
             form.has_errors('enddate', errors.BAD_DATE_RANGE)
