@@ -785,6 +785,7 @@ def Relation(type1, type2):
         _base_props = ('_thing1_id', '_thing2_id', '_name', '_date')
         _type_prefix = Relation._type_prefix
         _rel_cache = g.relcache
+        _rel_cache_ttl = int(timedelta(hours=12).total_seconds())
 
         @classmethod
         def get_things_from_db(cls, ids):
@@ -951,13 +952,15 @@ def Relation(type1, type2):
 
         def _commit(self):
             DataThing._commit(self)
-            self._rel_cache.set(self._rel_cache_key(), self._id)
+            ttl = self.__class__._rel_cache_ttl
+            self._rel_cache.set(self._rel_cache_key(), self._id, time=ttl)
 
         def _delete(self):
             tdb.del_rel(self._type_id, self._id)
 
             self._cache.delete(self._cache_key())
-            self._rel_cache.set(self._rel_cache_key(), None)
+            ttl = self.__class__._rel_cache_ttl
+            self._rel_cache.set(self._rel_cache_key(), None, time=ttl)
 
             # temporarily set this property so the rest of this request
             # knows it's deleted. save -> unsave, hide -> unhide
@@ -1028,7 +1031,12 @@ def Relation(type1, type2):
                 cache_key_lookup[rel_cache_key] = t
 
             # get the relation ids from the cache or query the db
-            res = sgm(cls._rel_cache, cache_key_lookup.keys(), lookup_rel_ids)
+            res = sgm(
+                cache=cls._rel_cache,
+                keys=cache_key_lookup.keys(),
+                miss_fn=lookup_rel_ids,
+                time=cls._rel_cache_ttl,
+            )
 
             # get the relation objects
             rel_ids = {rel_id for rel_id in res.itervalues()
