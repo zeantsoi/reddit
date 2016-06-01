@@ -701,6 +701,24 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    @sampled("events_collector_loid_sample_rate")
+    def loid_event(self, loid, action_name, request=None, context=None):
+        """Create a 'loid' event for event-collector.
+
+        loid: the created/modified loid
+        action_name: create_loid (only allowed value currently)
+        """
+        event = Event(
+            topic="loid_events",
+            event_type='ss.%s' % action_name,
+            request=request,
+            context=context,
+        )
+        event.add("request_url", request.fullpath)
+        for k, v in loid.to_dict().iteritems():
+            event.add(k, v)
+        self.save_event(event)
+
     def login_event(self, action_name, error_msg,
                     user_name=None, email=None, captcha_shown=None,
                     remember_me=None, newsletter=None, email_verified=None,
