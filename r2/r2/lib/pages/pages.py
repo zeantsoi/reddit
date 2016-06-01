@@ -5177,7 +5177,15 @@ def make_link_child(item, show_media_preview=False):
             else:
                 g.log.debug("media_object without media_embed %s" % item)
 
-        if media_embed:
+        # some promoted posts allow both videos and text
+        if media_embed and item.selftext and item.promoted:
+            link_child = MediaAndSelfTextChild(item,
+                                               media_embed,
+                                               load=True,
+                                               expand=expand,
+                                               nofollow=item.nofollow,
+                                               position_inline=position_inline)
+        elif media_embed:
             link_child = MediaChild(item,
                                     media_embed,
                                     load=True,
@@ -5272,6 +5280,32 @@ class SelfTextChild(LinkChild):
                      nofollow = self.nofollow,
                      expunged=self.link.expunged)
         return u.render()
+
+
+class MediaAndSelfTextChild(LinkChild):
+    """Renders with a MediaChild and SelfTextChild back-to-back"""
+    css_style = "video"
+
+    def __init__(self, link, content, **kw):
+        self._content = content
+        LinkChild.__init__(self, link, **kw)
+
+    def content(self):
+        # video content
+        video_content = ""
+        if isinstance(self._content, basestring):
+            video_content = self._content
+        else:
+            video_content = self._content.render()
+
+        # text content
+        u = UserText(self.link, self.link.selftext,
+                     editable=c.user == self.link.author,
+                     nofollow=self.nofollow,
+                     extra_css='media-embed',
+                     expunged=self.link.expunged)
+        return video_content + u.render()
+
 
 class UserText(CachedTemplate):
     cachable = False
