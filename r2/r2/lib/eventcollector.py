@@ -864,6 +864,7 @@ class EventQueue(object):
         link: A promoted r2.models.Link object
         is_approved: Boolean for if the post is accepted or rejected
         reason: Optional string specifying reason for the rejection
+        quality: Quality of the link. One of (None, 'low', 'high')
         request: pylons.request of the request that created the message
         context: pylons.tmpl_context of the request that created the message
 
