@@ -58,7 +58,6 @@ from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
-from r2.lib.providers.cdn.fastly import FastlyCdnProvider
 from r2.lib.template_helpers import add_sr, format_html
 from r2.lib.utils import (
     TimeoutFunction,
@@ -1484,14 +1483,8 @@ def purge_from_cdn(url, verify=True, max_retries=10, pause=3):
     If the purging still can't be verified despite all the retries,
     a notification will be sent to the #takedown-tool channel.
     """
-    parsed_url = UrlParser(url)
-    # Remove images hosted on Fastly
-    if parsed_url.hostname in (g.image_hosting_domain, g.imgix_gif_domain):
-        purge_content_function = FastlyCdnProvider().purge_content
-    else:
-        purge_content_function = g.cdn_provider.purge_content
+    g.cdn_provider.purge_content(url)
 
-    purge_content_function(url)
     if not verify:
         return
 
@@ -1504,7 +1497,7 @@ def purge_from_cdn(url, verify=True, max_retries=10, pause=3):
             return
 
         # the purge didn't take effect, try again
-        purge_content_function(url)
+        g.cdn_provider.purge_content(url)
         try_count += 1
 
     hooks.get_hook("cdn_purge.failed").call(url=url)
