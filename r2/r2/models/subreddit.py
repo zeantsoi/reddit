@@ -1219,7 +1219,7 @@ class Subreddit(Thing, Printable, BaseSite):
                                                       data=True,
                                                       return_dict=False,
                                                       stale=True)
-        elif (not user and
+        elif ((not user or isinstance(user, FakeAccount)) and
                 len(c.recent_subreddits) == 10 and
                 feature.is_enabled("subreddit_cookie_frontpage") and
                 feature.variant("subreddit_cookie_frontpage") == "test_group"):
