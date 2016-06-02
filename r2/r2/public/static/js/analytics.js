@@ -22,76 +22,12 @@ r.analytics = {
       r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
     }
 
-    r.analytics.contextData = {
-      dnt: window.DO_NOT_TRACK,
-      language: document.getElementsByTagName('html')[0].getAttribute('lang'),
-      link_id: r.config.cur_link ? r.utils.fullnameToId(r.config.cur_link) : null,
-      loid: null,
-      loid_created: null,
-      referrer_url: document.referrer || '',
-      referrer_domain: null,
-      sr_id: r.config.cur_site ? r.utils.fullnameToId(r.config.cur_site) : null,
-      sr_name: r.config.post_site || null,
-      user_id: null,
-      user_name: null,
-      user_in_beta: r.config.pref_beta,
-    };
-
-    if (r.config.feature_adblock_test) {
-      r.analytics.contextData.adblock = r.analytics.testAdblock();
-    }
-
-    if (r.config.user_id) {
-      r.analytics.contextData.user_id = r.config.user_id;
-      r.analytics.contextData.user_name = r.config.logged;
-    } else {
-      var tracker = new redditlib.Tracker();
-      var loggedOutData = tracker.getTrackingData();
-      if (loggedOutData && loggedOutData.loid) {
-        r.analytics.contextData.loid = loggedOutData.loid;
-        if (loggedOutData.loidcreated) {
-          r.analytics.contextData.loid_created = decodeURIComponent(loggedOutData.loidcreated);
-        }
-      }
-    }
-
-    if (document.referrer) {
-      var referrerDomain = document.referrer.match(/\/\/([^\/]+)/);
-      if (referrerDomain && referrerDomain.length > 1) {
-        r.analytics.contextData.referrer_domain = referrerDomain[1];
-      }
-    }
-
-    if ($('body').hasClass('comments-page')) {
-      r.analytics.contextData.page_type = 'comments';
-    } else if ($('body').hasClass('listing-page')) {
-      r.analytics.contextData.page_type = 'listing';
-
-      if (r.config.cur_listing) {
-        r.analytics.contextData.listing_name = r.config.cur_listing;
-      }
-    }
-
     if (r.config.feature_screenview_events) {
       r.analytics.screenviewEvent();
     }
 
-    if (r.config.expando_preference) {
-      r.analytics.contextData.expando_preference = r.config.expando_preference;
-    }
-
-    if (r.config.pref_no_profanity) {
-      r.analytics.contextData.media_preference_hide_nsfw = r.config.pref_no_profanity
-    }
-
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
-  },
-
-  testAdblock: function() {
-    var $el = $('#adblock-test');
-
-    return (!$el.length || $el.is(':hidden'));
   },
 
   _eventPredicates: {},
@@ -352,27 +288,29 @@ r.analytics = {
 
   firePageTrackingPixel: function(callback) {
     var url = r.config.tracker_url;
+    var contextData = r.events.contextData;
+
     if (!url) {
       return;
     }
     var params = {
-      dnt: this.contextData.dnt,
+      dnt: contextData.dnt,
     };
 
-    if (this.contextData.loid) {
-      params.loid = this.contextData.loid;
+    if (contextData.loid) {
+      params.loid = contextData.loid;
     }
-    if (this.contextData.loid_created) {
-      params.loidcreated = decodeURIComponent(this.contextData.loid_created);
+    if (contextData.loid_created) {
+      params.loidcreated = decodeURIComponent(contextData.loid_created);
     }
 
     var querystring = [
       'r=' + Math.random(),
     ];
 
-    if (this.contextData.referrer_domain) {
+    if (contextData.referrer_domain) {
       querystring.push(
-        'referrer_domain=' + encodeURIComponent(this.contextData.referrer_domain)
+        'referrer_domain=' + encodeURIComponent(contextData.referrer_domain)
       );
     }
 
@@ -414,40 +352,20 @@ r.analytics = {
     }
   },
 
-  addContextData: function(properties, payload) {
-    /* jshint sub: true */
-    payload = payload || {};
 
-    if (this.contextData.user_id) {
-      payload['user_id'] = this.contextData.user_id;
-      payload['user_name'] = this.contextData.user_name;
-    } else {
-      payload['loid'] = this.contextData.loid;
-      payload['loid_created'] = decodeURIComponent(this.contextData.loid_created);
-    }
 
-    properties.forEach(function(contextProperty) {
-      /* jshint eqnull: true */
-      if (this.contextData[contextProperty] != null) {
-        payload[contextProperty] = this.contextData[contextProperty];
-      }
-    }.bind(this));
 
-    return payload;
-  },
 
   adsInteractionEvent: function(action, payload, done) {
     var eventTopic = 'selfserve_events';
     var eventType = 'cs.interaction.' + action;
 
-    r.events.track(
-      eventTopic,
-      eventType,
-      this.addContextData([
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: [
         'referrer_domain',
         'referrer_url',
-      ], payload)
-    );
+      ],
+    });
 
     if (done) {
       r.events.send(done);
@@ -457,17 +375,7 @@ r.analytics = {
   screenviewEvent: function() {
     var eventTopic = 'screenview_events';
     var eventType = 'cs.screenview';
-    var payload = this.addContextData([
-      'sr_name',
-      'sr_id',
-      'listing_name',
-      'language',
-      'dnt',
-      'referrer_domain',
-      'referrer_url',
-      'user_in_beta',
-      'adblock',
-    ]);
+    var payload = {};
 
     if (r.config.event_target) {
       for (var key in r.config.event_target) {
@@ -499,19 +407,25 @@ r.analytics = {
     }
 
     // event collector
-    r.events.track(eventTopic, eventType, payload).send();
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: [
+        'sr_name',
+        'sr_id',
+        'listing_name',
+        'language',
+        'dnt',
+        'referrer_domain',
+        'referrer_url',
+        'user_in_beta',
+        'adblock',
+      ],
+    }).send();
   },
 
   loginRequiredEvent: function(actionName, actionDetail, targetType, targetFullname) {
     var eventTopic = 'login_events';
     var eventType = 'cs.loggedout_' + actionName;
-    var payload = this.addContextData([
-      'sr_name',
-      'sr_id',
-      'listing_name',
-      'referrer_domain',
-      'referrer_url',
-    ]);
+    var payload = {};
 
     payload['process_notes'] = 'LOGIN_REQUIRED';
 
@@ -529,16 +443,21 @@ r.analytics = {
     }
 
     // event collector
-    r.events.track(eventTopic, eventType, payload).send();
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: [
+        'sr_name',
+        'sr_id',
+        'listing_name',
+        'referrer_domain',
+        'referrer_url',
+      ],
+    }).send();
   },
 
   timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
     var eventTopic = 'forbidden_actions';
     var eventType = 'cs.forbidden_' + actionName;
-    var payload = this.addContextData([
-      'sr_name',
-      'sr_id',
-    ]);
+    var payload = {};
 
     payload['process_notes'] = 'IN_TIMEOUT';
 
@@ -556,18 +475,18 @@ r.analytics = {
     }
 
     // event collector
-    r.events.track(eventTopic, eventType, payload).send();
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: [
+        'sr_name',
+        'sr_id',
+      ],
+    }).send();
   },
 
   imageUploadEvent: function(mimetype, size, source, key, unsuccessful) {
     var eventTopic = 'image_upload_events';
     var eventType = 'cs.upload_image';
-    var payload = this.addContextData([
-      'referrer_domain',
-      'referrer_url',
-      'sr_name',
-      'sr_id',
-    ]);
+    var payload = {};
 
     if (unsuccessful) {
       payload['process_notes'] = unsuccessful;
@@ -592,7 +511,14 @@ r.analytics = {
     }
 
     // event collector
-    r.events.track(eventTopic, eventType, payload).send();
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: [
+        'referrer_domain',
+        'referrer_url',
+        'sr_name',
+        'sr_id',
+      ],
+    }).send();
   },
 
   registerAdvanceEvent: function(email) {
@@ -600,7 +526,7 @@ r.analytics = {
     // email field in the experiment.
     var eventTopic = 'login_events';
     var eventType = 'cs.register_step_advance';
-    var payload = this.addContextData([]);
+    var payload = {};
 
     payload['step_name'] = 'enter_email';
     payload.email = email;
@@ -613,14 +539,7 @@ r.analytics = {
 
     var eventTopic = 'expando_events';
     var eventType = 'cs.' + actionName;
-    var payload = this.addContextData([
-      'page_type',
-      'listing_name',
-      'referrer_domain',
-      'referrer_url',
-      'expando_preference',
-      'media_preference_hide_nsfw',
-    ]);
+    var payload = {};
 
     if ('linkIsNSFW' in targetData) {
       payload['nsfw'] = targetData.linkIsNSFW;
@@ -664,13 +583,23 @@ r.analytics = {
       payload['sr_id'] = r.utils.fullnameToId(targetData.subredditFullname);
     }
 
-    r.events.track(eventTopic, eventType, payload).send();
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: [
+        'page_type',
+        'listing_name',
+        'referrer_domain',
+        'referrer_url',
+        'expando_preference',
+        'media_preference_hide_nsfw',
+      ],
+    }).send();
   },
 
-  sendEvent: function(eventTopic, actionName, defaultFields, customFields, done) {
+  sendEvent: function(eventTopic, actionName, contextProperties, payload, done) {
     var eventType = 'cs.' + actionName;
-    var payload = this.addContextData(defaultFields, customFields);
-    r.events.track(eventTopic, eventType, payload).send(done);
+    r.events.track(eventTopic, eventType, payload, {
+      contextProperties: contextProperties,
+    }).send(done);
   },
 };
 
