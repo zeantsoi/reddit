@@ -27,7 +27,7 @@ import requests
 from pylons import app_globals as g
 
 from r2.lib.providers.cdn import CdnProvider
-from r2.lib.utils import constant_time_compare
+from r2.lib.utils import constant_time_compare, UrlParser
 
 class CloudFlareCdnProvider(CdnProvider):
     """A provider for reddit's configuration of CloudFlare.
@@ -44,8 +44,15 @@ class CloudFlareCdnProvider(CdnProvider):
 
         timer = g.stats.get_timer("providers.cloudflare.content_purge")
         timer.start()
+
+        # Get the proper zone id for the purge cache url based on hostname
+        if UrlParser(url).hostname == g.image_hosting_domain:
+            purge_key_url = g.secrets['cloudflare_purge_key_imagehosting_url']
+        else:
+            purge_key_url = g.secrets['cloudflare_purge_key_url']
+
         response = requests.delete(
-            g.secrets['cloudflare_purge_key_url'],
+            purge_key_url,
             headers={
                 'X-Auth-Email': g.secrets['cloudflare_email_address'],
                 'X-Auth-Key': g.secrets['cloudflare_api_key'],
