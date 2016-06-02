@@ -145,6 +145,12 @@
     <%include file="redditheader.html"/>
   %endif
 
+  ## In order to be positioned before the content container this must be
+  ## before the sidebar in the DOM
+  %if getattr(thing, 'pre_content', None):
+    ${thing.pre_content}
+  %endif
+
   %if thing.show_sidebar:
     <div class="side">
       ${sidebar(content = thing.rightbox())}

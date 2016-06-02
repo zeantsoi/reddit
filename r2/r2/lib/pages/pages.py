@@ -161,7 +161,7 @@ from r2.lib.utils import Storage, tup, url_is_embeddable_image
 from r2.lib.utils import precise_format_timedelta
 from r2.lib.cache import make_key_id, MemcachedError
 
-from babel.numbers import format_currency
+from babel.numbers import format_currency, format_number
 from babel.dates import format_date
 from collections import defaultdict, namedtuple
 import csv
@@ -182,6 +182,7 @@ datefmt = _force_utf8(_('%d %b %Y'))
 
 MAX_DESCRIPTION_LENGTH = 150
 RELEVANCY_EXPERIMENT_SUB = 'gaming'
+
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
@@ -1316,6 +1317,59 @@ class TopPostsSidebar(Templated):
             page_type=page_type,
         )
 
+
+def _get_top_posts(num, link):
+    links = c.site.get_links('hot', 'all')
+    builder = IDBuilder(links, num=num)
+    top_posts = LinkListing(builder).get_items()[0]
+
+    return filter(lambda x: not x.fullname == link.fullname,
+                  top_posts)
+
+
+class SubredditBar(Templated):
+    def __init__(self):
+        Templated.__init__(
+            self,
+            subreddit_name=c.site.name,
+            icon=c.site.icon_img,
+            subscribers=format_number(c.site._ups, c.locale),
+            url=add_sr(''),
+            key_color=c.site.key_color,
+        )
+
+
+class TopPostsDivider(Templated):
+    def __init__(self, link):
+        page_type = "self" if link.is_self else "link"
+        # The builder sometimes returns the current link
+        # so we fetch an extra one and slice the list
+        top_posts = _get_top_posts(4, link)[0:3]
+
+        Templated.__init__(
+            self,
+            cta_url=add_sr(''),
+            top_posts=top_posts,
+            sr_name=c.site.name,
+            page_type=page_type,
+        )
+
+
+class TopPostsCarousel(Templated):
+    def __init__(self, link, position='top'):
+        page_type = "self" if link.is_self else "link"
+        top_posts = _get_top_posts(12, link)
+
+        Templated.__init__(
+            self,
+            cta_url=add_sr(''),
+            top_posts=top_posts,
+            sr_name=c.site.name,
+            page_type=page_type,
+            position=position,
+        )
+
+
 class TopPostsWithinSubreddit(TopPostsSidebar):
     """ Renders top posts from the article's subreddit in the sidebar """
     def __init__(self, current_page):
@@ -1950,7 +2004,25 @@ class LinkInfoPage(Reddit):
                 "embed_inject_template": websafe(embeds.get_inject_template()),
             })
 
-        Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
+        self.top_posts = None
+        pre_content = None
+        if not is_api() and is_seo_referrer() and \
+                c.site.name == RELEVANCY_EXPERIMENT_SUB and \
+                feature.is_enabled('top_posts'):
+
+            variant = feature.variant('top_posts')
+            if variant == 'divider':
+                self.top_posts = TopPostsDivider(self.link)
+            elif variant == 'carousel_bottom':
+                self.top_posts = TopPostsCarousel(self.link, position='bottom')
+            elif variant == 'carousel_top':
+                self.pre_content = TopPostsCarousel(self.link)
+            elif variant == 'subreddit':
+                self.top_posts = SubredditBar()
+
+        Reddit.__init__(self, title=title,
+                        short_description=short_description, robots=robots,
+                        *a, **kw)
 
     def _build_og_data(self, link_title, meta_description):
         sr_fragment = "/r/" + c.site.name if not c.default_sr else get_domain()
@@ -2100,6 +2172,7 @@ class LinkInfoPage(Reddit):
         return self.content_stack((
             self.infobar,
             self.link_listing,
+            self.top_posts,
             comment_area,
             self.popup_panes,
         ))
@@ -2115,9 +2188,16 @@ class LinkInfoPage(Reddit):
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
+        top_post_variants = {'subreddit', 'carousel_bottom',
+                             'carousel_top', 'divider'
+                             }
+
+        in_top_posts_exp = feature.is_enabled('top_posts') and \
+            not is_api() and is_seo_referrer() and \
+            feature.variant('top_posts') in top_post_variants
 
         if (c.site and not c.default_sr and c.render_style == 'html' and
-                feature.is_enabled('read_next')):
+                not in_top_posts_exp and feature.is_enabled('read_next')):
             link = self.link
 
             def wrapper_fn(thing):
