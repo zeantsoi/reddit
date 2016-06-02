@@ -214,7 +214,7 @@ class S3MediaProvider(MediaProvider):
             if mime_type == "image/gif":
                 domain = g.gif_hosting_domain
             return urlunsplit((
-                "https" if c.secure else "http",
+                "https",
                 domain,
                 name,
                 None,
