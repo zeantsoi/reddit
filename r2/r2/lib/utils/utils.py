@@ -867,19 +867,6 @@ class UrlParser(object):
                            u.path, u.params, u.query, fragment))
 
 
-def is_seo_referrer():
-    """To be used for experiments to evaluate if a user is an SEO user
-
-    A user constitutes as an SEO user if the http referer is something like
-    google.com (or another search engine). Note that this function must be used
-    PRIOR to .is_enabled() to avoid the unnecessary bucketing of users. It
-    should be used similarly to is_api() in this sense.
-    """
-    p = UrlParser(request.referer)
-    return any(is_subdomain(p.hostname, seo_domain) for seo_domain
-               in g.seo_domains)
-
-
 def coerce_url_to_protocol(url, protocol='http'):
     '''Given an absolute (but potentially protocol-relative) url, coerce it to
     a protocol.'''

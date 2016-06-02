@@ -290,7 +290,6 @@ class Globals(object):
             'hide_subscribers_srs',
             'mcrouter_addr',
             'mweb_whitelist_expressions',
-            'seo_domains',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [
