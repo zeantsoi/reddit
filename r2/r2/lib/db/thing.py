@@ -751,8 +751,13 @@ class Thing(DataThing):
             cls._type_id, thing_ids, value_name, limit, desc)
 
     def update_search_index(self, boost_only=False):
-        # disable while CloudSearch is broken
-        pass
+        msg = {'fullname': self._fullname}
+        if boost_only:
+            msg['boost_only'] = True
+
+        amqp.add_item('search_changes', pickle.dumps(msg),
+                      message_id=self._fullname,
+                      delivery_mode=amqp.DELIVERY_TRANSIENT)
 
 
 class RelationMeta(type):
