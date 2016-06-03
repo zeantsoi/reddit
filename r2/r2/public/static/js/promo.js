@@ -33,6 +33,7 @@
           dt: this.displayedThings,
           loid: this.loid,
           is_refresh: options.refresh,
+          referrer: document.referrer,
         },
       });
     },
