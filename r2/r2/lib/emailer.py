@@ -180,9 +180,12 @@ def message_notification_email(data):
             continue
 
         # Don't send more than MAX_EMAILS_PER_USER per user per day
-        USER_MESSAGE_THROTTLE_KEY = "email-message_notification_%s" % user._id
-        g.cache.add(USER_MESSAGE_THROTTLE_KEY, 0, time=24*60*60)
-        if g.cache.get(USER_MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_USER:
+        user_notification_ratelimit = SimpleRateLimit(
+            name="email_message_notification_%s" % user._id36,
+            seconds=int(datetime.timedelta(days=1).total_seconds()),
+            limit=MAX_EMAILS_PER_USER,
+        )
+        if not user_notification_ratelimit.check():
             continue
 
         # Get all new messages that haven't been emailed
@@ -321,7 +324,7 @@ def message_notification_email(data):
         )
 
         g.stats.simple_event('email.message_notification.queued')
-        g.cache.incr(USER_MESSAGE_THROTTLE_KEY)
+        user_notification_ratelimit.record_usage()
 
 def generate_non_preview_usernames_str(usernames):
     """ produces string of usernames for whom a message preview is not 
