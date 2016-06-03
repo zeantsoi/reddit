@@ -47,6 +47,7 @@
       this.prev = this._advance.bind(this, -1);
       this.$listing = $('.organic-listing');
       this.adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
+      this.userEngagedWithAd = false;
 
       if (this.adBlockIsEnabled) {
         this.showPromo = false;
@@ -126,9 +127,11 @@
 
       
       var $clearLeft = $promotedLink.next('.clearleft');
+      var intervalSinceLastTabChange = Date.now() - this.lastTabChangeTimestamp;
 
       if (this.adBlockIsEnabled ||
-          Date.now() - this.lastTabChangeTimestamp < this.MIN_PROMO_TIME) {
+          intervalSinceLastTabChange < this.MIN_PROMO_TIME ||
+          this.userEngagedWithAd) {
         return;
       }
 
@@ -161,7 +164,7 @@
             $promotedLink.add($clearLeft).remove(); 
             $promo.show();            
           } else {
-            this.next()
+            this.next();
           }
         }
         // force a redraw to prevent showing duplicate ads
@@ -195,6 +198,11 @@
             $promotedLink.remove()
             $item.appendTo(this.$listing);
           }
+
+          $item.on('expando:show', function(){
+            this.userEngagedWithAd = true;
+          }.bind(this));
+
           return $item;
         } else {
           if (!prevPromo.length && !this.organics.length) {
