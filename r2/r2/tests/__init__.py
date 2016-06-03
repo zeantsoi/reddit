@@ -259,6 +259,7 @@ class RedditControllerTestCase(RedditTestCase):
             ratelimitcache=NonCache(),
             pagecache=NonCache(),
             cache=NonCache(),
+            gencache=NonCache(),
         )
 
         self.mock_eventcollector()
