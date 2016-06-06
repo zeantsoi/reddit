@@ -74,18 +74,6 @@ EU_COOKIE_COUNTRIES = {
     "UK",
 }
 
-# List of countries in which Mobile Native is not available
-NON_MOBILE_NATIVE_COUNTRIES = {
-    "BR",
-    "CU",
-    "DE",
-    "FR",
-    "ID",
-    "IR",
-    "MM",
-    "SD",
-}
-
 EMAIL_OPTIN_COUNTRIES = {
     "US",
 }
@@ -207,16 +195,3 @@ def can_auto_optin_email(request, context):
     country_code = get_request_location(request, context)
 
     return (country_code in EMAIL_OPTIN_COUNTRIES)
-
-
-def is_mobile_native_country(request, context):
-    """
-    Check if the request is from a country in which we've launched
-    out native mobile apps.
-    """
-    if g.debug:
-        return True
-
-    country_code = get_request_location(request, context)
-
-    return (country_code not in NON_MOBILE_NATIVE_COUNTRIES)

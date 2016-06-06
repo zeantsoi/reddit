@@ -304,8 +304,8 @@ def js_config(extra_config=None):
         "feature_new_report_dialog": feature.is_enabled('new_report_dialog'),
         "feature_ads_user_matching": feature.is_enabled('ads_user_matching'),
         "feature_flatlist_events": feature.is_enabled('flatlist_events'),
-        "feature_mobile_native_banner": feature.is_enabled('mobile_native_banner'),
-        "is_mobile_native_country": geoip.is_mobile_native_country(request, c),
+        "feature_mobile_native_banner": feature.is_enabled(
+            'mobile_native_banner'),
         "email_verified": logged and c.user.email and c.user.email_verified,
         "feature_post_embed": feature.is_enabled('post_embed'),
         "feature_adblock_test": feature.is_enabled('adblock_test'),

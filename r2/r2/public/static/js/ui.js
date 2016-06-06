@@ -135,7 +135,7 @@ r.ui.initMWebBanner = function() {
     var optInCookieName;
     var url;
     var storeKey;
-    if (r.config.feature_mobile_native_banner && r.config.is_mobile_native_country) {
+    if (r.config.feature_mobile_native_banner) {
       storeKey = 'native-banner.closed';
       optInCookieName = null;
 
