@@ -622,6 +622,8 @@ def set_media(link, force=False, **kwargs):
 
         hooks.get_hook("scraper.set_media").call(link=link)
 
+        amqp.add_item("new_media", link._fullname)
+
         if media.media_object or media.secure_media_object:
             amqp.add_item("new_media_embed", link._fullname)
 
