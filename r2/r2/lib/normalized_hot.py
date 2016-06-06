@@ -75,7 +75,7 @@ def get_hot_tuples(sr_ids, ageweight=None):
             shuffle_offset = long(hashed.hexdigest(), 16) % number_to_shuffle
 
             # Offset the hottest five link items by {shuffle_offset}
-            top_links = links[:number_to_shuffle]
+            top_links = sr_links[:number_to_shuffle]
             shuffled_links = top_links[shuffle_offset:]
             shuffled_links.extend(top_links[:shuffle_offset])
 
