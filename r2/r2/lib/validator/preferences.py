@@ -117,10 +117,6 @@ def filter_prefs(prefs, user):
             if prefs.get("pref_other_theme", False):
                 prefs["pref_default_theme_sr"] = prefs["pref_other_theme"]
 
-    if (not feature.is_enabled('affiliate_links', user=user) and
-            'affiliate_links' in prefs):
-        del prefs['affiliate_links']
-
     for pref_key in prefs.keys():
         if pref_key not in user._preference_attrs:
             del prefs[pref_key]
