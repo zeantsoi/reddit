@@ -174,8 +174,8 @@ class RedditTestCase(TestCase):
     def mock_eventcollector(self):
         """Mock out the parts of the event collector which write to the queue.
 
-        Also mocks `domain` and `_datetime_to_millis` as it makes writing tests
-        easier since we pass in mock data to the events as well.
+        Also mocks `domain` and `to_epoch_milliseconds` as it makes writing
+        tests easier since we pass in mock data to the events as well.
         """
         self.autopatch(g.events, "queue_production", MockEventQueue())
         self.autopatch(g.events, "queue_test", MockEventQueue())
@@ -183,8 +183,8 @@ class RedditTestCase(TestCase):
         self.domain_mock = self.autopatch(eventcollector, "domain")
 
         self.created_ts_mock = MagicMock(name="created_ts")
-        self._datetime_to_millis = self.autopatch(
-            eventcollector, "_datetime_to_millis",
+        self.to_epoch_milliseconds = self.autopatch(
+            eventcollector, "to_epoch_milliseconds",
             return_value=self.created_ts_mock)
 
     assert_same_dict = staticmethod(assert_same_dict)

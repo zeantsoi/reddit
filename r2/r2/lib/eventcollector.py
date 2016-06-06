@@ -34,22 +34,15 @@ from r2.lib.geoip import (
 from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
-    epoch_timestamp,
+    to_epoch_milliseconds,
     parse_agent,
     sampled,
     squelch_exceptions,
     to36,
 )
 
-
-def _epoch_to_millis(timestamp):
-    """Convert an epoch_timestamp from seconds (float) to milliseconds (int)"""
-    return int(timestamp * 1000)
-
-
-def _datetime_to_millis(dt):
-    """Convert a standard datetime to epoch milliseconds."""
-    return _epoch_to_millis(epoch_timestamp(dt))
+# XXX External dependencies!
+_datetime_to_millis = to_epoch_milliseconds
 
 
 class EventQueue(object):
@@ -104,8 +97,10 @@ class EventQueue(object):
         if vote.previous_vote:
             event.add("prev_vote_direction",
                 get_vote_direction_name(vote.previous_vote))
-            event.add("prev_vote_ts",
-                _datetime_to_millis(vote.previous_vote.date))
+            event.add(
+                "prev_vote_ts",
+                to_epoch_milliseconds(vote.previous_vote.date)
+            )
 
         if vote.is_automatic_initial_vote:
             event.add("auto_self_vote", True)
@@ -236,7 +231,7 @@ class EventQueue(object):
         post = Link._byID(new_comment.link_id)
         event.add("post_id", post._id)
         event.add("post_fullname", post._fullname)
-        event.add("post_created_ts", _datetime_to_millis(post._date))
+        event.add("post_created_ts", to_epoch_milliseconds(post._date))
         if post.promoted:
             event.add("post_is_promoted", bool(post.promoted))
 
@@ -247,7 +242,7 @@ class EventQueue(object):
             parent = post
         event.add("parent_id", parent._id)
         event.add("parent_fullname", parent._fullname)
-        event.add("parent_created_ts", _datetime_to_millis(parent._date))
+        event.add("parent_created_ts", to_epoch_milliseconds(parent._date))
 
         event.add("user_neutered", new_comment.author_slow._spam)
 
@@ -1111,7 +1106,7 @@ class EventQueue(object):
             request=request,
             context=context,
             data=dict(
-                original_end_date=_datetime_to_millis(original_end),
+                original_end_date=to_epoch_milliseconds(original_end),
             )
         )
 
@@ -1572,11 +1567,11 @@ class EventQueue(object):
                 'email_address': user.email,
                 'user_id': user._id,
                 'user_name': user.name,
-                'user_age': _datetime_to_millis(user._date),
+                'user_age': to_epoch_milliseconds(user._date),
                 'reply_count': reply_count,
                 'email_hash': email_hash,
-                'newest_reply_age': _datetime_to_millis(newest_reply_age),
-                'oldest_reply_age': _datetime_to_millis(oldest_reply_age),
+                'newest_reply_age': to_epoch_milliseconds(newest_reply_age),
+                'oldest_reply_age': to_epoch_milliseconds(oldest_reply_age),
                 'reply_fullname_listing': fullnames,
                 'reply_type_count': reply_types,
             }
@@ -1687,7 +1682,7 @@ class Event(baseplate.events.Event):
 
         # Add info about when target was originally posted for links/comments
         if isinstance(target, (Comment, Link)):
-            self.add("target_created_ts", _datetime_to_millis(target._date))
+            self.add("target_created_ts", to_epoch_milliseconds(target._date))
 
         hooks.get_hook("eventcollector.add_target_fields").call(
             event=self,
@@ -1863,8 +1858,8 @@ class SelfServeEvent(Event):
         from r2.models.promo import PROMOTE_COST_BASIS
 
         self.add("campaign_id", campaign._id)
-        self.add("start_date_ts", _datetime_to_millis(campaign.start_date))
-        self.add("end_date_ts", _datetime_to_millis(campaign.end_date))
+        self.add("start_date_ts", to_epoch_milliseconds(campaign.start_date))
+        self.add("end_date_ts", to_epoch_milliseconds(campaign.end_date))
         self.add("target_name", campaign.target.pretty_name)
         self.add("subreddit_targets", campaign.target.subreddit_names)
         self.add("no_daily_budget", campaign.no_daily_budget)
@@ -1898,12 +1893,16 @@ class SelfServeEvent(Event):
 
             prev_start_date = prev_attrs.get("start_date")
             if prev_start_date is not None:
-                self.add("prev_start_date_ts",
-                    _datetime_to_millis(prev_start_date))
+                self.add(
+                    "prev_start_date_ts",
+                    to_epoch_milliseconds(prev_start_date)
+                )
             prev_end_date = prev_attrs.get("end_date")
             if prev_end_date is not None:
-                self.add("prev_end_date_ts",
-                    _datetime_to_millis(prev_end_date))
+                self.add(
+                    "prev_end_date_ts",
+                    to_epoch_milliseconds(prev_end_date)
+                )
 
             prev_target = prev_attrs.get("target")
             if prev_target:
