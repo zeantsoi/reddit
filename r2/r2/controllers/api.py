@@ -530,9 +530,12 @@ class ApiController(RedditController):
         ):
             return
 
-        if (kind == "image" and
-                not feature.is_enabled('image_uploads', subreddit=sr.name)
-        ):
+        # Don't allow image uploading to subreddits that are
+        # nsfw or quarantined or not feature flagged
+        if (kind == "image" and (
+                not feature.is_enabled('image_uploads', subreddit=sr.name) or
+                sr.quarantine
+        )):
             # this could happen if they actually typed "self" into the
             # URL box and we helpfully translated it for them
             c.errors.add(errors.SUBREDDIT_NOTALLOWED, field='sr')
