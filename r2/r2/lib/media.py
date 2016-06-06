@@ -86,7 +86,7 @@ _IMAGE_PREVIEW_TEMPLATE = """
 """
 
 _MP4_PREVIEW_TEMPLATE = """
-<video class="%(css_class)s" poster="%(poster_url)s"
+<video class="%(css_class)s"
     preload="auto" autoplay="autoplay" muted="muted" loop="loop"
     webkit-playsinline="" style="width: %(width)spx; height: %(height)spx;">
     <source src="%(url)s" type="video/mp4">
@@ -767,13 +767,11 @@ def get_preview_media_object(preview_object, include_censored=False):
             height=height,
         )
     else:
-        static_url = g.image_resizing_provider.resize_image(preview_object, width, file_type="jpg")
         mp4_url = g.image_resizing_provider.resize_image(preview_object, width, file_type="mp4")
         img_html = format_html(
             _MP4_PREVIEW_TEMPLATE,
             css_class="preview",
             url=mp4_url,
-            poster_url=static_url,
             width=width,
             height=height,
         )
