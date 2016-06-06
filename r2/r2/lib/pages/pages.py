@@ -1623,7 +1623,8 @@ class NewLinkPage(FormPage):
     def __init__(self, pagename, show_sidebar=False, default_sr=None, *a, **kw):
         self.allow_image_upload = (default_sr and
             feature.is_enabled("image_uploads", subreddit=default_sr.name) and
-            not default_sr.quarantine
+            not default_sr.quarantine and
+            not default_sr.over_18
         )
         FormPage.__init__(self,
                           pagename,
