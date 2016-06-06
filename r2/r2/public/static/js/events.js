@@ -63,7 +63,9 @@
 
         // `truthy` means skip, undefined topics will therefore be using a 100%
         // sample
-        this.sampling = {};
+        this.sampling = {
+          'ad_serving_events': Math.random() > config.ad_serving_events_sample_rate,
+        };
       }
 
       this.contextData = this._getContextData(config);
