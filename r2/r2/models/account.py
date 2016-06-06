@@ -741,6 +741,11 @@ class Account(Thing):
 
         return self.pref_default_theme_sr
 
+    def has_been_atoed(self):
+        """Return true if this account has ever been required to reset their password
+        """
+        return 'force_password_reset' in self._t
+
 
 class FakeAccount(Account):
     _nodb = True
