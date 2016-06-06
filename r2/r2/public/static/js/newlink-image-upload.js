@@ -204,6 +204,7 @@
       if (this._isValidUrl(url)) {
         this._debouncedRequestSuggestTitle(url);
       }
+      this.$clearUrlButton.show();
     },
 
     _handleUrlClear: function() {
@@ -214,6 +215,7 @@
       this.$previewLinkDisplayGroup.hide();
       this.$previewLinkTitle.text('');
       this.$previewLinkDomain.attr('href', '#').text('');
+      this.$clearUrlButton.hide();
     },
 
     _handleTitleChange: function(title) {
