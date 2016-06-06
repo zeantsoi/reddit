@@ -1577,4 +1577,4 @@ def purge_associated_images(link):
         purge_image(thumbnail_url)
 
     if preview_url:
-        purge_imgix_images(link.preview_object, purge_nsfw=link.nsfw)
+        purge_imgix_images(link.preview_object, purge_nsfw=link.over_18)
