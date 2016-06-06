@@ -151,12 +151,19 @@ def _strip_exif_data(image, image_file):
 
 
 def _get_exif_tags(image):
-    """Return exif_tags if they exist, else None."""
+    """Return exif data, if it exists.
+
+    If the exif data is corrupted, return False.
+    If exif_tags don't exist return None.
+    """
     try:
         exif_tags = image._getexif() or {}
     except AttributeError:
         # Image format with no EXIF tags
         return None
+    except IndexError:
+        # Bad EXIF data
+        return False
 
     return exif_tags
 
@@ -695,6 +702,9 @@ def make_temp_uploaded_image_permanent(image_key):
             # Strip exif data after applying orientation
             image = _apply_exif_orientation(image)
             image.format = original_format
+            _strip_exif_data(image, f)
+        elif exif_tags is False:
+            # Getting exif data failed because of invalid format.
             _strip_exif_data(image, f)
         data["px_size"] = image.size
 
