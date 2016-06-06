@@ -309,8 +309,6 @@ def js_config(extra_config=None):
         "email_verified": logged and c.user.email and c.user.email_verified,
         "feature_post_embed": feature.is_enabled('post_embed'),
         "feature_adblock_test": feature.is_enabled('adblock_test'),
-        "ad_serving_events_sample_rate": g.live_config.get(
-            "events_collector_ad_serving_sample_rate", 0),
     }
 
     if feature.is_enabled("eu_cookie_policy"):

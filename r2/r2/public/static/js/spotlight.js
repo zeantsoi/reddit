@@ -50,10 +50,6 @@
 
       if (this.adBlockIsEnabled) {
         this.showPromo = false;
-
-        r.analytics.adblockEvent('native-headline', {
-          method: 'element-hidden',
-        });
       }
 
       // ensure that r.promo is initialized
@@ -204,17 +200,7 @@
           }
           return false;
         }
-      }.bind(this), function onError(xhr, statusText) {
-        // Ignore http errors/timeouts. A `status` of `0` means
-        // the request wasn't actually finished (likely net::ERR_BLOCKED_BY_CLIENT)
-        if (statusText === 'timeout' || xhr.status !== 0) {
-          return;
-        }
-
-        r.analytics.adblockEvent('native-headline', {
-          method: 'endpoint-blocked',
-        });
-      });
+      }.bind(this));
     },
 
     chooseRandom: function(forcePromo) {
