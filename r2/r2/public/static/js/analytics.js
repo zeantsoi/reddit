@@ -352,31 +352,9 @@ r.analytics = {
     }
   },
 
-  adServingEvent: function(eventType, payload) {
-    var eventTopic = 'ad_serving_events';
-    var eventType = 'cs.' + eventType;
 
-    r.events.track(eventTopic, eventType, payload, {
-      contextProperties: [
-        'referrer_domain',
-        'referrer_url',
-        'adblock',
-        'dnt',
-        'sr_name',
-        'sr_id',
-        'listing_name',
-        'page_type',
-      ],
-    });
-  },
 
-  adblockEvent: function(placementType, payload) {
-    var payload = payload || {};
 
-    payload.placement_type = placementType;
-
-    return this.adServingEvent('adblock', payload);
-  },
 
   adsInteractionEvent: function(action, payload, done) {
     var eventTopic = 'selfserve_events';
