@@ -271,14 +271,6 @@ class ThingBase(object):
     _ttl = None
     _warn_on_partial_ttl = True
 
-    # A per-class dictionary of default TTLs that new columns of this
-    # class should have
-    _default_ttls = {}
-
-    # A per-instance property defining the TTL of individual columns
-    # (that must also appear in self._dirties)
-    _column_ttls = {}
-
     # a timestamp property that will automatically be added to newly
     # created Things (disable by setting to None)
     _timestamp_prop = None
@@ -318,7 +310,6 @@ class ThingBase(object):
         self._partial = None if _partial is None else frozenset(_partial)
 
         self._deletes = set()
-        self._column_ttls = {}
 
         # our row key
         self._id = _id
@@ -579,14 +570,16 @@ class ThingBase(object):
         return len(self._dirties) or len(self._deletes) or not self._committed
 
     @will_write
-    def _commit(self, write_consistency_level = None):
+    def _commit(self, write_consistency_level=None, ttl=None):
         if not self._dirty:
             return
 
         if self._id is None:
             raise TdbException("Can't commit %r without an ID" % (self,))
 
-        if self._committed and self._ttl and self._warn_on_partial_ttl:
+        ttl = ttl or self._ttl
+
+        if self._committed and ttl and self._warn_on_partial_ttl:
             log.warning("Using a full-TTL object %r in a mutable fashion"
                         % (self,))
 
@@ -669,7 +662,6 @@ class ThingBase(object):
 
         self._dirties.clear()
         self._deletes.clear()
-        self._column_ttls.clear()
 
     def _destroy(self):
         self._cf.remove(self._id,
@@ -711,8 +703,6 @@ class ThingBase(object):
         except KeyError:
             pass
         self._dirties[attr] = val
-        if attr in self._default_ttls:
-            self._column_ttls[attr] = self._default_ttls[attr]
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
@@ -756,10 +746,6 @@ class ThingBase(object):
             del self._dirties[key]
         except KeyError:
             pass
-        try:
-            del self._column_ttls[key]
-        except KeyError:
-            pass
         self._deletes.add(key)
 
     def _get(self, key, default = None):
@@ -769,11 +755,6 @@ class ThingBase(object):
             if self._partial is not None and key not in self._partial:
                 raise AttributeError("_get on unrequested key from partial")
             return default
-
-    def _set_ttl(self, key, ttl):
-        assert key in self._dirties
-        assert isinstance(ttl, (long, int))
-        self._column_ttls[key] = ttl
 
     def _on_create(self):
         """A hook executed on creation, good for creation of static
@@ -1331,17 +1312,12 @@ class View(ThingBase):
         updates = dict((col_name, cls._serialize_column(col_name, col_val))
                        for (col_name, col_val) in col_values.iteritems())
 
-        # if they didn't give us a TTL, use the default TTL for the
-        # class. This will be further overwritten below per-column
-        # based on the _default_ttls class dict. Note! There is no way
-        # to use this API to express that you don't want a TTL if
-        # there is a default set on either the row or the column
-        default_ttl = ttl or cls._ttl
+        ttl = ttl or cls._ttl
 
         def do_inserts(b):
             for k, v in updates.iteritems():
                 b.insert(row_key, {k: v},
-                         ttl=cls._default_ttls.get(k, default_ttl))
+                         ttl=ttl)
 
         if batch is None:
             batch = cls._cf.batch(write_consistency_level = cls._wcl(write_consistency_level))
