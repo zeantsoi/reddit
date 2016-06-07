@@ -70,16 +70,8 @@
      %if thing.affiliatize_link and not thing.use_outbound:
        data-href-url="${thing.href_url}"
        data-affiliate-url="${generate_affiliate_link(thing.href_url)}"
-       %if thing.nofollow:
-         rel="noreferrer nofollow"
-       %else:
-         rel="noreferrer"
-       %endif
-
      %endif
-     %if thing.nofollow:
-       rel="nofollow"
-     %endif
+     rel="${thing.rel}"
      >
      ${caller.body()}
   </a>

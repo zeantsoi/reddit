@@ -989,6 +989,14 @@ class Link(Thing, Printable):
             else:
                 item.is_blocked_for_legal_reasons = False
 
+            rel_names = []
+            if item.affiliatize_link and \
+                    not item.use_outbound:
+                rel_names.append('noreferrer')
+            if item.nofollow:
+                rel_names.append('nofollow')
+            item.rel = ' '.join(rel_names)
+
         if user_is_loggedin:
             incr_counts(wrapped)
 
