@@ -21,7 +21,7 @@ fi
 if [[ ${CI_REPO:=} = "" ]]; then
     # This assumed to be `drone exec`.
     echo "Running style checks on staged local changes..."
-    git diff --cached | pep8 --diff
+    git diff --unified=0 --cached | pep8 --diff
 else
     echo "Running style checks within Drone..."
     # Get repo name without org and slash so we place nicely with forks.
@@ -30,7 +30,7 @@ else
     git fetch --no-tags --depth=10 upstream master
     # Find the point at which the branch and the canonical repo diverged.
     # Catches cases where the submitter hasn't rebased recently.
-    git diff --cached $(git merge-base HEAD upstream/master) | pep8 --diff
+    git diff --unified=0 --cached $(git merge-base HEAD upstream/master) | pep8 --diff
 fi
 error_encountered=$?
 
