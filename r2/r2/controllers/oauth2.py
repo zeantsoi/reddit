@@ -377,7 +377,18 @@ class OAuth2AccessController(MinimalController):
     def _make_new_token_response(cls, access_token, refresh_token=None):
         if not access_token:
             return {"error": "invalid_grant"}
-        expires_in = int(access_token._ttl) if access_token._ttl else None
+        access_token_ttl = getattr(access_token, 'token_ttl', None)
+
+        if access_token_ttl:
+            g.stats.simple_event(
+                'oauth2.access_token.expires_in.valid_token_ttl'
+            )
+            expires_in = int(access_token_ttl)
+        else:
+            g.stats.simple_event(
+                'oauth2.access_token.expires_in.default_token_ttl'
+            )
+            expires_in = g.default_access_token_ttl
         resp = {
             "access_token": access_token._id,
             "token_type": access_token.token_type,

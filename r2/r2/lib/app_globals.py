@@ -223,6 +223,7 @@ class Globals(object):
             'eu_cookie_max_attempts',
             'mobile_auth_gild_time',
             'promo_sr_id',
+            'default_access_token_ttl',
         ],
 
         ConfigValue.float: [

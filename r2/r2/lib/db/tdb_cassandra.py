@@ -641,12 +641,11 @@ class ThingBase(object):
                 for k, v in updates.iteritems():
                     b.insert(self._id,
                              {k: v},
-                             ttl=self._column_ttls.get(k, self._ttl))
+                             ttl=ttl)
             if self._deletes:
                 b.remove(self._id, self._deletes)
 
         self._orig.update(self._dirties)
-        self._column_ttls.clear()
         self._dirties.clear()
         for k in self._deletes:
             try:
