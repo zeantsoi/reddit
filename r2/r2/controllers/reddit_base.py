@@ -944,6 +944,7 @@ class MinimalController(BaseController):
             request.environ.get("WANT_RAW_JSON"),
             cookies_key,
             whitelisted_variants,
+            feature.is_enabled("affiliate_links"),
         )
         key = "page:%s" % _id
         return key
