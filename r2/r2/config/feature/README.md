@@ -106,7 +106,11 @@ Secondly, eligible users are either *bucketed* into a variant or *excluded*
 (because the summed percentage of all variants is less than 100).  `is_enabled`
 will return False for users who are non-eligible, fall into a control group, or
 are excluded; for anyone for whom this is true, you should call `variant` to
-find the specific variant they fall into.
+find the specific variant they fall into. When wanting to pull just the variants
+and not send a bucketing event (such as for /api/me.json and /api/v1/me), you
+can use `variant`. `is_enabled` will return the eligibility for the experiment
+and send a bucketing event if it's enabled. Note - experiments will only be
+enabled for requests that are for the `html` extension (desktop site).
 
 In code, this looks something like this:
 

@@ -126,3 +126,6 @@ class World(object):
         stats = self.stacked_proxy_safe_get(g, 'stats', None)
         if stats:
             return stats.simple_event(name)
+
+    def render_style(self):
+        return self.stacked_proxy_safe_get(c, 'render_style')

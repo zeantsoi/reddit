@@ -323,6 +323,11 @@ class FeatureState(object):
                     pass
 
     def _is_experiment_enabled(self, experiment, user=None):
+        # If request type is not html, it's not a desktop request.
+        # Don't bucket this user to prevent unnecessary bucketing
+        # events for users that don't see the experiments.
+        if self.world.render_style() != 'html':
+            return False
 
         if experiment.get('enabled', True):
             variant = self._get_experiment_variant(experiment, user)
