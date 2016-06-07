@@ -3350,7 +3350,7 @@ def need_provider_captcha():
     ):
         return False
 
-    return not c.oauth2_client and feature.is_enabled("registration_captcha")
+    return not c.oauth2_client
 
 
 def valid_provider_captcha(

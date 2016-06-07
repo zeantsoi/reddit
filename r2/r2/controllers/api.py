@@ -356,7 +356,6 @@ class ApiController(RedditController):
             g.log.warning("Failed to subscribe: %r" % e)
             abort(500)
 
-    @vary_pagecache_on_experiments("registration_captcha")
     @json_validate()
     def GET_requires_captcha(self, responder):
         """
@@ -750,7 +749,6 @@ class ApiController(RedditController):
         ))
         return handle_login(**kwargs)
 
-    @vary_pagecache_on_experiments("registration_captcha")
     @csrf_exempt
     @cross_domain(allow_credentials=True)
     @validatedForm(
