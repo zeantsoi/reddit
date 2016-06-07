@@ -405,7 +405,7 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
             $.getJSON("/api/requires_captcha.json", function(res) {
                 if (res.required) {
                     $form.recaptcha();
-                    this.captchaLoaded = True;
+                    this.captchaLoaded = true;
                 }
             }.bind(this));
         } else if (this.captchaLoaded) {
