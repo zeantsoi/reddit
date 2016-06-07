@@ -28,7 +28,7 @@
       //    function(eventTopic, eventName, eventPayload, options) { ...
       // `calledWith.done` is the callback from:
       //    overrides.send = function(done) { ...
-      r.events.track.apply(r.events, calledWith.track);
+      r.events.track.apply(r.events.track, calledWith.track);
 
       return calledWith.done;
     }.bind(r.analytics));
