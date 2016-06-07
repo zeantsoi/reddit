@@ -30,7 +30,7 @@
       //    overrides.send = function(done) { ...
       r.events.track.apply(r.events, calledWith.track);
 
-      return calledWith.done;
+      return calledWith.done || function(){};
     }.bind(r.analytics));
 
     // call all the callbacks after the payloads are sent.
