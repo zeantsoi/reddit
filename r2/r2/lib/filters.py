@@ -215,11 +215,19 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         soup = BeautifulSoup(text.decode('utf-8'))
         links = soup.findAll('a')
         update_text = False
-        for link in filter(lambda x: domain(x.get('href')) in g.merchant_affiliate_domains , links):
+
+        def detect_affiliate(markdown_link):
+            return domain(markdown_link.get('href'))\
+                    in g.merchant_affiliate_domains
+
+        for link in filter(detect_affiliate, links):
             update_text = True
             link['class'] = 'affiliate'
             link['data-href-url'] = link.get('href')
-            link['data-affiliate-url'] = generate_affiliate_link(link.get('href'))
+            link['data-affiliate-url'] = generate_affiliate_link(
+                                            link.get('href')
+                                         )
+            link['rel'] = 'noreferrer'
 
         if update_text:
             text = str(soup)

@@ -62,9 +62,6 @@
      %if tabindex:
        tabindex="${tabindex}"
      %endif
-     %if thing.nofollow:
-       rel="nofollow"
-     %endif
      %if thing.use_outbound:
        data-href-url="${thing.href_url}"
        data-outbound-url="${thing.outbound_link.url}"
@@ -73,6 +70,15 @@
      %if thing.affiliatize_link and not thing.use_outbound:
        data-href-url="${thing.href_url}"
        data-affiliate-url="${generate_affiliate_link(thing.href_url)}"
+       %if thing.nofollow:
+         rel="noreferrer nofollow"
+       %else:
+         rel="noreferrer"
+       %endif
+
+     %endif
+     %if thing.nofollow:
+       rel="nofollow"
      %endif
      >
      ${caller.body()}
