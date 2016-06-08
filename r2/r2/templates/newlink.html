@@ -60,52 +60,82 @@ ${thing.formtabs_menu}
     %endif
 </div>
 
+<%def name="newlink_url_input()">
+  <div id="new-link-url-input">
+    %if getattr(thing, "swap_link_and_image_order", False):
+      <span>${_("url")}</span>
+    %endif
+
+    <div class="c-form-group">
+      <input id="url"
+          name="url"
+          type="url"
+          class="input"
+          value="${thing.url}"
+          required>
+      <span class="clear-input-button" hidden>x</span>
+    </div>
+  </div>
+</%def>
+
+<%def name="newlink_image_input()">
+  <div id="new-link-image-input" class="image-post-upload" hidden>
+    %if not getattr(thing, "swap_link_and_image_order", False):
+      <div>
+        <small>${_("or")}</small>
+      </div>
+    %endif
+
+    %if not getattr(thing, "show_alternate_button_label", False):
+      <span>${_("image")}</span>
+    %endif
+
+    <label class="file-upload-button c-btn c-btn-primary">
+      <div class="file-upload-icon"></div>
+      %if getattr(thing, "show_alternate_button_label", False):
+        Upload Image
+      %else:
+        Upload a file
+      %endif
+      <input id="image" type="file">
+    </label>
+
+    <div>
+      ${error_field("BAD_FILE_SIZE", "image-upload", "div")}
+      ${error_field("BAD_FILE_TYPE", "image-upload", "div")}
+      ${error_field("BAD_IMAGE_UPLOAD", "image-upload", "div")}
+      ${error_field("BAD_LEASE_REQUEST", "image-upload", "div")}
+    </div>
+
+    %if getattr(thing, "swap_link_and_image_order", False):
+      <div>
+        <small>${_("or")}</small>
+      </div>
+    %endif
+  </div>
+</%def>
+
 ## Let's just do this the easy way...
 %if getattr(thing, "allow_image_upload", False):
   <div id="newlink-with-image-upload">
     %if thing.show_link:
       <div class="spacer">
-        <%utils:round_field title="${_('url')}" id="url-field">
+        <%
+          url_field_title = _('url')
+
+          if getattr(thing, "swap_link_and_image_order", False):
+            url_field_title = ''
+        %>
+        <%utils:round_field title="${url_field_title}" id="url-field">
           <input name="kind" value="link" type="hidden"/>
 
-          <div id="new-link-url-input">
-            <div class="c-form-group">
-              <input id="url"
-                  name="url"
-                  type="url"
-                  class="input"
-                  value="${thing.url}"
-                  required>
-              <span class="clear-input-button" hidden>x</span>
-            </div>
-          </div>
-
-          <div id="new-link-image-input" class="image-post-upload" hidden>
-            <div>
-              <small>${_("or")}</small>
-            </div>
-
-            %if not getattr(thing, "show_alternate_button_label", False):
-              <span>${_("image")}</span>
-            %endif
-
-            <label class="file-upload-button c-btn c-btn-primary">
-              <div class="file-upload-icon"></div>
-              %if getattr(thing, "show_alternate_button_label", False):
-                Upload Image
-              %else:
-                Upload a file
-              %endif
-              <input id="image" type="file">
-            </label>
-
-            <div>
-              ${error_field("BAD_FILE_SIZE", "image-upload", "div")}
-              ${error_field("BAD_FILE_TYPE", "image-upload", "div")}
-              ${error_field("BAD_IMAGE_UPLOAD", "image-upload", "div")}
-              ${error_field("BAD_LEASE_REQUEST", "image-upload", "div")}
-            </div>
-          </div>
+          %if getattr(thing, "swap_link_and_image_order", False):
+            ${newlink_image_input()}
+            ${newlink_url_input()}
+          %else:
+            ${newlink_url_input()}
+            ${newlink_image_input()}
+          %endif
 
           <div id="new-link-image-name-display" hidden>
             <div class="c-form-group">
