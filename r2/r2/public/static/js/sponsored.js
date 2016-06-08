@@ -933,11 +933,19 @@ var exports = r.sponsored = {
     setup_subreddits: function(srInput){
       if(typeof srInput === 'string'){
         if(srInput !== " reddit.com"){
-          sr_add_sr(srInput);
+          r.srAutocomplete.srAddSr(srInput);
         }
       } else if(typeof srInput === 'object'){
+        var addSr = r.srAutocomplete.srAddSr(
+          undefined,
+          {
+            noNewSuggestions: true,
+          }
+        );
         // check to make sure it's not the frontpage
-        _.map(srInput, sr_add_sr);
+        _.map(srInput, function(srName){
+          addSr(srName);
+        });
       }
     },
 
@@ -2534,7 +2542,7 @@ function edit_campaign($campaign_row) {
             if (targeting && !isCollection) {
                 radios.filter('*[value="subreddit"]')
                     .prop("checked", "checked");
-                sr_add_sr(targeting);
+                r.srAutocomplete.srAddSr(targeting);
                 campaign.find('*[name="sr"]').prop("disabled", false).end()
                     .find(".subreddit-targeting").show();
                 $(".collection-targeting").hide();
@@ -2544,7 +2552,12 @@ function edit_campaign($campaign_row) {
                   // Multisubreddits
                   radios.filter('*[value="subreddit"]')
                     .prop("checked", "checked");
-                  srs.forEach(sr_add_sr);
+                  srs.forEach(r.srAutocomplete.srAddSr(
+                    undefined,
+                    {
+                      noNewSuggestions: true,
+                    }
+                  ));
                   campaign.find('*[name="sr"]').prop("disabled", false).end()
                       .find(".subreddit-targeting").show();
                   $(".collection-targeting").hide();
