@@ -162,7 +162,9 @@ class TestEventCollector(RedditTestCase):
         context = MagicMock(name="context")
         request = MagicMock(name="request")
         request.ip = "1.2.3.4"
-        g.events.sr_created_event(sr, context=context, request=request)
+        base_url = '/some/path'
+        g.events.sr_created_event(sr, context=context, request=request,
+                                  base_url=base_url)
 
         g.events.queue_production.assert_event_item(
             dict(
@@ -172,7 +174,7 @@ class TestEventCollector(RedditTestCase):
                     'sr_id': sr._id,
                     'sr_name': sr.name,
                     'sr_type': sr.type,
-                    'base_url': '/subreddit/create',
+                    'base_url': base_url,
                     'user_id': context.user._id,
                     'user_name': context.user.name,
                     'user_neutered': sr.author_slow._spam,

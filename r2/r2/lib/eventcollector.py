@@ -126,6 +126,7 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    @sampled("events_collector_submit_sample_rate")
     def submit_event(self, new_post, request=None, context=None,
             context_data=None):
         """Create a 'submit' event for event-collector
@@ -268,7 +269,7 @@ class EventQueue(object):
         event.add("sr_id", new_sr._id)
         event.add('sr_name', new_sr.name)
         event.add('sr_type', new_sr.type)
-        event.add('base_url', '/subreddit/create')
+        event.add('base_url', base_url)
         event.add('user_neutered', new_sr.author_slow._spam)
 
         self.save_event(event)
