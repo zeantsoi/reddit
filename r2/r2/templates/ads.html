@@ -79,6 +79,23 @@
       if (!r.config.logged) {
         data.properties.age_hours = age;
       }
+
+      var pageType;
+
+      if (/^(\/(hot|new|rising|controversial|top))?(\/)?$/.test(location.pathname)) {
+        pageType = 'frontpage-listing';
+      } else if (/^\/r\/[^\/]+(\/(hot|new|rising|controversial|top))?(\/)?$/.test(location.pathname)) {
+        pageType = 'subreddit-listing';
+      } else if ($('body').hasClass('comments-page')) {
+        pageType = 'comments';
+      } else if ($('body').hasClass('listing-page')) {
+        pageType = 'listing';
+      }
+
+      if (pageType) {
+        data.properties.pageType = pageType;
+      }
+
       parser.hash = JSON.stringify(data);
 
       iframe.frameborder = 0;
