@@ -85,11 +85,17 @@ ${thing.formtabs_menu}
               <small>${_("or")}</small>
             </div>
 
-            <span>${_("image")}</span>
+            %if not getattr(thing, "show_alternate_button_label", False):
+              <span>${_("image")}</span>
+            %endif
 
             <label class="file-upload-button c-btn c-btn-primary">
               <div class="file-upload-icon"></div>
-              Upload a file
+              %if getattr(thing, "show_alternate_button_label", False):
+                Upload Image
+              %else:
+                Upload a file
+              %endif
               <input id="image" type="file">
             </label>
 

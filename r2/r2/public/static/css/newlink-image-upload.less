@@ -90,7 +90,6 @@
         font-size: small;
         line-height: 20px;
         vertical-align: middle;
-        margin-left: unit(@margin-small, px);
 
         .file-upload-icon {
             pointer-events: none;
@@ -106,6 +105,10 @@
         input[type=file] {
             display: none;
         }
+    }
+
+    span + .file-upload-button {
+        margin-left: unit(@margin-small, px);
     }
 
     .new-link-preview-throbber {

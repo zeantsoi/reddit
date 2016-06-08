@@ -3806,6 +3806,10 @@ class NewLink(Templated):
                                   subreddit=default_sr.name):
                 link_tab_label = 'link/image'
 
+            if feature.is_enabled('image_uploads_button_change',
+                                  subreddit=default_sr.name):
+                self.show_alternate_button_label = True
+
         tabs = []
         if show_link:
             tabs.append((link_tab_label, ('link-desc', 'url-field')))
