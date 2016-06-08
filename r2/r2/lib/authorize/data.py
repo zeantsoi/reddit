@@ -165,7 +165,7 @@ def update_batch_settlements(start_date=None, end_date=None):
         _write_batch_settlement(batch)
 
 
-def update_authorize_data():
+def update_authorizenet_data():
     latest_entry_time = AuthorizeBatchSettlement.last_settlement_time()
     todays_date = datetime.datetime.now().date()
 

@@ -34,7 +34,7 @@ from r2.lib.authorize.data import (
     _write_batch_settlement,
     chunked_dates,
     str_to_date,
-    update_authorize_data,
+    update_authorizenet_data,
     update_batch_settlements,
     update_batch_transactions,
     write_missing_batch_statistics,
@@ -275,12 +275,12 @@ class TestAuthorizeData(RedditTestCase):
 
     @patch('r2.lib.authorize.data.AuthorizeBatchSettlement')
     @patch('r2.lib.authorize.data.update_batch_settlements')
-    def test_update_authorize_data(self, update_settlements, settlement):
+    def test_update_authorizenet_data(self, update_settlements, settlement):
         """Assert update_batch_settlements is called right number of times."""
 
         # Assert that update_batch_settlements passed no args if no entries
         settlement.last_settlement_time.return_value = None
-        update_authorize_data()
+        update_authorizenet_data()
         update_settlements.assert_called_once_with()
 
         # Assert that update_batch_settlements is called for each date chunk
@@ -289,5 +289,5 @@ class TestAuthorizeData(RedditTestCase):
         start_date = (datetime.datetime.now() -
                       datetime.timedelta(days=num_chunks * DEFAULT_CHUNK_SIZE))
         settlement.last_settlement_time.return_value = start_date
-        update_authorize_data()
+        update_authorizenet_data()
         self.assertEquals(update_settlements.call_count, num_chunks)
