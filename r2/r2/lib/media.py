@@ -561,11 +561,11 @@ def _get_scrape_url(link, use_image_scraper=False):
             return link.url
         sr_name = link.subreddit_slow.name
         p = UrlParser(link.url)
-        # If it's a gif link on imgur, replacing it with gifv should
-        # give us the embedly friendly video url
+        # If it's a gifv link on imgur, replacing it with gif should give us
+        # the _ImageScraper-friendly url, so we'll get native mp4 previews
         if is_subdomain(p.hostname, "imgur.com"):
-            if p.path_extension().lower() == "gif":
-                p.set_extension("gifv")
+            if p.path_extension().lower() == "gifv":
+                p.set_extension("gif")
                 return p.unparse()
         return link.url
 
