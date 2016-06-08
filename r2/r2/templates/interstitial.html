@@ -36,20 +36,22 @@
   <div class="interstitial-message md-container">
     <div class="md">
       <h3>${self.interstitial_title()}</h3>
-
-      %if thing.sr_name and thing.sr_description:
-        <div class="interstitial-subreddit-description">
-          <h5>${_("r/%s") % thing.sr_name}</h5>
-          ${md(thing.sr_description)}
-        </div>
-      %endif
-
+      ${self.interstitial_description()}
       ${self.interstitial_message()}
     </div>
   </div>
   
   ${self.interstitial_buttons()}
 </div>
+
+<%def name="interstitial_description()">
+  %if thing.sr_name and thing.sr_description:
+    <div class="interstitial-subreddit-description">
+      <h5>${_("r/%s") % thing.sr_name}</h5>
+        ${md(thing.sr_description)}
+    </div>
+  %endif
+</%def>
 
 <%def name="interstitial_image_attrs()">
   src="${static(thing.image)}"

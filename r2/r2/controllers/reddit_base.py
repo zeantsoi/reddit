@@ -1761,6 +1761,7 @@ class RedditController(OAuth2ResourceController):
                         content=pages.PrivateInterstitial(
                             sr_name=c.site.name,
                             sr_description=c.site.public_description,
+                            is_quarantined=c.site.quarantine,
                         ),
                     )
                     request.environ['usable_error_content'] = errpage.render()

@@ -26,6 +26,12 @@
 
 <%inherit file="interstitial.html"/>
 
+<%def name="interstitial_description()">
+  %if not thing.is_quarantined:
+    ${parent.interstitial_description()}
+  %endif
+</%def>
+
 <%def name="interstitial_image_attrs()">
   src="${static('interstitial-image-private.png')}"
   alt="${_('private')}"
