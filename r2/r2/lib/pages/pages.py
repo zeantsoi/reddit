@@ -3799,9 +3799,16 @@ class NewLink(Templated):
         self.show_link = show_link
         self.show_self = show_self
 
+        link_tab_label = 'link'
+
+        if self.allow_image_upload:
+            if feature.is_enabled('image_uploads_tab_change',
+                                  subreddit=default_sr.name):
+                link_tab_label = 'link/image'
+
         tabs = []
         if show_link:
-            tabs.append(('link', ('link-desc', 'url-field')))
+            tabs.append((link_tab_label, ('link-desc', 'url-field')))
         if show_self:
             tabs.append(('text', ('text-desc', 'text-field')))
 
@@ -3819,11 +3826,20 @@ class NewLink(Templated):
                 to_hide = ','.join('#' + p for p in all_fields if p not in parts)
                 onclick = "return select_form_tab(this, '%s', '%s');"
                 onclick = onclick % (to_show, to_hide)
+                css_friendly_name = tab_name.replace('/', '-')
                 if tab_name == self.default_tab:
                     self.default_show = to_show
                     self.default_hide = to_hide
-
-                buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name + "-button"))
+                    # this is used in the template to initialize the form.  It
+                    # was never expected that a non-css-friendly name would be
+                    # used for a tab, so this is temporarily going to be ugly
+                    self.default_tab = css_friendly_name
+                tab_button = JsButton(
+                    tab_name,
+                    onclick=onclick,
+                    css_class=css_friendly_name + '-button',
+                )
+                buttons.append(tab_button)
 
             self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
 
