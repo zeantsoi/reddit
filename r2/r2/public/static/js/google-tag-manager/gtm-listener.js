@@ -11,6 +11,4 @@
     global.googleTagManager.push(e.detail);
   });
 
-  r.frames.postMessage(window.parent, 'loaded.gtm');
-
 })((this.gtm = this.gtm || {}), this, this.r);
