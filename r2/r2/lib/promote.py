@@ -1679,10 +1679,9 @@ def keywords_from_context(
                              for target in subreddit.audience_target.split(',')])
                              
     # Pass experiment flags to ad server for reporting
-    if feature.is_enabled("new_ads_styles"):
-        v = feature.variant("new_ads_styles")
-        if v in ("control_1", "control_2", "test_group"):
-            keywords.add("exp.new_ads_styles.%s" % v)                             
+    ads_styles_variant = feature.variant("new_ads_styles")
+    if ads_styles_variant is not None:
+        keywords.add("exp.new_ads_styles.%s" % ads_styles_variant)
 
     return keywords
 
