@@ -239,6 +239,7 @@ class Subreddit(Thing, Printable, BaseSite):
         mod_actions=0,
         # do we allow self-posts, links only, or any?
         link_type='any', # one of ('link', 'self', 'any')
+        allow_images=True,
         sticky_fullnames=None,
         submit_link_label='',
         submit_text_label='',
@@ -767,6 +768,14 @@ class Subreddit(Thing, Printable, BaseSite):
         if c.user_is_admin or self.is_moderator_with_perms(user, "posts"):
             return True
         return "link" in self.allowed_types
+
+    def can_submit_image(self, user):
+        if c.user_is_admin or self.is_moderator_with_perms(user, "posts"):
+            return True
+        if self.link_type == "any":
+            return True
+
+        return self.allow_images and "link" in self.allowed_types
 
     def can_submit_text(self, user):
         if c.user_is_admin or self.is_moderator_with_perms(user, "posts"):
