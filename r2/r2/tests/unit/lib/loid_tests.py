@@ -49,6 +49,7 @@ class LoidTests(RedditTestCase):
 
                     'user_id': context.user._id,
                     'user_name': context.user.name,
+                    'user_features': context.user.user_features,
 
                     'request_url': request.fullpath,
                     'domain': request.host,

@@ -1637,6 +1637,8 @@ class Event(baseplate.events.Event):
         if context.user_is_loggedin:
             data["user_id"] = context.user._id
             data["user_name"] = context.user.name
+            if getattr(context.user, "user_features", None):
+                data["user_features"] = context.user.user_features
         else:
             if context.loid:
                 data.update(context.loid.to_dict())
