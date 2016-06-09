@@ -84,6 +84,15 @@ from r2.models.query_cache import CachedQueryMutator
 
 PROMO_HEALTH_KEY = 'promotions_last_updated'
 
+def get_site_path(site):
+    if isinstance(site, MultiReddit):
+        return site.path
+    elif not isinstance(site, FakeSubreddit):
+        return site.name
+
+    return Frontpage.name
+
+
 def _mark_promos_updated():
     NamedGlobals.set(PROMO_HEALTH_KEY, time.time())
 

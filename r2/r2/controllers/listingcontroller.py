@@ -424,7 +424,6 @@ class ListingWithPromos(SubredditListingController):
                              interestbar_prob=interestbar_prob,
                              show_promo=can_show_promo,
                              house_probability=house_probability,
-                             site=c.site,
                              displayed_things=displayed_things,
                              max_num = self.listing_obj.max_num,
                              max_score = self.listing_obj.max_score).listing()

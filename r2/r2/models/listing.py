@@ -329,12 +329,7 @@ class LinkListing(Listing):
 
         self.show_promo_in_listing = kw.get("show_promo_in_listing", False)
         self.show_nums = kw.get('show_nums', False)
-        if isinstance(c.site, MultiReddit):
-            self.path_for_promo_request = c.site.path
-        elif not isinstance(c.site, FakeSubreddit):
-            self.path_for_promo_request = c.site.name
-        else:
-            self.path_for_promo_request = Frontpage.name
+        self.promo_site_path = promote.get_site_path(c.site)
 
     def listing(self, *args, **kwargs):
         wrapped = Listing.listing(self, *args, **kwargs)
@@ -402,18 +397,11 @@ class SpotlightListing(Listing):
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
         self.house_probability = kw.get('house_probability', 1)
-        site = kw.get('site', Frontpage)
         self.displayed_things = ','.join(kw.get('displayed_things', []))
         self.new_ads_styles_enabled = feature.is_enabled("new_ads_styles") and \
                                       feature.variant('new_ads_styles') == 'test_group'
 
-        if isinstance(site, MultiReddit):
-            self.site = site.path
-        elif not isinstance(site, FakeSubreddit):
-            self.site = site.name
-        else:
-            self.site = Frontpage.name
-
+        self.promo_site_path = promote.get_site_path(c.site)
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
 

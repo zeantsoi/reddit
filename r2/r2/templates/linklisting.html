@@ -46,7 +46,7 @@
 %if feature.is_enabled('promoted_links_in_feed') and thing.show_promo_in_listing:
   r.listing.setup(
     ${scriptsafe_dumps(",".join([link._fullname for link in thing.things[:10]]))},
-    ${scriptsafe_dumps(thing.path_for_promo_request)},
+    ${scriptsafe_dumps(thing.promo_site_path)},
     ${scriptsafe_dumps(thing.show_promo_in_listing)}
   );
 %endif
