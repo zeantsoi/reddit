@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import base64
 import hmac
 import hashlib
 import urllib
@@ -61,6 +62,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, ungettext
+
 
 static_text_extensions = {
     '.js': 'js',
@@ -153,6 +155,23 @@ def header_url(url, absolute=False):
         return make_url_https(url)
     else:
         return make_url_protocol_relative(url)
+
+
+def get_gtm_cachebuster():
+    dependencies = [
+        "gtm.js",
+        "gtm-jail.js",
+    ]
+
+    joined = "".join(
+        g.static_names.get(file, file)
+        for file in dependencies
+    )
+
+    sha = hashlib.sha1(joined).digest()
+    shorthash = base64.urlsafe_b64encode(sha[0:8]).rstrip("=")
+
+    return shorthash
 
 
 def js_config(extra_config=None):

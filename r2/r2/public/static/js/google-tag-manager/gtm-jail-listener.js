@@ -13,7 +13,8 @@
   jail.referrer = 'no-referrer';
   jail.id = 'jail';
   jail.name = window.name;
-  jail.src = '/gtm?id=' + global.CONTAINER_ID;
+  jail.src = '/gtm?id=' + global.CONTAINER_ID +
+    '&cb=' + global.CACHE_BUSTER;
   jail.onload = function() {
     preload.off();
 

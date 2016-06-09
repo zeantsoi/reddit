@@ -28,6 +28,7 @@
     from r2.lib.filters import spaceCompress, unsafe, safemarkdown, jssafe, scriptsafe_dumps
     from r2.lib.template_helpers import (
         add_sr,
+        get_gtm_cachebuster,
         html_datetime,
         js_config,
         make_url_protocol_relative,
@@ -446,7 +447,8 @@ ${unsafe(txt)}
           url: location.href,
           userMatching: r.config.feature_ads_user_matching,
         });
-        frame.src = '//' + ${scriptsafe_dumps(g.media_domain)} + '/gtm/jail';
+        frame.src = '//' + ${scriptsafe_dumps(g.media_domain)} +
+          '/gtm/jail?cb=' + ${scriptsafe_dumps(get_gtm_cachebuster())};
 
         document.body.appendChild(frame);
       }
