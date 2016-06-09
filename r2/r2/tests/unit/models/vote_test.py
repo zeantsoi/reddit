@@ -3,18 +3,27 @@ from datetime import datetime
 
 import pytz
 
+from r2.lib import hooks
 from r2.lib.utils import tup
 from r2.models.vote import Vote
 from r2.tests import RedditTestCase
 
 
+class NullHook(object):
+    def call_until_return(self, **kwargs):
+        return
+
+
 class TestVoteValidator(RedditTestCase):
+    disable_hooks = True
 
     def setUp(self):
         self.user = MagicMock(name="user")
         self.user._id36 = 'userid36'
         self.thing = MagicMock(name="thing")
         self.vote_data = {}
+        if self.disable_hooks:
+            self.get_hook = self.autopatch(hooks, "get_hook", return_value=NullHook())
         super(RedditTestCase, self).setUp()
 
     def cast_vote(self, **kw):
