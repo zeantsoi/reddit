@@ -47,8 +47,6 @@ class TestExperiment(TestFeatureBase):
         self.patch_g(enable_loggedout_experiments=True)
         self.world.is_whitelisted_experiment = MagicMock()
         self.world.is_whitelisted_experiment.return_value = False
-        self.world.render_style = MagicMock()
-        self.world.render_style.return_value = 'html'
 
     def get_loggedin_users(self, num_users):
         users = []
