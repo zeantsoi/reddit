@@ -1624,8 +1624,10 @@ class FormPage(BoringPage):
 
 
 class NewLinkPage(FormPage):
-    def __init__(self, pagename, show_sidebar=False, default_sr=None, *a, **kw):
+    def __init__(self, pagename, show_sidebar=False, default_sr=None,
+            allow_images=True, *a, **kw):
         self.allow_image_upload = (default_sr and
+            allow_images and
             feature.is_enabled("image_uploads", subreddit=default_sr.name) and
             not default_sr.quarantine and
             not default_sr.over_18
@@ -3796,10 +3798,14 @@ class SubredditFacets(Templated):
 class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha=None, url='', title='', text='', selftext='',
-                 resubmit=False, default_sr=None,
-                 extra_subreddits=None, show_link=True, show_self=True):
+                 resubmit=False, default_sr=None, extra_subreddits=None,
+                 show_link=True, show_self=True, show_image=True):
 
-        self.allow_image_upload = default_sr and feature.is_enabled("image_uploads", subreddit=default_sr.name)
+        self.allow_image_upload = (
+            default_sr and
+            show_image and
+            feature.is_enabled("image_uploads", subreddit=default_sr.name)
+        )
         self.show_link = show_link
         self.show_self = show_self
 

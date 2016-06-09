@@ -1423,6 +1423,7 @@ class FrontController(RedditController):
         if feature.is_enabled("image_uploads"):
             extra_stylesheets.append("newlink-image-upload.less")
 
+        allow_images = c.default_sr or c.site.can_submit_image(c.user)
         newlink = NewLink(
             url=url or '',
             title=title or '',
@@ -1435,6 +1436,7 @@ class FrontController(RedditController):
             show_link=c.default_sr or c.site.can_submit_link(c.user),
             show_self=((c.default_sr or c.site.can_submit_text(c.user))
                       and not request.GET.get('no_self')),
+            show_image=allow_images,
         )
 
         return NewLinkPage(_("submit"),
@@ -1442,6 +1444,7 @@ class FrontController(RedditController):
                         page_classes=['submit-page'],
                         extra_stylesheets=extra_stylesheets,
                         default_sr=c.site if not c.default_sr else None,
+                        allow_images=allow_images,
                         content=newlink).render()
 
     def GET_catchall(self):
