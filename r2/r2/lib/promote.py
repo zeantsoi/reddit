@@ -84,6 +84,61 @@ from r2.models.query_cache import CachedQueryMutator
 
 PROMO_HEALTH_KEY = 'promotions_last_updated'
 
+
+def _user_disabled_ads(user):
+    # `pref_hide_ads` doesn't reset after gold expires.
+    # need to ensure they still have gold.
+    return user.gold and user.pref_hide_ads
+
+
+def _ads_enabled():
+    # users in the treatment get ads
+    if feature.is_enabled("ads"):
+        return True
+
+    # but so do users in the holdout, check the variant to ensure
+    # the users aren't the control
+    ads_variant = feature.variant("ads")
+    return (ads_variant is None or
+            not ads_variant.startswith("control_"))
+
+
+def headlines_enabled(site, user):
+    if g.disable_ads:
+        return False
+
+    user_disable_ads = _user_disabled_ads(user)
+    site_disabled_ads = (not site.allow_ads or
+                         site.hide_sponsored_headlines)
+
+    if user_disable_ads or site_disabled_ads:
+        return False
+
+    return _ads_enabled()
+
+
+def banners_enabled(site, user):
+    if g.disable_ads:
+        return False
+
+    user_disable_ads = _user_disabled_ads(user)
+    site_disabled_ads = not site.allow_ads
+
+    if user_disable_ads or site_disabled_ads:
+        return False
+
+    return _ads_enabled()
+
+
+def ads_feature_enabled(name, **kwargs):
+    ads_enabled = _ads_enabled()
+
+    if not ads_enabled:
+        return False
+
+    return feature.is_enabled(name, **kwargs)
+
+
 def get_site_path(site):
     if isinstance(site, MultiReddit):
         return site.path

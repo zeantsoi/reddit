@@ -327,7 +327,12 @@ class LinkListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)
 
-        self.show_promo_in_listing = kw.get("show_promo_in_listing", False)
+        # circular if imported on the module level
+        from r2.lib import promote
+
+        self.in_feed_ads_enabled = (promote.ads_feature_enabled(
+            "promoted_links_in_feed"
+        ) and promote.headlines_enabled(site=c.site, user=c.user))
         self.show_nums = kw.get('show_nums', False)
         self.promo_site_path = promote.get_site_path(c.site)
 
@@ -389,6 +394,9 @@ class SpotlightListing(Listing):
     _js_cls = "OrganicListing"
 
     def __init__(self, *a, **kw):
+        # circular if imported on the module level
+        from r2.lib import promote
+
         self.nextprev   = False
         self.show_nums  = True
         self._parent_max_num   = kw.get('max_num', 0)
@@ -398,9 +406,9 @@ class SpotlightListing(Listing):
         self.show_promo = kw.get('show_promo', False)
         self.house_probability = kw.get('house_probability', 1)
         self.displayed_things = ','.join(kw.get('displayed_things', []))
-        self.new_ads_styles_enabled = feature.is_enabled("new_ads_styles") and \
-                                      feature.variant('new_ads_styles') == 'test_group'
-
+        self.new_ads_styles_enabled = promote.ads_feature_enabled(
+            "new_ads_styles"
+        )
         self.promo_site_path = promote.get_site_path(c.site)
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])

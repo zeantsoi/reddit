@@ -2,14 +2,20 @@ import datetime
 import pytz
 import unittest
 
-from mock import MagicMock, Mock, patch
+from mock import (
+    MagicMock,
+    Mock,
+    patch,
+)
 from pylons import app_globals as g
 
 from r2.tests import RedditTestCase
 from r2.lib.authorize.api import Transaction
 from r2.lib import promote
 from r2.lib.promote import (
+    ads_feature_enabled,
     auth_campaign,
+    banners_enabled,
     can_extend,
     can_refund,
     charge_campaign,
@@ -19,6 +25,7 @@ from r2.lib.promote import (
     get_refund_amount,
     get_spent_amount,
     get_unspent_budget,
+    headlines_enabled,
     is_pre_cpm,
     is_underdelivered,
     RefundProviderException,
@@ -1003,3 +1010,224 @@ class TestAuthorizeInteraction(RedditTestCase):
         # self.campaign.trans_id
         refund_transaction.assert_called_once_with(self.user, self.campaign._id,
             self.link._id, refund_amount, self.campaign.trans_id)
+
+
+class TestHeadlinesEnabled(RedditTestCase):
+    def setUp(self):
+        g.disable_ads = False
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_globally_disabled(self, variant, is_enabled):
+        g.disable_ads = True
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertFalse(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_gold_user_pref_disabled(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=True, pref_hide_ads=True)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertFalse(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_expired_gold_user_pref_disabled(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=True)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_expired_gold_user(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=True, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_site_doesnt_allow_ads(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=False, hide_sponsored_headlines=False)
+
+        self.assertFalse(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_site_doesnt_allow_headlines(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=True)
+
+        self.assertFalse(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_user_in_control_group(self, variant, is_enabled):
+        variant.return_value = "control_1"
+        is_enabled.return_value = False
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertFalse(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_user_in_treatment_group(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(headlines_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_user_in_holdout(self, variant, is_enabled):
+        variant.return_value = None
+        is_enabled.return_value = False
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(headlines_enabled(site=site, user=user))
+
+
+class TestBannersEnabled(RedditTestCase):
+    def setUp(self):
+        g.disable_ads = False
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_globally_disabled(self, variant, is_enabled):
+        g.disable_ads = True
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertFalse(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_gold_user_pref_disabled(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=True, pref_hide_ads=True)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertFalse(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_expired_gold_user_pref_disabled(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=True)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_expired_gold_user(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=True, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_site_doesnt_allow_ads(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=False, hide_sponsored_headlines=False)
+
+        self.assertFalse(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_user_in_control_group(self, variant, is_enabled):
+        variant.return_value = "control_1"
+        is_enabled.return_value = False
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertFalse(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_user_in_treatment_group(self, variant, is_enabled):
+        variant.return_value = "treatment"
+        is_enabled.return_value = True
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(banners_enabled(site=site, user=user))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote.feature.variant")
+    def test_user_in_holdout(self, variant, is_enabled):
+        variant.return_value = None
+        is_enabled.return_value = False
+
+        user = Mock(gold=False, pref_hide_ads=False)
+        site = Mock(allow_ads=True, hide_sponsored_headlines=False)
+
+        self.assertTrue(banners_enabled(site=site, user=user))
+
+
+class TestAdsFeatureEnabled(RedditTestCase):
+    def setUp(self):
+        g.disable_ads = False
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote._ads_enabled")
+    def test_disabled_if_ads_are_disabled(self, _ads_enabled, is_enabled):
+        _ads_enabled.return_value = False
+        is_enabled.return_value = True
+
+        self.assertFalse(ads_feature_enabled("in_feed_ads"))
+
+    @patch("r2.lib.promote.feature.is_enabled")
+    @patch("r2.lib.promote._ads_enabled")
+    def test_enabled_if_ads_are_enabled_and_so_is_feature(
+            self, _ads_enabled, is_enabled):
+        _ads_enabled.return_value = True
+        is_enabled.return_value = True
+
+        self.assertTrue(ads_feature_enabled("in_feed_ads"))

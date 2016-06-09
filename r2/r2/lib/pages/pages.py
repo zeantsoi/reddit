@@ -277,8 +277,10 @@ class Reddit(Templated):
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
         self.dnt_enabled = feature.is_enabled("do_not_track")
-        self.moat_tracking_enabled = (feature.is_enabled("moat_tracking") and
-                                      g.live_config.get("moat_script_url"))
+        self.moat_tracking_enabled = (
+            promote.ads_feature_enabled("moat_tracking") and
+            g.live_config.get("moat_script_url")
+        )
         self.header = header
         self.footer = RedditFooter()
         self.debug_footer = DebugFooter()
@@ -823,8 +825,7 @@ class Reddit(Templated):
                                       show_cover=True))
 
         no_ads_yet = True
-        user_disabled_ads = c.user.gold and c.user.pref_hide_ads
-        show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
+        show_adbox = promote.banners_enabled(site=c.site, user=c.user)
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit):

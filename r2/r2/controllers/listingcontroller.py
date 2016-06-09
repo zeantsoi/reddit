@@ -99,8 +99,6 @@ class ListingController(RedditController):
     show_chooser = False
     suppress_reply_buttons = False
 
-    show_promo_in_listing = False
-
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
 
@@ -228,7 +226,6 @@ class ListingController(RedditController):
         model = LinkListing(
             self.builder_obj,
             show_nums=self.show_nums,
-            show_promo_in_listing=self.show_promo_in_listing,
         )
         suggestions = None
         if self.next_suggestions_cls:
@@ -353,7 +350,6 @@ class SubredditListingController(ListingController):
 
 class ListingWithPromos(SubredditListingController):
     show_organic = False
-    show_promo_in_listing = True
 
     def make_requested_ad(self, requested_ad):
         try:
@@ -374,14 +370,14 @@ class ListingWithPromos(SubredditListingController):
 
     def make_single_ad(self):
         return SpotlightListing(
-            show_promo=(not c.site.hide_sponsored_headlines and c.site.allow_ads),
+            show_promo=True,
             site=c.site,
             displayed_things=[link._fullname 
                               for link in self.listing_obj.things[0:10]],
             navigable=False,
         ).listing()
 
-    def make_spotlight(self, can_show_promo):
+    def make_spotlight(self, show_promo):
         """Build the Spotlight.
 
         The frontpage gets a Spotlight box that contains promoted and organic
@@ -422,7 +418,7 @@ class ListingWithPromos(SubredditListingController):
         s = SpotlightListing(organic_links=organic_links,
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
-                             show_promo=can_show_promo,
+                             show_promo=show_promo,
                              house_probability=house_probability,
                              displayed_things=displayed_things,
                              max_num = self.listing_obj.max_num,
@@ -433,7 +429,7 @@ class ListingWithPromos(SubredditListingController):
         # only send a spotlight listing for HTML rendering
         if c.render_style == "html":
             spotlight = None
-            show_sponsors = not c.user.pref_hide_ads or not c.user.gold
+            show_promo = promote.headlines_enabled(site=c.site, user=c.user)
             show_organic = self.show_organic and c.user.pref_organic
             on_frontpage = isinstance(c.site, DefaultSR)
             requested_ad = request.GET.get('ad')
@@ -442,19 +438,13 @@ class ListingWithPromos(SubredditListingController):
                 self.extra_page_classes = \
                     self.extra_page_classes + ['front-page']
 
-            # `pref_hide_ads` doesn't reset after gold expires.
-            # need to ensure they still have gold.
-            gold_user_ads_off = c.user.gold and c.user.pref_hide_ads
-            site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
-            can_show_promo = (not gold_user_ads_off and not site_headlines_off)
-
             if requested_ad:
                 spotlight = self.make_requested_ad(requested_ad)
-            elif feature.is_enabled('promoted_links_in_feed') and can_show_promo:
+            elif feature.is_enabled('promoted_links_in_feed'):
                 spotlight = None
             elif on_frontpage and show_organic:
-                spotlight = self.make_spotlight(can_show_promo)
-            elif show_sponsors:
+                spotlight = self.make_spotlight(show_promo)
+            elif show_promo:
                 spotlight = self.make_single_ad()
 
             self.spotlight = spotlight
@@ -540,8 +530,7 @@ class HotController(ListingWithPromos):
             elif isinstance(c.site, DefaultSR) and not self.listing_obj.prev:
                 trending_info = self.trending_info()
                 if trending_info:
-                    if feature.is_enabled("new_ads_styles") and \
-                       feature.variant("new_ads_styles") == 'test_group':
+                    if promote.ads_feature_enabled("new_ads_styles"):
                         stack = [
                             TrendingSubredditsBar(**trending_info),
                             self.spotlight,

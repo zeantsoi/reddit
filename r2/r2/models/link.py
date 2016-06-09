@@ -1324,8 +1324,11 @@ class PromotedLink(Link):
 
     @classmethod
     def add_props(cls, user, wrapped):
+        # circular if imported on the module level
+        from r2.lib import promote
+
         Link.add_props(user, wrapped)
-        moat_tracking_enabled = feature.is_enabled("moat_tracking")
+        moat_tracking_enabled = promote.ads_feature_enabled("moat_tracking")
 
         for item in wrapped:
             item.nofollow = True
@@ -1340,8 +1343,9 @@ class PromotedLink(Link):
                 except (AttributeError, IndexError):
                     pass
 
-            item.new_ads_styles_enabled = feature.is_enabled("new_ads_styles") and \
-                                          feature.variant('new_ads_styles') == 'test_group'
+            item.new_ads_styles_enabled = promote.ads_feature_enabled(
+                "new_ads_styles"
+            )
             item.rowstyle_cls = "link %s" % status
             if item.new_ads_styles_enabled:
                 item.rowstyle_cls += " new-ad-style"
