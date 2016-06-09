@@ -243,6 +243,8 @@ r.analytics = {
 
     if (!adBlockIsEnabled) {
       var thirdParty = [];
+      var linkFullname = $el.data('fullname');
+      var campaignFullname = $el.data('cid');
       var pixel1 = $el.data('thirdPartyTrackingUrl');
       var pixel2 = $el.data('thirdPartyTrackingTwoUrl');
 
@@ -255,8 +257,19 @@ r.analytics = {
       }
 
       if (thirdParty.length) {
+
+        thirdParty.forEach(function(url) {
+          r.analytics.thirdPartyPixelAttemptEvent({
+            pixel_url: url,
+            link_fullname: linkFullname,
+            campaign_fullname: campaignFullname,
+          });
+        });
+
         r.gtm.trigger('fire-pixels', {
           pixels: thirdParty,
+          link_fullname: linkFullname,
+          campaign_fullname: campaignFullname,
         });
       }
     }
@@ -368,6 +381,27 @@ r.analytics = {
         'page_type',
       ],
     });
+  },
+
+  thirdPartyPixelAttemptEvent: function(payload) {
+    return this.adServingEvent(
+      'third_party_impression_pixel_attempt',
+      payload
+    );
+  },
+
+  thirdPartyPixelFailureEvent: function(payload) {
+    return this.adServingEvent(
+      'third_party_impression_pixel_failure',
+      payload
+    );
+  },
+
+  thirdPartyPixelSuccessEvent: function(payload) {
+    return this.adServingEvent(
+      'third_party_impression_pixel_success',
+      payload
+    );
   },
 
   adblockEvent: function(placementType, payload) {

@@ -54,4 +54,13 @@
       r.gtm[method].apply(r.gtm, args);
     });
   });
+
+  r.frames.receiveMessage('pixelError.gtm', function(e) {
+    r.analytics.thirdPartyPixelFailureEvent(e.detail);
+  });
+
+  r.frames.receiveMessage('pixelSuccess.gtm', function(e) {
+    r.analytics.thirdPartyPixelSuccessEvent(e.detail);
+  });
+
 })((this.r = this.r || {}), this);
