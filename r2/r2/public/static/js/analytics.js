@@ -408,6 +408,9 @@ r.analytics = {
       }
     }
 
+    payload['screen_width'] = screen.width;
+    payload['screen_height'] = screen.height;
+
     var linkListing = [];
     var minRank = null;
     var maxRank = 0;
