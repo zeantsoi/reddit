@@ -129,3 +129,12 @@ class World(object):
 
     def render_style(self):
         return self.stacked_proxy_safe_get(c, 'render_style')
+
+    def valid_experiment_request(self):
+        # GETs are the only request methods that should return
+        # any data that would be affected by experiments, so
+        # they are the only ones that should be bucketed.
+        if request.method.upper() != "GET":
+            return False
+        else:
+            return True

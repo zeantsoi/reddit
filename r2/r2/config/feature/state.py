@@ -343,7 +343,7 @@ class FeatureState(object):
             if not c.have_sent_bucketing_event:
                 c.have_sent_bucketing_event = {}
 
-            if variant is not None:
+            if variant is not None and self.world.valid_experiment_request():
                 loid = self.world.current_loid()
                 if self.world.is_user_loggedin(user):
                     bucketing_id = user._id
