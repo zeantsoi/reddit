@@ -1631,7 +1631,9 @@ def generate_affiliate_link(url):
     if not g.affiliate_redirect_url:
         return url
 
-    return '%s?%s' % (g.affiliate_redirect_url, urlencode({"u" : url, "key" : g.affiliate_redirect_key}))
+    return '%s?%s' % (g.affiliate_redirect_url,
+                      urlencode({"u": _force_utf8(url),
+                                 "key": g.affiliate_redirect_key}))
 
 
 def summarize_markdown(md):
