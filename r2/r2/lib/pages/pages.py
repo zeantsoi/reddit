@@ -263,7 +263,7 @@ class Reddit(Templated):
                  header=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
                  show_locationbar=False, show_newsletterbar=False,
-                 canonical_link=None,
+                 canonical_link=None, displayed_things=None,
                  **context):
         Templated.__init__(self, **context)
         self.title = title
@@ -299,6 +299,12 @@ class Reddit(Templated):
         self.mobilewebredirectbar = None
         self.show_timeout_modal = False
         self.show_reset_password_modal = False
+
+        # Things displayed on the page (for ad targeting)
+        if displayed_things is not None:
+            self.displayed_things = displayed_things
+        else:
+            self.displayed_things = []
 
         test_groups = ('test_group', 'dismiss', 'x')
         action_name = request.route_dict['action_name']
@@ -856,7 +862,7 @@ class Reddit(Templated):
             if moderator:
                 ps.append(self.sr_admin_menu())
             if show_adbox:
-                ps.append(Ads())
+                ps.append(Ads(displayed_things=self.displayed_things))
             no_ads_yet = False
         elif self.show_wiki_actions:
             ps.append(self.wiki_actions_menu())
@@ -928,7 +934,7 @@ class Reddit(Templated):
                     link="https://www.redditgifts.com/exchanges/secret-santa-2015/?source=barbttn-ss15-ftpg-151109",
                     target="_blank",
                 ))
-            ps.append(Ads())
+            ps.append(Ads(displayed_things=self.displayed_things))
 
             if g.live_config["gold_revenue_goal"]:
                 ps.append(Goldvertisement())
@@ -4102,7 +4108,7 @@ class AdminGold(Templated):
 
 
 class Ads(Templated):
-    def __init__(self):
+    def __init__(self, displayed_things=None):
         Templated.__init__(self)
         self.ad_url = g.ad_domain + "/ads/"
         self.frame_id = "ad-frame"

@@ -151,6 +151,8 @@ class ListingController(RedditController):
             self.abort403()
 
         self.listing_obj = self.listing()
+        displayed_things = [link._fullname
+                            for link in self.listing_obj.things[0:10]]
 
         content = self.content()
         return self.render_cls(content=content,
@@ -163,6 +165,7 @@ class ListingController(RedditController):
                                infotext=self.infotext,
                                infotext_class=self.infotext_class,
                                robots=getattr(self, "robots", None),
+                               displayed_things=displayed_things,
                                **self.render_params).render()
 
     def content(self):
