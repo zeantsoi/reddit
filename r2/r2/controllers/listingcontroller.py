@@ -448,10 +448,10 @@ class ListingWithPromos(SubredditListingController):
             site_headlines_off = not c.site.allow_ads or c.site.hide_sponsored_headlines
             can_show_promo = (not gold_user_ads_off and not site_headlines_off)
 
-            if feature.is_enabled('promoted_links_in_feed') and can_show_promo:
-                spotlight = None
-            elif requested_ad:
+            if requested_ad:
                 spotlight = self.make_requested_ad(requested_ad)
+            elif feature.is_enabled('promoted_links_in_feed') and can_show_promo:
+                spotlight = None
             elif on_frontpage and show_organic:
                 spotlight = self.make_spotlight(can_show_promo)
             elif show_sponsors:
