@@ -398,8 +398,11 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             is_admin_or_mod = c.user_is_loggedin and (
                 c.user_is_admin or thing.is_moderator_with_perms(c.user, 'wiki')
             )
-
-            return thing.wikimode == 'anyone' or (thing.wikimode == 'modonly' and is_admin_or_mod)
+            # The only setting that prevents anyone from seeing an entire
+            # wiki is 'disabled'. These states combine editing and viewing
+            # permissions but the names refer to who can edit.
+            return (thing.wikimode in ('anyone', 'modonly') or
+                    (thing.wikimode == 'disabled' and is_admin_or_mod))
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
