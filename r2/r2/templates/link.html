@@ -47,7 +47,7 @@
   </span>
 </%def>
 
-<%def name="make_link(name, css_class, tabindex=0)">
+<%def name="make_link(name, css_class, tabindex=0, url=None)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
     expand_inline = getattr(thing, 'expand_inline', False)
@@ -58,7 +58,7 @@
             ${'outbound' if thing.use_outbound else '' }
             ${'affiliate' if thing.affiliatize_link and not thing.use_outbound else '' }"
 
-     href="${thing.href_url}"
+     href="${url if url else thing.href_url}"
      %if tabindex:
        tabindex="${tabindex}"
      %endif
@@ -270,8 +270,18 @@
 
 <%def name="thumbnail()">
   %if thing.thumbnail:
-  <%call expr="make_link('thumbnail', 'thumbnail ' + (thing.thumbnail if thing.thumbnail_sprited else ''))">
-    ${thumbnail_img(thing)}
-  </%call>
+    <% 
+      css_class = 'thumbnail'
+  
+      if thing.thumbnail_sprited:
+        css_class = '%s %s' % (css_class, thing.thumbnail)
+
+      if getattr(thing, 'thumbnail_url_experiment', False):
+        css_class = '%s %s' % (css_class, 'expand-inline-thumbnail')
+
+    %>
+    <%call expr="make_link('thumbnail', css_class, 0, getattr(thing, 'thumbnail_url_experiment', False))">
+      ${thumbnail_img(thing)}
+    </%call>
   %endif
 </%def>

@@ -66,7 +66,9 @@
     events: {
       'click .expando-button': 'toggleExpando',
       // experiment 18
-      'click .expand-media': 'toggleExpandoFromLink'
+      'click .expand-media': 'toggleExpandoFromLink',
+      // experiment 34
+      'click .expand-inline-thumbnail': 'toggleExpandoFromLink'
     },
 
     constructor: function() {
@@ -90,7 +92,7 @@
       this.expanded ? this.collapse() : this.expand();
     },
 
-    // experiment 18
+    // experiment 18 & 34
     toggleExpandoFromLink: function(e) {
       expandoButton = $('.expando-button').next()
       if (isPluginExpandoButton(expandoButton)) { return; }
@@ -315,20 +317,21 @@
       });
     }
 
-    $(listingSelectors.join(',')).on('click', '.expando-button', function(e) {
-      if (isPluginExpandoButton(e.target)) { return; }
-
-      var $thing = $(this).closest('.thing')
-      initExpando($thing, false);
-    });
-
-    // experiment 18
-    $(listingSelectors.join(',')).on('click', '.expand-media', function(e) {
-      expandoButton = $('.expando-button').next()
+    function expandoOnClick(target, expandoButton){
       if (isPluginExpandoButton(expandoButton)) { return; }
 
-      var $thing = $(this).closest('.thing')
+      var $thing = $(target).closest('.thing');
       initExpando($thing, false);
+    }
+
+    $(listingSelectors.join(',')).on('click', '.expando-button', function(e) {
+      expandoOnClick(this, e.target);
+    });
+
+    // experiment 18 & 34
+    $(listingSelectors.join(',')).on('click', '.expand-media, .expand-inline-thumbnail', function(e) {
+      expandoButton = $('.expando-button').next();
+      expandoOnClick(this, expandoButton);
     });
 
     $('.link .expando-button.expanded').each(function() {

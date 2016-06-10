@@ -855,23 +855,6 @@ class Link(Thing, Printable):
             else:
                 item.href_url = item.url
                 variant = feature.variant('media_preview_redirect')
-                media_preview_experiment_enabled = (
-                    feature.is_enabled('media_preview_redirect') and
-                    (variant == 'redirect_to_comments_page' or
-                        variant == 'expand_inline'))
-
-                # check media preview pref, and only change behavior for 
-                # listing pages (not comment pages)
-                if (media_preview_experiment_enabled and 
-                        getattr(item, 'preview_image', False) and
-                        show_media_preview and
-                        item.link_child and
-                        request.route_dict['action_name'] != 'comments'):
-                    if variant == 'redirect_to_comments_page': 
-                        item.href_url = item.permalink
-                    elif variant == 'expand_inline':
-                        item.expand_inline = True
-                        item.href_url = 'javascript:void(0)'
 
                 if feature.is_enabled('affiliate_links') \
                         and item.post_hint == 'link' \
@@ -881,18 +864,51 @@ class Link(Thing, Printable):
                 else:
                     item.affiliatize_link = False
 
-                # If an image upload, link to the image only if on the comments page,
-                # else link to the comments page permalink.
-                # If the subreddit or user has disabled previews, link to the image.
-                if (item.domain in g.image_hosting_domain and
+                meets_media_experiment_requirements = (
+                    getattr(item, 'preview_image', False) and
+                    show_media_preview and
+                    item.link_child and
+                    request.route_dict['action_name'] != 'comments')
+
+                media_preview_experiment_enabled = (
+                    feature.is_enabled('media_preview_redirect') and
+                    (variant == 'redirect_to_comments_page' or
+                        variant == 'expand_inline'))
+
+                # check media preview pref, and only change behavior for 
+                # listing pages (not comment pages)
+                if (media_preview_experiment_enabled and 
+                        meets_media_experiment_requirements):
+                    if variant == 'redirect_to_comments_page': 
+                        item.href_url = item.permalink
+                    elif variant == 'expand_inline':
+                        item.expand_inline = True
+                        item.href_url = 'javascript:void(0)'
+
+                # check media preview pref, and only change behavior for
+                # listing pages (not comment pages). This will expand images
+                # inline for thumbnail clicks, and redirect to comments pages
+                # for listing urls
+                expando_redirect_enabled = (
+                    feature.is_enabled('expando_redirect') and
+                    feature.variant('expando_redirect') == 'test_group')
+
+                if (expando_redirect_enabled and
+                        not media_preview_experiment_enabled and
+                        meets_media_experiment_requirements):
+                    item.href_url = item.permalink
+                    item.thumbnail_url_experiment = 'javascript:void(0)'
+                # If an image upload, link to the image only if on the comments
+                # page, else link to the comments page permalink.
+                # If the subreddit or user has disabled previews, link to the
+                # image.
+                elif (item.domain in g.image_hosting_domain and
                         show_media_preview and
                         request.route_dict['action_name'] != 'comments'
                 ):
                     item.href_url = item.permalink
                 elif (feature.is_enabled('outbound_clicktracking') and 
                         c.user.pref_allow_clicktracking and
-                        # don't do outbound click tracking for internal links
-                        not media_preview_experiment_enabled and
                         not g.debug):
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
