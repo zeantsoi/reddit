@@ -2907,6 +2907,7 @@ class ApiController(RedditController):
                    spam_comments = VOneOf('spam_comments', ('low', 'high', 'all')),
                    type = VOneOf('type', Subreddit.valid_types),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
+                   allow_images=VBoolean('allow_images'),
                    submit_link_label=VLength('submit_link_label', max_length=60),
                    submit_text_label=VLength('submit_text_label', max_length=60),
                    comment_score_hide_mins=VInt('comment_score_hide_mins',
@@ -2984,6 +2985,7 @@ class ApiController(RedditController):
             'exclude_banned_modqueue',
             'header_title',
             'hide_ads',
+            'allow_images',
             'lang',
             'link_type',
             'name',
@@ -3016,6 +3018,10 @@ class ApiController(RedditController):
         public_description = kw.pop('public_description')
         description = kw.pop('description')
         submit_text = kw.pop('submit_text')
+
+        # If not link type, don't change the allow_images setting
+        if kw["link_type"] != "link":
+            kw.pop("allow_images")
 
         def update_wiki_text(sr):
             error = False

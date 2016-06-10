@@ -345,6 +345,18 @@ try participating in other communities on reddit for a little while first before
             </label>
           </li>
         %endif
+        <li>
+          <input class="nomargin" type="checkbox"
+                   name="allow_images" id="allow_images"
+                   %if not thing.site or not thing.site.link_type == "link" or thing.site.allow_images:
+                     checked="checked"
+                   %endif
+          >
+          <label for="allow_images">
+              ${_("allow image uploads and links to image hosting sites")}&#32;
+              <span class="gray">${_('(for "links only" subreddits)')}</span>
+          </label>
+        </li>
         %endif
         <li>
           <input class="nomargin" type="checkbox"
