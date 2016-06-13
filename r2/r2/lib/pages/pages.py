@@ -88,7 +88,6 @@ from r2.models.promo import (
     NO_TRANSACTION,
     PROMOTE_COST_BASIS,
     PROMOTE_PRIORITIES,
-    PromotedLinkRoadblock,
     PromotionLog,
     Collection,
     SelfServeNotices,
@@ -4724,7 +4723,6 @@ class PromotePage(Reddit):
         if c.user_is_sponsor:
             buttons = [
                 NavButton(menu['new_promo'], dest='/promoted/new_promo'),
-                NavButton(menu['roadblock'], dest='/sponsor/roadblock'),
                 NavButton(menu['current_promos'], dest='/sponsor/promoted',
                           aliases=['/sponsor']),
                 NavButton('inventory', '/sponsor/inventory'),
@@ -5134,19 +5132,6 @@ class RefundPage(Reddit):
 class PromotePost(PromoteLinkBase):
     def __init__(self):
         PromoteLinkBase.__init__(self)
-
-class Roadblocks(PromoteLinkBase):
-    def __init__(self):
-        self.roadblocks = PromotedLinkRoadblock.get_roadblocks()
-        PromoteLinkBase.__init__(self)
-        # reference "now" to what we use for promtions
-        now = promote.promo_datetime_now()
-
-        startdate = now + datetime.timedelta(1)
-        enddate   = startdate + datetime.timedelta(1)
-
-        self.default_start = startdate.strftime('%m/%d/%Y')
-        self.default_end = enddate.strftime('%m/%d/%Y')
 
 
 class SponsorLookupUser(PromoteLinkBase):

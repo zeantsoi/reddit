@@ -2228,25 +2228,6 @@ var exports = r.sponsored = {
         this.reload_with_params(data);
     },
 
-    fill_roadblock_form: function() {
-        var $form = $('.roadblock-dashboard'),
-            timing = this.get_timing($form);
-
-        this.render_timing_duration($form, timing.duration);
-    },
-
-    submit_roadblock_form: function() {
-        var $form = $('.roadblock-dashboard');
-        var timing = this.get_timing($form)
-        var selected_sr_names = $('#selected_sr_names').val();
-        var data = {
-          startdate: timing.startdate,
-          enddate: timing.enddate,
-          srs: selected_sr_names
-        };
-        $.request("add_roadblock", data, null);
-    },
-
     reload_with_params: function(data) {
         var queryString = '?' + $.param(data);
         var location = window.location;

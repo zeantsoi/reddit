@@ -78,7 +78,6 @@ from r2.lib.pages import (
     Reddit,
     RefundPage,
     RenderableCampaign,
-    Roadblocks,
     SponsorLookupUser,
 )
 from r2.lib.pages.things import default_thing_wrapper, wrap_links
@@ -150,7 +149,6 @@ from r2.models import (
     PromotionLog,
     PromotionPrices,
     PromotionWeights,
-    PromotedLinkRoadblock,
     PROMOTE_STATUS,
     Subreddit,
     Target,
@@ -326,11 +324,6 @@ class PromoteController(RedditController):
 
 
 class SponsorController(PromoteController):
-    @validate(VSponsorAdmin())
-    def GET_roadblock(self):
-        return PromotePage(title=_("manage roadblocks"),
-                           content=Roadblocks()).render()
-
     @validate(VSponsorAdminOrAdminSecret('secret'),
               start=VDate('startdate'),
               end=VDate('enddate'),
@@ -1326,51 +1319,6 @@ class PromoteApiController(ApiController):
 
         form.redirect(promote.promo_edit_url(l))
 
-    @validatedForm(
-        VSponsorAdmin(),
-        VModhash(),
-        start=VDate('startdate'),
-        end=VDate('enddate'),
-        srs=VSRByNames('srs', required=True),
-    )
-    def POST_add_roadblock(self, form, jquery, start, end, srs):
-        if (form.has_errors('startdate', errors.BAD_DATE) or
-                form.has_errors('enddate', errors.BAD_DATE)):
-            return
-
-        if end < start:
-            c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
-            form.has_errors('enddate', errors.BAD_DATE_RANGE)
-            return
-
-        if form.has_errors('srs', errors.SUBREDDIT_NOEXIST,
-                           errors.SUBREDDIT_NOTALLOWED,
-                           errors.SUBREDDIT_REQUIRED):
-            return
-
-        if srs:
-            srs = srs.values() if type(srs) is dict else [srs]
-            for sr in srs:
-                PromotedLinkRoadblock.add(sr, start, end)
-        jquery.refresh()
-
-    @validatedForm(
-        VSponsorAdmin(),
-        VModhash(),
-        start=VDate('startdate'),
-        end=VDate('enddate'),
-        sr=VSubmitSR('sr', promotion=True),
-    )
-    def POST_rm_roadblock(self, form, jquery, start, end, sr):
-        if end < start:
-            c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
-            form.has_errors('enddate', errors.BAD_DATE_RANGE)
-            return
-
-        if start and end and sr:
-            PromotedLinkRoadblock.remove(sr, start, end)
-            jquery.refresh()
-
     def _lowest_max_cpm_bid_dollars(self, total_budget_dollars, bid_dollars,
                                     start, end):
         """
@@ -1673,21 +1621,6 @@ class PromoteApiController(ApiController):
                 return
         else:
             total_budget_pennies = 0
-
-        is_frontpage = (not target.is_collection and
-                        target.subreddit_name == Frontpage.name)
-
-        if not target.is_collection and not is_frontpage:
-            # targeted to a single subreddit, check roadblock
-            sr = target.subreddits_slow[0]
-            roadblock = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
-            if roadblock and not c.user_is_sponsor:
-                msg_params = {"start": roadblock[0].strftime('%m/%d/%Y'),
-                              "end": roadblock[1].strftime('%m/%d/%Y')}
-                c.errors.add(errors.OVERSOLD, field='sr',
-                             msg_params=msg_params)
-                form.has_errors('sr', errors.OVERSOLD)
-                return
 
         # Check inventory
         campaign = campaign if campaign_id36 else None
