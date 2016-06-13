@@ -545,7 +545,7 @@ class ApiController(RedditController):
 
         allow_images = sr.can_submit_image(c.user)
         if not allow_images:
-            if kind == "image" or url_is_image(url):
+            if kind == "image" or (kind == "link" and url_is_image(url)):
                 # Image uploads aren't allowed in this subreddit
                 c.errors.add(errors.IMAGES_NOTALLOWED, field='url')
                 form.has_errors('url', errors.IMAGES_NOTALLOWED)
