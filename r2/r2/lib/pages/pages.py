@@ -3816,9 +3816,6 @@ class NewLink(Templated):
                                   subreddit=default_sr.name):
                 link_tab_label = 'link/image'
 
-            if feature.is_enabled('image_uploads_button_change',
-                                  subreddit=default_sr.name):
-                self.show_alternate_button_label = True
             if feature.is_enabled('image_uploads_order_change',
                                   subreddit=default_sr.name):
                 self.swap_link_and_image_order = True
