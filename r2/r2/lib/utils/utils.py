@@ -92,15 +92,21 @@ MOBILE_PLATFORMS = {'iOS', 'Windows', 'Android', 'BlackBerry'}
 def detect_mobile(ua):
     parsed = parse_agent(ua)
     platform = parsed.get('platform_name')
+    sub_platform = parsed.get('sub-platform')
+    browser_name = parsed.get('browser_name')
 
     if platform in MOBILE_PLATFORMS:
         if parsed.get('sub-platform') == 'IPad':
             return False
 
-        if platform == 'Android' and not 'Mobile' in ua:
+        if platform == 'Android' and not \
+                ('Mobile' in ua or browser_name == 'Opera Mobile'):
             return False
 
-        if platform == 'Windows' and not parsed.get('sub-platform') == 'Windows Phone':
+        if platform == 'Windows' and not sub_platform == 'Windows Phone':
+            return False
+
+        if 'Opera Mini' in ua:
             return False
 
         return True
