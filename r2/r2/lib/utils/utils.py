@@ -911,7 +911,7 @@ def url_is_embeddable_image(url):
     parsed_url = UrlParser(url)
 
     if parsed_url.path_extension().lower() in {"jpg", "gif", "png", "jpeg"}:
-        if parsed_url.hostname not in g.oembed_friendly_image_domains:
+        if parsed_url.hostname not in g.known_image_domains:
             return False
         return True
 
