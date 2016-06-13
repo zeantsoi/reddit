@@ -918,17 +918,6 @@ def url_is_embeddable_image(url):
     return False
 
 
-def url_is_image(url):
-    hostname = UrlParser(url).hostname
-    # Check if the url is a known image domain
-    # since images aren't allowed in this subreddit
-    for domain in g.image_hosting_domains:
-        if is_subdomain(hostname, domain):
-            return True
-
-    return False
-
-
 def url_to_thing(url):
     """Given a reddit URL, return the Thing to which it associates.
 

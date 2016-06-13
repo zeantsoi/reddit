@@ -68,7 +68,6 @@ from r2.lib.utils import (
     timeuntil,
     to36,
     tup,
-    url_is_image,
 )
 
 from r2.lib.pages import (
@@ -539,17 +538,11 @@ class ApiController(RedditController):
                 sr.quarantine or
                 sr.over_18
         )):
+            # this could happen if they actually typed "self" into the
+            # URL box and we helpfully translated it for them
             c.errors.add(errors.SUBREDDIT_NOTALLOWED, field='sr')
             form.has_errors('sr', errors.SUBREDDIT_NOTALLOWED)
             return
-
-        allow_images = sr.can_submit_image(c.user)
-        if not allow_images:
-            if kind == "image" or url_is_image(url):
-                # Image uploads aren't allowed in this subreddit
-                c.errors.add(errors.IMAGES_NOTALLOWED, field='url')
-                form.has_errors('url', errors.IMAGES_NOTALLOWED)
-                return
 
         if not sr.can_submit_text(c.user) and is_self:
             # this could happen if they actually typed "self" into the

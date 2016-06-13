@@ -1625,7 +1625,7 @@ class FormPage(BoringPage):
 
 class NewLinkPage(FormPage):
     def __init__(self, pagename, show_sidebar=False, default_sr=None,
-                allow_images=True, *a, **kw):
+            allow_images=True, *a, **kw):
         self.allow_image_upload = (default_sr and
             allow_images and
             feature.is_enabled("image_uploads", subreddit=default_sr.name) and
