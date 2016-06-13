@@ -639,6 +639,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
     _optional_data_attrs = dict(
         action_type="action_type",
         sr_detail="sr_detail",
+        show_media="show_media",
         )
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",

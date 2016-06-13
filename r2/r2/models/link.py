@@ -691,6 +691,11 @@ class Link(Thing, Printable):
             elif item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
                 item.preview_image = getattr(item, 'preview_object', None)
+            elif (extensions.is_api() and item.has_thumbnail and
+                    request.params.get("always_show_media")):
+                item.thumbnail = media.thumbnail_url(item)
+                item.preview_image = getattr(item, 'preview_object', None)
+                item.show_media = show_media
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
                     item.thumbnail = "nsfw"
