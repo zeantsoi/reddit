@@ -1626,11 +1626,11 @@ class FormPage(BoringPage):
 class NewLinkPage(FormPage):
     def __init__(self, pagename, show_sidebar=False, default_sr=None,
                 allow_images=True, *a, **kw):
-        self.allow_image_upload = (default_sr and
+        sr_name = default_sr.name if default_sr else None
+        self.allow_image_upload = (
             allow_images and
-            feature.is_enabled("image_uploads", subreddit=default_sr.name) and
-            not default_sr.quarantine and
-            not default_sr.over_18
+            feature.is_enabled("image_uploads", subreddit=sr_name) and
+            not (default_sr and (default_sr.quarantine or default_sr.over_18))
         )
         FormPage.__init__(self,
                           pagename,
@@ -3800,11 +3800,10 @@ class NewLink(Templated):
     def __init__(self, captcha=None, url='', title='', text='', selftext='',
                  resubmit=False, default_sr=None, extra_subreddits=None,
                  show_link=True, show_self=True, show_image=True):
-
+        sr_name = default_sr.name if default_sr else None
         self.allow_image_upload = (
-            default_sr and
             show_image and
-            feature.is_enabled("image_uploads", subreddit=default_sr.name)
+            feature.is_enabled("image_uploads", subreddit=sr_name)
         )
         self.show_link = show_link
         self.show_self = show_self
@@ -3813,11 +3812,11 @@ class NewLink(Templated):
 
         if self.allow_image_upload:
             if feature.is_enabled('image_uploads_tab_change',
-                                  subreddit=default_sr.name):
+                                  subreddit=sr_name):
                 link_tab_label = 'link/image'
 
             if feature.is_enabled('image_uploads_order_change',
-                                  subreddit=default_sr.name):
+                                  subreddit=sr_name):
                 self.swap_link_and_image_order = True
 
         tabs = []
