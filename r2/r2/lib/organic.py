@@ -21,6 +21,7 @@
 ###############################################################################
 
 from r2.models import *
+from r2.lib import all_sr
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib import count
 from r2.lib.utils import UniqueIterator, timeago
@@ -38,7 +39,7 @@ def cached_organic_links(*sr_ids):
     link_names.sort(key = lambda n: sr_count[n][0])
 
     if not link_names and g.debug:
-        q = All.get_links('new', 'all')
+        q = all_sr.get_all_query('new', 'all')
         q._limit = 100 # this decomposes to a _query
         link_names = [x._fullname for x in q if x.promoted is None]
         g.log.debug('Used inorganic links')

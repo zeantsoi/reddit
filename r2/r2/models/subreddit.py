@@ -74,6 +74,7 @@ from r2.models.trylater import TryLater, TryLaterBySubject
 from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 from r2.lib import hooks
+from r2.lib import all_sr
 from r2.models.query_cache import MergedCachedQuery
 from r2.models.rules import SubredditRules
 import pycassa
@@ -1709,19 +1710,10 @@ class AllSR(FakeSubreddit):
         return True
 
     def get_links(self, sort, time):
-        from r2.models import Link
-        from r2.lib.db import queries
-        q = Link._query(
-            sort=queries.db_sort(sort),
-            read_cache=True,
-            write_cache=True,
-            cache_time=60,
-            data=True,
-            filter_primary_sort_only=True,
-        )
-        if time != 'all':
-            q._filter(queries.db_times[time])
-        return q
+        if sort == 'hot':
+            return all_sr.get_all_hot_ids()
+        else:
+            return all_sr.get_all_query(sort, time)
 
     def get_all_comments(self):
         from r2.lib.db import queries
@@ -1744,6 +1736,12 @@ class AllSR(FakeSubreddit):
 
         return MergedCachedQuery(qs)
 
+    def all_keep_item(self, item):
+        # this is structured weird so we can add more rules easily
+        if not item.subreddit.discoverable:
+            return False
+        return True
+
 class AllMinus(AllSR):
     analytics_name = "all"
     name = _("%s (filtered)") % "all"
@@ -1765,13 +1763,14 @@ class AllMinus(AllSR):
     def path(self):
         return '/r/all-' + '-'.join(sr.name for sr in self.exclude_srs)
 
-    def get_links(self, sort, time):
-        from r2.models import Link
-        from r2.lib.db.operators import not_
-        q = AllSR.get_links(self, sort, time)
-        if c.user.gold and self.exclude_sr_ids:
-            q._filter(not_(Link.c.sr_id.in_(self.exclude_sr_ids)))
-        return q
+    def all_keep_item(self, item):
+        # super
+        if not AllSR.all_keep_item(self, item):
+            return False
+        # skip excluded links
+        elif item.subreddit in self.exclude_srs:
+            return False
+        return True
 
 
 class Filtered(object):

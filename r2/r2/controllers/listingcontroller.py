@@ -206,7 +206,7 @@ class ListingController(RedditController):
         def keep(item):
             wouldkeep = item.keep_item(item)
             if isinstance(c.site, AllSR):
-                if not item.subreddit.discoverable:
+                if not c.site.all_keep_item(item):
                     return False
             if getattr(item, "promoted", None) is not None:
                 return False
