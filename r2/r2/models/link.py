@@ -890,6 +890,7 @@ class Link(Thing, Printable):
                 ):
                     item.href_url = item.permalink
                 elif (feature.is_enabled('outbound_clicktracking') and 
+                        c.user.pref_allow_clicktracking and
                         # don't do outbound click tracking for internal links
                         not media_preview_experiment_enabled and
                         not g.debug):

@@ -371,6 +371,10 @@
         <a href="https://www.reddit.com/wiki/noindex">${_("details")}</a>
         )
       </span>
+      <br />
+      %if feature.is_enabled('outbound_clicktracking'):
+        ${checkbox(_("allow reddit to log my outbound clicks for personalization"), "allow_clicktracking")}
+      %endif
     </td>
   </tr>
   <tr>

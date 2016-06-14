@@ -160,6 +160,7 @@ class Account(Thing):
                      orangered_opt_in_message_timestamp=None,
                      last_password_reset_timestamp=None,
                      accepted_promoted_links=0,
+                     pref_allow_clicktracking=True,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
