@@ -766,7 +766,7 @@ def update_unapproved_campaigns_listing(link):
     # cannot import at module level due to circularity
     from r2.lib import promote
     is_insert = (promote.is_accepted(link) and
-        not promote.all_campaigns_approved(link))
+                 not promote.all_campaigns_reviewed(link))
 
     with CachedQueryMutator() as m:
         q = get_all_links_with_unapproved_campaigns()

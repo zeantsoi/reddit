@@ -22,11 +22,15 @@
 
 <%!
   import json
+  from r2.lib.promote import promo_datetime_now
   from r2.lib.strings import strings
   from babel.numbers import format_currency
 %>
 
-<% jquery_row = "$('." + thing.campaign._fullname + "')" %>
+<%
+  jquery_row = "$('." + thing.campaign._fullname + "')"
+  current_datetime = promo_datetime_now()
+%>
 
 <tr class="campaign-row ${thing.campaign._fullname} ${'refund' if (not thing.free and thing.needs_refund) else ''}"
     data-startdate="${thing.campaign.start_date.strftime('%m/%d/%Y')}"
@@ -168,6 +172,22 @@
     %elif thing.is_edited_live:
       <span class='info'>${_("edited live")}</span>
     %else:
+      %if thing.needs_review:
+        %if thing.campaign.end_date < current_datetime:
+          <span class='info'>${_('expired')}</span>
+        %else:
+          <span class='info'>${_("pending review")}</span>
+        %endif
+      %else:
+        %if not thing.promolink_is_accepted:
+          <span class='info'>${_("pending link approval")}</span>
+        %elif not thing.campaign.is_approved == False:
+          <span class='info'>${_("approved")}</span>
+        %else:
+          <span class='info'>${_("rejected")}</span>
+        %endif
+      %endif
+
       %if thing.editable:
         <button class="edit" onclick="edit_campaign(${jquery_row})">
           ${_("edit")}
@@ -191,8 +211,6 @@
           <button class="resume" onclick="toggle_pause_campaign(${jquery_row}, false)">
             ${_("resume")}
           </button>
-        %elif thing.needs_approval:
-          <span class='info'>${_("awaiting approval")}</span>
         %else:
           <button class="pause" onclick="toggle_pause_campaign(${jquery_row}, true)">
             ${_("pause")}
@@ -206,13 +224,32 @@
         </button>
       %endif
 
-      %if thing.needs_approval and c.user_is_sponsor:
+      %if thing.needs_review and c.user_is_sponsor:
         %if thing.hide_after_seen:
           <input type="hidden" name="hide_after" value="yes">
         %endif
-        <button class="approve" onclick="approve_campaign(${jquery_row})">
+        <button class="approve" onclick="approve_campaign(${jquery_row}, true)">
           ${_("approve")}
         </button>
+        <button class="reject" onclick="open_reject_campaign(${jquery_row})">
+          ${_("reject")}
+        </button>
+        <form class="campaign-rejection-form" style="display:none">
+          <br/>
+          <input type="hidden" name="executed" value="rejected" />
+          <label>Reason:</label><br/>
+          <textarea name="reason" value="" ></textarea>
+          <br/>
+          <a href="javascript: void 0;" class="reject"
+              onclick="approve_campaign(${jquery_row}, false)">
+              submit
+          </a>
+          /
+          <a href="javascript: void 0;" class="cancel_reject"
+              onclick="cancel_reject_campaign(${jquery_row})">
+              ${_("cancel")}
+          </a>
+        </form>
       %endif
     %endif
   </td>

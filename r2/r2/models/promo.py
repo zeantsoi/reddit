@@ -43,6 +43,13 @@ from r2.models.wiki import WikiPageIniItem
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
                       "pending", "promoted", "finished", "edited_live", "external")
 
+ACCEPTED_PROMOTE_STATUSES = (
+    PROMOTE_STATUS.accepted,
+    PROMOTE_STATUS.pending,
+    PROMOTE_STATUS.promoted,
+    PROMOTE_STATUS.finished,
+)
+
 PROMOTE_COST_BASIS = Enum('fixed_cpm', 'cpm', 'cpc',)
 
 
@@ -379,6 +386,7 @@ class PromoCampaign(Thing):
         extensions_remaining=30,
         auto_extend=False,
         pre_extension_end_date=None,
+        manually_reviewed=None,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -454,10 +462,6 @@ class PromoCampaign(Thing):
             return True
 
         return False
-
-    @property
-    def needs_approval(self):
-        return not (self.is_approved or self.is_house)
 
     @property
     def is_extended(self):

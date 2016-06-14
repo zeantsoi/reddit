@@ -5642,13 +5642,25 @@ ul.colors {
             border: 1px solid #cc9;
         }
 
-        .campaign-spent, .campaign-buttons .info, button:not(.approve) {
+        .campaign-spent, button:not(.approve):not(.reject) {
             display: none;
         }
     }
 
     .hidden {
         display: none;
+    }
+}
+
+.campaign-buttons {
+    .info {
+        font-weight: bold;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        display: block;
+    }
+    textarea {
+        max-width: 90%;
     }
 }
 

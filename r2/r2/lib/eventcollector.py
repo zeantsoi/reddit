@@ -946,12 +946,14 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
-    def approve_campaign_event(self, link, campaign, is_approved, request=None, context=None):
+    def approve_campaign_event(self, link, campaign, is_approved, reason=None,
+                               request=None, context=None):
         """Send an event recording when promo campaign's is approved.
 
         link: A promoted r2.models.Link object
         campaign: A r2.models.PromoCampaign object
         is_approved: Boolean for if the campaign is approved or unapproved
+        rejection_reason: Optional string specifying reason for the rejection
         request: pylons.request of the request that created the message
         context: pylons.tmpl_context of the request that created the message
 
@@ -964,6 +966,9 @@ class EventQueue(object):
                 is_approved=is_approved,
             ),
         )
+
+        if not is_approved and reason:
+            event.add('rejection_reason', reason)
 
         event.add_promoted_link_fields(link)
         event.add_campaign_fields(campaign)

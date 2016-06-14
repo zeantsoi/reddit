@@ -116,6 +116,24 @@ and we'll reconsider it for submission.
 
 Note: For ads going through the approval process — Your payment has been authorized, but has not yet been captured. We charge the amount when an approved ad launches. Since your ad has been rejected, your payment authorization will be voided within 24-48 hours, unless you edit and resubmit the ad for approval.
 
+%elif thing.kind == Email.Kind.REJECT_CAMPAIGN:
+This email is to inform you that a campaign you created for a self-serve ad
+submitted to reddit.com has been rejected. 
+
+Please review the following link for reasons you campaign may have been 
+rejected:
+
+https://reddit.zendesk.com/hc/en-us/articles/203677179-Prohibited-Ads
+
+%if thing.reason:
+Here's the reason your campaign was rejected:
+    ${thing.reason}
+
+%endif
+To update your campaign, please go to:
+    ${unsafe(edit_url + ref_tags % dict(ref="campaign_reject", campaign="edit_promo"))}
+and we'll reconsider it for submission.
+
 %elif thing.kind == Email.Kind.QUEUED_PROMO:
 This email is to inform you that your self-serve ad on reddit.com is about to go
 live. Please use this email as your receipt.

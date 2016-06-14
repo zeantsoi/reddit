@@ -9,14 +9,15 @@ from mock import (
 )
 from pylons import app_globals as g
 
-from r2.tests import RedditTestCase
 from r2.lib.authorize.api import Transaction
 from r2.lib import promote
 from r2.lib.promote import (
     ads_enabled,
     ads_feature_enabled,
+    all_campaigns_reviewed,
     auth_campaign,
     banners_enabled,
+    campaign_needs_review,
     can_extend,
     can_refund,
     charge_campaign,
@@ -27,8 +28,10 @@ from r2.lib.promote import (
     get_spent_amount,
     get_unspent_budget,
     headlines_enabled,
+    is_accepted,
     is_pre_cpm,
     is_underdelivered,
+    promo_datetime_now,
     RefundProviderException,
     refund_campaign,
     srnames_from_site,
@@ -38,12 +41,14 @@ from r2.lib.promote import (
     void_campaign,
 )
 from r2.models import (
+    ACCEPTED_PROMOTE_STATUSES,
     Account,
     Collection,
     FakeAccount,
     Frontpage,
     Link,
     PromoCampaign,
+    PROMOTE_STATUS,
     Subreddit,
     MultiReddit,
 )
@@ -821,7 +826,9 @@ class TestMakeDailyPromotions(unittest.TestCase):
         self.assertEqual(promote_link.call_count, 3)
         self.assertEqual(update_promote_status.call_count, 2)
 
+    @patch('r2.lib.promote.expire_unapproved_campaigns')
     def test_underdelivered_campaigns_that_can_be_are_extended(
+        expire_unapproved_campaigns,
         self,
         finished_promo,
         update_promote_status,
@@ -867,7 +874,9 @@ class TestMakeDailyPromotions(unittest.TestCase):
         self.assertEqual(update_promote_status.call_count, 0)
         self.assertEqual(extend_campaign.call_count, 5)
 
+    @patch('r2.lib.promote.expire_unapproved_campaigns')
     def test_underdelivered_campaigns_cannot_be_extended_are_marked_finished(
+        expire_unapproved_campaigns,
         self,
         finished_promo,
         update_promote_status,
@@ -1256,3 +1265,157 @@ class TestAdsFeatureEnabled(RedditTestCase):
         is_enabled.return_value = True
 
         self.assertTrue(ads_feature_enabled("in_feed_ads"))
+
+
+class TestCampaignReview(RedditTestCase):
+
+    def setUp(self):
+        self.all_status_ids = ([PROMOTE_STATUS[name] for name in
+                               PROMOTE_STATUS.name])
+        self.unaccepted_promote_statuses = (set(self.all_status_ids) -
+                                            set(ACCEPTED_PROMOTE_STATUSES))
+
+    @patch('r2.lib.promote.is_promo')
+    def test_link_is_accepted(self, is_promo):
+        """Assert is_accepted returns correct value based on link.is_promo
+        and link.promote_status.
+
+        """
+        link = Mock()
+
+        # Should return False if link.is_promo is False
+        is_promo.return_value = False
+        for status_id in self.all_status_ids:
+            error_msg = ('Non-promo link should not be accepted with status %s'
+                         % PROMOTE_STATUS.name[status_id])
+            link.promote_status = status_id
+            self.assertFalse(is_accepted(link), msg=error_msg)
+
+        is_promo.reset_mock()
+        is_promo.return_value = True
+
+        # Should return True if link.is_promo is True and
+        # link.promote_status is accepted
+        for status_id in ACCEPTED_PROMOTE_STATUSES:
+            error_msg = ('Promo link should be accepted with status %s' %
+                         PROMOTE_STATUS.name[status_id])
+            link.promote_status = status_id
+            self.assertTrue(is_accepted(link), msg=error_msg)
+
+        # Should return False if link.is_promo is True and
+        # link.promote_status is not accepted
+        for status_id in self.unaccepted_promote_statuses:
+            error_msg = ('Promo link should not be accepted with status %s' %
+                         PROMOTE_STATUS.name[status_id])
+            link.promote_status = status_id
+            self.assertFalse(is_accepted(link), msg=error_msg)
+
+    def test_house_campaign_needs_review(self):
+        """Assert that house campaigns never need review."""
+        link = Mock()
+        campaign = Mock()
+        campaign.is_house = True
+
+        for status_id in self.all_status_ids:
+            status = PROMOTE_STATUS.name[status_id]
+            for manually_reviewed in (True, False):
+                error_msg = (
+                    'House campaign should not need review with ' +
+                    'promote_status == %s ' % status +
+                    'and manually_reviewed == %s' % manually_reviewed
+                )
+                campaign.manually_reviewed = manually_reviewed
+                link.promote_status = PROMOTE_STATUS.name[status_id]
+                self.assertFalse(campaign_needs_review(campaign, link),
+                                 msg=error_msg)
+
+    def test_non_manually_reviewed_campaign_needs_review(self):
+        """Assert whether non-manually reviewed campaigns need review."""
+        link = Mock()
+        campaign = Mock()
+        campaign.is_house = False
+        campaign.manually_reviewed = False
+
+        for status_id in self.all_status_ids:
+            status = PROMOTE_STATUS.name[status_id]
+            link.promote_status = status_id
+            if status_id in ACCEPTED_PROMOTE_STATUSES:
+                error_msg = ('Non-manually reviewed campaign should require' +
+                             'review with promote_status == %s' % status)
+                self.assertTrue(campaign_needs_review(campaign, link),
+                                msg=error_msg)
+            else:
+                error_msg = ('Non-manually reviewed campaign should not ' +
+                             'require review with promote_status == %s'
+                             % status)
+                self.assertFalse(campaign_needs_review(campaign, link),
+                                 msg=error_msg)
+
+    def test_manually_reviewed_campaign_needs_review(self):
+        """Assert that manually reviewed campaigns never need review."""
+        link = Mock()
+        campaign = Mock()
+        campaign.is_house = False
+        campaign.manually_reviewed = True
+
+        for status_id in self.all_status_ids:
+            status = PROMOTE_STATUS.name[status_id]
+            error_msg = ('Manually reviewed campaign should not need review ' +
+                         'with promote_status == %s' % status)
+            link.promote_status = PROMOTE_STATUS.name[status_id]
+            self.assertFalse(campaign_needs_review(campaign, link),
+                             msg=error_msg)
+
+    @patch('r2.lib.promote.PromoCampaign')
+    def test_all_campaigns_reviewed_with_no_campaigns(self, promo_campaign):
+        """Assert that link with no campaigns has all campaigns reviewed."""
+        promo_campaign._by_link.return_value = []
+        link = Mock()
+
+        # Should always return True regardless of whether link.managed_promo
+        for managed_promo in (True, False):
+            link.managed_promo = managed_promo
+            self.assertTrue(all_campaigns_reviewed(link))
+
+    @patch('r2.lib.promote.campaign_needs_review')
+    @patch('r2.lib.promote.PromoCampaign')
+    def test_all_campaigns_reviewed_when_campaign_needs_review(
+            self, promo_campaign, campaign_needs_review):
+        """Assert all campaigns reviewed with campaign needs review."""
+        link = Mock()
+        link.managed_promo = False
+        campaign = Mock()
+        campaign_needs_review.return_value = True
+
+        # All campaigns reviewed should be True with expired campaign that
+        # needs review
+        campaign.end_date = promo_datetime_now()
+        promo_campaign._by_link.return_value = [campaign]
+        self.assertTrue(all_campaigns_reviewed(link))
+
+        # All campaigns reviewed should be False with unexpired campaign that
+        # needs review
+        campaign.end_date = promo_datetime_now() + datetime.timedelta(days=1)
+        promo_campaign._by_link.return_value = [campaign]
+        self.assertFalse(all_campaigns_reviewed(link))
+
+        # All campaigns reviewed should be True with unexpired campaign that
+        # needs review when link is managed
+        link.managed_promo = True
+        self.assertTrue(all_campaigns_reviewed(link))
+
+    @patch('r2.lib.promote.campaign_needs_review')
+    @patch('r2.lib.promote.PromoCampaign')
+    def test_all_campaigns_reviewed_when_not_campaign_needs_review(
+            self, promo_campaign, campaign_needs_review):
+        """Assert all campaigns reviewed with campaign needs review."""
+        link = Mock()
+        link.managed_promo = False
+        campaign = Mock()
+        campaign_needs_review.return_value = False
+
+        # All campaigns reviewed should be True with unexpired campaign that
+        # does not need review
+        campaign.end_date = promo_datetime_now() + datetime.timedelta(days=1)
+        promo_campaign._by_link.return_value = [campaign]
+        self.assertTrue(all_campaigns_reviewed(link))

@@ -335,6 +335,7 @@ class Email(object):
                 "EDITED_LIVE_PROMO",
                 "AUTO_EXTEND_PROMO",
                 "CHANGED_AUTHOR",
+                "REJECT_CAMPAIGN",
                 )
 
     # Do not remove anything from this dictionary!  See above comment.
@@ -369,6 +370,8 @@ class Email(object):
         Kind.AUTO_EXTEND_PROMO: _("[selfserve] your promotion has been extended"),
         Kind.CHANGED_AUTHOR: _("[reddit] a promotion has been transferred to \
             your account"),
+        Kind.REJECT_CAMPAIGN: _("[reddit] your promotion campaign has been \
+            rejected"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip,

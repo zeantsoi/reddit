@@ -4984,8 +4984,8 @@ class RenderableCampaign(Templated):
         self.free = campaign.is_freebie()
         # only show approval if the link has been accepted. accepting the link
         # automatically approvals all the current campaigns.
-        self.needs_approval = (campaign.needs_approval and
-                               promote.is_accepted(link))
+        self.needs_review = promote.campaign_needs_review(campaign, link)
+        self.promolink_is_accepted = promote.is_accepted(link)
         self.is_pending = is_pending
         self.is_live = is_live
         self.is_complete = is_complete

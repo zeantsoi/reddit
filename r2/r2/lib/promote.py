@@ -58,6 +58,7 @@ from r2.lib.utils import (
     weighted_lottery,
 )
 from r2.models import (
+    ACCEPTED_PROMOTE_STATUSES,
     Account,
     Bid,
     Collection,
@@ -216,10 +217,7 @@ def is_promo(link):
 
 def is_accepted(link):
     return (is_promo(link) and
-            link.promote_status != PROMOTE_STATUS.rejected and
-            link.promote_status != PROMOTE_STATUS.edited_live and
-            link.promote_status != PROMOTE_STATUS.external and
-            link.promote_status >= PROMOTE_STATUS.accepted)
+            link.promote_status in ACCEPTED_PROMOTE_STATUSES)
 
 def is_unpaid(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.unpaid
@@ -525,7 +523,8 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, requires_approval=True, **attributes):
+
+def new_campaign(link, requires_review=True, **attributes):
 
     campaign = PromoCampaign.create(
         link=link,
@@ -543,7 +542,7 @@ def new_campaign(link, requires_approval=True, **attributes):
     # force campaigns for approved links to also be approved unless 
     # otherwise specified.
     if is_accepted(link):
-        set_campaign_approval(link, campaign, (not requires_approval))
+        set_campaign_approval(link, campaign, (not requires_review))
 
     hooks.get_hook('promote.new_campaign').call(link=link, campaign=campaign)
 
@@ -727,6 +726,13 @@ def edit_campaign(
         if is_approved != campaign.is_approved:
             changed['is_approved'] = (campaign.is_approved, is_approved)
             campaign.is_approved = is_approved
+
+    if 'manually_reviewed' in kwargs:
+        manually_reviewed = kwargs['manually_reviewed']
+        if manually_reviewed != campaign.manually_reviewed:
+            changed['manually_reviewed'] = (campaign.manually_reviewed,
+                                            manually_reviewed)
+            campaign.manually_reviewed = manually_reviewed
             queries.update_unapproved_campaigns_listing(link)
 
     if "no_daily_budget" in kwargs:
@@ -774,15 +780,28 @@ def edit_campaign(
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
 
 
-def all_campaigns_approved(link):
+def campaign_needs_review(campaign, link):
+    requires_manual_review = campaign.manually_reviewed is False
+    return (requires_manual_review and
+            not campaign.is_house and
+            link.promote_status in ACCEPTED_PROMOTE_STATUSES)
+
+
+def all_campaigns_reviewed(link):
     campaigns = PromoCampaign._by_link(link._id)
-    return link.managed_promo or all(map(lambda campaign: not campaign.needs_approval, campaigns))
+    has_unreviewed_campaigns = False
+    for campaign in campaigns:
+        if (campaign_needs_review(campaign, link) and
+                campaign.end_date > promo_datetime_now()):
+            has_unreviewed_campaigns = True
+            break
+    return link.managed_promo or not has_unreviewed_campaigns
 
 
 def approve_all_campaigns(link):
     campaigns = PromoCampaign._by_link(link._id)
     for campaign in campaigns:
-        set_campaign_approval(link, campaign, True)
+        set_campaign_approval(link, campaign, True, manually_reviewed=True)
 
 
 def unapprove_all_campaigns(link):
@@ -791,7 +810,8 @@ def unapprove_all_campaigns(link):
         set_campaign_approval(link, campaign, False)
 
 
-def set_campaign_approval(link, campaign, is_approved):
+def set_campaign_approval(link, campaign, is_approved,
+                          manually_reviewed=False, reason=None):
     # can't approve campaigns until the link is approved
     if not is_accepted(link) and is_approved:
         return
@@ -801,7 +821,14 @@ def set_campaign_approval(link, campaign, is_approved):
         campaign=campaign,
         is_approved=is_approved,
         send_event=False,
+        manually_reviewed=manually_reviewed,
     )
+
+    if not is_approved:
+        emailer.reject_campaign(
+            link,
+            reason,
+        )
 
     g.events.approve_campaign_event(
         link=link,
@@ -1406,6 +1433,7 @@ def make_daily_promotions():
 
     _mark_promos_updated()
     finalize_completed_campaigns(daysago=1)
+    expire_unapproved_campaigns()
     hooks.get_hook('promote.make_daily_promotions').call(offset=0)
 
 
@@ -1510,6 +1538,21 @@ def finalize_completed_campaigns(daysago=1):
 
     if underdelivered_campaigns:
         queries.set_underdelivered_campaigns(underdelivered_campaigns)
+
+
+def expire_unapproved_campaigns():
+    now = datetime.datetime.now(g.tz)
+    date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    q_expired_unapproved = PromoCampaign._query(
+        PromoCampaign.c.end_date == date,
+        PromoCampaign.c.is_approved == False,  # noqa
+        data=True,
+    )
+
+    for campaign in q_expired_unapproved:
+        link = Link._byID(campaign.link_id)
+        queries.update_unapproved_campaigns_listing(link)
 
 
 def get_refund_amount(campaign):

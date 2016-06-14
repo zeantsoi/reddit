@@ -2690,20 +2690,38 @@ function terminate_campaign($campaign_row) {
               null, true, "json", false);
 }
 
-function approve_campaign($campaign_row) {
+function open_reject_campaign($campaign_row) {
+  $campaign_row.find('button.reject').hide();
+  $campaign_row.find('.campaign-rejection-form').show().find('textarea').focus();
+}
+
+function cancel_reject_campaign($campaign_row) {
+  $campaign_row.find('button.reject').show();
+  $campaign_row.find('.campaign-rejection-form').hide();
+}
+
+function approve_campaign($campaign_row, approved) {
   var campaignId = $campaign_row.data('campaign_id36');
   var linkId = $campaign_row.data('link_id36');
   var $hideAfter = $campaign_row.find('input[name="hide_after"]');
   var hideAfter = false;
+  var reason = '';
 
   if ($hideAfter.length) {
     hideAfter = $hideAfter.val();
+  }
+
+  if (!approved) {
+    $rejectionForm = $campaign_row.find('.campaign-rejection-form');
+    reason = $rejectionForm.find('textarea').val();
   }
 
   $.request('approve_campaign', {
     campaign_id36: campaignId,
     link_id36: linkId,
     hide_after: hideAfter,
+    approved: approved,
+    reason: reason,
   }, null, true, 'json', false);
 }
 

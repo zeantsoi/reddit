@@ -606,6 +606,10 @@ def changed_promo_author(thing, author):
     return _promo_email(thing, Email.Kind.CHANGED_AUTHOR, author=author)
 
 
+def reject_campaign(thing, reason):
+    return _promo_email(thing, Email.Kind.REJECT_CAMPAIGN, reason=reason)
+
+
 def fraud_alert(body):
     return _fraud_email(body, Email.Kind.FRAUD_ALERT)
 

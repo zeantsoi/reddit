@@ -1259,7 +1259,7 @@ class PromoteApiController(ApiController):
         l._commit()
 
         if not is_new_promoted:
-            requires_approval = any(key in changed for key in (
+            requires_review = any(key in changed for key in (
                 "title",
                 "is_self",
                 "selftext",
@@ -1269,7 +1269,8 @@ class PromoteApiController(ApiController):
             ))
 
             # only trips if changed by a non-sponsor
-            if requires_approval and not c.user_is_sponsor and promote.is_promoted(l):
+            if (requires_review and
+                    not c.user_is_sponsor and promote.is_promoted(l)):
                 promote.edited_live_promotion(l)
 
             # ensure plugins are notified of the final edits to the link
@@ -1680,6 +1681,7 @@ class PromoteApiController(ApiController):
         if campaign:
             if requires_reapproval and promote.is_accepted(link):
                 campaign_dict['is_approved'] = False
+                campaign_dict['manually_reviewed'] = False
             promote.edit_campaign(
                 link,
                 campaign,
@@ -1688,7 +1690,7 @@ class PromoteApiController(ApiController):
         else:
             campaign = promote.new_campaign(
                 link,
-                requires_approval=(not c.user_is_sponsor),
+                requires_review=(not c.user_is_sponsor),
                 **campaign_dict
             )
         rc = RenderableCampaign.from_campaigns(link, campaign)
@@ -1739,17 +1741,21 @@ class PromoteApiController(ApiController):
                    VModhash(),
                    link=VLink('link_id36'),
                    campaign=VPromoCampaign("campaign_id36"),
-                   hide_after_seen=VBoolean("hide_after"))
+                   hide_after_seen=VBoolean("hide_after"),
+                   approved=VBoolean('approved'),
+                   reason=nop('reason'),)
     def POST_approve_campaign(self, form, jquery,
-                              link, campaign, hide_after_seen):
+                              link, campaign, hide_after_seen,
+                              approved, reason):
         if not link or not campaign or link._id != campaign.link_id:
             return abort(404, 'not found')
 
-        promote.set_campaign_approval(link, campaign, True)
+        promote.set_campaign_approval(link, campaign, is_approved=approved,
+                                      manually_reviewed=True, reason=reason)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
-        if hide_after_seen and promote.all_campaigns_approved(link):
+        if hide_after_seen and promote.all_campaigns_reviewed(link):
             jquery("#thing_%s" % link._fullname).hide()
 
     @exclude_from_logging(
