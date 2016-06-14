@@ -645,6 +645,7 @@ if [ ! -f /etc/cron.d/reddit ]; then
 */5  * * * * root /sbin/start --quiet reddit-job-clean_up_hardcache
 */2  * * * * root /sbin/start --quiet reddit-job-broken_things
 */2  * * * * root /sbin/start --quiet reddit-job-rising
+*    * * * * root /sbin/start --quiet reddit-job-all-sr
 0    * * * * root /sbin/start --quiet reddit-job-trylater
 0    0 * * * root /sbin/start --quiet reddit-job-sitemaps
 
