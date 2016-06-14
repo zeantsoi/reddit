@@ -30,6 +30,7 @@ import string
 import time
 
 import requests
+import requests.exceptions
 
 from pylons import app_globals as g
 
@@ -129,8 +130,14 @@ def fetch_listing(path, limit=1000, batch_size=100):
             params["after"] = after
 
         print "> {}-{}".format(count, count+batch_size)
-        response = session.get(base_url, params=params)
-        response.raise_for_status()
+
+        try:
+            response = session.get(base_url, params=params)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as ex:
+            print "Exception fetching (%r), continuing on" % (ex,)
+            # just take the data we have
+            return
 
         listing = get_requests_resp_json(response)["data"]
         for child in listing["children"]:
