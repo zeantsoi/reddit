@@ -92,15 +92,8 @@ def _user_disabled_ads(user):
 
 
 def _ads_enabled():
-    # users in the treatment get ads
-    if feature.is_enabled("ads"):
-        return True
-
-    # but so do users in the holdout, check the variant to ensure
-    # the users aren't the control
-    ads_variant = feature.variant("ads")
-    return (ads_variant is None or
-            not ads_variant.startswith("control_"))
+    # users in the treatment don't get ads
+    return not feature.is_enabled("no_ads")
 
 
 def headlines_enabled(site, user):
