@@ -385,6 +385,7 @@ class Globals(object):
             'precomputed_comment_sort_min_comments',
             'comment_vote_update_threshold',
             'comment_vote_update_period',
+            'r_all_penalty',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',
