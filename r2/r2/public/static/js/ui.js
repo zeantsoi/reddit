@@ -139,7 +139,7 @@ r.ui.initMWebBanner = function() {
       storeKey = 'native-banner.closed';
       optInCookieName = null;
 
-      url = 'https://293679.measurementapi.com/serve?action=impression&' +
+      url = 'https://293679.measurementapi.com/serve?action=click&' +
             'publisher_id=293679&site_id=122129&site_id_ios=121809';
       callout = r._("get reddit mobile");
     } else {
