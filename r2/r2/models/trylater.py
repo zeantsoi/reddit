@@ -59,6 +59,7 @@ almost the exact same semantics, but has a useful ``unschedule`` method.
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import uuid
+import traceback
 
 from pycassa.system_manager import TIME_UUID_TYPE, UTF8_TYPE
 from pycassa.util import convert_uuid_to_time
@@ -107,6 +108,8 @@ class TryLater(tdb_cassandra.View):
         try:
             ready_fn(ready_items)
         except:
+            error = traceback.format_exc()
+            g.log.info(error)
             g.stats.simple_event(
                 "trylater.{system}.failed".format(system=rowkey),
             )
