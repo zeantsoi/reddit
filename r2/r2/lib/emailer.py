@@ -178,11 +178,13 @@ def message_notification_email(data):
     for datum in data.itervalues():
         datum = json.loads(datum)
         user = Account._byID36(datum['to'], data=True)
+        g.log.info('user fullname: %s' % user._fullname)
 
         # In case a user has enabled the preference while it was enabled for
         # them, but we've since turned it off.  We need to explicitly state the
         # user because we're not in the context of an HTTP request from them.
         if not feature.is_enabled('orangereds_as_emails', user=user):
+            g.log.info('feature not enabled for user: %s' % user._fullname)
             continue
 
         # Don't send more than MAX_EMAILS_PER_USER per user per day
@@ -192,6 +194,8 @@ def message_notification_email(data):
             limit=MAX_EMAILS_PER_USER,
         )
         if not user_notification_ratelimit.check():
+            g.log.info('message blocked at user_notification_ratelimit: %s' %
+                       user_notification_ratelimit)
             continue
 
         # Get all new messages that haven't been emailed
@@ -199,6 +203,7 @@ def message_notification_email(data):
         inbox_items = sorted(inbox_items, key=lambda x: x[1]._date)
 
         if not inbox_items:
+            g.log.info('no inbox items found for %s' % user._fullname)
             continue
         newest_inbox_rel = inbox_items[-1][0]
         oldest_inbox_rel = inbox_items[0][0]
@@ -213,6 +218,7 @@ def message_notification_email(data):
         if (start_date != newest_inbox_rel._date and
                 now < newest_inbox_rel._date + NOTIFICATION_EMAIL_COOLING_PERIOD and
                 now < oldest_inbox_rel._date + NOTIFICATION_EMAIL_MAX_DELAY):
+            g.log.info('messages still being batched for: %s' % user._fullname)
             continue
 
         messages = []
@@ -223,6 +229,8 @@ def message_notification_email(data):
         # Batch messages to email starting with older messages
         for inbox_rel, message in inbox_items:
             # Get sender_name, replacing with display_author if it exists
+            g.log.info('user fullname: %s, message fullname: %s' % (
+                user._fullname, message._fullname))
             if getattr(message, 'from_sr', False):
                 sender_name = ('/r/%s' %
                     Subreddit._byID(message.sr_id, data=True).name)
@@ -306,7 +314,7 @@ def message_notification_email(data):
         custom_headers = {
             'List-Unsubscribe': "<%s>" % unsubscribe_link
         }
-
+        g.log.info('sending message for user: %s' % user._fullname)
         g.email_provider.send_email(
             to_address=user.email,
             from_address="Reddit <%s>" % g.notification_email,
