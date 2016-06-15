@@ -65,8 +65,6 @@
 
     events: {
       'click .expando-button': 'toggleExpando',
-      // experiment 18
-      'click .expand-media': 'toggleExpandoFromLink',
       // experiment 34
       'click .expand-inline-thumbnail': 'toggleExpandoFromLink'
     },
@@ -92,7 +90,7 @@
       this.expanded ? this.collapse() : this.expand();
     },
 
-    // experiment 18 & 34
+    // experiment 34
     toggleExpandoFromLink: function(e) {
       expandoButton = $('.expando-button').next()
       if (isPluginExpandoButton(expandoButton)) { return; }
@@ -328,8 +326,8 @@
       expandoOnClick(this, e.target);
     });
 
-    // experiment 18 & 34
-    $(listingSelectors.join(',')).on('click', '.expand-media, .expand-inline-thumbnail', function(e) {
+    // experiment 34
+    $(listingSelectors.join(',')).on('click', '.expand-inline-thumbnail', function(e) {
       expandoButton = $('.expando-button').next();
       expandoOnClick(this, expandoButton);
     });

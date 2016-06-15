@@ -50,11 +50,9 @@
 <%def name="make_link(name, css_class, tabindex=0, url=None)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
-    expand_inline = getattr(thing, 'expand_inline', False)
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }
-            ${ expand_inline and 'expand-media' or '' }
             ${'outbound' if thing.use_outbound else '' }
             ${'affiliate' if thing.affiliatize_link and not thing.use_outbound else '' }"
 
