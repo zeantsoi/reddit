@@ -433,7 +433,7 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="googletagmanager()">
-  %if g.googletagmanager and thing.site_tracking and thing.dnt_enabled:
+  %if g.googletagmanager and thing.site_tracking and thing.dnt_enabled and thing.ads_enabled:
     <script>
       if (!window.DO_NOT_TRACK) {
         var frame = document.createElement('iframe');

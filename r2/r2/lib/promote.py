@@ -91,15 +91,15 @@ def _user_disabled_ads(user):
     return user.gold and user.pref_hide_ads
 
 
-def _ads_enabled():
+def ads_enabled():
+    if g.disable_ads:
+        return False
+
     # users in the treatment don't get ads
     return not feature.is_enabled("no_ads")
 
 
 def headlines_enabled(site, user):
-    if g.disable_ads:
-        return False
-
     user_disable_ads = _user_disabled_ads(user)
     site_disabled_ads = (not site.allow_ads or
                          site.hide_sponsored_headlines)
@@ -107,26 +107,21 @@ def headlines_enabled(site, user):
     if user_disable_ads or site_disabled_ads:
         return False
 
-    return _ads_enabled()
+    return ads_enabled()
 
 
 def banners_enabled(site, user):
-    if g.disable_ads:
-        return False
-
     user_disable_ads = _user_disabled_ads(user)
     site_disabled_ads = not site.allow_ads
 
     if user_disable_ads or site_disabled_ads:
         return False
 
-    return _ads_enabled()
+    return ads_enabled()
 
 
 def ads_feature_enabled(name, **kwargs):
-    ads_enabled = _ads_enabled()
-
-    if not ads_enabled:
+    if not ads_enabled():
         return False
 
     return feature.is_enabled(name, **kwargs)
