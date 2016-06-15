@@ -13,7 +13,6 @@ from r2.tests import RedditTestCase
 from r2.lib.authorize.api import Transaction
 from r2.lib import promote
 from r2.lib.promote import (
-    ads_enabled,
     ads_feature_enabled,
     auth_campaign,
     banners_enabled,
@@ -1212,47 +1211,23 @@ class TestBannersEnabled(RedditTestCase):
         self.assertTrue(banners_enabled(site=site, user=user))
 
 
-class TestAdsEnabled(RedditTestCase):
-    def setUp(self):
-        g.disable_ads = False
-
-    @patch("r2.lib.promote.feature.is_enabled")
-    def test_ads_enabled_is_false_disabled_via_config(self, is_enabled):
-        g.disable_ads = True
-        is_enabled.return_value = True
-
-        self.assertFalse(ads_enabled())
-
-    @patch("r2.lib.promote.feature.is_enabled")
-    def test_ads_enabled_is_false_if_no_ads_is_enabled(self, is_enabled):
-        is_enabled.return_value = True
-
-        self.assertFalse(ads_enabled())
-
-    @patch("r2.lib.promote.feature.is_enabled")
-    def test_ads_enabled_is_true_if_no_ads_is_disabled(self, is_enabled):
-        is_enabled.return_value = False
-
-        self.assertTrue(ads_enabled())
-
-
 class TestAdsFeatureEnabled(RedditTestCase):
     def setUp(self):
         g.disable_ads = False
 
     @patch("r2.lib.promote.feature.is_enabled")
-    @patch("r2.lib.promote.ads_enabled")
-    def test_disabled_if_ads_are_disabled(self, ads_enabled, is_enabled):
-        ads_enabled.return_value = False
+    @patch("r2.lib.promote._ads_enabled")
+    def test_disabled_if_ads_are_disabled(self, _ads_enabled, is_enabled):
+        _ads_enabled.return_value = False
         is_enabled.return_value = True
 
         self.assertFalse(ads_feature_enabled("in_feed_ads"))
 
     @patch("r2.lib.promote.feature.is_enabled")
-    @patch("r2.lib.promote.ads_enabled")
+    @patch("r2.lib.promote._ads_enabled")
     def test_enabled_if_ads_are_enabled_and_so_is_feature(
-            self, ads_enabled, is_enabled):
-        ads_enabled.return_value = True
+            self, _ads_enabled, is_enabled):
+        _ads_enabled.return_value = True
         is_enabled.return_value = True
 
         self.assertTrue(ads_feature_enabled("in_feed_ads"))
