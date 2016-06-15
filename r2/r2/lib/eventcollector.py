@@ -249,6 +249,32 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    def sr_created_event(self, new_sr, base_url=None, request=None,
+                         context=None):
+        """Create a 'comment' event for event-collector.
+
+        new_sr: The newly created subreddit.
+        request, context: Should be pylons.request & pylons.c respectively
+        """
+        from r2.models import Subreddit
+
+        event = Event(
+            topic="subreddit_create_events",
+            event_type="ss.subreddit_created",
+            time=new_sr._date,
+            request=request,
+            context=context,
+        )
+
+        event.add("sr_id", new_sr._id)
+        event.add('sr_name', new_sr.name)
+        event.add('sr_type', new_sr.type)
+        event.add('base_url', base_url)
+        event.add('user_neutered', new_sr.author_slow._spam)
+
+        self.save_event(event)
+
+    @squelch_exceptions
     @sampled("events_collector_poison_sample_rate")
     def cache_poisoning_event(self, poison_info, request=None, context=None):
         """Create a 'cache_poisoning_server' event for event-collector

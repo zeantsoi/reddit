@@ -3146,6 +3146,8 @@ class ApiController(RedditController):
 
             update_wiki_text(sr)
             sr._commit()
+            g.events.sr_created_event(sr, request=request, context=c,
+                                      base_url='/subreddits/create')
 
             hooks.get_hook("subreddit.new").call(subreddit=sr)
 

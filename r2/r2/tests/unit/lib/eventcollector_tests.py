@@ -157,6 +157,49 @@ class TestEventCollector(RedditTestCase):
             )
         )
 
+    def test_sr_created_event(self):
+        sr = MagicMock(name="new_subreddit", _date=FAKE_DATE)
+        context = MagicMock(name="context")
+        request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
+        base_url = '/some/path'
+        g.events.sr_created_event(sr, context=context, request=request,
+                                  base_url=base_url)
+
+        g.events.queue_production.assert_event_item(
+            dict(
+                event_topic="subreddit_create_events",
+                event_type="ss.subreddit_created",
+                payload={
+                    'sr_id': sr._id,
+                    'sr_name': sr.name,
+                    'sr_type': sr.type,
+                    'base_url': base_url,
+                    'user_id': context.user._id,
+                    'user_name': context.user.name,
+                    'user_neutered': sr.author_slow._spam,
+                    'domain': request.host,
+                    'geoip_country': context.location,
+                    'oauth2_client_id': context.oauth2_client._id,
+                    'oauth2_client_app_type': context.oauth2_client.app_type,
+                    'oauth2_client_name': context.oauth2_client.name,
+                    'referrer_domain': self.domain_mock(),
+                    'referrer_url': request.headers.get(),
+                    'user_agent': request.user_agent,
+                    'user_features': context.user.user_features,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
+                    'obfuscated_data': {
+                        'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
+                    }
+                }
+            )
+        )
+
     def test_report_event_link(self):
         self.patch_liveconfig("events_collector_report_sample_rate", 1.0)
 
