@@ -39,6 +39,7 @@ import simplejson as json
 from baseplate.crypto import MessageSigner
 from r2.config import feature
 from r2.lib import hooks
+from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.filters import _force_unicode
 from r2.lib.utils import timeago, long_datetime
 from r2.models import (
