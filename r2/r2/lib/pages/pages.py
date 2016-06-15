@@ -276,6 +276,7 @@ class Reddit(Templated):
         self.loginbox = loginbox
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
+        self.ads_enabled = promote.ads_enabled()
         self.dnt_enabled = feature.is_enabled("do_not_track")
         self.moat_tracking_enabled = (
             promote.ads_feature_enabled("moat_tracking") and
