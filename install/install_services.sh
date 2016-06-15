@@ -50,7 +50,9 @@ echo "Waiting for services to be available, see source for port meanings..."
 # 11211 - memcache
 # 5432 - postgres
 # 5672 - rabbitmq
-for port in 11211 5432 5672; do
+# 2181 - zookeeper, note this is installed in install_zookeeper.sh
+#        we check here too for drone's sake
+for port in 11211 5432 5672 2181; do
     while ! nc -vz localhost $port; do
         sleep 1
     done
