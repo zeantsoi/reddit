@@ -1578,6 +1578,9 @@ class ApiController(RedditController):
             thing.subreddit_slow.remove_sticky(thing)
             if thing.image_upload:
                 purge_associated_images(thing, notify_failures=False)
+            if thing.preview_object:
+                thing.set_preview_object(None)
+                thing._commit()
         elif isinstance(thing, Comment):
             link = thing.link_slow
 
