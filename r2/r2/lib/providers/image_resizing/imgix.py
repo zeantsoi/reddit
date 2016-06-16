@@ -85,6 +85,10 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         if file_type and file_type in ('gif', 'jpg', 'png', 'mp4'):
             url.update_query(fm=file_type)
 
+        # We need to disable fragmented mp4s for proper playback in Firefox
+        if file_type == 'mp4':
+            url.update_query(**{'mp4-fragmented': 'false'})
+
         if censor_nsfw:
             # Do an initial blur to make sure we're getting rid of icky
             # details.
