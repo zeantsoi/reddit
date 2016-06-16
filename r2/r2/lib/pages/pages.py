@@ -2208,6 +2208,7 @@ class CommentPane(Templated):
             c.can_embed,
             self.max_depth,
             self.edits_visible,
+            feature.is_enabled("affiliate_links"),
         )
         key = "pane:%s" % _id
         return key
