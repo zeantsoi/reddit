@@ -44,6 +44,7 @@
                 '&depth=' + (++context) +
                 '&showedits=' + (showedits === 'true') +
                 '&created=' + el.getAttribute('data-embed-created') +
+                '&uuid=' + el.getAttribute('data-embed-uuid') +
                 '&showmore=false';
 
     return PROTOCOL + (commentUrl.replace(/\/$/,'')) + '?' + query;

@@ -21,6 +21,7 @@
 ###############################################################################
 
 from datetime import datetime
+from uuid import uuid1
 
 from pylons import response
 from pylons import app_globals as g
@@ -140,6 +141,7 @@ def _oembed_comment(thing, **embed_options):
                        comment=thing.make_permalink_slow(force_domain=True),
                        link=link.make_permalink_slow(force_domain=True),
                        title=websafe(title),
+                       uuid=uuid1(),
                        )
 
     oembed_response = dict(_OEMBED_BASE,

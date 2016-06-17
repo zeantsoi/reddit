@@ -26,6 +26,7 @@
     from r2.lib.filters import unsafe
     from r2.lib import js
     from r2.lib.template_helpers import add_sr, get_domain, static
+    from r2.lib.utils import UrlParser
 %>
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="text_with_links, plain_link"/>
@@ -34,6 +35,23 @@
     link_data = {"redirect-type": "link", "redirect-thing": thing.link._id}
     sr_data = {"redirect-type": "subreddit"}
     reddit_data = {"redirect-type": "logo"}
+
+    created = c.embed_config.get('created')
+    comment = c.embed_config.get('thing')
+    uuid = c.embed_config.get('uuid')
+
+    permalink = UrlParser(thing.link.permalink)
+    permalink.update_query(utm_source='embed',
+                           utm_medium='comment_embed',
+                           utm_name=uuid,
+                           utm_term=comment.get('id'),
+                           utm_content='footer',
+                           )
+
+    footer_link = permalink.unparse()
+
+    permalink.update_query(utm_content='more')
+    more_link = permalink.unparse()
 %>
 
 <!doctype html>
@@ -48,9 +66,9 @@
         <div class="reddit-embed">
             <div class="reddit-embed-content">
                 ${next.body()}
-                ${plain_link(_("More comments"), thing.link.permalink, _sr_path=False, _class="reddit-embed-more-link")}
+                ${plain_link(_("More comments"), more_link, _sr_path=False, _class="reddit-embed-more-link")}
             </div>
-          <a href="${thing.link.permalink}" class="reddit-embed-comment-link-wrap">
+          <a href="${footer_link}" class="reddit-embed-comment-link-wrap">
             <footer class="reddit-embed-footer" role="contentinfo">
 
                 <span class="reddit-embed-footer-img"></span>

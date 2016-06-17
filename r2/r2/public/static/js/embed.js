@@ -62,16 +62,6 @@
       '</textarea>'
     );
 
-    var embedCodeTemplate = _.template(
-      '<div class="reddit-embed" ' +
-         ' data-embed-media="<%- media %>" ' +
-         '<% if (parent) { %> data-embed-parent="true" <% } %>' +
-         '<% if (live) { %> data-embed-live="true" <% } %>' +
-         ' data-embed-created="<%- new Date().toISOString() %>">' +
-        '<a href="<%- comment %>">Comment</a> from discussion <a href="<%- link %>"><%- title %></a>.' +
-      '</div>'
-    );
-
     function absolute(url) {
       if (/^https?:\/\//.test(url)) {
         return url;
@@ -86,6 +76,7 @@
         parent: false,
         media: location.host,
         created: (new Date()).toISOString(),
+        uuid: r.uuid()
       };
 
       data = _.defaults({}, data, defaults);

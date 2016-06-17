@@ -19,6 +19,7 @@ _COMMENT_EMBED_TEMPLATE = (
         'data-embed-media="%(media)s" '
         'data-embed-parent="%(parent)s" '
         'data-embed-live="%(live)s" '
+        'data-embed-uuid="%(uuid)s" '
         'data-embed-created="%(created)s">'
         '<a href="%(comment)s">Comment</a> '
         'from discussion '
@@ -81,12 +82,14 @@ def set_up_comment_embed(sr, thing, showedits):
         author = None
 
     iso_timestamp = request.GET.get("created", "")
+    uuid = request.GET.get("uuid", "")
 
     c.embed_config = {
         "eventtracker_url": g.eventtracker_url or "",
         "anon_eventtracker_url": g.anon_eventtracker_url or "",
         "event_clicktracker_url": g.event_clicktracker_url or "",
         "created": iso_timestamp,
+        "uuid": uuid,
         "showedits": showedits,
         "thing": {
             "id": thing._id,
