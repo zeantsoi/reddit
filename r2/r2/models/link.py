@@ -1980,6 +1980,7 @@ class Comment(Thing, Printable):
             affiliate = feature.is_enabled('affiliate_links') \
                     and item.affiliatize_links \
                     and c.user.allow_affiliates_replacing
+            item.affiliate = affiliate
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
             item.usertext = UserText(item, item.body,
