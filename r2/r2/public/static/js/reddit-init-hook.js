@@ -8,6 +8,11 @@
     try {
         r.events.init();
         r.analytics.init();
+
+        if (r.config.feature_screenview_events) {
+          r.screenviewEvent.init();
+        }
+
         r.resEvent.init();
         r.access.init();
     } catch (err) {

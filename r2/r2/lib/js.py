@@ -524,6 +524,12 @@ _submodule["res-event"] = Module("_res_event.js",
     "res-event.js",
 )
 
+_submodule["screenview-event"] = Module("_screenview-event.js",
+    "base.js",
+    _submodule["analytics"],
+    "screenview-event.js",
+)
+
 _submodule["s3-image-uploader"] = Module("_s3-image-uploader.js",
     "base.js",
     "errors.js",
@@ -608,6 +614,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "analytics.js",
     "events.js",
     _submodule["res-event"],
+    _submodule["screenview-event"],
     "access.js",
     "reddit-init-hook.js",
     "jquery.reddit.js",

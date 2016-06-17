@@ -22,10 +22,6 @@ r.analytics = {
       r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
     }
 
-    if (r.config.feature_screenview_events) {
-      r.analytics.screenviewEvent();
-    }
-
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
   },
@@ -439,59 +435,6 @@ r.analytics = {
     if (done) {
       r.events.send(done);
     }
-  },
-
-  screenviewEvent: function() {
-    var eventTopic = 'screenview_events';
-    var eventType = 'cs.screenview';
-    var payload = {};
-
-    if (r.config.event_target) {
-      for (var key in r.config.event_target) {
-        var value = r.config.event_target[key];
-        if (value !== null) {
-          payload[key] = value;
-        }
-      }
-    }
-
-    payload['screen_width'] = screen.width;
-    payload['screen_height'] = screen.height;
-
-    var linkListing = [];
-    var minRank = null;
-    var maxRank = 0;
-    $('.linklisting .thing.link').each(function() {
-        var $thing = $(this);
-        var fullname = $thing.data('fullname');
-        var rank = parseInt($thing.data('rank')) || '';
-        linkListing.push(fullname);
-        maxRank = Math.max(maxRank, rank);
-        if (minRank == null) {
-            minRank = rank;
-        }
-        minRank = Math.min(minRank, rank);
-    });
-    if (!_.isEmpty(linkListing)) {
-        payload.link_listing = linkListing;
-        payload.link_listing_min_rank = minRank;
-        payload.link_listing_max_rank = maxRank;
-    }
-
-    // event collector
-    r.events.track(eventTopic, eventType, payload, {
-      contextProperties: [
-        'sr_name',
-        'sr_id',
-        'listing_name',
-        'language',
-        'dnt',
-        'referrer_domain',
-        'referrer_url',
-        'user_in_beta',
-        'adblock',
-      ],
-    }).send();
   },
 
   loginRequiredEvent: function(actionName, actionDetail, targetType, targetFullname) {
