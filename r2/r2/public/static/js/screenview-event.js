@@ -3,8 +3,8 @@
   var EVENT_TYPE = 'screenview';
 
   r.screenviewEvent = {
-    init: function() {
-      var defaultFields = [
+    getDefaultEventFields: function() {
+      return [
         'sr_name',
         'sr_id',
         'listing_name',
@@ -15,7 +15,9 @@
         'user_in_beta',
         'adblock',
       ];
+    },
 
+    getCustomEventFields: function() {
       var customFields = {
         screen_width: window.screen.width,
         screen_height: window.screen.height,
@@ -37,6 +39,13 @@
           customFields[key] = linkListingData[key];
         }
       }
+
+      return customFields;
+    },
+
+    init: function() {
+      var defaultFields = this.getDefaultEventFields();
+      var customFields = this.getCustomEventFields();
 
       r.analytics.sendEvent(EVENT_TOPIC, EVENT_TYPE, defaultFields, customFields);
     },

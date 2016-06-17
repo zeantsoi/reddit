@@ -302,6 +302,7 @@ def js_config(extra_config=None):
         "events_collector_key": events_collector_key,
         "events_collector_secret": events_collector_secret,
         "feature_screenview_events": feature.is_enabled('screenview_events'),
+        "feature_scroll_events": feature.is_enabled('scroll_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),
         "listing_over_18": listing_over_18,

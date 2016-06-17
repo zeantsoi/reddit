@@ -611,10 +611,14 @@ r.analytics = {
   },
 
   sendEvent: function(eventTopic, actionName, contextProperties, payload, done) {
+    this.queueEvent(eventTopic, actionName, contextProperties, payload).send(done);
+  },
+
+  queueEvent: function(eventTopic, actionName, contextProperties, payload) {
     var eventType = 'cs.' + actionName;
-    r.events.track(eventTopic, eventType, payload, {
+    return r.events.track(eventTopic, eventType, payload, {
       contextProperties: contextProperties,
-    }).send(done);
+    });
   },
 };
 

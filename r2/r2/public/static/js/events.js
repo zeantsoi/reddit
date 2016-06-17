@@ -138,7 +138,7 @@
       return contextData;
     },
 
-    _addContextData: function(properties, payload) {
+    addContextData: function(properties, payload) {
       /* jshint sub: true */
       properties = properties || [];
       payload = payload || {};
@@ -180,7 +180,7 @@
           return this;
         }.bind(this);
       } else {
-        var payload = this._addContextData(options.contextProperties, eventPayload);
+        var payload = this.addContextData(options.contextProperties, eventPayload);
 
         if (_tracker && !this.sampling[eventTopic]) {
           _tracker.track(eventTopic, eventName, payload);

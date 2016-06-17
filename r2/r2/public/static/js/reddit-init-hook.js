@@ -9,6 +9,10 @@
         r.events.init();
         r.analytics.init();
 
+        if (r.config.feature_scroll_events) {
+          r.scrollEvent.init();
+        }
+
         if (r.config.feature_screenview_events) {
           r.screenviewEvent.init();
         }
