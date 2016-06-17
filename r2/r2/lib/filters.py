@@ -227,7 +227,6 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
             link['data-affiliate-url'] = generate_affiliate_link(
                                             link.get('href')
                                          )
-            link['rel'] = 'noreferrer'
 
         if update_text:
             text = str(soup)

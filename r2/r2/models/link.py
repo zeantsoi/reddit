@@ -995,8 +995,6 @@ class Link(Thing, Printable):
                 item.is_blocked_for_legal_reasons = False
 
             rel_names = []
-            if item.affiliatize_link:
-                rel_names.append('noreferrer')
             if item.nofollow:
                 rel_names.append('nofollow')
             item.rel = ' '.join(rel_names)
