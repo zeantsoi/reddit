@@ -93,6 +93,7 @@ from pycassa.system_manager import (
     DOUBLE_TYPE,
 )
 import pytz
+import sys
 
 NOTIFICATION_EMAIL_COOLING_PERIOD = g.notification_email_cooling_period
 NOTIFICATION_EMAIL_MAX_DELAY = timedelta(hours=1)
@@ -3023,10 +3024,18 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
     @classmethod
     def send_orangered_sys_message(cls, hook, to):
-        # create token to pass to template
-        token = OrangeredOptInToken._new(to)
         base = g.https_endpoint or g.origin
-        url = base + '/prefs/orangereds/' + token._id
+        url = '%s%s' % (base, '/prefs/orangereds')
+
+        try:
+            # create token to pass to template
+            to.email.decode('ascii')
+            token = OrangeredOptInToken._new(to)
+            url = '%s/%s' % (url, token._id)
+        except UnicodeEncodeError:
+            # non-ascii emails are not compatible with our current token
+            # creation. Do not create token in this case.
+            sys.exc_clear()
 
         # send sys message via wiki templates
         hooks.get_hook('account.%s' % hook).call(
