@@ -23,6 +23,7 @@ consult subredditselector.html for config variables
     SR_NAMES_DELIM: ',',
     selectedSr: {},
     origSr: '',
+    MAX_SUBREDDITS: 100,
     MAX_DESCRIPTION_LENGTH: 200,
     hoverCardTemplate: _.template(
       '<div class="hovercard"> ' +
@@ -238,22 +239,21 @@ consult subredditselector.html for config variables
     },
 
     /**
-    Checks to see if subreddit is valid
+    Validator for adding subreddits
 
     @params {function} successFn: callback for success (found subreddit)
-    @params {function} failFn: callback for failure (did not find subreddit)
     @params {Integer} retries: if ratelimited, retry again in 2 seconds
 
     @return {null}
     **/
-    srIsValidSubreddit: function(query, successFn, failFn, retries) {
+    srIsValidSubreddit: function(query, successFn, retries) {
       $('.SUBREDDIT_NOEXIST').text('loading...').show();
-      if (!query) {
-        return failFn(query);
-      }
-      query = query.toLowerCase();
       successFn = successFn.bind(this);
-      failFn = failFn.bind(this);
+      if (!query) {
+        return this.srShowNoSubredditExistsErrorMsg(query);
+      }
+
+      query = query.toLowerCase();
       $.request('search_reddit_names.json', 
         {
           query: query, 
@@ -263,12 +263,12 @@ consult subredditselector.html for config variables
         function (resp) {
           $('.field-sr').hide();
           if (resp.names.length == 1) {
-            r.srAutocomplete.srHideErrorMsg();
+            this.srHideErrorMsg();
             successFn(query);
           } else {
-            failFn(query);
+            this.srShowNoSubredditExistsErrorMsg(query);
           }
-        },
+        }.bind(this),
         false, 'json', false, 
         function(e) {
           if (e === 'ratelimit') {
@@ -277,22 +277,20 @@ consult subredditselector.html for config variables
               retries = 0;
             }
             if (retries > 3) {
-              var errorMsg = 'something went wrong. please try again';
-              return r.srAutocomplete.srShowErrorMsg(errorMsg);
+              return this.srShowRequestFailedMsg();
             }
             window.setTimeout(
               r.srAutocomplete.srIsValidSubreddit.bind(
                 this,
                 query,
                 successFn,
-                failFn,
                 retries + 1
               ),
               2000);
           } else {
-            failFn(query);
+            this.srShowRequestFailedMsg();
           }
-        });
+        }.bind(this));
     },
 
     /**
@@ -358,8 +356,7 @@ consult subredditselector.html for config variables
       } else if (e.keyCode == this.KEYS.ENTER) {
         this.srIsValidSubreddit(
           e.target.value, 
-          this.srAddSr(undefined, {subreddit: e.target.value}),
-          this.srShowNoSubredditExistsErrorMsg);
+          this.srAddSr(undefined, {subreddit: e.target.value}));
         if (this.isMultiple) {
           e.target.value = '';
         }
@@ -412,8 +409,7 @@ consult subredditselector.html for config variables
         var name = $(row).text();
         this.srIsValidSubreddit(
           name, 
-          this.srAddSr(undefined, {isAutocomplete: true, subreddit: name}),
-          this.srShowNoSubredditExistsErrorMsg);
+          this.srAddSr(undefined, {isAutocomplete: true, subreddit: name}));
         if (this.isMultiple) {
           $('#sr-autocomplete').val('');
         }
@@ -429,14 +425,17 @@ consult subredditselector.html for config variables
       $('#sr-autocomplete').trigger('focus');
       this.srIsValidSubreddit(
         name, 
-        this.srAddSr(undefined, {isSuggestion: true, subreddit: name}),
-        this.srShowNoSubredditExistsErrorMsg);
+        this.srAddSr(undefined, {isSuggestion: true, subreddit: name}));
       return false;
     },
 
     /* UI: Adds a subreddit to the list of subreddits posted */
     srAddSr: function(srName, triggerParams) {
-      var canAddToken = this.isMultiple && srName && !(srName.toLowerCase() in this.selectedSr);
+      var tooManySubreddits = Object.keys(this.selectedSr).length >= this.MAX_SUBREDDITS;
+      var canAddToken = this.isMultiple &&
+        srName &&
+        !(srName.toLowerCase() in this.selectedSr) &&
+        !(tooManySubreddits);
       // Checks if srName is defined and doesn't exist in selectedSr yet
       if (canAddToken) {
         var newSrToken = this.srToken(srName);
@@ -450,8 +449,10 @@ consult subredditselector.html for config variables
         return function(srName) {
           r.srAutocomplete.srAddSr(srName, triggerParams);
         }.bind(this);
+      } else if (tooManySubreddits) {
+        this.srShowTooManySubredditsMsg();
+        return;
       }
-
       r.srAutocomplete.srHideErrorMsg();
       if ($.defined(triggerParams)) {
         $('#sr-autocomplete').trigger('sr-changed', triggerParams);
@@ -480,6 +481,18 @@ consult subredditselector.html for config variables
         errorMsg = 'subreddit /r/' + subreddit + ' does not exist';
       }
       r.srAutocomplete.srShowErrorMsg(errorMsg);
+    },
+
+    srShowTooManySubredditsMsg: function(){
+      r.srAutocomplete.srShowErrorMsg(
+        r._('the maximum number of subreddits you can target is %(num)s')
+        .format({num: this.MAX_SUBREDDITS})
+      );
+    },
+
+    srShowRequestFailedMsg: function(){
+      var errorMsg = r._('something went wrong. please try again');
+      return r.srAutocomplete.srShowErrorMsg(errorMsg);
     },
 
     srShowErrorMsg: function(errorMsg) {

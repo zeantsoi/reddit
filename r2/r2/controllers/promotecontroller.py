@@ -1401,6 +1401,7 @@ class PromoteApiController(ApiController):
                             errors.SUBREDDIT_REQUIRED)
             form.has_errors('collection', errors.COLLECTION_NOEXIST)
             form.has_errors('targeting', errors.INVALID_TARGET)
+            form.has_errors('targeting', errors.TARGET_TOO_MANY_SUBREDDITS)
             return
 
         if form.has_errors('location', errors.INVALID_LOCATION):

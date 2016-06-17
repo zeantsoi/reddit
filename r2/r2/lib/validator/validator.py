@@ -1493,6 +1493,7 @@ class VCollection(Validator):
 
 class VPromoTarget(Validator):
     default_param = ("targeting", "sr", "collection", "selected_sr_names")
+    MAX_SUBREDDITS = 100
 
     def run(self, targeting, sr_name, collection_name, selected_sr_names):
         if targeting == "collection" and collection_name == "none":
@@ -1510,6 +1511,12 @@ class VPromoTarget(Validator):
                 srs = VSRByNames("sr", required=True).run(selected_sr_names)
                 srs = srs.values() if type(srs) is dict else [srs]
                 sr_names = [sr.name for sr in srs]
+                if len(sr_names) > self.MAX_SUBREDDITS:
+                    self.set_error(
+                        errors.TARGET_TOO_MANY_SUBREDDITS,
+                        field="targeting"
+                    )
+                    return
                 pretty_name = "\n ".join(["/r/%s" % sr for sr in sr_names])
                 return Target(Collection(pretty_name, sr_names))
             else:

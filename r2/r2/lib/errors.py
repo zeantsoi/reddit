@@ -84,6 +84,7 @@ error_list = dict((
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('COLLECTION_NOEXIST', _('that collection doesn\'t exist')),
         ('INVALID_TARGET', _('that target type is not valid')),
+        ('TARGET_TOO_MANY_SUBREDDITS', _('targeting too many subreddits')),
         ('INVALID_OS_VERSION', _('that version range is not valid')),
         ('RATELIMIT', _('you are doing that too much. try again in %(time)s.')),
         ('SUBREDDIT_RATELIMIT', _("you are doing that too much. try again later.")),
