@@ -3032,7 +3032,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             to.email.decode('ascii')
             token = OrangeredOptInToken._new(to)
             url = '%s/%s' % (url, token._id)
-        except UnicodeEncodeError:
+        except (UnicodeEncodeError, UnicodeDecodeError):
             # non-ascii emails are not compatible with our current token
             # creation. Do not create token in this case.
             sys.exc_clear()
