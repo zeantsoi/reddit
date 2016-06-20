@@ -24,6 +24,11 @@ r.analytics = {
 
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
     r.analytics.bindAdEventPixels();
+
+    // Add parameters to track link sharing
+    if (r.config.share_tracking_hmac) {
+      r.analytics.replaceShareParams();
+    }
   },
 
   _eventPredicates: {},
@@ -342,7 +347,8 @@ r.analytics = {
   stripAnalyticsParams: function() {
     var hasReplaceState = !!(window.history && window.history.replaceState);
     var params = $.url().param();
-    var stripParams = ['ref', 'ref_source', 'ref_campaign'];
+    // su, sl, st are user_id, loid, and timestamp for tracking link shares
+    var stripParams = ['ref', 'ref_source', 'ref_campaign', 'su', 'sl', 'st', 'sh'];
     // strip utm tags as well
     _.keys(params).forEach(function(paramKey){
       if (paramKey.indexOf('utm_') === 0){
@@ -351,6 +357,10 @@ r.analytics = {
     });
 
     var strippedParams = _.omit(params, stripParams);
+    // Add parameters to track link sharing
+    if (r.config.share_tracking_hmac) {
+      _.extend(strippedParams, r.analytics.replaceShareParams());
+    }
 
     if (hasReplaceState && !_.isEqual(params, strippedParams)) {
       var a = document.createElement('a');
@@ -359,6 +369,27 @@ r.analytics = {
 
       window.history.replaceState({}, document.title, a.href);
     }
+
+  },
+
+  replaceShareParams: function() {
+    var shareParams = {};
+    var loid = $.cookie('loid');
+    // Add user_id (base36) or loid, timestamp (base36), and
+    // a signing hash (last 8 digits) to track link sharing.
+    // If changing this method, also change it in the Link
+    // model since it's being used there as well.
+    if (r.config.user_id) {
+      shareParams["su"] = r.config.user_id.toString(36);
+    } else if (loid) {
+      shareParams["sl"] = loid;
+    }
+
+    if (shareParams) {
+      shareParams["st"] = r.config.share_tracking_ts.toString(36);
+      shareParams["sh"] = r.config.share_tracking_hmac.substring(0, 8);
+    }
+    return shareParams;
   },
 
   adServingEvent: function(eventType, payload) {

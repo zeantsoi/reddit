@@ -202,6 +202,17 @@ def js_config(extra_config=None):
                 route_name=route_name,
             )
 
+    share_ts = int(time.time() * 1000)
+    share_tracking_hmac = None
+    # Only enable for comments pages on desktop
+    if (feature.is_enabled("url_share_tracking") and
+            c.render_style == "html" and
+            action_name == "GET_comments"):
+        share_user_id = user_id if user_id else c.loid.loid
+        if share_user_id:
+            share_tracking_hmac = hmac.new(g.secrets["share_tracking"],
+                "%s|%s" % (share_user_id, share_ts), hashlib.sha1).hexdigest()
+
     mac = hmac.new(g.secrets["action_name"], route_name, hashlib.sha1)
     verification = mac.hexdigest()
     cur_subreddit = ""
@@ -331,6 +342,8 @@ def js_config(extra_config=None):
         "feature_adblock_test": feature.is_enabled('adblock_test'),
         "ad_serving_events_sample_rate": g.live_config.get(
             "events_collector_ad_serving_sample_rate", 0),
+        "share_tracking_hmac": share_tracking_hmac,
+        "share_tracking_ts": share_ts,
     }
 
     if feature.is_enabled("eu_cookie_policy"):
