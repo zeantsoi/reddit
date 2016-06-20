@@ -383,22 +383,35 @@ r.analytics = {
     });
   },
 
+  _thirdPartyPixelEvent: function(eventType, payload) {
+    payload = payload || {};
+
+    if (payload.pixel_url) {
+      var parser = document.createElement('a');
+      parser.href = payload.pixel_url;
+
+      payload.pixel_domain = parser.host;
+    }
+
+    return this.adServingEvent(eventType, payload);
+  },
+
   thirdPartyPixelAttemptEvent: function(payload) {
-    return this.adServingEvent(
+    return this._thirdPartyPixelEvent(
       'third_party_impression_pixel_attempt',
       payload
     );
   },
 
   thirdPartyPixelFailureEvent: function(payload) {
-    return this.adServingEvent(
+    return this._thirdPartyPixelEvent(
       'third_party_impression_pixel_failure',
       payload
     );
   },
 
   thirdPartyPixelSuccessEvent: function(payload) {
-    return this.adServingEvent(
+    return this._thirdPartyPixelEvent(
       'third_party_impression_pixel_success',
       payload
     );
