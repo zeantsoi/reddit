@@ -25,7 +25,7 @@ from r2.lib import amqp
 from r2.lib.db import tdb_cassandra
 from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
-from r2.lib.filters import websafe
+from r2.lib.filters import websafe, _force_unicode
 from r2.lib.hooks import HookRegistrar
 from r2.lib.log import log_text
 from r2.models import Account, Message, NotFound, Report, Subreddit
@@ -378,7 +378,9 @@ def send_templated_orangered(message_type, title_type, user, url):
         g.log.warning("Unable to send message: invalid wiki templates.")
         return
 
-    message_template = message_template.format(user_email=user.email, url=url)
+    message_template = message_template.format(
+                            user_email=_force_unicode(user.email),
+                            url=url)
 
     user.orangered_opt_in_message_timestamp = datetime.now(g.tz)
     user._commit()
