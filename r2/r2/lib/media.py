@@ -1497,7 +1497,8 @@ def _purge_preview_links(preview_object, censor_nsfw=False, file_type=None):
         purge_from_cdn(url, verify=False)
 
 
-def purge_from_cdn(url, verify=True, max_retries=10, pause=3):
+def purge_from_cdn(url, verify=True, max_retries=10, pause=3,
+        notify_failures=True):
     """Purge the url from the CDN.
 
     Supports optional verification/retrying due to inconsistency.
@@ -1521,10 +1522,11 @@ def purge_from_cdn(url, verify=True, max_retries=10, pause=3):
         g.cdn_provider.purge_content(url)
         try_count += 1
 
-    hooks.get_hook("cdn_purge.failed").call(url=url)
+    if notify_failures:
+        hooks.get_hook("cdn_purge.failed").call(url=url)
 
 
-def purge_image(url):
+def purge_image(url, notify_failures=True):
     parsed_url = UrlParser(url)
 
     # imgix hosted image (previews)
@@ -1561,10 +1563,10 @@ def purge_image(url):
     else:
         g.media_provider.make_inaccessible(url)
 
-    purge_from_cdn(url)
+    purge_from_cdn(url, notify_failures=notify_failures)
 
 
-def purge_associated_images(link):
+def purge_associated_images(link, notify_failures=True):
     thumbnail_url = getattr(link, 'thumbnail_url', None)
     preview_url = None
     has_preview = (
@@ -1576,10 +1578,10 @@ def purge_associated_images(link):
         preview_url = link.preview_object['url']
 
     if getattr(link, 'image_upload', False):
-        purge_image(link.url)
+        purge_image(link.url, notify_failures=notify_failures)
 
     if thumbnail_url:
-        purge_image(thumbnail_url)
+        purge_image(thumbnail_url, notify_failures=notify_failures)
 
     if preview_url:
         purge_imgix_images(link.preview_object, purge_nsfw=link.over_18)
