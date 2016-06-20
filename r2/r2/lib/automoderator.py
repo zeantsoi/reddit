@@ -51,6 +51,7 @@ from r2.lib.db import queries
 from r2.lib.errors import RedditError
 from r2.lib.filters import _force_unicode
 from r2.lib.menus import CommentSortMenu
+from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.utils import (
     SimpleSillyStub,
     TimeoutFunction,
@@ -1442,38 +1443,16 @@ class Rule(object):
             target.perform_actions(target_item, data)
 
         if self.comment:
-            comment = self.build_message(self.comment, item, data, disclaimer=True)
-
-            # TODO: shouldn't have to do all this manually
-            if isinstance(item, Comment):
-                link = data["link"]
-                parent_comment = item
-            else:
-                link = item
-                parent_comment = None
-            new_comment, inbox_rel = Comment._new(
-                ACCOUNT, link, parent_comment, comment, None)
-            new_comment.distinguished = "yes"
-            new_comment.sendreplies = False
-            new_comment._commit()
-
-            # If the comment isn't going to be put into the user's inbox
-            # due to them having sendreplies disabled, force it. For a normal
-            # mod, distinguishing the comment would do this, but it doesn't
-            # happen here since we're setting .distinguished directly.
-            if isinstance(item, Link) and not inbox_rel:
-                inbox_rel = Inbox._add(data["author"], new_comment, "selfreply")
-
-            queries.new_comment(new_comment, inbox_rel)
-
-            if self.comment_stickied:
-                try:
-                    link.set_sticky_comment(new_comment, set_by=ACCOUNT)
-                except RedditError:
-                    # This comment isn't valid to set to sticky, ignore
-                    pass
-
-            g.stats.simple_event("automoderator.comment")
+            # There are ways that users can make bots trigger automod rules.
+            # Add ratelimit by subreddit for posting comments, limit to
+            # 60 comments / min (limit < 60)
+            rl = SimpleRateLimit(
+                name="automod_comment_count:%s" % data["subreddit"].name,
+                seconds=60,
+                limit=60,
+            )
+            if rl.record_and_check():
+                self.post_comment(item, data)
 
         if self.modmail:
             message = self.build_message(self.modmail, item, data, permalink=True)
@@ -1516,6 +1495,41 @@ class Rule(object):
         message = VMarkdown('').run(message)
 
         return message[:10000]
+
+    def post_comment(self, item, data):
+        """Post comment based on Rule, while not hit the comment Ratelimit"""
+        comment = self.build_message(self.comment, item, data, disclaimer=True)
+
+        # TODO: shouldn't have to do all this manually
+        if isinstance(item, Comment):
+            link = data["link"]
+            parent_comment = item
+        else:
+            link = item
+            parent_comment = None
+        new_comment, inbox_rel = Comment._new(
+            ACCOUNT, link, parent_comment, comment, None)
+        new_comment.distinguished = "yes"
+        new_comment.sendreplies = False
+        new_comment._commit()
+
+        # If the comment isn't going to be put into the user's inbox
+        # due to them having sendreplies disabled, force it. For a normal
+        # mod, distinguishing the comment would do this, but it doesn't
+        # happen here since we're setting .distinguished directly.
+        if isinstance(item, Link) and not inbox_rel:
+            inbox_rel = Inbox._add(data["author"], new_comment, "selfreply")
+
+        queries.new_comment(new_comment, inbox_rel)
+
+        if self.comment_stickied:
+            try:
+                link.set_sticky_comment(new_comment, set_by=ACCOUNT)
+            except RedditError:
+                # This comment isn't valid to set to sticky, ignore
+                pass
+
+        g.stats.simple_event("automoderator.comment")
 
 
 def run():
