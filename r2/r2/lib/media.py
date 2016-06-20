@@ -735,6 +735,11 @@ def allowed_media_preview(url, preview_object):
     for allowed_domain in g.media_preview_domain_whitelist:
         if is_subdomain(p.hostname, allowed_domain):
             return True
+
+    if (feature.is_enabled('embed_all_images') and
+            feature.variant('embed_all_images') == 'test_group'):
+        return True
+
     return False
 
 
