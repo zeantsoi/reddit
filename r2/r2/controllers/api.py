@@ -3302,6 +3302,7 @@ class ApiController(RedditController):
                 Subreddit._by_domain(old_domain, _update = True)
                 Subreddit._by_domain(sr.domain, _update = True)
 
+            amqp.add_item('subreddit_text_edited', sr._fullname)
             sr.update_search_index()
             form.parent().set_text('.status', _("saved"))
 
