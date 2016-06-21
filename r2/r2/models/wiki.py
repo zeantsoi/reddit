@@ -540,7 +540,7 @@ class ImagesByWikiPage(tdb_cassandra.View):
 class DeletedImagesByWikiPage(tdb_cassandra.View):
     _value_type = 'json'
     _compare_with = TIME_UUID_TYPE
-    _ttl = timedelta(days=WIKI_RECENT_DAYS)
+    _ttl = timedelta(days=30)
     _use_db = True
 
     @classmethod
@@ -561,7 +561,7 @@ class DeletedImagesByWikiPage(tdb_cassandra.View):
         return partial[uuid]
 
     @classmethod
-    def get_recent(cls, sr, page_name, count=20):
+    def get_recent(cls, sr, page_name, count=100):
         rowkey = WikiPage.id_for(sr, page_name)
         q = tdb_cassandra.ColumnQuery(cls,
                                       (rowkey,),
