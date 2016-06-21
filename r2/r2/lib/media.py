@@ -147,7 +147,8 @@ def _square_image(img):
 def _strip_exif_data(image, image_file):
     """Remove exif data by saving the image."""
     image_file.seek(0)
-    image.save(image_file.name, optimize=True, format=image.format)
+    image.save(image_file.name, optimize=True, format=image.format,
+        icc_profile=image.info.get('icc_profile'))
 
 
 def _get_exif_tags(image):
