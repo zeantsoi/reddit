@@ -96,7 +96,11 @@
       <label class="form-group">
         <input id="url_link" class="nomargin" 
                type="radio" value="link" name="kind"
-               onclick="$('#text-field').hide(); $('#url-field').show()"
+               %if c.user_is_sponsor:
+                onclick="$('#url-field').show()"
+               %else:
+                onclick="$('#text-field').hide(); $('#url-field').show()"
+               %endif
                ${"checked='checked'" if is_link else ""}>
         <div class="label-group">
           <span class="label">${_("link")}</span>
@@ -106,7 +110,11 @@
       <label class="form-group">
         <input id="self_link" class="nomargin" 
                type="radio" value="self" name="kind"
-               onclick="$('#url-field').hide(); $('#text-field').show()"
+               %if c.user_is_sponsor:
+                onclick="$('#url-field').hide()"
+               %else:
+                onclick="$('#url-field').hide(); $('#text-field').show()"
+               %endif
                ${"" if is_link else "checked='checked'"}>
         <div class="label-group">
           <span class="label">${_("text")}</span>
@@ -115,15 +123,10 @@
       </label>
     </div>
   </%utils:line_field>
-  <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded text-field"
-                     style="${('' if not is_link else 'display:none')}">
-    ${UserText(None, text=text, textarea_class='rounded', have_form=False,
-               creating=True)}
-  </%utils:line_field>
   <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded url-field"
                      style="${('' if is_link else 'display:none')}">
     <input id="url" name="url" type="text" 
-           value="${(url if is_link else '') if link else ""}"
+           value="${url if is_link or (c.user_is_sponsor and c.url) else ''}"
            class="rounded">
     ${error_field("NO_URL", "url", "div")}
     ${error_field("BAD_URL", "url", "div")}
@@ -146,6 +149,12 @@
         <p>${_("Choose a different domain name to display on the site (the small grey text next to a link)")}</p>
       </div>
     %endif
+  </%utils:line_field>
+  <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded text-field"
+    style="${('' if (not is_link or c.user_is_sponsor) else 'display:none')}"
+  >
+    ${UserText(None, text=text, textarea_class='rounded', have_form=False,
+               creating=True)}
   </%utils:line_field>
   %if tracker_access:
     <%utils:line_field title="${_('impression tracking url')}" css_class="rounded text-field">

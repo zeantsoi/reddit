@@ -354,6 +354,50 @@ class TestSubmit(unittest.TestCase):
 
         self.assertEqual(self.links_by_url_add_link.call_count, 1)
 
-        l.set_content(True, "change to self post")
+        l.set_content(True, selftext="change to self post")
 
         self.assertEqual(self.links_by_url_remove_link.call_count, 1)
+
+    def test_promo_link_url_and_content(self):
+        url = "http://test.com/1"
+        selftext = "hello world"
+        l = LinkMock._submit(
+            is_self=False,
+            content=url,
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+        l.promoted = True
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 1)
+
+        l.set_content(False, url=url, selftext=selftext)
+
+        self.assertEqual(l.selftext, selftext)
+        self.assertEqual(l.url, url)
+        self.assertEqual(self.links_by_url_add_link.call_count, 2)
+
+    def test_promo_self_url_and_content(self):
+        url = "http://test.com/1"
+        selftext = "hello world"
+        subreddit_stub = u"/comments/%s/test_post/"
+        l = LinkMock._submit(
+            is_self=True,
+            content=url,
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+        l.promoted = True
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 0)
+
+        l.set_content(True, url=url, selftext=selftext)
+
+        self.assertEqual(l.selftext, selftext)
+        self.assertEqual(l.url, subreddit_stub % l._id36)
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 0)

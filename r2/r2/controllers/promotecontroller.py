@@ -1086,11 +1086,14 @@ class PromoteApiController(ApiController):
             l = promote.new_promotion(
                 is_self=is_self,
                 title=title,
-                content=(selftext if is_self else url),
+                url=url,
+                selftext=selftext,
                 author=user,
                 ip=request.ip,
             )
-
+            # enable url and selftext to coexist
+            if c.user_is_sponsor:
+                l.set_content(is_self, url, selftext)
             # manage flights in adzerk
             if promoted_externally:
                 promote.update_promote_status(l, PROMOTE_STATUS.external)
@@ -1105,24 +1108,23 @@ class PromoteApiController(ApiController):
             # type changing
             if is_self != l.is_self:
                 changed["is_self"] = (l.is_self, is_self)
-                prev_selftext = l.selftext
-                prev_url = l.url
 
-                l.set_content(is_self, selftext if is_self else url)
+            # url changing
+            if url and url != l.url:
+                changed["url"] = (l.url, url)
 
-                if l.is_self:
-                    changed["selftext"] = (prev_selftext, l.selftext)
-                else:
-                    changed["url"] = (prev_url, l.url)
+            # selftext changing
+            if selftext != l.selftext:
+                changed["selftext"] = (l.selftext, selftext)
 
-            else:
-                if is_link and url and url != l.url:
-                    changed["url"] = (l.url, url)
-                    l.url = url
+            # only sponsors could have posts with selftext and url
+            if url and selftext and not c.user_is_sponsor:
+                c.errors.add(errors.SPONSOR_REQUIRED, field="kind-selector")
+                form.set_error(errors.SPONSOR_REQUIRED, "kind-selector")
+                return
 
-                if is_self and selftext != l.selftext:
-                    changed["selftext"] = (l.selftext, selftext)
-                    l.selftext = selftext
+            # sets is_self, url, and selftext attributes
+            l.set_content(is_self, url, selftext)
 
             if c.user_is_sponsor:
                 if (form.has_errors("media_url", errors.BAD_URL) or

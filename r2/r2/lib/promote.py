@@ -402,7 +402,8 @@ def _set_promote_menu_preference(author):
         author.pref_show_promote = True
         author._commit()
 
-def new_promotion(is_self, title, content, author, ip):
+
+def new_promotion(is_self, title, url, selftext, author, ip):
     """
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
@@ -411,12 +412,11 @@ def new_promotion(is_self, title, content, author, ip):
     l = Link._submit(
         is_self=is_self,
         title=title,
-        content=content,
+        content=(selftext if is_self else url),
         author=author,
         sr=sr,
         ip=ip,
     )
-
     l.promoted = True
     l.disable_comments = False
     l.sendreplies = True

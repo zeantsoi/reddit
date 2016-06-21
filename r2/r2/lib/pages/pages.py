@@ -5215,8 +5215,8 @@ def make_link_child(item, show_media_preview=False):
                                     expand=expand,
                                     position_inline=position_inline)
 
-    # if the item is_self, add a selftext child
-    elif item.is_self:
+    # if the item is_self or if it's a promoted link, add a selftext child
+    elif item.is_self or (item.selftext and item.promoted):
         if not item.selftext: item.selftext = u''
 
         expand = expandable

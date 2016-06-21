@@ -334,26 +334,23 @@ class Link(Thing, Printable):
 
         return l
 
-    def set_content(self, is_self, content):
+    def set_content(self, is_self, url=None, selftext=""):
         if not self.promoted:
             raise ValueError("set_content is only supported for promoted links")
 
         was_self = self.is_self
         self.is_self = is_self
 
+        if not was_self:
+            LinksByUrlAndSubreddit.remove_link(self)
+
         if is_self:
-            if not was_self:
-                LinksByUrlAndSubreddit.remove_link(self)
-
             self.url = self.make_permalink_slow()
-            self.selftext = content
         else:
-            if not was_self:
-                LinksByUrlAndSubreddit.remove_link(self)
-
-            self.url = content
-            self.selftext = self._defaults.get("selftext", "")
+            self.url = url
             LinksByUrlAndSubreddit.add_link(self)
+
+        self.selftext = selftext or self._defaults.get("selftext", "")
 
         self._commit()
 
