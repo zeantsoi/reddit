@@ -2215,6 +2215,7 @@ class CommentPane(Templated):
             self.max_depth,
             self.edits_visible,
             feature.is_enabled("affiliate_links"),
+            c.user.pref_affiliate_links,
         )
         key = "pane:%s" % _id
         return key
@@ -2299,12 +2300,16 @@ class CommentPane(Templated):
                 # spoof an unlogged in user
                 user = c.user
                 logged_in = c.user_is_loggedin
+                pref_affiliate_links = (feature.is_enabled("affiliate_links")
+                                        and c.user.pref_affiliate_links)
+
                 try:
                     c.user = UnloggedUser([c.lang])
                     # Preserve the viewing user's flair preferences.
                     c.user.pref_show_flair = user.pref_show_flair
 
                     c.user_is_loggedin = False
+                    c.user.pref_affiliate_links = pref_affiliate_links
 
                     # make the comment listing. if the user is loggedin we
                     # already made the builder retrieve/build the comment tree
