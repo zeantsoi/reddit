@@ -1455,7 +1455,7 @@ def process_image_upload():
     amqp.consume_items('image_upload_q', process_image)
 
 
-def purge_imgix_images(preview_object, purge_nsfw=False):
+def purge_imgix_images(preview_object, purge_nsfw=False, notify_failures=True):
     """Purge the image from imgix and copies on the CDN.
 
     This is quite ugly overall but seems to be necessary since the CDN
@@ -1466,7 +1466,7 @@ def purge_imgix_images(preview_object, purge_nsfw=False):
     # First, purge the desktop preview url from imgix and cdn
     static_preview_url = g.image_resizing_provider.resize_image(
             preview_object, preview_object['width'])
-    purge_image(static_preview_url)
+    purge_image(static_preview_url, notify_failures=notify_failures)
 
     # Second, purge all permutations of the image available through the API
     _purge_preview_links(preview_object)
@@ -1585,4 +1585,5 @@ def purge_associated_images(link, notify_failures=True):
         purge_image(thumbnail_url, notify_failures=notify_failures)
 
     if preview_url:
-        purge_imgix_images(link.preview_object, purge_nsfw=link.over_18)
+        purge_imgix_images(link.preview_object, purge_nsfw=link.over_18,
+            notify_failures=notify_failures)
