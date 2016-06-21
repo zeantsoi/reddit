@@ -49,6 +49,10 @@ from r2.models import (
 
 MAX_TIMESTAMP_DEVIATION = 600
 ZENDESK_PREFIX = "##- Please type your reply above this line -##"
+# First portion of the signature Zendesk adds to every message. The entire
+# signature is very long, this should be enough to ID it.
+ZENDESK_SIGNATURE = '\r\n\r\n\r\n--------------------------------\r\n'\
+                    'This email is a service from Reddit Support.'
 
 
 def validate_mailgun_webhook(timestamp, token, signature):
@@ -89,6 +93,7 @@ class MailgunWebhookController(RedditController):
         subject = request_body["subject"]
         body_plain = request_body["body-plain"]
         stripped_text = request_body["stripped-text"]
+        stripped_signature = request_body["stripped-signature"]
         timestamp = request_body["timestamp"]
         token = request_body["token"]
         signature = request_body["signature"]
@@ -107,14 +112,7 @@ class MailgunWebhookController(RedditController):
         parent = Message._byID36(message_id36, data=True)
         to = Account._byID(parent.author_id, data=True)
         sr = Subreddit._byID(parent.sr_id, data=True)
-
-        if stripped_text.startswith(ZENDESK_PREFIX):
-            stripped_text = stripped_text[len(ZENDESK_PREFIX):].lstrip()
-
-        if len(stripped_text) > 10000:
-            body = stripped_text[:10000] + "\n\n--snipped--"
-        else:
-            body = stripped_text
+        body = self.get_snipped_body(stripped_text, stripped_signature)
 
         try:
             markdown_souptest(body)
@@ -161,3 +159,21 @@ class MailgunWebhookController(RedditController):
         queries.new_message(message, inbox_rel)
         g.stats.simple_event("mailgun.incoming.success")
         g.stats.simple_event("modmail_email.incoming_email")
+
+    def get_snipped_body(self, body, signature):
+        if body.startswith(ZENDESK_PREFIX):
+            body = body[len(ZENDESK_PREFIX):].lstrip()
+
+        # Mailgun sometimes strips text as if it's a signature when it's
+        # not. This adds the signature back to the message, but removes the
+        # signature Zendesk adds and anything after.
+        signature, _, _ = signature.partition(ZENDESK_SIGNATURE)
+        if signature:
+            body += '\n{}'.format(signature)
+
+        if len(body) > 10000:
+            snipped_body = body[:10000] + "\n\n--snipped--"
+        else:
+            snipped_body = body
+
+        return snipped_body
