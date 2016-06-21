@@ -162,7 +162,7 @@ class LoginRegBase(object):
             res = self.do_register()
             self.assert_failure(res, "USERNAME_TAKEN")
 
-    def test_captcha_blocking(self):
+    def test_captcha_register_blocking(self):
         with contextlib.nested(
             self.mock_register(),
             self.failed_captcha()
@@ -170,10 +170,26 @@ class LoginRegBase(object):
             res = self.do_register()
             self.assert_failure(res, "BAD_CAPTCHA")
 
-    def test_captcha_disabling(self):
+    def test_captcha_register_disabling(self):
         with contextlib.nested(
             self.mock_register(),
             self.disabled_captcha()
         ):
             res = self.do_register()
+            self.assert_success(res)
+
+    def test_captcha_login_blocking(self):
+        with contextlib.nested(
+            self.mock_login(),
+            self.failed_captcha()
+        ):
+            res = self.do_login()
+            self.assert_failure(res, "BAD_CAPTCHA")
+
+    def test_captcha_login_disabling(self):
+        with contextlib.nested(
+            self.mock_login(),
+            self.disabled_captcha()
+        ):
+            res = self.do_login()
             self.assert_success(res)

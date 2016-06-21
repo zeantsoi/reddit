@@ -339,7 +339,9 @@ class ApiController(RedditController):
 
         if responder.has_errors('email', errors.BAD_EMAIL):
             return
-        elif not valid_provider_captcha(responder, force_check=True):
+        elif not valid_provider_captcha(
+            responder, "newsletter", force_check=True
+        ):
             return
         try:
             newsletter.add_subscriber(email, source=source)
@@ -352,13 +354,13 @@ class ApiController(RedditController):
             abort(500)
 
     @json_validate()
-    def GET_requires_captcha(self, responder):
+    def GET_requires_captcha(self, responder, location=None):
         """
         Check whether CAPTCHAs are needed for API methods that define the
         "captcha" and "iden" parameters.
         """
-        return {"required": bool(need_provider_captcha())}
-        
+        return {"required": bool(need_provider_captcha(location))}
+
     @allow_oauth2_access
     @json_validate()
     @api_doc(api_section.captcha)

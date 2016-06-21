@@ -26,8 +26,6 @@
    import random
 %>
 
-<%namespace file="utils.html" import="error_field"/>
-
 <%
   op = "login-main"
   base = g.https_endpoint
@@ -39,7 +37,9 @@
   <input type="hidden" name="op" value="${op}" />
   <input name="user" placeholder="${_('username')}" type="text" maxlength="20" tabindex="1"/>
   <input name="passwd" placeholder="${_('password')}" type="password" tabindex="1"/>
-
+  %if g.secrets.get('recaptcha_public_key'):
+    <div class="g-recaptcha" data-sitekey="${g.secrets['recaptcha_public_key']}"></div>
+  %endif
   <div class="status"></div>
 
   <div id="remember-me">

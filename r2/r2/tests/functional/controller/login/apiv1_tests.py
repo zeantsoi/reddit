@@ -126,7 +126,8 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
         )
         self.assert_403_response(res, "signing.body.invalid.invalid_format")
 
-    def test_captcha_blocking(self):
+    def test_captcha_register_blocking(self):
+        # when the request is signed, the captcha shouldn't have any teeth
         with contextlib.nested(
             self.mock_register(),
             self.failed_captcha()
@@ -147,5 +148,14 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             self.epoch = time.time() - 86400 * 30
             self.platform = "android"
             self.version = 1
+            res = self.do_login()
+            self.assert_success(res)
+
+    def test_captcha_login_blocking(self):
+        # when the request is signed, the captcha shouldn't have any teeth
+        with contextlib.nested(
+            self.mock_login(),
+            self.failed_captcha()
+        ):
             res = self.do_login()
             self.assert_success(res)

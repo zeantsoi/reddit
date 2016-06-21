@@ -523,6 +523,9 @@ r.ui.Form = function(el) {
         });
 }
 r.ui.Form.prototype = $.extend(new r.ui.Base(), {
+    captchaLoaded: false,
+    captchaChecked: false,
+
     showStatus: function(msg, isError) {
         this.$el.find('.status, .c-alert')
             .show()
@@ -595,7 +598,26 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
         var message = r._('an error occurred (status: %(status)s)')
                          .format({status: xhr.status})
         this.showStatus(message, true)
-    }
+    },
+
+    loadCaptcha: function(location) {
+        var check_url = "/api/requires_captcha";
+        if (location) {
+            check_url += "/" + location;
+        }
+        var $form = this.$el;
+        if (!this.captchaChecked) {
+            this.captchaChecked = true;
+            $.getJSON(check_url + ".json", function(res) {
+                if (res.required) {
+                    $form.recaptcha();
+                    this.captchaLoaded = true;
+                }
+            }.bind(this));
+        } else if (this.captchaLoaded) {
+            $form.recaptcha();
+        }
+    },
 })
 
 r.ui.Bubble = Backbone.View.extend({

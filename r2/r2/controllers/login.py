@@ -41,13 +41,18 @@ from r2.models.account import register, AccountExists
 def handle_login(
     controller, form, responder, user, rem=None, signature=None, **kwargs
 ):
-    def _event(error):
+    # check captcha before login (if any) since its answer might
+    # change once c.user is set.
+    captcha_shown = not signature and need_provider_captcha("login")
+
+    def _event(error, captcha_shown=captcha_shown):
         g.events.login_event(
             'login_attempt',
             error_msg=error,
             user_name=request.urlvars.get('url_user'),
             remember_me=rem,
             signature=signature,
+            captcha_shown=captcha_shown,
             request=request,
             context=c)
 
@@ -83,6 +88,11 @@ def handle_login(
     elif responder.has_errors("passwd", errors.WRONG_PASSWORD):
         _event(error='WRONG_PASSWORD')
 
+    # last but not least, we have to check the captcha
+    elif (not signature and not g.disable_captcha and
+          not valid_provider_captcha(responder, "login")):
+        _event(error='BAD_CAPTCHA')
+
     else:
         controller._login(responder, user, rem)
         _event(error=None)
@@ -93,10 +103,11 @@ def handle_register(
     password, rem=None, newsletter_subscribe=False,
     sponsor=False, signature=None, **kwargs
 ):
-
-    # check captcha before login (if any) since its answer might
+    # check captcha before register (if any) since its answer might
     # change once c.user is set.
-    def _event(error, captcha_shown=not signature and need_provider_captcha()):
+    captcha_shown = not signature and need_provider_captcha("register")
+
+    def _event(error, captcha_shown=captcha_shown):
         g.events.login_event(
             'register_attempt',
             error_msg=error,
@@ -157,7 +168,7 @@ def handle_register(
 
     # last but not least, we have to check the captcha
     elif (not signature and not g.disable_captcha and
-          not valid_provider_captcha(responder)):
+          not valid_provider_captcha(responder, "register")):
         _event(error='BAD_CAPTCHA')
 
     else:

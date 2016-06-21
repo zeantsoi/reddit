@@ -222,7 +222,10 @@ r.login.ui = {
 
 r.ui.LoginForm = function() {
     r.ui.Form.apply(this, arguments)
+    var $el = this.$el.find('[name="passwd"]');
+    $el.one('focus', $.proxy(this, 'loadCaptcha', 'login'));
 }
+
 r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
     showErrors: function(errors) {
         r.ui.Form.prototype.showErrors.call(this, errors)
@@ -303,7 +306,7 @@ r.ui.RegisterForm = function() {
         this.$user.on('keyup', $.proxy(this, 'usernameChanged'));
     }
 
-    this.$user.one('focus', $.proxy(this, 'loadCaptcha'))
+    this.$user.one('focus', $.proxy(this, 'loadCaptcha', 'register'));
 
     this.$el.find('[name="passwd2"]').on('keyup', $.proxy(this, 'checkPasswordMatch'));
     this.$el.find('[name="passwd"][data-validate-url]')
@@ -341,8 +344,6 @@ r.ui.RegisterForm = function() {
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     maxName: 0,
-    captchaLoaded: false,
-    captchaChecked: false,
 
     usernameChanged: function() {
         var name = this.$user.val()
@@ -395,21 +396,6 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
             })
         } else {
             this.$el.removeClass('name-available name-taken')
-        }
-    },
-
-    loadCaptcha: function() {
-        var $form = this.$el;
-        if (!this.captchaChecked) {
-            this.captchaChecked = true;
-            $.getJSON("/api/requires_captcha.json", function(res) {
-                if (res.required) {
-                    $form.recaptcha();
-                    this.captchaLoaded = true;
-                }
-            }.bind(this));
-        } else if (this.captchaLoaded) {
-            $form.recaptcha();
         }
     },
 

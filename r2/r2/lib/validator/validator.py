@@ -3381,7 +3381,7 @@ class VSigned(Validator):
         return signature
 
 
-def need_provider_captcha():
+def need_provider_captcha(location=None):
     # don't show captchas to registered clients (for now)
 
     # Temporary: Disable captcha for mweb, which uses HTTP Basic to
@@ -3400,16 +3400,26 @@ def need_provider_captcha():
     ):
         return False
 
-    return not c.oauth2_client
+    # oauth clients have other hoops to hop through.  No captcha needed.
+    if c.oauth2_client:
+        return False
+
+    # login captcha is an experiment
+    if location == "login":
+        return feature.is_enabled("login_captcha")
+
+    # all other "optional" captchas are actually mandatory (e.g., register)
+    return True
 
 
 def valid_provider_captcha(
     responder,
+    location,
     field='g-recaptcha-response',
     error=errors.BAD_CAPTCHA,
     force_check=False,
 ):
-    if force_check or need_provider_captcha():
+    if force_check or need_provider_captcha(location):
         check_captcha = VProviderCaptcha(field, default='')
         check_captcha({})
         return not responder.has_errors(field, error)

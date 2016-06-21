@@ -433,6 +433,8 @@ def make_map(config):
     mc('/api/:type', controller='api',
        requirements=dict(type='wikibannednote|bannednote|mutednote'),
        action='relnote')
+    mc('/api/requires_captcha/:location',
+       controller='api', action='requires_captcha')
 
     # Route /api/multi here to prioritize it over the /api/:action rule
     mc("/api/multi", controller="multiapi", action="multi",

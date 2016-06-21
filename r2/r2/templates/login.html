@@ -137,9 +137,10 @@
             <a href="/newsletter" target="_blank">${_('learn more')}</a>
           </label>
         </div>
-        %if g.secrets.get('recaptcha_public_key'):
-          <div class="c-form-group g-recaptcha" data-sitekey="${g.secrets['recaptcha_public_key']}"></div>
-        %endif
+      %endif
+      %if g.secrets.get('recaptcha_public_key'):
+        <div class="c-form-group g-recaptcha" data-sitekey="${g.secrets['recaptcha_public_key']}"></div>
+        ${error_field("BAD_CAPTCHA", "g-recaptcha-response", kind="span")}
       %endif
       <div class="c-clearfix c-submit-group">
         <span class="c-form-throbber"></span>
@@ -212,12 +213,6 @@
             <input name="passwd2" id="passwd2_${op}" 
                    type="password" tabindex="${tabindex}"/>
             ${error_field("BAD_PASSWORD_MATCH", "passwd2", kind="span")}
-          </li>
-          <li>
-            %if not g.disable_captcha:
-            <% iden = hasattr(thing, "captcha") and thing.captcha.iden or '' %>
-            ${captchagen(iden, tabulate=True, label=False, size=30, tabindex=tabindex)}
-            %endif
           </li>
         %endif
         <li>
