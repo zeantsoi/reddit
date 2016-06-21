@@ -294,7 +294,7 @@ class Link(Thing, Printable):
             comment_tree_version=cls._choose_comment_tree_version(),
             is_self=is_self,
             over_18=over_18,
-            affiliatize_link=author.allow_affiliates_replacing,
+            affiliatize_link=author.pref_affiliate_links,
             image_upload=image_upload,
         )
 
@@ -859,7 +859,8 @@ class Link(Thing, Printable):
                 if feature.is_enabled('affiliate_links') \
                         and item.post_hint == 'link' \
                         and domain(item.domain) in g.merchant_affiliate_domains:
-                    if item.affiliatize_link and not user.allow_affiliates_replacing:
+                    if (item.affiliatize_link and
+                            not user.pref_affiliate_links):
                         item.affiliatize_link = False
                 else:
                     item.affiliatize_link = False
@@ -1439,14 +1440,14 @@ class Comment(Thing, Printable):
             spam = True
 
         comment = Comment(_ups=1,
-                    body=body,
-                    link_id=link._id,
-                    sr_id=link.sr_id,
-                    author_id=author._id,
-                    ip=ip,
-                    _spam=spam,
-                    affiliatize_links=author.allow_affiliates_replacing,
-                    **kw)
+                          body=body,
+                          link_id=link._id,
+                          sr_id=link.sr_id,
+                          author_id=author._id,
+                          ip=ip,
+                          _spam=spam,
+                          affiliatize_links=author.pref_affiliate_links,
+                          **kw)
 
         # these props aren't relations
         if parent:
@@ -1964,8 +1965,8 @@ class Comment(Thing, Printable):
                 item.inbox_replies_enabled = item.sendreplies
 
             affiliate = feature.is_enabled('affiliate_links') \
-                    and item.affiliatize_links \
-                    and user.allow_affiliates_replacing
+                and item.affiliatize_links \
+                and user.pref_affiliate_links
             item.affiliate = affiliate
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText

@@ -701,17 +701,6 @@ class Account(Thing):
         days_left = (expires - datetime.now(g.tz)).days + 1
         return max(days_left, 1)
 
-    @property
-    def allow_affiliates_replacing(self):
-        """Replace affiliate links for logged-in.
-
-        Don't replace for users with the pref turned off.
-        """
-        if not c.user_is_loggedin:
-            return True
-
-        return self.pref_affiliate_links
-
     def incr_admin_takedown_strikes(self, amt=1):
         return self._incr('admin_takedown_strikes', amt)
 
