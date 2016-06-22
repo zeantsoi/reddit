@@ -304,6 +304,7 @@ class Reddit(Templated):
         self.mobilewebredirectbar = None
         self.show_timeout_modal = False
         self.show_reset_password_modal = False
+        self.has_new_modmail_srs = False
 
         # Things displayed on the page (for ad targeting)
         if displayed_things is not None:
@@ -489,6 +490,12 @@ class Reddit(Templated):
                 if c.can_apply_styles and c.allow_styles and sr.header:
                     self.default_theme_sr = sr
 
+        # set whether or not to display the new modmail icon
+        if c.user_is_loggedin:
+            self.has_new_modmail_srs = any(
+                feature.is_enabled('new_modmail', subreddit=modded_sr.name)
+                for modded_sr in c.user.moderated_subreddits('mail')
+            )
 
     @staticmethod
     def get_subreddit_stylesheet_url(sr):
