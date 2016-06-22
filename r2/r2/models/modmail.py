@@ -23,19 +23,20 @@
 from datetime import datetime
 
 from pylons import app_globals as g
-from sqlalchemy import and_, case, func, literal_column, sql
+from sqlalchemy import and_, case, exists, func, literal_column, sql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy.sql import label
+from sqlalchemy.sql.expression import label, literal
 from sqlalchemy.types import Boolean, DateTime, Integer, String, Text
 
 from r2.lib.db.thing import NotFound
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Enum, tup
+from r2.models.account import Account
 from r2.models.subreddit import Subreddit
 
 ENGINE = g.dbm.get_engine("modmail")
@@ -174,7 +175,10 @@ class ModmailConversation(Base):
         Session.add(self)
         Session.commit()
 
-        self.add_message(author, body, is_author_hidden=is_author_hidden)
+        self.add_message(author, body,
+                         is_author_hidden=is_author_hidden)
+
+        update_sr_mods_modmail_icon(owner)
 
         if participant_id:
             self.add_participant(participant_id)
@@ -407,6 +411,8 @@ class ModmailConversation(Base):
 
         Session.commit()
 
+        update_sr_mods_modmail_icon(sr)
+
         # create unread records for all except the author of
         # the newly created message
         self._create_unread_helper(
@@ -582,6 +588,38 @@ class ModmailConversation(Base):
         return result_dict
 
 
+def update_sr_mods_modmail_icon(sr):
+    """Helper method to set the modmail icon for mods with mail permissions
+    for the passed sr.
+
+    Method will lookup all moderators for the passed sr and query whether they
+    have unread conversations that exist. If the user has unreads the modmail
+    icon will be lit up, if they do not it will be disabled.
+
+    Args:
+    sr  -- Subreddit object to fetch mods with mail perms from
+    """
+
+    mods_with_perms = sr.moderators_with_perms()
+    modmail_user_ids = [mod_id for mod_id, perms in mods_with_perms.iteritems()
+                        if 'mail' in perms or 'all' in perms]
+
+    mod_accounts = Account._byID(modmail_user_ids, ignore_missing=True,
+                                 return_dict=False)
+
+    mail_exists_by_user = (ModmailConversationUnreadState
+                           .users_unreads_exist(mod_accounts))
+
+    for mod in mod_accounts:
+        set_modmail_icon(mod, bool(mail_exists_by_user.get(mod._id)))
+
+
+def set_modmail_icon(user, icon_status):
+    if user.new_modmail_exists != icon_status:
+        user.new_modmail_exists = icon_status
+        user._commit()
+
+
 def to_serializable_author(author, entity, current_user, is_hidden=False):
     if not author or author._deleted:
         return {
@@ -697,6 +735,8 @@ class ModmailConversationUnreadState(Base):
                 .delete(synchronize_session='fetch'))
         Session.commit()
 
+        set_modmail_icon(user, bool(cls.unreads_exist(user)))
+
     @classmethod
     def mark_unread(cls, user, ids):
         # Marking things unread takes a bit more effort.
@@ -714,6 +754,40 @@ class ModmailConversationUnreadState(Base):
                 conversation.mark_unread(user)
             except ValueError:
                 pass
+
+        set_modmail_icon(user, True)
+
+    @classmethod
+    def users_unreads_exist(cls, users):
+        """Accepts a collection of account objects and will return
+        a dict with account ids and true or false to signal the account
+        has unreads that exist.
+
+        output: { account_id: True|False }
+        """
+
+        user_ids = [user._id for user in tup(users)]
+        q = (Session.query(
+                        cls.account_id.label('account_id'),
+                        exists().where(cls.account_id.in_(user_ids)))
+                    .filter(cls.account_id.in_(user_ids))
+                    .group_by(cls.account_id))
+
+        results = dict(q.all())
+
+        return {user_id: results.get(user_id, False)
+                for user_id in user_ids}
+
+    @classmethod
+    def unreads_exist(cls, user):
+        """Returns True or False for the passed user if they have unreads
+        that exist or not"""
+
+        q = (Session.query(cls)
+                    .filter_by(account_id=user._id))
+
+        return (Session.query(literal(True)).filter(q.exists()).scalar()
+                is not None)
 
 
 class ModmailConversationParticipant(Base):

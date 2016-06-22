@@ -335,21 +335,35 @@ ul.flat-vert {text-align: left;}
   border-radius: 2px;
   display: inline-block;
 }
-#modmail {
+#modmail, #new_modmail {
     position: relative;
     top: -2px;
     display: inline-block;
     text-indent: -9999px;
     overflow: hidden;
-    width: 16px;
     height: 16px;
     margin-bottom: -6px;
 }
+
+#modmail {
+    width: 16px;
+}
+
+#new_modmail {
+    width: 13px;
+}
+
 #modmail.havemail {
     background-image: url(../modmail.png);  /* SPRITE */
 }
 #modmail.nohavemail {
     background-image: url(../modmailgray.png);  /* SPRITE */
+}
+#new_modmail.havemail {
+    background-image: url(../icon-modshield-green.png);  /* SPRITE */
+}
+#new_modmail.nohavemail {
+    background-image: url(../icon-modshield-gray.png);  /* SPRITE */
 }
 .user {color: gray;}
 .user .userkarma {
