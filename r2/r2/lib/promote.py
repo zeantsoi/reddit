@@ -824,7 +824,7 @@ def set_campaign_approval(link, campaign, is_approved,
         manually_reviewed=manually_reviewed,
     )
 
-    if not is_approved:
+    if not is_approved and manually_reviewed:
         emailer.reject_campaign(
             link,
             reason,

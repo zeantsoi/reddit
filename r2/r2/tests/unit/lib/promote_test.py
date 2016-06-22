@@ -10,6 +10,7 @@ from mock import (
 from pylons import app_globals as g
 
 from r2.lib.authorize.api import Transaction
+from r2.lib import emailer
 from r2.lib import promote
 from r2.lib.promote import (
     ads_enabled,
@@ -31,9 +32,11 @@ from r2.lib.promote import (
     is_accepted,
     is_pre_cpm,
     is_underdelivered,
+    new_campaign,
     promo_datetime_now,
     RefundProviderException,
     refund_campaign,
+    set_campaign_approval,
     srnames_from_site,
     InapplicableRefundException,
     get_utc_offset,
@@ -1419,3 +1422,109 @@ class TestCampaignReview(RedditTestCase):
         campaign.end_date = promo_datetime_now() + datetime.timedelta(days=1)
         promo_campaign._by_link.return_value = [campaign]
         self.assertTrue(all_campaigns_reviewed(link))
+
+
+class TestSetCampaignApproval(RedditTestCase):
+
+    def setUp(self):
+        self.set_campaign_approval = self.autopatch(promote,
+                                                    'set_campaign_approval')
+        self.is_accepted = self.autopatch(promote, 'is_accepted')
+        self.campaign = Mock()
+        self.campaign.is_house = True
+        self.PromoCampaign = self.autopatch(promote, 'PromoCampaign')
+        self.PromoCampaign.create.return_value = self.campaign
+        self.autopatch(promote, 'PromotionWeights')
+        self.autopatch(promote, 'PromotionLog')
+        self.autopatch(g.events, 'new_campaign_event')
+        self.link = Mock()
+
+    def test_with_new_campaign_and_accepted_link(self):
+        """Assert set_campaign_approval is called with correct arguments upon
+        new campaign creation.
+
+        """
+        self.is_accepted.return_value = True
+
+        # If new_campaign is not passed requires_review, set_campaign_approval
+        # should have is_approved set to False
+        new_campaign(self.link)
+        self.set_campaign_approval.assert_called_once_with(
+            self.link,
+            self.campaign,
+            False,
+        )
+
+        self.set_campaign_approval.reset_mock()
+
+        # If new_campaign is passed requires_review, set_campaign_approval
+        # should have is_approved set to True
+        new_campaign(self.link, requires_review=False)
+        self.set_campaign_approval.assert_called_once_with(
+            self.link,
+            self.campaign,
+            True,
+        )
+
+    def test_with_new_campaign_and_unaccepted_link(self):
+        """Assert set_campaign_approval is not called when link is not
+        approved.
+
+        """
+        self.is_accepted.return_value = False
+
+        new_campaign(self.link)
+        self.assertEqual(self.set_campaign_approval.call_count, 0)
+
+
+class TestRejectCampaignEmail(RedditTestCase):
+
+    def setUp(self):
+        self.is_accepted = self.autopatch(promote, 'is_accepted',
+                                          return_value=True)
+        self.link = Mock()
+        self.campaign = Mock()
+        self.autopatch(promote, 'edit_campaign')
+        self.autopatch(g.events, 'approve_campaign_event')
+        self.emailer_reject_campaign = self.autopatch(emailer,
+                                                      'reject_campaign')
+
+    def test_not_approved_and_not_manually_reviewed(self):
+        """Assert rejection email not sent if not reviewed and not approved."""
+        set_campaign_approval(
+            self.link,
+            self.campaign,
+            is_approved=False,
+            manually_reviewed=False,
+        )
+        self.assertFalse(self.emailer_reject_campaign.called)
+
+    def test_not_approved_and_manually_reviewed(self):
+        """Assert rejection email sent if reviewed and not approved."""
+        set_campaign_approval(
+            self.link,
+            self.campaign,
+            is_approved=False,
+            manually_reviewed=True,
+        )
+        self.assertTrue(self.emailer_reject_campaign.called)
+
+    def test_approved_and_not_manually_reviewed(self):
+        """Assert rejection email not sent if not reviewed and approved."""
+        set_campaign_approval(
+            self.link,
+            self.campaign,
+            is_approved=True,
+            manually_reviewed=False,
+        )
+        self.assertFalse(self.emailer_reject_campaign.called)
+
+    def test_approved_and_manually_reviewed(self):
+        """Assert rejection email not sent if reviewed and approved."""
+        set_campaign_approval(
+            self.link,
+            self.campaign,
+            is_approved=True,
+            manually_reviewed=True,
+        )
+        self.assertFalse(self.emailer_reject_campaign.called)
