@@ -51,7 +51,7 @@ MAX_TIMESTAMP_DEVIATION = 600
 ZENDESK_PREFIX = "##- Please type your reply above this line -##"
 # First portion of the signature Zendesk adds to every message. The entire
 # signature is very long, this should be enough to ID it.
-ZENDESK_SIGNATURE = '\r\n\r\n\r\n--------------------------------\r\n'\
+ZENDESK_SIGNATURE = '--------------------------------\r\n'\
                     'This email is a service from Reddit Support.'
 
 
@@ -168,6 +168,7 @@ class MailgunWebhookController(RedditController):
         # not. This adds the signature back to the message, but removes the
         # signature Zendesk adds and anything after.
         signature, _, _ = signature.partition(ZENDESK_SIGNATURE)
+        signature = signature.rstrip()
         if signature:
             body += '\n{}'.format(signature)
 
