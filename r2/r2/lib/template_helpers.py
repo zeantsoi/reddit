@@ -658,8 +658,6 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
         cssclass = 'admin'
         if not label:
             label = _('reddit admin, speaking officially')
-        if not link:
-            link = '/about/team'
     elif kind in ('X', '@'):
         priority = 5
         cssclass = 'gray'
