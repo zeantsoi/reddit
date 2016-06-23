@@ -36,25 +36,23 @@
       ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing", access_required=False, event_action="delete")}
     </li>
   %endif
-  %if thing.can_ban:
-    %if not getattr(thing.thing, "use_big_modbuttons", False):
-      %if not thing.show_spam:
-        <li>
-           ${ynbutton(_("spam"), _("spammed"), "remove", event_action='spam')}
-        </li>
-        <li>
-           ${ynbutton(_("remove"), _("removed"), "remove", hidden_data=dict(spam=False),
-             event_action='remove')}
-        </li>
-      %endif
+  %if thing.can_ban and not thing.use_big_modbuttons:
+    %if not thing.show_spam:
+      <li>
+         ${ynbutton(_("spam"), _("spammed"), "remove", event_action='spam')}
+      </li>
+      <li>
+         ${ynbutton(_("remove"), _("removed"), "remove", hidden_data=dict(spam=False),
+           event_action='remove')}
+      </li>
+    %endif
 
-      %if thing.show_approve:
-        <li>
-           ${self.state_button("approve", _("approve"),
-              "return change_state(this, 'approve');", _("approved"),
-              event_action="approve")}
-        </li>
-      %endif
+    %if thing.show_approve:
+      <li>
+         ${self.state_button("approve", _("approve"),
+            "return change_state(this, 'approve');", _("approved"),
+            event_action="approve")}
+      </li>
     %endif
   %endif
 
@@ -278,8 +276,9 @@
 </%def>
 
 <%def name="reports_button()">
-<li 
-    %if thing.mod_reports or thing.user_reports:
+%if thing.show_reports and not thing.show_spam:
+  <li
+    %if getattr(thing, "mod_reports", False) or getattr(thing, "user_reports", False):
       class="rounded reported-stamp stamp has-reasons access-required"
       title="${_('click to show report reasons')}"
     %else:
@@ -287,8 +286,9 @@
     %endif
     data-event-action="viewreports"
     >
-  ${strings.reports % thing.thing.reported}
-</li>
+    ${strings.reports % thing.thing.reported}
+  </li>
+%endif
 </%def>
 
 <%def name="report_reasons()">
@@ -443,9 +443,7 @@
     %endif
   %endif
 
-  %if thing.show_reports and not thing.show_spam:
-    ${reports_button()}
-  %endif
+  ${reports_button()}
 
   %if getattr(thing.thing, "use_big_modbuttons", False):
      ${big_modbuttons(thing.thing)}
@@ -534,9 +532,8 @@
       </li>
     %endif
 
-    %if thing.show_reports and not thing.show_spam:
-      ${reports_button()}
-    %endif
+    ${reports_button()}
+
 
     %if getattr(thing.thing, "use_big_modbuttons", False):
        ${big_modbuttons(thing.thing)}

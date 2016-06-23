@@ -76,11 +76,25 @@ class PrintableButtons(Styled):
                         show_rescrape=show_rescrape,
                         show_givegold=show_givegold,
                         **kw)
-        
+
+
 class BanButtons(PrintableButtons):
+    def __init__(self, thing, disable_big_modbuttons=False):
+        use_big_modbuttons = (
+            not disable_big_modbuttons and
+            getattr(thing.thing, "use_big_modbuttons", False)
+        )
+        PrintableButtons.__init__(
+            self, "banbuttons", thing,
+            use_big_modbuttons=use_big_modbuttons,
+        )
+
+
+class ReportsButton(PrintableButtons):
     def __init__(self, thing,
                  show_delete = False, show_report = True):
-        PrintableButtons.__init__(self, "banbuttons", thing)
+        PrintableButtons.__init__(self, "reports_button", thing)
+
 
 class LinkButtons(PrintableButtons):
     def __init__(self, thing, comments = True, delete = True, report = True):
