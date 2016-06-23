@@ -59,7 +59,10 @@ $(function() {
   });
 
   $("a.outbound").on('keyup', function(e) {
-    if (e.which === 13) {
+    // If ctrl (17) + click was used, reset the url
+    // when ctrl has been released, so that a user
+    // can copy the correct link without leaving
+    if (e.which === 13 || e.which === 17) {
       resetOriginalURL(this);
     }
     return true;
