@@ -714,6 +714,8 @@ module["reddit"] = LocalizedModule("reddit.js",
     "warn-on-unload.js",
     "relevancy-click-tracker.js",
     "topposts.js",
+    "websocket.js",
+    "user-websockets.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,
         "moderator_invite": ModeratorPermissionSet,
@@ -735,7 +737,6 @@ module["newlink-image-upload"] = Module("newlink-image-upload.js",
     _submodule["s3-image-uploader"],
     _submodule["file-input-actions"],
     "newlink-image-upload.js",
-    "websocket.js",
     filter_module=_submodule["reddit-main"],
 )
 

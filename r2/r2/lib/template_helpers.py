@@ -44,6 +44,7 @@ from r2.lib import (
     hooks,
     js,
     tracking,
+    websockets,
 )
 from r2.lib.static import static_mtime
 
@@ -274,6 +275,12 @@ def js_config(extra_config=None):
         events_collector_key = g.secrets['events_collector_js_key']
         events_collector_secret = g.secrets['events_collector_js_secret']
 
+    if logged:
+        user_websocket_url = websockets.make_url("/user/%s" % c.user._id36,
+            max_age=24 * 60 * 60)
+    else:
+        user_websocket_url = None
+
     config = {
         # is the user logged in?
         "logged": logged,
@@ -363,6 +370,7 @@ def js_config(extra_config=None):
             "events_collector_ad_serving_sample_rate", 0),
         "share_tracking_hmac": share_tracking_hmac,
         "share_tracking_ts": share_ts,
+        "user_websocket_url": user_websocket_url,
     }
 
     if feature.is_enabled("eu_cookie_policy"):
