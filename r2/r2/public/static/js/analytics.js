@@ -347,8 +347,8 @@ r.analytics = {
   stripAnalyticsParams: function() {
     var hasReplaceState = !!(window.history && window.history.replaceState);
     var params = $.url().param();
-    // su, sl, st are user_id, loid, and timestamp for tracking link shares
-    var stripParams = ['ref', 'ref_source', 'ref_campaign', 'su', 'sl', 'st', 'sh'];
+    // st is timestamp and sh is hash for tracking link shares
+    var stripParams = ['ref', 'ref_source', 'ref_campaign', 'st', 'sh'];
     // strip utm tags as well
     _.keys(params).forEach(function(paramKey){
       if (paramKey.indexOf('utm_') === 0){
@@ -374,21 +374,11 @@ r.analytics = {
 
   replaceShareParams: function() {
     var shareParams = {};
-    var loid = $.cookie('loid');
-    // Add user_id (base36) or loid, timestamp (base36), and
-    // a signing hash (last 8 digits) to track link sharing.
-    // If changing this method, also change it in the Link
-    // model since it's being used there as well.
-    if (r.config.user_id) {
-      shareParams["su"] = r.config.user_id.toString(36);
-    } else if (loid) {
-      shareParams["sl"] = loid;
-    }
+    // Add timestamp (base36) and a signing hash (last 8 digits)
+    // to track link sharing.
+    shareParams["st"] = r.config.share_tracking_ts.toString(36);
+    shareParams["sh"] = r.config.share_tracking_hmac.substring(0, 8);
 
-    if (shareParams) {
-      shareParams["st"] = r.config.share_tracking_ts.toString(36);
-      shareParams["sh"] = r.config.share_tracking_hmac.substring(0, 8);
-    }
     return shareParams;
   },
 
