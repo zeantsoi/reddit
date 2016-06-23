@@ -4709,7 +4709,9 @@ class DetailsPage(LinkInfoPage):
 
         if c.user_is_admin:
             from admin_pages import AdminDetailsBar
-            rb.append(AdminDetailsBar(from_page='details'))
+            # Move banning tool higher in the sidebar, index 1 position
+            # always holds LinkInfo
+            rb.insert(2, AdminDetailsBar(from_page='details'))
 
         return rb
 
