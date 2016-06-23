@@ -1325,7 +1325,8 @@ def charge_campaign(link, campaign, freebie=False, manual=False):
 
 def charge_pending(offset=1):
     for camp, link in get_accepted_promos(offset=offset):
-        charge_campaign(link, camp)
+        if camp.is_approved:
+            charge_campaign(link, camp)
 
 
 def live_campaigns_by_link(link, sr=None):
