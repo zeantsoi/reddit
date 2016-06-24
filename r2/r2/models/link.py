@@ -1849,6 +1849,7 @@ class Comment(Thing, Printable):
                              item.author != user and
                              not item.show_spam)))
 
+            item.show_author_data = not (item.deleted or item.author._deleted)
             item.have_form = not item.deleted
 
             extra_css = ''
@@ -2564,6 +2565,8 @@ class Message(Thing, Printable):
 
             if item.sr_id and item.to:
                 item.to_is_moderator = item.to._id in mods_by_srid[item.sr_id]
+
+            item.show_author_data = not (item._deleted or item.author._deleted)
 
         if to_set_unread:
             unread_by_class = defaultdict(list)

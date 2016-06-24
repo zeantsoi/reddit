@@ -52,7 +52,7 @@
     data-subreddit-fullname="${what.subreddit._fullname}"
   %endif
 
-  %if not getattr(what, 'deleted', False) and getattr(what, 'author', False):
+  %if getattr(what, 'show_author_data', False) and getattr(what, 'author', False):
     data-author="${what.author.name}"
     data-author-fullname="${what.author._fullname}"
   %endif
