@@ -162,7 +162,7 @@ def _get_exif_tags(image):
     except AttributeError:
         # Image format with no EXIF tags
         return None
-    except IndexError:
+    except (IndexError, SyntaxError):
         # Bad EXIF data
         return False
 
