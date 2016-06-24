@@ -3085,6 +3085,9 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
     @classmethod
     def live_orangereds_broadcast(self, to, obj):
+        if not feature.is_enabled("live_orangereds", user=to):
+            return
+
         if isinstance(obj, Comment):
             msg_type = "comment reply"
         else:

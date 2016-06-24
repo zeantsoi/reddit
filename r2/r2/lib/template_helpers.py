@@ -275,7 +275,7 @@ def js_config(extra_config=None):
         events_collector_key = g.secrets['events_collector_js_key']
         events_collector_secret = g.secrets['events_collector_js_secret']
 
-    if logged:
+    if logged and feature.is_enabled("live_orangereds"):
         user_websocket_url = websockets.make_url("/user/%s" % c.user._id36,
             max_age=24 * 60 * 60)
     else:

@@ -450,6 +450,9 @@ class Reddit(Templated):
                 self.show_timeout_modal = True
                 self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
+        self.live_orangereds = (c.user_is_loggedin and
+            feature.is_enabled('live_orangereds'))
+
         self.popup_panes = self.build_popup_panes()
         panes.append(self.popup_panes)
 
