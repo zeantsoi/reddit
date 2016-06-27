@@ -54,7 +54,9 @@ class PrintableButtons(Styled):
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
                         (is_link and approval_checkmark is None)) and not thing._deleted
-
+        if "use_big_modbuttons" not in kw:
+            kw["use_big_modbuttons"] = getattr(thing, "use_big_modbuttons",
+                                               False)
         Styled.__init__(self, style = style,
                         thing = thing,
                         fullname = thing._fullname,
@@ -76,11 +78,25 @@ class PrintableButtons(Styled):
                         show_rescrape=show_rescrape,
                         show_givegold=show_givegold,
                         **kw)
-        
+
+
 class BanButtons(PrintableButtons):
+    def __init__(self, thing, disable_big_modbuttons=False):
+        use_big_modbuttons = (
+            not disable_big_modbuttons and
+            getattr(thing.thing, "use_big_modbuttons", False)
+        )
+        PrintableButtons.__init__(
+            self, "banbuttons", thing,
+            use_big_modbuttons=use_big_modbuttons,
+        )
+
+
+class ReportsButton(PrintableButtons):
     def __init__(self, thing,
                  show_delete = False, show_report = True):
-        PrintableButtons.__init__(self, "banbuttons", thing)
+        PrintableButtons.__init__(self, "reports_button", thing)
+
 
 class LinkButtons(PrintableButtons):
     def __init__(self, thing, comments = True, delete = True, report = True):
