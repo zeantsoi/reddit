@@ -126,10 +126,19 @@ class ListingController(RedditController):
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
 
+        more_links_enabled = (feature.is_enabled('more_links') and
+                              feature.variant('more_links') == 'test_group')
+
+        combo_variant = feature.variant('listing_preview_combo')
+        combo_experiment_enabled = (
+            feature.is_enabled('listing_preview_combo') and
+            (combo_variant == 'listings_only' or
+                combo_variant == 'expandos_previews_listings'))
+
         # desktop only
-        if (not is_api() and 
-                feature.is_enabled('more_links') and
-                feature.variant('more_links') == 'test_group'):
+        if (not is_api() and
+                (more_links_enabled or
+                    combo_experiment_enabled)):
             num = 100
 
         self.num = num

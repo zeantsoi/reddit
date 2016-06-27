@@ -884,7 +884,14 @@ class Link(Thing, Printable):
                     feature.is_enabled('expando_redirect') and
                     feature.variant('expando_redirect') == 'test_group')
 
-                if (expando_redirect_enabled and
+                combo_variant = feature.variant('listing_preview_combo')
+                combo_experiment_enabled = (
+                    feature.is_enabled('listing_preview_combo') and
+                    (combo_variant == 'preview_redirect_only' or
+                        combo_variant == 'expandos_previews_listings'))
+
+                if ((expando_redirect_enabled or
+                        combo_experiment_enabled) and
                         meets_media_experiment_requirements):
                     item.href_url = item.permalink
                     item.thumbnail_url_experiment = 'javascript:void(0)'

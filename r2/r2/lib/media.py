@@ -740,6 +740,12 @@ def allowed_media_preview(url, preview_object):
             feature.variant('embed_all_images') == 'test_group'):
         return True
 
+    combo_variant = feature.variant('listing_preview_combo')
+    if (feature.is_enabled('listing_preview_combo') and
+            (combo_variant == 'all_images_only' or
+             combo_variant == 'expandos_previews_listings')):
+        return True
+
     return False
 
 
