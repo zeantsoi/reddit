@@ -26,7 +26,7 @@
    from r2.lib.filters import jssafe
    from r2.lib.template_helpers import add_sr, static
    from r2.lib.strings import strings
-   from r2.lib.pages.things import BanButtons, ReportsButton
+   from r2.lib.pages.things import BanButtons
    from r2.lib.utils import long_datetime
 %>
 
@@ -208,8 +208,7 @@ ${self.RenderPrintable()}
 </%def>
 
 <%def name="buttons(ban=True)">
-  ${BanButtons(thing, disable_big_modbuttons=True)}
-  ${ReportsButton(thing)}
+  ${BanButtons(thing)}
 </%def>
 
 <%def name="ParentDiv()">
