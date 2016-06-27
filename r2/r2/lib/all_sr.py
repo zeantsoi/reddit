@@ -55,8 +55,6 @@ def get_all_hot_ids():
     diversity."""
     # this is populated by write_all_hot_cache below from a separate job
     link_ids = g.gencache.get(CACHE_KEY, [], stale=True)
-    if not link_ids:
-        link_ids = g.cache.get("ALL_HOT", [], stale=True)
     return link_ids
 
 
