@@ -26,7 +26,7 @@ from pylons import app_globals as g
 
 from r2.lib.db.operators import not_
 
-CACHE_KEY = "ALL_HOT"
+CACHE_KEY = "all:hot"
 
 
 def get_all_query(sort, time):
@@ -54,7 +54,9 @@ def get_all_hot_ids():
     """ Return a list of Link fullnames sorted by Hot and reshuffled for
     diversity."""
     # this is populated by write_all_hot_cache below from a separate job
-    link_ids = g.cache.get(CACHE_KEY, [], stale=True)
+    link_ids = g.gencache.get(CACHE_KEY, [], stale=True)
+    if not link_ids:
+        link_ids = g.cache.get("ALL_HOT", [], stale=True)
     return link_ids
 
 
@@ -70,7 +72,7 @@ def write_all_hot_cache():
     top_links = resort_links(list(q))
     link_ids = [link._fullname for link in top_links]
 
-    g.cache.set(CACHE_KEY, link_ids)
+    g.gencache.set(CACHE_KEY, link_ids)
 
     return link_ids
 
