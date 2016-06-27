@@ -45,9 +45,6 @@ from pycassa.cassandra.ttypes import ConsistencyLevel
 from r2.lib.utils import in_chunks, prefix_keys, trace, tup
 from r2.lib.hardcachebackend import HardCacheBackend
 
-from r2.lib.sgm import sgm # get this into our namespace so that it's
-                           # importable from us
-
 # This is for use in the health controller
 _CACHE_SERVERS = set()
 
@@ -1120,7 +1117,6 @@ class Permacache(object):
         self.cache_chain.set(key, val)
 
     def set_multi(self, keys, prefix='', time=None, format=None):
-        # time is sent by sgm but will be ignored
         self._backend_set_multi(keys, prefix=prefix, format=format)
         self.cache_chain.set_multi(keys, prefix=prefix)
 
