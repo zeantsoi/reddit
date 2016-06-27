@@ -23,6 +23,7 @@
 import hashlib
 import hmac
 import re
+import string
 import time
 
 from pylons import app_globals as g
@@ -51,8 +52,7 @@ MAX_TIMESTAMP_DEVIATION = 600
 ZENDESK_PREFIX = "##- Please type your reply above this line -##"
 # First portion of the signature Zendesk adds to every message. The entire
 # signature is very long, this should be enough to ID it.
-ZENDESK_SIGNATURE = '--------------------------------\r\n'\
-                    'This email is a service from Reddit Support.'
+ZENDESK_SIGNATURE = 'This email is a service from Reddit Support.'
 
 
 def validate_mailgun_webhook(timestamp, token, signature):
@@ -168,7 +168,7 @@ class MailgunWebhookController(RedditController):
         # not. This adds the signature back to the message, but removes the
         # signature Zendesk adds and anything after.
         signature, _, _ = signature.partition(ZENDESK_SIGNATURE)
-        signature = signature.rstrip()
+        signature = signature.rstrip(string.whitespace + '-')
         if signature:
             body += '\n{}'.format(signature)
 
