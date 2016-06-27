@@ -2263,7 +2263,7 @@ class CommentPane(Templated):
         else:
             g.log.debug("using comment page cache")
             key = self.cache_key()
-            self.rendered = g.pagecache.get(key)
+            self.rendered = g.commentpanecache.get(key)
 
             if self.rendered:
                 cache_hit = True
@@ -2309,7 +2309,7 @@ class CommentPane(Templated):
                     c.user_is_loggedin = logged_in
 
                 try:
-                    g.pagecache.set(
+                    g.commentpanecache.set(
                         key,
                         self.rendered,
                         time=g.commentpane_cache_time

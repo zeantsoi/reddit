@@ -24,12 +24,9 @@ from pylons.i18n import _, ungettext
 from r2.controllers.reddit_base import (
     base_listing,
     disable_subreddit_css,
-    pagecache_policy,
-    PAGECACHE_POLICY,
     paginated_listing,
     RedditController,
     require_https,
-    vary_pagecache_on_experiments,
 )
 from r2 import config
 from r2.models import *
@@ -216,7 +213,6 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
         return self.abort404()
 
-    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(article=VLink('article',
                   docs={"article": "ID36 of a link"}),
@@ -578,7 +574,6 @@ class FrontController(RedditController):
                        ).render()
         return res
 
-    @pagecache_policy(PAGECACHE_POLICY.LOGGEDIN_AND_LOGGEDOUT)
     @require_oauth2_scope("modconfig")
     @api_doc(api_section.moderation, uses_site=True)
     def GET_stylesheet(self):
@@ -1118,7 +1113,6 @@ class FrontController(RedditController):
     search_help_page = "/wiki/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
 
-    @vary_pagecache_on_experiments("aa_test_loggedout")
     @base_listing
     @require_oauth2_scope("read")
     @validate(query=VLength('q', max_length=512),
