@@ -21,6 +21,7 @@
 ###############################################################################
 import contextlib
 import json
+import time
 from mock import patch, MagicMock
 
 from r2.lib import signing
@@ -35,15 +36,20 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
     def setUp(self):
         super(APIV1LoginTests, self).setUp()
         self.device_id = "dead-beef"
+        self.epoch = None
+        self.platform = "test"
+        self.version = 1
 
-    def make_ua_signature(self, platform="test", version=1):
+    def make_ua_signature(self):
         payload = "User-Agent:{}|Client-Vendor-ID:{}".format(
             self.user_agent, self.device_id,
         )
-        return self.sign(payload, platform, version)
+        return self.sign(payload)
 
-    def sign(self, payload, platform="test", version=1):
-        return signing.sign_v1_message(payload, platform, version)
+    def sign(self, payload):
+        return signing.sign_v1_message(
+            payload, self.platform, self.version, epoch=self.epoch
+        )
 
     def additional_headers(self, headers, body):
         return {
@@ -126,4 +132,20 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             self.failed_captcha()
         ):
             res = self.do_register()
+            self.assert_success(res)
+
+    def test_epoch_check(self):
+        with self.mock_login():
+            self.epoch = time.time() - 86400 * 30
+            res = self.do_login(expect_errors=True)
+            self.assert_403_response(
+                res, "signing.body.invalid.expired_token",
+            )
+
+    def test_epoch_bypass_android(self):
+        with self.mock_login():
+            self.epoch = time.time() - 86400 * 30
+            self.platform = "android"
+            self.version = 1
+            res = self.do_login()
             self.assert_success(res)

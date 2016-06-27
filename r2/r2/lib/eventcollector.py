@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 import baseplate.events
+import time
 
 from pylons import app_globals as g
 from collections import defaultdict
@@ -784,6 +785,14 @@ class EventQueue(object):
             event.add("signed", True)
             event.add("signature_platform", signature.platform)
             event.add("signature_version", signature.version)
+            event.add("signature_valid", signature.is_valid())
+            sigerror = ", ".join(
+                "%s_%s" % (field, code) for code, field in signature.errors
+            )
+            event.add("signature_errors", sigerror)
+            if signature.epoch:
+                event.add("signature_age", int(time.time()) - signature.epoch)
+
 
         if context.loid:
             for k, v in context.loid.to_dict().iteritems():
@@ -1483,8 +1492,8 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
-    def subreddit_subscribe_event(self, is_subscribing, is_first_sub, 
-                                  subreddit, user, sub_size, request=None, 
+    def subreddit_subscribe_event(self, is_subscribing, is_first_sub,
+                                  subreddit, user, sub_size, request=None,
                                   context=None):
         """Create a subreddit subscribe event
 
@@ -1523,13 +1532,13 @@ class EventQueue(object):
                               request=None, context=None):
         """Create an orangered to email event
 
-        email_hash: unique id hash of the email message being sent. built with 
+        email_hash: unique id hash of the email message being sent. built with
             a hash of the set of message_ids displayed in the email
-        reply_count: count of replies included in an orangered to email 
-        newest_reply_age: age of the newest reply (sent as datetime, 
+        reply_count: count of replies included in an orangered to email
+        newest_reply_age: age of the newest reply (sent as datetime,
             we coerce to milli)
-        oldest_reply_age: age of the oldest reply (sent as datetime, 
-            we coerce to milli) 
+        oldest_reply_age: age of the oldest reply (sent as datetime,
+            we coerce to milli)
         user: user that triggered above actions
         messages: displayed messages in the email
         request: pylons.request of the request that created the message
