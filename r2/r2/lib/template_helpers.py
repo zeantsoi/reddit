@@ -208,8 +208,13 @@ def js_config(extra_config=None):
     if (feature.is_enabled("url_share_tracking") and
             c.render_style == "html" and
             action_name == "GET_comments"):
+        share_hash_msg = "%s" % share_ts
+        if user_id:
+            share_hash_msg = "%s|%s" % (user_id, share_ts)
+        elif c.loid.loid:
+            share_hash_msg = "%s|%s" % (c.loid.loid, share_ts)
         share_tracking_hmac = hmac.new(g.secrets["share_tracking"],
-            "%s" % share_ts, hashlib.sha1).hexdigest()
+            share_hash_msg, hashlib.sha1).hexdigest()
 
     mac = hmac.new(g.secrets["action_name"], route_name, hashlib.sha1)
     verification = mac.hexdigest()
