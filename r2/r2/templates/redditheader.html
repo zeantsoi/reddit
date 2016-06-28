@@ -72,52 +72,53 @@
     %endfor
   </div>
 
-  <div id="header-bottom-right">
-    %if c.user_is_loggedin and c.user.pref_beta or c.subdomain == 'beta':
-      <div class="beta-hint help help-hoverable">
-        <a class="beta-link" href="/r/${g.beta_sr}">beta</a>
-        <div id="beta-help" class="hover-bubble help-bubble anchor-top">
-          <div class="help-section">
-            <p>${_("You're in beta mode! Thanks for helping to test reddit.")}</p>
-            <p>
-            ${text_with_links(_("Please give feedback at %(beta_link)s, or %(learn_more_link)s."),
-                beta_link = dict(link_text="/r/" + g.beta_sr, path="/r/" + g.beta_sr),
-                learn_more_link = dict(link_text=_("learn more on the wiki"), path="/r/" + g.beta_sr + "/wiki")
-              )}
-            </p>
+  %if not feature.is_enabled('new_topbar'):
+    <div id="header-bottom-right">
+      %if c.user_is_loggedin and c.user.pref_beta or c.subdomain == 'beta':
+        <div class="beta-hint help help-hoverable">
+          <a class="beta-link" href="/r/${g.beta_sr}">beta</a>
+          <div id="beta-help" class="hover-bubble help-bubble anchor-top">
+            <div class="help-section">
+              <p>${_("You're in beta mode! Thanks for helping to test reddit.")}</p>
+              <p>
+              ${text_with_links(_("Please give feedback at %(beta_link)s, or %(learn_more_link)s."),
+                  beta_link = dict(link_text="/r/" + g.beta_sr, path="/r/" + g.beta_sr),
+                  learn_more_link = dict(link_text=_("learn more on the wiki"), path="/r/" + g.beta_sr + "/wiki")
+                )}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    %endif
-    %if not c.user_is_loggedin:
-      %if thing.enable_login_cover and not g.read_only_mode:
-      <span class="user">
-        <%
-          base = g.https_endpoint
-          login_url = add_sr(base + "/login", sr_path=False)
-        %>
-        ${text_with_links(_("Want to join? %(login_or_register)s in seconds."),
-            login_or_register = dict(link_text=_("Log in or sign up"), path=login_url, _class="login-required"))}
-      </span>
-      ${separator("|")}
       %endif
-    %else:
-      <span class="user">
-         ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
-         &nbsp;(<span class="userkarma" title="${_("post karma")}">${format_number(display_link_karma(c.user.link_karma))}</span>)
-      </span>
-
-      ${separator("|")}
-
-
-      %if c.have_messages:
-        ${plain_link(_("messages"), path="/message/unread/", title=_("new mail!"), _class="havemail", _sr_path=False, _id="mail")}
-        %if c.user.inbox_count > 0:
-          ${plain_link(c.user.inbox_count, path="/message/unread/", _class="message-count", _sr_path=False)}
+      %if not c.user_is_loggedin:
+        %if thing.enable_login_cover and not g.read_only_mode:
+          <span class="user">
+            <%
+              base = g.https_endpoint
+              login_url = add_sr(base + "/login", sr_path=False)
+            %>
+            ${text_with_links(_("Want to join? %(login_or_register)s in seconds."),
+                login_or_register = dict(link_text=_("Log in or sign up"), path=login_url, _class="login-required"))}
+          </span>
+          ${separator("|")}
         %endif
       %else:
-        ${plain_link(_("messages"), path="/message/inbox/", title=_("no new mail"), _class="nohavemail", _sr_path=False, _id="mail")}
-      %endif
+        <span class="user">
+           ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
+           &nbsp;(<span class="userkarma" title="${_("post karma")}">${format_number(display_link_karma(c.user.link_karma))}</span>)
+        </span>
+
+        ${separator("|")}
+
+
+        %if c.have_messages:
+          ${plain_link(_("messages"), path="/message/unread/", title=_("new mail!"), _class="havemail", _sr_path=False, _id="mail")}
+          %if c.user.inbox_count > 0:
+            ${plain_link(c.user.inbox_count, path="/message/unread/", _class="message-count", _sr_path=False)}
+          %endif
+        %else:
+          ${plain_link(_("messages"), path="/message/inbox/", title=_("no new mail"), _class="nohavemail", _sr_path=False, _id="mail")}
+        %endif
       ${separator("|")}
       %if c.user_is_loggedin and c.user.is_moderator_somewhere:
          <%
@@ -170,4 +171,5 @@
       ${logout(dest=request.fullpath)}
     %endif
   </div>
+  %endif
 </div>

@@ -293,6 +293,8 @@ class Globals(object):
             'mcrouter_addr',
             'mweb_whitelist_expressions',
             'seo_domains',
+            'topbar_menu_multis',
+            'topbar_visible_multis',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [
@@ -330,6 +332,7 @@ class Globals(object):
             'selfserve_support_email',
             'eu_cookie',
             'adserver_reporting_cutoff',
+            'reddit_defaults_user',
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [

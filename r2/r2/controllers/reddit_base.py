@@ -1624,6 +1624,10 @@ class RedditController(OAuth2ResourceController):
         c.allow_styles = True
         c.can_apply_styles = self.allow_stylesheets
 
+        if not is_api() and feature.is_enabled('new_topbar') and \
+                (feature.variant('new_topbar') in ('no-styles', 'topbar')):
+            c.can_apply_styles = False
+
         # use override stylesheet if one exists and:
         #   this page has no custom stylesheet
         #   or the user disabled the stylesheet for this sr (indiv or global)

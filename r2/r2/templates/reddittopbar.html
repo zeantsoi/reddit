@@ -1,0 +1,147 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2016
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+  from r2.lib.template_helpers import display_link_karma, format_number
+  from r2.lib.pages import SearchForm
+  from r2.lib.utils import unicode_title_to_ascii
+
+  visible_multis = g.config['topbar_visible_multis']
+  menu_multis = g.config['topbar_menu_multis']
+  menu_multis = sorted(menu_multis)
+
+  visible_multis_ids = [unicode_title_to_ascii(m) for m in visible_multis]
+  menu_multis_ids = [unicode_title_to_ascii(m) for m in menu_multis]
+
+  defaults_user = g.config["reddit_defaults_user"]
+  multi_path = "/user/%s/m/" % defaults_user
+%>
+
+<%
+  utm_tags = '?utm_source=experiments&utm_medium=new_topbar&utm_name=%s' % thing.variant
+%>
+<%namespace file="utils.html" import="logout"/>
+
+<header class="topbar" id="topbar">
+  <div class="topbar__leftbox">
+    <a class="topbar__home" href="${'/' + utm_tags}"></a>
+    <a class="topbar__front" href="${'/' + utm_tags}">front</a>
+    %if thing.username:
+      <span class="topbar__menu-btn topbar-menu">
+        <span>${_("my communities")}</span> <span class="topbar__arrow-icon"></span>
+        <div class="topbar__dropdown">
+          <div class="topbar__dropdown-scroller">
+            %for sub in thing.subscriptions:
+              <a class="topbar__dropdown-link" href="${'/r/' + sub + utm_tags}">
+                <span class="topbar__sr-r">r/</span>${sub}
+              </a>
+            %endfor
+          </div>
+          %if thing.is_moderator_somewhere:
+            <a class="topbar__dropdown-link divider" href="${'/r/mod' + utm_tags}">Mod</a>
+          %endif
+          <a class="topbar__dropdown-link divider" href="${'/subreddits' + utm_tags}">${_("manage my communities")}</a>
+          <a class="topbar__dropdown-link" href="${'/r/myrandom' + utm_tags}">${_("random")}</a>
+        </div>
+      </span>
+    %endif
+    %for multi in visible_multis:
+      <a 
+        class="topbar__link ${'topbar__hide' if loop.index > 1 else ''}"
+        href="${multi_path + visible_multis_ids[loop.index] + utm_tags}"
+      >${multi}</a>
+    %endfor
+    <span class="topbar__menu-btn topbar-menu">
+      <span>More</span> <span class="topbar__arrow-icon"></span>
+      <div class="topbar__dropdown">
+        <div class="topbar__dropdown-scroller">
+          %for multiname in visible_multis[-3:]:
+            <a class="topbar__dropdown-link topbar__menu-hidden" 
+               href="${multi_path + visible_multis_ids[-3:][loop.index] + utm_tags}">${multiname}</a>
+          %endfor
+          %for multiname in menu_multis:
+            <a class="topbar__dropdown-link" 
+               href="${multi_path + menu_multis_ids[loop.index] + utm_tags}">${multiname}</a>
+          %endfor
+        </div>
+        <a class="topbar__dropdown-link divider" href="${'/r/all' + utm_tags}">${_("all")}</a>
+        <a class="topbar__dropdown-link" href="${'/r/random' + utm_tags}">${_("random")}</a>
+      </div>
+    </span>
+  </div>
+  <div class="topbar__rightbox">
+    ${SearchForm()}
+    <div class="topbar__account topbar-menu">
+      <a
+        %if thing.username:
+          class="topbar__rightbox-link"
+        %else:
+          class="topbar__rightbox-link login-required"
+          href="${'/login' + utm_tags}"
+        %endif
+      >
+        <span class="topbar__account-icon"></span>
+        <span class="topbar__account-signup-txt">${ thing.username if thing.username else "Sign up or Log in"}</span>
+      %if thing.username:
+        <span class="topbar__arrow-icon"></span>
+      %endif        
+      </a>
+      %if thing.username:
+        <div class="topbar__dropdown">
+          <span class="topbar__account-dropdown-user">${thing.username}</span>
+          <a href="${'/user/' + thing.username + utm_tags}"
+             class="topbar__dropdown-link"
+          >${_("profile")} (${format_number(display_link_karma(thing.link_karma))})</a>
+          ${logout(dest=request.fullpath)}
+        </div>
+      %endif
+    </div>
+    %if thing.username:
+      <a  class="topbar__rightbox-link topbar__mail" href="${'/message/unread' + utm_tags}">
+        <span 
+          class="topbar__mail-icon ${'has-mail' if thing.has_messages else ''}"
+        ></span>
+        %if thing.has_messages:
+          <span class="topbar__msgs-count"> ${thing.inbox_count}</span>
+        %endif
+      </a>
+    %endif
+    %if thing.is_moderator_somewhere:
+      <a  class="topbar__rightbox-link" href="${'/message/moderator' + utm_tags}">
+        <span 
+          class="topbar__mod-icon ${'has-mod' if thing.has_mod_messages else ''}"
+        ></span>
+      </a>
+    %endif
+    <a
+      class="topbar__rightbox-link"
+      %if thing.username:
+        href="${'/prefs' + utm_tags}"
+      %else:
+        href="javascript:void"
+        onclick="return showlang();"
+      %endif
+    >
+      <span class="topbar__preferences"></span>
+    </a>
+  </div>
+</header>

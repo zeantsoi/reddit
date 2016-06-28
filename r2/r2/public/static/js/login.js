@@ -192,7 +192,7 @@ r.login.ui = {
         if (r.config.logged) {
             return true
         } else {
-            var el = $(e.target);
+            var el = $(e.currentTarget);
             var href = el.attr('href');
             var actionDetails = this._getActionDetails(el);
             var dest;

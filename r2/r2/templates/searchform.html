@@ -55,7 +55,8 @@
 </%def>
 
 <form action="${add_sr(thing.search_path)}" id="search" role="search">
-  <input type="text" 
+  <input type="text"
+         class='search-input'
          %if thing.prev_search:
            value="${thing.prev_search}" style="color:black"
          %endif
