@@ -750,6 +750,7 @@ module["modtools"] = Module("modtools.js",
 module["admin"] = Module("admin.js",
     # include Backbone and timings so they are available early to render admin bar fast.
     "lib/backbone-1.0.0.js",
+    "lib/jquery.tablesorter.js",
     "timings.js",
     "adminbar.js",
 )
