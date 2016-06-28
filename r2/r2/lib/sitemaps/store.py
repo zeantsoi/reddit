@@ -65,13 +65,6 @@ def zip_string(string):
     return zipbuffer.getvalue()
 
 
-def store_sitemaps():
-    """This is kept around temporarily until we remove the old puppet
-    job that expects this to be here.
-    """
-    pass
-
-
 def upload_sitemap(key, sitemap):
     key.set_contents_from_string(zip_string(sitemap), headers=HEADERS)
 
