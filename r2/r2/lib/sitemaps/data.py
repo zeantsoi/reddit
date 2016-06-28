@@ -25,6 +25,7 @@
 Currently only supports subreddit links but will soon support comment links.
 """
 
+from collections import namedtuple
 import tempfile
 
 from boto.s3.connection import S3Connection
@@ -71,3 +72,14 @@ def find_all_subreddits(s3path):
     for line in _read_subreddit_etl_from_s3(s3path):
         _, subreddit, __ = line.split('\x01')
         yield subreddit
+
+
+CommentPageInfo = namedtuple(
+    'CommentPageInfo',
+    ['thing_id', 'subreddit', 'title', 'num_comments', 'last_modified'],
+)
+
+
+def find_comment_page_data(s3path):
+    for line in _read_subreddit_etl_from_s3(s3path):
+        yield CommentPageInfo(*line.strip().split('\x01')[1:])

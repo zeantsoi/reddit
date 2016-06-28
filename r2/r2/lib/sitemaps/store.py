@@ -30,17 +30,28 @@ The binary data we send to s3 is a gzipped xml file. In addition we also
 send the appropriate type and encoding headers so this is understood
 correctly by the browser.
 
-The only file expected to be used outside this module is:
+We store sitemaps for two classes of pages: subreddits and comment pages.
+We store both the sitemaps for those pages as well as 2 sitemap indices.
+One for each class of sitemap.
 
-store_sitemaps_in_s3(subreddits)
+The directory structure we create on s3 should look something like this:
 
-Even though the subreddits are expected to be generated and passed into this
-function, the sitemap index is created here. The reasoning is that in order
-to create the sitemap index we need to know how many sitemaps we have.
-If we simply queried the subreddit iterator for it's length then we would
-have to load all of the subreddits into memory, which would be ... bad.
+/subreddit-sitemaps.xml
+/comment-page-sitemaps.xml
+/subreddit_sitemap/0.xml
+/subreddit_sitemap/1.xml
+/comment_page_sitemap/2016-05-23/0.xml
+/comment_page_sitemap/2016-05-23/1.xml
+/comment_page_sitemap/2016-05-24/0.xml
+/comment_page_sitemap/2016-05-24/1.xml
+/comment_page_sitemap/2016-05-24/2.xml
+
+For subreddit sitemaps we get every single subreddit so we just dump them
+into a single /subreddit_sitemap directory.
+
+For comment page sitemaps, we get a daily update of links created that day.
+We dump all the sitemaps for that day in a day specific directory.
 """
-
 
 import gzip
 from StringIO import StringIO
@@ -49,49 +60,72 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from pylons import app_globals as g
 
-from r2.lib.sitemaps.generate import subreddit_sitemaps, sitemap_index
+from r2.lib.sitemaps.generate import (
+    generate_subreddit_sitemaps,
+    generate_comment_page_sitemaps,
+    generate_sitemap_index,
+)
 
 
+# We upload zipped sitemaps.
 HEADERS = {
     'Content-Type': 'text/xml',
     'Content-Encoding': 'gzip',
 }
 
 
-def zip_string(string):
+def _zip_string(string):
     zipbuffer = StringIO()
     with gzip.GzipFile(mode='w', fileobj=zipbuffer) as f:
         f.write(string)
     return zipbuffer.getvalue()
 
 
-def upload_sitemap(key, sitemap):
-    key.set_contents_from_string(zip_string(sitemap), headers=HEADERS)
+def _upload_sitemap(key, sitemap):
+    g.log.debug("Uploading %r", key)
+
+    key.set_contents_from_string(_zip_string(sitemap), headers=HEADERS)
 
 
-def store_subreddit_sitemap(bucket, index, sitemap):
+def _upload_subreddit_sitemap(bucket, index, sitemap):
     key = Key(bucket)
     key.key = 'subreddit_sitemap/{0}.xml'.format(index)
-    g.log.debug("Uploading %r", key)
 
-    upload_sitemap(key, sitemap)
+    _upload_sitemap(key, sitemap)
 
 
-def store_sitemap_index(bucket, count):
+def _upload_comment_page_sitemap(bucket, index, dt_key, sitemap):
     key = Key(bucket)
-    key.key = g.sitemap_subreddit_keyname
-    g.log.debug("Uploading %r", key)
+    key.key = 'comment_page_sitemap/{0}/{1}.xml'.format(dt_key, index)
 
-    upload_sitemap(key, sitemap_index(count))
+    _upload_sitemap(key, sitemap)
 
 
-def store_sitemaps_in_s3(subreddits):
+def _update_sitemap_index(path, prefix, bucket):
+    key = Key(bucket)
+    key.key = path
+
+    _upload_sitemap(key, generate_sitemap_index(bucket.list(prefix)))
+
+
+def generate_and_upload_subreddit_sitemaps(subreddits):
     s3conn = S3Connection()
     bucket = s3conn.get_bucket(g.sitemap_upload_s3_bucket, validate=False)
 
-    sitemap_count = 0
-    for i, sitemap in enumerate(subreddit_sitemaps(subreddits)):
-        store_subreddit_sitemap(bucket, i, sitemap)
-        sitemap_count += 1
+    for i, sitemap in enumerate(generate_subreddit_sitemaps(subreddits)):
+        _upload_subreddit_sitemap(bucket, i, sitemap)
 
-    store_sitemap_index(bucket, sitemap_count)
+    _update_sitemap_index(
+        'subreddit-sitemaps.xml', 'subreddit_sitemap', bucket)
+
+
+def generate_and_upload_comment_page_sitemaps(comment_page_data, dt_key):
+    s3conn = S3Connection()
+    bucket = s3conn.get_bucket(g.sitemap_upload_s3_bucket, validate=False)
+
+    sitemaps = generate_comment_page_sitemaps(comment_page_data)
+    for i, sitemap in enumerate(sitemaps):
+        _upload_comment_page_sitemap(bucket, i, dt_key, sitemap)
+
+    _update_sitemap_index(
+        'comment-page-sitemaps.xml', 'comment_page_sitemap', bucket)

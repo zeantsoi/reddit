@@ -48,7 +48,7 @@ The sitemap index which takes the form of:
 </sitemapindex>
 ------------------------------------------------------------------------
 
-Next are subreddit sitemaps which take the form of:
+Next are the normal sitemaps which take the form of:
 
 ------------------------------------------------------------------------
  <?xml version="1.0" encoding="UTF-8"?>
@@ -67,7 +67,7 @@ from lxml import etree
 from pylons import app_globals as g
 
 from r2.lib.template_helpers import add_sr
-from r2.lib.utils import in_chunks
+from r2.lib.utils import in_chunks, to36, title_to_url
 
 SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
 LINKS_PER_SITEMAP = 50000
@@ -92,31 +92,48 @@ def _subreddit_links(subreddits):
         yield _absolute_url(path)
 
 
-def _subreddit_sitemap(subreddits):
+def _comment_page_links(comment_page_data):
+    for comment_info in comment_page_data:
+        path = u'/r/{0}/comments/{1}/{2}/'.format(
+            comment_info.subreddit,
+            to36(int(comment_info.thing_id)),
+            title_to_url(comment_info.title)
+        )
+        yield _absolute_url(path)
+
+
+def _generate_sitemap(links):
     urlset = etree.Element('urlset', xmlns=SITEMAP_NAMESPACE)
-    for link in _subreddit_links(subreddits):
+    for link in links:
         url_elem = etree.SubElement(urlset, 'url')
         loc_elem = etree.SubElement(url_elem, 'loc')
         loc_elem.text = link
     return _stringify_xml(urlset)
 
 
-def subreddit_sitemaps(subreddits):
-    """Create an array of sitemaps.
+def _generate_sitemaps(links):
+    """Create an iterator of sitemaps.
 
     Each sitemap has up to 50000 links, being the maximum allowable number of
     links according to the sitemap standard.
     """
-    for subreddit_chunks in in_chunks(subreddits, LINKS_PER_SITEMAP):
-        yield _subreddit_sitemap(subreddit_chunks)
+    for subreddit_chunks in in_chunks(links, LINKS_PER_SITEMAP):
+        yield _generate_sitemap(subreddit_chunks)
 
 
-def sitemap_index(count):
+def generate_subreddit_sitemaps(subreddits):
+    return _generate_sitemaps(_subreddit_links(subreddits))
+
+
+def generate_comment_page_sitemaps(comment_page_data):
+    return _generate_sitemaps(_comment_page_links(comment_page_data))
+
+
+def generate_sitemap_index(keys):
     sm_elem = etree.Element('sitemapindex', xmlns=SITEMAP_NAMESPACE)
-    for i in xrange(count):
+    for key in keys:
         sitemap_elem = etree.SubElement(sm_elem, 'sitemap')
         loc_elem = etree.SubElement(sitemap_elem, 'loc')
-        url = '{0}/subreddit_sitemap/{1}.xml'.format(
-            g.sitemap_s3_static_host, i)
+        url = '{0}/{1}'.format(g.sitemap_s3_static_host, key.key)
         loc_elem.text = url
     return _stringify_xml(sm_elem)
