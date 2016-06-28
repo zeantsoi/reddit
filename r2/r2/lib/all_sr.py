@@ -27,6 +27,7 @@ from pylons import app_globals as g
 from r2.lib.db.operators import not_
 
 CACHE_KEY = "all:hot"
+NUM_LINKS = 2000
 
 
 def get_all_query(sort, time):
@@ -64,7 +65,7 @@ def write_all_hot_cache():
 
     q = Link._query(
         sort=queries.db_sort('hot'),
-        limit=1000
+        limit=NUM_LINKS,
     )
 
     top_links = resort_links(list(q))
