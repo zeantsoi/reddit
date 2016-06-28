@@ -63,4 +63,4 @@ Disallow: /r/*/search
 Disallow: /gold?
 Allow: /
 
-Sitemap: ${add_sr('sitemap', sr_path=False, force_https=True)}
+Sitemap: ${thing.subreddit_sitemap}
