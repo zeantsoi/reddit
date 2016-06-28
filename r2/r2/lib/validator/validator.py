@@ -961,7 +961,10 @@ class VModConversation(Validator):
             return self.set_error(errors.NO_CONVERSATION_ID, code=422)
 
         try:
-            return ModmailConversation._byID(int(param), current_user=c.user)
+            return ModmailConversation._byID(
+                    int(param),
+                    current_user=c.user,
+            )
         except NotFound:
             return self.set_error(errors.CONVERSATION_NOT_FOUND, code=404)
         except:

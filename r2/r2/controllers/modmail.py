@@ -7,6 +7,7 @@ from r2.controllers.reddit_base import OAuth2OnlyController
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.base import abort
 from r2.lib.db.thing import NotFound
+from r2.lib.errors import errors
 from r2.lib.validator import (
     validate,
     VBoolean,
@@ -201,6 +202,7 @@ class ModmailController(OAuth2OnlyController):
         markRead -- if passed the conversation will be marked read when the
                     conversation is returned
         """
+        self._validate_vmodconversation()
 
         sr = self._try_get_subreddit_access(conversation)
         authors = self._try_get_byID(conversation.author_ids, Account,
@@ -240,6 +242,8 @@ class ModmailController(OAuth2OnlyController):
                            the subreddit
         isInternal      -- boolean to signify a moderator only message
         """
+        self._validate_vmodconversation()
+
         sr = Subreddit._by_fullname(conversation.owner_fullname)
         self._feature_enabled_check(sr)
 
@@ -277,7 +281,7 @@ class ModmailController(OAuth2OnlyController):
     @validate(conversation=VModConversation('conversation_id'))
     def POST_star(self, conversation):
         """Marks a conversation as having a star."""
-
+        self._validate_vmodconversation()
         self._try_get_subreddit_access(conversation)
         conversation.add_star()
         conversation.add_action(c.user, 'marked_important')
@@ -287,6 +291,7 @@ class ModmailController(OAuth2OnlyController):
     @validate(conversation=VModConversation('conversation_id'))
     def DELETE_star(self, conversation):
         """Removes a star from a conversation."""
+        self._validate_vmodconversation()
         self._try_get_subreddit_access(conversation)
         conversation.remove_star()
         conversation.add_action(c.user, 'unmarked_important')
@@ -370,6 +375,7 @@ class ModmailController(OAuth2OnlyController):
     @require_oauth2_scope('identity')
     @validate(conversation=VModConversation('conversation_id'))
     def POST_archive(self, conversation):
+        self._validate_vmodconversation()
         sr = Subreddit._by_fullname(conversation.owner_fullname)
         self._feature_enabled_check(sr)
 
@@ -389,6 +395,7 @@ class ModmailController(OAuth2OnlyController):
     @require_oauth2_scope('identity')
     @validate(conversation=VModConversation('conversation_id'))
     def POST_unarchive(self, conversation):
+        self._validate_vmodconversation()
         sr = Subreddit._by_fullname(conversation.owner_fullname)
         self._feature_enabled_check(sr)
 
@@ -405,6 +412,18 @@ class ModmailController(OAuth2OnlyController):
             abort(403, 'Must be a moderator with mail access.')
 
         response.status_code = 204
+
+    @require_oauth2_scope('identity')
+    def GET_unread_convo_count(self):
+        """Endpoint to retrieve the unread conversation count by
+        category"""
+
+        convo_counts = ModmailConversation.unread_convo_count(c.user)
+        return simplejson.dumps(convo_counts)
+
+    def _validate_vmodconversation(self):
+        if (errors.CONVERSATION_NOT_FOUND, 'conversation_id') in c.errors:
+            abort(404, errors.CONVERSATION_NOT_FOUND)
 
     def _get_conversation_access(self, ids):
         validated_convos = []

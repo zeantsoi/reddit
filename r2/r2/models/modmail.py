@@ -23,12 +23,14 @@
 from datetime import datetime
 
 from pylons import app_globals as g
-from sqlalchemy import and_, func, sql
+from sqlalchemy import and_, case, func, literal_column, sql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.sql import label
 from sqlalchemy.types import Boolean, DateTime, Integer, String, Text
 
 from r2.lib.db.thing import NotFound
@@ -178,7 +180,79 @@ class ModmailConversation(Base):
             self.add_participant(participant_id)
 
     @classmethod
-    def _byID(cls, ids, current_user=None, return_single=False):
+    def unread_convo_count(cls, user):
+        """Returns a dict by conversation state with a count
+        of all the unread conversations for the passed user.
+
+        Returns the following dict:
+        {
+            'new': <count>,
+            'inprogress': <count>,
+            'mod': <count>,
+            'notification': <count>,
+            'archived': <count>
+        }
+        """
+        users_modded_subs = user.moderated_subreddits('mail')
+        sr_fullnames = [sr._fullname for sr in users_modded_subs]
+
+        # Build subquery to select all conversations with an unread
+        # record for the passed user, this will preselect the records
+        # that need to be counted as well as limit the number of
+        # rows that will have to be counted in the main query
+        subquery = Session.query(cls)
+
+        subquery = subquery.outerjoin(
+                ModmailConversationUnreadState,
+                and_(ModmailConversationUnreadState.account_id == user._id,
+                     ModmailConversationUnreadState.conversation_id == cls.id))
+
+        subquery = subquery.filter(
+                cls.owner_fullname.in_(sr_fullnames),
+                ModmailConversationUnreadState.date.isnot(None))
+
+        subquery = subquery.subquery()
+
+        # Pass the subquery to the count query to retrieve a tuple of
+        # counts for each conversation state
+        query = (Session.query(
+                           cls.state,
+                           label('internal', func.count(case(
+                               [(cls.is_internal, cls.id)],
+                               else_=literal_column('NULL')))),
+                           label('auto', func.count(case(
+                               [(cls.is_auto, cls.id)],
+                               else_=literal_column('NULL')))),
+                           label('total', func.count(cls.id)),)
+                        .select_from(subquery)
+                        .group_by(cls.state))
+
+        convo_counts = query.all()
+
+        # initialize result dict so all keys are present
+        result = {state: 0 for state in ModmailConversation.STATE.name}
+        result.update({
+            'auto': 0,
+            'internal': 0,
+        })
+
+        if not convo_counts:
+            return result
+
+        for convo_count in convo_counts:
+            state, internal_count, auto_count, total_count = convo_count
+            num_convos = total_count - internal_count - auto_count
+
+            result['internal'] += internal_count
+            result['auto'] += auto_count
+
+            if state in ModmailConversation.STATE:
+                result[ModmailConversation.STATE.name[state]] += num_convos
+
+        return result
+
+    @classmethod
+    def _byID(cls, ids, current_user=None):
         """Return conversation(s) looked up by ID."""
         ids = tup(ids)
 
@@ -195,14 +269,10 @@ class ModmailConversation(Base):
                      ModmailConversationUnreadState.conversation_id.in_(ids))
             )
 
-        if return_single:
+        if len(ids) == 1:
             try:
-                results = query.first()
-                if not results:
-                    raise
-
-                return results
-            except:
+                return query.one()[0]
+            except NoResultFound:
                 raise NotFound
 
         return query.all()
