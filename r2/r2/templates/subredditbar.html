@@ -20,12 +20,13 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%
+<%!
   from r2.lib.template_helpers import static
+%>
 
-  sub_name = getattr(thing, 'subreddit_name')
-  key_color = getattr(thing, "key_color")
-  image = getattr(thing, "icon")
+<%
+  key_color = thing.key_color
+  image = thing.icon
   if key_color == '':
     key_color = '#24A0ED'
 
@@ -37,10 +38,19 @@
   <img class='sub-bar__icon'
   	   src='${image}' 
   	   style='background-color: ${key_color};'/>
-  <span class='sub-bar__title'>R/${sub_name} ${_('community')} </span>
-  <span class='sub-bar__subscribers'>${getattr(thing, 'subscribers')} followers</span>
+  <span class='sub-bar__title'>R/${thing.subreddit_name} ${_('community')} </span>
+  <span class='sub-bar__subscribers'>${thing.subscribers} followers</span>
 
-  <a class='sub-bar__link' href='${getattr(thing, "url")}'>
+  <a 
+    class='sub-bar__link' 
+    href='${thing.url}'
+    data-event_type="top_posts_click"
+    data-target_name="${thing.subreddit_name}"
+    data-target_fullname="${thing.subreddit_id}"
+    data-target_type="subreddit"
+    data-link_name="top_posts_sub_link"
+    data-page_type="${thing.page_type}"
+  >
     <span class='sub-bar__link-txt'>${_('more')} </span>
     <span class='sub-bar__arrow'> </span>
   </a>

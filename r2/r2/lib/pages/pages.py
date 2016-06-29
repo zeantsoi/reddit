@@ -1312,14 +1312,16 @@ def _get_top_posts(num, link):
 
 
 class SubredditBar(Templated):
-    def __init__(self):
+    def __init__(self, link):
         Templated.__init__(
             self,
             subreddit_name=c.site.name,
+            subreddit_id=c.site._fullname,
             icon=c.site.icon_img,
             subscribers=format_number(c.site._ups, c.locale),
             url=add_sr(''),
             key_color=c.site.key_color,
+            page_type="self" if link.is_self else "link",
         )
 
 
@@ -1335,6 +1337,7 @@ class TopPostsDivider(Templated):
             cta_url=add_sr(''),
             top_posts=top_posts,
             sr_name=c.site.name,
+            subreddit_id=c.site._fullname,
             page_type=page_type,
         )
 
@@ -1931,7 +1934,7 @@ class LinkInfoPage(Reddit):
             elif variant == 'carousel_top':
                 self.pre_content = TopPostsCarousel(self.link)
             elif variant == 'subreddit':
-                self.top_posts = SubredditBar()
+                self.top_posts = SubredditBar(self.link)
 
         Reddit.__init__(self, title=title,
                         short_description=short_description, robots=robots,

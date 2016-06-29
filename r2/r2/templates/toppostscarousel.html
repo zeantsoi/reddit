@@ -20,21 +20,21 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file='toppostssidebar.html' import='render_post' />
+<%namespace file='toppostslink.html' import='render_post' />
 <%namespace file="utils.html" import="plain_link" />
 
 <%!
   from r2.lib.template_helpers import static
 %>
 
-<div class='posts-carousel ${getattr(thing, 'position')}'>
+<div class='posts-carousel ${thing.position}'>
   <button class='posts-carousel__btn left'>
     <image class='posts-carousel__arrow-left' src='${static("icon-right-arrow.png")}' />
   </button>
   <div class='posts-carousel__slider'>
     <div class='posts-carousel__inner'>
       % for post in thing.top_posts:
-        ${render_post(post)}
+        ${render_post(post, event_type='top_posts_click', link_name=('top_posts_%s_link' % thing.position))}
       % endfor
     </div>
   </div>

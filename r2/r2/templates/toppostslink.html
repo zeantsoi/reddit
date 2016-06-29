@@ -25,14 +25,14 @@
   from r2.lib.template_helpers import static, format_number
 %>
 
-<%def name="render_post(post)">
+<%def name="render_post(post, event_type='', link_name='')">
   <a
     href="${post.permalink}"
-    data-action_name="relevant_posts_sidebar_click"
+    data-event_type="${event_type}"
     data-target_name=""
     data-target_fullname="${post._fullname}"
     data-target_type="${'self' if post.is_self else 'link'}"
-    data-link_name="relevant_post_link"
+    data-link_name="${link_name}"
     data-page_type="${thing.page_type}"
   >
     <div class="top-posts__post">
@@ -59,34 +59,3 @@
     </div>
   </a>
 </%def>
-
-<div class="relevancy-sidebar top-posts">
-  <div class="top-posts__header">
-    <div class="top-posts__header-icon">
-      <img class="top-posts__header-image" src="${static(thing.icon_image)}" />
-    </div>
-    <div class="top-posts__header-text">
-      ${thing.title}
-    </div>
-  </div>
-  <div class="top-posts__list">
-    % for post in thing.top_posts:
-      ${render_post(post)}
-    % endfor
-  </div>
-  <div class="top-posts__cta">
-    <a
-      href="${thing.cta_url}"
-      data-action_name="relevant_posts_sidebar_click"
-      data-target_name="${thing.sr_name}"
-      data-target_fullname="${thing.sr_fullname}"
-      data-target_type="subreddit"
-      data-link_name="relevant_post_cta"
-      data-page_type="${thing.page_type}"
-    >
-      <div class="top-posts__cta-text">
-        SEE THE TOP 25 POSTS
-      </div>
-    </a>
-  </div>
-</div>

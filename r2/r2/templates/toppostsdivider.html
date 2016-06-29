@@ -20,17 +20,23 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file='toppostssidebar.html' import='render_post' />
+<%namespace file='toppostslink.html' import='render_post' />
 <%namespace file="utils.html" import="plain_link" />
 
 <div class="posts-divider">
   <div class='posts-divider__link-wrap'>
-    <%
-      text = 'more from r/%s' % getattr(thing, 'sr_name')
-    %>
-    ${plain_link(text, getattr(thing, 'cta_url'), _sr_path=False, _class="posts-divider__link")}
+    <a 
+      href="${getattr(thing, 'cta_url')}"
+      class="posts-divider__link"
+      data-event_type="top_posts_divider_click"
+      data-target_name="${thing.sr_name}"
+      data-target_fullname="${thing.subreddit_id}"
+      data-target_type="subreddit"
+      data-link_name="top_posts_divider"
+      data-page_type="${thing.page_type}"
+    >more from r/${thing.sr_name}</a>
   </div>
     % for post in thing.top_posts:
-      ${render_post(post)}
+      ${render_post(post, event_type='top_posts_click', link_name='top_posts_divider_link')}
     % endfor
 </div>
