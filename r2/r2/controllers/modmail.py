@@ -2,6 +2,7 @@ import simplejson
 from pylons import response
 from pylons import tmpl_context as c
 
+from r2.config import feature
 from r2.controllers.reddit_base import OAuth2OnlyController
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.base import abort
@@ -152,6 +153,7 @@ class ModmailController(OAuth2OnlyController):
         body        -- the body of the first message in the conversation
 
         """
+        self._feature_enabled_check(entity)
 
         try:
             conversation = ModmailConversation(
@@ -238,10 +240,11 @@ class ModmailController(OAuth2OnlyController):
                            the subreddit
         isInternal      -- boolean to signify a moderator only message
         """
+        sr = Subreddit._by_fullname(conversation.owner_fullname)
+        self._feature_enabled_check(sr)
+
         if conversation.is_internal and not is_internal:
             is_internal = True
-
-        sr = Subreddit._by_fullname(conversation.owner_fullname)
 
         is_mod = sr.is_moderator(c.user)
         if not is_mod and is_author_hidden:
@@ -368,6 +371,7 @@ class ModmailController(OAuth2OnlyController):
     @validate(conversation=VModConversation('conversation_id'))
     def POST_archive(self, conversation):
         sr = Subreddit._by_fullname(conversation.owner_fullname)
+        self._feature_enabled_check(sr)
 
         if sr.is_moderator_with_perms(c.user, 'mail'):
             if conversation.state == ModmailConversation.STATE['archived']:
@@ -386,6 +390,7 @@ class ModmailController(OAuth2OnlyController):
     @validate(conversation=VModConversation('conversation_id'))
     def POST_unarchive(self, conversation):
         sr = Subreddit._by_fullname(conversation.owner_fullname)
+        self._feature_enabled_check(sr)
 
         if sr.is_moderator_with_perms(c.user, 'mail'):
             if conversation.state != ModmailConversation.STATE['archived']:
@@ -409,7 +414,15 @@ class ModmailController(OAuth2OnlyController):
         # transform sr to be a dict with a key being the sr fullname
         # and the value being the sr object itself
         modded_srs = c.user.moderated_subreddits('mail')
-        sr_by_fullname = {sr._fullname: sr for sr in modded_srs}
+        sr_by_fullname = {}
+        for sr in modded_srs:
+            if feature.is_enabled('new_modmail', subreddit=sr.name):
+                sr_by_fullname[sr._fullname] = sr
+
+        sr_by_fullname = {
+            sr._fullname: sr for sr in modded_srs
+            if feature.is_enabled('new_modmail', subreddit=sr.name)
+        }
 
         for conversation in conversations:
             if sr_by_fullname.get(conversation.owner_fullname):
@@ -434,8 +447,13 @@ class ModmailController(OAuth2OnlyController):
 
     def _try_get_subreddit_access(self, conversation):
         sr = Subreddit._by_fullname(conversation.owner_fullname)
+        self._feature_enabled_check(sr)
 
         if not sr.is_moderator_with_perms(c.user, 'mail'):
             abort(403)
 
         return sr
+
+    def _feature_enabled_check(self, sr):
+        if not feature.is_enabled('new_modmail', subreddit=sr.name):
+            abort(403, 'Feature not enabled for the passed Subreddit.')
