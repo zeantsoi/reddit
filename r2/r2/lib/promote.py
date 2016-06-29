@@ -274,11 +274,11 @@ def update_served(items):
             campaign._commit()
 
 
-def get_min_bid_dollars(user):
+def get_min_cpm_bid_dollars(user):
     if user.selfserve_min_bid_override_pennies:
         return user.selfserve_min_bid_override_pennies / 100.
     else:
-        return g.min_bid_pennies / 100.
+        return g.min_cpm_bid_pennies / 100.
 
 
 NO_CAMPAIGN = "NO_CAMPAIGN"

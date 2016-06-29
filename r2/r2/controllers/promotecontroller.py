@@ -1360,17 +1360,17 @@ class PromoteApiController(ApiController):
             PromotedLinkRoadblock.remove(sr, start, end)
             jquery.refresh()
 
-    def _lowest_max_bid_dollars(self, total_budget_dollars, bid_dollars, start,
-            end):
+    def _lowest_max_cpm_bid_dollars(self, total_budget_dollars, bid_dollars,
+                                    start, end):
         """
-        Calculate the lower between g.max_bid_pennies
+        Calculate the lower between g.max_cpm_bid_pennies
         and maximum bid per day by budget
         """
         ndays = (to_date(end) - to_date(start)).days
-        max_daily_bid = total_budget_dollars / ndays
-        max_bid_dollars = g.max_bid_pennies / 100.
+        max_daily_cpm_bid = total_budget_dollars / ndays
+        max_cpm_bid_dollars = g.max_cpm_bid_pennies / 100.
 
-        return min(max_daily_bid, max_bid_dollars)
+        return min(max_daily_cpm_bid, max_cpm_bid_dollars)
 
     @validatedForm(
         VSponsor('link_id36'),
@@ -1487,18 +1487,30 @@ class PromoteApiController(ApiController):
                 priority = PROMOTE_PRIORITIES['auction']
                 cost_basis = PROMOTE_COST_BASIS[cost_basis]
 
-                # Error if bid is outside acceptable range
-                min_bid_dollars = promote.get_min_bid_dollars(c.user)
-                max_bid_dollars = self._lowest_max_bid_dollars(
-                    total_budget_dollars=total_budget_dollars,
-                    bid_dollars=bid_dollars,
-                    start=start,
-                    end=end)
+                if cost_basis == PROMOTE_COST_BASIS.cpc:
+                    min_bid_dollars = g.min_cpc_bid_pennies / 100.
+                    max_bid_dollars = g.max_cpc_bid_pennies / 100.
 
-                if bid_dollars < min_bid_dollars or bid_dollars > max_bid_dollars:
-                    c.errors.add(errors.BAD_BID, field='bid',
-                        msg_params={'min': '%.2f' % round(min_bid_dollars, 2),
-                                    'max': '%.2f' % round(max_bid_dollars, 2)}
+                else:
+                    min_bid_dollars = promote.get_min_cpm_bid_dollars(c.user)
+                    max_bid_dollars = self._lowest_max_cpm_bid_dollars(
+                        total_budget_dollars=total_budget_dollars,
+                        bid_dollars=bid_dollars,
+                        start=start,
+                        end=end,
+                    )
+
+                if (bid_dollars < min_bid_dollars or
+                        bid_dollars > max_bid_dollars):
+                    rounded_min_bid = round(min_bid_dollars, 2)
+                    rounded_max_bid = round(max_bid_dollars, 2)
+                    cost_basis_name = PROMOTE_COST_BASIS.name[cost_basis]
+                    c.errors.add(
+                        errors.BAD_BID,
+                        field='bid',
+                        msg_params={'cost_basis': cost_basis_name.upper(),
+                                    'min': '%.2f' % rounded_min_bid,
+                                    'max': '%.2f' % rounded_max_bid}
                     )
                     form.has_errors('bid', errors.BAD_BID)
                     return

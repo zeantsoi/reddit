@@ -238,8 +238,10 @@ var CampaignCreator = React.createClass({
       totalBudgetDollars: 0,
       targetName: '',
       cpm: 0,
-      minBidDollars: 0,
-      maxBidDollars: 0,
+      minCpmBidDollars: 0,
+      maxCpmBidDollars: 0,
+      minCpcBidDollars: 0,
+      maxCpcBidDollars: 0,
       maxBudgetDollars: 0,
       minBudgetDollars: 0,
       dates: [],
@@ -306,8 +308,20 @@ var CampaignCreator = React.createClass({
   getCampaignSets: function() {
     if (r.sponsored.isAuction) {
       var auction = this.getAuctionOption();
-      var formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
-      var formattedMaxBidDollars = parseFloat(auction.maxBidDollars).toFixed(2);
+
+      var minBidDollars;
+      var maxBidDollars;
+      var validAuction = true;
+      if (auction.costBasis === 'CPM') {
+        minBidDollars = parseFloat(auction.minCpmBidDollars).toFixed(2);
+        maxBidDollars = parseFloat(auction.maxCpmBidDollars).toFixed(2);
+      } else if (auction.costBasis === 'CPC') {
+        minBidDollars = parseFloat(auction.minCpcBidDollars).toFixed(2);
+        maxBidDollars = parseFloat(auction.maxCpcBidDollars).toFixed(2);
+      } else {
+        validAuction = false;
+      }
+
       var MESSAGES = {
             CONFIRM_MSG: r._('Please confirm the details of your campaign'),
             MIN_BUDGET_MSG: r._('your budget must be at least $%(minBudgetDollars)s'),
@@ -316,18 +330,23 @@ var CampaignCreator = React.createClass({
                                              ' 1,000 impressions per day. Please adjust your bid, ' +
                                              ' budget, or schedule in order to enable this.'),
             MIN_BID_MSG: r._('your bid must be at least $%(minBid)s'),
-            MAX_BID_MSG: r._('your bid must not exceed $%(maxBid)s')
+            MAX_BID_MSG: r._('your bid must not exceed $%(maxBid)s'),
+            INVALID_AUCTION: r._('Something went wrong. Please refresh the page and try again.')
           };
       var INFOTEXT_ATTRS = {
             CONFIRM_MSG: null,
             MIN_BUDGET_MSG: {className: 'error', minBudgetDollars: auction.minBudgetDollars},
             MAX_BUDGET_MSG: {className: 'error', maxBudgetDollars: auction.maxBudgetDollars},
-            MIN_IMPRESSIONS_PER_DAY_MSG: {className: 'error', minBid: formattedMinBidDollars},
-            MIN_BID_MSG: {className: 'error', minBid: formattedMinBidDollars},
-            MAX_BID_MSG: {className: 'error', maxBid: formattedMaxBidDollars}
+            MIN_IMPRESSIONS_PER_DAY_MSG: {className: 'error'},
+            MIN_BID_MSG: {className: 'error', minBid: minBidDollars},
+            MAX_BID_MSG: {className: 'error', maxBid: maxBidDollars},
+            INVALID_AUCTION: null
           };
       var messageKey = "CONFIRM_MSG";
-      if (auction.totalBudgetDollars < this.props.minBudgetDollars) {
+
+      if (!validAuction) {
+        messageKey = "INVALID_AUCTION";
+      } else if (auction.totalBudgetDollars < this.props.minBudgetDollars) {
         messageKey = "CONFIRM_MSG";
       } else if (auction.totalBudgetDollars > this.props.maxBudgetDollars &&
                  this.props.maxBudgetDollars > 0) {
@@ -335,12 +354,20 @@ var CampaignCreator = React.createClass({
       } else {
         if (r.sponsored.userIsSponsor) {
           auction.primary = true;
-        } else if (auction.maxBidDollars < auction.minBidDollars) {
-          messageKey = "MIN_IMPRESSIONS_PER_DAY_MSG";
-        } else if (auction.bidDollars < auction.minBidDollars) {
-          messageKey = "MIN_BID_MSG";
-        } else if (auction.bidDollars > auction.maxBidDollars) {
-          messageKey = "MAX_BID_MSG";
+        } else if (auction.costBasis === 'CPM') {
+          if (auction.maxCpmBidDollars < auction.minCpmBidDollars) {
+            messageKey = "MIN_IMPRESSIONS_PER_DAY_MSG";
+          } else if (auction.bidDollars < auction.minCpmBidDollars) {
+            messageKey = "MIN_BID_MSG";
+          } else if (auction.bidDollars > auction.maxCpmBidDollars) {
+            messageKey = "MAX_BID_MSG";
+          }
+        } else if (auction.costBasis === 'CPC') {
+          if (auction.bidDollars < auction.minCpcBidDollars) {
+            messageKey = "MIN_BID_MSG";
+          } else if (auction.bidDollars > auction.maxCpcBidDollars) {
+            messageKey = "MAX_BID_MSG";
+          }          
         } else {
           auction.primary = true;
         }
@@ -526,8 +553,10 @@ var CampaignCreator = React.createClass({
       costBasis: this.props.costBasis,
       bidDollars: this.props.bidDollars,
       isNew: this.props.isNew,
-      minBidDollars: this.props.minBidDollars,
-      maxBidDollars: this.props.maxBidDollars,
+      minCpmBidDollars: this.props.minCpmBidDollars,
+      maxCpmBidDollars: this.props.maxCpmBidDollars,
+      minCpcBidDollars: this.props.minCpcBidDollars,
+      maxCpcBidDollars: this.props.maxCpcBidDollars,
       minBudgetDollars: this.props.minBudgetDollars,
       maxBudgetDollars: this.props.maxBudgetDollars
     };
@@ -1160,8 +1189,10 @@ var exports = r.sponsored = {
             totalBudgetDollars = parseFloat($("#total_budget_dollars").val()),
             costBasisValue = $form.find('#cost_basis').val(),
             bidDollars = $form.find('#bid_dollars').val() || 0.,
-            minBidDollars = r.sponsored.get_min_bid_dollars(),
-            maxBidDollars = r.sponsored.get_lowest_max_bid_dollars($form),
+            minCpmBidDollars = r.sponsored.get_min_cpm_bid_dollars(),
+            maxCpmBidDollars = r.sponsored.get_lowest_max_cpm_bid_dollars($form),
+            minCpcBidDollars = r.sponsored.get_min_cpc_bid_dollars(),
+            maxCpcBidDollars = r.sponsored.get_max_cpc_bid_dollars(),
             minBudgetDollars = r.sponsored.get_min_budget_dollars(),
             maxBudgetDollars = r.sponsored.get_max_budget_dollars();
 
@@ -1170,8 +1201,10 @@ var exports = r.sponsored = {
             totalBudgetDollars: totalBudgetDollars,
             dates: dates,
             isNew: $form.find('#is_new').val() === 'true',
-            minBidDollars: minBidDollars,
-            maxBidDollars: maxBidDollars,
+            minCpmBidDollars: minCpmBidDollars,
+            maxCpmBidDollars: maxCpmBidDollars,
+            minCpcBidDollars: minCpcBidDollars,
+            maxCpcBidDollars: maxCpcBidDollars,
             maxBudgetDollars: parseFloat(maxBudgetDollars),
             minBudgetDollars: parseFloat(minBudgetDollars),
             targetName: targeting.displayName,
@@ -1868,9 +1901,11 @@ var exports = r.sponsored = {
 
         if(isValidForm){ 
           this.enable_form($form);
-        } else if(!this.targetValid){
-          // target is not valid
-          this.render_disabled_form("Please select a valid subreddit or collection");
+        } else {
+          if (!this.targetValid) {
+            // target is not valid
+            this.render_disabled_form("Please select a valid subreddit or collection");
+          }
           this.disable_form($form);
         } 
         // If campaign is new, don't set up live editing fields
@@ -2010,28 +2045,36 @@ var exports = r.sponsored = {
         this.render()
     },
 
-    get_min_bid_dollars: function() {
-        return parseFloat($('#bid_dollars').data('min_bid_dollars'));
+    get_min_cpm_bid_dollars: function() {
+        return parseFloat($('#bid_dollars').data('min_cpm_bid_dollars'));
     },
 
-    get_max_bid_dollars: function() {
-        return parseFloat($('#bid_dollars').data('max_bid_dollars'));
+    get_max_cpm_bid_dollars: function() {
+        return parseFloat($('#bid_dollars').data('max_cpm_bid_dollars'));
+    },
+
+    get_min_cpc_bid_dollars: function() {
+        return parseFloat($('#bid_dollars').data('min_cpc_bid_dollars'));
+    },
+
+    get_max_cpc_bid_dollars: function() {
+        return parseFloat($('#bid_dollars').data('max_cpc_bid_dollars'));
     },
 
     get_bid_dollars: function() {
         return parseFloat($('#bid_dollars').val());
     },
 
-    get_lowest_max_bid_dollars: function($form) {
+    get_lowest_max_cpm_bid_dollars: function($form) {
       var totalBudgetDollars = $form.find('#total_budget_dollars').val(),
           duration = this.get_timing($form).duration;
 
-        // maxBidDollars should be the lowest either
-        // of maxBidDollars or dailyMaxBid
-        var maxBidDollars = r.sponsored.get_max_bid_dollars(),
-            dailyMaxBid = totalBudgetDollars / duration; 
+        // maxCpmBidDollars should be the lowest either
+        // of maxCpmBidDollars or dailyMaxCpmBid
+        var maxCpmBidDollars = r.sponsored.get_max_cpm_bid_dollars(),
+            dailyMaxCpmBid = totalBudgetDollars / duration; 
 
-        return Math.min(maxBidDollars, dailyMaxBid);
+        return Math.min(maxCpmBidDollars, dailyMaxCpmBid);
     },
 
     get_min_budget_dollars: function() {
@@ -2089,11 +2132,19 @@ var exports = r.sponsored = {
     @returns true if so, else false
     */
     check_bid_dollars: function($form) {
-      var maxBidDollars = r.sponsored.get_lowest_max_bid_dollars($form);
-      var minBidDollars = r.sponsored.get_min_bid_dollars();
+      var minBidDollars;
+      var maxBidDollars;
       var bidDollars = r.sponsored.get_bid_dollars();
+      var costBasis = $form.find('#cost_basis').val();
 
-      $form.find('.daily-max-spend').text(maxBidDollars.toFixed(2));
+      if (costBasis === 'cpm') {
+          minBidDollars = r.sponsored.get_min_cpm_bid_dollars();
+          maxBidDollars = r.sponsored.get_lowest_max_cpm_bid_dollars($form);
+          $form.find('.daily-max-spend').text(maxBidDollars.toFixed(2));
+      } else if (costBasis === 'cpc') {
+          minBidDollars = r.sponsored.get_min_cpc_bid_dollars();
+          maxBidDollars = r.sponsored.get_max_cpc_bid_dollars();
+      }
 
       // Form validation
       if (isNaN(maxBidDollars) || 
