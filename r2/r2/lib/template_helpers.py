@@ -184,7 +184,7 @@ def js_config(extra_config=None):
     controller_name = request.environ['pylons.routes_dict']['controller']
     action_name = request.environ['pylons.routes_dict']['action']
     route_name = controller_name + '.' + action_name
-    stats_name = route_name + ('.no_ads' if promote.ads_enabled() else '')
+    stats_name = route_name + ('' if promote.ads_enabled() else '.no_ads')
 
     cache_policy = "loggedout_www"
     if c.user_is_loggedin:
