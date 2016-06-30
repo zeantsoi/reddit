@@ -46,6 +46,7 @@ import yaml
 
 from pylons import app_globals as g
 
+from r2.config import feature
 from r2.lib import amqp
 from r2.lib.db import queries
 from r2.lib.errors import RedditError
@@ -71,6 +72,7 @@ from r2.models import (
     LastModified,
     Link,
     Message,
+    ModmailConversation,
     ModAction,
     Report,
     Subreddit,
@@ -1460,11 +1462,21 @@ class Rule(object):
                 self.modmail_subject, data, self.matches)
             subject = subject[:100]
 
-            new_message, inbox_rel = Message._new(ACCOUNT, data["subreddit"],
-                subject, message, None)
-            new_message.distinguished = "yes"
-            new_message._commit()
-            queries.new_message(new_message, inbox_rel)
+            if feature.is_enabled("new_modmail",
+                                  subreddit=data["subreddit"].name):
+                ModmailConversation(
+                    data["subreddit"],
+                    ACCOUNT,
+                    subject,
+                    message,
+                )
+            else:
+                new_message, inbox_rel = Message._new(
+                    ACCOUNT, data["subreddit"],
+                    subject, message, None)
+                new_message.distinguished = "yes"
+                new_message._commit()
+                queries.new_message(new_message, inbox_rel)
 
             g.stats.simple_event("automoderator.modmail")
 
