@@ -29,11 +29,11 @@
 <%namespace file="utils.html" import="md" />
 
 <%def name="view_notification_link(action_str, message, query)">
-  <% 
+  <%
     url = UrlParser(message['permalink'])
     url.update_query(**thing.base_utm_query)
     url.update_query(**query)
-    url = url.unparse() 
+    url = url.unparse()
   %>
   <a href="${url}"
      class="link"
@@ -44,15 +44,14 @@
 
 </%def>
 
-<%def name="parse_url(base_url, base_query, custom_queries=None)">
-  <% 
+<%def name="parse_url(base_url, base_query, custom_queries=None)" filter="h, trim">
+  <%
     url = UrlParser(base_url)
     url.update_query(**base_query)
     if custom_queries:
       url.update_query(**custom_queries)
     url = url.unparse()
-  %>
-  ${url}
+  %>${url}
 </%def>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -115,7 +114,7 @@
                   <td>
                     <div class="text-header" style="color:#555555; font-family:Arial; font-size:18px; line-height:22px; text-align:left">
                       You have ${thing.message_count} new ${'messages' if thing.message_count > 1 else 'message'} in your
-                      <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_link'})}"  class="link" style="color:#0079d3; text-decoration:none" target="_blank">
+                      <a href="${parse_url(thing.inbox_url, thing.base_utm_query, {'utm_term': 'inbox_link'})}" class="link" style="color:#0079d3; text-decoration:none" target="_blank">
                         <span class="link" style="color:#0079d3; text-decoration:none">Reddit Inbox</span>
                       </a>
                     </div>
