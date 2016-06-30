@@ -175,6 +175,8 @@ def get_gtm_cachebuster():
 
 
 def js_config(extra_config=None):
+    from r2.lib import promote
+
     logged = c.user_is_loggedin and c.user.name
     user_id = c.user_is_loggedin and c.user._id
     user_in_timeout = c.user_is_loggedin and c.user.in_timeout
@@ -182,6 +184,7 @@ def js_config(extra_config=None):
     controller_name = request.environ['pylons.routes_dict']['controller']
     action_name = request.environ['pylons.routes_dict']['action']
     route_name = controller_name + '.' + action_name
+    stats_name = route_name + ('.no_ads' if promote.ads_enabled() else '')
 
     cache_policy = "loggedout_www"
     if c.user_is_loggedin:
@@ -218,6 +221,8 @@ def js_config(extra_config=None):
 
     mac = hmac.new(g.secrets["action_name"], route_name, hashlib.sha1)
     verification = mac.hexdigest()
+    stats_mac = hmac.new(g.secrets["action_name"], stats_name, hashlib.sha1)
+    stats_verification = stats_mac.hexdigest()
     cur_subreddit = ""
     cur_sr_fullname = ""
     cur_listing = ""
@@ -332,6 +337,8 @@ def js_config(extra_config=None):
         "pageInfo": {
           "verification": verification,
           "actionName": route_name,
+          "statsName": stats_name,
+          "statsVerification": stats_verification,
         },
         "facebook_app_id": g.live_config["facebook_app_id"],
         "feature_expando_events": feature.is_enabled('expando_events'),

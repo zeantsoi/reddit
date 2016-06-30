@@ -396,7 +396,7 @@ r.ui.ReadNext = Backbone.View.extend({
 
 r.ui.initTimings = function() {
   // return if we're not configured for sending stats
-  if (!r.config.pageInfo.actionName || !r.config.stats_domain) {
+  if (!r.config.pageInfo.statsName || !r.config.stats_domain) {
     return
   }
 
@@ -427,8 +427,8 @@ r.ui.initTimings = function() {
         return o
       }, {})
 
-      timingData.actionName = r.config.pageInfo.actionName
-      timingData.verification = r.config.pageInfo.verification
+      timingData.actionName = r.config.pageInfo.statsName;
+      timingData.verification = r.config.pageInfo.statsVerification;
 
       $.ajax({
         type: 'POST',
