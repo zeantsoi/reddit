@@ -49,8 +49,6 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from pylons import app_globals as g
 
-from r2.models.sitemap import SitemapUpdater
-from r2.lib.sitemaps.data import find_all_subreddits
 from r2.lib.sitemaps.generate import subreddit_sitemaps, sitemap_index
 
 
@@ -97,7 +95,10 @@ def store_sitemap_index(bucket, count):
 def store_sitemaps_in_s3(subreddits):
     s3conn = S3Connection()
     bucket = s3conn.get_bucket(g.sitemap_upload_s3_bucket, validate=False)
+
+    sitemap_count = 0
     for i, sitemap in enumerate(subreddit_sitemaps(subreddits)):
         store_subreddit_sitemap(bucket, i, sitemap)
+        sitemap_count += 1
 
-    store_sitemap_index(bucket, i + 1)
+    store_sitemap_index(bucket, sitemap_count)
