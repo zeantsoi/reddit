@@ -727,6 +727,15 @@ def edit_campaign(
             changed['is_approved'] = (campaign.is_approved, is_approved)
             campaign.is_approved = is_approved
 
+            approved_at = campaign.approved_at
+            if is_approved:
+                campaign.approval_time = promo_datetime_now()
+            else:
+                campaign.approval_time = None
+
+            if approved_at != campaign.approval_time:
+                changed['approved_at'] = (approved_at, campaign.approval_time)
+
     if 'manually_reviewed' in kwargs:
         manually_reviewed = kwargs['manually_reviewed']
         if manually_reviewed != campaign.manually_reviewed:
@@ -778,6 +787,60 @@ def edit_campaign(
         )
 
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
+
+
+def is_campaign_approved(campaign):
+    return campaign.is_approved is True
+
+
+def approved_campaigns_by_link(link):
+    campaigns = PromoCampaign._by_link(link._id)
+    return filter(is_campaign_approved, campaigns)
+
+
+def _partition_approved_campaigns(campaigns):
+    """Returns a tuple with two members:
+    1. List of PromoCampaign objects with approval_time set to a datetime
+    2. List of PromoCampaign objects with approval_time set to None
+
+    """
+    has_approval_time, no_approval_time = [], []
+    for campaign in campaigns:
+        if getattr(campaign, 'approval_time', False):
+            has_approval_time.append(campaign)
+        else:
+            no_approval_time.append(campaign)
+
+    return has_approval_time, no_approval_time
+
+
+def _campaigns_by_approved_at(campaigns):
+    return sorted(campaigns, key=lambda campaign: campaign.approved_at,
+                  reverse=True)
+
+
+def recently_approved_campaigns(campaigns, limit=None):
+    """Returns a list of approved campaigns sorted by:
+    1. Whether campaign.approval_time is a datetime
+    2. campaign.approved_at (descending order)
+
+    """
+    approved = filter(is_campaign_approved, campaigns)
+    has_approval_time, no_approval_time = (
+        _partition_approved_campaigns(approved)
+    )
+
+    recently_approved = (_campaigns_by_approved_at(has_approval_time) +
+                         _campaigns_by_approved_at(no_approval_time))
+
+    if limit:
+        return recently_approved[:limit]
+    else:
+        return recently_approved
+
+
+def campaigns_needing_review(campaigns, link):
+    return [camp for camp in campaigns if campaign_needs_review(camp, link)]
 
 
 def campaign_needs_review(campaign, link):

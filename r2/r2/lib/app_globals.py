@@ -221,6 +221,7 @@ class Globals(object):
             'max_bid_pennies',
             'frequency_cap_min',
             'frequency_cap_default',
+            'num_approved_campaigns_to_display',
             'eu_cookie_max_attempts',
             'mobile_auth_gild_time',
             'promo_sr_id',

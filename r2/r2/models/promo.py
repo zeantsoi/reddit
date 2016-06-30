@@ -696,6 +696,24 @@ class PromoCampaign(Thing):
     def bid_dollars(self):
         return self.bid_pennies / 100.
 
+    @property
+    def approved_at(self):
+        """Returns a datetime or None. Used to keep track of when campaign is
+        approved; because not all approved campaigns have the approval_time
+        data attribute, returns _date as an approximation.
+
+        """
+        if self.is_approved:
+            approval_time = getattr(self, 'approval_time', None)
+
+            if approval_time:
+                return approval_time
+            else:
+                return getattr(self, '_date')
+
+        else:
+            None
+
     def delete(self):
         self._deleted = True
         self._commit()

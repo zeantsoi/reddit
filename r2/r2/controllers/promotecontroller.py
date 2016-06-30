@@ -709,8 +709,26 @@ class SponsorListingController(PromoteListingController):
 
             for item in pane.things:
                 campaigns = campaigns_by_link[item._id]
+                link = item.lookups[0]
+                needing_review = promote.campaigns_needing_review(campaigns,
+                                                                  link)
+                recently_approved = promote.recently_approved_campaigns(
+                    campaigns,
+                    limit=g.num_approved_campaigns_to_display,
+                )
+
+                campaigns_set = set(needing_review) | set(recently_approved)
+                displayable_campaigns = sorted(
+                    campaigns_set,
+                    key=lambda campaign: campaign.is_approved
+                )
+
                 item.campaigns = RenderableCampaign.from_campaigns(
-                    item, campaigns, full_details=False, hide_after_seen=True)
+                    item,
+                    displayable_campaigns,
+                    full_details=False,
+                    hide_after_seen=True,
+                )
                 item.cachable = False
                 item.show_campaign_summary = True
         return pane

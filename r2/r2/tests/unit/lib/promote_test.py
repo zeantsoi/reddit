@@ -1,5 +1,6 @@
 import datetime
 import pytz
+import random
 import unittest
 
 from mock import (
@@ -16,9 +17,11 @@ from r2.lib.promote import (
     ads_enabled,
     ads_feature_enabled,
     all_campaigns_reviewed,
+    approved_campaigns_by_link,
     auth_campaign,
     banners_enabled,
     campaign_needs_review,
+    campaigns_needing_review,
     can_extend,
     can_refund,
     charge_campaign,
@@ -30,10 +33,13 @@ from r2.lib.promote import (
     get_unspent_budget,
     headlines_enabled,
     is_accepted,
+    is_campaign_approved,
     is_pre_cpm,
     is_underdelivered,
     new_campaign,
+    _partition_approved_campaigns,
     promo_datetime_now,
+    recently_approved_campaigns,
     RefundProviderException,
     refund_campaign,
     set_campaign_approval,
@@ -1528,3 +1534,149 @@ class TestRejectCampaignEmail(RedditTestCase):
             manually_reviewed=True,
         )
         self.assertFalse(self.emailer_reject_campaign.called)
+
+
+class TestApprovedCampaignFunctions(RedditTestCase):
+
+    def setUp(self):
+        self.now = promo_datetime_now()
+
+        unreviewed_attrs = dict(
+            is_approved=None,
+            manually_reviewed=False,
+            is_house=False,
+        )
+        self.unreviewed_1 = Mock(**unreviewed_attrs)
+        self.unreviewed_2 = Mock(**unreviewed_attrs)
+        self.unreviewed_3 = Mock(**unreviewed_attrs)
+
+        def _no_approval_time_attrs(days):
+            days_ago = self.now - datetime.timedelta(days)
+            return dict(
+                spec=PromoCampaign,
+                is_approved=True,
+                manually_reviewed=None,
+                _date=days_ago,
+                approved_at=days_ago
+            )
+
+        self.approved_no_approval_time_1 = Mock(**_no_approval_time_attrs(2))
+        self.approved_no_approval_time_2 = Mock(**_no_approval_time_attrs(4))
+        self.approved_no_approval_time_3 = Mock(**_no_approval_time_attrs(6))
+
+        def _has_approval_time_attrs(days):
+            days_ago = self.now - datetime.timedelta(days)
+            return dict(
+                is_approved=True,
+                manually_reviewed=True,
+                approval_time=days_ago,
+                approved_at=days_ago
+            )
+
+        self.approved_1 = Mock(**_has_approval_time_attrs(1))
+        self.approved_2 = Mock(**_has_approval_time_attrs(3))
+        self.approved_3 = Mock(**_has_approval_time_attrs(5))
+
+        self.all_approved_with_no_approval_time = [
+            self.approved_no_approval_time_1,
+            self.approved_no_approval_time_2,
+            self.approved_no_approval_time_3,
+        ]
+        self.all_approved = [
+            self.approved_1,
+            self.approved_2,
+            self.approved_3,
+        ]
+        self.all_approved_campaigns = (
+            self.all_approved_with_no_approval_time +
+            self.all_approved
+        )
+        self.all_unapproved_campaigns = [
+            self.unreviewed_1,
+            self.unreviewed_2,
+            self.unreviewed_3,
+        ]
+        self.all_campaigns = (self.all_approved_campaigns +
+                              self.all_unapproved_campaigns)
+
+    def test_is_campaign_approved_returns_bool(self):
+        """Assert a non-falsy boolean value is returned."""
+
+        rejected_campaign = Mock(is_approved=False)
+
+        self.assertTrue(is_campaign_approved(self.approved_1))
+        self.assertFalse(is_campaign_approved(self.unreviewed_1))
+        self.assertFalse(is_campaign_approved(rejected_campaign))
+
+    @patch('r2.lib.promote.PromoCampaign._by_link')
+    def test_approved_campaigns_by_link(self, _by_link):
+        """Assert only approved campaigns are returned."""
+
+        _by_link.return_value = self.all_campaigns
+
+        link = Mock()
+        returned_campaigns = approved_campaigns_by_link(link)
+
+        self.assertEqual(set(returned_campaigns),
+                         set(self.all_approved_campaigns))
+
+    def test_recently_approved_campaigns_order(self):
+        """Assert campaigns with approval_time set to a datetime are returned
+        first, then other approved campaigns, both sorted in descending order
+        of approved_at.
+
+        """
+        # Randomize ordering of campaigns before sorting
+        all_approved_campaigns_copy = self.all_approved_campaigns
+        random.shuffle(all_approved_campaigns_copy)
+        campaigns = recently_approved_campaigns(all_approved_campaigns_copy)
+
+        self.assertEqual(campaigns[:3], self.all_approved)
+        self.assertEqual(campaigns[3:6],
+                         self.all_approved_with_no_approval_time)
+
+    def test_recently_approved_campaigns_limit(self):
+        """Assert the limit specified is returned."""
+
+        limit = 4
+        campaigns = recently_approved_campaigns(self.all_approved_campaigns,
+                                                limit=limit)
+
+        self.assertEqual(len(campaigns), limit)
+
+    def test_recently_approved_campaigns_sub_limit(self):
+        """Assert only approved campaigns are returned, even if the quantity is
+        less than limit.
+
+        """
+        limit = 4
+        campaigns = recently_approved_campaigns(self.all_approved, limit=limit)
+
+        num_approved_campaigns = len(self.all_approved)
+        self.assertTrue(limit > num_approved_campaigns)
+        self.assertEqual(len(campaigns), num_approved_campaigns)
+
+    def test_partition_approved_campaigns(self):
+        """Assert two return values, the first with campaigns with
+        approval_time set, the second without."""
+
+        # Randomize ordering of campaigns before sorting
+        all_approved_campaigns_copy = self.all_approved_campaigns
+        random.shuffle(all_approved_campaigns_copy)
+
+        has_approval_time, no_approval_time = _partition_approved_campaigns(
+            all_approved_campaigns_copy
+        )
+
+        # Check that the returned values are lists that contain approved
+        # campaigns, partitioned by whether approval_time is set
+        self.assertEqual(set(has_approval_time), set(self.all_approved))
+        self.assertEqual(set(no_approval_time),
+                         set(self.all_approved_with_no_approval_time))
+
+    def test_campaigns_needing_review(self):
+        """Assert only campaigns needing review are returned."""
+
+        link = Mock(promote_status=ACCEPTED_PROMOTE_STATUSES[0])
+        campaigns = campaigns_needing_review(self.all_campaigns, link)
+        self.assertTrue(set(campaigns), set(self.all_unapproved_campaigns))
