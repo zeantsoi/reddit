@@ -161,7 +161,7 @@ from r2.lib.utils import Storage, tup, url_is_embeddable_image
 from r2.lib.utils import precise_format_timedelta
 from r2.lib.cache import make_key_id, MemcachedError
 
-from babel.numbers import format_currency, format_number
+from babel.numbers import format_currency
 from babel.dates import format_date
 from collections import defaultdict, namedtuple
 import csv
