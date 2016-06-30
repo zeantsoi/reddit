@@ -1604,7 +1604,8 @@ class Event(baseplate.events.Event):
 
             sensitive_data = self.get_sensitive_context_data(request, context)
             for key, value in sensitive_data.iteritems():
-                self.set_field(key, value, obfuscate=True)
+                self.set_field(key, value,
+                               kind=baseplate.events.FieldKind.OBFUSCATED)
 
         if data:
             for key, value in data.iteritems():
@@ -1612,13 +1613,14 @@ class Event(baseplate.events.Event):
 
         if obfuscated_data:
             for key, value in obfuscated_data.iteritems():
-                self.set_field(key, value, obfuscate=True)
+                self.set_field(key, value,
+                               kind=baseplate.events.FieldKind.OBFUSCATED)
 
-    def add(self, key, value, obfuscate=False):
-        self.set_field(key, value, obfuscate=obfuscate)
+    def add(self, key, value, kind=baseplate.events.FieldKind.NORMAL):
+        self.set_field(key, value, kind=kind)
 
-    def add_text(self, key, value, obfuscate=False):
-        self.add(key, value, obfuscate=obfuscate)
+    def add_text(self, key, value, kind=baseplate.events.FieldKind.NORMAL):
+        self.add(key, value, kind=kind)
 
         if value is None:
             return
@@ -1768,8 +1770,10 @@ class SelfServeEvent(Event):
         if card_number is None:
             return
 
-        self.add("payment_card_last4", card_number[-4:], obfuscate=True)
-        self.add("payment_card_expiry", payment.expirationDate, obfuscate=True)
+        self.add("payment_card_last4", card_number[-4:],
+                 kind=baseplate.events.FieldKind.OBFUSCATED)
+        self.add("payment_card_expiry", payment.expirationDate,
+                 kind=baseplate.events.FieldKind.OBFUSCATED)
         self.add("payment_postal_code", address.zip)
 
     def add_promoted_link_fields(self, link, changed=None):
