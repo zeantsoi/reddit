@@ -347,8 +347,7 @@ r.analytics = {
   stripAnalyticsParams: function() {
     var hasReplaceState = !!(window.history && window.history.replaceState);
     var params = $.url().param();
-    // st is timestamp and sh is hash for tracking link shares
-    var stripParams = ['ref', 'ref_source', 'ref_campaign', 'st', 'sh'];
+    var stripParams = ['ref', 'ref_source', 'ref_campaign'];
     // strip utm tags as well
     _.keys(params).forEach(function(paramKey){
       if (paramKey.indexOf('utm_') === 0){
@@ -357,8 +356,10 @@ r.analytics = {
     });
 
     var strippedParams = _.omit(params, stripParams);
-    // Add parameters to track link sharing
-    if (r.config.share_tracking_hmac) {
+    // Add parameters to track link sharing if 'st' and 'sh'
+    // are not present in the existing params. If they're present,
+    // updating them would leave multiple entries in browser history
+    if (r.config.share_tracking_hmac && !('st' in params || 'sh' in params)) {
       _.extend(strippedParams, r.analytics.replaceShareParams());
     }
 
