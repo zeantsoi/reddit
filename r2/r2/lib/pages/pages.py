@@ -1299,24 +1299,6 @@ class SubredditInfoBar(CachedTemplate):
 class SponsorshipBox(Templated):
     pass
 
-class TopPostsSidebar(Templated):
-    """ Renders top 3 posts from a given set of links in the sidebar """
-    def _render_top_posts(self, links, title, icon_image, cta_url, name,
-                          fullname, current_page):
-        builder = IDBuilder(links, num=3)
-        top_posts = [link for link in LinkListing(builder).get_items()[0]]
-        page_type = "self" if current_page.is_self else "link"
-        Templated.__init__(
-            self,
-            title=title,
-            icon_image=icon_image,
-            cta_url=cta_url,
-            top_posts=top_posts,
-            sr_name=name,
-            sr_fullname=fullname,
-            page_type=page_type,
-        )
-
 
 def _get_top_posts(num, link):
     links = c.site.get_links('hot', 'all')
@@ -1368,77 +1350,6 @@ class TopPostsCarousel(Templated):
             page_type=page_type,
             position=position,
         )
-
-
-class TopPostsWithinSubreddit(TopPostsSidebar):
-    """ Renders top posts from the article's subreddit in the sidebar """
-    def __init__(self, current_page):
-        links = c.site.get_links('hot', 'all')
-        self._render_top_posts(
-            links,
-            "Top Posts on r/%s" % c.site.name,
-            "top_posts_icon.png",
-            add_sr(""),
-            c.site.name,
-            c.site._fullname,
-            current_page,
-        )
-
-class TopDefaultPosts(TopPostsSidebar):
-    """ Renders top posts the default subreddits in the sidebar """
-    def __init__(self, current_page):
-        default_sr = DefaultSR()
-        links = default_sr.get_links('hot', 'all')
-        self._render_top_posts(
-            links,
-            "Top Posts on Reddit",
-            "top_posts_icon.png",
-            add_sr("", sr_path=False),
-            default_sr.name,
-            default_sr._fullname,
-            current_page,
-        )
-
-class RecentSubredditPosts(TopPostsSidebar):
-    """ Renders top posts from the most recent visited subreddits in the sidebar """
-    def __init__(self, current_page):
-        multi = MultiReddit(srs=c.recent_subreddits)
-        links = multi.get_links('hot', 'all')
-        path = "r/" + "+".join(sr.name for sr in multi.srs)
-        self._render_top_posts(
-            links,
-            "From Visited Communities",
-            "communities_icon.png",
-            add_sr(path, sr_path=False),
-            "multi",
-            "",
-            current_page,
-        )
-
-class ValuePropSidebar(Templated):
-    def __init__(self, current_page):
-        value_props = [
-            {
-                'icon': 'value_prop_share.png',
-                'title': 'SHARE',
-                'text': "Community members share stories, links, and images."
-            },
-            {
-                'icon': 'value_prop_vote.png',
-                'title': 'VOTE',
-                'text': "The global Reddit community then chooses which "
-                        "stories and discussions to upvote or downvote."
-            },
-            {
-                'icon': 'value_prop_discuss.png',
-                'title': 'DISCUSS',
-                'text': "Comments provide more info, conversation, context, "
-                        "and often humor."
-            },
-        ]
-        page_type = "self" if current_page.is_self else "link"
-        Templated.__init__(self, value_props=value_props, subreddit=c.site,
-                           page_type=page_type)
 
 
 class HelpLink(Templated):
@@ -2219,21 +2130,6 @@ class LinkInfoPage(Reddit):
                 rb.insert(1, AdminLinkInfoBar(a=self.link))
             else:
                 rb.insert(1, LinkInfoBar(a=self.link))
-
-                # insert a relevancy sidebar into the first position
-                if (request.route_dict['action'] == 'GET_comments' and
-                        c.site.name == RELEVANCY_EXPERIMENT_SUB and
-                        feature.is_enabled('relevancy_sidebar')):
-
-                    variant = feature.variant('relevancy_sidebar')
-                    if variant == 'current_subreddit':
-                        rb.insert(1, TopPostsWithinSubreddit(self.link))
-                    elif variant == 'default_subreddits':
-                        rb.insert(1, TopDefaultPosts(self.link))
-                    elif variant == 'recent_subreddits':
-                        rb.insert(1, RecentSubredditPosts(self.link))
-                    elif variant == 'value_prop':
-                        rb.insert(1, ValuePropSidebar(self.link))
 
         return rb
 
