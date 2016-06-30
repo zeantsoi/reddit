@@ -36,7 +36,6 @@ from gold import *
 from admintools import *
 from token import *
 from modaction import *
-from modmail import *
 from promo import *
 from authorizenet import *
 

@@ -72,7 +72,6 @@ def load_controllers():
     from newsletter import NewsletterController
     from moat import MoatController
     from googletagmanager import GoogleTagManagerController
-    from modmail import ModmailController
     from promotecontroller import PromoteController
     from promotecontroller import SponsorController
     from promotecontroller import PromoteApiController

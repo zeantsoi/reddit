@@ -349,15 +349,6 @@ def make_map(config):
     mc('/wiki/discussions/*page', controller='wiki', action='wiki_discussions')
     mc('/wiki/pages', controller='wiki', action='wiki_listing')
 
-    mc('/api/mod/conversations', controller='modmail', action='conversations')
-    mc('/api/mod/conversations/unread', controller='modmail', action='unread')
-    mc('/api/mod/conversations/read', controller='modmail', action='read')
-    mc('/api/mod/conversations/archive', controller='modmail', action='archive_status')
-    mc('/api/mod/conversations/:conversation_id', controller='modmail', action='mod_messages')
-    mc('/api/mod/conversations/:conversation_id/star', controller='modmail', action='star')
-    mc('/api/mod/conversations/:conversation_id/archive', controller='modmail', action='archive')
-    mc('/api/mod/conversations/:conversation_id/unarchive', controller='modmail', action='unarchive')
-
     mc('/api/wiki/edit', controller='wikiapi', action='wiki_edit')
     mc('/api/wiki/hide', controller='wikiapi', action='wiki_revision_hide')
     mc('/api/wiki/delete', controller='wikiapi', action='wiki_revision_delete')
