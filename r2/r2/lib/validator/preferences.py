@@ -93,6 +93,7 @@ PREFS_VALIDATORS = dict(
     pref_legacy_search=VBoolean('legacy_search'),
     pref_threaded_modmail=VBoolean('threaded_modmail', False),
     pref_allow_clicktracking=VBoolean('allow_clicktracking'),
+    pref_live_orangereds=VBoolean('live_orangereds', True),
 )
 
 

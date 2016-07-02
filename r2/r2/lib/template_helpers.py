@@ -275,7 +275,7 @@ def js_config(extra_config=None):
         events_collector_key = g.secrets['events_collector_js_key']
         events_collector_secret = g.secrets['events_collector_js_secret']
 
-    if logged and feature.is_enabled("live_orangereds"):
+    if feature.is_enabled("live_orangereds") and logged:
         user_websocket_url = websockets.make_url("/user/%s" % c.user._id36,
             max_age=24 * 60 * 60)
     else:
@@ -371,6 +371,7 @@ def js_config(extra_config=None):
         "share_tracking_hmac": share_tracking_hmac,
         "share_tracking_ts": share_ts,
         "user_websocket_url": user_websocket_url,
+        "live_orangereds_pref": c.user.pref_live_orangereds,
     }
 
     if feature.is_enabled("eu_cookie_policy"):

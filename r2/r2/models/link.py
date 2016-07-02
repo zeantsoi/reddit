@@ -3088,6 +3088,9 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
         if not feature.is_enabled("live_orangereds", user=to):
             return
 
+        if not to.pref_live_orangereds:
+            return
+
         if isinstance(obj, Comment):
             msg_type = "comment reply"
         else:

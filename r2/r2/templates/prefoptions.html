@@ -301,6 +301,13 @@
       %endif
       <br>
       ${checkbox(_("enable threaded modmail display"), "threaded_modmail")}
+      <br>
+      %if feature.is_enabled('live_orangereds'):
+        ${checkbox(_("enable browser notifications for new messages"), "live_orangereds")}
+        &#32;<span class="details">
+          ${_("(you also need to allow notifications from your browser under content settings)")}
+        </span>
+      %endif
     </td>
   </tr>
   <tr>
