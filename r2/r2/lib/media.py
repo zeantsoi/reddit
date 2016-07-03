@@ -421,7 +421,7 @@ def _flatten_alpha(img):
 def upload_media(image, file_type='jpg', category='thumbs',
         filename_hash=None):
     """Upload an image to the media provider."""
-    f = tempfile.NamedTemporaryFile(suffix=".{}".format(file_type), delete=True)
+    f = tempfile.NamedTemporaryFile(suffix=".{}".format(file_type), delete=False)
     try:
         img = image
         do_convert = True
@@ -431,6 +431,7 @@ def upload_media(image, file_type='jpg', category='thumbs',
             if img_format == file_type and img_format in ("png", "gif"):
                 img.verify()
                 f.write(image)
+                f.close()
                 do_convert = False
 
         if do_convert:
@@ -456,7 +457,7 @@ def upload_media(image, file_type='jpg', category='thumbs',
         )
         return g.media_provider.put(category, file_name, contents)
     finally:
-        f.close()
+        os.unlink(f.name)
     return ""
 
 
