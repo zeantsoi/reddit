@@ -25,6 +25,8 @@
 Currently only supports subreddit links but will soon support comment links.
 """
 
+import hashlib
+import itertools
 import tempfile
 
 from boto.s3.connection import S3Connection
@@ -37,8 +39,6 @@ def _read_subreddit_etl_from_s3(s3path):
     s3conn = S3Connection()
     bucket = s3conn.get_bucket(s3path.bucket, validate=False)
     s3keys = bucket.list(s3path.key)
-
-    key_count = 0
     for s3key in s3keys:
         g.log.info("Importing key %r", s3key)
 
@@ -61,10 +61,6 @@ def _read_subreddit_etl_from_s3(s3path):
                 g.log.debug("Starting import of %r", s3key)
                 for line in ntf_decompress:
                     yield line
-        key_count += 1
-
-    if key_count == 0:
-        raise ValueError('{0} contains no readable keys.'.format(s3path))
 
 
 def find_all_subreddits(s3path):

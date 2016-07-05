@@ -2,6 +2,7 @@ import datetime
 import dateutil
 import json
 import pytz
+import re
 import time
 
 from boto.s3.connection import S3Connection
