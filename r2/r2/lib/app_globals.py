@@ -398,6 +398,7 @@ class Globals(object):
             'comment_vote_update_threshold',
             'comment_vote_update_period',
             'r_all_penalty',
+            'ads_usermatch_timeout_ms',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',

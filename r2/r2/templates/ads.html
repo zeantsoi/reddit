@@ -154,7 +154,7 @@
       }
     }
 
-    timeout = setTimeout(loadAd, 1000);
+    timeout = setTimeout(loadAd, ${scriptsafe_dumps(thing.usermatch_timeout_ms)});
 
     if (r.config.feature_ads_user_matching && !window.DO_NOT_TRACK) {
       r.frames.receiveMessageOnce('userMatched.gtm', loadAd);

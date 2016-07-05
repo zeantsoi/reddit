@@ -4093,6 +4093,8 @@ class Ads(Templated):
         Templated.__init__(self)
         self.ad_url = g.ad_domain + "/ads/"
         self.frame_id = "ad-frame"
+        self.usermatch_timeout_ms = g.live_config.get(
+            "ads_usermatch_timeout_ms", 1000)
 
 
 class ReadNext(Templated):
