@@ -4080,14 +4080,20 @@ class ApiController(RedditController):
         VModhash(),
         action=VOneOf('action', ('sub', 'unsub')),
         srs=VSubscribeSR('sr', 'sr_name'),
+        skip_initial_defaults=VBoolean("skip_initial_defaults", default=False),
     )
     @api_doc(api_section.subreddits)
-    def POST_subscribe(self, action, srs):
+    def POST_subscribe(self, action, srs, skip_initial_defaults):
         """Subscribe to or unsubscribe from a subreddit.
 
         To subscribe, `action` should be `sub`. To unsubscribe, `action` should
         be `unsub`. The user must have access to the subreddit to be able to
         subscribe to it.
+
+        The `skip_initial_defaults` param can be set to True to prevent
+        automatically subscribing the user to the current set of defaults
+        when they take their first subscription action. Attempting to set it
+        for an unsubscribe action will result in an error.
 
         See also: [/subreddits/mine/](#GET_subreddits_mine_{where}).
 
@@ -4097,6 +4103,12 @@ class ApiController(RedditController):
             return abort(404, 'not found')
 
         is_subscribing = action == 'sub'
+
+        if skip_initial_defaults and not is_subscribing:
+            # asking to skip the automatic initial subscriptions to the
+            # defaults only makes sense if you're subscribing to others instead
+            return abort(400,
+                "skip_initial_defaults is only valid when subscribing")
 
         error = False
         for sr in srs:
@@ -4108,10 +4120,16 @@ class ApiController(RedditController):
         if error:
             return abort(403, 'permission denied')
 
-        # subscribe_defaults has the side effect of setting has_subscribed to
-        # True if it isn't already, so capture its value before that happens
+        # capture the value of has_subscribed before doing anything that could
+        # end up changing it
         is_first_sub = not c.user.has_subscribed
-        Subreddit.subscribe_defaults(c.user)
+
+        # if this is the user's first action to change their subscriptions,
+        # convert the "soft" default subscriptions into real ones before
+        # doing the actual subscribe/unsubscribe(s) they requested (unless they
+        # specifically requested not to have the initial defaults)
+        if is_first_sub and not skip_initial_defaults:
+            Subreddit.subscribe_defaults(c.user)
 
         if is_subscribing:
             SubredditParticipationByAccount.mark_participated(c.user, srs)

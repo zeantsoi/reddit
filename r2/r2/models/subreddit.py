@@ -1277,11 +1277,11 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def subscribe_defaults(cls, user):
-        if not user.has_subscribed:
-            user.has_subscribed = True
-            user._commit()
-            srs = cls.user_subreddits(user=None, ids=False, limit=None)
-            cls.subscribe_multiple(user, srs)
+        if user.has_subscribed:
+            return
+
+        srs = cls.user_subreddits(user=None, ids=False, limit=None)
+        cls.subscribe_multiple(user, srs)
 
     def keep_item(self, wrapped):
         if c.user_is_admin:
@@ -1386,6 +1386,10 @@ class Subreddit(Thing, Printable, BaseSite):
             return False
 
     def add_subscriber(self, user):
+        if not user.has_subscribed:
+            user.has_subscribed = True
+            user._commit()
+
         SubscribedSubredditsByAccount.create(user, self)
         SubscriptionsByDay.create(self, user)
         add_legacy_subscriber(self, user)
@@ -1393,6 +1397,10 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def subscribe_multiple(cls, user, srs):
+        if not user.has_subscribed:
+            user.has_subscribed = True
+            user._commit()
+
         SubscribedSubredditsByAccount.create(user, srs)
         SubscriptionsByDay.create(srs, user)
         add_legacy_subscriber(srs, user)
