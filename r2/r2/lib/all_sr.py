@@ -54,7 +54,7 @@ def get_all_hot_ids():
     """ Return a list of Link fullnames sorted by Hot and reshuffled for
     diversity."""
     # this is populated by write_all_hot_cache below from a separate job
-    link_ids = g.cache.get(CACHE_KEY, [])
+    link_ids = g.cache.get(CACHE_KEY, [], stale=True)
     return link_ids
 
 
