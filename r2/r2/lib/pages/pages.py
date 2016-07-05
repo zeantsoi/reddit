@@ -213,10 +213,8 @@ def responsive(res, space_compress=None):
 
 
 class Robots(Templated):
+    pass
 
-    def __init__(self, **context):
-        Templated.__init__(self, **context)
-        self.subreddit_sitemap = g.sitemap_subreddit_static_url
 
 class CrossDomain(Templated):
     pass
