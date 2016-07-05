@@ -343,14 +343,7 @@ class Reddit(Templated):
         canonical_url = UrlParser(canonical_link or request.url)
         canonical_url.canonicalize()
         self.canonical_link = canonical_url.unparse()
-        if c.render_style != "html":
-            u = UrlParser(request.fullpath)
-            u.set_extension("")
-            u.hostname = g.domain
-            u.scheme = g.default_scheme
-            if g.domain_prefix:
-                u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
-            self.canonical_link = u.unparse()
+
 
         # Generate a mobile link for Google.
         u = UrlParser(request.fullpath)

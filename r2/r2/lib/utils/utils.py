@@ -653,8 +653,15 @@ class UrlParser(object):
         subdomain = extract_subdomain(self.hostname)
         if subdomain == '' or is_language_subdomain(subdomain):
             self.hostname = 'www.{0}'.format(g.domain)
+
+        # If our extension is one denoting a special render type, remove it
+        # to refer to the canonical (html) render type
+        if self.path_extension().lower() in g.extension_subdomains.values():
+            self.set_extension('')
+
         if not self.path.endswith('/'):
             self.path += '/'
+
         self.scheme = 'https'
 
     def switch_subdomain_by_extension(self, extension=None):
