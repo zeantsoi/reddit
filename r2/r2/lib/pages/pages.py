@@ -856,7 +856,10 @@ class Reddit(Templated):
             if moderator:
                 ps.append(self.sr_admin_menu())
             if show_adbox:
-                ps.append(Ads(displayed_things=self.displayed_things))
+                ps.append(Ads(
+                    displayed_things=self.displayed_things,
+                    link=getattr(self, "link", None)
+                ))
             no_ads_yet = False
         elif self.show_wiki_actions:
             ps.append(self.wiki_actions_menu())
@@ -928,7 +931,10 @@ class Reddit(Templated):
                     link="https://www.redditgifts.com/exchanges/secret-santa-2015/?source=barbttn-ss15-ftpg-151109",
                     target="_blank",
                 ))
-            ps.append(Ads(displayed_things=self.displayed_things))
+            ps.append(Ads(
+                displayed_things=self.displayed_things,
+                link=getattr(self, "link", None)
+            ))
 
             if g.live_config["gold_revenue_goal"]:
                 ps.append(Goldvertisement())
@@ -4083,7 +4089,7 @@ class AdminGold(Templated):
 
 
 class Ads(Templated):
-    def __init__(self, displayed_things=None):
+    def __init__(self, displayed_things=None, link=None):
         Templated.__init__(self)
         self.ad_url = g.ad_domain + "/ads/"
         self.frame_id = "ad-frame"
