@@ -344,11 +344,9 @@ class Reddit(Templated):
         canonical_url.canonicalize()
         self.canonical_link = canonical_url.unparse()
 
-
         # Generate a mobile link for Google.
-        u = UrlParser(request.fullpath)
+        u = UrlParser(self.canonical_link)
         u.switch_subdomain_by_extension('mobile')
-        u.scheme = 'https'
         self.mobile_link = u.unparse()
 
         if self.show_infobar:
