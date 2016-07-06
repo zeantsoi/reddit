@@ -46,7 +46,7 @@ from urlparse import urlparse, urlunparse, urlunsplit
 import pytz
 import snudown
 import unidecode
-import httpagentparser
+from r2.lib.utils import reddit_agent_parser
 
 from babel.dates import TIMEDELTA_UNITS
 from BeautifulSoup import BeautifulSoup, SoupStrainer
@@ -72,7 +72,7 @@ def randstr(length,
 
 def parse_agent(ua):
     agent_summary = {}
-    parsed = httpagentparser.detect(ua)
+    parsed = reddit_agent_parser.detect(ua)
     for attr in ("browser", "os", "platform"):
         d = parsed.get(attr)
         if d:
@@ -85,6 +85,9 @@ def parse_agent(ua):
     dist = parsed.get('dist')
     if dist:
         agent_summary['sub-platform'] = dist.get('name')
+    app_name = parsed.get('app_name')
+    if app_name:
+        agent_summary['app_name'] = app_name
 
     return agent_summary
 
