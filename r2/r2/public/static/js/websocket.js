@@ -87,5 +87,88 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
             error: 1,
           },
         })
-    }
+    },
+
+    _verifyLocalStorage: function(keyname) {
+        // Check if local storage is supported
+        var PERSIST_SYNCED_KEYS_KEY = '__synced_local_storage_%(keyname)s__'.format({keyname: keyname});
+        try {
+            store.safeSet(
+                PERSIST_SYNCED_KEYS_KEY,
+                store.safeGet(PERSIST_SYNCED_KEYS_KEY) || ''
+            )
+        } catch (err) {
+            return false;
+        }
+        return true;
+    },
+
+    startPerBrowser: function(keyname, websocketUrl, websocketEvents, websocketStorageEvents) {
+        if (!this._verifyLocalStorage(keyname)) {
+            return false;
+        }
+        var now = new Date();
+        var date = store.safeGet(keyname) || '';
+
+        // If a websocket hasn't written to storage in 15 seconds,
+        // open a new one
+        if (!date || now - new Date(date) > 15000) {
+            this.on(websocketEvents);
+            this.start();
+            store.safeSet(keyname + '-websocketUrl', websocketUrl);
+        }
+        this._keepTrackOfHeartbeat(keyname, websocketEvents, websocketUrl);
+
+        // Listen for storage events to see if a websocket message
+        // has been broadcast
+        window.addEventListener('storage', websocketStorageEvents);
+    },
+
+    _writeHeartbeat: function(keyname, websocketEvents, websocketUrl) {
+        store.safeSet(keyname, new Date());
+        var websocketInterval = setInterval(function() {
+            var now = new Date();
+            var storedDate = store.safeGet(keyname);
+            if (store.safeGet(keyname + '-websocketUrl') !== websocketUrl) {
+                // Another websocket is currently open so close this one
+                if (!!storedDate && now - new Date(storedDate) < 5000) {
+                    this._maximumRetries = 0;
+                    this._socket.close();
+                    clearInterval(websocketInterval);
+                    this._watchHeartbeat(keyname, websocketEvents, websocketUrl);
+                }
+            }
+        store.safeSet(keyname, new Date());
+        }.bind(this), 5000);
+    },
+
+    _watchHeartbeat: function(keyname, websocketEvents, websocketUrl) {
+        var noWebsocketInterval = setInterval(function() {
+            var now = new Date();
+            var date = store.safeGet(keyname) || '';
+
+            // The websocket heartbeat hasn't been updated recently, so
+            // open a new websocket, clear this heartbeat checker, and
+            // start updating the heartbeat instead.
+            if (!date || now - new Date(date) > 15000) {
+                this.on(websocketEvents);
+                this.start();
+                store.safeSet(keyname + '-websocketUrl', websocketUrl);
+                clearInterval(noWebsocketInterval);
+                this._writeHeartbeat(keyname, websocketEvents, websocketUrl);
+            }
+        }.bind(this), 15000);
+    },
+
+    _keepTrackOfHeartbeat: function(keyname, websocketEvents, websocketUrl) {
+        if (store.safeGet(keyname + '-websocketUrl') === websocketUrl) {
+            // This is now the tab with the websocket, keep a timestamp
+            // rewriting every 5 seconds in local storage
+            this._writeHeartbeat(keyname, websocketEvents, websocketUrl);
+        } else {
+            // Otherwise, poll every 15 seconds to see if the timestamp is
+            // old, which means we'd need to open a websocket
+            this._watchHeartbeat(keyname, websocketEvents, websocketUrl);
+        }
+    },
 })
