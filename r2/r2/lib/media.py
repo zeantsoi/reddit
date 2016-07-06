@@ -20,8 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import sys
-
 import base64
 import contextlib
 import cStringIO
@@ -46,7 +44,6 @@ import requests
 
 from pylons import app_globals as g
 
-from r2 import models
 from r2.config import feature
 from r2.lib import (
     amqp,
@@ -75,7 +72,7 @@ from r2.models.media_cache import (
     Media,
     MediaByURL,
 )
-from r2.models import Account, NotFound, Subreddit
+from r2.models import Account, Subreddit
 from urllib2 import (
     HTTPError,
     URLError,
