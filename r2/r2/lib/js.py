@@ -815,6 +815,10 @@ module["less"] = Module('less.js',
     should_compile=False,
 )
 
+module["contactus"] = LocalizedModule("contactus.js",
+    "contactus.js",
+)
+
 # This needs to be separate module because we need it to load on old / bad
 # browsers that choke on reddit.js
 module["https-tester"] = Module("https-tester.js",
