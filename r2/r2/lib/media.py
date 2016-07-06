@@ -34,13 +34,12 @@ import traceback
 import urllib
 import urllib2
 import urlparse
-import gzip
 
+import advocate
 import BeautifulSoup
 from PIL import Image, ImageFile
 from time import sleep
 import lxml.html
-import requests
 
 from pylons import app_globals as g
 
@@ -89,6 +88,9 @@ _MP4_PREVIEW_TEMPLATE = """
     <source src="%(url)s" type="video/mp4">
 </video>
 """
+
+
+SESSION = advocate.Session()
 
 
 def _image_to_str(image):
@@ -236,13 +238,13 @@ def _initialize_request(url, referer, gzip=False):
     if not url.startswith(("http://", "https://")):
         return
 
-    req = urllib2.Request(url)
+    req = advocate.Request("GET", url).prepare()
     if gzip:
-        req.add_header('Accept-Encoding', 'gzip')
+        req.headers["Accept-Encoding"] = "gzip"
     if g.useragent:
-        req.add_header('User-Agent', g.useragent)
+        req.headers["User-Agent"] = g.useragent
     if referer:
-        req.add_header('Referer', referer)
+        req.headers["Referer"] = referer
     return req
 
 
@@ -250,14 +252,10 @@ def _fetch_url(url, referer=None):
     request = _initialize_request(url, referer=referer, gzip=True)
     if not request:
         return None, None
-    response = urllib2.urlopen(request)
-    response_data = response.read()
-    content_encoding = response.info().get("Content-Encoding")
-    if content_encoding and content_encoding.lower() in ["gzip", "x-gzip"]:
-        buf = cStringIO.StringIO(response_data)
-        f = gzip.GzipFile(fileobj=buf)
-        response_data = f.read()
-    return response.headers.get("Content-Type"), response_data
+
+    response = SESSION.send(request)
+    response.raise_for_status()
+    return response.headers.get("Content-Type"), response.content
 
 
 @contextlib.contextmanager
@@ -276,7 +274,7 @@ def _request_image(url, timeout, referer=None):
         if referer:
             headers["Referer"] = referer
 
-        res = requests.get(
+        res = advocate.get(
             url,
             timeout=timeout,
             stream=True,
@@ -333,17 +331,18 @@ def _fetch_image_size(url, referer):
     parser = ImageFile.Parser()
     response = None
     try:
-        response = urllib2.urlopen(request)
+        response = SESSION.send(request, stream=True)
+        response.raise_for_status()
 
         while True:
-            chunk = response.read(1024)
+            chunk = response.raw.read(1024)
             if not chunk:
                 break
 
             parser.feed(chunk)
             if parser.image:
                 return parser.image.size
-    except urllib2.URLError:
+    except advocate.RequestException:
         return None
     finally:
         if response:
@@ -1051,7 +1050,7 @@ class _EmbedlyScraper(Scraper):
 
         timer = g.stats.get_timer("providers.embedly.oembed")
         timer.start()
-        content = requests.get(self.EMBEDLY_API_URL + "?" + params).content
+        content = advocate.get(self.EMBEDLY_API_URL + "?" + params).content
         timer.stop()
 
         return json.loads(content)
@@ -1242,7 +1241,7 @@ class _YouTubeScraper(Scraper):
         }
 
         with g.stats.get_timer("providers.youtube.oembed"):
-            content = requests.get(self.OEMBED_ENDPOINT, params=params).content
+            content = advocate.get(self.OEMBED_ENDPOINT, params=params).content
 
         oembed = None
         try:
@@ -1312,7 +1311,7 @@ class _YouTubeScraper(Scraper):
 
 @memoize("media.embedly_services2", time=3600)
 def _fetch_embedly_service_data():
-    resp = requests.get("https://api.embed.ly/1/services/python")
+    resp = advocate.get("https://api.embed.ly/1/services/python")
     return get_requests_resp_json(resp)
 
 
@@ -1522,7 +1521,7 @@ def purge_from_cdn(url, verify=True, max_retries=10, pause=3,
     try_count = 1
     while try_count <= max_retries:
         sleep(pause)
-        response = requests.head(url)
+        response = advocate.head(url)
 
         if response.status_code in (401, 403, 404):
             return

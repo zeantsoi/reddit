@@ -94,6 +94,7 @@ python-tinycss2
 python-unidecode
 python-mock
 python-yaml
+python-advocate
 
 python-baseplate
 

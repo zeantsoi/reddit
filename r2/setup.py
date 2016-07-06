@@ -79,6 +79,7 @@ setup(
         "kazoo",
         "stripe",
         "requests",
+        "advocate",
         "tinycss2",
         "unidecode",
         "PyYAML",

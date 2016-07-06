@@ -21,7 +21,6 @@
 ###############################################################################
 
 import base64
-import codecs
 import ConfigParser
 import cPickle as pickle
 import functools
@@ -40,9 +39,9 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from urllib import unquote_plus, unquote, urlencode
-from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse, urlunsplit
 
+import advocate
 import pytz
 import snudown
 import unidecode
@@ -307,35 +306,29 @@ def get_title(url):
     if not url or not url.startswith(('http://', 'https://')):
         return None
 
+    rsp = None
     try:
-        req = Request(url)
+        headers = {}
         if g.useragent:
-            req.add_header('User-Agent', g.useragent)
-        opener = urlopen(req, timeout=15)
+            headers["User-Agent"] = g.useragent
 
-        # determine the encoding of the response
-        for param in opener.info().getplist():
-            if param.startswith("charset="):
-                param_name, sep, charset = param.partition("=")
-                codec = codecs.getreader(charset)
-                break
-        else:
-            codec = codecs.getreader("utf-8")
+        rsp = advocate.get(url, stream=True, headers=headers)
 
-        with codec(opener, "ignore") as reader:
-            # Attempt to find the title in the first 1kb
-            data = reader.read(1024)
+        # Attempt to find the title in the first 1kb
+        data = rsp.raw.read(1024, decode_content=True)
+        title = extract_title(data)
+
+        # Title not found in the first kb, try searching an additional 10kb
+        if not title:
+            data += rsp.raw.read(10240, decode_content=True)
             title = extract_title(data)
 
-            # Title not found in the first kb, try searching an additional 10kb
-            if not title:
-                data += reader.read(10240)
-                title = extract_title(data)
-
         return title
-
     except:
         return None
+    finally:
+        if rsp:
+            rsp.close()
 
 def extract_title(data):
     """Try to extract the page title from a string of HTML.
