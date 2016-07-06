@@ -29,6 +29,7 @@ import base64
 import datetime
 import traceback, sys, smtplib
 import hashlib
+import time
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
@@ -168,16 +169,45 @@ def password_email(user):
     return True
 
 
+def make_message_dict_unique(message_dict):
+    json_data = {}
+
+    for message_data in message_dict.itervalues():
+        json_message_data = json.loads(message_data)
+        key = json_message_data['to']
+
+        if key in json_data:
+            # always take the most recent start_date
+            # start_date is ISO8601 date which is string comparable
+            if json_data[key]['start_date'] < json_message_data['start_date']:
+                json_data[key] = json_message_data
+        else:
+            json_data[key] = json_message_data
+
+    return json_data
+
+
+def get_unread_and_unemailed(user):
+    inbox_items = Inbox.get_unread_and_unemailed(user._id)
+    return sorted(inbox_items, key=lambda x: x[1]._date)
+
 @trylater_hooks.on('trylater.message_notification_email')
 def message_notification_email(data):
     """Queues a system email for a new message notification."""
     from r2.lib.pages import MessageNotificationEmail
 
+    timer_start = time.time()
+
     MAX_EMAILS_PER_USER = 30
     MAX_MESSAGES_PER_BATCH = 5
+    total_messages_sent = 0
+    inbox_item_lookup_count = 0
 
-    for datum in data.itervalues():
-        datum = json.loads(datum)
+    unique_user_list = make_message_dict_unique(data)
+    g.log.info(
+        "there are %s users for this batch of emails" % len(unique_user_list))
+
+    for datum in unique_user_list.itervalues():
         user = Account._byID36(datum['to'], data=True)
         g.log.info('user fullname: %s' % user._fullname)
 
@@ -200,12 +230,13 @@ def message_notification_email(data):
             continue
 
         # Get all new messages that haven't been emailed
-        inbox_items = Inbox.get_unread_and_unemailed(user._id)
-        inbox_items = sorted(inbox_items, key=lambda x: x[1]._date)
+        inbox_items = get_unread_and_unemailed(user)
+        inbox_item_lookup_count += 1
 
         if not inbox_items:
             g.log.info('no inbox items found for %s' % user._fullname)
             continue
+
         newest_inbox_rel = inbox_items[-1][0]
         oldest_inbox_rel = inbox_items[0][0]
 
@@ -232,39 +263,27 @@ def message_notification_email(data):
             # Get sender_name, replacing with display_author if it exists
             g.log.info('user fullname: %s, message fullname: %s' % (
                 user._fullname, message._fullname))
-            if getattr(message, 'from_sr', False):
-                sender_name = ('/r/%s' %
-                    Subreddit._byID(message.sr_id, data=True).name)
-            else:
-                if getattr(message, 'display_author', False):
-                    sender_id = message.display_author
-                else:
-                    sender_id = message.author_id
-                sender_name = '/u/%s' % Account._byID(sender_id, data=True).name
+
+            sender_name = get_sender_name(message)
 
             if message_count >= MAX_MESSAGES_PER_BATCH:
                 # prevent duplicate usernames for template display
                 non_preview_usernames.add(sender_name)
                 more_unread_messages = True
             else:
+                link = None
+                parent = None
                 if isinstance(message, Comment):
                     permalink = message.make_permalink_slow(context=1,
                         force_domain=True)
-                    link = None
-                    parent = None
                     if message.parent_id:
                         parent = Comment._byID(message.parent_id, data=True)
                     else:
                         link = Link._byID(message.link_id, data=True)
-                    if parent and parent.author_id == user._id:
-                        message_type = N_("comment reply")
-                    elif not parent and link.author_id == user._id:
-                        message_type = N_("post reply")
-                    else:
-                        message_type = N_("username notification")
                 else:
                     permalink = message.make_permalink(force_domain=True)
-                    message_type = N_("message")
+
+                message_type = get_message_type(message, parent, user, link)
 
                 messages.append({
                     "author_name": sender_name,
@@ -291,13 +310,13 @@ def message_notification_email(data):
         # unique email_hash for emails, to be used in utm tags
         id_str = ''.join(str(message['id'] for message in messages))
         email_hash = hashlib.sha1(id_str).hexdigest()
-        
+
         base_utm_query = {
-            'utm_name': email_hash, 
-            'utm_source': 'email', 
+            'utm_name': email_hash,
+            'utm_source': 'email',
             'utm_medium':'message_notification',
         }
-        
+
         non_preview_usernames_str = generate_non_preview_usernames_str(
                                         non_preview_usernames)
 
@@ -326,6 +345,8 @@ def message_notification_email(data):
             email_type='message_notification_email',
         )
 
+        total_messages_sent += 1
+
         # report the email event to data pipeline
         g.events.orangered_email_event(
             request=request,
@@ -341,8 +362,40 @@ def message_notification_email(data):
         g.stats.simple_event('email.message_notification.queued')
         user_notification_ratelimit.record_usage()
 
+    timer_end = time.time()
+    g.log.info(
+        "Took %s seconds to send orangered emails" % (timer_end - timer_start))
+
+    g.log.info("Total number of messages sent: %s" % total_messages_sent)
+    g.log.info("Total count of inbox lookups: %s" % inbox_item_lookup_count)
+
+
+def get_message_type(message, parent, user, link):
+    if isinstance(message, Comment):
+        if parent and parent.author_id == user._id:
+            return N_("comment reply")
+        elif not parent and link.author_id == user._id:
+            return N_("post reply")
+        else:
+            return N_("username notification")
+    else:
+        return N_("message")
+
+
+def get_sender_name(message):
+    if getattr(message, 'from_sr', False):
+        return ('/r/%s' %
+                Subreddit._byID(message.sr_id, data=True).name)
+    else:
+        if getattr(message, 'display_author', False):
+            sender_id = message.display_author
+        else:
+            sender_id = message.author_id
+        return '/u/%s' % Account._byID(sender_id, data=True).name
+
+
 def generate_non_preview_usernames_str(usernames):
-    """ produces string of usernames for whom a message preview is not 
+    """ produces string of usernames for whom a message preview is not
     displayed, for easy use in template
     """
     usernames = list(usernames)
