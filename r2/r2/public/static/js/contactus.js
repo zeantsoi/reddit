@@ -93,7 +93,7 @@ var accountIssueForm = {
 var breakRulesForm = {
   title: "which rule does the content break?",
   buttons: [{
-    text: "personal and indentifiable information",
+    text: "personal and identifiable information",
     action: {
       type: "show-details",
       content: [
@@ -103,7 +103,7 @@ var breakRulesForm = {
     },
   },
   {
-    text: "threatening, harassing, or inciting to violance",
+    text: "threatening, harassing, or inciting to violence",
     action: {
       type: "show-details",
       content: [
@@ -203,7 +203,7 @@ var contactAdminsForm = {
     },
   },
   {
-    text: "content I don\'t want to see.",
+    text: "content I don\'t want to see",
     action: {
       type: "show-form",
       content: contentSettingsHelp,
