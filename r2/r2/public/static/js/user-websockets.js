@@ -8,36 +8,68 @@ $(function() {
   var orangeredTimestampKey = r.config.user_id + '-orangered-ts';
   var websocketUrl = r.config.user_websocket_url;
   var millisecondsToBatch = 30000;
+  var messageNotificationMilliseconds = 3000;
 
-  // New message or comment reply:
-  // Flash toast, update inbox count, and update
-  // inbox orangered CSS
-  function flashNewMessage(message) {
-    var messageText = "You have a new %(messageType)s!".format(
-      {messageType: message.msg_type});
-
-    $('.new-message').html('<a href="%(permalink)s">%(messageText)s</a>'.format(
-        {permalink: message.permalink, messageText: messageText}));
-    $('.new-message').fadeIn(1000).delay(5000).fadeOut(1000);
-
-    if ($('.message-count').length) {
-      // Already havemail state so just increment count
-      $('.message-count').html(message.inbox_count);
-    } else {
-      // Set the have mail state and add the inbox count
-      $('#mail').removeClass('nohavemail');
-      $('#mail').addClass('havemail');
-      $('#mail').attr("href", "/message/unread/");
-      $('#mail').attr("title", "new mail!");
-      $('<a class="message-count" href="/message/unread/">'
-        + message.inbox_count + '</a>').insertAfter('#mail');
+  // New message or comment reply -- send browser notification
+  function flashNewMessage() {
+    var inboxMessages = store.safeGet(orangeredKey);
+    // The messages have already been processed
+    if (inboxMessages === null) {
+      return;
     }
+
+    var recentNewMessageCount = inboxMessages.length;
+
+    // Get number of unread messages to tell if plural or not
+    if (recentNewMessageCount === 1) {
+      var messageType = inboxMessages[0].msg_type;
+      var messageText = "You have a new %(messageType)s!".format(
+        {messageType: messageType});
+    } else {
+      var messageType = 'messages';
+      var messageText = "You have %(count)s new messages!".format({count: recentNewMessageCount});
+    }
+
+    if (r.config.live_orangereds_pref && !!Notification && Notification.permission !== "granted") {
+      Notification.requestPermission()
+
+        if (result === "granted") {
+          sendNotification(messageType, messageText, recentNewMessageCount, inboxMessages);
+        }
+
+      });
+    } else if (r.config.live_orangereds_pref && !!Notification && Notification.permission === "granted") {
+      sendNotification(messageType, messageText, recentNewMessageCount, inboxMessages);
+    }
+
+    // Remove all items from localstorage
+    store.remove(orangeredKey);
+
+    // Write timestamp to see if the next message needs to
+    // wait millisecondsToBatch to batch more messages
+    store.safeSet(orangeredTimestampKey, new Date());
+  }
+
+  function sendNotification(messageType, messageText, recentNewMessageCount, inboxMessages) {
+    var messageNotification = new Notification("New %(messageType)s on Reddit".format(
+        {messageType: messageType}), {
+          icon: '/static/circled-snoo-2x.png',
+          body: messageText,
+      });
+
+      messageNotification.onclick = function(event) {
+        event.preventDefault();
+        window.open('/message/unread/', '_blank');
+      };
+      setTimeout(function(){
+        messageNotification.close();
+      }, messageNotificationMilliseconds);
   }
 
   function updateMessageCount(inboxCount) {
     if ($('.message-count').length) {
       // Already havemail state so just increment count
-      $('.message-count').html(inboxCount);
+      $('.message-count').text(inboxCount);
     } else {
       // Set the havemail state and add the inbox count
       $('#mail').removeClass('nohavemail');
@@ -51,7 +83,7 @@ $(function() {
   }
 
   // localStorage events that should be processed
-  var websocketStorageEvents = function (event) {
+  var websocketStorageEvents = function(event) {
     // New orangered has been received
     if (event.key === orangeredKey) {
       var message = JSON.parse(event.newValue);
