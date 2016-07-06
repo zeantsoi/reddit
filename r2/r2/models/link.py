@@ -31,6 +31,7 @@ from r2.lib.utils import (
     epoch_timestamp,
     generate_outbound_link,
     generate_affiliate_link,
+    is_subdomain,
     strip_www,
     timesince,
     title_to_url,
@@ -899,7 +900,7 @@ class Link(Thing, Printable):
                 # page, else link to the comments page permalink.
                 # If the subreddit or user has disabled previews, link to the
                 # image.
-                elif (item.domain in g.image_hosting_domain and
+                elif (is_subdomain(item.domain, g.image_hosting_domain) and
                         show_media_preview and
                         request.route_dict['action_name'] != 'comments'
                 ):
