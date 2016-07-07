@@ -1432,7 +1432,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         comment_score_hide_mins='site.comment_score_hide_mins',
         content_options='site.link_type',
         default_set='site.allow_top',
-        description='site.description',
+        description='site_description',
         domain='site.domain',
         exclude_banned_modqueue='site.exclude_banned_modqueue',
         header_hover_text='site.header_title',

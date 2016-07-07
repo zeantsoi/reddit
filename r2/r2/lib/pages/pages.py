@@ -3218,6 +3218,8 @@ class CreateSubreddit(Templated):
                            allow_image_upload=allow_image_upload,
                            feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                            )
+        if site:
+            self.site_description = site.fetch_description()
         self.color_options = Subreddit.KEY_COLORS
         self.subreddit_selector = SubredditSelector(
                 placeholder=_("add subreddit"),

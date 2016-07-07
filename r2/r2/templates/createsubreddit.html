@@ -97,8 +97,8 @@ try participating in other communities on reddit for a little while first before
 
   <%utils:line_field title="${_('sidebar')}" css_class="usertext"
                      description="${_('shown in the sidebar of your subreddit. 5120 characters max.')}">
-    %if thing.site and thing.site.description:
-     ${UserText(None, text=thing.site.description or "", editable=True, creating=True, name="description", have_form=False)}
+    %if thing.site and thing.site_description:
+     ${UserText(None, text=thing.site_description or "", editable=True, creating=True, name="description", have_form=False)}
     %else:
      ${UserText(None, text="", creating=True, name="description", have_form=False)}
     %endif
