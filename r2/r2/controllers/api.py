@@ -508,6 +508,17 @@ class ApiController(RedditController):
             # VUrl may have replaced 'url' by adding 'http://'
             form.set_inputs(url=url)
 
+            # If submitting an out.reddit.com url,
+            # change it to the final url
+            if domain(url) == g.outboundtracker_url:
+                urlparser = UrlParser(url)
+                if not urlparser.query_dict.get('url'):
+                    c.errors.add(errors.BAD_URL, field='url')
+                    form.has_errors('url', errors.BAD_URL)
+                    return
+                else:
+                    url = urlparser.query_dict['url']
+
         is_self = (kind == "self")
 
         if not kind or form.has_errors('sr', errors.INVALID_OPTION):
