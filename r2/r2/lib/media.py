@@ -51,7 +51,7 @@ from r2.lib import (
     websockets,
 )
 from r2.lib.db import queries
-from r2.lib.db.tdb_cassandra import NotFound
+from r2.lib.db.thing import NotFound
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
 from r2.lib.template_helpers import add_sr, format_html
