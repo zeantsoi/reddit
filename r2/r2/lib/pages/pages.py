@@ -4985,14 +4985,15 @@ class RenderableCampaign(Templated):
             self.country, self.region, self.metro = '', '', ''
         self.location_str = campaign.location_str
 
-        self.truncate_targets = truncate_targets
-
-        if self.truncate_targets:
-            self.truncated_targeting_data = self._get_truncated_targets()
+        target = self.campaign.target
+        if truncate_targets and self._should_truncate_targets(target):
+            self.truncate_targets = True
+            self.truncated_targeting_data = self._get_truncated_targets(target)
             self.full_target_count = len(campaign.target.subreddit_names)
         else:
+            self.truncate_targets = False
             self.truncated_targeting_data = None
-            self.full_target_count = 0
+            self.full_target_count = None
 
         if campaign.target.is_collection:
             self.targeting_data = campaign.target.collection.name
@@ -5025,24 +5026,24 @@ class RenderableCampaign(Templated):
 
         Templated.__init__(self)
 
-    def _get_truncated_targets(self):
-        """Returns a string of subreddit targets truncated to the length
-        specified by g.target_display_max, or None.
-
-        """
-        target = self.campaign.target
-
+    def _should_truncate_targets(self, target):
         if not target.is_collection:
-            return
+            return False
 
         if '/r/' not in target.collection.name:
-            return
+            return False
 
-        subreddit_names = self.campaign.target.subreddit_names
-        if len(subreddit_names) <= g.target_display_max:
-            return
+        if len(target.subreddit_names) <= g.target_display_max:
+            return False
 
-        truncated_list = subreddit_names[:g.target_display_max]
+        return True
+
+    def _get_truncated_targets(self, target):
+        """Returns a string of subreddit targets truncated to the length
+        specified by g.target_display_max.
+
+        """
+        truncated_list = target.subreddit_names[:g.target_display_max]
         formatted_truncated_list = ('/r/' + name for name in truncated_list)
 
         return ' '.join(formatted_truncated_list)
