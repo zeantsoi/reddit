@@ -740,6 +740,9 @@ def allowed_media_preview(url, preview_object):
              combo_variant == 'expandos_previews_listings')):
         return True
 
+    if feature.is_enabled("expando_new_tab"):
+        return True
+
     return False
 
 

@@ -22,8 +22,19 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    if (r.config.new_window && (r.config.logged || !r.ui.isSmallScreen())) {
+    var experimentEnabled = r.config.feature_expando_new_tab;
+    var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
+    if (experimentEnabled || userPrefEnabled) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
+            // need to check for feature_expando_new_tab again because we only
+            // want to override this behavior when the experiment is enabled.
+            // checking the parent to make sure the link is not a self-post
+            var meetsExperimentRequirements = r.config.feature_expando_new_tab &&
+                !$(this).closest('.thing').hasClass('self') &&
+                this.href !== 'javascript:void(0)' &&
+                !$(this).hasClass('comments');
+
+            if (!meetsExperimentRequirements && !userPrefEnabled) { return; }
 
             if (!this.target) {
                 // Trident doesn't support `rel="noreferrer"` and requires a

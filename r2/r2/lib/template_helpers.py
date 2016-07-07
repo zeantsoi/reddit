@@ -241,6 +241,12 @@ def js_config(extra_config=None):
         expando_preference = "do_not_expand"
 
     pref_beta = logged and c.user.pref_beta
+    expando_new_tab_variant = feature.variant("expando_new_tab")
+    expando_new_tab_enabled = (
+        feature.is_enabled("expando_new_tab") and
+        (expando_new_tab_variant == "image_expando_new_tab" or
+            expando_new_tab_variant == "self_post_image_expando_new_tab"))
+
     pref_new_window = (
         (feature.is_enabled("new_window") and
             feature.variant("new_window") == "test_group") or
@@ -321,6 +327,7 @@ def js_config(extra_config=None):
         "events_collector_key": events_collector_key,
         "events_collector_secret": events_collector_secret,
         "feature_screenview_events": feature.is_enabled('screenview_events'),
+        "feature_expando_new_tab": expando_new_tab_enabled,
         "feature_scroll_events": feature.is_enabled('scroll_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),

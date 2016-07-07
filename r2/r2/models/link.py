@@ -856,7 +856,35 @@ class Link(Thing, Printable):
                 item.feature_media_previews = False
 
             item.use_outbound = False
-            if item.is_self and not item.promoted:
+
+            meets_media_experiment_requirements = (
+                getattr(item, 'preview_image', False) and
+                show_media_preview and
+                item.link_child and
+                request.route_dict['action_name'] != 'comments')
+
+            meets_self_post_experiment_requirements = (
+                request.route_dict['action_name'] != 'comments' and
+                item.is_self and
+                bool(item.selftext) and
+                not item.promoted)
+
+            # expando on link and thumbnail click
+            expando_new_tab_variant = feature.variant("expando_new_tab")
+
+            # enable expando for self-posts and media previews
+            self_post_image_expando_new_tab = (
+                feature.is_enabled("expando_new_tab") and
+                expando_new_tab_variant ==
+                "self_post_image_expando_new_tab")
+
+            if (self_post_image_expando_new_tab and
+                    (meets_media_experiment_requirements or
+                        meets_self_post_experiment_requirements)):
+                item.expand_inline = True
+                item.href_url = 'javascript:void(0)'
+                item.affiliatize_link = False
+            elif item.is_self and not item.promoted:
                 item.href_url = item.permalink
                 item.affiliatize_link = False
             else:
@@ -870,12 +898,6 @@ class Link(Thing, Printable):
                         item.affiliatize_link = False
                 else:
                     item.affiliatize_link = False
-
-                meets_media_experiment_requirements = (
-                    getattr(item, 'preview_image', False) and
-                    show_media_preview and
-                    item.link_child and
-                    request.route_dict['action_name'] != 'comments')
 
                 # check media preview pref, and only change behavior for
                 # listing pages (not comment pages). This will expand images
@@ -891,6 +913,18 @@ class Link(Thing, Printable):
                     (combo_variant == 'preview_redirect_only' or
                         combo_variant == 'expandos_previews_listings'))
 
+                # enable expando for media previews
+                image_expando_new_tab = (
+                    feature.is_enabled("expando_new_tab") and
+                    (expando_new_tab_variant == "image_expando_new_tab" or
+                        expando_new_tab_variant == "image_expando_no_tab"))
+
+                if (image_expando_new_tab and
+                        meets_media_experiment_requirements):
+                    item.expand_inline = True
+                    item.affiliatize_link = False
+                    item.href_url = 'javascript:void(0)'
+
                 if ((expando_redirect_enabled or
                         combo_experiment_enabled) and
                         meets_media_experiment_requirements):
@@ -902,6 +936,7 @@ class Link(Thing, Printable):
                 # image.
                 elif (is_subdomain(item.domain, g.image_hosting_domain) and
                         show_media_preview and
+                        not image_expando_new_tab and
                         request.route_dict['action_name'] != 'comments'
                 ):
                     item.href_url = item.permalink
