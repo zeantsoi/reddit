@@ -53,10 +53,10 @@ ${unsafe(taglinetext % dict(author=author))}
   %if acceptance_count:
     (${acceptance_count} ${_('accepted link')}${'s' if acceptance_count != 1 else ''})
   %endif
-  <%
-    approved_campaigns_count = len(promote.approved_campaigns_by_link(thing))
-  %>
   %if c.user_is_sponsor:
+    <%
+      approved_campaigns_count = len(promote.approved_campaigns_by_link(thing))
+    %>
     |&nbsp;
     <a href="${promote.promo_edit_url(thing)}">
       ${_('%(count)d approved campaign%(plural)s') % dict(count=approved_campaigns_count,
