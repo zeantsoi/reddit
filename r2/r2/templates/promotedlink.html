@@ -107,9 +107,13 @@ ${unsafe(taglinetext % dict(author=author))}
        promoter = WrappedUser(promo_account, thing.attribs, thing, force_show_flair=False).render()
 
      hide_tagline = False
-     if (promote.is_promoted(thing) and getattr(thing, "ad_style", "") in
-         ("new-ad-style-grey", "new-ad-style-transparent",
-          "new-ad-style-blue")):
+     new_ad_styles = (
+        "new-ad-style-grey",
+        "new-ad-style-transparent",
+        "new-ad-style-blue"
+     )
+     if ((promote.is_promoted(thing) or promote.is_external(thing))
+          and getattr(thing, "ad_style", "") in new_ad_styles):
        hide_tagline = True
   %>
   %if getattr(thing, "ad_style", "") == "new-ad-style":
