@@ -501,7 +501,7 @@ class ModmailConversation(Base):
             })
         else:
             result_dict.update({
-                'objIds': {'key': 'messages', 'id': self.messages[0].id}
+                'objIds': [{'key': 'messages', 'id': self.messages[0].id}]
             })
 
         return result_dict
