@@ -30,4 +30,10 @@
 <%def name="javascript_bottom()">
   ${parent.javascript_bottom()}
   ${unsafe(js.use('sponsored'))}
+  ${unsafe(js.use('promoted'))}
+  <script type="text/javascript">
+    $(function() {
+      r.promoted.init();
+    })
+  </script>
 </%def>

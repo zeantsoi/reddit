@@ -1724,7 +1724,8 @@ class PromoteApiController(ApiController):
                 requires_review=(not c.user_is_sponsor),
                 **campaign_dict
             )
-        rc = RenderableCampaign.from_campaigns(link, campaign)
+        rc = RenderableCampaign.from_campaigns(link, campaign,
+                                               truncate_targets=False)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
     @validatedForm(VSponsor('link_id36'),

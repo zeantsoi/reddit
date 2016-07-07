@@ -37,6 +37,8 @@
     data-enddate="${thing.campaign.end_date.strftime('%m/%d/%Y')}"
     data-targeting-collection="${thing.campaign.target.is_collection}"
     data-targeting="${thing.targeting_data}"
+    data-truncated-targeting="${thing.truncated_targeting_data}"
+    data-full-target-count="${thing.full_target_count}"
     data-country="${thing.country}"
     data-region="${thing.region}"
     data-metro="${thing.metro}"
@@ -142,7 +144,12 @@
   %endif
 
   <td class="campaign-target" title="${thing.campaign.target.pretty_name}">
-    ${thing.campaign.target.pretty_name}
+    %if thing.truncate_targets:
+      ${thing.truncated_targeting_data}
+      <div class="toggle-campaign-target"></div>
+    %else:
+      ${thing.campaign.target.pretty_name}
+    %endif
   </td>
 
   <td class="campaign-location" title="${thing.location_str}">

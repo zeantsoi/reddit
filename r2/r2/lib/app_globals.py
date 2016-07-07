@@ -228,6 +228,7 @@ class Globals(object):
             'mobile_auth_gild_time',
             'promo_sr_id',
             'default_access_token_ttl',
+            'target_display_max',
         ],
 
         ConfigValue.float: [

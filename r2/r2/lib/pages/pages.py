@@ -4931,7 +4931,7 @@ class PromoteLinkEdit(PromoteLinkBase):
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,
                  is_complete, is_edited_live, full_details=True,
-                 hide_after_seen=False):
+                 hide_after_seen=False, truncate_targets=True):
         self.link = link
         self.campaign = campaign
 
@@ -4984,6 +4984,16 @@ class RenderableCampaign(Templated):
         else:
             self.country, self.region, self.metro = '', '', ''
         self.location_str = campaign.location_str
+
+        self.truncate_targets = truncate_targets
+
+        if self.truncate_targets:
+            self.truncated_targeting_data = self._get_truncated_targets()
+            self.full_target_count = len(campaign.target.subreddit_names)
+        else:
+            self.truncated_targeting_data = None
+            self.full_target_count = 0
+
         if campaign.target.is_collection:
             self.targeting_data = campaign.target.collection.name
         else:
@@ -5015,9 +5025,32 @@ class RenderableCampaign(Templated):
 
         Templated.__init__(self)
 
+    def _get_truncated_targets(self):
+        """Returns a string of subreddit targets truncated to the length
+        specified by g.target_display_max, or None.
+
+        """
+        target = self.campaign.target
+
+        if not target.is_collection:
+            return
+
+        if '/r/' not in target.collection.name:
+            return
+
+        subreddit_names = self.campaign.target.subreddit_names
+        if len(subreddit_names) <= g.target_display_max:
+            return
+
+        truncated_list = subreddit_names[:g.target_display_max]
+        formatted_truncated_list = ('/r/' + name for name in truncated_list)
+
+        return ' '.join(formatted_truncated_list)
+
     @classmethod
     def from_campaigns(cls, link, campaigns,
-                       full_details=True, hide_after_seen=False):
+                       full_details=True, hide_after_seen=False,
+                       truncate_targets=True):
         campaigns, is_single = tup(campaigns, ret_is_single=True)
 
         if full_details:
@@ -5043,7 +5076,8 @@ class RenderableCampaign(Templated):
                 not is_live_or_pending) or
                 is_expired_house)
             rc = cls(link, camp, transaction, is_pending, is_live, is_complete,
-                     is_edited_live, full_details, hide_after_seen)
+                     is_edited_live, full_details, hide_after_seen,
+                     truncate_targets)
             ret.append(rc)
         if is_single:
             return ret[0]

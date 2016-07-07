@@ -768,6 +768,11 @@ module["policies"] = Module("policies.js",
 )
 
 
+module['promoted'] = Module(
+    'promoted.js',
+)
+
+
 module["sponsored"] = LocalizedModule("sponsored.js",
     "lib/ui.core.js",
     "lib/ui.datepicker.js",
