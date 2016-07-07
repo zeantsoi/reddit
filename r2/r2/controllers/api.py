@@ -1929,7 +1929,7 @@ class ApiController(RedditController):
         if not (c.user._spam or
                 c.user.ignorereports or
                 (sr and sr.is_banned(c.user))):
-            Report.new(c.user, thing, reason)
+            Report.new(c.user, thing, reason, ip=request.ip)
 
         g.events.report_event(
             reason=reason,

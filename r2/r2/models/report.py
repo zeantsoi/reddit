@@ -50,7 +50,7 @@ class Report(MultiRelation('report', *REPORT_RELS)):
     _field = 'reported'
 
     @classmethod
-    def new(cls, user, thing, reason=None):
+    def new(cls, user, thing, reason=None, ip=None):
         from r2.lib.db import queries
 
         # check if this report exists already!
@@ -69,6 +69,9 @@ class Report(MultiRelation('report', *REPORT_RELS)):
             kw['reason'] = reason
 
         r = Report(user, thing, '0', **kw)
+
+        if ip:
+            r.ip = ip
 
         # mark item as reported
         try:
