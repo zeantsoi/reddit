@@ -32,11 +32,10 @@ import subprocess
 import tempfile
 import traceback
 import urllib
-import urllib2
 import urlparse
 
-import advocate
 import BeautifulSoup
+from advocate import AddrValidator, RequestsAPIWrapper
 from PIL import Image, ImageFile
 from time import sleep
 import lxml.html
@@ -90,6 +89,9 @@ _MP4_PREVIEW_TEMPLATE = """
 """
 
 
+advocate = RequestsAPIWrapper(AddrValidator(
+    ip_whitelist=g.scraper_ip_whitelist,
+))
 SESSION = advocate.Session()
 
 

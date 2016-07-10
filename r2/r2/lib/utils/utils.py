@@ -41,7 +41,6 @@ from decimal import Decimal
 from urllib import unquote_plus, unquote, urlencode
 from urlparse import urlparse, urlunparse, urlunsplit
 
-import advocate
 import pytz
 import snudown
 import unidecode
@@ -303,6 +302,8 @@ def path_component(s):
 
 def get_title(url):
     """Fetch the contents of url and try to extract the page's title."""
+    from r2.lib.media import advocate
+
     if not url or not url.startswith(('http://', 'https://')):
         return None
 

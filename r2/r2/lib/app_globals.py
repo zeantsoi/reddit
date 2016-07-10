@@ -366,6 +366,10 @@ class Globals(object):
             "activity_endpoint",
         ],
 
+        ConfigValue.tuple_of(ConfigValue.baseplate(ipaddress.IPv4Network)): [
+            "scraper_ip_whitelist",
+        ],
+
         ConfigValue.set: [
             'merchant_affiliate_domains',
         ],
