@@ -1181,7 +1181,7 @@ class _GfycatScraper(_ImageScraper):
                 return None
             else:
                 return gif_url
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, TypeError):
             return None
 
 
