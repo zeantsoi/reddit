@@ -163,7 +163,7 @@ def _create_comment_page_test_message():
     message = {
         'job_name': COMMENT_PAGE_SITEMAP_JOB_NAME,
         'location': ('s3://reddit-data-analysis/big-data/r2/prod/' +
-                     'daily_sitemap_reporting/dt=2016-06-29'),
+                     'daily_sitemap_reporting/dt=2016-07-10'),
     }
     _create_sqs_message(message)
 

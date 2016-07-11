@@ -62,6 +62,7 @@ Next are the normal sitemaps which take the form of:
 
 Each sitemap and sitemap index will have 50000 links or fewer.
 """
+import urllib
 
 from lxml import etree
 from pylons import app_globals as g
@@ -97,7 +98,7 @@ def _comment_page_links(comment_page_data):
         path = u'/r/{0}/comments/{1}/{2}/'.format(
             comment_info.subreddit,
             to36(int(comment_info.thing_id)),
-            title_to_url(comment_info.title)
+            urllib.quote(title_to_url(comment_info.title).encode('utf-8'))
         )
         yield _absolute_url(path)
 
