@@ -137,6 +137,7 @@ from r2.lib.validator import (
     VUrl,
 )
 from r2.models import (
+    ACCEPTED_PROMOTE_STATUSES,
     Account,
     AccountsByCanonicalEmail,
     calc_impressions,
@@ -710,18 +711,26 @@ class SponsorListingController(PromoteListingController):
             for item in pane.things:
                 campaigns = campaigns_by_link[item._id]
                 link = item.lookups[0]
-                needing_review = promote.campaigns_needing_review(campaigns,
-                                                                  link)
-                recently_approved = promote.recently_approved_campaigns(
-                    campaigns,
-                    limit=g.num_approved_campaigns_to_display,
-                )
 
-                campaigns_set = set(needing_review) | set(recently_approved)
-                displayable_campaigns = sorted(
-                    campaigns_set,
-                    key=lambda campaign: campaign.is_approved
-                )
+                if link.promote_status in ACCEPTED_PROMOTE_STATUSES:
+                    needing_review = promote.campaigns_needing_review(
+                        campaigns,
+                        link
+                    )
+                    recently_approved = promote.recently_approved_campaigns(
+                        campaigns,
+                        limit=g.num_approved_campaigns_to_display,
+                    )
+
+                    campaigns_set = (set(needing_review) |
+                                     set(recently_approved))
+                    displayable_campaigns = sorted(
+                        campaigns_set,
+                        key=lambda campaign: campaign.is_approved
+                    )
+
+                else:
+                    displayable_campaigns = campaigns
 
                 item.campaigns = RenderableCampaign.from_campaigns(
                     item,
