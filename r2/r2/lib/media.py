@@ -723,12 +723,8 @@ def allowed_media_preview(url, preview_object):
     p = UrlParser(url)
     if p.has_image_extension():
         return True
-    # since we'll have a lot of gifv urls with static preview images, we need
-    # to check that the preview we have is a gif before showing.  These should
-    # all have embedly embeds anyway, but we never want to show a still image
-    elif (is_subdomain(p.hostname, "imgur.com") and
-            p.path_extension().lower() == "gifv" and
-            preview_object.get('url', '').endswith('.gif')):
+    # anytime we have a preview image with a gif source, we want to show it
+    elif preview_object.get('url', '').endswith('.gif'):
         return True
     for allowed_domain in g.media_preview_domain_whitelist:
         if is_subdomain(p.hostname, allowed_domain):
