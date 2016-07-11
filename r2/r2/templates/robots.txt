@@ -60,6 +60,7 @@ Disallow: /login
 Disallow: /reddits/search
 Disallow: /search
 Disallow: /r/*/search
+Disallow: /r/*/user
 Disallow: /gold?
 Allow: /
 
