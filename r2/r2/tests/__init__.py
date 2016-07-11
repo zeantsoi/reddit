@@ -258,7 +258,6 @@ class RedditControllerTestCase(RedditTestCase):
             rendercache=NonCache(),
             ratelimitcache=NonCache(),
             commentpanecache=NonCache(),
-            cache=NonCache(),
             gencache=NonCache(),
         )
 
