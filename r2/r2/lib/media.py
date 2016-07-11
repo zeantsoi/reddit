@@ -834,6 +834,10 @@ def get_media_embed(media_object):
     if media_object.get("type") == "custom":
         return _make_custom_media_embed(media_object)
 
+    # _GfycatScraper is not represented here because it does not generate
+    # media_objects.  If a gfycat link has a media_object attached, it was
+    # scraped with _EmbedlyScraper, which is handled below.
+
     if "oembed" in media_object:
         if media_object.get("type") == "youtube.com":
             return _YouTubeScraper.media_embed(media_object)
@@ -882,6 +886,11 @@ class Scraper(object):
 
         if _ImageScraper.matches(url):
             return _ImageScraper(url)
+
+        if _GfycatScraper.matches(url):
+            s = _GfycatScraper(url)
+            if s.media_url:
+                return s
 
         if _YouTubeScraper.matches(url):
             return _YouTubeScraper(url, maxwidth=maxwidth)
@@ -1070,7 +1079,10 @@ class _ImageScraper(_MediaScraper):
 
     def __init__(self, url):
         self.url = url
-        self.media_url = url
+
+    @property
+    def media_url(self):
+        return self.url
 
     def fetch_media(self):
         content_type, content = _fetch_image_url(
@@ -1124,6 +1136,53 @@ class _ImageScraper(_MediaScraper):
         thumbnail = _prepare_image(image)
 
         return thumbnail, preview_object
+
+
+class _GfycatScraper(_ImageScraper):
+    """Use gfycat's api to get embed information.
+
+    https://gfycat.com/api
+    """
+    GFYCAT_API_URL = "https://gfycat.com/cajax/get/"
+
+    @classmethod
+    def matches(cls, url):
+        p = UrlParser(url)
+        return is_subdomain(p.hostname, "gfycat.com")
+
+    def scrape(self):
+        if not self.media_url:
+            return None, None, None, None
+        return super(_GfycatScraper, self).scrape()
+
+    @property
+    def media_url(self):
+        if not hasattr(self, "_gif_url"):
+            self._gif_url = self._get_gif_url()
+        return self._gif_url
+
+    def _get_gif_url(self):
+        p = UrlParser(self.url)
+        gfy_name = p.path.strip("/")
+
+        if "/" in gfy_name:
+            return None
+
+        with g.stats.get_timer("providers.gfycat.api"):
+            content = advocate.get(self.GFYCAT_API_URL + gfy_name).content
+
+        try:
+            res = json.loads(content)
+            gfy_item = res["gfyItem"]
+            gif_url = gfy_item["gifUrl"]
+            gif_size = int(gfy_item["gifSize"])
+
+            if gif_size > self.MAXIMUM_GIF_SIZE:
+                return None
+            else:
+                return gif_url
+        except (ValueError, KeyError):
+            return None
 
 
 class _OEmbedScraper(_MediaScraper):
