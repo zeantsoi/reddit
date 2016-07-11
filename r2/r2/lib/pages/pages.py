@@ -181,7 +181,7 @@ from things import wrap_links, wrap_things, default_thing_wrapper
 datefmt = _force_utf8(_('%d %b %Y'))
 
 MAX_DESCRIPTION_LENGTH = 150
-RELEVANCY_EXPERIMENT_SUB = 'gaming'
+RELEVANCY_EXPERIMENT_SUB = 'pokemongo'
 
 
 def get_captcha():
@@ -1921,7 +1921,7 @@ class LinkInfoPage(Reddit):
         pre_content = None
         if not is_api() and is_seo_referrer() and \
                 c.site.name == RELEVANCY_EXPERIMENT_SUB and \
-                feature.is_enabled('top_posts'):
+                feature.is_enabled('pokemongo_content'):
 
             variant = feature.variant('top_posts')
             if variant == 'divider':
@@ -2105,9 +2105,10 @@ class LinkInfoPage(Reddit):
                              'carousel_top', 'divider'
                              }
 
-        in_top_posts_exp = feature.is_enabled('top_posts') and \
-            not is_api() and is_seo_referrer() and \
-            feature.variant('top_posts') in top_post_variants
+        in_top_posts_exp = not is_api() and is_seo_referrer() and \
+            c.site.name == RELEVANCY_EXPERIMENT_SUB and \
+            feature.is_enabled('pokemongo_content') and \
+            feature.variant('pokemongo_content') in top_post_variants
 
         if (c.site and not c.default_sr and c.render_style == 'html' and
                 not in_top_posts_exp and feature.is_enabled('read_next')):
