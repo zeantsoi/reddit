@@ -508,7 +508,7 @@ class HotController(ListingWithPromos):
         if (isinstance(c.site, DefaultSR) and
                 feature.is_enabled('all_instead_of_frontpage') and
                 feature.variant('all_instead_of_frontpage') == 'test_group'):
-            return AllSR.get_links('hot', 'all')
+            return AllSR().get_links('hot', 'all')
         if isinstance(c.site, DefaultSR):
             sr_ids = Subreddit.user_subreddits(c.user)
             return normalized_hot(sr_ids)
