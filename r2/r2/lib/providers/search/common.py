@@ -297,8 +297,7 @@ class SubredditFields(FieldsBase):
 
     @field
     def sidebar(self):
-        return (None if self.sr.type == 'private'
-                else self.sr.fetch_description())
+        return None if self.sr.type == 'private' else self.sr.description
 
     @field(cloudsearch_type=int)
     def over18(self):

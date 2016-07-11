@@ -576,20 +576,6 @@ class Subreddit(Thing, Printable, BaseSite):
             return ""
 
     @property
-    def description(self):
-        # since this requires a separate lookup, we want to discourage
-        # accidentally reading in a loop. so we'll fail noisily and encourage
-        # use of a more obviously named method.
-        raise NotImplementedError("Subreddit.description is obsolete. "
-                                  "Please use fetch_description().")
-
-    def fetch_description(self):
-        try:
-            return WikiPage.get(self, 'config/sidebar')._get('content', '')
-        except tdb_cassandra.NotFound:
-            return ""
-
-    @property
     def prev_stylesheet(self):
         try:
             return WikiPage.get(self, 'config/stylesheet')._get('revision','')
@@ -1025,20 +1011,12 @@ class Subreddit(Thing, Printable, BaseSite):
                 elif rel_name == 'muted':
                     muted_srids.add(item._id)
 
-        pages = WikiPage.get_multiple([(item, "config/sidebar")
-                                       for item in wrapped])
-        srid_by_pageid = {WikiPage.id_for(item, "config/sidebar"): item._id
-                          for item in wrapped}
-        sidebars = {srid_by_pageid[pageid]: page._get("content", "")
-                    for pageid, page in pages.iteritems()}
-
         for item in wrapped:
             item.subscriber = item._id in subscriber_srids
             item.moderator = item._id in moderator_srids
             item.contributor = item._id in contributor_srids
             item.banned = item._id in banned_srids
             item.muted = item._id in muted_srids
-            item.description = sidebars.get(item._id, "")
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0

@@ -961,7 +961,7 @@ class FrontController(RedditController):
     @api_doc(api_section.subreddits, uses_site=True)
     def GET_sidebar(self):
         """Get the sidebar for the current subreddit"""
-        usertext = UserText(c.site, c.site.fetch_description())
+        usertext = UserText(c.site, c.site.description)
         return Reddit(content=usertext).render()
 
     @require_oauth2_scope("read")
