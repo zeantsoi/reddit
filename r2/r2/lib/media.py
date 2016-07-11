@@ -516,12 +516,12 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
             print "%s made a bad secure media obj for url %s" % (scraper, url)
             secure_media_object = None
 
-        # If thumbnail can't be found, attempt again using _ThumbnailOnlyScraper
+        # If thumbnail can't be found, attempt again using _HTMLParsingScraper
         # This should fix bugs that occur when embed.ly caches links before the 
         # thumbnail is available
         if (not thumbnail_image and 
-                not isinstance(scraper, _ThumbnailOnlyScraper)):
-            scraper = _ThumbnailOnlyScraper(url)
+                not isinstance(scraper, _HTMLParsingScraper)):
+            scraper = _HTMLParsingScraper(url)
             try:
                 thumbnail_image, preview_object, _, _ = scraper.scrape()
             except (HTTPError, URLError) as e:
@@ -890,14 +890,19 @@ class Scraper(object):
         if _YouTubeScraper.matches(url):
             return _YouTubeScraper(url, maxwidth=maxwidth)
 
-        embedly_services = _fetch_embedly_services()
-        for service_re in embedly_services:
-            if service_re.match(url):
-                return _EmbedlyScraper(url,
-                                       autoplay=autoplay,
-                                       maxwidth=maxwidth)
+        if _EmbedlyScraper.matches(url):
+            return _EmbedlyScraper(
+                url,
+                autoplay=autoplay,
+                maxwidth=maxwidth,
+            )
 
-        return _ThumbnailOnlyScraper(url)
+        return _HTMLParsingScraper(url)
+
+    @classmethod
+    def matches(cls, url):
+        """Return true if this scraper should be used for the given URL"""
+        raise NotImplementedError
 
     def scrape(self):
         # should return a 4-tuple of:
@@ -910,31 +915,29 @@ class Scraper(object):
         raise NotImplementedError
 
 
-class _ThumbnailOnlyScraper(Scraper):
-    def __init__(self, url):
-        self.url = url
-        # Having the source document's protocol on hand makes it easier to deal
-        # with protocol-relative urls we extract from it.
-        self.protocol = UrlParser(url).scheme
+class _MediaScraper(Scraper):
+    """A simplified scraper for creating static media previews.
 
-    def scrape(self):
-        thumbnail_url, image_data = self._find_thumbnail_image()
-        if not thumbnail_url:
-            return None, None, None, None
+    Preview images for gifs are converted to static images.
+    """
+    @classmethod
+    def matches(cls, url):
+        p = UrlParser(url)
+        return p.has_image_extension()
 
-        # When isolated from the context of a webpage, protocol-relative URLs
-        # are ambiguous, so let's absolutify them now.
-        if thumbnail_url.startswith('//'):
-            thumbnail_url = coerce_url_to_protocol(thumbnail_url, self.protocol)
+    def fetch_media(self):
+        """Request image data suitable for creating media previews."""
+        content_type, content = _fetch_url(self.url)
 
-        if not image_data:
-            _, image_data = _fetch_url(thumbnail_url, referer=self.url)
+        if content_type and "image" in content_type and content:
+            return content
 
-        if not image_data:
-            return None, None, None, None
+        return None
 
-        uid = _filename_from_content(image_data)
-        image = str_to_image(image_data)
+    def make_media_previews(self, content):
+        """Returns a tuple of thumbnail, preview_object"""
+        uid = _filename_from_content(content)
+        image = str_to_image(content)
         storage_url = upload_media(image, category='previews')
         width, height = image.size
         preview_object = {
@@ -943,48 +946,85 @@ class _ThumbnailOnlyScraper(Scraper):
             'width': width,
             'height': height,
         }
-
         thumbnail = _prepare_image(image)
 
+        return thumbnail, preview_object
+
+    def scrape(self):
+        content = self.fetch_media()
+        if not content:
+            return None, None, None, None
+        thumbnail, preview_object = self.make_media_previews(content)
         return thumbnail, preview_object, None, None
+
+    @classmethod
+    def media_embed(cls, media_object):
+        return None
+
+
+class _HTMLParsingScraper(_MediaScraper):
+    """Suitable for scraping content from HTML documents.
+
+    HTML documents are parsed and the best candidate URL for a preview image
+    is then scraped. Direct links to images are also supported.
+    """
+    def __init__(self, url):
+        self.url = url
+        # Having the source document's protocol on hand makes it easier to deal
+        # with protocol-relative urls we extract from it.
+        self.protocol = UrlParser(url).scheme
+
+    @classmethod
+    def matches(self, url):
+        return True
+
+    def fetch_media(self):
+        content_type, content = _fetch_url(self.url)
+
+        # if it's an image, it's pretty easy to guess what we should thumbnail.
+        if content_type and "image" in content_type and content:
+            return content
+
+        if content_type and "html" in content_type and content:
+            thumbnail_url = self._find_thumbnail_url_from_html(content)
+            if not thumbnail_url:
+                return None
+
+            # When isolated from the context of a webpage, protocol-relative
+            # URLs are ambiguous, so let's absolutify them now.
+            if thumbnail_url.startswith('//'):
+                thumbnail_url = coerce_url_to_protocol(
+                    thumbnail_url,
+                    self.protocol,
+                )
+
+            _, content = _fetch_url(thumbnail_url, referer=self.url)
+            return content
+
+        return None
 
     def _extract_image_urls(self, soup):
         for img in soup.findAll("img", src=True):
             yield urlparse.urljoin(self.url, img["src"])
 
-    def _find_thumbnail_image(self):
-        """Find what we think is the best thumbnail image for a link.
-
-        Returns a 2-tuple of image url and, as an optimization, the raw image
-        data.  A value of None for the former means we couldn't find an image;
-        None for the latter just means we haven't already fetched the image.
-        """
-        content_type, content = _fetch_url(self.url)
-
-        # if it's an image, it's pretty easy to guess what we should thumbnail.
-        if content_type and "image" in content_type and content:
-            return self.url, content
-
-        if content_type and "html" in content_type and content:
-            soup = BeautifulSoup.BeautifulSoup(content)
-        else:
-            return None, None
-
+    def _find_thumbnail_url_from_html(self, content):
+        """Find what we think is the best thumbnail image for a link."""
+        soup = BeautifulSoup.BeautifulSoup(content)
         # Allow the content author to specify the thumbnail using the Open
         # Graph protocol: http://ogp.me/
         og_image = (soup.find('meta', property='og:image') or
                     soup.find('meta', attrs={'name': 'og:image'}))
         if og_image and og_image.get('content'):
-            return og_image['content'], None
+            return og_image['content']
         og_image = (soup.find('meta', property='og:image:url') or
                     soup.find('meta', attrs={'name': 'og:image:url'}))
         if og_image and og_image.get('content'):
-            return og_image['content'], None
+            return og_image['content']
 
         # <link rel="image_src" href="http://...">
         thumbnail_spec = soup.find('link', rel='image_src')
         if thumbnail_spec and thumbnail_spec['href']:
-            return thumbnail_spec['href'], None
+            return thumbnail_spec['href']
 
         # ok, we have no guidance from the author. look for the largest
         # image on the page with a few caveats. (see below)
@@ -1020,160 +1060,33 @@ class _ThumbnailOnlyScraper(Scraper):
                 max_area = area
                 max_url = image_url
 
-        return max_url, None
+        return max_url
 
 
-class _EmbedlyScraper(Scraper):
-    """Use Embedly to get information about embed info for a url.
+class _ImageScraper(_MediaScraper):
+    """Given a URL that looks like an image, scrape it directly.
 
-    http://embed.ly/docs/api/embed/endpoints/1/oembed
+    Previews for gifs are preserved as gifs.
     """
-    EMBEDLY_API_URL = "https://api.embed.ly/1/oembed"
-
-    def __init__(self, url, autoplay=False, maxwidth=600):
-        self.url = url
-        self.maxwidth = int(maxwidth)
-        self.embedly_params = {}
-
-        if autoplay:
-            self.embedly_params["autoplay"] = "true"
-
-    def _fetch_from_embedly(self, secure):
-        param_dict = {
-            "url": self.url,
-            "format": "json",
-            "maxwidth": self.maxwidth,
-            "key": g.embedly_api_key,
-            "secure": "true" if secure else "false",
-        }
-
-        param_dict.update(self.embedly_params)
-        params = urllib.urlencode(param_dict)
-
-        timer = g.stats.get_timer("providers.embedly.oembed")
-        timer.start()
-        content = advocate.get(self.EMBEDLY_API_URL + "?" + params).content
-        timer.stop()
-
-        return json.loads(content)
-
-    def _make_media_object(self, oembed):
-        if oembed.get("type") in ("video", "rich"):
-            return {
-                "type": domain(self.url),
-                "oembed": oembed,
-            }
-        return None
-
-    def scrape(self):
-        oembed = self._fetch_from_embedly(secure=False)
-        if not oembed:
-            return None, None, None, None
-
-        if oembed.get("type") == "photo":
-            thumbnail_url = oembed.get("url")
-        else:
-            thumbnail_url = oembed.get("thumbnail_url")
-        if not thumbnail_url:
-            return None, None, None, None
-
-        if (oembed.get('provider_name') == "Imgur" 
-                and not "i.imgur" in self.url):
-            temp_url = UrlParser(thumbnail_url)
-            if temp_url.query_dict.get('fb') is not None:
-                del temp_url.query_dict['fb']
-                thumbnail_url = temp_url.unparse()
-
-        content_type, content = _fetch_url(thumbnail_url, referer=self.url)
-        uid = _filename_from_content(content)
-        image = str_to_image(content)
-        storage_url = upload_media(image, category='previews')
-        width, height = image.size
-        preview_object = {
-            'uid': uid,
-            'url': storage_url,
-            'width': width,
-            'height': height,
-        }
-
-        thumbnail = _prepare_image(image)
-
-        secure_oembed = self._fetch_from_embedly(secure=True)
-        if not self.validate_secure_oembed(secure_oembed):
-            secure_oembed = {}
-
-        return (
-            thumbnail,
-            preview_object,
-            self._make_media_object(oembed),
-            self._make_media_object(secure_oembed),
-        )
-
-    def validate_secure_oembed(self, oembed):
-        """Check the "secure" embed is safe to embed, and not a placeholder"""
-        if not oembed.get("html"):
-            return False
-
-        # Get the embed.ly iframe's src
-        iframe_src = lxml.html.fromstring(oembed['html']).get('src')
-        if not iframe_src:
-            return False
-        iframe_src_url = UrlParser(iframe_src)
-
-        # Per embed.ly support: If the URL for the provider is HTTP, we're
-        # gonna get a placeholder image instead
-        provider_src_url = UrlParser(iframe_src_url.query_dict.get('src'))
-        return not provider_src_url.scheme or provider_src_url.scheme == "https"
-
-    @classmethod
-    def media_embed(cls, media_object):
-        oembed = media_object["oembed"]
-
-        html = oembed.get("html")
-        width = oembed.get("width")
-        height = oembed.get("height")
-        public_thumbnail_url = oembed.get('thumbnail_url')
-        if not (html and width and height):
-            return
-
-        return MediaEmbed(
-            width=width,
-            height=height,
-            content=html,
-            public_thumbnail_url=public_thumbnail_url,
-        )
-
-
-class _ImageScraper(Scraper):
-    """Given a URL that looks like an image, scrape it directly. This includes
-       support for both static files and gifs."""
-
     FETCH_TIMEOUT = 10
     MAXIMUM_IMAGE_SIZE = 1024 * 1024 * 20 # 20MB
     MAXIMUM_GIF_SIZE = 1024 * 1024 * 100 # 100MB
 
     def __init__(self, url):
         self.url = url
+        self.media_url = url
 
-    @classmethod
-    def matches(cls, url):
-        p = UrlParser(url)
-        return p.has_image_extension()
-
-    def scrape(self):
-        # should return a 4-tuple of:
-        #     thumbnail, preview_object, media_object, secure_media_obj
+    def fetch_media(self):
         content_type, content = _fetch_image_url(
-            self.url,
+            self.media_url,
             timeout=self.FETCH_TIMEOUT,
             max_image_size=self.MAXIMUM_IMAGE_SIZE,
             max_gif_size=self.MAXIMUM_GIF_SIZE,
-            referer=self.url,
+            referer=self.media_url,
         )
+        return content
 
-        if not content:
-            return None, None, None, None
-
+    def make_media_previews(self, content):
         filename_hash = None
         # If this is scraping an image upload, use the s3 key as part of
         # the hash for thumbnails and previews. This associates all of the
@@ -1212,84 +1125,68 @@ class _ImageScraper(Scraper):
             'width': width,
             'height': height,
         }
-
         thumbnail = _prepare_image(image)
 
-        return (
-            thumbnail,
-            preview_object,
-            None,
-            None,
-        )
+        return thumbnail, preview_object
 
 
-class _YouTubeScraper(Scraper):
-    OEMBED_ENDPOINT = "https://www.youtube.com/oembed"
-    URL_MATCH = re.compile(r"https?://((www\.)?youtube\.com/watch|youtu\.be/)")
+class _OEmbedScraper(_MediaScraper):
+    """A generic oEmbed based scraper."""
+    allowed_oembed_types = {"video"}
 
-    def __init__(self, url, maxwidth):
+    def __init__(self, url, maxwidth, media_object_type=None):
         self.url = url
-        self.maxwidth = maxwidth
-
-    @classmethod
-    def matches(cls, url):
-        return cls.URL_MATCH.match(url)
-
-    def _fetch_from_youtube(self):
-        params = {
+        self.maxwidth = int(maxwidth)
+        self.oembed_params = {
             "url": self.url,
             "format": "json",
             "maxwidth": self.maxwidth,
         }
+        self.media_object_type = media_object_type or domain(url)
 
-        with g.stats.get_timer("providers.youtube.oembed"):
-            content = advocate.get(self.OEMBED_ENDPOINT, params=params).content
+    @classmethod
+    def matches(cls, url):
+        return False
 
+    def fetch_oembed(self, oembed_api_url):
+        """Request oembed data"""
+        resp = advocate.get(oembed_api_url, params=self.oembed_params)
         oembed = None
         try:
-            oembed = json.loads(content)
+            oembed = json.loads(resp.content)
         except ValueError:
             g.log.error("No JSON object for content of: {0}".format(self.url))
         return oembed
 
-    def _make_media_object(self, oembed):
-        if oembed.get("type") == "video":
+    @property
+    def oembed(self):
+        if not hasattr(self, "_oembed"):
+            self._oembed = self.fetch_oembed()
+        return self._oembed
+
+    def make_media_object(self, oembed):
+        if oembed.get("type") in self.allowed_oembed_types:
             return {
-                "type": "youtube.com",
+                "type": self.media_object_type,
                 "oembed": oembed,
             }
         return None
 
-    def scrape(self):
-        oembed = self._fetch_from_youtube()
-        if not oembed:
-            return None, None, None, None
-        thumbnail_url = oembed.get("thumbnail_url")
-
-        if not thumbnail_url:
-            return None, None, None, None
-
+    def fetch_media(self):
+        if not self.oembed:
+            return None
+        thumbnail_url = self.oembed.get("thumbnail_url")
         _, content = _fetch_url(thumbnail_url, referer=self.url)
-        uid = _filename_from_content(content)
-        image = str_to_image(content)
-        storage_url = upload_media(image, category='previews')
-        width, height = image.size
-        preview_object = {
-            'uid': uid,
-            'url': storage_url,
-            'width': width,
-            'height': height,
-        }
+        return content
 
-        thumbnail = _prepare_image(image)
-        media_object = self._make_media_object(oembed)
-
-        return (
-            thumbnail,
-            preview_object,
-            media_object,
-            media_object,
-        )
+    def scrape(self):
+        if not self.oembed:
+            return None, None, None, None
+        thumbnail, preview_object, _, _ = super(_OEmbedScraper, self).scrape()
+        if not thumbnail:
+            return None, None, None, None
+        media_object = self.make_media_object(self.oembed)
+        return thumbnail, preview_object, media_object, media_object
 
     @classmethod
     def media_embed(cls, media_object):
@@ -1311,27 +1208,147 @@ class _YouTubeScraper(Scraper):
         )
 
 
-@memoize("media.embedly_services2", time=3600)
-def _fetch_embedly_service_data():
-    resp = advocate.get("https://api.embed.ly/1/services/python")
-    return get_requests_resp_json(resp)
+class _EmbedlyScraper(_OEmbedScraper):
+    """Use Embedly to get information about embed info for a url.
 
+    http://embed.ly/docs/api/embed/endpoints/1/oembed
+    """
+    OEMBED_ENDPOINT = "https://api.embed.ly/1/oembed"
 
-def _fetch_embedly_services():
-    if not g.embedly_api_key:
-        if g.debug:
-            g.log.info("No embedly_api_key, using no key while in debug mode.")
+    allowed_oembed_types = {"video", "rich"}
+
+    def __init__(self, url, autoplay=False, maxwidth=600):
+        super(_EmbedlyScraper, self).__init__(
+            url,
+            maxwidth=maxwidth,
+        )
+        self.oembed_params["key"] = g.embedly_api_key
+        if autoplay:
+            self.oembed_params["autoplay"] = "true"
+
+    @classmethod
+    def matches(cls, url):
+        embedly_services = cls._fetch_embedly_services()
+        for service_re in embedly_services:
+            if service_re.match(url):
+                return True
+        return False
+
+    def fetch_oembed(self, secure=False):
+        self.oembed_params.update({
+            "secure": "true" if secure else "false",
+        })
+
+        with g.stats.get_timer("providers.embedly.oembed"):
+            return super(_EmbedlyScraper, self).fetch_oembed(
+                self.OEMBED_ENDPOINT
+            )
+
+    def fetch_media(self):
+        oembed = self.oembed
+        if not oembed:
+            return None
+
+        if oembed.get("type") == "photo":
+            thumbnail_url = oembed.get("url")
         else:
-            g.log.warning("No embedly_api_key configured. Will not use "
-                          "embed.ly.")
-            return []
+            thumbnail_url = oembed.get("thumbnail_url")
 
-    service_data = _fetch_embedly_service_data()
+        if not thumbnail_url:
+            return None
 
-    return [
-        re.compile("(?:%s)" % "|".join(service["regex"]))
-        for service in service_data
-    ]
+        if (oembed.get('provider_name') == "Imgur" and
+                "i.imgur" not in self.url):
+            temp_url = UrlParser(thumbnail_url)
+            if temp_url.query_dict.get('fb') is not None:
+                del temp_url.query_dict['fb']
+                thumbnail_url = temp_url.unparse()
+
+        _, content = _fetch_url(thumbnail_url, referer=self.url)
+        return content
+
+    def scrape(self):
+        scrape_results = super(_EmbedlyScraper, self).scrape()
+        thumbnail, preview_object, media_object, _ = scrape_results
+
+        if not thumbnail:
+            return None, None, None, None
+
+        secure_oembed = self.fetch_oembed(secure=True)
+        if not self.validate_secure_oembed(secure_oembed):
+            secure_oembed = {}
+
+        return (
+            thumbnail,
+            preview_object,
+            media_object,
+            self.make_media_object(secure_oembed),
+        )
+
+    def validate_secure_oembed(self, oembed):
+        """Check the "secure" embed is safe to embed, and not a placeholder"""
+        if not oembed.get("html"):
+            return False
+
+        # Get the embed.ly iframe's src
+        iframe_src = lxml.html.fromstring(oembed['html']).get('src')
+        if not iframe_src:
+            return False
+        iframe_src_url = UrlParser(iframe_src)
+
+        # Per embed.ly support: If the URL for the provider is HTTP, we're
+        # gonna get a placeholder image instead
+        provider_src_url = UrlParser(iframe_src_url.query_dict.get('src'))
+        return (
+            not provider_src_url.scheme or
+            provider_src_url.scheme == "https"
+        )
+
+    @classmethod
+    @memoize("media.embedly_services2", time=3600)
+    def _fetch_embedly_service_data(cls):
+        resp = advocate.get("https://api.embed.ly/1/services/python")
+        return get_requests_resp_json(resp)
+
+    @classmethod
+    def _fetch_embedly_services(cls):
+        if not g.embedly_api_key:
+            if g.debug:
+                g.log.info("No embedly_api_key, using no key while in debug mode.")
+            else:
+                g.log.warning("No embedly_api_key configured. Will not use "
+                              "embed.ly.")
+                return []
+
+        service_data = cls._fetch_embedly_service_data()
+
+        return [
+            re.compile("(?:%s)" % "|".join(service["regex"]))
+            for service in service_data
+        ]
+
+
+class _YouTubeScraper(_OEmbedScraper):
+    """Use YouTube's oembed API to get video embeds directly."""
+    OEMBED_ENDPOINT = "https://www.youtube.com/oembed"
+    URL_MATCH = re.compile(r"https?://((www\.)?youtube\.com/watch|youtu\.be/)")
+
+    def __init__(self, url, maxwidth):
+        super(_YouTubeScraper, self).__init__(
+            url,
+            maxwidth=maxwidth,
+            media_object_type="youtube.com",
+        )
+
+    @classmethod
+    def matches(cls, url):
+        return cls.URL_MATCH.match(url)
+
+    def fetch_oembed(self):
+        with g.stats.get_timer("providers.youtube.oembed"):
+            return super(_YouTubeScraper, self).fetch_oembed(
+                    self.OEMBED_ENDPOINT
+                )
 
 
 def run():
