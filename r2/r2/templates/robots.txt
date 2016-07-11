@@ -65,3 +65,4 @@ Disallow: /gold?
 Allow: /
 
 Sitemap: ${thing.subreddit_sitemap}
+Sitemap: ${thing.comment_page_sitemap}

@@ -121,7 +121,7 @@ def generate_and_upload_subreddit_sitemaps(subreddits):
         _upload_subreddit_sitemap(bucket, i, sitemap)
 
     _update_sitemap_index(
-        'subreddit-sitemaps.xml', 'subreddit_sitemap', bucket)
+        g.sitemap_subreddit_keyname, 'subreddit_sitemap', bucket)
 
 
 def generate_and_upload_comment_page_sitemaps(comment_page_data, dt_key):
@@ -133,4 +133,4 @@ def generate_and_upload_comment_page_sitemaps(comment_page_data, dt_key):
         _upload_comment_page_sitemap(bucket, i, dt_key, sitemap)
 
     _update_sitemap_index(
-        'comment-page-sitemaps.xml', 'comment_page_sitemap', bucket)
+        g.sitemap_comment_page_keyname, 'comment_page_sitemap', bucket)
