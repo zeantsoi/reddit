@@ -53,7 +53,6 @@ For comment page sitemaps, we get a daily update of links created that day.
 We dump all the sitemaps for that day in a day specific directory.
 """
 
-import urllib
 import gzip
 from StringIO import StringIO
 
@@ -98,7 +97,11 @@ def _upload_subreddit_sitemap(bucket, index, sitemap):
 def _upload_comment_page_sitemap(bucket, index, dt_key, sitemap):
     key = Key(bucket)
     key.key = 'comment_page_sitemap/{0}/{1}.xml'.format(
-        urllib.quote(dt_key), index)
+        # S3 didn't like entity encoded key names, so we'll handle
+        # the values that we'll see from the data team.
+        dt_key.replace('=', '-'),
+        index
+    )
 
     _upload_sitemap(key, sitemap)
 
