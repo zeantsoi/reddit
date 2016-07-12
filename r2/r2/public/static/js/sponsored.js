@@ -2149,13 +2149,18 @@ var exports = r.sponsored = {
       // Form validation
       if (isNaN(maxBidDollars) || 
           isNaN(minBidDollars) || 
-          isNaN(bidDollars) ||
-          (maxBidDollars < minBidDollars) ||
-          (bidDollars < minBidDollars) ||
-          (bidDollars > maxBidDollars)) {
+          isNaN(bidDollars)) {
           return false;
+      } else {
+          if (!this.userIsSponsor &&
+              ((maxBidDollars < minBidDollars) ||
+              (bidDollars < minBidDollars) ||
+              (bidDollars > maxBidDollars))) {
+            return false;
+          }
+          return true;
       }
-      return true;
+
     },
 
     calc_impressions: function(bid, cpm_pennies) {
