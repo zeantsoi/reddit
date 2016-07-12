@@ -51,7 +51,7 @@ class ModmailController(OAuth2OnlyController):
         sort=VOneOf('sort', options=('recent', 'mod', 'user'),
                     default='recent'),
         state=VOneOf('state',
-                     options=('new', 'in_progress', 'mod_discussion',
+                     options=('new', 'inprogress', 'mod',
                               'notification', 'archived', 'all'),
                      default='all'),
     )
@@ -68,7 +68,7 @@ class ModmailController(OAuth2OnlyController):
                     mod: last_mod_update
                     user: last_user_update
         state    -- this parameter lets users filter messages by state
-                    choices: new, in_progress, mod_discussion,
+                    choices: new, inprogress, mod,
                     notification, archived, all
         """
 
@@ -359,7 +359,7 @@ class ModmailController(OAuth2OnlyController):
         if not archive:
             ModmailConversation.set_states(
                 convo_ids,
-                ModmailConversation.STATE['in_progress'])
+                ModmailConversation.STATE['inprogress'])
         else:
             ModmailConversation.set_states(
                 convo_ids,
@@ -400,7 +400,7 @@ class ModmailController(OAuth2OnlyController):
             if conversation.is_internal:
                 abort(422, 'Cannot archive/unarchive mod discussions.')
 
-            conversation.set_state('in_progress')
+            conversation.set_state('inprogress')
         else:
             abort(403, 'Must be a moderator with mail access.')
 

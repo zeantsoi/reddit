@@ -99,9 +99,12 @@ class ModmailConversation(Base):
             order_by="ModmailConversationAction.date.desc()", lazy="joined")
 
     # DO NOT REARRANGE THE ITEMS IN THIS ENUM - only append new items at bottom
+    # Pseudo-states: mod (is_internal), notification (is_auto), these pseudo-states
+    # act as a conversation type to denote mod only convos and automoderator generated
+    # convos
     STATE = Enum(
         "new",
-        "in_progress",
+        "inprogress",
         "archived",
     )
 
@@ -229,9 +232,11 @@ class ModmailConversation(Base):
         # Filter messages based on passed state, all means that
         # that messages should not be filtered by state and returned
         # respecting the sort order that has been passed in. The
-        # mod_discussion state is a special state which will filter
-        # out conversations that are not internal.
-        if state == 'mod_discussion':
+        # mod state is a special state which will filter
+        # out conversations that are not internal. The other special
+        # state is the notification state which denotes a convo created
+        # by automoderator
+        if state == 'mod':
             query = query.filter(cls.is_internal.is_(True))
         elif state == 'notification':
             query = query.filter(cls.is_auto.is_(True),
@@ -321,10 +326,10 @@ class ModmailConversation(Base):
         if sr.is_moderator_with_perms(author, 'mail'):
             # Check if a mod who is not the original author of the
             # conversation is responding and if so change the state
-            # of the conversation to 'in_progress'
+            # of the conversation to 'inprogress'
             if (self.state == self.STATE['new'] and
                     author._id not in self.author_ids):
-                self.state = self.STATE['in_progress']
+                self.state = self.STATE['inprogress']
 
             self.last_mod_update = message.date
         else:
