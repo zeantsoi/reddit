@@ -112,10 +112,10 @@ def _process_message():
                 'Invalid job_name: {0}'.format(message['job_name']))
 
 
-def _process_subreddit_sitemaps(s3path, timestamp, **kw):
+def _process_subreddit_sitemaps(s3path, **kw):
     # There are some error cases that allow us to get messages
     # for sitemap creation that are now out of date.
-    if timestamp is not None and _before_last_sitemap(timestamp):
+    if 'timestamp' in kw and _before_last_sitemap(kw['timestamp']):
         return
 
     subreddits = find_all_subreddits(s3path)
@@ -153,8 +153,17 @@ def _create_subreddit_test_message():
     message = {
         'job_name': SUBREDDIT_SITEMAP_JOB_NAME,
         'location': ('s3://reddit-data-analysis/big-data/r2/prod/' +
-                     'daily_sr_sitemap_reporting/dt=2016-06-29'),
+                     'daily_sr_sitemap_reporting/dt=2016-07-11'),
         'timestamp': _current_timestamp(),
+    }
+    _create_sqs_message(message)
+
+
+def _create_timeless_subreddit_test_message():
+    message = {
+        'job_name': SUBREDDIT_SITEMAP_JOB_NAME,
+        'location': ('s3://reddit-data-analysis/big-data/r2/prod/' +
+                     'daily_sr_sitemap_reporting/dt=2016-07-11'),
     }
     _create_sqs_message(message)
 
