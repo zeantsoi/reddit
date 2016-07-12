@@ -363,26 +363,7 @@ def set_subreddit():
             path = '%s://%s%s' % (g.default_scheme, domain, sr.path)
             abort(301, location=BaseController.format_output_url(path))
     elif '+' in sr_name:
-        name_filter = lambda name: Subreddit.is_valid_name(name,
-            allow_language_srs=True)
-        sr_names = filter(name_filter, sr_name.split('+'))
-        srs = Subreddit._by_name(sr_names, stale=can_stale).values()
-        if All in srs:
-            c.site = All
-        elif Friends in srs:
-            c.site = Friends
-        else:
-            srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
-            if len(srs) == 1:
-                c.site = srs[0]
-            elif srs:
-                found = {sr.name.lower() for sr in srs}
-                sr_names = filter(lambda name: name.lower() in found, sr_names)
-                sr_name = '+'.join(sr_names)
-                multi_path = '/r/' + sr_name
-                c.site = MultiReddit(multi_path, srs)
-            elif not c.error_page:
-                abort(404)
+        _set_subreddit_from_multipath(sr_name, can_stale)
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
         base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
@@ -431,6 +412,33 @@ def set_subreddit():
 
     if isinstance(c.site, FakeSubreddit):
         c.default_sr = True
+
+
+def _set_subreddit_from_multipath(multipath, can_stale):
+    srs = _subreddits_from_multipath(multipath, can_stale)
+
+    if All in srs:
+        c.site = All
+    elif Friends in srs:
+        c.site = Friends
+    else:
+        srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
+        if len(srs) == 0:
+            abort(404)
+        elif len(srs) == 1:
+            c.site = srs[0]
+        else:
+            sr_names = '+'.join(sorted([sr.name for sr in srs]))
+            multi_path = '/r/{0}/'.format(sr_names)
+            c.site = MultiReddit(multi_path, srs)
+
+
+def _subreddits_from_multipath(multipath, can_stale):
+    sr_names = multipath.split('+')
+    valid_sr_names = [name for name in sr_names if
+                      Subreddit.is_valid_name(name, allow_language_srs=True)]
+    return Subreddit._by_name(valid_sr_names, stale=can_stale).values()
+
 
 _FILTER_SRS = {"mod": ModFiltered, "all": AllFiltered}
 def set_multireddit():
@@ -1118,6 +1126,20 @@ class MinimalController(BaseController):
     def abort403(self):
         abort(403, "forbidden")
 
+    def log_if_not_canonical(self, canonical_url):
+        if not self.is_eligible_for_canonical_redirect():
+            return
+
+        current_url = UrlParser(request.fullpath)
+        current_url.canonicalize()
+
+        if not current_url.is_canonically_equivalent(canonical_url):
+            g.events.canonical_redirect_event(
+                UrlParser(canonical_url).canonicalize().unparse(),
+                request=request,
+                context=c,
+            )
+
     def abort_if_blocked_legally(self, link):
         # we can unfortunately be compelled to block content in certain
         # jurisdictions by legal process. this is a rudimentary implementation
@@ -1419,6 +1441,14 @@ class RedditController(OAuth2ResourceController):
                 g.stats.simple_event('mweb.redirect')
                 abort(302, location=self.format_output_url(url.unparse()))
 
+    def is_eligible_for_canonical_redirect(self):
+        return (feature.is_enabled('302_to_canonicals') and
+                request.method.upper() == 'GET' and
+                not request.environ.get('extension'))
+
+    def canonical_redirect(self):
+        self.log_if_not_canonical(request.fullpath)
+
     def pre(self):
         record_timings = g.admin_cookie in request.cookies or g.debug
         admin_bar_eligible = response.content_type == 'text/html'
@@ -1497,6 +1527,8 @@ class RedditController(OAuth2ResourceController):
 
         # redirect mobile clients to m.reddit.com conditionally
         self.mweb_redirect()
+        # redirect users to canonical versions of the page conditionally
+        self.canonical_redirect()
 
         if c.user_is_loggedin:
             self.set_up_user_context()

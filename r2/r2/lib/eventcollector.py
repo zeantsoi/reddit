@@ -127,6 +127,19 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def canonical_redirect_event(self, canonical_url, request, context):
+        event = Event(
+            topic='canonical_redirect',
+            event_type='canonical_redirection',
+            request=request,
+            context=context,
+        )
+
+        event.add('redirect_url', canonical_url)
+        event.add('redirect_from_path', request.fullpath)
+
+        self.save_event(event)
+
     @squelch_exceptions
     @sampled("events_collector_submit_sample_rate")
     def submit_event(self, new_post, request=None, context=None,

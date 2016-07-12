@@ -498,8 +498,11 @@ class Link(Thing, Printable):
 
         return res
 
-    def make_canonical_link(self, sr, subdomain='www'):
-        domain = '%s.%s' % (subdomain, g.domain)
+    def make_canonical_link(self, sr):
+        if g.domain_prefix:
+            domain = '%s.%s' % (g.domain_prefix, g.domain)
+        else:
+            domain = g.domain
         path = 'comments/%s/%s/' % (self._id36, title_to_url(self.title))
         return '%s://%s/r/%s/%s' % (g.default_scheme, domain, sr.name, path)
 

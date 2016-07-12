@@ -317,24 +317,20 @@ class SubredditListingController(ListingController):
 
         return u"%s • %s" % (_force_unicode(title), sr_fragment)
 
-    def canonical_link(self):
-        """Return the canonical link of the subreddit.
+    def _canonical_link(self):
+        """Creates a canonical path.
 
-        Ordinarily canonical links are created using request.url.
-        In the case of subreddits, we perform a bit of magic to strip the
-        subreddit path from the url. This means that a path like:
+        The one thing we are really trying to canonicalize here is the
+        casing of the subreddit name. For instance.
 
-        https:///www.reddit.com/r/hiphopheads/
+        https://www.reddit.com/r/nomansskythegame/
 
-        will instead show:
+        Should canonicalize to:
 
-        https://www.reddit.com/
-
-        See SubredditMiddleware for more information.
-
-        This method constructs our url from scratch given other information.
+        https://www.reddit.com/r/NoMansSkyTheGame/
         """
-        return add_sr('/', force_https=True)
+        url = UrlParser(request.fullpath)
+        return url.canonicalize().canonicalize_subreddit_path(c.site).unparse()
 
     def _build_og_description(self):
         description = c.site.public_description.strip()
@@ -390,8 +386,8 @@ class SubredditListingController(ListingController):
             else:
                 event_target['target_after'] = self.after._fullname
         render_params['extra_js_config'] = {'event_target': event_target}
-
-        render_params['canonical_link'] = self.canonical_link()
+        render_params['canonical_link'] = self._canonical_link()
+        self.log_if_not_canonical(render_params['canonical_link'])
 
         return render_params
 

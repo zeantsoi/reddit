@@ -596,11 +596,18 @@ class UrlParser(object):
         self.path =  '/'.join(dirs)
         return self
 
-    def canonicalize(self):
+    def _canonicalize_hostname(self, preserve_language_subdomain):
         subdomain = extract_subdomain(self.hostname)
-        if subdomain == '' or is_language_subdomain(subdomain):
-            self.hostname = 'www.{0}'.format(g.domain)
+        if (subdomain == '' or
+                is_language_subdomain(subdomain) and
+                not preserve_language_subdomain):
+            if g.domain_prefix:
+                self.hostname = '{0}.{1}'.format(g.domain_prefix, g.domain)
+            else:
+                self.hostname = g.domain
 
+    def canonicalize(self, preserve_language_subdomain=True):
+        self._canonicalize_hostname(preserve_language_subdomain)
         # If our extension is one denoting a special render type, remove it
         # to refer to the canonical (html) render type
         if self.path_extension().lower() in g.extension_subdomains.values():
@@ -610,6 +617,38 @@ class UrlParser(object):
             self.path += '/'
 
         self.scheme = 'https'
+
+        return self
+
+    def is_canonically_equivalent(self, canonical):
+        """
+        Check if the url is equivalent to the canonicalized version of
+        another url.
+
+        The canonicalize method converts relative paths to absolute urls.
+        We would like this method to work with simple relative paths.
+        This means that just checking equality between self the canonicalized
+        url can't work, because the __eq__ checks things lie scheme and netloc.
+
+        This method is designed as a less restrictive __eq__ method so much
+        of the code is borrowed.
+        """
+
+        canonical = UrlParser(canonical)
+        # simplifies unit testing by bypassing the global request object.
+        canonical.hostname = self.hostname
+        canonical.canonicalize()
+
+        (_, __, s_path, s_params, s_query, ___) = self._unparse()
+        (_, __, c_path, c_params, c_query, ___) = canonical._unparse()
+
+        if s_path != c_path or s_params != c_params:
+            return False
+
+        if dict(self.query_dict) != dict(canonical.query_dict):
+            return False
+
+        return True
 
     def switch_subdomain_by_extension(self, extension=None):
         """Change the subdomain to the one that fits an extension.
@@ -790,6 +829,32 @@ class UrlParser(object):
         if not (self.path_has_subreddit()
                 or self.path.startswith(subreddit.user_path)):
             self.path = (subreddit.user_path + self.path)
+        return self
+
+    def canonicalize_subreddit_path(self, subreddit):
+        """Canonicalizes the subreddit part of the path.
+
+        The one thing we are really trying to canonicalize here is the
+        casing of the subreddit name. For instance.
+
+        https://www.reddit.com/r/nomansskythegame/new/
+
+        Should canonicalize to:
+
+        https://www.reddit.com/r/NoMansSkyTheGame/new/
+
+        Warning:
+        The urls are already assumed to canonicalized in every other way.
+        For instance the behavior of this method is undefined if there is no
+        trailing slash.
+        """
+
+        path_re = re.compile(r'/r/(.*?)/(.*)?')
+        if not path_re.search(self.path):
+            return self
+
+        postfix = path_re.search(self.path).group(2)
+        self.path = subreddit.user_path + postfix
         return self
 
     @property

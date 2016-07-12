@@ -312,6 +312,11 @@ class Reddit(Templated):
         self.show_reset_password_modal = False
         self.has_new_modmail_srs = False
 
+        # generate a canonical link for crawlers
+        canonical_url = UrlParser(canonical_link or request.fullpath)
+        canonical_url.canonicalize(preserve_language_subdomain=False)
+        self.canonical_link = canonical_url.unparse()
+
         # Things displayed on the page (for ad targeting)
         if displayed_things is not None:
             self.displayed_things = displayed_things
@@ -350,11 +355,6 @@ class Reddit(Templated):
             has_adblock_test = bool(self.adblock_test_class)
 
         self.has_adblock_test = has_adblock_test
-
-        # generate a canonical link for google
-        canonical_url = UrlParser(canonical_link or request.url)
-        canonical_url.canonicalize()
-        self.canonical_link = canonical_url.unparse()
 
         # Generate a mobile link for Google.
         u = UrlParser(self.canonical_link)

@@ -23,6 +23,9 @@
 ###############################################################################
 import unittest
 
+import mock
+
+from r2.models.subreddit import BaseSite
 from r2.lib.utils import UrlParser
 from r2.tests import RedditTestCase
 from pylons import app_globals as g
@@ -280,3 +283,52 @@ class TestEquality(unittest.TestCase):
         u2 = UrlParser('http://example.com/')
         u2.update_query(page=u'ｕｎｉｃｏｄｅ：（')
         self.assertEquals(u, u2)
+
+
+class TestIsCanonicallyEquivalent(unittest.TestCase):
+
+    def test_is_canonically_equivalent(self):
+
+        test_cases = [
+            ('/cats', '/cats', False),
+            ('/cats/', '/cats/', True),
+            ('/cats/', 'https://www.reddit.com/cats/', True),
+            ('/cats#grumpy', '/cats#grumpy', False),
+            ('/cats/#grumpy', '/cats/#grumpy', True),
+            ('/cats/#grumpy', '/cats', True),
+            ('/dogs?people=False', '/dogs?people=False', False),
+            ('/dogs/?people=False', '/dogs/?people=False', True),
+            ('/dogs/?cute=True&people=False',
+             '/dogs/?people=False&cute=True', True),
+        ]
+
+        for test_url, canonical_url, assertion in test_cases:
+            parsed = UrlParser(test_url)
+            # this is to get around the need to patch the global request
+            # object with the appropriate hostname.
+            parsed.hostname = 'reddit'
+            self.assertEquals(
+                parsed.is_canonically_equivalent(canonical_url),
+                assertion
+            )
+
+    def test_replace_subreddit(self):
+        test_cases = [
+            ('/r/VIDEOS/', '/r/videos/', '/r/videos/'),
+            ('/r/VIDEOS/new/', '/r/videos/', '/r/videos/new/'),
+            ('/r/VIDEOS/new/#cats', '/r/videos/', '/r/videos/new/#cats'),
+            ('/user/dave/m/cats/', '', '/user/dave/m/cats/'),
+        ]
+
+        for test_url, user_path, canonical_url in test_cases:
+            subreddit = mock.create_autospec(BaseSite, spec_set=True)
+            subreddit.user_path = user_path
+
+            url = UrlParser(test_url).canonicalize_subreddit_path(subreddit)
+            url.hostname = 'reddit'
+            print test_url, user_path, canonical_url
+            self.assertTrue(
+                url.is_canonically_equivalent(canonical_url),
+                '{0} is not equivalent to {1}'.format(
+                    url, UrlParser(canonical_url)),
+            )

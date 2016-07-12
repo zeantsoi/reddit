@@ -293,6 +293,7 @@ class FrontController(RedditController):
                 return self.intermediate_redirect("/over18", sr_path=False)
 
         canonical_link = article.make_canonical_link(sr)
+        self.log_if_not_canonical(canonical_link)
 
         # Determine if we should show the embed link for comments
         c.can_embed = article.is_embeddable
