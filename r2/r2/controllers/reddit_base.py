@@ -93,6 +93,7 @@ from r2.lib.utils import (
     is_throttled,
     tup,
     UrlParser,
+    parse_agent,
 )
 from r2.lib.validator import (
     build_arg_list,
@@ -1601,9 +1602,11 @@ class RedditController(OAuth2ResourceController):
                     return self.intermediate_redirect("/quarantine", sr_path=False)
 
             #check over 18
+            agent = parse_agent(request.user_agent)
             if (c.site.over_18 and not c.over18 and
-                request.path != "/over18"
-                and c.render_style == 'html'):
+                    request.path != "/over18" and
+                    c.render_style == 'html' and
+                    not agent['bot']):
                 return self.intermediate_redirect("/over18", sr_path=False)
 
         #check whether to allow custom styles

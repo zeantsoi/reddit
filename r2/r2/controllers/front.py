@@ -45,7 +45,12 @@ from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import to36, sanitize_url, title_to_url, is_seo_referrer
-from r2.lib.utils import query_string, UrlParser, url_links_builder
+from r2.lib.utils import (
+    parse_agent,
+    query_string,
+    UrlParser,
+    url_links_builder,
+)
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode, _force_utf8
 from r2.lib.emailer import Email, generate_notification_email_unsubscribe_token
@@ -276,7 +281,11 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
 
         # check over 18
-        if article.is_nsfw and not c.over18 and c.render_style == 'html':
+        agent = parse_agent(request.user_agent)
+        if (article.is_nsfw and
+                not c.over18 and
+                c.render_style == 'html' and
+                not agent['bot']):
             return self.intermediate_redirect("/over18", sr_path=False)
 
         canonical_link = article.make_canonical_link(sr)
