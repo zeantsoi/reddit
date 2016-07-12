@@ -151,7 +151,7 @@ class ModmailConversation(Base):
         return func.greatest(cls.last_mod_update, cls.last_user_update)
 
     def __init__(self, owner, author, subject,
-                 body, is_author_hidden=False):
+                 body, is_author_hidden=False, to=None):
         self.owner_fullname = owner._fullname
         self.subject = subject
         self.num_messages = 0
@@ -163,7 +163,13 @@ class ModmailConversation(Base):
             self.is_auto = True
 
         if owner.is_moderator_with_perms(author, 'mail'):
-            self.is_internal = True
+            # check if moderator has addressed the new convo to someone
+            # if they have make the convo not internal and add the 'to' user
+            # as the participant of the conversation
+            if to:
+                participant_id = to._id
+            else:
+                self.is_internal = True
         else:
             participant_id = author._id
             if is_author_hidden:

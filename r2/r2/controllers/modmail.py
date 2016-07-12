@@ -9,6 +9,7 @@ from r2.lib.base import abort
 from r2.lib.db.thing import NotFound
 from r2.lib.errors import errors
 from r2.lib.validator import (
+    VAccountByName,
     validate,
     VBoolean,
     VInt,
@@ -16,6 +17,7 @@ from r2.lib.validator import (
     VList,
     VMarkdownLength,
     VModConversation,
+    VModConvoRecipient,
     VNotInTimeout,
     VOneOf,
     VSRByName,
@@ -139,9 +141,10 @@ class ModmailController(OAuth2OnlyController):
         subject=VLength('subject', max_length=100),
         body=VMarkdownLength('body'),
         is_author_hidden=VBoolean('isAuthorHidden', default=False),
+        to=VModConvoRecipient('to', required=False),
     )
     def POST_conversations(self, entity, subject, body,
-                           is_author_hidden):
+                           is_author_hidden, to):
         """Creates a new conversation for a particular SR
 
         This endpoint will create a ModmailConversation object as
@@ -149,12 +152,30 @@ class ModmailController(OAuth2OnlyController):
         object.
 
         POST Params:
-        srName      -- the human readable name of the subreddit
-        subject     -- the subject of the first message in the conversation
-        body        -- the body of the first message in the conversation
-
+        srName          -- the human readable name of the subreddit
+        subject         -- the subject of the first message in the conversation
+        body            -- the body of the first message in the conversation
+        isAuthorHidden  -- boolean on whether the mod name should be hidden
+                           (only mods can use this flag)
+        to              -- name of the user that a mod wants to create a convo
+                           with (only mods can use this flag)
         """
         self._feature_enabled_check(entity)
+
+        # make sure the user is not muted when creating a new conversation
+        if entity.is_muted(c.user) and not c.user_is_admin:
+            abort(403, 'User muted for subreddit')
+
+        # validate post params
+        if (errors.USER_BLOCKED, to) in c.errors:
+            # empty return to not give away that a user was banned
+            return
+        elif (errors.USER_DOESNT_EXIST, to) in c.errors:
+            return abort(404, 'Recipient user not found')
+
+        # only mods can set a 'to' parameter
+        if (not entity.is_moderator_with_perms(c.user, 'mail') and to):
+            abort(403, 'Cannot set a convo recipient if you are a non mod')
 
         try:
             conversation = ModmailConversation(
@@ -163,6 +184,7 @@ class ModmailController(OAuth2OnlyController):
                 subject,
                 body,
                 is_author_hidden=is_author_hidden,
+                to=to,
             )
         except MustBeAModError:
             abort(403, 'Must be a mod to hide the message author.')
@@ -256,6 +278,10 @@ class ModmailController(OAuth2OnlyController):
 
         sr = Subreddit._by_fullname(conversation.owner_fullname)
         self._feature_enabled_check(sr)
+
+        # make sure the user is not muted before posting a message
+        if sr.is_muted(c.user):
+            abort(403, 'User muted for subreddit')
 
         if conversation.is_internal and not is_internal:
             is_internal = True

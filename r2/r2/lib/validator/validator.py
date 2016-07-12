@@ -1980,6 +1980,18 @@ class VMessageRecipient(VExistingUname):
             else:
                 return account
 
+class VModConvoRecipient(VMessageRecipient):
+    def __init__(self, param, required=True, *a, **kw):
+        self.required = required
+        super(VModConvoRecipient, self).__init__(param, *a, **kw)
+
+    def run(self, name):
+        if not name and not self.required:
+            return None
+
+        return super(VModConvoRecipient, self).run(self, name)
+
+
 class VUserWithEmail(VExistingUname):
     def run(self, name):
         user = VExistingUname.run(self, name)
