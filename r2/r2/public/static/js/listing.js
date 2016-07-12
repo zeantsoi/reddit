@@ -30,7 +30,7 @@
       var newPromo = r.promo.requestPromo();
       var self = this;
       newPromo.pipe(function(promo){
-        var numThings = $('.sitetable').find('.thing').length;
+        var numThings = $('.sitetable.linklisting').find('.thing').length;
         // if too few items displayed, don't display ad
         if(numThings < self.FOLD_LINE){
           return;

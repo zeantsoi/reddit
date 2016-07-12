@@ -99,6 +99,8 @@ class ListingController(RedditController):
     show_chooser = False
     suppress_reply_buttons = False
 
+    show_promo_in_listing = False
+
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
 
@@ -246,6 +248,7 @@ class ListingController(RedditController):
         model = LinkListing(
             self.builder_obj,
             show_nums=self.show_nums,
+            show_promo_in_listing=self.show_promo_in_listing,
         )
         suggestions = None
         if self.next_suggestions_cls:
@@ -391,6 +394,7 @@ class SubredditListingController(ListingController):
 
 class ListingWithPromos(SubredditListingController):
     show_organic = False
+    show_promo_in_listing = True
 
     def make_requested_ad(self, requested_ad):
         try:
