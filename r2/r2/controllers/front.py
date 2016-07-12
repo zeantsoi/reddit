@@ -1660,6 +1660,16 @@ class FormsController(RedditController):
             c.user.email_verified = True
             c.user._commit()
             Award.give_if_needed("verified_email", c.user)
+
+            g.events.email_update_event(
+                action_name='verified_email',
+                user=c.user,
+                base_url=request.fullpath,
+                dnt=feature.is_enabled("do_not_track"),
+                new_email=c.user.email,
+                request=request,
+                context=c)
+
             return self.redirect(dest)
 
         # failure. let 'em know.
