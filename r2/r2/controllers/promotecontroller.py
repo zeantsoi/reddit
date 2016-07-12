@@ -1513,17 +1513,25 @@ class PromoteApiController(ApiController):
 
                 if (bid_dollars < min_bid_dollars or
                         bid_dollars > max_bid_dollars):
-                    rounded_min_bid = round(min_bid_dollars, 2)
-                    rounded_max_bid = round(max_bid_dollars, 2)
-                    cost_basis_name = PROMOTE_COST_BASIS.name[cost_basis]
-                    c.errors.add(
-                        errors.BAD_BID,
-                        field='bid',
-                        msg_params={'cost_basis': cost_basis_name.upper(),
-                                    'min': '%.2f' % rounded_min_bid,
-                                    'max': '%.2f' % rounded_max_bid}
-                    )
-                    form.has_errors('bid', errors.BAD_BID)
+
+                    if max_bid_dollars <= min_bid_dollars:
+                        bid_error = errors.INVALID_MIN_MAX_BID
+                        c.errors.add(bid_error, field='bid')
+
+                    else:
+                        bid_error = errors.BAD_BID
+                        rounded_min_bid = round(min_bid_dollars, 2)
+                        rounded_max_bid = round(max_bid_dollars, 2)
+                        cost_basis_name = PROMOTE_COST_BASIS.name[cost_basis]
+                        c.errors.add(
+                            bid_error,
+                            field='bid',
+                            msg_params={'cost_basis': cost_basis_name.upper(),
+                                        'min': '%.2f' % rounded_min_bid,
+                                        'max': '%.2f' % rounded_max_bid}
+                        )
+
+                    form.has_errors('bid', bid_error)
                     return
 
         else:
