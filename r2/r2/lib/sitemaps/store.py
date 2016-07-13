@@ -83,8 +83,9 @@ def _zip_string(string):
 
 def _upload_sitemap(key, sitemap):
     g.log.debug("Uploading %r", key)
-
     key.set_contents_from_string(_zip_string(sitemap), headers=HEADERS)
+    g.log.info("Uploaded %r", key)
+
 
 
 def _upload_subreddit_sitemap(bucket, index, sitemap):
