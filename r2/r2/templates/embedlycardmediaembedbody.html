@@ -1,0 +1,56 @@
+<%!
+   from r2.lib.filters import scriptsafe_dumps
+%>
+<!doctype html>
+<html>
+<head>
+    <style type="text/css">
+    html, iframe, body, object, embed, div, span, p {
+        margin: 0;
+        padding: 0;
+    }
+
+    iframe {
+        max-width: 100%;
+    }
+    </style>
+</head>
+<body>
+    ${unsafe(thing.body)}
+
+    <script type="text/javascript">
+    if (window.parent) {
+        var root = document.documentElement,
+            updateId = ${scriptsafe_dumps(thing.id36)},
+            knownHeight = 0,
+            knownWidth = 0;
+
+        var checkDimensions = function() {
+            if (root.offsetHeight === knownHeight && root.offsetWidth === knownWidth) {
+                return;
+            }
+
+            knownWidth = root.offsetWidth;
+            knownHeight = root.offsetHeight;
+            window.parent.postMessage(JSON.stringify({
+                "name": "embedlyCard",
+                "action": "dimensionsChange",
+                "width": knownWidth,
+                "height": knownHeight,
+                "updateId": updateId,
+            }), '*');
+        };
+
+        if ('MutationObserver' in window) {
+            /* Currently just check on every set of mutations. */
+            var observer = new MutationObserver(checkDimensions),
+                config = { attributes: true, subtree: true, childList: true};
+
+            observer.observe(root, config);
+        } else {
+            window.setInterval(checkDimensions, 500);
+        }
+    }
+    </script>
+</body>
+</html>

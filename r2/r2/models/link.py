@@ -854,6 +854,14 @@ class Link(Thing, Printable):
             # attach video or selftext as needed
             item.link_child, item.editable = make_link_child(item, show_media_preview)
 
+            use_embedly_card = (
+                media.should_use_embedly_card(item) and
+                feature.is_enabled("embedly_card_preview") and
+                feature.variant("embedly_card_preview") == "show_embedly_card"
+            )
+
+            item.embedly_card_preview = use_embedly_card
+
             if (feature.is_enabled("inline_image_previews_logged_in") or
                     feature.is_enabled("inline_image_previews_logged_out")):
                 item.feature_media_previews = True
