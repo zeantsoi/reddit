@@ -572,13 +572,13 @@ ${unsafe(txt)}
   </form>
 </%def>
 
-<%def name="block_field(kind, title, description = '', css_class= '', **kw)">
+<%def name="block_field(kind, title, description = '', css_class= '', required=False, **kw)">
   <div class="${kind} ${css_class}"
        %for k, v in kw.iteritems():
          ${k}="${v}"
        %endfor
        >
-    <span class="title">${title}</span>
+    <span class="title ${'required-roundfield' if required else ''}">${title}</span>
     &#32;
     %if description:
       <span class="little gray ${kind}-description">${description}</span>

@@ -8,22 +8,36 @@
         position: relative;
     }
 
-    .image-upload-drop-target {
-        &:after {
-            position: absolute;
-            top: 0;
-            left: 0;
-            content: '';
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            box-sizing: border-box;
-        }
+    .file-drop-label {
+        display: inline-block;
+        color: #ddd;
+        padding-right: 16px;
+        padding-left: 16px;
+    }
 
-        &.image-upload-drop-active:after {
-            border: 5px dashed #999;
-            background-color: rgba(255, 255, 255, 0.5);
-        }
+    .file-drop-label-icon {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        vertical-align: middle;
+        background-image: url('../photo-icon.png'); /* SPRITE */
+        transform: translateY(-1px);
+    }
+
+    .image-upload-drop-target {
+        position: relative;
+        content: '';
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+        padding: 20px 10px;
+        border: 2px dashed #bbb;
+        background-color: #fafafa;
+        text-align: center;
+    }
+
+    .image-upload-drop-active {
+        border: 5px dashed #999 !important;
     }
 
     #new-link-image-preview img {
@@ -95,7 +109,7 @@
             pointer-events: none;
             display: inline-block;
             width: 20px;
-            height: 20px;
+            height: 16px;
             margin-right: unit(@margin-x-small, px);
             vertical-align: middle;
             background-image: url('../icon-upload.png'); /* SPRITE */
@@ -136,7 +150,23 @@
             background-size: 100%;
             background-image: url('../icon-thinking_2x.png'); /* SPRITE pixel-ratio=2 */
         }
+
+        .file-drop-label-icon {
+            background-size: 100%;
+            background-image: url('../photo-icon_2x.png'); /* SPRITE pixel-ratio=2 */
+        }
     }
+}
+
+.required-roundfield {
+    &:before {
+        content: "*";
+        color: red;
+    }
+}
+
+#items-required {
+    padding-bottom: 10px;
 }
 
 @-webkit-keyframes rotate {

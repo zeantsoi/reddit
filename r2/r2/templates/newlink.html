@@ -79,16 +79,12 @@ ${thing.formtabs_menu}
 </%def>
 
 <%def name="newlink_image_input()">
-  <div id="new-link-image-input" class="image-post-upload" hidden>
-    %if not getattr(thing, "swap_link_and_image_order", False):
-      <div>
-        <small>${_("or")}</small>
-      </div>
-    %endif
-
+  <div id="new-link-image-input" class="image-post-upload image-upload-drop-target">
+    <div class="file-drop-label-icon"></div>
+    <div class="file-drop-label">Drop image here or </div>
     <label class="file-upload-button c-btn c-btn-primary">
       <div class="file-upload-icon"></div>
-        ${_("Upload Image")}
+        ${_("Choose File")}
       <input id="image" type="file">
     </label>
 
@@ -98,18 +94,13 @@ ${thing.formtabs_menu}
       ${error_field("BAD_IMAGE_UPLOAD", "image-upload", "div")}
       ${error_field("BAD_LEASE_REQUEST", "image-upload", "div")}
     </div>
-
-    %if getattr(thing, "swap_link_and_image_order", False):
-      <div>
-        <small>${_("or")}</small>
-      </div>
-    %endif
   </div>
 </%def>
 
 ## Let's just do this the easy way...
 %if getattr(thing, "allow_image_upload", False):
   <div id="newlink-with-image-upload">
+    <input name="kind" value="link" type="hidden"/>
     %if thing.show_link:
       <div class="spacer">
         <%
@@ -118,33 +109,9 @@ ${thing.formtabs_menu}
           if getattr(thing, "swap_link_and_image_order", False):
             url_field_title = ''
         %>
-        <%utils:round_field title="${url_field_title}" id="url-field">
-          <input name="kind" value="link" type="hidden"/>
+        <%utils:round_field title="${_('url')}" id="url-field">
 
-          %if getattr(thing, "swap_link_and_image_order", False):
-            ${newlink_image_input()}
-            ${newlink_url_input()}
-          %else:
-            ${newlink_url_input()}
-            ${newlink_image_input()}
-          %endif
-
-          <div id="new-link-image-name-display" hidden>
-            <div class="c-form-group">
-              <div id="image-name" class="input"></div>
-              <span class="clear-input-button">x</span>
-            </div>
-          </div>
-          
-          ${error_field("NO_URL", "url", "div")}
-          ${error_field("BAD_URL", "url", "div")}
-          ${error_field("IMAGES_NOTALLOWED", "url", "div")}
-          ${error_field("BAD_FILE_TYPE", "url", "div")}
-          ${error_field("DOMAIN_BANNED", "url", "div")}
-          ${error_field("ALREADY_SUB", "url", "div")}
-          ${error_field("NO_LINKS", "sr")}
-          ${error_field("NO_SELFS", "sr")}
-          ${error_field("SUBREDDIT_NOTALLOWED", "sr")}
+          ${newlink_url_input()}
 
           <div class="new-link-preview-throbber"></div>
 
@@ -153,13 +120,47 @@ ${thing.formtabs_menu}
             <a class="new-link-preview-domain" href="#"></a>
           </div>
 
-          <div id="new-link-image-preview"></div>
+          ${error_field("NO_URL", "url", "div")}
+          ${error_field("BAD_URL", "url", "div")}
+          ${error_field("DOMAIN_BANNED", "url", "div")}
+          ${error_field("ALREADY_SUB", "url", "div")}
+          ${error_field("NO_LINKS", "sr")}
+          ${error_field("NO_SELFS", "sr")}
+          ${error_field("SUBREDDIT_NOTALLOWED", "sr")}
+
         </%utils:round_field>
       </div>
+
+      % if thing.allow_image_upload:
+        <div class="spacer">
+          <%utils:round_field title="${_('image')}" id="image-field">
+            <div id="new-link-image-name-display" hidden>
+              <div class="c-form-group">
+                <div id="image-name" class="input"></div>
+                <span class="clear-input-button">x</span>
+              </div>
+            </div>
+
+            ${newlink_image_input()}
+
+            ${error_field("IMAGES_NOTALLOWED", "url", "div")}
+            ${error_field("BAD_FILE_TYPE", "url", "div")}
+
+            <div class="new-link-preview-throbber"></div>
+
+            <div id="new-link-preview" hidden>
+              <div class="new-link-preview-title"></div>
+              <a class="new-link-preview-domain" href="#"></a>
+            </div>
+
+            <div id="new-link-image-preview"></div>
+          </%utils:round_field>
+        </div>
+      %endif
     %endif
 
     <div class="spacer">
-      <%utils:round_field title="${_('title')}" id="title-field">
+      <%utils:round_field title="${_('title')}" id="title-field" required="True">
         <div id="suggest-title">
           <a href="javascript: void 0;" tabindex="100" hidden>${_("use suggested title")}</a>
         </div>
@@ -225,7 +226,7 @@ ${thing.formtabs_menu}
 %endif
 
 <div class="spacer">
-  <%utils:round_field title="${_('choose a subreddit')}" id="reddit-field">
+  <%utils:round_field title="${_('choose a subreddit')}" id="reddit-field" required="True">
     ${SubredditSelector(thing.default_sr, extra_subreddits=thing.extra_subreddits, required=True)}
   </%utils:round_field>
 </div>
@@ -267,6 +268,7 @@ ${thing.captcha}
   )}
 </div>
 
+<div id="items-required">${_("*required")}</div>
 <input name="resubmit" value="${thing.resubmit}" type="hidden"/>
 <div class="spacer">
   <button class="btn" name="submit" value="form" type="submit">${_("submit")}</button>

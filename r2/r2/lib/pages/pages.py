@@ -3896,7 +3896,8 @@ class NewLink(Templated):
 
         tabs = []
         if show_link:
-            tabs.append((link_tab_label, ('link-desc', 'url-field')))
+            tabs.append((link_tab_label,
+                ('link-desc', 'url-field', 'image-field')))
         if show_self:
             tabs.append(('text', ('text-desc', 'text-field')))
 

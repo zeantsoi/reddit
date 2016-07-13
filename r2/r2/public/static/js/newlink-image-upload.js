@@ -58,9 +58,11 @@
 
       this.$form = $(this.form);
       this.$submitButton = this.$form.find('button[name=submit]');
+      this.$imageField = $('#image-field');
       this.$urlField = $('#url-field');
-      this.$throbber = this.$urlField.find('.new-link-preview-throbber');
-      this.$typeInput = this.$urlField.find('input[name=kind]');
+      this.$imageThrobber = this.$imageField.find('.new-link-preview-throbber');
+      this.$urlThrobber = this.$urlField.find('.new-link-preview-throbber');
+      this.$typeInput = $('#newlink-with-image-upload').find('input[name=kind]');
 
       this.$urlInputDisplayGroup = $('#new-link-url-input');
       this.$urlInput = this.$urlInputDisplayGroup.find('input[name=url]');
@@ -112,10 +114,10 @@
         // Bind various forms of file input to the file-input action
         // see file-input-actions.js
         r.actions.bindImageUploadOnInput(this.$fileInput[0], this.form);
-        r.actions.bindImageUploadOnDrop(this.$urlField[0], this.form);
+        r.actions.bindImageUploadOnDrop(this.$imageField[0], this.form);
         r.actions.bindImageUploadOnPaste(window, this.form);
 
-        this.$urlField.addClass(this.DROP_TARGET_CLASS);
+        this.$fileInputDisplayGroup.addClass(this.DROP_TARGET_CLASS);
 
         r.actions.on('file-input', function(e) {
           if (!this._isValidAction(e)) {
@@ -151,14 +153,14 @@
           }
         }.bind(this));
 
-        this.$urlField.on('file-input:dragenter', function(e) {
+        this.$imageField.on('file-input:dragenter', function(e) {
           if (this._isFileInputAllowed()) {
-            $(e.target).addClass(this.VALID_DROP_STATE);
+            $(this.$fileInputDisplayGroup).addClass(this.VALID_DROP_STATE);
           }
         }.bind(this));
 
-        this.$urlField.on('file-input:dragleave file-input:drop', function(e) {
-          $(e.target).removeClass(this.VALID_DROP_STATE);
+        this.$imageField.on('file-input:dragleave file-input:drop', function(e) {
+          $(this.$fileInputDisplayGroup).removeClass(this.VALID_DROP_STATE);
         }.bind(this));
       } else {
         this.$fileInputDisplayGroup.empty();
@@ -200,22 +202,30 @@
     },
     
     _handleUrlInput: function(url) {
-      this.$fileInputDisplayGroup.hide();
       if (this._isValidUrl(url)) {
         this._debouncedRequestSuggestTitle(url);
       }
       this.$clearUrlButton.show();
+
+      this.$imageField.hide();
+      this.$fileInputDisplayGroup.show();
+      this.$imageNameDisplayGroup.hide();
+      this.$imageNameDisplayText.text('');
+      this.$previewImageDisplayGroup.hide().empty();
+      this.$typeInput.val('link');
     },
 
     _handleUrlClear: function() {
       this._suggestedUrl = '';
       this._renderErrors(null);
-      this.$throbber.hide();
+      this.$urlThrobber.hide();
+      this.$imageThrobber.hide();
       this.$fileInputDisplayGroup.show();
       this.$previewLinkDisplayGroup.hide();
       this.$previewLinkTitle.text('');
       this.$previewLinkDomain.attr('href', '#').text('');
       this.$clearUrlButton.hide();
+      this.$imageField.show();
     },
 
     _handleTitleChange: function(title) {
@@ -227,10 +237,10 @@
     },
 
     _handleFileInput: function(file) {
-      this.$urlInputDisplayGroup.hide();
       this.$fileInputDisplayGroup.hide();
       this.$imageNameDisplayGroup.show();
       this.$imageNameDisplayText.text(file.name);
+      this.$urlField.hide();
       this._setFormDisabled(true);
       this._requestS3Lease(file);
     },
@@ -240,8 +250,10 @@
       this._leaseReq = null;
       this._uploader = null;
       this._renderErrors(null);
-      this.$throbber.hide();
+      this.$urlThrobber.hide();
+      this.$imageThrobber.hide();
       this.$urlInput.val('');
+      this.$urlField.show();
       this.$urlInputDisplayGroup.show();
       this.$fileInputDisplayGroup.show();
       this.$imageNameDisplayGroup.hide();
@@ -260,7 +272,7 @@
 
     _requestSuggestTitle: function(url) {
       this._suggestedUrl = url;
-      this.$throbber.show();
+      this.$urlThrobber.show();
 
       r.ajax({
         type: 'POST',
@@ -275,7 +287,7 @@
 
         this._suggestedTitle = '';
         this.$suggestTitleButton.hide();
-        this.$throbber.hide();
+        this.$urlThrobber.hide();
 
         var errs = r.errors.getAPIErrorsFromResponse(res);
         if (errs) {
@@ -302,7 +314,7 @@
         if (url !== this._suggestedUrl) { return; }
 
         this._suggestedUrl = '';
-        this.$throbber.hide();
+        this.$urlThrobber.hide();
         this.$previewLinkDisplayGroup.hide();
         this.$previewLinkTitle.text('');
         this.$previewLinkDomain.attr('href', '#').text('');
@@ -312,13 +324,13 @@
     _requestS3Lease: function(file) {
       var leaseReq = r.S3ImageUploader.request({ file: file}, this._mimetype);
       this._leaseReq = leaseReq;
-      this.$throbber.show();
+      this.$imageThrobber.show();
 
       leaseReq.done(function(uploader) {
         if (leaseReq !== this._leaseReq) { return; }
 
         this._leaseReq = null;
-        this.$throbber.hide();
+        this.$imageThrobber.hide();
         this._renderErrors(null);
         this._requestS3Upload(uploader, file);
       }.bind(this))
@@ -338,7 +350,7 @@
       uploader.on('request', function(uploader) {
         if (uploader !== this._uploader) { return; }
 
-        this.$throbber.show();
+        this.$imageThrobber.show();
 
         if (this.IS_LOCAL_PREVIEW_SUPPORTED) {
           var previewUrl = URL.createObjectURL(file);
@@ -361,7 +373,7 @@
       uploader.on('success', function(uploader, imageUrl) {
         if (uploader !== this._uploader) { return; }
 
-        this.$throbber.hide();
+        this.$imageThrobber.hide();
         this.$urlInput.val(imageUrl);
         this.$typeInput.val('image');
         this._setFormDisabled(false);
@@ -394,7 +406,7 @@
     },
 
     _isFileInputAllowed: function() {
-      return this.$urlField.is(':visible') && !(this._file || this._leaseReq || this._uploader);
+      return this.$imageField.is(':visible') && !(this._file || this._leaseReq || this._uploader);
     },
 
     _isValidFile: function(file) {
