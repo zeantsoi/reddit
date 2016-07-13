@@ -892,6 +892,11 @@ class Scraper(object):
             if s.media_url:
                 return s
 
+        if _GiphyScraper.matches(url):
+            s = _GiphyScraper(url)
+            if s.media_url:
+                return s
+
         if _YouTubeScraper.matches(url):
             return _YouTubeScraper(url, maxwidth=maxwidth)
 
@@ -1138,28 +1143,35 @@ class _ImageScraper(_MediaScraper):
         return thumbnail, preview_object
 
 
-class _GfycatScraper(_ImageScraper):
-    """Use gfycat's api to get embed information.
-
-    https://gfycat.com/api
-    """
-    GFYCAT_API_URL = "https://gfycat.com/cajax/get/"
-
+class _GifHostScraper(_ImageScraper):
+    """Scraper for 3rd party gif hosting sites"""
     @classmethod
     def matches(cls, url):
         p = UrlParser(url)
-        return is_subdomain(p.hostname, "gfycat.com")
+        return is_subdomain(p.hostname, cls.HOSTNAME)
 
     def scrape(self):
         if not self.media_url:
             return None, None, None, None
-        return super(_GfycatScraper, self).scrape()
+        return super(_GifHostScraper, self).scrape()
 
     @property
     def media_url(self):
         if not hasattr(self, "_gif_url"):
             self._gif_url = self._get_gif_url()
         return self._gif_url
+
+    def _get_gif_url(self):
+        raise NotImplementedError
+
+
+class _GfycatScraper(_GifHostScraper):
+    """Use gfycat's api to get embed information.
+
+    https://gfycat.com/api
+    """
+    HOSTNAME = "gfycat.com"
+    GFYCAT_API_URL = "https://gfycat.com/cajax/get/"
 
     def _get_gif_url(self):
         p = UrlParser(self.url)
@@ -1183,6 +1195,21 @@ class _GfycatScraper(_ImageScraper):
                 return gif_url
         except (ValueError, KeyError, TypeError):
             return None
+
+
+class _GiphyScraper(_GifHostScraper):
+    HOSTNAME = "giphy.com"
+    GIPHY_MEDIA_URL_TEMPLATE = "https://media.giphy.com/media/{}/giphy.gif"
+
+    def _get_gif_url(self):
+        # example giphy url
+        # http://giphy.com/gifs/excited-realms-con-the-life-of-un-cdi5XykCOXl8Q
+        # example gif url
+        # https://media.giphy.com/media/cdi5XykCOXl8Q/giphy.gif
+        p = UrlParser(self.url)
+        giphy_id = p.path.strip('/').split('-')[-1]
+        if giphy_id:
+            return self.GIPHY_MEDIA_URL_TEMPLATE.format(giphy_id)
 
 
 class _OEmbedScraper(_MediaScraper):
