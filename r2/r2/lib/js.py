@@ -701,6 +701,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "embed.js",
     _submodule["post-sharing"],
     "expando.js",
+    "expando/resize-embedly-cards.js",
     # inline expando-nsfw-flow.js module here when unflagged
     _submodule["saved"],
     "res-advisory.js",

@@ -5263,20 +5263,34 @@ def make_link_child(item, show_media_preview=False):
     else:
         media_object = item.secure_media_object
 
-    if media_object:
+    use_embedly_card = (
+        media.should_use_embedly_card(item) and
+        feature.is_enabled("embedly_card_preview") and
+        feature.variant("embedly_card_preview") == "show_embedly_card"
+    )
+
+    if media_object or use_embedly_card:
         media_embed = None
         expand = False
         position_inline = False
+        extra_css_class = ""
 
         if isinstance(media_object, basestring):
             media_embed = media_object
         else:
-            is_autoexpand_type = media_object.get('type') in g.autoexpand_media_types
+            is_autoexpand_type = False
+            if media_object:
+                provider = media_object.get('type')
+                is_autoexpand_type = provider in g.autoexpand_media_types
             expand = expandable and (show_media_preview or is_autoexpand_type)
             position_inline = expandable and is_autoexpand_type
 
             try:
-                media_embed = media.get_media_embed(media_object)
+                if media_object:
+                    media_embed = media.get_media_embed(media_object)
+                elif use_embedly_card:
+                    media_embed = media.get_embedly_card(item.url)
+                    extra_css_class = "embedly-card-embed"
             except TypeError:
                 g.log.warning("link %s has a bad media object" % item)
                 media_embed = None
@@ -5292,6 +5306,7 @@ def make_link_child(item, show_media_preview=False):
                         scrolling=media_embed.scrolling,
                         id36=item._id36,
                         authenticated=should_authenticate,
+                        extra_css_class=extra_css_class,
                     )
                 else:
                     media_embed = media_embed.content
@@ -5501,6 +5516,10 @@ class MediaEmbedBody(CachedTemplate):
     def render(self, *a, **kw):
         res = CachedTemplate.render(self, *a, **kw)
         return responsive(res, True)
+
+
+class EmbedlyCardMediaEmbedBody(MediaEmbedBody):
+    pass
 
 
 class PaymentForm(Templated):
