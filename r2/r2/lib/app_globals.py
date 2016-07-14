@@ -273,6 +273,8 @@ class Globals(object):
             'lockcaches',
             'permacache_memcaches',
             'memoizecaches',
+            'srmembercaches',
+            'relcaches',
             'ratelimitcaches',
             'hardcache_memcaches',
             'cassandra_seeds',
@@ -770,6 +772,22 @@ class Globals(object):
             num_clients=num_mc_clients,
         )
 
+        # a pool just for srmember rels
+        srmembercaches = CMemcache(
+            "srmember",
+            self.srmembercaches,
+            min_compress_len=96,
+            num_clients=num_mc_clients,
+        )
+
+        # a pool just for rels
+        relcaches = CMemcache(
+            "rel",
+            self.relcaches,
+            min_compress_len=96,
+            num_clients=num_mc_clients,
+        )
+
         ratelimitcaches = CMemcache(
             "ratelimit",
             self.ratelimitcaches,
@@ -909,22 +927,22 @@ class Globals(object):
             self.srmembercache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
-                self.mcrouter,
+                srmembercaches,
             )
         else:
             self.srmembercache = MemcacheChain(
-                (localcache_cls(), self.mcrouter))
+                (localcache_cls(), srmembercaches))
         cache_chains.update(srmembercache=self.srmembercache)
 
         if stalecaches:
             self.relcache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
-                self.mcrouter,
+                relcaches,
             )
         else:
             self.relcache = MemcacheChain(
-                (localcache_cls(), self.mcrouter))
+                (localcache_cls(), relcaches))
         cache_chains.update(relcache=self.relcache)
 
         self.ratelimitcache = MemcacheChain(

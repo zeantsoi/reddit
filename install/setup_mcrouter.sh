@@ -82,9 +82,6 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
       "defaultsrs:": "local-pool",
       "featuredsrs:": "local-pool",
       "query:": "local-pool",
-      "rel:": "local-pool",
-      "srmember:": "local-pool",
-      "srmemberrel:": "local-pool",
     },
     "wildcard": {
       "type": "PoolRoute",
