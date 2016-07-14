@@ -1808,7 +1808,7 @@ def keywords_from_context(
         if hasattr(t, "keyword_targets"):
             keywords.update(['k.' + word 
                              for word in t.keyword_targets.split(',')])
-    
+
     # Add keywords for recently visited links
     for link in c.recent_clicks:
         if (hasattr(link, "keyword_targets")):
@@ -1831,8 +1831,19 @@ def keywords_from_context(
             keywords.update(['t.' + target 
                              for target in subreddit.audience_target.split(',')])        
 
-    # Add keywords for audience targeting (recently visited subreddits)
-    for subreddit in c.recent_subreddits:
+    # Add keywords for audience targeting.
+    #   use recently visited subreddits and subreddits
+    #   from clicked outbound links.
+    recent_subreddits = Subreddit._byID(
+        [link.sr_id for link in c.recent_clicks],
+        return_dict=False,
+        data=True,
+        ignore_missing=True,
+        stale=True,
+    )
+    recent_subreddits = set(recent_subreddits + c.recent_subreddits)
+
+    for subreddit in recent_subreddits:
         if subreddit.audience_target:
             keywords.update(['a.' + target 
                              for target in subreddit.audience_target.split(',')])
