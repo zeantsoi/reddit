@@ -1841,7 +1841,9 @@ def keywords_from_context(
         ignore_missing=True,
         stale=True,
     )
-    recent_subreddits = set(recent_subreddits + c.recent_subreddits)
+
+    if c.recent_subreddits:
+        recent_subreddits = set(recent_subreddits + c.recent_subreddits)
 
     for subreddit in recent_subreddits:
         if subreddit.audience_target:
