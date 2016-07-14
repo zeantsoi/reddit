@@ -104,6 +104,8 @@ def set_prefs(user, prefs):
             try:
                 sr = Subreddit._by_name(g.beta_sr)
                 if not sr.is_subscriber(user):
+                    # make sure initial subscriptions have been done first
+                    Subreddit.subscribe_defaults(user)
                     sr.add_subscriber(user)
             except NotFound:
                 g.log.warning("Could not find beta subreddit '%s'. It may "
