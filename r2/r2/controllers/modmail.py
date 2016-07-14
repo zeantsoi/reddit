@@ -223,6 +223,16 @@ class ModmailController(OAuth2OnlyController):
         })
 
     @require_oauth2_scope('identity')
+    def GET_modmail_enabled_srs(self):
+        modded_srs = c.user.moderated_subreddits('mail')
+        enabled_srs = [modded_sr.name for modded_sr in modded_srs
+                       if feature.is_enabled('new_modmail',
+                                             subreddit=modded_sr.name)]
+        return simplejson.dumps({
+            'subreddits': enabled_srs
+        })
+
+    @require_oauth2_scope('identity')
     @validate(
         conversation=VModConversation('conversation_id'),
         msg_body=VMarkdownLength('body'),
@@ -433,11 +443,6 @@ class ModmailController(OAuth2OnlyController):
         # transform sr to be a dict with a key being the sr fullname
         # and the value being the sr object itself
         modded_srs = c.user.moderated_subreddits('mail')
-        sr_by_fullname = {}
-        for sr in modded_srs:
-            if feature.is_enabled('new_modmail', subreddit=sr.name):
-                sr_by_fullname[sr._fullname] = sr
-
         sr_by_fullname = {
             sr._fullname: sr for sr in modded_srs
             if feature.is_enabled('new_modmail', subreddit=sr.name)

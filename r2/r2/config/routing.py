@@ -353,6 +353,8 @@ def make_map(config):
     mc('/api/mod/conversations/read', controller='modmail', action='read')
     mc('/api/mod/conversations/archive', controller='modmail',
        action='archive_status')
+    mc('/api/mod/conversations/subreddits', controller='modmail',
+       action='modmail_enabled_srs')
     mc('/api/mod/conversations/:conversation_id', controller='modmail',
        action='mod_messages')
     mc('/api/mod/conversations/:conversation_id/star', controller='modmail',
