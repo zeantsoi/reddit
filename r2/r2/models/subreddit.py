@@ -2788,14 +2788,6 @@ class SRMember(Relation(Subreddit, Account)):
     _cache = g.srmembercache
     _rel_cache = g.srmembercache
 
-    @classmethod
-    def _cache_prefix(cls):
-        return "srmember:"
-
-    @classmethod
-    def _rel_cache_prefix(cls):
-        return "srmemberrel:"
-
     def has_permission(self, perm):
         """Returns whether this member has explicitly been granted a permission.
         """
