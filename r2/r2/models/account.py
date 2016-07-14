@@ -72,6 +72,7 @@ class Account(Thing):
                                                'num_failed_payments',
                                                'num_gildings',
                                                'admin_takedown_strikes',
+                                               'admin_suspension_strikes',
                                               )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
@@ -155,6 +156,7 @@ class Account(Thing):
                      selfserve_min_bid_override_pennies=None,
                      pref_show_gold_expiration=False,
                      admin_takedown_strikes=0,
+                     admin_suspension_strikes=0,
                      pref_threaded_modmail=False,
                      in_timeout=False,
                      has_used_mobile_app=False,
@@ -734,6 +736,9 @@ class Account(Thing):
 
     def incr_admin_takedown_strikes(self, amt=1):
         return self._incr('admin_takedown_strikes', amt)
+
+    def incr_suspension_strikes(self, amt=1):
+        return self._incr('admin_suspension_strikes', amt)
 
     def get_style_override(self):
         """Return the subreddit selected for reddit theme.

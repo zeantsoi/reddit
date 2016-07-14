@@ -1456,6 +1456,50 @@ def in_chunks(it, size=25):
             yield chunk
 
 
+def timedelta_to_seconds(td):
+    return td.days*(24*60*60)+td.seconds+(float(td.microseconds)/1000000)
+
+
+def format_timedelta(td, sep='', count=2):
+    ret = []
+    s = timedelta_to_seconds(td)
+    if s < 0:
+        neg = True
+        s *= -1
+    else:
+        neg = False
+
+    if s >= (365*24*60*60):
+        years = int(s//(365*24*60*60))
+        ret.append('%dy' % years)
+        s -= years*(365*24*60*60)
+    if s >= (30*24*60*60):
+        months = int(s//(30*24*60*60))
+        ret.append('%dm' % months)
+        s -= months*(30*24*60*60)
+    if s >= (24*60*60):
+        days = int(s//(24*60*60))
+        ret.append('%dd' % days)
+        s -= days*(24*60*60)
+    if s >= 60*60:
+        hours = int(s//(60*60))
+        ret.append('%dh' % hours)
+        s -= hours*(60*60)
+    if s >= 60:
+        minutes = int(s//60)
+        ret.append('%dM' % minutes)
+        s -= minutes*60
+    if s >= 1:
+        seconds = int(s)
+        ret.append('%ds' % seconds)
+        s -= seconds
+
+    if not ret:
+        return '0s'
+
+    return ('-' if neg else '') + sep.join(ret[:count])
+
+
 def progress(it, verbosity=100, key=repr, estimate=None, persec=True):
     """An iterator that yields everything from `it', but prints progress
        information along the way, including time-estimates if
@@ -1474,38 +1518,6 @@ def progress(it, verbosity=100, key=repr, estimate=None, persec=True):
         except:
             pass
 
-    def timedelta_to_seconds(td):
-        return td.days * (24*60*60) + td.seconds + (float(td.microseconds) / 1000000)
-    def format_timedelta(td, sep=''):
-        ret = []
-        s = timedelta_to_seconds(td)
-        if s < 0:
-            neg = True
-            s *= -1
-        else:
-            neg = False
-
-        if s >= (24*60*60):
-            days = int(s//(24*60*60))
-            ret.append('%dd' % days)
-            s -= days*(24*60*60)
-        if s >= 60*60:
-            hours = int(s//(60*60))
-            ret.append('%dh' % hours)
-            s -= hours*(60*60)
-        if s >= 60:
-            minutes = int(s//60)
-            ret.append('%dm' % minutes)
-            s -= minutes*60
-        if s >= 1:
-            seconds = int(s)
-            ret.append('%ds' % seconds)
-            s -= seconds
-
-        if not ret:
-            return '0s'
-
-        return ('-' if neg else '') + sep.join(ret)
     def format_datetime(dt, show_date=False):
         if show_date:
             return dt.strftime('%Y-%m-%d %H:%M')

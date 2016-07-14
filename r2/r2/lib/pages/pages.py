@@ -143,6 +143,7 @@ from r2.lib.strings import (
 from r2.lib.utils import is_subdomain, title_to_url, UrlParser
 from r2.lib.utils import url_links_builder, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
+from r2.lib.utils import timedelta
 from r2.lib.template_helpers import (
     add_sr,
     comment_label,
@@ -158,7 +159,7 @@ from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date, is_seo_referrer
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage, tup, url_is_embeddable_image
-from r2.lib.utils import precise_format_timedelta
+from r2.lib.utils import format_timedelta, precise_format_timedelta
 from r2.lib.cache import make_key_id, MemcachedError
 
 from babel.numbers import format_currency
@@ -4157,7 +4158,7 @@ class WrappedUser(CachedTemplate):
             if tup[1] == 'F' and '(' in tup[3]:
                 author_title = tup[3]
 
-        flair = wrapped_flair(user, subreddit or c.site, force_show_flair)
+        flair = wrapped_flair(user, subreddit, force_show_flair)
         flair_enabled, flair_position, flair_text, flair_css_class = flair
         has_flair = bool(
             c.user.pref_show_flair and (flair_text or flair_css_class))
@@ -4195,7 +4196,22 @@ class WrappedUser(CachedTemplate):
         show_details_link = False
 
         if c.user_is_admin:
-            karma = ' (%d)' % user.link_karma
+            now = datetime.datetime.now(g.tz)
+
+            local_karma = []
+            if not isinstance(subreddit, FakeSubreddit):
+                local_karma = (user.karma('link', subreddit),
+                               user.karma('comment', subreddit))
+
+            karma = []
+            karma.append('%d+%d' % (user.link_karma, user.comment_karma))
+            if any(local_karma):
+                karma.append('[%d+%d]' % (local_karma[0], local_karma[1]))
+            karma.append('%s' % format_timedelta(now-user._date))
+            if user.admin_suspension_strikes:
+                karma.append("S%d" % user.admin_suspension_strikes)
+
+            karma = ' (%s)' % ' '.join(karma)
 
             if user.in_timeout:
                 if user.timeout_expiration:
