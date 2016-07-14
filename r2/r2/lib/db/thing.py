@@ -784,7 +784,7 @@ def Relation(type1, type2):
 
         _base_props = ('_thing1_id', '_thing2_id', '_name', '_date')
         _type_prefix = Relation._type_prefix
-        _rel_cache = g.relcache
+        _fast_cache = g.relcache
 
         @classmethod
         def get_things_from_db(cls, ids):
@@ -928,13 +928,13 @@ def Relation(type1, type2):
                      '[unsaved]' if not self._created else '\b'))
 
         @classmethod
-        def _rel_cache_prefix(cls):
+        def _fast_cache_prefix(cls):
             return "rel:"
 
         @classmethod
-        def _rel_cache_key_from_parts(cls, thing1_id, thing2_id, name):
+        def _fast_cache_key_from_parts(cls, thing1_id, thing2_id, name):
             key = "{prefix}{cls}_{t1}_{t2}_{name}".format(
-                prefix=cls._rel_cache_prefix(),
+                prefix=cls._fast_cache_prefix(),
                 cls=cls.__name__,
                 t1=str(thing1_id),
                 t2=str(thing2_id),
@@ -942,8 +942,8 @@ def Relation(type1, type2):
             )
             return key
 
-        def _rel_cache_key(self):
-            return self._rel_cache_key_from_parts(
+        def _fast_cache_key(self):
+            return self._fast_cache_key_from_parts(
                 self._thing1_id,
                 self._thing2_id,
                 self._name,
@@ -951,16 +951,17 @@ def Relation(type1, type2):
 
         def _commit(self):
             DataThing._commit(self)
-            self._rel_cache.set(self._rel_cache_key(), self._id)
+            self._fast_cache.set(self._fast_cache_key(), self._id)
 
         def _delete(self):
             tdb.del_rel(self._type_id, self._id)
 
+            #clear cache
             self._cache.delete(self._cache_key())
-            self._rel_cache.set(self._rel_cache_key(), None)
-
-            # temporarily set this property so the rest of this request
-            # knows it's deleted. save -> unsave, hide -> unhide
+            #update fast query cache
+            self._fast_cache.set(self._fast_cache_key(), None)
+            #temporarily set this property so the rest of this request
+            #know it's deleted. save -> unsave, hide -> unhide
             self._name = 'un' + self._name
 
         @classmethod
@@ -992,12 +993,12 @@ def Relation(type1, type2):
                         cls.c._name == names)
 
                 for rel in q:
-                    rel_cache_key = cls._rel_cache_key_from_parts(
+                    fast_cache_key = cls._fast_cache_key_from_parts(
                         rel._thing1_id,
                         rel._thing2_id,
                         str(rel._name),
                     )
-                    rel_ids[rel_cache_key] = rel._id
+                    rel_ids[fast_cache_key] = rel._id
 
                 for cache_key in uncached_keys:
                     if cache_key not in rel_ids:
@@ -1020,15 +1021,15 @@ def Relation(type1, type2):
             # create cache keys for all permutations and initialize lookup
             for t in rel_tuples:
                 thing1, thing2, name = t
-                rel_cache_key = cls._rel_cache_key_from_parts(
+                fast_cache_key = cls._fast_cache_key_from_parts(
                     thing1._id,
                     thing2._id,
                     name,
                 )
-                cache_key_lookup[rel_cache_key] = t
+                cache_key_lookup[fast_cache_key] = t
 
             # get the relation ids from the cache or query the db
-            res = sgm(cls._rel_cache, cache_key_lookup.keys(), lookup_rel_ids)
+            res = sgm(cls._fast_cache, cache_key_lookup.keys(), lookup_rel_ids)
 
             # get the relation objects
             rel_ids = {rel_id for rel_id in res.itervalues()
