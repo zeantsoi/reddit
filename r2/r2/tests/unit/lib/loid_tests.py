@@ -5,7 +5,8 @@ from pylons import app_globals as g
 
 from r2.tests import RedditTestCase
 from r2.lib import hooks
-from r2.lib.loid import LoId, LOID_COOKIE, LOID_CREATED_COOKIE
+from r2.lib.loid import LoId, LOID_COOKIE, LOID_CREATED_COOKIE, isodate
+from r2.lib.utils import to_epoch_milliseconds
 
 
 class LoidTests(RedditTestCase):
@@ -22,9 +23,9 @@ class LoidTests(RedditTestCase):
         loid = LoId.load(request, context, create=True)
         self.assertIsNotNone(loid.loid)
         self.assertIsNotNone(loid.created)
-        self.assertTrue(loid._new)
+        self.assertTrue(loid.new)
 
-        loid.save(context)
+        loid.save()
 
         context.cookies.add.assert_has_calls([
             call(
@@ -34,7 +35,7 @@ class LoidTests(RedditTestCase):
             ),
             call(
                 LOID_CREATED_COOKIE,
-                loid.created,
+                isodate(loid.created),
                 expires=ANY,
             )
         ])
@@ -45,7 +46,8 @@ class LoidTests(RedditTestCase):
                 payload={
                     'loid_new': True,
                     'loid': loid.loid,
-                    'loid_created': loid.created,
+                    'loid_created': to_epoch_milliseconds(loid.created),
+                    'loid_version': 0,
 
                     'user_id': context.user._id,
                     'user_name': context.user.name,
@@ -77,10 +79,9 @@ class LoidTests(RedditTestCase):
         request = MagicMock(name="request")
         request.cookies = {}
         loid = LoId.load(request, context, create=False)
-        self.assertIsNone(loid.loid)
-        self.assertIsNone(loid.created)
-        self.assertFalse(loid._new)
-        loid.save(context)
+        self.assertFalse(loid.new)
+        self.assertFalse(loid.serializable)
+        loid.save()
         self.assertFalse(bool(context.cookies.add.called))
         g.events.queue_production.assert_item_count(0)
 
@@ -90,8 +91,9 @@ class LoidTests(RedditTestCase):
         request.cookies = {LOID_COOKIE: "foo", LOID_CREATED_COOKIE: "bar"}
         loid = LoId.load(request, context, create=False)
         self.assertEqual(loid.loid, "foo")
-        self.assertEqual(loid.created, "bar")
-        self.assertFalse(loid._new)
-        loid.save(context)
+        self.assertNotEqual(loid.created, "bar")
+        self.assertFalse(loid.new)
+        self.assertTrue(loid.serializable)
+        loid.save()
         self.assertFalse(bool(context.cookies.add.called))
         g.events.queue_production.assert_item_count(0)
