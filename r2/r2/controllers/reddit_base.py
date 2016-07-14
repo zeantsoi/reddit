@@ -84,7 +84,6 @@ from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt, get_pageview_pixel_url
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
-    detect_mobile,
     SimpleSillyStub,
     UniqueIterator,
     extract_subdomain,
@@ -93,7 +92,6 @@ from r2.lib.utils import (
     is_throttled,
     tup,
     UrlParser,
-    parse_agent,
 )
 from r2.lib.validator import (
     build_arg_list,
@@ -1401,7 +1399,7 @@ class RedditController(OAuth2ResourceController):
             url = UrlParser(request.fullpath)
             if (c.render_style == 'html' and
                     not no_redirect and
-                    detect_mobile(request.user_agent) and
+                    request.parsed_agent.is_mobile_browser and
                     self.is_safe_mobile_web_route(url.path)):
 
                 compact = 'true'
@@ -1604,12 +1602,13 @@ class RedditController(OAuth2ResourceController):
                         request=request, context=c)
                     return self.intermediate_redirect("/quarantine", sr_path=False)
 
-            #check over 18
-            agent = parse_agent(request.user_agent)
-            if (c.site.over_18 and not c.over18 and
-                    request.path != "/over18" and
-                    c.render_style == 'html' and
-                    not agent['bot']):
+            # check over 18
+            if (
+                c.site.over_18 and not c.over18 and
+                request.path != "/over18" and
+                c.render_style == 'html' and
+                not request.parsed_agent.bot
+            ):
                 return self.intermediate_redirect("/over18", sr_path=False)
 
         #check whether to allow custom styles
