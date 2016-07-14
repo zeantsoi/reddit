@@ -137,27 +137,6 @@
                     title = mail_img_title, _sr_path = False,
                     _id = "modmail", _class=css_class, data=data_attrs)}
          ${separator("|")}
-
-         <%doc>
-          Below is a placeholder for the new modmail system. The icon will be higlighted
-          when the user has new modmail in the new modmail system.
-         </%doc>
-         <%
-            modmail_path = '/message/moderator'
-            if c.user.new_modmail_exists:
-              modmail_img_class = 'havemail'
-              modmail_img_title = 'new mod mail!'
-            else:
-              modmail_img_class = 'nohavemail'
-              modmail_img_title = 'no new mod mail'
-
-            css_class = "%s access-required" % modmail_img_class
-            data_attrs = {'event-action': 'pageview', 'event-detail': 'modmail'}
-         %>
-         ${plain_link(_("mod messages"), path=modmail_path,
-                    title = modmail_img_title, _sr_path = False,
-                    _id = "new_modmail", _class=css_class, data=data_attrs)}
-         ${separator("|")}
       %endif
     %endif
     ${thing.corner_buttons()}
