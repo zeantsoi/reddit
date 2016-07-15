@@ -122,9 +122,15 @@ class LoId(object):
         """
         stub = cls(request, context, serializable=False)
 
+        # for ineligible content/requests, set unserializable loid.
+        if not cls.is_eligible(request, context):
+            stub._trigger_event("ineligible_loid")
+            return stub
+
+        # attempt cookie loading
         loid = request.cookies.get(LOID_COOKIE)
         if loid:
-            # future-proof to v1 id tracking
+            # future-proof to v1 id tracking which is dot separated fields
             loid, _, _ = unquote(loid).partition(".")
             try:
                 created = ensure_unquoted(
@@ -140,9 +146,13 @@ class LoId(object):
                 version=0,
                 created=created,
             )
+        # no existing cookie, so make a new one if we are allowed to
         elif create:
             return cls._create(request, context)
+
+        # no cookie and can't make one, so send the unserializable stub
         else:
+            stub._trigger_event("stub_loid")
             return stub
 
     def save(self, **cookie_attrs):
@@ -177,3 +187,24 @@ class LoId(object):
             d = {"{}{}".format(prefix, k): v for k, v in d.iteritems()}
 
         return d
+
+    @classmethod
+    def is_eligible(cls, request, context):
+        # bots don't need loids
+        if request.parsed_agent.bot:
+            return False
+
+        # known mobile apps don't need an loid (they won't use them anyway)
+        if request.parsed_agent.app_name:
+            return False
+
+        # content pages should generate a cookie
+        if context.render_style in ("html", "mobile", "compact"):
+            return True
+
+        # XXX: unfortunately, mobile web uses /api/me.json which is
+        # content type json
+        if context.render_style == "json":
+            return True
+
+        return context.render_style.startswith("api-")

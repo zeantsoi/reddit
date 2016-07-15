@@ -540,10 +540,6 @@ def set_content_type():
             if request.GET.get("keep_extension"):
                 c.cookies['reddit_mobility'] = Cookie(ext, expires=NEVER)
 
-    # allow content and api calls to set an loid
-    if is_api() or c.render_style in ("html", "mobile", "compact"):
-        c.loid = LoId.load(request, c)
-
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these
     callback = request.GET.get("jsonp")
@@ -1000,6 +996,10 @@ class MinimalController(BaseController):
         # if an rss feed, this will also log the user in if a feed=
         # GET param is included
         set_content_type()
+
+        # this needs c.render_style set, which is initialized in
+        # set_content_type.
+        c.loid = LoId.load(request, c)
 
         c.request_timer.intermediate("minimal-pre")
         # True/False forces. None updates for most non-POST requests
