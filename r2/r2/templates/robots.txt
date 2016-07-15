@@ -36,6 +36,9 @@ Disallow: /my_shiny_metal_ass
 User-Agent: Gort
 Disallow: /earth
 
+User-agent: MJ12bot
+Disallow: /
+
 User-Agent: *
 Disallow: /*.json
 Disallow: /*.json-compact
