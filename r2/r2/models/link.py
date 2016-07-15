@@ -3141,22 +3141,41 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
         return res
 
     @classmethod
-    def get_unread_and_unemailed(cls, to_id):
-        inbox = Inbox._query(
-            Inbox.c._thing1_id == to_id,
-            Inbox.c.new == True,
-            Inbox.c.emailed == False,
-            data=True,
+    def get_unread_and_unemailed(cls, user):
+        from r2.lib.db import queries
+
+        message_ids = []
+        comment_ids = []
+        inbox_fullnames = queries.get_unread_inbox(user)
+        things = Thing._by_fullname(inbox_fullnames)
+
+        for fullname, value in things.iteritems():
+            if isinstance(value, Message):
+                message_ids.append(value._id)
+            elif isinstance(value, Comment):
+                comment_ids.append(value._id)
+
+        inbox_rel_message = cls.rel(Account, Message)
+        inbox_messages = inbox_rel_message._query(
+            inbox_rel_message.c._thing2_id == message_ids,
         )
+
+        inbox_rel_comment = cls.rel(Account, Comment)
+        inbox_comments = inbox_rel_comment._query(
+            inbox_rel_comment.c._thing2_id == comment_ids,
+        )
+
+        inbox = list(inbox_messages) + list(inbox_comments)
 
         for i in inbox:
             if not hasattr(i, 'new'):
                 i.new = True
                 i._commit()
 
-            if (not getattr(i._thing2, '_deleted', False) and
-                    not getattr(i._thing2, '_spam', False)):
-                yield i, i._thing2
+            if hasattr(i, 'emailed') and not i.emailed:
+                if (not getattr(i._thing2, '_deleted', False) and
+                        not getattr(i._thing2, '_spam', False)):
+                    yield i, i._thing2
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):
