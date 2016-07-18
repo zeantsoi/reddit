@@ -803,7 +803,10 @@ class Reddit(Templated):
                 mod_link_override = mod_self_override = False
 
                 if isinstance(c.site, FakeSubreddit):
-                    submit_buttons = set(("link", "self"))
+                    if feature.is_enabled('submit_image'):
+                        submit_buttons = set(("link", "self", "image"))
+                    else:
+                        submit_buttons = set(("link", "self"))
                 else:
                     # we want to show submit buttons for logged-out users too
                     # so we can't just use can_submit_link/text
@@ -818,7 +821,7 @@ class Reddit(Templated):
                                 c.site.can_submit_text(c.user)):
                             submit_buttons.add("self")
                             mod_self_override = True
-
+                buttons_list = []
                 if "link" in submit_buttons:
                     css_class = "submit submit-link"
                     if mod_link_override:
@@ -828,7 +831,8 @@ class Reddit(Templated):
                         'event-action': 'submit',
                         'event-detail': 'link',
                     }
-                    ps.append(SideBox(title=c.site.submit_link_label or
+                    buttons_list.append(SideBox(
+                                      title=c.site.submit_link_label or
                                             strings.submit_link_label,
                                       css_class=css_class,
                                       link="/submit",
@@ -844,13 +848,33 @@ class Reddit(Templated):
                         'event-action': 'submit',
                         'event-detail': 'self',
                     }
-                    ps.append(SideBox(title=c.site.submit_text_label or
+                    buttons_list.append(SideBox(
+                                      title=c.site.submit_text_label or
                                             strings.submit_text_label,
                                       css_class=css_class,
                                       link="/submit?selftext=true",
                                       sr_path=not fake_sub or is_multi,
                                       data_attrs=data_attrs,
                                       show_cover=True))
+                if "image" in submit_buttons:
+                    css_class = "submit submit-image"
+                    image_button = SideBox(
+                        title="Submit a new image",
+                        css_class=css_class,
+                        link="/submit?utm_term=submit_image",
+                        sr_path=False,
+                        show_cover=True,
+                    )
+                    submit_image_variant = feature.variant('submit_image')
+                    if submit_image_variant == 'image_button_first':
+                        buttons_list.insert(0, image_button)
+                    elif submit_image_variant == 'image_button_second':
+                        buttons_list.insert(1, image_button)
+                    elif submit_image_variant == 'image_button_third':
+                        buttons_list.append(image_button)
+
+                for button in buttons_list:
+                    ps.append(button)
 
         no_ads_yet = True
         show_adbox = promote.banners_enabled(site=c.site, user=c.user)
