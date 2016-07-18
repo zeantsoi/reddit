@@ -144,7 +144,7 @@
 
           verify that a user has a sr that is enrolled in the new modmail system
          </%doc>
-         %if c.user_is_logged_in and c.user.new_modmail_exists is not None:
+         %if c.user_is_loggedin and c.user.new_modmail_exists is not None:
            <%
               modmail_path = '/message/moderator'
               if c.user.new_modmail_exists:
