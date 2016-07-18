@@ -12,6 +12,9 @@ function reportContentTmpl(reportReason, composeURL) {
 }
 
 
+reportWithEmailMessage = "If you do not have a Reddit account please contact us on " +
+                         link({url:"mailto:contact@reddit.com", text: "contact@reddit.com"}) +
+                         " with links relevant to your issue."
 reportCompanionMsg = "Remember we deal with lots of users. Please be as concise as possible and " +
                      "add any relevant links. This will enable us to deal with your report more efficiently."
 
@@ -73,7 +76,7 @@ var accountIssueForm = {
     },
   },
   {
-    text: "banned account",
+    text: "suspended account",
     action: {
       type: "show-details",
       content: [
@@ -99,6 +102,7 @@ var breakRulesForm = {
       content: [
         reportContentTmpl("content you feel breaks our rules on personal and identifiable information",
                           getComposeURL("Personal and confidential information")),
+        reportWithEmailMessage,
         reportCompanionMsg,],
     },
   },
@@ -109,6 +113,7 @@ var breakRulesForm = {
       content: [
         reportContentTmpl("content you feel threatens, harasses or incites violence",
                           getComposeURL("Threatening, harassing, or inciting violence")),
+        reportWithEmailMessage,
         reportCompanionMsg,],
     },
   },
@@ -118,7 +123,11 @@ var breakRulesForm = {
       type: "show-details",
       content: [
         reportContentTmpl("a user for ban evasion", getComposeURL("Ban Evasion")),
-        reportCompanionMsg,],
+        reportWithEmailMessage,
+        reportCompanionMsg,
+        "** Please note: we can only accept reports of ban evasion from moderators of the " +
+        "subreddit in which the evasion is taking place. If you are not a moderator and you " +
+        "suspect ban evasion, please report it to the moderator of that subreddit.",],
     },
   }, 
   {
@@ -127,6 +136,7 @@ var breakRulesForm = {
       type: "show-details",
       content: [
         reportContentTmpl("a user for vote manipulation", getComposeURL("Vote Manipulation")),
+        reportWithEmailMessage,
         reportCompanionMsg,],
     },
   }, ],
@@ -154,7 +164,7 @@ var generalHelpForm = {
     },
   },
   {
-    text: "content breaks reddit\'s rules",
+    text: "content breaks Reddit\'s rules",
     action: {
       type: "show-form",
       content: breakRulesForm,
@@ -172,7 +182,7 @@ var generalHelpForm = {
 var contentSettingsHelp = {
 title: "how can I hide content?",
  buttons: [{
-   text: "mute/hide",
+   text: "hide",
    action: {
      type: "show-details",
      content: [
@@ -184,8 +194,9 @@ title: "how can I hide content?",
    text: "block",
    action: {
      type: "show-details",
-     content: ["You can block any user who has contacted you. You do so by clicking on the block " +
-               "button beneath any PM or Comment/Post reply in your inbox.",
+     content: ["You can block any user who has contacted you. You do so by clicking on the block button beneath " +
+               "any PM or Comment/Post reply in your " +
+               link({text: "inbox", url: getRedditURL("/message/inbox/")}) + ".",
                "You can delete any PM in your inbox by clicking on the delete button that appears below " +
                "any PM you have received. ",],
    },
@@ -196,13 +207,6 @@ title: "how can I hide content?",
 var contactAdminsForm = {
   title: defaultTitle,
   buttons: [{
-    text: "annoying content",
-    action: {
-      type: "show-form",
-      content: contentSettingsHelp,
-    },
-  },
-  {
     text: "content I don\'t want to see",
     action: {
       type: "show-form",
