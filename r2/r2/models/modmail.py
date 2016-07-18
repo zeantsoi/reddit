@@ -615,6 +615,12 @@ def update_sr_mods_modmail_icon(sr):
 
 
 def set_modmail_icon(user, icon_status):
+    """Account.new_modmail_exists has the following states
+
+    None - no new modmail srs
+    False - no unreads but have a sr enrolled in the new modmail
+    True - unreads exist and a sr is enrolled in the new modmail
+    """
     if user.new_modmail_exists != icon_status:
         user.new_modmail_exists = icon_status
         user._commit()

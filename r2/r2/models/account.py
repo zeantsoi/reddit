@@ -141,7 +141,7 @@ class Account(Thing):
                      otp_secret=None,
                      state=0,
                      modmsgtime=None,
-                     new_modmail_exists=False,
+                     new_modmail_exists=None,
                      inbox_count=0,
                      banned_profile_visible=False,
                      pref_use_global_defaults=False,
