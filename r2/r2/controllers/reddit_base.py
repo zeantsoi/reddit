@@ -1392,6 +1392,9 @@ class RedditController(OAuth2ResourceController):
         """
 
         # abort redirect to mweb as soon as possible
+        # NOTE: Since the mweb server respects this cookie (redirecting
+        # traffic to desktop), NOT respecting this cookie on desktop will
+        # result in a redirect loop for mweb users.
         no_redirect = request.cookies.get('mweb-no-redirect')
 
         with g.stats.get_timer('mweb-redirect'):
