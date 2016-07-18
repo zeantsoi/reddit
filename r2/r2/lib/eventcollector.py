@@ -237,6 +237,8 @@ class EventQueue(object):
         event.add("post_id", post._id)
         event.add("post_fullname", post._fullname)
         event.add("post_created_ts", _datetime_to_millis(post._date))
+        if post.promoted:
+            event.add("post_is_promoted", bool(post.promoted))
 
         if new_comment.parent_id:
             parent = Comment._byID(new_comment.parent_id)
