@@ -899,20 +899,6 @@ class Link(Thing, Printable):
                 else:
                     item.affiliatize_link = False
 
-                # check media preview pref, and only change behavior for
-                # listing pages (not comment pages). This will expand images
-                # inline for thumbnail clicks, and redirect to comments pages
-                # for listing urls
-                expando_redirect_enabled = (
-                    feature.is_enabled('expando_redirect') and
-                    feature.variant('expando_redirect') == 'test_group')
-
-                combo_variant = feature.variant('listing_preview_combo')
-                combo_experiment_enabled = (
-                    feature.is_enabled('listing_preview_combo') and
-                    (combo_variant == 'preview_redirect_only' or
-                        combo_variant == 'expandos_previews_listings'))
-
                 # enable expando for media previews
                 image_expando_new_tab = (
                     feature.is_enabled("expando_new_tab") and
@@ -925,16 +911,7 @@ class Link(Thing, Printable):
                     item.affiliatize_link = False
                     item.href_url = 'javascript:void(0)'
 
-                if ((expando_redirect_enabled or
-                        combo_experiment_enabled) and
-                        meets_media_experiment_requirements):
-                    item.href_url = item.permalink
-                    item.thumbnail_url_experiment = 'javascript:void(0)'
-                # If an image upload, link to the image only if on the comments
-                # page, else link to the comments page permalink.
-                # If the subreddit or user has disabled previews, link to the
-                # image.
-                elif (is_subdomain(item.domain, g.image_hosting_domain) and
+                if (is_subdomain(item.domain, g.image_hosting_domain) and
                         show_media_preview and
                         not image_expando_new_tab and
                         request.route_dict['action_name'] != 'comments'
