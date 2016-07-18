@@ -10,6 +10,18 @@ r.analytics = {
       }, this)
     );
 
+    // Fires on comment page
+    $(document).delegate(
+      '.sitetable .promotedlink.promoted',
+      'onshow',
+      _.bind(function(ev) {
+        var onCommentsPage = $('body').hasClass('comments-page');
+        if (onCommentsPage){
+          this.fireRetargetingPixel(ev.target);
+        }
+      }, this)
+    );
+
     $('.promotedlink.promoted:visible').trigger('onshow');
 
     // dont track sponsor's activity
@@ -339,6 +351,20 @@ r.analytics = {
     var pixel = new Image();
     pixel.onload = pixel.onerror = callback;
     pixel.src = url + '&' + querystring.join('&');
+  },
+
+  /**
+  Fires a retargeting pixel to Adzerk so we could retarget a user
+  **/
+  fireRetargetingPixel: function(el) {
+    var $el = $(el);
+    var retargetPixel = new Image();
+    var retargetPixelUrl = $el.data('adserverRetargetPixel');
+    var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
+
+    if (retargetPixelUrl && !adBlockIsEnabled) {
+      retargetPixel.src = retargetPixelUrl;
+    }
   },
 
   // If we passed along referring tags to this page, after it's loaded, remove them from the URL so that 

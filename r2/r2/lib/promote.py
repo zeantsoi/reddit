@@ -359,7 +359,14 @@ def add_trackers(items, sr, adserver_click_urls=None):
             "r": random.randint(0, 2147483647), # cachebuster
         }
         item.imp_pixel = update_query(g.adtracker_url, pixel_query)
-        
+
+        retarget_pixel_url = "https://%s/udb/%s/rt/%s/%s/i.gif"
+        network_id = g.az_selfserve_network_id
+        advertiser_id = getattr(item.author, "external_advertiser_id", "")
+
+        if network_id and advertiser_id:
+            item.adserver_retarget_pixel = retarget_pixel_url %\
+                (g.adzerk_engine_domain, network_id, advertiser_id, item._id)
         if item.third_party_tracking:
             item.third_party_tracking_url = expand_macros(item.third_party_tracking)
         if item.third_party_tracking_2:

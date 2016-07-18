@@ -228,6 +228,7 @@
 
       this.showExpandoContent();
       this.fireExpandEvent();
+      r.analytics.fireRetargetingPixel(this.$el);
     },
 
     showExpandoContent: function() {

@@ -138,6 +138,10 @@ ${self.RenderPrintable()}
       data-adserver-imp-pixel="${what.adserver_imp_pixel}"
     % endif
 
+    % if hasattr(what, 'adserver_retarget_pixel'):
+      data-adserver-retarget-pixel="${what.adserver_retarget_pixel}"
+    % endif
+
     % if hasattr(what, 'adserver_click_url'):
       data-adserver-click-url="${what.adserver_click_url}"
     % endif
