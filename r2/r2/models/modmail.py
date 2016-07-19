@@ -31,11 +31,18 @@ from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy.sql.expression import label, literal
-from sqlalchemy.types import Boolean, DateTime, Integer, String, Text
+from sqlalchemy.types import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Integer,
+    String,
+    Text,
+)
 
 from r2.lib.db.thing import NotFound
 from r2.lib.filters import safemarkdown
-from r2.lib.utils import Enum, tup
+from r2.lib.utils import Enum, tup, to36
 from r2.models.account import Account
 from r2.models.subreddit import Subreddit
 
@@ -68,14 +75,16 @@ class ModmailConversation(Base):
         modmail). If the user stops having overall access, they will also lose
         access to all internal conversations, regardless of whether they
         participated in them or not.
-    star - this field will be true if a conversation has been 'starred' and
-        false if the conversation is not 'starred'
+    is_highlighted - this field will be true if a conversation has been
+        'highlighted' and false if the conversation is not 'highlighted'
+    legacy_first_message_id - the ID for the first Message object in this
+        conversation in the legacy messaging system (if any).
 
     """
 
     __tablename__ = "modmail_conversations"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     owner_fullname = Column(String(100), nullable=False, index=True)
     subject = Column(String(100), nullable=False)
     state = Column(Integer, index=True, default=0)
@@ -91,14 +100,15 @@ class ModmailConversation(Base):
         default=datetime.min)
     is_internal = Column(Boolean, nullable=False, default=False)
     is_auto = Column(Boolean, nullable=False, default=False)
-    star = Column(Boolean, nullable=False, default=False)
+    is_highlighted = Column(Boolean, nullable=False, default=False)
+    legacy_first_message_id = Column(BigInteger, index=True)
 
     messages = relationship(
-        "ModmailMessage", backref="conversation",
+        "ModmailMessage",
         order_by="ModmailMessage.date.desc()", lazy="joined")
 
     mod_actions = relationship(
-            "ModmailConversationAction", backref="conversation",
+            "ModmailConversationAction",
             order_by="ModmailConversationAction.date.desc()", lazy="joined")
 
     # DO NOT REARRANGE THE ITEMS IN THIS ENUM - only append new items at bottom
@@ -132,10 +142,14 @@ class ModmailConversation(Base):
 
             ordered_id_array.append({
                 'key': key,
-                'id': element.id
+                'id': to36(element.id)
             })
 
         return ordered_id_array
+
+    @property
+    def id36(self):
+        return to36(self.id)
 
     @hybrid_property
     def last_updated(self):
@@ -151,9 +165,11 @@ class ModmailConversation(Base):
         return func.greatest(cls.last_mod_update, cls.last_user_update)
 
     def __init__(self, owner, author, subject,
-                 body, is_author_hidden=False, to=None):
+                 body, is_author_hidden=False, to=None,
+                 legacy_first_message_id=None):
         self.owner_fullname = owner._fullname
         self.subject = subject
+        self.legacy_first_message_id = legacy_first_message_id
         self.num_messages = 0
         self.is_internal = False
         self.is_auto = False
@@ -176,18 +192,13 @@ class ModmailConversation(Base):
                 raise MustBeAModError(
                         'Must be a mod to hide the message author.')
 
-        # TODO: I think it should be possible to do this in a single commit
-        # by using a deferred foreign key in the messages table?
         Session.add(self)
-        Session.commit()
-
-        self.add_message(author, body,
-                         is_author_hidden=is_author_hidden)
-
-        update_sr_mods_modmail_icon(owner)
 
         if participant_id:
             self.add_participant(participant_id)
+
+        self.add_message(author, body,
+                         is_author_hidden=is_author_hidden)
 
     @classmethod
     def unread_convo_count(cls, user):
@@ -199,7 +210,8 @@ class ModmailConversation(Base):
             'new': <count>,
             'inprogress': <count>,
             'mod': <count>,
-            'notification': <count>,
+            'notifications': <count>,
+            'highlighted': <count>,
             'archived': <count>
         }
         """
@@ -233,6 +245,9 @@ class ModmailConversation(Base):
                            label('auto', func.count(case(
                                [(cls.is_auto, cls.id)],
                                else_=literal_column('NULL')))),
+                           label('highlighted', func.count(case(
+                               [(cls.is_highlighted, cls.id)],
+                               else_=literal_column('NULL')))),
                            label('total', func.count(cls.id)),)
                         .select_from(subquery)
                         .group_by(cls.state))
@@ -242,19 +257,22 @@ class ModmailConversation(Base):
         # initialize result dict so all keys are present
         result = {state: 0 for state in ModmailConversation.STATE.name}
         result.update({
-            'auto': 0,
-            'internal': 0,
+            'notifications': 0,
+            'mod': 0,
+            'highlighted': 0
         })
 
         if not convo_counts:
             return result
 
         for convo_count in convo_counts:
-            state, internal_count, auto_count, total_count = convo_count
+            (state, internal_count, auto_count,
+             highlighted_count, total_count) = convo_count
             num_convos = total_count - internal_count - auto_count
 
-            result['internal'] += internal_count
-            result['auto'] += auto_count
+            result['mod'] += internal_count
+            result['notifications'] += auto_count
+            result['highlighted'] += highlighted_count
 
             if state in ModmailConversation.STATE:
                 result[ModmailConversation.STATE.name[state]] += num_convos
@@ -276,16 +294,44 @@ class ModmailConversation(Base):
                 ModmailConversationUnreadState,
                 and_(ModmailConversationUnreadState.account_id ==
                      current_user._id,
-                     ModmailConversationUnreadState.conversation_id.in_(ids))
+                     ModmailConversationUnreadState.conversation_id.in_(ids),
+                     ModmailConversationUnreadState.active.is_(True))
             )
 
         if len(ids) == 1:
             try:
-                return query.one()[0]
+                if not current_user:
+                    return query.one()
+
+                conversation, last_unread = query.one()
+                conversation.last_unread = last_unread
+                return conversation
             except NoResultFound:
                 raise NotFound
 
-        return query.all()
+        results = []
+        for row in query.all():
+            conversation = row[0]
+            conversation.last_unread = row[1]
+            results.append(conversation)
+
+        return results
+
+    @classmethod
+    def _by_legacy_message(cls, legacy_message):
+        """Return conversation associated with a legacy message."""
+
+        if legacy_message.first_message:
+            legacy_id = legacy_message.first_message
+        else:
+            legacy_id = legacy_message._id
+
+        query = Session.query(cls).filter_by(legacy_first_message_id=legacy_id)
+
+        try:
+            return query.one()
+        except NoResultFound:
+            raise NotFound
 
     @classmethod
     def get_mod_conversations(cls, owners, viewer=None, limit=None, after=None,
@@ -318,9 +364,12 @@ class ModmailConversation(Base):
         # by automoderator
         if state == 'mod':
             query = query.filter(cls.is_internal.is_(True))
-        elif state == 'notification':
+        elif state == 'notifications':
             query = query.filter(cls.is_auto.is_(True),
                                  cls.state == cls.STATE['new'])
+        elif state == 'highlighted':
+            query = query.filter(cls.is_highlighted.is_(True),
+                                 cls.state != cls.STATE['archived'])
         elif state != 'all':
             query = (query.filter_by(state=cls.STATE[state])
                           .filter(cls.is_internal.is_(False)))
@@ -343,7 +392,8 @@ class ModmailConversation(Base):
         query = query.outerjoin(
             ModmailConversationUnreadState,
             and_(ModmailConversationUnreadState.account_id == viewer._id,
-                 ModmailConversationUnreadState.conversation_id == cls.id)
+                 ModmailConversationUnreadState.conversation_id == cls.id,
+                 ModmailConversationUnreadState.active.is_(True))
         )
 
         if after:
@@ -380,12 +430,8 @@ class ModmailConversation(Base):
         return results
 
     def add_participant(self, participant_id):
-        participant = ModmailConversationParticipant(self.id, participant_id)
-        try:
-            Session.add(participant)
-            Session.commit()
-        except:
-            Session.rollback()
+        participant = ModmailConversationParticipant(self, participant_id)
+        Session.add(participant)
 
     def add_message(self, author, body,
                     is_author_hidden=False,
@@ -415,15 +461,21 @@ class ModmailConversation(Base):
         else:
             self.last_user_update = message.date
 
-        Session.commit()
+        try:
+            Session.commit()
+        except:
+            Session.rollback()
+            raise
 
         update_sr_mods_modmail_icon(sr)
 
         # create unread records for all except the author of
         # the newly created message
-        self._create_unread_helper(
+        ModmailConversationUnreadState.create_unreads(
+            self.id,
             list((set(sr.moderators) | set(self.author_ids)) -
-                 set([author._id])))
+                 set([author._id]))
+        )
 
         return message
 
@@ -439,8 +491,6 @@ class ModmailConversation(Base):
             Session.rollback()
             raise
 
-        Session.commit()
-
     def set_state(self, state):
         """Set the state of this conversation."""
         try:
@@ -451,48 +501,27 @@ class ModmailConversation(Base):
 
         Session.commit()
 
+    def set_legacy_first_message_id(self, message_id):
+        """Set the legacy_first_message_id for this conversation."""
+        self.legacy_first_message_id = message_id
+        Session.commit()
+
     def mark_read(self, user):
         """Mark this conversation read for a user."""
         ModmailConversationUnreadState.mark_read(user, [self.id])
 
     def mark_unread(self, user):
         """Mark this conversation unread for a user."""
-        self._create_unread_helper([user._id])
+        ModmailConversationUnreadState.create_unreads(self.id, [user._id])
 
-    def _create_unread_helper(self, user_ids):
-        if not user_ids:
-            return
-
-        query = (
-            Session.query(ModmailConversationUnreadState.account_id)
-                   .filter(
-                       ModmailConversationUnreadState.account_id.in_(user_ids),
-                       (ModmailConversationUnreadState.conversation_id ==
-                        self.id))
-        )
-
-        user_read_states = set([row[0] for row in query])
-        user_ids = set(user_ids) - user_read_states
-
-        for user_id in user_ids:
-            mark = ModmailConversationUnreadState(self.id, user_id)
-            Session.add(mark)
-
-        try:
-            Session.commit()
-        except IntegrityError:
-            Session.rollback()
-
-    def add_star(self):
-        """Add a star to this conversation."""
-        self.star = True
-        # TODO: Add a system message about the event here?
+    def add_highlight(self):
+        """Add a highlight to this conversation."""
+        self.is_highlighted = True
         Session.commit()
 
-    def remove_star(self):
-        """Remove the star from this conversation."""
-        self.star = False
-        # TODO: Add a system message about the event here?
+    def remove_highlight(self):
+        """Remove the highlight from this conversation."""
+        self.is_highlighted = False
         Session.commit()
 
     @classmethod
@@ -556,8 +585,8 @@ class ModmailConversation(Base):
                 'type': entity._type_name,
                 'displayName': entity.name
             },
-            'isStarred': self.star,
-            'id': self.id,
+            'isHighlighted': self.is_highlighted,
+            'id': to36(self.id),
             'subject': self.subject,
             'authors': serializable_authors,
         }
@@ -588,7 +617,7 @@ class ModmailConversation(Base):
             })
         else:
             result_dict.update({
-                'objIds': [{'key': 'messages', 'id': self.messages[0].id}]
+                'objIds': [{'key': 'messages', 'id': to36(self.messages[0].id)}]
             })
 
         return result_dict
@@ -675,11 +704,15 @@ class ModmailMessage(Base):
 
     __tablename__ = "modmail_messages"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     conversation_id = Column(
-        Integer,
-        ForeignKey("modmail_conversations.id"),
-        nullable=False,
+        BigInteger,
+        ForeignKey(
+            "modmail_conversations.id",
+            deferrable=True,
+            use_alter=True,
+            name='fk_conversation_id',
+        ),
         index=True,
     )
     date = Column(DateTime(timezone=True), nullable=False)
@@ -688,19 +721,29 @@ class ModmailMessage(Base):
     body = Column(Text, nullable=False)
     is_internal = Column(Boolean, nullable=False, default=False)
 
+    conversation = relationship(
+        ModmailConversation,
+        primaryjoin=(conversation_id == ModmailConversation.id),
+        post_update=True
+    )
+
     def __init__(self, conversation, author, body,
                  is_author_hidden=False, is_internal=False):
-        self.conversation_id = conversation.id
+        self.conversation = conversation
         self.date = datetime.now(g.tz)
         self.author_id = author._id
         self.is_author_hidden = is_author_hidden
         self.body = body
         self.is_internal = is_internal
 
+    @property
+    def id36(self):
+        return to36(self.id)
+
     def to_serializable(self, sr, author, current_user=None):
 
         return {
-            'id': self.id,
+            'id': to36(self.id),
             'date': self.date.isoformat(),
             'author': to_serializable_author(author, sr, current_user,
                                              self.is_author_hidden),
@@ -729,8 +772,9 @@ class ModmailConversationUnreadState(Base):
     __tablename__ = "modmail_conversation_unread_state"
 
     conversation_id = Column(
-        Integer, ForeignKey("modmail_conversations.id"), primary_key=True)
+        BigInteger, ForeignKey("modmail_conversations.id"), primary_key=True)
     account_id = Column(Integer, primary_key=True, index=True)
+    active = Column(Boolean, index=True, default=True)
     date = Column(DateTime(timezone=True), nullable=False)
 
     def __init__(self, conversation_id, account_id):
@@ -740,11 +784,13 @@ class ModmailConversationUnreadState(Base):
 
     @classmethod
     def mark_read(cls, user, ids):
-        # Let the user delete as many of their own ids as they want
+        # Let the user update as many of their own ids as they want
+        # set active to False for convos that have been read
         (Session.query(cls)
                 .filter_by(account_id=user._id)
                 .filter(cls.conversation_id.in_(ids))
-                .delete(synchronize_session='fetch'))
+                .update({'active': False}, synchronize_session=False))
+
         Session.commit()
 
         set_modmail_icon(user, bool(cls.unreads_exist(user)))
@@ -782,7 +828,8 @@ class ModmailConversationUnreadState(Base):
         q = (Session.query(
                         cls.account_id.label('account_id'),
                         exists().where(cls.account_id.in_(user_ids)))
-                    .filter(cls.account_id.in_(user_ids))
+                    .filter(cls.account_id.in_(user_ids),
+                            cls.active.is_(True))
                     .group_by(cls.account_id))
 
         results = dict(q.all())
@@ -796,10 +843,69 @@ class ModmailConversationUnreadState(Base):
         that exist or not"""
 
         q = (Session.query(cls)
-                    .filter_by(account_id=user._id))
+                    .filter_by(account_id=user._id, active=True))
 
         return (Session.query(literal(True)).filter(q.exists()).scalar()
                 is not None)
+
+    @classmethod
+    def create_unreads(cls, conversation_id, user_ids):
+        """This method will create unread records for the current
+        conversation, for the list of user_ids that are passed.
+
+        The method will first look for any 'inactive' unread states
+        to convert them to 'active'. After that all currently 'active'
+        unread records are queried for and the union of ids of the users
+        with previously 'inactive' unread records and those with active
+        unread records.
+
+        The difference is then taken from the passed user_ids and new
+        unread records are created for users who did not have previously
+        created unread records.
+        """
+
+        if not user_ids:
+            return
+
+        inactive_unreads_query = (
+            Session.query(cls)
+                   .filter(
+                       cls.account_id.in_(user_ids),
+                       cls.conversation_id == conversation_id,
+                       cls.active.is_(False))
+        )
+
+        inactive_unreads_query.update(
+            {'active': True, 'date': datetime.now(g.tz)},
+            synchronize_session=False
+        )
+
+        active_unreads_query = (
+            Session.query(cls.account_id)
+                   .filter(
+                       cls.account_id.in_(user_ids),
+                       cls.conversation_id == conversation_id,
+                       cls.active.is_(True))
+        )
+
+        active_user_read_states = set([row[0] for row in active_unreads_query])
+        inactive_user_read_states = set([row['id']
+                                        for row in inactive_unreads_query])
+
+        read_states_already_exist = (
+            active_user_read_states | inactive_user_read_states
+        )
+
+        create_read_state_user_ids = set(user_ids) - read_states_already_exist
+
+        for user_id in create_read_state_user_ids:
+            mark = cls(conversation_id, user_id)
+            Session.add(mark)
+
+        try:
+            Session.commit()
+        except IntegrityError:
+            Session.rollback()
 
 
 class ModmailConversationParticipant(Base):
@@ -811,13 +917,36 @@ class ModmailConversationParticipant(Base):
 
     __tablename__ = 'modmail_conversation_participants'
 
+    id = Column(BigInteger, primary_key=True)
     conversation_id = Column(
-        Integer, ForeignKey(ModmailConversation.id), primary_key=True)
-    account_id = Column(Integer, primary_key=True, index=True)
+        BigInteger,
+        ForeignKey(
+            ModmailConversation.id,
+            deferrable=True,
+            use_alter=True,
+            name='fk_conversation_id',
+        ),
+        index=True
+    )
+    account_id = Column(Integer, index=True)
+    owner_fullname = Column(String(100), nullable=False, index=True)
+    date = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True
+    )
 
-    def __init__(self, conversation_id, account_id):
-        self.conversation_id = conversation_id
+    conversation = relationship(
+        ModmailConversation,
+        primaryjoin=(conversation_id == ModmailConversation.id),
+        post_update=True
+    )
+
+    def __init__(self, conversation, account_id):
+        self.conversation = conversation
         self.account_id = account_id
+        self.owner_fullname = conversation.owner_fullname
+        self.date = datetime.now(g.tz)
 
     @classmethod
     def get_conversation_ids(cls, account_id):
@@ -838,7 +967,7 @@ class ModmailConversationAction(Base):
 
     id = Column(Integer, primary_key=True)
     conversation_id = Column(
-            Integer, ForeignKey(ModmailConversation.id),
+            BigInteger, ForeignKey(ModmailConversation.id),
             nullable=False, index=True)
     account_id = Column(Integer, index=True)
     action_type_id = Column(Integer, index=True)
@@ -846,8 +975,8 @@ class ModmailConversationAction(Base):
 
     # DO NOT REARRANGE ORDERING, APPEND NEW TYPES TO THE END
     ACTION_TYPES = Enum(
-        'marked_important',
-        'unmarked_important',
+        'highlighted',
+        'unhighlighted',
         'archived',
         'unarchived',
         'reported_to_admins',
@@ -866,6 +995,10 @@ class ModmailConversationAction(Base):
             self.action_type_id = self.ACTION_TYPES[action_type_name]
         except:
             raise ValueError('Incorrect action_type_name.')
+
+    @property
+    def id36(self):
+        return to36(self.id)
 
     @classmethod
     def add_actions(cls, conversations, account, action_type_name):
@@ -892,6 +1025,7 @@ class ModmailConversationAction(Base):
             author_id = None
 
         return {
+            'id': to36(self.id),
             'author': {
                 'id': author_id,
                 'name': name,

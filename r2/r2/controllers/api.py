@@ -430,14 +430,39 @@ class ApiController(RedditController):
 
             # Don't allow mods in timeout to send a message
             VNotInTimeout().run(target=to, subreddit=from_sr)
+
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip,
                                         sr=from_sr, from_sr=True)
+
+            # if it's from a subreddit with new modmail, create a conversation
+            if feature.is_enabled('new_modmail', subreddit=from_sr.name):
+                ModmailConversation(
+                    from_sr,
+                    c.user,
+                    subject,
+                    body,
+                    to=to,
+                    is_author_hidden=True,
+                    legacy_first_message_id=m._id,
+                )
         else:
             # Only let users in timeout message the admins
             if (to and not (isinstance(to, Subreddit) and
                     '/r/%s' % to.name == g.admin_message_acct)):
                 VNotInTimeout().run(target=to)
+
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
+
+            # if it's to a subreddit with new modmail, create a conversation
+            if (isinstance(to, Subreddit) and
+                    feature.is_enabled('new_modmail', subreddit=to.name)):
+                ModmailConversation(
+                    to,
+                    c.user,
+                    subject,
+                    body,
+                    legacy_first_message_id=m._id,
+                )
 
         form.set_text(".status", _("your message has been delivered"))
         form.set_inputs(to = "", subject = "", text = "", captcha="")
@@ -2342,6 +2367,18 @@ class ApiController(RedditController):
 
             item, inbox_rel = Message._new(c.user, to, subject, comment,
                                            request.ip, parent=parent)
+
+            # if this is a reply to modmail in a subreddit that has the new
+            # modmail system, look up the conversation and add a message to it
+            if (sr_name and
+                    feature.is_enabled('new_modmail', subreddit=sr_name)):
+                try:
+                    conv = ModmailConversation._by_legacy_message(item)
+                except NotFound:
+                    conv = None
+
+                if conv:
+                    conv.add_message(c.user, comment)
         else:
             # Don't let users in timeout comment
             VNotInTimeout().run(action_name='comment', target=parent)

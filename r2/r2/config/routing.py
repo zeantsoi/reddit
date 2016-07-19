@@ -356,8 +356,8 @@ def make_map(config):
        action='modmail_enabled_srs')
     mc('/api/mod/conversations/:conversation_id', controller='modmail',
        action='mod_messages')
-    mc('/api/mod/conversations/:conversation_id/star', controller='modmail',
-       action='star')
+    mc('/api/mod/conversations/:conversation_id/highlight',
+       controller='modmail', action='highlight')
     mc('/api/mod/conversations/:conversation_id/archive', controller='modmail',
        action='archive')
     mc('/api/mod/conversations/:conversation_id/unarchive',

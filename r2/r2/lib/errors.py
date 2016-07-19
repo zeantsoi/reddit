@@ -198,6 +198,7 @@ error_list = dict((
         ('POST_NOT_ACCESSIBLE', _("Cannot access this post.")),
         ('NO_CONVERSATION_ID', _("No conversation id passed.")),
         ('CONVERSATION_NOT_FOUND', _("No conversation found.")),
+        ('INVALID_CONVERSATION_ID', _("Invalid conversation id.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

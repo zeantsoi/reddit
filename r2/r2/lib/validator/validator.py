@@ -962,11 +962,13 @@ class VModConversation(Validator):
 
         try:
             return ModmailConversation._byID(
-                    int(param),
+                    int(param, base=36),
                     current_user=c.user,
             )
         except NotFound:
             return self.set_error(errors.CONVERSATION_NOT_FOUND, code=404)
+        except ValueError:
+            return self.set_error(errors.INVALID_CONVERSATION_ID, code=422)
         except:
             return self.set_error('Unknown Error', code=500)
 
@@ -1980,6 +1982,7 @@ class VMessageRecipient(VExistingUname):
             else:
                 return account
 
+
 class VModConvoRecipient(VMessageRecipient):
     def __init__(self, param, required=True, *a, **kw):
         self.required = required
@@ -1989,7 +1992,7 @@ class VModConvoRecipient(VMessageRecipient):
         if not name and not self.required:
             return None
 
-        return super(VModConvoRecipient, self).run(self, name)
+        return super(VModConvoRecipient, self).run(name)
 
 
 class VUserWithEmail(VExistingUname):

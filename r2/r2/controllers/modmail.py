@@ -1,13 +1,15 @@
 import simplejson
-from pylons import response
+from pylons import request, response
 from pylons import tmpl_context as c
 
 from r2.config import feature
 from r2.controllers.reddit_base import OAuth2OnlyController
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.base import abort
+from r2.lib.db import queries
 from r2.lib.db.thing import NotFound
 from r2.lib.errors import errors
+from r2.lib.utils import tup
 from r2.lib.validator import (
     VAccountByName,
     validate,
@@ -23,6 +25,7 @@ from r2.lib.validator import (
     VSRByName,
     VSRByNames,
 )
+from r2.models import Account, Message, Subreddit
 from r2.models.modmail import (
     ModmailConversation,
     ModmailConversationAction,
@@ -30,8 +33,6 @@ from r2.models.modmail import (
     MustBeAModError,
     Session,
 )
-from r2.models.subreddit import Subreddit
-from r2.models.account import Account
 
 
 class ModmailController(OAuth2OnlyController):
@@ -55,7 +56,8 @@ class ModmailController(OAuth2OnlyController):
                     default='recent'),
         state=VOneOf('state',
                      options=('new', 'inprogress', 'mod',
-                              'notification', 'archived', 'all'),
+                              'notifications', 'archived',
+                              'highlighted', 'all'),
                      default='all'),
     )
     def GET_conversations(self, srs, after, limit, sort, state):
@@ -71,8 +73,8 @@ class ModmailController(OAuth2OnlyController):
                     mod: last_mod_update
                     user: last_user_update
         state    -- this parameter lets users filter messages by state
-                    choices: new, inprogress, mod,
-                    notification, archived, all
+                    choices: new, inprogress, mod, notifications,
+                    archived, highlighted, all
         """
 
         # Retrieve subreddits in question, if entities are passed
@@ -114,15 +116,15 @@ class ModmailController(OAuth2OnlyController):
         # conversation in the correct context
         authors = self._try_get_byID(author_ids, Account, ignore_missing=True)
         for conversation in conversations:
-            conversation_ids.append(conversation.id)
+            conversation_ids.append(conversation.id36)
 
-            conversations_dict[conversation.id] = conversation.to_serializable(
+            conversations_dict[conversation.id36] = conversation.to_serializable(
                 authors,
                 modded_entities[conversation.owner_fullname],
             )
 
             latest_message = conversation.messages[0]
-            messages_dict[latest_message.id] = latest_message.to_serializable(
+            messages_dict[latest_message.id36] = latest_message.to_serializable(
                modded_entities[conversation.owner_fullname],
                authors[latest_message.author_id],
                c.user,
@@ -190,6 +192,28 @@ class ModmailController(OAuth2OnlyController):
             abort(403, 'Must be a mod to hide the message author.')
         except:
             abort(500, 'Failed to save conversation')
+
+        # Create copy of the message in the legacy messaging system as well
+        if to:
+            message, inbox_rel = Message._new(
+                c.user,
+                to,
+                subject,
+                body,
+                request.ip,
+                sr=entity,
+                from_sr=True,
+            )
+        else:
+            message, inbox_rel = Message._new(
+                c.user,
+                entity,
+                subject,
+                body,
+                request.ip,
+            )
+        queries.new_message(message, inbox_rel)
+        conversation.set_legacy_first_message_id(message._id)
 
         # Get author associated account object for serialization
         # of the newly created conversation object
@@ -302,9 +326,32 @@ class ModmailController(OAuth2OnlyController):
         except Exception:
             abort(500, 'Failed to save message')
 
+        # Add the message to the legacy messaging system as well (unless it's
+        # an internal message on a non-internal conversation, since we have no
+        # way to hide specific messages from the external participant)
+        legacy_incompatible = is_internal and not conversation.is_internal
+        if (conversation.legacy_first_message_id and
+                not legacy_incompatible):
+            first_message = Message._byID(conversation.legacy_first_message_id)
+            subject = conversation.subject
+            if not subject.startswith('re: '):
+                subject = 're: ' + subject
+
+            message, inbox_rel = Message._new(
+                c.user,
+                sr,
+                subject,
+                msg_body,
+                request.ip,
+                parent=first_message,
+            )
+            queries.new_message(message, inbox_rel)
+
         serializable_convo = conversation.to_serializable(
-                entity=sr, all_messages=True,
-                current_user=c.user)
+            entity=sr,
+            all_messages=True,
+            current_user=c.user,
+        )
         messages = serializable_convo.pop('messages')
 
         response.status_code = 201
@@ -315,22 +362,22 @@ class ModmailController(OAuth2OnlyController):
 
     @require_oauth2_scope('identity')
     @validate(conversation=VModConversation('conversation_id'))
-    def POST_star(self, conversation):
-        """Marks a conversation as having a star."""
+    def POST_highlight(self, conversation):
+        """Marks a conversation as highlighted."""
         self._validate_vmodconversation()
         self._try_get_subreddit_access(conversation)
-        conversation.add_star()
-        conversation.add_action(c.user, 'marked_important')
+        conversation.add_action(c.user, 'highlighted')
+        conversation.add_highlight()
         response.status_code = 204
 
     @require_oauth2_scope('identity')
     @validate(conversation=VModConversation('conversation_id'))
-    def DELETE_star(self, conversation):
-        """Removes a star from a conversation."""
+    def DELETE_highlight(self, conversation):
+        """Removes a highlight from a conversation."""
         self._validate_vmodconversation()
         self._try_get_subreddit_access(conversation)
-        conversation.remove_star()
-        conversation.add_action(c.user, 'unmarked_important')
+        conversation.add_action(c.user, 'unhighlighted')
+        conversation.remove_highlight()
         response.status_code = 204
 
     @require_oauth2_scope('identity')
@@ -344,9 +391,9 @@ class ModmailController(OAuth2OnlyController):
             abort(400, 'Must pass an id or list of ids.')
 
         try:
-            ids = [int(id) for id in ids]
+            ids = [int(id, base=36) for id in ids]
         except:
-            abort(422, 'Must pass int ids.')
+            abort(422, 'Must pass base 36 ids.')
 
         try:
             convos = self._get_conversation_access(ids)
@@ -367,9 +414,9 @@ class ModmailController(OAuth2OnlyController):
             abort(400, 'Must pass an id or list of ids.')
 
         try:
-            ids = [int(id) for id in ids]
+            ids = [int(id, base=36) for id in ids]
         except:
-            abort(422, 'Must pass int ids.')
+            abort(422, 'Must pass base 36 ids.')
 
         try:
             convos = self._get_conversation_access(ids)
@@ -387,7 +434,9 @@ class ModmailController(OAuth2OnlyController):
     )
     def POST_archive_status(self, ids, archive):
         try:
-            convos = self._get_conversation_access(ids)
+            convos = self._get_conversation_access(
+                [int(id, base=36) for id in ids]
+            )
         except ValueError:
             abort(403, 'Invalid conversation id passed.')
 
@@ -423,8 +472,8 @@ class ModmailController(OAuth2OnlyController):
             if conversation.is_internal:
                 abort(422, 'Cannot archive/unarchive mod discussions.')
 
-            conversation.set_state('archived')
             conversation.add_action(c.user, 'archived')
+            conversation.set_state('archived')
         else:
             abort(403, 'Must be a moderator with mail access.')
 
@@ -443,6 +492,7 @@ class ModmailController(OAuth2OnlyController):
             if conversation.is_internal:
                 abort(422, 'Cannot archive/unarchive mod discussions.')
 
+            conversation.add_action(c.user, 'unarchived')
             conversation.set_state('inprogress')
         else:
             abort(403, 'Must be a moderator with mail access.')
@@ -474,7 +524,7 @@ class ModmailController(OAuth2OnlyController):
             if feature.is_enabled('new_modmail', subreddit=sr.name)
         }
 
-        for conversation in conversations:
+        for conversation in tup(conversations):
             if sr_by_fullname.get(conversation.owner_fullname):
                 validated_convos.append(conversation)
             else:
