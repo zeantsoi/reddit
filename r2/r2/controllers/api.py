@@ -3682,9 +3682,6 @@ class ApiController(RedditController):
         if not links:
             return abort(400)
 
-        for link in links:
-            g.events.hide_link_event(c.user, link, '/api/hide',
-                                     request=request, context=c)
         LinkHidesByAccount._hide(c.user, links)
 
     @require_oauth2_scope("report")
