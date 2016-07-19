@@ -4225,6 +4225,8 @@ class WrappedUser(CachedTemplate):
                 author_cls += " user-spam"
             if user._banned:
                 author_cls += " user-banned"
+            if user._deleted:
+                author_cls += " user-deleted"
 
         CachedTemplate.__init__(self,
                                 name = user.name,

@@ -61,7 +61,7 @@
 %if context_deleted and not c.user_is_admin:
   <span class="author">[deleted]</span>
 %else:
-  %if thing.user_deleted:
+  %if thing.user_deleted and not c.user_is_admin:
     <span class="author">[deleted]</span>
   %elif thing.name == '[blocked]':
     <span class="author">${_(thing.thing.original_author.name)}</span>
