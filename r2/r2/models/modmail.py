@@ -894,7 +894,7 @@ class ModmailConversationAction(Base):
                 'isHidden': False,
                 'isDeleted': author._deleted
             },
-            'action_type_id': self.action_type_id,
+            'actionTypeId': self.action_type_id,
             'date': self.date.isoformat(),
         }
 
