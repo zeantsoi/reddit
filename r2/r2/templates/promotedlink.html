@@ -124,29 +124,29 @@ ${unsafe(taglinetext % dict(author=author))}
   %endif 
     %if thing.is_author or c.user_is_sponsor:
       %if not promote.is_promo(thing):
-        ${_('deleted sponsored link')}
+        ${_('deleted promoted post')}
       %elif promote.is_external(thing):
-        ${_('external sponsored link')}
+        ${_('external promoted post')}
       %elif promote.is_unpaid(thing):
-        ${_('unpaid sponsored link')}
+        ${_('unpaid promoted post')}
       %elif promote.is_unapproved(thing):
         ${_('waiting approval')}
       %elif promote.is_rejected(thing):
-        ${_('rejected sponsored link')}
+        ${_('rejected promoted post')}
       %elif promote.is_promoted(thing) and promoter:
         ${_('promoted by')}&nbsp;${unsafe(promoter)}
       %elif promote.is_promoted(thing):
-        ${_('sponsored link')}
+        ${_('promoted post')}
       %elif promote.is_accepted(thing):
-        ${_('accepted sponsored link')}
+        ${_('accepted promoted post')}
       %elif promote.is_edited_live(thing):
-        ${_('edited live sponsored link')}
+        ${_('edited live promoted post')}
       %endif
     %elif promoter:
       ${_('promoted by')}&nbsp;${unsafe(promoter)}
     %else:
       %if not hide_tagline:
-        ${_('sponsored link')}
+        ${_('promoted post')}
       %endif
     %endif
   </p>

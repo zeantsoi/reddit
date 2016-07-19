@@ -62,7 +62,9 @@ user_added_messages = {
     "traffic": {
         "pm": {
             "subject": N_("you can view traffic on a promoted link"),
-            "msg": N_('you have been added to the list of users able to see [traffic for the sponsored link "%(title)s"](%(traffic_url)s).'),
+            "msg": N_('you have been added to the list of users able to see' +
+                      'see [traffic for the promoted post ' +
+                      '"%(title)s"](%(traffic_url)s).'),
         },
     },
 }

@@ -1920,7 +1920,7 @@ class Comment(Thing, Printable):
                 item.full_comment_count = item.link.num_comments
 
                 if item.sr_id == Subreddit.get_promote_srid():
-                    item.taglinetext = _("%(link)s by %(author)s [sponsored link]")
+                    item.taglinetext = _("%(link)s by %(author)s [promoted post]") #noqa
                 else:
                     item.taglinetext = _("%(link)s by %(author)s in %(subreddit)s")
 

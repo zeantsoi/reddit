@@ -265,7 +265,7 @@ class PromoteController(RedditController):
         ads_images = _get_ads_images(c.user)
         images = {k: v.get("url") for k, v in ads_images.iteritems()}
 
-        return PromotePage(title=_("create sponsored link"),
+        return PromotePage(title=_("create promoted post"),
                            content=PromoteLinkNew(images),
                            extra_js_config={
                             "ads_virtual_page": "new-promo",
@@ -281,7 +281,7 @@ class PromoteController(RedditController):
             return self.abort404()            
         rendered = wrap_links(link, skip=False)
         form = PromoteLinkEdit(link, rendered)
-        page = PromotePage(title=_("edit sponsored link"), content=form,
+        page = PromotePage(title=_("edit promoted post"), content=form,
                       show_sidebar=False, extension_handling=False)
         return page.render()
 
@@ -367,7 +367,7 @@ class SponsorController(PromoteController):
         if c.render_style == 'csv':
             return content.as_csv()
         else:
-            return PromotePage(title=_("sponsored link report"),
+            return PromotePage(title=_("promoted post report"),
                                content=content).render()
 
     @validate(
@@ -398,7 +398,7 @@ class SponsorController(PromoteController):
         if c.render_style == 'csv':
             return content.as_csv()
         else:
-            return PromotePage(title=_("sponsored link inventory"),
+            return PromotePage(title=_("promoted post inventory"),
                                content=content).render()
 
     @validate(
