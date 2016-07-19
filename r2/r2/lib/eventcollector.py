@@ -21,6 +21,8 @@
 ###############################################################################
 import baseplate.events
 import time
+import re
+from urlparse import urlparse
 
 from pylons import app_globals as g
 from collections import defaultdict
@@ -1587,8 +1589,57 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def hide_link_event(self, user, link, base_url,
+                        request=None, context=None):
+        link_sr = link.subreddit_slow
+        actor_is_moderator = link_sr.is_moderator(user)
+
+        link_author = link.author_slow
+        actor_is_author = link_author._id == user._id
+        target_domain = urlparse(link.url).hostname
+
+        e = Event(
+            topic='flatlist_events',
+            event_type='ss.post_flatlist',
+            request=request,
+            context=context,
+            data={
+                'base_url': base_url,
+                'is_target_author': actor_is_author,
+                'target_is_moderator': actor_is_moderator,
+                'process_notes': 'hide',
+                'sr_id': link_sr._id,
+                'sr_name': link_sr.name,
+                'target_created_ts': _datetime_to_millis(link._date),
+                'target_author_name': link_author.name,
+                'target_fullname': link._fullname,
+                'target_id': link._id,
+                'target_url': link.url,
+                'target_url_domain': target_domain,
+                'user_id': user._id,
+                'user_name': user.name,
+            }
+        )
+        a = e.payload['user_agent_parsed'].get('app_name') or request.host
+        e.add('app_name', a)
+        self.save_event(e)
+
 
 class Event(baseplate.events.Event):
+    SORT_OPTIONS = [
+        'hot',
+        'new',
+        'rising',
+        'controversial',
+        'top',
+        'guilded',
+        'promoted',
+    ]
+    PATH_REGEX = re.compile(
+        '^/(((?P<thing>user|r)/(?P<thing_name>\w+))'
+        '|{sorting_options})'.format(
+            sorting_options='|'.join(SORT_OPTIONS)))
+
     def __init__(self, topic, event_type,
                  time=None, uuid=None, request=None, context=None,
                  data=None, obfuscated_data=None):
