@@ -113,14 +113,13 @@ function createMwebRedirectUrl(query) {
 
 r.ui.initFooterMwebBtn = function() {
     $('.mweb-redirect-btn').on('click', function(e) {
-        var url = createMwebRedirectUrl('ref_source=desktop');
+      e.preventDefault();
 
-        if ($.cookie('mweb-no-redirect')) {
-            $.cookie('mweb-no-redirect', null, { domain: r.config.cur_domain});
-        }
+      if ($.cookie('mweb-no-redirect')) {
+        $.cookie('mweb-no-redirect', null, { domain: r.config.cur_domain});
+      }
 
-        url = createMwebRedirectUrl('ref_source=desktop')
-        window.location = url;
+      window.location = createMwebRedirectUrl('ref_source=desktop');
     });
 }
 
