@@ -550,14 +550,6 @@ class ApiController(RedditController):
             form.has_errors('sr', errors.SUBREDDIT_NOTALLOWED)
             return
 
-        allow_images = sr.can_submit_image(c.user)
-        if not allow_images:
-            if kind == "image" or (kind == "link" and url_is_image(url)):
-                # Image uploads aren't allowed in this subreddit
-                c.errors.add(errors.IMAGES_NOTALLOWED, field='url')
-                form.has_errors('url', errors.IMAGES_NOTALLOWED)
-                return
-
         if not sr.can_submit_text(c.user) and is_self:
             # this could happen if they actually typed "self" into the
             # URL box and we helpfully translated it for them
@@ -601,6 +593,14 @@ class ApiController(RedditController):
                 c.errors.add(errors.TOO_LONG, field='text',
                     msg_params={'max_length': Link.SELFTEXT_MAX_LENGTH})
                 form.set_error(errors.TOO_LONG, 'text')
+                return
+
+        allow_images = sr.can_submit_image(c.user)
+        if not allow_images:
+            if kind == "image" or (kind == "link" and url_is_image(url)):
+                # Image uploads aren't allowed in this subreddit
+                c.errors.add(errors.IMAGES_NOTALLOWED, field='url')
+                form.has_errors('url', errors.IMAGES_NOTALLOWED)
                 return
 
         VNotInTimeout().run(action_name="submit", details_text=kind, target=sr)
