@@ -9,6 +9,31 @@ $(function() {
   var websocketUrl = r.config.user_websocket_url;
   var millisecondsToBatch = 30000;
 
+  // New message or comment reply:
+  // Flash toast, update inbox count, and update
+  // inbox orangered CSS
+  function flashNewMessage(message) {
+    var messageText = "You have a new %(messageType)s!".format(
+      {messageType: message.msg_type});
+
+    $('.new-message').html('<a href="%(permalink)s">%(messageText)s</a>'.format(
+        {permalink: message.permalink, messageText: messageText}));
+    $('.new-message').fadeIn(1000).delay(5000).fadeOut(1000);
+
+    if ($('.message-count').length) {
+      // Already havemail state so just increment count
+      $('.message-count').html(message.inbox_count);
+    } else {
+      // Set the have mail state and add the inbox count
+      $('#mail').removeClass('nohavemail');
+      $('#mail').addClass('havemail');
+      $('#mail').attr("href", "/message/unread/");
+      $('#mail').attr("title", "new mail!");
+      $('<a class="message-count" href="/message/unread/">'
+        + message.inbox_count + '</a>').insertAfter('#mail');
+    }
+  }
+
   function updateMessageCount(inboxCount) {
     if ($('.message-count').length) {
       // Already havemail state so just increment count
