@@ -56,7 +56,12 @@ from r2.config import extensions
 from r2.lib.memoize import memoize
 from r2.lib.wrapped import Wrapped
 from r2.lib.filters import _force_utf8, _force_unicode
-from r2.lib import hooks, utils, geoip
+from r2.lib import (
+    geoip,
+    hooks,
+    utils,
+    websockets,
+)
 from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
@@ -3003,6 +3008,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
         if orangered:
             to._incr('inbox_count', 1)
+            cls.live_orangereds_broadcast(to, obj)
 
         if feature.is_enabled('orangereds_as_emails', user=to):
             if (to.email and orangered and to.pref_email_messages and 
@@ -3075,6 +3081,22 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             title_type='%s_title' % hook,
             user=to,
             url=url,
+        )
+
+    @classmethod
+    def live_orangereds_broadcast(self, to, obj):
+        if isinstance(obj, Comment):
+            msg_type = "comment reply"
+        else:
+            msg_type = "message"
+
+        websockets.send_broadcast(
+            namespace="/user/%s" % to._id36,
+            type="new_orangered",
+            payload={
+                "inbox_count": to.inbox_count,
+                "msg_type" : msg_type,
+            },
         )
 
     @classmethod
