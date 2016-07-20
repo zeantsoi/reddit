@@ -84,6 +84,7 @@ from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt, get_pageview_pixel_url
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
+    detect_mobile,
     SimpleSillyStub,
     UniqueIterator,
     extract_subdomain,
@@ -92,6 +93,7 @@ from r2.lib.utils import (
     is_throttled,
     tup,
     UrlParser,
+    parse_agent,
 )
 from r2.lib.validator import (
     build_arg_list,
@@ -539,6 +541,10 @@ def set_content_type():
         if ext in ("mobile", "m", "compact"):
             if request.GET.get("keep_extension"):
                 c.cookies['reddit_mobility'] = Cookie(ext, expires=NEVER)
+
+    # allow content and api calls to set an loid
+    if is_api() or c.render_style in ("html", "mobile", "compact"):
+        c.loid = LoId.load(request, c)
 
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these
@@ -997,10 +1003,6 @@ class MinimalController(BaseController):
         # GET param is included
         set_content_type()
 
-        # this needs c.render_style set, which is initialized in
-        # set_content_type.
-        c.loid = LoId.load(request, c)
-
         c.request_timer.intermediate("minimal-pre")
         # True/False forces. None updates for most non-POST requests
         c.update_last_visit = None
@@ -1066,7 +1068,7 @@ class MinimalController(BaseController):
 
         # write loid cookie if necessary
         if c.loid:
-            c.loid.save(domain=g.domain)
+            c.loid.save(c, domain=g.domain)
 
         # send cookies
         secure_cookies = feature.is_enabled("force_https")
@@ -1399,7 +1401,7 @@ class RedditController(OAuth2ResourceController):
             url = UrlParser(request.fullpath)
             if (c.render_style == 'html' and
                     not no_redirect and
-                    request.parsed_agent.is_mobile_browser and
+                    detect_mobile(request.user_agent) and
                     self.is_safe_mobile_web_route(url.path)):
 
                 compact = 'true'
@@ -1602,13 +1604,12 @@ class RedditController(OAuth2ResourceController):
                         request=request, context=c)
                     return self.intermediate_redirect("/quarantine", sr_path=False)
 
-            # check over 18
-            if (
-                c.site.over_18 and not c.over18 and
-                request.path != "/over18" and
-                c.render_style == 'html' and
-                not request.parsed_agent.bot
-            ):
+            #check over 18
+            agent = parse_agent(request.user_agent)
+            if (c.site.over_18 and not c.over18 and
+                    request.path != "/over18" and
+                    c.render_style == 'html' and
+                    not agent['bot']):
                 return self.intermediate_redirect("/over18", sr_path=False)
 
         #check whether to allow custom styles

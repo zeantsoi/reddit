@@ -35,6 +35,7 @@ from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
     to_epoch_milliseconds,
+    parse_agent,
     sampled,
     squelch_exceptions,
     to36,
@@ -1724,7 +1725,7 @@ class Event(baseplate.events.Event):
         data["geoip_country"] = get_request_location(request, context)
         data["domain"] = request.host
         data["user_agent"] = request.user_agent
-        data["user_agent_parsed"] = request.parsed_agent.to_dict()
+        data["user_agent_parsed"] = parse_agent(request.user_agent)
 
         http_referrer = request.headers.get("Referer", None)
         if http_referrer:
