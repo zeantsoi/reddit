@@ -284,7 +284,7 @@ class FeatureState(object):
         loid = self.world.current_loid_obj()
         if (
             cfg.get("no_loid") and
-            (not loid or loid._new) and
+            (not loid or loid.new) and
             not loggedin
         ):
             return True
