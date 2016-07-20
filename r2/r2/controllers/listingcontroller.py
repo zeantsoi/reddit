@@ -278,6 +278,29 @@ listing_api_doc = partial(
 class SubredditListingController(ListingController):
     private_referrer = False
 
+    def build_listing(self, num, after, reverse, count, sr_detail=None,
+                      **kwargs):
+        listing_timer = None
+        if num in [25, 50, 100]:
+            listing_timer = g.stats.get_timer(
+                "render_link_listing.num_%s" % str(num))
+            listing_timer.start()
+
+        rendered_listing = ListingController.build_listing(
+            self,
+            num,
+            after,
+            reverse,
+            count,
+            sr_detail,
+            **kwargs
+        )
+
+        if listing_timer:
+            listing_timer.stop()
+
+        return rendered_listing
+
     def _build_og_title(self, max_length=256):
         sr_fragment = "/r/" + c.site.name
         title = c.site.title.strip()
