@@ -1,8 +1,12 @@
 r.analytics = {
   init: function() {
+    this.onCommentsPage = $('body').hasClass('comments-page');
+    this.spotlightIsHidden = $('#siteTable_organic').is(":hidden");
+    this.promotedLinkIsHidden = $('.promotedlink.promoted').is(":hidden");
+    this.adBlockIsEnabled = this.spotlightIsHidden || this.promotedLinkIsHidden;
     // these guys are relying on the custom 'onshow' from jquery.reddit.js
     $(document).delegate(
-      '.organic-listing .promotedlink.promoted',
+      '.promotedlink.promoted',
       'onshow',
       _.bind(function(ev) {
         this.fireTrackingPixel(ev.target);
@@ -15,8 +19,7 @@ r.analytics = {
       '.sitetable .promotedlink.promoted',
       'onshow',
       _.bind(function(ev) {
-        var onCommentsPage = $('body').hasClass('comments-page');
-        if (onCommentsPage){
+        if (this.onCommentsPage){
           this.fireRetargetingPixel(ev.target);
         }
       }, this)
@@ -181,7 +184,6 @@ r.analytics = {
       return;
     }
 
-    var onCommentsPage = $('body').hasClass('comments-page');
     var thingId = $el.thing_id();
     var adserverUpvotePixel, adserverDownvotePixel;
 
@@ -209,7 +211,7 @@ r.analytics = {
       return (store.safeGet(key) || {})[thingId];
     }
 
-    if (onCommentsPage) {
+    if (this.onCommentsPage) {
       adserverUpvotePixel = getEventPixel('adserverUpvotePixel');
       adserverDownvotePixel = getEventPixel('adserverDownvotePixel');
     } else {
@@ -240,21 +242,19 @@ r.analytics = {
 
   fireTrackingPixel: function(el) {
     var $el = $(el);
-    var onCommentsPage = $('body').hasClass('comments-page');
 
-    if ($el.data('trackerFired') || onCommentsPage) {
+    if ($el.data('trackerFired') || this.onCommentsPage) {
       return;
     }
 
-    var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
     var pixel = new Image();
     var impPixel = $el.data('impPixel');
 
-    if (impPixel && !adBlockIsEnabled) {
+    if (impPixel && !this.adBlockIsEnabled) {
       pixel.src = impPixel;
     }
 
-    if (!adBlockIsEnabled) {
+    if (!this.adBlockIsEnabled) {
       var thirdParty = [];
       var linkFullname = $el.data('fullname');
       var campaignFullname = $el.data('cid');
@@ -290,7 +290,7 @@ r.analytics = {
     var adserverPixel = new Image();
     var adserverImpPixel = $el.data('adserverImpPixel');
 
-    if (adserverImpPixel && !adBlockIsEnabled) {
+    if (adserverImpPixel && !this.adBlockIsEnabled) {
       adserverPixel.src = adserverImpPixel;
     }
 
@@ -360,9 +360,8 @@ r.analytics = {
     var $el = $(el);
     var retargetPixel = new Image();
     var retargetPixelUrl = $el.data('adserverRetargetPixel');
-    var adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
 
-    if (retargetPixelUrl && !adBlockIsEnabled) {
+    if (retargetPixelUrl && !this.adBlockIsEnabled) {
       retargetPixel.src = retargetPixelUrl;
     }
   },
