@@ -36,13 +36,6 @@ var generalAccountQForm = {
        content: getRedditURL("/r/secretsanta"),
      },
    },
-   {
-     text: "question about reddit Gold",
-     action: {
-       type: "link",
-       content: "mailto:goldsupport@reddit.com",
-     },
-    },
   ],
 };
 
@@ -203,7 +196,7 @@ title: "how can I hide content?",
  }, ]
 };
 
-// Main form body.
+// Contact admins form body.
 var contactAdminsForm = {
   title: defaultTitle,
   buttons: [{
@@ -221,6 +214,109 @@ var contactAdminsForm = {
     }
   }],
 };
+
+//Main form details
+var advertisingDetails = [
+  "Subscribe to" +
+  link({url: getRedditURL("/r/selfserve"), text: "/r/selfserve"}) +
+  " to talk with other advertisers about advertising on reddit.",
+  "Check out " +
+  link({url: getRedditURL("/r/ads"), text: "/r/ads"}) +
+  "to see the most popular image ads on reddit.",
+  "Reach the reddit advertising team at " +
+  link({url: getRedditURL("mailto:advertising@reddit.com"), text: "advertising@reddit.com"}) + ".",
+  "Learn more about advertising products and best practices a " +
+  link({url: getRedditURL("/advertising"), text: "reddit.com/advertising"}) + ".",
+];
+
+var pressDetails = [
+  "For guidelines on using and sourcing Reddit, please visit the Press & Media help page " +
+  link({url: "https://reddit.zendesk.com/hc/en-us/articles/206630455-Press-Media", text: "here"}) + ".",
+  "If you have general questions about your personal Reddit account, please email " +
+  link({url: "mailto:contact@reddit.com", text: "contact@reddit.com"}) +
+  " and include your Reddit username.",
+  "If you have questions about licensing, reproducing, or using Reddit’s logo, screenshots, " +
+  "or content for personal or business use, please contact " +
+  link({url: "mailto:licensing@reddit.com", text: "licensing@reddit.com"}) + ".",
+  "If you are a journalist or reporter looking to reach Reddit’s Communications team for a " +
+  "story inquiry, please contact " +
+  link({url: "mailto:press@reddit.com", text: "press@reddit.com"}) + ".",
+];
+
+//Main form body
+var contactForm = {
+  title: "how can we help you?",
+  buttons: [{
+    text: 'get help moderating',
+    action: {
+      type: 'show-details',
+      content: [
+        "Are you a new moderator?  Need advice?  You'll find a community ready to assist you at " +
+        link({url: getRedditURL("/r/modhelp"), text: "/r/modhelp"}),
+      ],
+    },
+  },
+  {
+    text: "report a bug",
+    action: {
+      type: "show-details",
+      content: [
+        "Check out " +
+        link({url: getRedditURL("/r/bugs"), text: "/r/bugs"}) +
+        " for other people with the same problem, or submit your own bug report.",
+        "If you have an idea for a new feature, tell us about it in " +
+        link({url: getRedditURL("/r/ideasfortheadmins"), text: "/r/ideasfortheadmins"}) + "."
+      ],
+    },
+  },
+  {
+    text: "use the Reddit trademark",
+    action: {
+      type: "show-details",
+      content: [
+        "You'll need a license to use the reddit trademark.  Read our " +
+        link({url:getRedditURL("/wiki/licensing"), text: "licensing page"}) +
+        " to find out how to get permission.",
+      ],
+    },
+  },
+  {
+    text: "advertise on Reddit",
+    action: {
+      type: "show-details",
+      content: advertisingDetails,
+    },
+  },
+  {
+    text: "make a press inquiry",
+    action: {
+      type: "show-details",
+      content: pressDetails,
+    },
+  },  
+  {
+      text: "question about Reddit gold",
+      action: {
+        type: "show-details",
+        content: [
+          "Got a question about " +
+          link({url: getRedditURL("/gold/about"), text: "Reddit gold"}) +
+          "? Please email " +
+          link({url: "mailto:goldsupport@reddit.com", text: "goldsupport@reddit.com"}) +
+          ".",
+        ],
+      },
+  },
+  {
+    text: "message the admins",
+    action: {
+      type: "show-form",
+      content: contactAdminsForm,
+    }
+  }],
+}
+
+
 
 function getRedditURL(path) {
   // If the path doesn't end with `/` than it's not relative.
@@ -310,13 +406,10 @@ function setupDetailsListeners() {
   }); 
 }
 
-function initContactPage(contactAdminForm) {
-  setupDetailsListeners(); 
-  $("ol.contact-options").on("click", "#message-the-admins .button", function() {
-    showForm(contactAdminForm);
-  });
+function initContactPage(firstForm) {
+  showForm(firstForm);
+  setupDetailsListeners();
 }
 
 
-initContactPage(contactAdminsForm);
-
+initContactPage(contactForm);
