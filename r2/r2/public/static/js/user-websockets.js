@@ -31,13 +31,17 @@ $(function() {
     }
 
     if (r.config.live_orangereds_pref && !!Notification && Notification.permission !== "granted") {
-      Notification.requestPermission()
+      Notification.requestPermission().then(function(result) {
+        payload = {"permission": result,
+          "tab_in_focus": !document.hidden,
+          "pref_email_messages": r.config.pref_email_messages};
+        r.analytics.sendEvent("browser_notification_events", "request_permission", null, payload);
 
         if (result === "granted") {
           sendNotification(messageType, messageText, recentNewMessageCount, inboxMessages);
         }
-
       });
+
     } else if (r.config.live_orangereds_pref && !!Notification && Notification.permission === "granted") {
       sendNotification(messageType, messageText, recentNewMessageCount, inboxMessages);
     }
@@ -56,8 +60,16 @@ $(function() {
           icon: '/static/circled-snoo-2x.png',
           body: messageText,
       });
+      payload = {"new_messages": recentNewMessageCount,
+        "tab_in_focus": !document.hidden,
+        "pref_email_messages": r.config.pref_email_messages};
+      r.analytics.sendEvent("browser_notification_events", "new_orangered", null, payload);
 
       messageNotification.onclick = function(event) {
+        var payload = {"inbox_count": inboxMessages[inboxMessages.length-1].inbox_count,
+          "tab_in_focus": !document.hidden,
+          "pref_email_messages": r.config.pref_email_messages};
+        r.analytics.sendEvent("browser_notification_events", "orangereds_click", null, payload);
         event.preventDefault();
         window.open('/message/unread/', '_blank');
       };

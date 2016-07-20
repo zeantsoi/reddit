@@ -372,6 +372,7 @@ def js_config(extra_config=None):
         "share_tracking_ts": share_ts,
         "user_websocket_url": user_websocket_url,
         "live_orangereds_pref": c.user.pref_live_orangereds,
+        "pref_email_messages": logged and c.user.pref_email_messages,
     }
 
     if feature.is_enabled("eu_cookie_policy"):
