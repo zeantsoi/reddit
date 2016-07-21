@@ -22,17 +22,23 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    var experimentEnabled = r.config.feature_expando_new_tab;
+    var experimentEnabled = r.config.feature_expando_new_tab_enabled;
+    var newTabVariantEnabled = r.config.feature_expando_new_tab_variant;
     var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
     if (experimentEnabled || userPrefEnabled) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
             // need to check for feature_expando_new_tab again because we only
             // want to override this behavior when the experiment is enabled.
             // checking the parent to make sure the link is not a self-post
-            var meetsExperimentRequirements = r.config.feature_expando_new_tab &&
+            var meetsExperimentRequirements = newTabVariantEnabled &&
                 !$(this).closest('.thing').hasClass('self') &&
-                this.href !== 'javascript:void(0)' &&
+                !$(this).hasClass('expand-media') &&
                 !$(this).hasClass('comments');
+
+            if (experimentEnabled && $(this).hasClass('expand-media') && !e.metaKey){
+                e.preventDefault();
+                return false;
+            }
 
             if (!meetsExperimentRequirements && !userPrefEnabled) { return; }
 

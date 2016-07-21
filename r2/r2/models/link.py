@@ -882,7 +882,7 @@ class Link(Thing, Printable):
                     (meets_media_experiment_requirements or
                         meets_self_post_experiment_requirements)):
                 item.expand_inline = True
-                item.href_url = 'javascript:void(0)'
+                item.href_url = item.url
                 item.affiliatize_link = False
             elif item.is_self and not item.promoted:
                 item.href_url = item.permalink
@@ -909,7 +909,6 @@ class Link(Thing, Printable):
                         meets_media_experiment_requirements):
                     item.expand_inline = True
                     item.affiliatize_link = False
-                    item.href_url = 'javascript:void(0)'
 
                 if (is_subdomain(item.domain, g.image_hosting_domain) and
                         show_media_preview and
