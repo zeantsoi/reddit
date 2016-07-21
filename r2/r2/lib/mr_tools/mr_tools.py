@@ -33,9 +33,28 @@ NCPUS = multiprocessing.cpu_count()
 
 
 def join_things(
-    fields, deleted=False, spam=True, fd=STDIN, out=STDOUT, err=STDERR
+    fields,
+    deleted=False,
+    spam=True,
+    fd=STDIN,
+    out=STDOUT,
+    err=STDERR,
+    defaults=None,
 ):
-    """A reducer that joins thing table dumps and data table dumps"""
+    """A reducer that joins thing table dumps and data table dumps
+
+    :param list fields: list of data fields that the resulting thing must
+        contain.  Any things that missing these any of these fields (unless
+        provided in the dump or by :param:`defaults`) will be silently dropped.
+    :param bool deleted: Allow deleted items.
+    :param bool spam: Allow spam items.
+    :param file fd: Input stream.
+    :param file out: Output stream.
+    :param file err: Error stream.
+    :param defaults: mapping of fieldnames to default values if not provided
+        in the input stream.
+    :type defaults: dict or None
+    """
     # Because of how Python handles scope, if we want to modify these outside
     # the closure function below, they need to be inside a mutable object.
     # http://stackoverflow.com/a/23558809/120999
@@ -45,6 +64,8 @@ def join_things(
     }
     def process(thing_id, vals):
         data = {}
+        if defaults:
+            data.update(defaults)
         thing = None
 
         for val in vals:
@@ -86,6 +107,7 @@ def join_things(
             counters['skipped'] += 1
 
     mr_reduce(process, fd=fd, out=out)
+
     # Print to stderr to avoid getting this caught up in the pipe of
     # compute_time_listings.
     err.write(

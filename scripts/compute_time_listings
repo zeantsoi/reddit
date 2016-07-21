@@ -116,25 +116,17 @@ if [ -z $MINID ]; then
     exit 1
 fi
 
-run_query "\\copy (SELECT thing_id, 'thing', '$THING_CLS', ups, downs, deleted, spam, extract(epoch from date)
-                   FROM reddit_thing_$THING_CLS
-                   WHERE
-                       not deleted AND
-                       thing_id >= $MINID
-                  ) to $THING_DUMP"
+THING_SQL=$(reddit "MrTop('${THING_CLS}', ${MINID}).emit_thing_query()")
+run_query "\\copy ($THING_SQL) to $THING_DUMP"
 
-run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
-                   FROM reddit_data_$THING_CLS
-                   WHERE
-                       key IN ('url', 'sr_id', 'author_id') AND
-                       thing_id >= $MINID
-                  ) to $DATA_DUMP"
+DATA_SQL=$(reddit "MrTop('${THING_CLS}', ${MINID}).emit_data_query()")
+run_query "\\copy ($DATA_SQL) to $DATA_DUMP"
 
 cat $THING_DUMP $DATA_DUMP |
     mrsort |
-    reddit "join_things('$THING_CLS')" |
-    reddit "time_listings($TIMES, '$THING_CLS')" |
+    reddit "MrTop('${THING_CLS}').join_things()" |
+    reddit "MrTop('${THING_CLS}').time_listings($TIMES)" |
     mrsort |
-    reddit -j4 "write_permacache()"
+    reddit -j4 "MrTop.write_permacache()"
 
 echo 'Done.'

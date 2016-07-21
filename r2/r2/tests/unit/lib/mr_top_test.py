@@ -25,7 +25,7 @@ import time
 
 from r2.tests import RedditTestCase
 from r2.lib import jsontemplates
-from r2.lib.mr_top import join_things, time_listings, write_permacache
+from r2.lib.mr_top import MrTop
 from r2.lib import mr_top
 from . mr_tools_test import make_thing_row, make_pg_dump, make_link
 
@@ -44,7 +44,7 @@ class MrTopTests(RedditTestCase):
         dump = make_pg_dump(fields, link)
         stdin = StringIO(dump)
         stdout = StringIO()
-        join_things("link", fd=stdin, out=stdout, err=StringIO())
+        MrTop("link", fd=stdin, out=stdout, err=StringIO()).join_things()
 
         self.assertEqual(
             stdout.getvalue().strip(),
@@ -59,11 +59,12 @@ class MrTopTests(RedditTestCase):
         dump = make_pg_dump(fields, link)
         stdin = StringIO(dump)
         stdout = StringIO()
-        join_things("link", fd=stdin, out=stdout, err=StringIO())
+        MrTop("link", fd=stdin, out=stdout, err=StringIO()).join_things()
 
-        # XXX: as built, the join fails if there are missing fields.
-        # This is not necessarily a feature.
-        self.assertEqual(stdout.getvalue().strip(), "")
+        self.assertEqual(
+            stdout.getvalue().strip(),
+            "1 link 1 0 f f 100.01 0 10 foo".replace(" ", "\t")
+        )
 
     def test_time_listings(self):
         link = make_link(
@@ -78,7 +79,7 @@ class MrTopTests(RedditTestCase):
         l = make_thing_row(["author_id", "sr_id", "url"], link)
         stdin = StringIO(l)
         stdout = StringIO()
-        time_listings(["hour"], "link", fd=stdin, out=stdout)
+        MrTop("link", fd=stdin, out=stdout).time_listings(["hour"])
 
         # order is not important for the response:
         res = dict(x.split("\t", 1) for x in stdout.getvalue().splitlines())
@@ -111,7 +112,7 @@ class MrTopTests(RedditTestCase):
         l = make_thing_row(["author_id", "sr_id", "url"], link)
         stdin = StringIO(l)
         stdout = StringIO()
-        time_listings(["hour"], "link", fd=stdin, out=stdout)
+        MrTop("link", fd=stdin, out=stdout).time_listings(["hour"])
 
         # the item is too old and should be dropped
         res = dict(x.split("\t", 1) for x in stdout.getvalue().splitlines())
@@ -125,7 +126,7 @@ class MrTopTests(RedditTestCase):
             "t3_1",
         ]))
         stdout = StringIO()
-        write_permacache(fd=stdin, out=stdout)
+        MrTop.write_permacache(fd=stdin, out=stdout)
         self.queries.get_domain_links.assert_called_once_with(
             "foo.com", "top", "hour"
         )
@@ -138,7 +139,7 @@ class MrTopTests(RedditTestCase):
             "t3_1",
         ]))
         stdout = StringIO()
-        write_permacache(fd=stdin, out=stdout)
+        MrTop.write_permacache(fd=stdin, out=stdout)
         self.queries._get_submitted.assert_called_once_with(1, "top", "hour")
 
     def test_write_permacache_sr(self):
@@ -149,7 +150,7 @@ class MrTopTests(RedditTestCase):
             "t3_1",
         ]))
         stdout = StringIO()
-        write_permacache(fd=stdin, out=stdout)
+        MrTop.write_permacache(fd=stdin, out=stdout)
         self.queries._get_links.assert_called_once_with(1, "top", "hour")
 
     def test_write_permacache_unknown(self):
@@ -162,7 +163,7 @@ class MrTopTests(RedditTestCase):
         stdout = StringIO()
         self.assertRaises(
             AssertionError,
-            lambda: write_permacache(fd=stdin, out=stdout),
+            lambda: MrTop.write_permacache(fd=stdin, out=stdout),
         )
 
     def test_write_no_limiting(self):
@@ -184,7 +185,7 @@ class MrTopTests(RedditTestCase):
 
         query = self.queries._get_links.return_value = MagicMock()
 
-        write_permacache(fd=stdin, out=stdout)
+        MrTop.write_permacache(fd=stdin, out=stdout)
         self.assertEqual(len(query._replace.call_args[0][0]), 2)
 
     def test_write_limiting(self):
@@ -207,5 +208,5 @@ class MrTopTests(RedditTestCase):
         query = self.queries._get_links.return_value = MagicMock()
 
         # the limit should be reflected in the call to _replace
-        write_permacache(fd=stdin, out=stdout, num=1)
+        MrTop.write_permacache(fd=stdin, out=stdout, num=1)
         self.assertEqual(len(query._replace.call_args[0][0]), 1)
