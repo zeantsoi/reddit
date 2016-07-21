@@ -19,12 +19,36 @@ LOID_LENGTH = 18
 LOID_CHARSPACE = string.uppercase + string.lowercase + string.digits
 
 
-def isodate(d):
-    # Python's `isoformat` isn't actually perfectly ISO.  This more
-    # closely matches the format we were getting in JS
+def to_isodate(d):
+    """Generate an ISO-8601 datestamp.
+
+    Python's `isoformat` isn't actually perfectly ISO.  This more closely
+    matches the format we were getting in JS
+
+    :param d: datetime with timezone
+    :type d: :py:class:`datetime.datetime`
+    :rtype: str
+    """
     d = d.astimezone(pytz.UTC)
     milliseconds = ("%06d" % d.microsecond)[0:3]
     return d.strftime("%Y-%m-%dT%H:%M:%S.") + milliseconds + "Z"
+
+
+def from_isodate(dstr):
+    """Extract a datetime from an ISO-8601 datestamp.
+
+    dateutil.parse does this but it won't actually guarantee that the result
+    has a timezone
+
+    :param str dstr: datestamp in ISO-8601 format
+    :rtype: :py:class:`datetime.datetime`
+    """
+    d = date_parse(dstr)
+    # the dstr may not actually have a timezone (though we generate them with
+    # one).  If it doesn't, the parsed date won't either!
+    if d.tzinfo is None:
+        d = pytz.UTC.localize(d)
+    return d
 
 
 def ensure_unquoted(cookie_str):
@@ -135,7 +159,7 @@ class LoId(object):
             try:
                 created = ensure_unquoted(
                     request.cookies.get(LOID_CREATED_COOKIE, ""))
-                created = date_parse(created)
+                created = from_isodate(created)
             except ValueError:
                 created = None
             return cls(
@@ -164,7 +188,7 @@ class LoId(object):
             expires = datetime.utcnow() + EXPIRES_RELATIVE
             for (name, value) in (
                 (LOID_COOKIE, self.loid),
-                (LOID_CREATED_COOKIE, isodate(self.created)),
+                (LOID_CREATED_COOKIE, to_isodate(self.created)),
             ):
                 d = cookie_attrs.copy()
                 d.setdefault("expires", expires)

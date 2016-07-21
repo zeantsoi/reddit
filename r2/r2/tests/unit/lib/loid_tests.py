@@ -7,7 +7,7 @@ from pylons import app_globals as g
 
 from r2.tests import RedditTestCase
 from r2.lib import hooks
-from r2.lib.loid import LoId, LOID_COOKIE, LOID_CREATED_COOKIE, isodate
+from r2.lib.loid import LoId, LOID_COOKIE, LOID_CREATED_COOKIE, to_isodate
 from r2.lib.utils import to_epoch_milliseconds
 
 
@@ -67,7 +67,7 @@ class LoidTests(RedditTestCase):
                 ),
                 call(
                     LOID_CREATED_COOKIE,
-                    isodate(loid.created),
+                    to_isodate(loid.created),
                     expires=ANY,
                 )
             ])
@@ -104,7 +104,7 @@ class LoidTests(RedditTestCase):
     def make_returning_cookies(self):
         return {
             LOID_COOKIE: "foo",
-            LOID_CREATED_COOKIE: isodate(datetime.now(pytz.UTC)),
+            LOID_CREATED_COOKIE: to_isodate(datetime.now(pytz.UTC)),
         }
 
     def test_ftue_autocreate(self):
