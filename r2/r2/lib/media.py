@@ -358,7 +358,6 @@ def optimize_jpeg(filename):
 def optimize_gif(filename):
     with open(os.path.devnull, 'w') as devnull:
         args = ("/usr/bin/gifsicle",
-                "--optimize",
                 "--no-comments",
                 "--no-names",
                 "--batch",
