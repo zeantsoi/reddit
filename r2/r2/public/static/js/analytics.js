@@ -430,10 +430,19 @@ r.analytics = {
     payload = payload || {};
 
     if (payload.pixel_url) {
+      var pixel_url = payload.pixel_url;
       var parser = document.createElement('a');
-      parser.href = payload.pixel_url;
+      parser.href = pixel_url;
 
       payload.pixel_domain = parser.host;
+
+      // move `pixel_url` to the `interana_excluded` section
+      // due to high cardinality.
+      payload.interana_excluded = {
+        pixel_url: pixel_url,
+      };
+
+      delete payload.pixel_url;
     }
 
     return this.adServingEvent(eventType, payload);
