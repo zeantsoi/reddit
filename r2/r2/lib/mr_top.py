@@ -140,14 +140,22 @@ def store_keys(key, maxes):
 
     query._replace(item_tuples, lock=lock)
 
-def write_permacache(fd = sys.stdin):
-    mr_tools.mr_reduce_max_per_key(lambda x: map(float, x[:-1]), num=1000,
-                                   post=store_keys,
-                                   fd = fd)
 
-def reduce_listings(fd=sys.stdin):
+def write_permacache(fd=sys.stdin, out=sys.stdout):
+    mr_tools.mr_reduce_max_per_key(
+        lambda x: map(float, x[:-1]), num=1000,
+        post=store_keys,
+        fd=fd,
+        out=out
+    )
+
+
+def reduce_listings(fd=sys.stdin, out=sys.stdout):
     # like write_permacache, but just sends the reduced version of the listing
     # to stdout instead of to the permacache. It's handy for debugging to see
     # the final result before it's written out
-    mr_tools.mr_reduce_max_per_key(lambda x: map(float, x[:-1]), num=1000,
-                                   fd = fd)
+    mr_tools.mr_reduce_max_per_key(
+        lambda x: map(float, x[:-1]), num=1000,
+        fd=fd,
+        out=out,
+    )

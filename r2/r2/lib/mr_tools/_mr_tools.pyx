@@ -25,7 +25,9 @@ from itertools import imap, groupby
 from heapq import nlargest
 
 stdin = sys.stdin
+stdout = sys.stdout
 stderr = sys.stderr
+
 
 class _Chunker(object):
     __slots__ = ('_size', '_done', '_it')
@@ -52,6 +54,7 @@ class _Chunker(object):
                     raise
         return chunk
 
+
 cdef class in_chunks(object):
     cdef it
     cdef int size
@@ -63,34 +66,42 @@ cdef class in_chunks(object):
     def __iter__(self):
         return _Chunker(self.it, self.size)
 
+
 cdef class Storage(dict):
     def __getattr__(self, attr):
         return self[attr]
+
 
 def valiter(grouper):
     key, group = grouper
     return key, imap(lambda x: x[1:], group)
 
+
 cpdef list _keyiter_splitter(str x):
     x = x.strip('\n')
     return x.split('\t')
+
 
 def keyiter(stream=stdin):
     lines = imap(_keyiter_splitter, stream)
     groups = groupby(lines, lambda x: x[0])
     return imap(valiter, groups)
 
-def emit(vals):
-    print '\t'.join(map(str, vals))
 
-def emit_all(vals):
+def emit(vals, out=stdout):
+    out.write('\t'.join(map(str, vals)) + "\n")
+
+
+def emit_all(vals, out=stdout):
     for val in vals:
-        emit(val)
+        emit(val, out=out)
+
 
 def status(msg, **opts):
     if opts:
         msg = msg % opts
     stderr.write("%s\n" % msg)
+
 
 cpdef Storage format_dataspec(msg, specs):
     # spec() =:= name | (name, fn)
@@ -107,6 +118,7 @@ cpdef Storage format_dataspec(msg, specs):
             name, fn = spec
             ret[name] = fn(val)
     return Storage(**ret)
+
 
 cdef class dataspec_m(object):
     cdef specs
@@ -133,28 +145,31 @@ cdef class dataspec_r(object):
                                 msgs))
         return wrapped_fn_r
 
-cpdef mr_map(process, fd = stdin):
+
+cpdef mr_map(process, fd=stdin, out=stdout):
     for line in fd:
         vals = line.strip('\n').split('\t')
         for res in process(vals):
-            emit(res)
+            emit(res, out=out)
 
-cpdef mr_reduce(process, fd = stdin):
+
+cpdef mr_reduce(process, fd=stdin, out=stdout):
     for key, vals in keyiter(fd):
         for res in process(key, vals):
-            emit(res)
+            emit(res, out=out)
 
-cpdef mr_foldl(process, init, emit = False, fd = stdin):
+
+cpdef mr_foldl(process, init, emit=False, fd=stdin, out=stdout):
     acc = init
     for key, vals in keyiter(fd):
         acc = process(key, vals, acc)
 
     if emit:
-        emit(acc)
+        emit(acc, out=out)
 
     return acc
 
-cpdef mr_max(process, int idx = 0, int num = 10, emit = False, fd = stdin):
+cpdef mr_max(process, int idx=0, int num=10, emit=False, fd=stdin, out=stdout):
     """a reducer that, in the process of reduction, only returns the
        top N results"""
     cdef list maxes = []
@@ -167,12 +182,14 @@ cpdef mr_max(process, int idx = 0, int num = 10, emit = False, fd = stdin):
             maxes = maxes[:num]
 
     if emit:
-        emit_all(maxes)
+        emit_all(maxes, out=out)
 
     return maxes
 
+
 cpdef _sbool(str x):
     return x == 't'
+
 
 def dataspec_m_rel(*fields):
     return dataspec_m(*((('rel_id', int),
@@ -182,6 +199,7 @@ def dataspec_m_rel(*fields):
                          'name',
                          ('timestamp', float))
                         + fields))
+
 
 def dataspec_m_thing(*fields):
     return dataspec_m(*((('thing_id', int),
@@ -193,7 +211,8 @@ def dataspec_m_thing(*fields):
                          ('timestamp', float))
                         + fields))
 
-def mr_reduce_max_per_key(sort_key, post = None, num = 10, fd = sys.stdin):
+
+def mr_reduce_max_per_key(sort_key, post=None, num=10, fd=stdin, out=stdout):
     def process(key, vals):
         cdef list maxes = nlargest(num, vals, key=sort_key)
 
@@ -206,4 +225,4 @@ def mr_reduce_max_per_key(sort_key, post = None, num = 10, fd = sys.stdin):
         return [ ([key] + item)
                  for item in maxes ]
 
-    return mr_reduce(process, fd = fd)
+    return mr_reduce(process, fd=fd, out=out)

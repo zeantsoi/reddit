@@ -24,9 +24,10 @@ import sys
 import multiprocessing
 
 from r2.lib.mr_tools._mr_tools import mr_map, mr_reduce, format_dataspec
-from r2.lib.mr_tools._mr_tools import stdin, emit
+from r2.lib.mr_tools._mr_tools import emit
 
-def join_things(fields, deleted=False, spam=True):
+
+def join_things(fields, deleted=False, spam=True, fd=sys.stdin):
     """A reducer that joins thing table dumps and data table dumps"""
     # Because of how Python handles scope, if we want to modify these outside
     # the closure function below, they need to be inside a mutable object.
@@ -77,7 +78,7 @@ def join_things(fields, deleted=False, spam=True):
         else:
             counters['skipped'] += 1
 
-    mr_reduce(process)
+    mr_reduce(process, fd=fd)
     # Print to stderr to avoid getting this caught up in the pipe of
     # compute_time_listings.
     print >> sys.stderr, '%s items processed, %s skipped' % (
@@ -95,23 +96,39 @@ class Mapper(object):
         vals = line.split('\t')
         return list(self.process(vals)) # a list of tuples
 
-def mr_map_parallel(processor, fd = stdin,
-                    workers = multiprocessing.cpu_count(),
-                    chunk_size = 1000):
-    # `process` must be an instance of Mapper and promise that it is
-    # safe to execute in a fork()d process.  Also note that we fuck
-    # up the result ordering, but relying on result ordering breaks
-    # the mapreduce contract anyway. Note also that like many of the
-    # mr_tools functions, we break on newlines in the emitted output
 
+def mr_map_parallel(
+    processor,
+    fd=sys.stdin,
+    workers=multiprocessing.cpu_count(),
+    chunk_size=1000,
+    out=sys.stdout,
+):
+    """Map in parallel.
+
+    `processor` must be an instance of Mapper and promise that it is
+    safe to execute in a fork()d process.  Also note that we fuck
+    up the result ordering, but relying on result ordering breaks
+    the mapreduce contract anyway. Note also that like many of the
+    mr_tools functions, we break on newlines in the emitted output
+
+    :param processor: an multiprocessing-safe instance of :py:class:`Mapper`
+    :param int workers: Number of concurrent workers.
+    :param int chunk_size:
+    :param file fd: Input data stream (default is stdin)
+    :param file out: Output data stream (default is stdout)
+
+
+    :type processor: :py:class:`Mapper`
+    """
     if workers == 1:
-        return mr_map(process, fd=fd)
+        return mr_map(processor, fd=fd, out=out)
 
     pool = multiprocessing.Pool(workers)
 
     for res in pool.imap_unordered(processor, fd, chunk_size):
         for subres in res:
-            emit(subres)
+            emit(subres, out=out)
 
 def test():
     from r2.lib.mr_tools._mr_tools import keyiter
@@ -121,9 +138,11 @@ def test():
         for val in vals:
             print '\t', val
 
+
 class UpperMapper(Mapper):
     def process(self, values):
         yield map(str.upper, values)
 
-def test_parallel():
-    return mr_map_parallel(UpperMapper())
+
+def test_parallel(fd=sys.stdin, out=sys.stdout):
+    return mr_map_parallel(UpperMapper(), fd=fd, out=out)
