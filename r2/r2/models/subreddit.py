@@ -662,9 +662,18 @@ class Subreddit(Thing, Printable, BaseSite):
 
     activity_contexts = (
         "logged_in",
+        "logged_out",
     )
     SubredditActivity = collections.namedtuple(
         "SubredditActivity", activity_contexts)
+
+    def _activity_context_id(self, context):
+        assert context in self.activity_contexts
+
+        if context == "logged_in":
+            return self._fullname
+        elif context == "logged_out":
+            return self._fullname + "_guests"
 
     def record_visitor_activity(self, context, visitor_id):
         """Record a visit to this subreddit in the activity service.
@@ -680,14 +689,13 @@ class Subreddit(Thing, Printable, BaseSite):
         """
         assert context in self.activity_contexts
 
-        # we don't actually support other contexts yet
-        assert self.activity_contexts == ("logged_in",)
-
         if not c.activity_service:
             return
 
+        context_id = self._activity_context_id(context)
+
         try:
-            c.activity_service.record_activity(self._fullname, visitor_id)
+            c.activity_service.record_activity(context_id, visitor_id)
         except (TApplicationException, TProtocolException, TTransportException):
             pass
 
@@ -697,20 +705,23 @@ class Subreddit(Thing, Printable, BaseSite):
         :returns: a named tuple of activity information for each context.
 
         """
-        # we don't actually support other contexts yet
-        assert self.activity_contexts == ("logged_in",)
-
         if not c.activity_service:
             return None
 
+        context_by_id = {self._activity_context_id(context): context
+                         for context in self.activity_contexts}
+
         try:
-            # TODO: support batch lookup of multiple contexts (requires changes
-            # to activity service)
             with c.activity_service.retrying(attempts=4, budget=0.1) as svc:
-                activity = svc.count_activity(self._fullname)
-            return self.SubredditActivity(activity)
+                activity_by_id = svc.count_activity_multi(context_by_id.keys())
         except (TApplicationException, TProtocolException, TTransportException):
             return None
+
+        activity_by_context = dict.fromkeys(self.activity_contexts)
+        activity_by_context.update((context_by_id[id], activity)
+                                   for id, activity in activity_by_id.items())
+
+        return self.SubredditActivity(**activity_by_context)
 
     def spammy(self):
         return self._spam

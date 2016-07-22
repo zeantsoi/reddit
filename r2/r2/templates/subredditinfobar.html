@@ -62,6 +62,12 @@
     ${unsafe(Score.users_here_now(thing.active_visitors.logged_in.count, prepend='~' if thing.active_visitors.logged_in.is_fuzzed else ''))}
   </p>
     %endif
+
+    %if thing.active_visitors and thing.active_visitors.logged_out and feature.is_enabled("loggedout_activity"):
+  <p class="users-online ${'fuzzed' if thing.active_visitors.logged_out.is_fuzzed else ''}" title="${_('logged-out users viewing this subreddit in the past 15 minutes')}">
+    ${unsafe(Score.users_here_now(thing.active_visitors.logged_out.count, prepend='~' if thing.active_visitors.logged_out.is_fuzzed else ''))}
+  </p>
+    %endif
   %endif
 
   %if thing.sr.moderator:

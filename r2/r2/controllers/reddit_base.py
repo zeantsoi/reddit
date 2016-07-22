@@ -1084,6 +1084,9 @@ class MinimalController(BaseController):
         if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
             if c.user_is_loggedin:
                 c.site.record_visitor_activity("logged_in", c.user._fullname)
+            else:
+                if c.loid.serializable:
+                    c.site.record_visitor_activity("logged_out", c.loid.loid)
 
         if self.should_update_last_visit():
             c.user.update_last_visit(c.start_time)
