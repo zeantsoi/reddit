@@ -26,8 +26,15 @@ import multiprocessing
 from r2.lib.mr_tools._mr_tools import mr_map, mr_reduce, format_dataspec
 from r2.lib.mr_tools._mr_tools import emit
 
+STDIN = sys.stdin
+STDOUT = sys.stdout
+STDERR = sys.stderr
+NCPUS = multiprocessing.cpu_count()
 
-def join_things(fields, deleted=False, spam=True, fd=sys.stdin):
+
+def join_things(
+    fields, deleted=False, spam=True, fd=STDIN, out=STDOUT, err=STDERR
+):
     """A reducer that joins thing table dumps and data table dumps"""
     # Because of how Python handles scope, if we want to modify these outside
     # the closure function below, they need to be inside a mutable object.
@@ -78,11 +85,15 @@ def join_things(fields, deleted=False, spam=True, fd=sys.stdin):
         else:
             counters['skipped'] += 1
 
-    mr_reduce(process, fd=fd)
+    mr_reduce(process, fd=fd, out=out)
     # Print to stderr to avoid getting this caught up in the pipe of
     # compute_time_listings.
-    print >> sys.stderr, '%s items processed, %s skipped' % (
-                         counters['processed'], counters['skipped'])
+    err.write(
+        '%s items processed, %s skipped\n' % (
+            counters['processed'], counters['skipped']
+        )
+    )
+
 
 class Mapper(object):
     def __init__(self):
@@ -99,10 +110,10 @@ class Mapper(object):
 
 def mr_map_parallel(
     processor,
-    fd=sys.stdin,
-    workers=multiprocessing.cpu_count(),
+    fd=STDIN,
+    workers=NCPUS,
     chunk_size=1000,
-    out=sys.stdout,
+    out=STDOUT,
 ):
     """Map in parallel.
 
@@ -114,11 +125,9 @@ def mr_map_parallel(
 
     :param processor: an multiprocessing-safe instance of :py:class:`Mapper`
     :param int workers: Number of concurrent workers.
-    :param int chunk_size:
+    :param int chunk_size: job size per worker
     :param file fd: Input data stream (default is stdin)
     :param file out: Output data stream (default is stdout)
-
-
     :type processor: :py:class:`Mapper`
     """
     if workers == 1:
@@ -130,19 +139,11 @@ def mr_map_parallel(
         for subres in res:
             emit(subres, out=out)
 
-def test():
-    from r2.lib.mr_tools._mr_tools import keyiter
-
-    for key, vals in keyiter():
-        print key, vals
-        for val in vals:
-            print '\t', val
-
 
 class UpperMapper(Mapper):
     def process(self, values):
         yield map(str.upper, values)
 
 
-def test_parallel(fd=sys.stdin, out=sys.stdout):
+def test_parallel(fd=STDIN, out=STDOUT):
     return mr_map_parallel(UpperMapper(), fd=fd, out=out)
