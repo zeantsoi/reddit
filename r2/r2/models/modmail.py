@@ -322,9 +322,6 @@ class ModmailConversation(Base):
             if state == 'new':
                 query = query.filter(cls.is_auto.is_(False))
 
-        if limit:
-            query = query.limit(limit).from_self()
-
         # If viewer context is not passed just return the results
         # without adding the last_read attribute
         if not viewer:
@@ -362,6 +359,9 @@ class ModmailConversation(Base):
             query = query.order_by(sql.desc(cls.last_user_update))
         else:
             query = query.order_by(sql.desc(cls.last_updated))
+
+        if limit:
+            query = query.limit(limit)
 
         results = []
 
