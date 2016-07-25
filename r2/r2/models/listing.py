@@ -342,9 +342,9 @@ class LinkListing(Listing):
         )
 
         self.in_feed_ads_enabled = (
+            promote.headlines_enabled(site=c.site, user=c.user) and
+            kw.get("show_promo_in_listing", False) and
             promote.ads_feature_enabled("promoted_links_in_feed")
-            and promote.headlines_enabled(site=c.site, user=c.user)
-            and kw.get("show_promo_in_listing", False)
         )
         self.show_nums = kw.get('show_nums', False)
         self.promo_site_path = promote.get_site_path(c.site)
