@@ -26,6 +26,7 @@
 # list. I'll call it a feature.
 
 import sys
+from collections import OrderedDict
 
 from r2.models import Link, Comment
 from r2.lib.db.sorts import epoch_seconds, score, controversy
@@ -35,25 +36,35 @@ from r2.lib.utils import timeago, UrlParser
 from r2.lib.jsontemplates import make_fullname # what a strange place
                                                # for this function
 
+STDIN = sys.stdin
+STDOUT = sys.stdout
+STDERR = sys.stderr
+
+
 thingcls_by_name = {
     "link": Link,
     "comment": Comment,
 }
 data_fields_by_name = {
-    "link": {
-        "url": str,
-        "sr_id": int,
-        "author_id": int,
-    },
-    "comment": {
-        "sr_id": int,
-        "author_id": int,
-    },
+    "link": OrderedDict((
+        ("author_id", int),
+        ("sr_id", int),
+        ("url", str),
+    )),
+    "comment": OrderedDict((
+        ("author_id", int),
+        ("sr_id", int),
+    )),
 }
 
 
-def join_things(thing_type):
-    mr_tools.join_things(data_fields_by_name[thing_type].keys())
+def join_things(thing_type, fd=STDIN, out=STDOUT, err=STDERR):
+    mr_tools.join_things(
+        data_fields_by_name[thing_type].keys(),
+        fd=fd,
+        out=out,
+        err=err,
+    )
 
 
 def _get_cutoffs(intervals):
@@ -67,7 +78,7 @@ def _get_cutoffs(intervals):
     return cutoffs
 
 
-def time_listings(intervals, thing_type):
+def time_listings(intervals, thing_type, fd=STDIN, out=STDOUT):
     cutoff_by_interval = _get_cutoffs(intervals)
 
     @mr_tools.dataspec_m_thing(*data_fields_by_name[thing_type].items())
@@ -110,12 +121,11 @@ def time_listings(intervals, thing_type):
                         yield ("domain/link/controversial/%s/%s" % (interval, domain),
                                thing_controversy, thing.timestamp, fname)
 
-    mr_tools.mr_map(process)
+    mr_tools.mr_map(process, fd=fd, out=out)
 
 
 def store_keys(key, maxes):
     category, thing_cls, sort, time, id = key.split("/")
-
     query = None
     if category == "user":
         if thing_cls == "link":
@@ -141,16 +151,16 @@ def store_keys(key, maxes):
     query._replace(item_tuples, lock=lock)
 
 
-def write_permacache(fd=sys.stdin, out=sys.stdout):
+def write_permacache(fd=STDIN, out=STDOUT, num=1000):
     mr_tools.mr_reduce_max_per_key(
-        lambda x: map(float, x[:-1]), num=1000,
+        lambda x: map(float, x[:-1]), num=num,
         post=store_keys,
         fd=fd,
         out=out
     )
 
 
-def reduce_listings(fd=sys.stdin, out=sys.stdout):
+def reduce_listings(fd=STDIN, out=STDOUT):
     # like write_permacache, but just sends the reduced version of the listing
     # to stdout instead of to the permacache. It's handy for debugging to see
     # the final result before it's written out
