@@ -923,7 +923,10 @@ class Subreddit(Thing, Printable, BaseSite):
         if self.type in ('public', 'restricted',
                          'gold_restricted', 'archived'):
             return True
-        elif c.user_is_loggedin:
+        elif (
+            isinstance(user, Account) and
+            not isinstance(user, FakeAccount)
+        ):
             if self.type == 'gold_only':
                 return (user.gold or 
                     user.gold_charter or 

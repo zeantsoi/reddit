@@ -84,9 +84,6 @@ def monitor_mentions(comment):
     if len(usernames) > g.butler_max_mentions:
         return
 
-    # Subreddit.can_view stupidly requires this.
-    c.user_is_loggedin = True
-
     for username in usernames:
         try:
             account = Account._by_name(username)
