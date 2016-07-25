@@ -252,14 +252,8 @@ class RedditTestCase(TestCase):
             'platform_version': None,
             'bot': None
         }
-        self.agent_parser_mock = self.autopatch(
-            eventcollector, "parse_agent",
-            return_value=self.user_agent_parsed)
 
     assert_same_dict = staticmethod(assert_same_dict)
-
-    def patch_parsed_user_agent(self, parsed_agent):
-        self.agent_parser_mock.return_value = parsed_agent
 
     def autopatch(self, obj, attr, *a, **kw):
         """Helper method to patch an object and automatically cleanup."""

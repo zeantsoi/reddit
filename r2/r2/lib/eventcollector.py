@@ -1591,6 +1591,7 @@ class EventQueue(object):
         link_author = link.author_slow
         actor_is_author = link_author._id == user._id
         target_domain = urlparse(link.url).hostname
+        app_name = request.parsed_agent.app_name or request.host
 
         e = Event(
             topic='flatlist_events',
@@ -1598,6 +1599,7 @@ class EventQueue(object):
             request=request,
             context=context,
             data={
+                'app_name': app_name,
                 'base_url': base_url,
                 'is_target_author': actor_is_author,
                 'is_sr_moderator': actor_is_moderator,
@@ -1614,8 +1616,6 @@ class EventQueue(object):
                 'user_name': user.name,
             }
         )
-        a = e.payload['user_agent_parsed'].get('app_name') or request.host
-        e.add('app_name', a)
         self.save_event(e)
 
 

@@ -480,8 +480,8 @@ class TestEventCollector(RedditTestCase):
         actor = FakeAccount(_id=123456, name="Hider")
         link = MagicMock(name="link")
         context = MagicMock(name="context")
-        request = self.get_mock_request_with_headers(
-            Referer="https://www.reddit.com/")
+        request = MagicMock(name="request")
+        request.parsed_agent.app_name = None
 
         base_url = '/base/url'
         request.referrer = "https://www.reddit.com/"
@@ -506,7 +506,7 @@ class TestEventCollector(RedditTestCase):
                     'process_notes': 'hide',
                     'sr_id': parent_sr._id,
                     'sr_name': parent_sr.name,
-                    'target_created_ts': self.created_ts_mock,
+                    'target_created_ts': 1,
                     'target_author_name': link_author.name,
                     'target_fullname': link._fullname,
                     'target_id': link._id,
@@ -525,11 +525,7 @@ class TestEventCollector(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'referrer_url': request.headers.get('Referer'),
                     'user_agent': request.user_agent,
-                    'user_agent_parsed': {
-                        'platform_name': None,
-                        'platform_version': None,
-                        'bot': None
-                    },
+                    'user_agent_parsed': request.parsed_agent.to_dict(),
                     'geoip_country': context.location,
                 },
             }
@@ -539,20 +535,16 @@ class TestEventCollector(RedditTestCase):
         actor = FakeAccount(_id=123456, name="Hider")
         link = MagicMock(name="link")
         context = MagicMock(name="context")
-        request = self.get_mock_request_with_headers(
-            Referer='https://www.reddit.com')
+        request = MagicMock(name="request")
 
         base_url = '/'
         link.url = 'https://www.reddit.com/r/testing/comments/13st/test'
-
+        app_name = 'reddit is fun'
+        request.parsed_agent.app_name = app_name
         parent_sr = link.subreddit_slow
         parent_sr._id = link.sr_id
         parent_sr.is_moderator = lambda u: None
         link_author = link.author_slow
-
-        app_name = 'reddit is fun'
-        parsed_agent = {'app_name': app_name}
-        self.patch_parsed_user_agent(parsed_agent)
 
         g.events.hide_link_event(actor, link, base_url,
                                  request=request, context=context)
@@ -568,7 +560,7 @@ class TestEventCollector(RedditTestCase):
                     'process_notes': 'hide',
                     'sr_id': parent_sr._id,
                     'sr_name': parent_sr.name,
-                    'target_created_ts': self.created_ts_mock,
+                    'target_created_ts': 1,
                     'target_author_name': link_author.name,
                     'target_fullname': link._fullname,
                     'target_id': link._id,
@@ -587,18 +579,19 @@ class TestEventCollector(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'referrer_url': request.headers.get('Referer'),
                     'user_agent': request.user_agent,
-                    'user_agent_parsed': parsed_agent,
+                    'user_agent_parsed': request.parsed_agent.to_dict(),
                     'geoip_country': context.location,
                 },
             }
         )
 
     def test_mod_link_hide_event(self):
+        host = "reddit.com"
         actor = FakeAccount(_id=123456, name="Hider")
         link = MagicMock(name="link")
         context = MagicMock(name="context")
-        request = self.get_mock_request_with_headers(
-            Referer="https://www.reddit.com/")
+        request = MagicMock(name="request", host=host)
+        request.parsed_agent.app_name = None
 
         base_url = '/base/url'
         request.referrer = "https://www.reddit.com/"
@@ -616,14 +609,14 @@ class TestEventCollector(RedditTestCase):
                 'event_topic': 'flatlist_events',
                 'event_type': 'ss.post_flatlist',
                 'payload': {
-                    'app_name': request.host,
+                    'app_name': host,
                     'base_url': base_url,
                     'is_target_author': False,
                     'is_sr_moderator': True,
                     'process_notes': 'hide',
                     'sr_id': parent_sr._id,
                     'sr_name': parent_sr.name,
-                    'target_created_ts': self.created_ts_mock,
+                    'target_created_ts': 1,
                     'target_author_name': link_author.name,
                     'target_fullname': link._fullname,
                     'target_id': link._id,
@@ -642,13 +635,8 @@ class TestEventCollector(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'referrer_url': request.headers.get('Referer'),
                     'user_agent': request.user_agent,
-                    'user_agent_parsed': self.user_agent_parsed,
+                    'user_agent_parsed': request.parsed_agent.to_dict(),
                     'geoip_country': context.location,
                 },
             }
         )
-
-    def get_mock_request_with_headers(self, **header_fields):
-        headers = defaultdict(lambda: MagicMock(name='dictvalue'),
-                              header_fields)
-        return MagicMock(name='request', headers=headers)
