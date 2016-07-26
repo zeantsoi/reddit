@@ -179,7 +179,7 @@ title: "how can I hide content?",
    action: {
      type: "show-details",
      content: [
-       "You can hide content by clicking on the hide button below any post on the site. This will remove" +
+       "You can hide content by clicking on the hide button below any post on the site. This will remove " +
        "the content from your view.",
        "You can view and unhide your hidden posts by clicking on the hidden tab in your account overview.",],
    },
