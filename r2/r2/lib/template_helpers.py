@@ -377,6 +377,7 @@ def js_config(extra_config=None):
         "live_orangereds_pref": c.user.pref_live_orangereds,
         "pref_email_messages": logged and c.user.pref_email_messages,
         "feature_thumbnail_expando": thumbnail_expando,
+        "feature_double_sidebar": feature.is_enabled('double_sidebar'),
     }
 
     if feature.is_enabled("eu_cookie_policy"):

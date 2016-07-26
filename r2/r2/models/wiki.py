@@ -34,6 +34,7 @@ from pylons import app_globals as g
 from pylons.controllers.util import abort
 
 from ConfigParser import SafeConfigParser
+from r2.config import feature
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.lib.utils import epoch_timestamp
@@ -381,6 +382,9 @@ class WikiPage(tdb_cassandra.Thing):
             return
         force = True if previous is None else force
         max_length = special_length_restrictions_bytes.get(self.name, MAX_PAGE_LENGTH_BYTES)
+        if (self.name == 'config/sidebar' and
+                feature.is_enabled('double_sidebar')):
+            max_length *= 2
         if len(content) > max_length:
             raise ContentLengthError(max_length)
         

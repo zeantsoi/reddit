@@ -663,6 +663,8 @@ class VMarkdownLength(VMarkdown):
         self.length_error = length_error
 
     def run(self, text, text2=''):
+        if feature.is_enabled("double_sidebar"):
+            self.max_length = 10240
         text = text or text2
         text = VLength(self.param, self.max_length,
                        empty_error=self.empty_error,

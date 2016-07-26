@@ -25,7 +25,7 @@
    from r2.lib.filters import scriptsafe_dumps
  %>
 
-<div id="${thing.frame_id}"></div>
+<div id="${thing.frame_id}" class="${thing.frame_class}"></div>
 
 <script>
   <%
@@ -97,7 +97,8 @@
       }
       adLoaded = true;
 
-      var $ad = $('#' + ${scriptsafe_dumps(thing.frame_id)});
+      var frame_id = ${scriptsafe_dumps(thing.frame_id)};
+      var $ad = $('#' + frame_id);
       var iframe = document.createElement('iframe');
       var parser = document.createElement('a');
       parser.href = ${scriptsafe_dumps(thing.ad_url)};
@@ -107,6 +108,12 @@
       if (!r.config.logged) {
         data.properties.age_hours = age;
       }
+
+      if (r.config.feature_double_sidebar) {
+        data.properties.double_sidebar = true;
+      }
+
+      data.properties.frame_id = frame_id;
 
       var pageType;
 
@@ -128,7 +135,7 @@
 
       iframe.frameborder = 0;
       iframe.scrolling = 'no';
-      iframe.name = ${scriptsafe_dumps(thing.frame_id)};
+      iframe.name = frame_id;
       iframe.src = parser.href;
       iframe.style.border = '0';
       iframe.style.height = '100%';
@@ -143,9 +150,7 @@
       if ($ad.height() === 0 ||
           $ad.width() === 0 ||
           $ad.offset().left === 0) {
-
         r.analytics.adblockEvent('banners');
-
         $('.footer').append(
           '<img alt="" src="' +
             ${scriptsafe_dumps(tracker_url)} +
@@ -154,12 +159,34 @@
       }
     }
 
-    timeout = setTimeout(loadAd, ${scriptsafe_dumps(thing.usermatch_timeout_ms)});
+    var frame_id = ${scriptsafe_dumps(thing.frame_id)};
+    /* Start loading ad if it's the main ad, otherwise wait for main ad to
+      finish requesting ads from Adzerk. */
+    if (frame_id === 'ad_main'){
+      timeout = setTimeout(loadAd, ${scriptsafe_dumps(thing.usermatch_timeout_ms)});
+      if (r.config.feature_ads_user_matching && !window.DO_NOT_TRACK) {
+        r.frames.receiveMessageOnce('userMatched.gtm', loadAd);
+      } else {
+        loadAd();
+      }
+    } else if (frame_id === 'ad_main_top') {
+      window.loadAd = loadAd;
+      $(window).on('message', function(e) {
+        e = e.originalEvent;
+        if (!new RegExp('^http(s)?:\\/\\/' + r.config.media_domain, 'i').test(e.origin)) {
+          return;
+        }
 
-    if (r.config.feature_ads_user_matching && !window.DO_NOT_TRACK) {
-      r.frames.receiveMessageOnce('userMatched.gtm', loadAd);
-    } else {
-      loadAd();
+        var data = e.data;
+
+        if (typeof data === 'string') {
+          var message = data.split(':');
+
+          if (message[0] == 'ados.createAdFrame' && message[1] == 'top') {
+            loadAd();
+          }
+        }
+      });
     }
   });
 </script>

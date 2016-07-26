@@ -96,7 +96,13 @@ from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
-from r2.models.wiki import WikiPage, ImagesByWikiPage, DeletedImagesByWikiPage
+from r2.models.wiki import (
+    WikiPage,
+    ImagesByWikiPage,
+    DeletedImagesByWikiPage,
+    MAX_PAGE_LENGTH_BYTES,
+    special_length_restrictions_bytes,
+)
 from r2.lib.db import tdb_cassandra, queries
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
@@ -738,7 +744,18 @@ class Reddit(Templated):
             notebar = AdminNotesSidebar('subreddit', c.site.name)
             ps.append(notebar)
 
-        if not c.user.pref_hide_ads or not c.user.gold:
+        no_ads_yet = True
+        show_adbox = promote.banners_enabled(site=c.site, user=c.user)
+
+        if (not isinstance(c.site, FakeSubreddit) and show_adbox and
+                promote.ads_feature_enabled("double_sidebar")):
+            ps.append(Ads(
+                    frame_id="ad_main_top",
+                    displayed_things=self.displayed_things,
+                    link=getattr(self, "link", None)
+                ))
+            no_ads_yet = False
+        elif show_adbox and not promote.ads_feature_enabled("double_sidebar"):
             ps.append(SponsorshipBox())
 
         if (isinstance(c.site, Filtered) and not
@@ -878,9 +895,6 @@ class Reddit(Templated):
 
                 for button in buttons_list:
                     ps.append(button)
-
-        no_ads_yet = True
-        show_adbox = promote.banners_enabled(site=c.site, user=c.user)
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit):
@@ -3295,6 +3309,11 @@ class CreateSubreddit(Templated):
         # feature flag was changed to split it off from user preferences
         # keeping the same attribute name to unnecessary transient errors
         feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_subreddit_setting")
+        if feature.is_enabled("double_sidebar"):
+            self.max_sidebar_chars = 10240
+        else:
+            self.max_sidebar_chars = 5120
+
         Templated.__init__(self,
                            site=site,
                            name=name,
@@ -4176,10 +4195,11 @@ class AdminGold(Templated):
 
 
 class Ads(Templated):
-    def __init__(self, displayed_things=None, link=None):
+    def __init__(self, frame_id="ad-frame", frame_class="ad300x250",
+                 displayed_things=None, link=None):
         Templated.__init__(self)
         self.ad_url = g.ad_domain + "/ads/"
-        self.frame_id = "ad-frame"
+        self.frame_id = frame_id
         self.usermatch_timeout_ms = g.live_config.get(
             "ads_usermatch_timeout_ms", 1000)
 
