@@ -188,19 +188,6 @@ ${md(strings.traffic_promoted_link_explanation % dict(interval=thing.interval))}
     ${last_modified_message()}
 %endif
 
-%if thing.has_adserver_reporting and thing.use_adserver_reporting:
-  <div class="md">
-    <p>
-      <em>
-        ${text_with_links(
-            _("NOTE: We've recently improved the accuracy of our reporting, to temporarily view the old numbers %(link)s."),
-            link=dict(link_text="click here", path=request.path + "?feature=legacy_ad_reporting"),
-        )}
-      </em>
-    </p>
-  </div>
-%endif
-
 ${md(strings.traffic_help_email % dict(email=g.selfserve_support_email), wrap=True)}
 
 ${make_campaign_table()}
