@@ -799,6 +799,20 @@ class Account(Thing):
         """
         return 'force_password_reset' in self._t
 
+    @property
+    def permalink(self):
+        return "/user/%s" % self.name
+
+    def make_permalink(self, force_domain=False):
+        from r2.lib.template_helpers import get_domain
+        p = self.permalink
+        if force_domain:
+            permalink_domain = get_domain(subreddit=False)
+            res = "%s://%s%s" % (g.default_scheme, permalink_domain, p)
+        else:
+            res = p
+        return res
+
     def add_note(self, note, author="<automated>"):
         """Add an admin note about the user."""
         from r2.models.admin_notes import AdminNotesBySystem
