@@ -227,7 +227,8 @@ class ModmailConversation(Base):
         subquery = subquery.outerjoin(
                 ModmailConversationUnreadState,
                 and_(ModmailConversationUnreadState.account_id == user._id,
-                     ModmailConversationUnreadState.conversation_id == cls.id))
+                     ModmailConversationUnreadState.conversation_id == cls.id,
+                     ModmailConversationUnreadState.active.is_(True)))
 
         subquery = subquery.filter(
                 cls.owner_fullname.in_(sr_fullnames),
