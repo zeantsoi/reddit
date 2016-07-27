@@ -93,7 +93,7 @@ PREFS_VALIDATORS = dict(
     pref_legacy_search=VBoolean('legacy_search'),
     pref_threaded_modmail=VBoolean('threaded_modmail', False),
     pref_allow_clicktracking=VBoolean('allow_clicktracking'),
-    pref_live_orangereds=VBoolean('live_orangereds', True),
+    pref_live_orangereds=VBoolean('live_orangereds'),
 )
 
 
@@ -143,6 +143,9 @@ def filter_prefs(prefs, user):
     if not user.gold:
         del prefs['pref_hide_ads']
         del prefs['pref_show_gold_expiration']
+
+    if not feature.is_enabled("live_orangereds"):
+        del prefs["pref_live_orangereds"]
 
     if not (user.gold or user.is_moderator_somewhere):
         prefs['pref_highlight_new_comments'] = True
