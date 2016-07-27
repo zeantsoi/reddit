@@ -603,7 +603,7 @@ class ModmailConversation(Base):
             result_dict.update({
                 'objIds': self.ordered_msg_and_action_ids,
                 'messages': {
-                    message.id: message.to_serializable(
+                    to36(message.id): message.to_serializable(
                         entity,
                         authors_dict.get(message.author_id),
                         current_user
@@ -611,7 +611,7 @@ class ModmailConversation(Base):
                     for message in self.messages
                 },
                 'modActions': {
-                    mod_action.id: mod_action.to_serializable()
+                    to36(mod_action.id): mod_action.to_serializable()
                     for mod_action in self.mod_actions
                 }
             })
