@@ -3071,10 +3071,6 @@ class ApiController(RedditController):
         description = kw.pop('description')
         submit_text = kw.pop('submit_text')
 
-        # If not link type, don't change the allow_images setting
-        if kw["link_type"] != "link":
-            kw.pop("allow_images")
-
         def update_wiki_text(sr):
             error = False
             apply_wikid_field(
