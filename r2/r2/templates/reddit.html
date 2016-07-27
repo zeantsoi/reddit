@@ -56,6 +56,9 @@
   %if getattr(thing, "feature_new_expando_icons", False):
     ${less_stylesheet("expando.less")}
   %endif
+  %if getattr(thing, "show_survey", False):
+    ${less_stylesheet("survey.less")}
+  %endif
 </%def>
 
 <%def name="sr_stylesheets()">

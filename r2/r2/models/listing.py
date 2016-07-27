@@ -42,6 +42,7 @@ from collections import namedtuple
 from copy import deepcopy, copy
 from random import randint
 import time
+import ast
 
 
 class Listing(object):
@@ -105,6 +106,13 @@ class Listing(object):
             thing.rowstyle_cls = getattr(thing, 'rowstyle_cls', "")
             thing.rowstyle_cls += ' ' + ('even' if (count % 2) else 'odd')
             thing.rowstyle = CachedVariable("rowstyle")
+
+        survey_action_taken = c.cookies.get('survey_action_taken')
+        if (feature.is_enabled('show_survey') and
+                not survey_action_taken and
+                g.live_config['survey_info']):
+            self.survey = ast.literal_eval(g.live_config['survey_info'])
+            self.show_survey = True
 
         #TODO: need name for template -- must be better way
         return Wrapped(self)

@@ -59,4 +59,30 @@
   %if not thing.things:
     <p id="noresults" class="error">${_("there doesn't seem to be anything here")}</p>
   %endif
+  %if getattr(thing, 'show_survey', False):
+    <% from r2.lib import js %>
+    ${survey_overlay()}
+    ${unsafe(js.use("survey"))}
+  %endif
 </div>
+
+<%def name="survey_overlay()">
+  <div class="survey-overlay" data-name="${thing.survey['name']}">
+    <div class="survey-title">
+      <div class="survey-overlay-snoo"></div>
+      <div class="survey-title-text">
+        ${_('Help us improve Reddit!')}
+      </div>
+    </div>
+    <div class="survey-buttons">
+      <div class="accept-survey">
+        <a href="${thing.survey['url']}" target="_blank">
+          <button class="btn survey-accept">${_("Answer a few questions")}</button>
+        </a>
+      </div>
+      <div class="dismiss-survey">
+        <button class="btn survey-decline">${_('No thanks')}</button>
+      </div>
+    </div>
+  </div>
+</%def>

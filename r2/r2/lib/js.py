@@ -665,7 +665,8 @@ module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
     "expando/nsfwflow.js",
 )
 
-module["reddit"] = LocalizedModule("reddit.js",
+module["reddit"] = LocalizedModule(
+    "reddit.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
     "custom-event.js",
@@ -739,6 +740,11 @@ module["newlink-image-upload"] = Module("newlink-image-upload.js",
     "newlink-image-upload.js",
     "websocket.js",
     filter_module=_submodule["reddit-main"],
+)
+
+module["survey"] = Module(
+    "survey.js",
+    "survey.js"
 )
 
 module["modtools"] = Module("modtools.js",

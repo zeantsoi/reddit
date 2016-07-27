@@ -335,6 +335,9 @@ class Reddit(Templated):
         if feature.is_enabled("new_expando_icons"):
             self.feature_new_expando_icons = True
 
+        if feature.is_enabled("show_survey"):
+            self.show_survey = True
+
         if (feature.is_enabled("inline_image_previews_logged_in") or
             feature.is_enabled("inline_image_previews_logged_out")):
             self.feature_expando_nsfw_flow = True
