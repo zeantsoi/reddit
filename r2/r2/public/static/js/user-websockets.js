@@ -8,7 +8,7 @@ $(function() {
   var orangeredTimestampKey = r.config.user_id + '-orangered-ts';
   var websocketUrl = r.config.user_websocket_url;
   var millisecondsToBatch = 30000;
-  var messageNotificationMilliseconds = 3000;
+  var messageNotificationMilliseconds = 7000;
 
   // New message or comment reply -- send browser notification
   function flashNewMessage() {
