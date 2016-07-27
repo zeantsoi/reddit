@@ -1777,7 +1777,8 @@ def srnames_from_site(user, site, include_subscriptions=True, limit=50):
 def keywords_from_context(
         user, site,
         include_subscriptions=True,
-        displayed_things=[]
+        displayed_things=[],
+        block_programmatic=False,
     ):
 
     is_frontpage = isinstance(site, FakeSubreddit)
@@ -1823,7 +1824,11 @@ def keywords_from_context(
                              for word in link.keyword_targets.split(',')])            
 
     hook = hooks.get_hook("ads.get_additional_keywords")
-    additional_keywords = hook.call_until_return(user=user, site=site)
+    additional_keywords = hook.call_until_return(
+        user=user,
+        site=site,
+        block_programmatic=block_programmatic,
+    )
     if additional_keywords is not None:
         keywords.update(additional_keywords)
 
@@ -2053,6 +2058,11 @@ def new_payment_method(user, ip, address, link):
 def failed_payment_method(user, link):
     user._incr('num_failed_payments')
     hooks.get_hook('promote.failed_payment').call(user=user, link=link)
+
+
+def block_programmatic(thing, should_block):
+    thing.block_programmatic = should_block
+    thing._commit()
 
 
 def process_promo_q():

@@ -121,5 +121,9 @@ class AdminDetailsBar(Templated):
     pass
 
 
+class SponsorToolsBar(Templated):
+    pass
+
+
 if config['r2.import_private']:
     from r2admin.lib.pages import *

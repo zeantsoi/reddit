@@ -835,6 +835,11 @@ function toggle_clear_suggested_sort(elem) {
   $(form).children().toggle();
 }
 
+function block_programmatic(elem) {
+    $.request('block_programmatic',
+              { thing_fullname: elem.value, should_block: elem.checked });
+}
+
 function set_suggested_sort(elem, value) {
   $(elem).parents('form').first().find('input[name="sort"]').val(value);
   change_state(elem, "set_suggested_sort");

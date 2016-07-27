@@ -2021,3 +2021,13 @@ class PromoteApiController(ApiController):
 
         l._commit()
         form.redirect(promote.promo_edit_url(l))            
+
+    @validate(
+        VSponsorAdmin(),
+        VModhash(),
+        thing=VByName('thing_fullname'),
+        should_block=VBoolean('should_block'),
+    )
+    def POST_block_programmatic(self, thing, should_block):
+        promote.block_programmatic(thing, should_block)
+        return

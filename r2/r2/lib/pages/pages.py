@@ -1890,9 +1890,9 @@ class LinkInfoPage(Reddit):
                  *a, **kw):
 
         c.permalink_page = True
-        expand_children = kw.get("expand_children", not bool(comment))
+        self.expand_children = kw.get("expand_children", not bool(comment))
 
-        wrapper = default_thing_wrapper(expand_children=expand_children)
+        wrapper = default_thing_wrapper(expand_children=self.expand_children)
 
 
         # link_listing will be the one-element listing at the top
@@ -2194,6 +2194,10 @@ class LinkInfoPage(Reddit):
                 rb.insert(1, AdminLinkInfoBar(a=self.link))
             else:
                 rb.insert(1, LinkInfoBar(a=self.link))
+
+        if c.user_is_sponsor and self.expand_children:
+            from admin_pages import SponsorToolsBar
+            rb.insert(3, SponsorToolsBar(a=self.link))
 
         return rb
 
