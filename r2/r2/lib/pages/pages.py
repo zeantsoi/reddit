@@ -3048,7 +3048,7 @@ class SubredditTopBar(CachedTemplate):
                 feature.variant('new_topbar') == 'no-styles':
             self.subreddit_link_query = {
                 "utm_source": "experiments",
-                "utm_medium": "new_topabr",
+                "utm_medium": "new_topbar",
                 "utm_name": feature.variant('new_topbar'),
             }
 
