@@ -128,6 +128,14 @@ class ListingController(RedditController):
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
 
+        # only do timer for subreddit listings
+        listing_timer = None
+        if (num in [25, 50, 100] and
+                isinstance(self, SubredditListingController)):
+            listing_timer = g.stats.get_timer(
+                "render_link_listing.num_%s" % str(num))
+            listing_timer.start()
+
         self.num = num
         self.count = count
         self.after = after
@@ -151,7 +159,11 @@ class ListingController(RedditController):
                             for link in self.listing_obj.things[0:10]]
 
         content = self.content()
-        return self.render_cls(content=content,
+
+        if listing_timer:
+            listing_timer.intermediate('build_listing')
+
+        rendered_listing = self.render_cls(content=content,
                                page_classes=self.extra_page_classes,
                                show_sidebar=self.show_sidebar,
                                show_chooser=self.show_chooser,
@@ -163,6 +175,12 @@ class ListingController(RedditController):
                                robots=getattr(self, "robots", None),
                                displayed_things=displayed_things,
                                **self.render_params).render()
+
+        if listing_timer:
+            listing_timer.intermediate('render_listing')
+            listing_timer.stop()
+
+        return rendered_listing
 
     def content(self):
         """Renderable object which will end up as content of the render_cls"""
@@ -277,29 +295,6 @@ listing_api_doc = partial(
 
 class SubredditListingController(ListingController):
     private_referrer = False
-
-    def build_listing(self, num, after, reverse, count, sr_detail=None,
-                      **kwargs):
-        listing_timer = None
-        if num in [25, 50, 100]:
-            listing_timer = g.stats.get_timer(
-                "render_link_listing.num_%s" % str(num))
-            listing_timer.start()
-
-        rendered_listing = ListingController.build_listing(
-            self,
-            num,
-            after,
-            reverse,
-            count,
-            sr_detail,
-            **kwargs
-        )
-
-        if listing_timer:
-            listing_timer.stop()
-
-        return rendered_listing
 
     def _build_og_title(self, max_length=256):
         sr_fragment = "/r/" + c.site.name
