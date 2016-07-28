@@ -1489,6 +1489,12 @@ class RedditController(OAuth2ResourceController):
                     c.user.pref_lang = g.lang
                     c.user._commit()
 
+        # explicit check for permanently banned accounts and disable their
+        # ability to log in.
+        if getattr(c.user, "_banned", False):
+            c.user = None
+            c.user_is_loggedin = False
+
         # redirect mobile clients to m.reddit.com conditionally
         self.mweb_redirect()
 
