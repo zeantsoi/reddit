@@ -3125,3 +3125,48 @@ class SubredditsActiveForFrontPage(tdb_cassandra.View):
         g.stats.simple_event("frontpage.filter_inactive", delta=num_filtered)
 
         return [int(sr_id36, 36) for sr_id36 in results.keys()]
+
+
+class SubredditAffinity(tdb_cassandra.View):
+    _use_db = True
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+        "column_name_class": tdb_cassandra.UTF8_TYPE,
+        "default_validation_class": tdb_cassandra.FLOAT_TYPE,
+    }
+    _compare_with = tdb_cassandra.UTF8_TYPE
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.ONE
+    _connection_pool = "main"
+
+    @classmethod
+    def row_key(self, subreddit, variant):
+        return "%s:%s" % (subreddit._id36, variant)
+
+    @classmethod
+    def create(self, subreddit, variant, similar_subreddits_dict):
+        """Add similar subreddits and scores for this variant
+
+        {similar_sr1: score, similar_sr2: score}
+        """
+        self._cf.insert(
+            self.row_key(subreddit, variant),
+            similar_subreddits_dict,
+        )
+
+    @classmethod
+    def get_variant_similar_subreddits(
+            self, subreddit, variant, include_score=False):
+        try:
+            query = self._cf.get(self.row_key(subreddit, variant))
+        except tdb_cassandra.NotFoundException:
+            return []
+
+        sorted_subreddits = sorted(
+            query.items(), key=lambda x: x[1], reverse=True)
+        if include_score:
+            # [(subreddit_1, score), (subreddit_2, score)]
+            return sorted_subreddits
+        else:
+            # [subreddit_1, subreddit_2]
+            return [item[0] for item in sorted_subreddits]
