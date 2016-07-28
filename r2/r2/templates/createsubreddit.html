@@ -348,7 +348,7 @@ try participating in other communities on reddit for a little while first before
         <li>
           <input class="nomargin" type="checkbox"
                    name="allow_images" id="allow_images"
-                   %if not thing.site or not thing.site.link_type == "link" or thing.site.allow_images:
+                   %if not thing.site or thing.site.allow_images:
                      checked="checked"
                    %endif
           >
