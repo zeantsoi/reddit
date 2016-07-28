@@ -3878,7 +3878,8 @@ class NewLink(Templated):
         sr_name = default_sr.name if default_sr else None
         self.allow_image_upload = (
             show_image and
-            feature.is_enabled("image_uploads", subreddit=sr_name)
+            feature.is_enabled("image_uploads", subreddit=sr_name) and
+            (not default_sr or default_sr.allow_images)
         )
         self.show_link = show_link
         self.show_self = show_self
