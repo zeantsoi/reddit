@@ -165,6 +165,12 @@
       } else {
         this.$fileInputDisplayGroup.empty();
       }
+
+      // If we preloaded a URL input via a URL param to submit, attempt
+      // to load the suggested title data
+      if (this.$urlInput.val()) {
+        this.$urlInput.trigger('input');
+      }
     },
 
     _handleSubmit: function(e) {
