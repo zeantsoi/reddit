@@ -72,7 +72,7 @@
     %endfor
   </div>
 
-  %if not feature.is_enabled('new_topbar'):
+  %if not feature.is_enabled('new_topbar') or feature.variant('new_topbar') == 'no-styles':
     <div id="header-bottom-right">
       %if c.user_is_loggedin and c.user.pref_beta or c.subdomain == 'beta':
         <div class="beta-hint help help-hoverable">

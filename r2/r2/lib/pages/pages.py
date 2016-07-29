@@ -706,8 +706,12 @@ class Reddit(Templated):
 
         ps = PaneStack(css_class='spacer')
 
-        if self.searchbox and not is_api() and \
-                not feature.is_enabled('new_topbar'):
+        top_bar_feature_enabled = (
+            not is_api() and
+            feature.is_enabled('new_topbar') and
+            feature.variant('new_topbar') == 'topbar'
+        )
+        if self.searchbox and not top_bar_feature_enabled:
             ps.append(SearchForm())
 
         sidebar_message = g.live_config.get("sidebar_message")
@@ -721,8 +725,7 @@ class Reddit(Templated):
                                      extra_class="gold"))
 
         if not c.user_is_loggedin and self.loginbox and \
-                not g.read_only_mode and not is_api() and \
-                not feature.is_enabled('new_topbar'):
+                not g.read_only_mode and not top_bar_feature_enabled:
             ps.append(LoginFormWide())
 
         if isinstance(c.site, DomainSR) and c.user_is_admin:
