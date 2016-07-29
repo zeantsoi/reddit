@@ -20,18 +20,18 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-"""Generates all the data used in making sitemaps and sitemap links.
-
-Currently only supports subreddit links but will soon support comment links.
-"""
+"""Generates all the data used in making sitemaps and sitemap links."""
 
 from collections import namedtuple
+from lxml import etree
+import gzip
 import tempfile
 
 from boto.s3.connection import S3Connection
 from pylons import app_globals as g
 
 from r2.lib.hadoop_decompress import hadoop_decompress
+from r2.lib.sitemaps.generate import SITEMAP_NAMESPACE
 
 
 def _read_subreddit_etl_from_s3(s3path):
@@ -68,6 +68,30 @@ def _read_subreddit_etl_from_s3(s3path):
         raise ValueError('{0} contains no readable keys.'.format(s3path))
 
 
+def _read_sitemap_from_s3(s3path):
+    s3conn = S3Connection()
+    bucket = s3conn.get_bucket(s3path.bucket, validate=False)
+    s3keys = bucket.list(s3path.key)
+
+    for s3key in s3keys:
+        g.log.info("Importing key %r", s3key)
+
+        with tempfile.TemporaryFile(mode='rw+b') as ntf_download:
+            g.log.debug("Downloading %r", s3key)
+            s3key.get_contents_to_file(ntf_download)
+
+            ntf_download.flush()
+            ntf_download.seek(0)
+
+            with gzip.GzipFile(mode='rb', fileobj=ntf_download) as f:
+                yield s3key, etree.parse(f)
+
+
+def _urls_from_xml(xml_tree):
+    for url_elem in xml_tree.iterfind('//{' + SITEMAP_NAMESPACE + '}loc'):
+        yield url_elem.text
+
+
 def find_all_subreddits(s3path):
     for line in _read_subreddit_etl_from_s3(s3path):
         _, subreddit, __ = line.split('\x01')
@@ -83,3 +107,9 @@ CommentPageInfo = namedtuple(
 def find_comment_page_data(s3path):
     for line in _read_subreddit_etl_from_s3(s3path):
         yield CommentPageInfo(*line.strip().split('\x01')[1:])
+
+
+def find_sitemap_data(s3path):
+    """Read the urls from a previously generated sitemaps."""
+    for s3key, xml_tree in _read_sitemap_from_s3(s3path):
+        yield s3key, _urls_from_xml(xml_tree)

@@ -42,7 +42,7 @@ SIGNATURE_V4_ALGORITHM = "AWS4-HMAC-SHA256"
 EXPIRES_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 
-def _to_path(bucket, key):
+def to_s3_path(bucket, key):
     if not bucket:
         raise ValueError
     return 's3://%s/%s' % (bucket, key)

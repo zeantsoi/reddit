@@ -36,6 +36,7 @@ from pylons import app_globals as g
 from r2.lib.s3_helpers import parse_s3_path
 from r2.lib.sitemaps import store
 from r2.lib.sitemaps.data import find_all_subreddits, find_comment_page_data
+from r2.lib.sitemaps import date_parse
 
 """Watch for SQS messages informing us to read, generate, and store sitemaps.
 
@@ -48,6 +49,7 @@ It is designed to be used in a daemon process.
 
 SUBREDDIT_SITEMAP_JOB_NAME = 'daily_sr_sitemap_reporting'
 COMMENT_PAGE_SITEMAP_JOB_NAME = 'daily_sitemap_reporting'
+REFRESH_LASTMOD_JOB_NAME = 'refresh-lastmod'
 
 
 def watcher():
@@ -66,7 +68,7 @@ def _datetime_from_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp / 1000, pytz.utc)
 
 
-def _before_last_sitemap(timestamp):
+def _is_before_last_sitemap(timestamp):
     sitemap_key = _subreddit_sitemap_key()
     if sitemap_key is None:
         return False
@@ -74,6 +76,28 @@ def _before_last_sitemap(timestamp):
     sitemap_datetime = dateutil.parser.parse(sitemap_key.last_modified)
     compare_datetime = _datetime_from_timestamp(timestamp)
     return compare_datetime < sitemap_datetime
+
+
+def _normalize_sqs_message(message):
+    """Simplifies raw SQS messages to make them easier to work with.
+
+    We currently work on two types of keys:
+
+    location: This is expected to be a string in the form s3://bucket/key.
+        If this exists we add a new key called s3path that is an S3Path
+        version of the original location.
+    locations: This is expected to be an array of s3path strings.
+        Similarly we create a new key called s3paths, which are an array
+        of S3Path objects that represent the old locations.
+    """
+    if 'location' in message:
+        s3path = parse_s3_path(message['location'])
+        message = dict(s3path=s3path, **message)
+    if 'locations' in message:
+        s3paths = [parse_s3_path(loc) for loc in message['locations']]
+        message = dict(s3paths=s3paths, **message)
+
+    return message
 
 
 @contextmanager
@@ -89,11 +113,10 @@ def _recieve_sqs_message():
 
     message, = messages
     js = json.loads(message.get_body())
-    s3path = parse_s3_path(js['location'])
 
     g.log.info('Received import job %r', js)
 
-    yield dict(s3path=s3path, **js)
+    yield _normalize_sqs_message(js)
 
     sqs_q.delete_message(message)
 
@@ -107,6 +130,8 @@ def _process_message():
             _process_subreddit_sitemaps(**message)
         elif message['job_name'] == COMMENT_PAGE_SITEMAP_JOB_NAME:
             _process_comment_page_sitemaps(**message)
+        elif message['job_name'] == REFRESH_LASTMOD_JOB_NAME:
+            store.refresh_lastmod(message['s3paths'])
         else:
             raise ValueError(
                 'Invalid job_name: {0}'.format(message['job_name']))
@@ -115,7 +140,7 @@ def _process_message():
 def _process_subreddit_sitemaps(s3path, **kw):
     # There are some error cases that allow us to get messages
     # for sitemap creation that are now out of date.
-    if 'timestamp' in kw and _before_last_sitemap(kw['timestamp']):
+    if 'timestamp' in kw and _is_before_last_sitemap(kw['timestamp']):
         return
 
     subreddits = find_all_subreddits(s3path)
@@ -127,10 +152,20 @@ def _dt_key_from_s3path(s3path):
     return re.match(r'^.*/([A-Za-z0-9_=-]+)$', s3path).group(1)
 
 
+def _queue_lastmod_refresh(dt_key):
+    message = {
+        'job_name': REFRESH_LASTMOD_JOB_NAME,
+        'locations': date_parse.recent_sitemap_s3paths(dt_key)
+    }
+    _create_sqs_message(message)
+
+
 def _process_comment_page_sitemaps(s3path, **kw):
     comment_page_data = find_comment_page_data(s3path)
     dt_key = _dt_key_from_s3path(s3path.key)
     store.generate_and_upload_comment_page_sitemaps(comment_page_data, dt_key)
+    if date_parse.dt_key_is_recent(dt_key):
+        _queue_lastmod_refresh(dt_key)
 
 
 def _current_timestamp():
@@ -145,8 +180,10 @@ def _create_sqs_message(message):
     # it returns None on failure
     assert sqs_q, "failed to connect to queue"
 
-    message = sqs_q.new_message(body=json.dumps(message))
-    sqs_q.write(message)
+    sqs_message = sqs_q.new_message(body=json.dumps(message))
+    sqs_q.write(sqs_message)
+
+    g.log.info('Queued SQS message: %r', message)
 
 
 def _create_subreddit_test_message():
@@ -172,7 +209,7 @@ def _create_comment_page_test_message():
     message = {
         'job_name': COMMENT_PAGE_SITEMAP_JOB_NAME,
         'location': ('s3://reddit-data-analysis/big-data/r2/prod/' +
-                     'daily_sitemap_reporting/dt=2016-07-10'),
+                     'daily_sitemap_reporting/dt=2016-08-14'),
     }
     _create_sqs_message(message)
 
@@ -183,5 +220,18 @@ def _create_bad_test_message():
         'job_name': 'some-terrible-job-name',
         'location': ('s3://reddit-data-analysis/big-data/r2/prod/' +
                      'daily_sitemap_reporting/dt=2016-06-29'),
+    }
+    _create_sqs_message(message)
+
+
+def _create_refresh_lastmod_message():
+    message = {
+        'job_name': REFRESH_LASTMOD_JOB_NAME,
+        'locations': [
+            ('s3://reddit-data-analysis/big-data/r2/prod/' +
+             'daily_sitemap_reporting/dt=2016-07-10'),
+            ('s3://reddit-data-analysis/big-data/r2/prod/' +
+             'daily_sitemap_reporting/dt=2016-07-11'),
+        ],
     }
     _create_sqs_message(message)

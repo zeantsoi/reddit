@@ -62,6 +62,7 @@ Next are the normal sitemaps which take the form of:
 
 Each sitemap and sitemap index will have 50000 links or fewer.
 """
+from datetime import date
 import urllib
 
 from lxml import etree
@@ -103,27 +104,32 @@ def _comment_page_links(comment_page_data):
         yield _absolute_url(path)
 
 
-def _generate_sitemap(links):
+def generate_sitemap_from_links(links, set_lastmod=True):
     urlset = etree.Element('urlset', xmlns=SITEMAP_NAMESPACE)
+    lastmod_date = date.today().isoformat()
     for link in links:
         url_elem = etree.SubElement(urlset, 'url')
         loc_elem = etree.SubElement(url_elem, 'loc')
         loc_elem.text = link
+        if set_lastmod:
+            lastmod_elem = etree.SubElement(url_elem, 'lastmod')
+            lastmod_elem.text = lastmod_date
     return _stringify_xml(urlset)
 
 
-def _generate_sitemaps(links):
+def _generate_sitemaps(links, set_lastmod=True):
     """Create an iterator of sitemaps.
 
     Each sitemap has up to 50000 links, being the maximum allowable number of
     links according to the sitemap standard.
     """
     for subreddit_chunks in in_chunks(links, LINKS_PER_SITEMAP):
-        yield _generate_sitemap(subreddit_chunks)
+        yield generate_sitemap_from_links(
+            subreddit_chunks, set_lastmod=set_lastmod)
 
 
 def generate_subreddit_sitemaps(subreddits):
-    return _generate_sitemaps(_subreddit_links(subreddits))
+    return _generate_sitemaps(_subreddit_links(subreddits), set_lastmod=False)
 
 
 def generate_comment_page_sitemaps(comment_page_data):

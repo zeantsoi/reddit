@@ -60,10 +60,13 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from pylons import app_globals as g
 
+from r2.lib.sitemaps.data import find_sitemap_data
+from r2.lib.sitemaps.date_parse import recent_sitemap_s3paths
 from r2.lib.sitemaps.generate import (
     generate_subreddit_sitemaps,
     generate_comment_page_sitemaps,
     generate_sitemap_index,
+    generate_sitemap_from_links,
 )
 
 
@@ -85,7 +88,6 @@ def _upload_sitemap(key, sitemap):
     g.log.debug("Uploading %r", key)
     key.set_contents_from_string(_zip_string(sitemap), headers=HEADERS)
     g.log.info("Uploaded %r", key)
-
 
 
 def _upload_subreddit_sitemap(bucket, index, sitemap):
@@ -135,3 +137,9 @@ def generate_and_upload_comment_page_sitemaps(comment_page_data, dt_key):
 
     _update_sitemap_index(
         g.sitemap_comment_page_keyname, 'comment_page_sitemap', bucket)
+
+
+def refresh_lastmod(s3paths):
+    for s3path in s3paths:
+        for key, links in find_sitemap_data(s3path):
+            _upload_sitemap(key, generate_sitemap_from_links(links))
