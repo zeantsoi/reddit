@@ -470,6 +470,12 @@ class ModmailConversation(Base):
 
             self.last_mod_update = message.date
         else:
+            # if this is the first user interaction with the conversation
+            # set the state to inprogress
+            if (self.last_user_update == datetime.min.replace(tzinfo=g.tz) and
+                    self.last_mod_update != datetime.min.replace(tzinfo=g.tz)):
+                self.state = self.STATE['inprogress']
+
             self.last_user_update = message.date
 
         try:
