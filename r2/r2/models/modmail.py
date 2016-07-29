@@ -282,7 +282,14 @@ class ModmailConversation(Base):
 
     @classmethod
     def _byID(cls, ids, current_user=None):
-        """Return conversation(s) looked up by ID."""
+        """Return conversation(s) looked up by ID.
+
+        Additional logic has been added to deal with the case
+        when the current user is passed into the method. When
+        a current_user is passed query.one() returns a keyedtuple,
+        whereas, when a current_user is not passed it returns a
+        single object.
+        """
         ids = tup(ids)
 
         query = Session.query(cls).filter(cls.id.in_(ids))
@@ -312,9 +319,12 @@ class ModmailConversation(Base):
 
         results = []
         for row in query.all():
-            conversation = row[0]
-            conversation.last_unread = row[1]
-            results.append(conversation)
+            if current_user:
+                conversation = row[0]
+                conversation.last_unread = row[1]
+                results.append(conversation)
+            else:
+                results.append(row)
 
         return results
 
