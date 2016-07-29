@@ -684,16 +684,17 @@ def to_serializable_author(author, entity, current_user, is_hidden=False):
         }
 
     name = author.name
-    is_mod = entity.is_moderator_with_perms(current_user, 'mail')
+    user_is_mod = entity.is_moderator_with_perms(current_user, 'mail')
+    author_is_mod = entity.is_moderator_with_perms(author, 'mail')
     if (current_user and
-            (not is_mod and is_hidden)):
+            (not user_is_mod and is_hidden)):
         name = entity.name
 
     return {
         'id': author._id,
         'name': name,
         'isAdmin': author.employee,
-        'isMod': bool(is_mod),
+        'isMod': bool(author_is_mod),
         'isHidden': is_hidden,
         'isDeleted': False,
     }
