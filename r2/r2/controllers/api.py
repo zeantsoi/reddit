@@ -2049,7 +2049,14 @@ class ApiController(RedditController):
         display_author = getattr(thing, "display_author", None)
         if block_acct.name in g.admins or display_author:
             return
-        c.user.add_enemy(block_acct)
+
+        rel = c.user.add_enemy(block_acct)
+
+        amqp.add_item("new_enemy",
+            json.dumps({
+                "rel": rel._fullname
+            })
+        )
 
         # report the user blocking to data pipeline
         g.events.report_event(
