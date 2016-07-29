@@ -73,6 +73,8 @@ class Report(MultiRelation('report', *REPORT_RELS)):
         if ip:
             r.ip = ip
 
+        r._commit()
+
         # mark item as reported
         try:
             thing._incr(cls._field)
@@ -94,8 +96,6 @@ class Report(MultiRelation('report', *REPORT_RELS)):
                 cls.accept(thing)
 
         hooks.get_hook("report.new").call(report=r)
-
-        r._commit()
 
         return r
 

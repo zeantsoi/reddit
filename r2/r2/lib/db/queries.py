@@ -29,6 +29,7 @@ import hashlib
 import itertools
 import pytz
 from time import mktime
+import json
 
 from pylons import app_globals as g
 from pylons import tmpl_context as c
@@ -1742,7 +1743,11 @@ def new_report(thing, report_rel):
         elif isinstance(thing, Message):
             m.insert(get_user_reported_messages(reporter_id), [report_rel])
 
-    amqp.add_item("new_report", thing._fullname)
+    msg = {
+        'fullname': thing._fullname,
+        'rel': report_rel._fullname
+    }
+    amqp.add_item("new_report", json.dumps(msg))
 
 
 def clear_reports(things, rels):

@@ -43,6 +43,7 @@ from hashlib import md5
 import re
 import traceback
 import yaml
+import json
 
 from pylons import app_globals as g
 
@@ -1551,7 +1552,10 @@ def run():
         if not ACCOUNT:
             return
 
-        fullname = msg.body
+        try:
+            fullname = json.loads(msg.body)['fullname']
+        except json.JSONDecodeError:
+            fullname = msg.body
 
         # Use the amqp routing key as the "check reason" - Possible values are
         # the ones that feed automoderator_q as defined in config/queues.py
