@@ -2052,11 +2052,16 @@ class ApiController(RedditController):
 
         rel = c.user.add_enemy(block_acct)
 
-        amqp.add_item("new_enemy",
-            json.dumps({
-                "rel": rel._fullname
-            })
-        )
+        if rel is not None:
+            # User.add_enemy is build automatically by UserRelManager.
+            # UserRelManager.add_X returns the relation when it was created by
+            # the call, otherwise it returns None (for instance if the
+            # relation already existed)
+            amqp.add_item("new_enemy",
+                json.dumps({
+                    "rel": rel._fullname
+                })
+            )
 
         # report the user blocking to data pipeline
         g.events.report_event(
