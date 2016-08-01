@@ -1978,9 +1978,15 @@ class PromoteApiController(ApiController):
                                  promoter_text, promoter_url, 
                                  discussion_link, promoted_externally):
         # Create the promoted link
-        if discussion_link:
-            original_subreddit = Subreddit._byID(original_link.sr_id, stale=True)
-            link_url = original_link.make_permalink(original_subreddit)
+        if discussion_link or original_link.is_self:
+            original_subreddit = Subreddit._byID(
+                original_link.sr_id,
+                stale=True,
+            )
+            link_url = original_link.make_permalink(
+                original_subreddit,
+                force_domain=True,
+            )
         else:
             link_url = original_link.url
 
@@ -1995,7 +2001,8 @@ class PromoteApiController(ApiController):
         )
         l.promoted = True
         l.disable_comments = True
-        if discussion_link:
+
+        if discussion_link or original_link.is_self:
             l.domain_override = "self." + original_subreddit.name
 
         # Add additional properties
