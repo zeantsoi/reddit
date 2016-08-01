@@ -1554,7 +1554,7 @@ def run():
 
         try:
             fullname = json.loads(msg.body)['fullname']
-        except json.JSONDecodeError:
+        except ValueError:
             fullname = msg.body
 
         # Use the amqp routing key as the "check reason" - Possible values are
