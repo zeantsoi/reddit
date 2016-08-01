@@ -29,12 +29,8 @@ from pylons import app_globals as g
 from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import MinimalController
-from r2.lib.pages import EmbedlyCardMediaEmbedBody, MediaEmbedBody 
-from r2.lib.media import (
-    get_embedly_card,
-    get_media_embed,
-    should_use_embedly_card,
-)
+from r2.lib.pages import MediaEmbedBody
+from r2.lib.media import get_media_embed
 from r2.lib.utils import constant_time_compare
 from r2.lib.validator import validate, VLink, nop
 from r2.models import Subreddit
@@ -63,24 +59,15 @@ class MediaembedController(MinimalController):
             media_object = link.secure_media_object
 
         if not media_object:
-            if should_use_embedly_card(link):
-                media_embed = get_embedly_card(link.url)
-                content = media_embed.content
-                body = EmbedlyCardMediaEmbedBody(
-                    body=content,
-                    id36=link._id36,
-                )
-            else:
-                abort(404)
+            abort(404)
         elif isinstance(media_object, dict):
             # otherwise it's the new style, which is a dict(type=type, **args)
             media_embed = get_media_embed(media_object)
             content = media_embed.content
-            body = MediaEmbedBody(body=content)
 
         c.allow_framing = True
 
-        return body.render()
+        return MediaEmbedBody(body = content).render()
 
 
 class AdController(MinimalController):

@@ -88,10 +88,6 @@ _MP4_PREVIEW_TEMPLATE = """
 </video>
 """
 
-_EMBEDLY_CARD_TEMPLATE = """
-<a class="embedly-card" href="%(url)s"></a>
-<script async src="//cdn.embedly.com/widgets/platform.js" charset="UTF-8"></script>
-"""
 
 advocate = RequestsAPIWrapper(AddrValidator(
     ip_whitelist=g.scraper_ip_whitelist,
@@ -808,30 +804,6 @@ def get_preview_media_object(preview_object, include_censored=False):
     }
 
     return media_object
-
-
-def get_embedly_card(url):
-    html = format_html(
-        _EMBEDLY_CARD_TEMPLATE,
-        url=url,
-    )
-    return MediaEmbed(
-        width=600,
-        height=0,
-        content=html,
-        sandbox=True,
-    )
-
-def should_use_embedly_card(item):
-    if (item.media_object or
-            item.promoted or
-            item.is_self or
-            item.over_18 or
-            (item.preview_object and
-                allowed_media_preview(item.url, item.preview_object))
-            ):
-        return False
-    return True
 
 
 def _make_custom_media_embed(media_object):
