@@ -937,6 +937,7 @@ class Link(Thing, Printable):
                     item.href_url = item.permalink
                 elif (feature.is_enabled('outbound_clicktracking') and 
                         c.user.pref_allow_clicktracking and
+                        not item.promoted and
                         not g.debug):
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
