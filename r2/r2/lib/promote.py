@@ -1204,6 +1204,22 @@ def flag_payment(link, reason):
     queries.set_payment_flagged_link(link)
 
 
+def on_promoted_post_delete(link):
+    try:
+        promoted_post = Link._byID(link.promoted_post_id)
+    except NotFound:
+        promoted_post = None
+        pass
+
+    # turn off the promoted post when deleting the original.
+    if promoted_post is not None:
+        update_promote_status(promoted_post, PROMOTE_STATUS.finished)
+        PromotionLog.add(
+            promoted_post,
+            "promoted post (%s) deleted by (%s)" % (link._id36, c.user.name),
+        )
+
+
 def review_fraud(link, is_fraud):
     link.fraud = is_fraud
     link._commit()

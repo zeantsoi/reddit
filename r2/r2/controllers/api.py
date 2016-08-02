@@ -1604,6 +1604,9 @@ class ApiController(RedditController):
             promote.reject_promotion(thing)
         thing._commit()
 
+        if (getattr(thing, "promoted_post_id", None) is not None):
+            promote.on_promoted_post_delete(thing)
+
         thing.update_search_index()
 
         if isinstance(thing, Link):
@@ -2182,6 +2185,12 @@ class ApiController(RedditController):
         if (form.has_errors('text', errors.NO_TEXT) or
                 form.has_errors("thing_id", errors.NOT_AUTHOR)):
             return
+
+        if (getattr(item, "promoted_post_id", None) is not None):
+            # promoted posts cannot be edited due to brand safety concerns.
+            # the author had to agree to let the post be promoted in the first
+            # place.
+            return abort(403, "forbidden")
 
         if isinstance(item, Link) and not item.is_self:
             return abort(403, "forbidden")

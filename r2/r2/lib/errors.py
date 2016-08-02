@@ -83,6 +83,7 @@ error_list = dict((
         ('SUBREDDIT_NO_ACCESS', _("you aren't allowed access to this subreddit")),
         ('SUBREDDIT_REQUIRED', _('you must specify a subreddit')),
         ('SUBREDDIT_DISABLED_ADS', _('this subreddit has chosen to disable their ads at this time')),
+        ('PROMOTED_POST_EXISTS', _('this link already has a promoted post')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('COLLECTION_NOEXIST', _('that collection doesn\'t exist')),
         ('INVALID_TARGET', _('that target type is not valid')),

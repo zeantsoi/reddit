@@ -15,6 +15,7 @@
                 <div class="infotext rounded">
                 <p>${_("Original ID of link to promote, e.g. 4clncr")}</p>
                 </div>
+                ${utils.error_field("PROMOTED_POST_EXISTS", "linkid", "div")}
             </%utils:line_field>
             <%utils:line_field title="${_('promoter text')}" id="ptext-field" css_class="rounded">
                 <input id="ptext" name="ptext" type="text" class="rounded">

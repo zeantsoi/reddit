@@ -1977,6 +1977,12 @@ class PromoteApiController(ApiController):
     def POST_promote_post_submit(self, form, jquery, original_link, 
                                  promoter_text, promoter_url, 
                                  discussion_link, promoted_externally):
+
+        if original_link.promoted_post_id is not None:
+            c.errors.add(errors.PROMOTED_POST_EXISTS, field="linkid")
+            form.set_error(errors.PROMOTED_POST_EXISTS, "linkid")
+            return
+
         # Create the promoted link
         if discussion_link or original_link.is_self:
             original_subreddit = Subreddit._byID(
@@ -2027,6 +2033,9 @@ class PromoteApiController(ApiController):
             promote.update_promote_status(l, PROMOTE_STATUS.promoted)
 
         l._commit()
+        original_link.promoted_post_id = l._id
+        original_link._commit()
+
         form.redirect(promote.promo_edit_url(l))            
 
     @validate(
