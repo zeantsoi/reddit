@@ -440,6 +440,19 @@ class ModmailConversation(Base):
 
         return results
 
+    @classmethod
+    def get_recent_convo_by_sr(cls, srs):
+        if not srs:
+            return
+
+        sr_fullnames = [sr._fullname for sr in srs]
+        query = (Session.query(cls.owner_fullname, func.max(cls.last_updated))
+                        .filter(cls.owner_fullname.in_(sr_fullnames))
+                        .group_by(cls.owner_fullname)
+                        .order_by(func.max(cls.last_updated)))
+
+        return {row[0]: row[1].isoformat() for row in query.all()}
+
     def add_participant(self, participant_id):
         participant = ModmailConversationParticipant(self, participant_id)
         Session.add(participant)

@@ -270,13 +270,26 @@ class ModmailController(OAuth2OnlyController):
 
     @require_oauth2_scope('identity')
     def GET_modmail_enabled_srs(self):
+        # sr_name, sr_icon, subsriber_count, most_recent_action
         modded_srs = c.user.moderated_subreddits('mail')
-        enabled_srs = [modded_sr.name for modded_sr in modded_srs
+        enabled_srs = [modded_sr for modded_sr in modded_srs
                        if feature.is_enabled('new_modmail',
                                              subreddit=modded_sr.name)]
-        return simplejson.dumps({
-            'subreddits': enabled_srs
-        })
+        recent_convos = ModmailConversation.get_recent_convo_by_sr(enabled_srs)
+
+        results = {}
+        for sr in enabled_srs:
+            results.update({
+                sr._fullname: {
+                    'id': sr._fullname,
+                    'name': sr.name,
+                    'icon': sr.icon_img,
+                    'subscribers': sr._ups,
+                    'lastUpdated': recent_convos.get(sr._fullname),
+                }
+            })
+
+        return simplejson.dumps({'subreddits': results})
 
     @require_oauth2_scope('identity')
     @validate(
