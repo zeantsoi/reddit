@@ -368,7 +368,11 @@ class ModmailController(OAuth2OnlyController):
         self._try_get_subreddit_access(conversation)
         conversation.add_action(c.user, 'highlighted')
         conversation.add_highlight()
-        response.status_code = 204
+
+        # Retrieve updated conversation to be returned
+        updated_convo = self._get_updated_convo(conversation.id, c.user)
+
+        return simplejson.dumps(updated_convo)
 
     @require_oauth2_scope('identity')
     @validate(conversation=VModConversation('conversation_id'))
@@ -378,7 +382,11 @@ class ModmailController(OAuth2OnlyController):
         self._try_get_subreddit_access(conversation)
         conversation.add_action(c.user, 'unhighlighted')
         conversation.remove_highlight()
-        response.status_code = 204
+
+        # Retrieve updated conversation to be returned
+        updated_convo = self._get_updated_convo(conversation.id, c.user)
+
+        return simplejson.dumps(updated_convo)
 
     @require_oauth2_scope('identity')
     @validate(ids=VList('conversation_ids'))
@@ -474,6 +482,8 @@ class ModmailController(OAuth2OnlyController):
 
             conversation.add_action(c.user, 'archived')
             conversation.set_state('archived')
+            updated_convo = self._get_updated_convo(conversation.id, c.user)
+            return simplejson.dumps(updated_convo)
         else:
             abort(403, 'Must be a moderator with mail access.')
 
@@ -494,10 +504,10 @@ class ModmailController(OAuth2OnlyController):
 
             conversation.add_action(c.user, 'unarchived')
             conversation.set_state('inprogress')
+            updated_convo = self._get_updated_convo(conversation.id, c.user)
+            return simplejson.dumps(updated_convo)
         else:
             abort(403, 'Must be a moderator with mail access.')
-
-        response.status_code = 204
 
     @require_oauth2_scope('identity')
     def GET_unread_convo_count(self):
@@ -506,6 +516,21 @@ class ModmailController(OAuth2OnlyController):
 
         convo_counts = ModmailConversation.unread_convo_count(c.user)
         return simplejson.dumps(convo_counts)
+
+    def _get_updated_convo(self, convo_id, user):
+        # Retrieve updated conversation to be returned
+        updated_convo = ModmailConversation._byID(
+            convo_id,
+            current_user=user
+        ).to_serializable(all_messages=True, current_user=c.user)
+        messages = updated_convo.pop('messages')
+        mod_actions = updated_convo.pop('modActions')
+
+        return {
+            'conversations': updated_convo,
+            'messages': messages,
+            'modActions': mod_actions,
+        }
 
     def _validate_vmodconversation(self):
         if (errors.CONVERSATION_NOT_FOUND, 'conversation_id') in c.errors:
