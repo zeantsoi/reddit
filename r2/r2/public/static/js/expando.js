@@ -65,8 +65,6 @@
 
     events: {
       'click .expando-button': 'toggleExpando',
-      // experiment 34 & 41
-      'click .expand-inline-thumbnail': 'toggleExpandoFromLink',
       'click .expand-media': 'toggleExpandoFromLink'
     },
 
@@ -326,12 +324,6 @@
 
     $(listingSelectors.join(',')).on('click', '.expando-button', function(e) {
       expandoOnClick(this, e.target);
-    });
-
-    // experiment 34 & 41
-    $(listingSelectors.join(',')).on('click', '.expand-inline-thumbnail', function(e) {
-      var expandoButton = $('.expando-button').next();
-      expandoOnClick(this, expandoButton);
     });
 
     $(listingSelectors.join(',')).on('click', '.expand-media', function(e) {

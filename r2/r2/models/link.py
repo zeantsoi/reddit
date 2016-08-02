@@ -877,21 +877,7 @@ class Link(Thing, Printable):
                 expando_new_tab_variant ==
                 "self_post_image_expando_new_tab")
 
-            # Check media preview pref, and only change behavior for
-            # listing pages (not comment pages). This will expand images
-            # and bodies of self posts inline for thumbnail clicks
-            thumbnail_expando_enabled = (
-                (not c.user or c.user.pref_media != "off") and
-                    feature.is_enabled('thumbnail_expando') and
-                    feature.variant('thumbnail_expando') == 'test_group')
-
-            if (thumbnail_expando_enabled and show_media and
-                    (meets_media_experiment_requirements or
-                        meets_self_post_experiment_requirements)):
-                    item.expand_thumbnail_inline = True
-                    item.href_url = item.url
-                    item.affiliatize_link = False
-            elif (self_post_image_expando_new_tab and
+            if (self_post_image_expando_new_tab and
                     (meets_media_experiment_requirements or
                         meets_self_post_experiment_requirements)):
                 item.expand_inline = True

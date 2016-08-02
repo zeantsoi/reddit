@@ -249,9 +249,6 @@ def js_config(extra_config=None):
         (expando_new_tab_variant == "image_expando_new_tab" or
             expando_new_tab_variant == "self_post_image_expando_new_tab"))
 
-    thumbnail_expando = (feature.is_enabled("thumbnail_expando") and
-            feature.variant("thumbnail_expando") == "test_group")
-
     pref_new_window = (
         (feature.is_enabled("new_window") and
             feature.variant("new_window") == "test_group") or
@@ -376,7 +373,6 @@ def js_config(extra_config=None):
         "user_websocket_url": user_websocket_url,
         "live_orangereds_pref": c.user.pref_live_orangereds,
         "pref_email_messages": logged and c.user.pref_email_messages,
-        "feature_thumbnail_expando": thumbnail_expando,
         "feature_double_sidebar": feature.is_enabled('double_sidebar'),
     }
 

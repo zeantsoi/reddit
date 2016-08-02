@@ -22,7 +22,7 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    var experimentEnabled = r.config.feature_expando_new_tab_enabled || r.config.feature_thumbnail_expando;
+    var experimentEnabled = r.config.feature_expando_new_tab_enabled;
     var newTabVariantEnabled = r.config.feature_expando_new_tab_variant;
     var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
     if (experimentEnabled || userPrefEnabled) {
