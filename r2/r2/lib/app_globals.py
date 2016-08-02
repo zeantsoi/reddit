@@ -375,6 +375,11 @@ class Globals(object):
         ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
             'emr_traffic_tags',
         ],
+
+        ConfigValue.json_dict: [
+            'interest_targets',
+        ],
+
     }
 
     live_config_spec = {

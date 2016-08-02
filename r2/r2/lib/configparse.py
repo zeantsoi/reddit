@@ -21,6 +21,7 @@
 ###############################################################################
 
 import re
+import json
 
 
 class ConfigValue(object):
@@ -101,6 +102,10 @@ class ConfigValue(object):
         def adapter(v, key=None):
             return baseplate_parser(v)
         return adapter
+
+    @staticmethod
+    def json_dict(v, key=None):
+        return json.loads(v)
 
 
 class ConfigValueParser(dict):

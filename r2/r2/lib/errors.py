@@ -86,6 +86,7 @@ error_list = dict((
         ('PROMOTED_POST_EXISTS', _('this link already has a promoted post')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('COLLECTION_NOEXIST', _('that collection doesn\'t exist')),
+        ('INVALID_INTEREST', _('that interest isn\'t supported')),
         ('INVALID_TARGET', _('that target type is not valid')),
         ('TARGET_TOO_MANY_SUBREDDITS', _('targeting too many subreddits')),
         ('INVALID_OS_VERSION', _('that version range is not valid')),

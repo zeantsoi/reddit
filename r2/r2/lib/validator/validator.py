@@ -1526,11 +1526,32 @@ class VCollection(Validator):
         self.set_error(errors.COLLECTION_NOEXIST)
 
 
+class VInterestTarget(Validator):
+    VALID_INTERESTS = set(g.interest_targets.keys())
+
+    def run(self, name):
+        is_valid = (name in self.VALID_INTERESTS)
+        if not is_valid:
+            self.set_error(errors.INVALID_INTEREST)
+        return is_valid
+
+
 class VPromoTarget(Validator):
-    default_param = ("targeting", "sr", "collection", "selected_sr_names")
+    default_param = ("targeting",
+                     "sr",
+                     "collection",
+                     "selected_sr_names",
+                     "interest")
+
     MAX_SUBREDDITS = 100
 
-    def run(self, targeting, sr_name, collection_name, selected_sr_names):
+    def run(self,
+            targeting,
+            sr_name,
+            collection_name,
+            selected_sr_names,
+            interest):
+
         if targeting == "collection" and collection_name == "none":
             return Target(Frontpage.name)
         elif targeting == "none":
@@ -1539,6 +1560,11 @@ class VPromoTarget(Validator):
             collection = VCollection("collection").run(collection_name)
             # VCollection added errors so no need to do anything
             return Target(collection) if collection else None
+        elif targeting == "interest":
+            if VInterestTarget("interest").run(interest):
+                return Target(interest, is_interest=True)
+            else:
+                return None
         elif targeting == "subreddit":
             # Check to see if target is a single subredddit or
             # multiple subreddits bundled as a collection

@@ -47,6 +47,7 @@
     r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
                                    ${unsafe(simplejson.dumps(thing.metros))});
     r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))});
+    r.sponsored.setup_interests(${unsafe(simplejson.dumps(thing.interests))});
   })
 </script>
 </%def>
@@ -816,6 +817,22 @@
   <%utils:line_field title="${_('targeting')}" css_class="rounded targeting-field">
     <div class="radio-group group">
       <span class="label">target</span>
+        %if thing.interest_targeting_enabled:
+          <label class="form-group">
+          <input id="interest_targeting" class="nomargin"
+                 type="radio" value="interest" name="targeting"
+                 onclick="r.sponsored.interest_targeting()"
+                 %if default_checked == 'interest':
+                   checked="checked"
+                 %endif
+                 >
+          <div class="label-group">
+
+            <span class="label">${_("interests")}</span>
+            <small class="label">${_("targets users based on their interests")}</small>
+          </div>
+        </label>
+      %endif
       <label class="form-group">
         <input id="collection_targeting" class="nomargin"
                type="radio" value="collection" name="targeting"
@@ -826,7 +843,7 @@
                >
         <div class="label-group">
 
-          <span class="label">${_("interests")}</span>
+          <span class="label">${_("collections")}</span>
           <small class="label">${_("targets a collection of similar subreddits")}</small>
         </div>
       </label>
@@ -845,12 +862,27 @@
       </label>
     </div>
     <div class="target-group group">
+      %if thing.interest_targeting_enabled:
+        <div class="interest-targeting"
+             %if default_checked != 'interest':
+               style="display:none"
+             %endif
+             >
+          <span class="label">${_("interest topic")}</span>
+          <div class="interest-selector uninitialized">
+            <div class="widget-container">
+              <div class="form-group-list">
+              </div>
+            </div>
+          </div>
+        </div>
+      %endif
       <div class="collection-targeting"
            %if default_checked != 'collection':
              style="display:none"
            %endif
            >
-        <span class="label">${_("interest audience group")}</span>
+        <span class="label">${_("subreddit collection")}</span>
         <div class="collection-selector uninitialized">
           <div class="widget-container">
             <div class="form-group-list">
@@ -869,6 +901,7 @@
           ${error_field("COLLECTION_NOEXIST", "collection", "div")}
         </div>
       </div>
+
       <div class="subreddit-targeting"
            %if default_checked != 'one':
              style="display:none"
