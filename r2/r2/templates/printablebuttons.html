@@ -322,7 +322,7 @@
 </%def>
 
 <%def name="linkbuttons()">
-  %if thing.show_comments:
+  %if thing.show_comments or thing.original_link:
     <li class="first">
     ${self.bylink_button(
         thing.comment_label,
@@ -331,19 +331,6 @@
         a_class=unsafe("bylink %s" % thing.commentcls),
         event_action="comments")}
     </li>
-  %elif thing.original_link:
-    <li class="first">
-    <%
-      original_link = Link._by_fullname(thing.original_link, stale=True)
-      original_subreddit = Subreddit._byID(original_link.sr_id, stale=True)
-      comment_text = "%d comments" % original_link.num_comments
-    %>
-    ${self.bylink_button(
-        comment_text,
-        original_link.make_permalink(original_subreddit),
-        sr_path=True,
-        event_action="comments")}
-    </li>    
   %endif
   %if thing.editable and not thing.promoted:
     <li>

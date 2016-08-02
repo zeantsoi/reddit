@@ -338,7 +338,7 @@ def add_trackers(items, sr, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
     for item in items:
-        if not item.promoted:
+        if item.promoted_post_id is None and not item.promoted:
             continue
 
         if item.campaign is None:
@@ -392,10 +392,17 @@ def add_trackers(items, sr, adserver_click_urls=None):
         if item.is_self:
             item.permalink = click_url
         else:
+            if item.original_link:
+                click_item = Link._by_fullname(item.original_link, stale=True)
+                permalink = click_item.make_permalink_slow()
+            else:
+                click_item = item
+                permalink = item.permalink
+
             # add encrypted click url to the permalink for comments->click
-            item.permalink = update_query(item.permalink, {
+            item.permalink = update_query(permalink, {
                 "click_url": url,
-                "click_hash": get_click_url_hmac(item, url),
+                "click_hash": get_click_url_hmac(click_item, url),
             })
 
 def update_promote_status(link, status):

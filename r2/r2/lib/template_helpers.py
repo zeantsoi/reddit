@@ -480,7 +480,13 @@ def replace_render(listing, item, render_func):
             replacements["rowstyle"] = item.rowstyle_cls
 
         if hasattr(item, "num_comments"):
-            com_label, com_cls = comment_label(item.num_comments)
+            if getattr(item, "original_link", None) is not None:
+                promoted_post = Link._by_fullname(item.original_link, stale=True)
+                num_comments = promoted_post.num_comments
+            else:
+                num_comments = item.num_comments
+
+            com_label, com_cls = comment_label(num_comments)
             if style == "compact":
                 com_label = unicode(item.num_comments)
             replacements['numcomments'] = com_label

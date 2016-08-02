@@ -491,10 +491,11 @@ class FrontController(RedditController):
             suggested_sort=suggested_sort,
         )
 
-        # Check for click urls on promoted links
+        # Check for click urls on promoted links or promoted posts
         click_url = None
         campaign_fullname = None
-        if article.promoted and not article.is_self:
+        if (not article.is_self and
+                (article.promoted or article.promoted_post_id is not None)):
             campaign_fullname = request.GET.get("campaign", None)
             click_url = request.GET.get("click_url", None)
             click_hash = request.GET.get("click_hash", "")
