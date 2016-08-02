@@ -1377,8 +1377,8 @@ class SponsorshipBox(Templated):
     pass
 
 
-def _get_top_posts(num, link):
-    links = c.site.get_links('hot', 'all')
+def _get_top_posts(num, link, sort='hot', time='all'):
+    links = c.site.get_links(sort, time)
     builder = IDBuilder(links, num=num)
     top_posts = LinkListing(builder).get_items()[0]
 
@@ -2017,6 +2017,22 @@ class LinkInfoPage(Reddit):
             elif variant == 'subreddit':
                 self.top_posts = SubredditBar(self.link)
 
+        self.append_link_listings = None
+        if is_seo_referrer() and feature.is_enabled('seo_comments_page'):
+            posts = None
+            seo_comments_variant = feature.variant('seo_comments_page')
+            if seo_comments_variant == "top_listing_on_comments":
+                posts = _get_top_posts(25, self.link, 'top', 'week')
+            elif seo_comments_variant == "hot_listing_on_comments":
+                posts = _get_top_posts(25, self.link, 'hot', 'all')
+            elif seo_comments_variant == "hot_listing_on_1_comment":
+                posts = _get_top_posts(25, self.link, 'hot', 'all')
+
+            if posts:
+                wrapper = default_thing_wrapper(expand_children=False)
+                self.append_link_listings = wrap_links(posts,
+                    wrapper=wrapper, sr_detail=sr_detail)
+
         Reddit.__init__(self, title=title,
                         short_description=short_description, robots=robots,
                         *a, **kw)
@@ -2172,6 +2188,7 @@ class LinkInfoPage(Reddit):
             self.top_posts,
             comment_area,
             self.popup_panes,
+            self.append_link_listings,
         ))
 
     def build_popup_panes(self):
