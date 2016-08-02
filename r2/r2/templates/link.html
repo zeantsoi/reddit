@@ -48,10 +48,10 @@
   </span>
 </%def>
 
-<%def name="make_link(name, css_class, tabindex=0)">
+<%def name="make_link(name, css_class, tabindex=0, expand_inline=False, url=None)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
-    expand_inline = getattr(thing, 'expand_inline', False)
+    expand_inline = expand_inline or getattr(thing, 'expand_inline', False)
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }
@@ -59,7 +59,7 @@
             ${ expand_inline and 'expand-media' or '' }
             ${'affiliate' if thing.affiliatize_link and not thing.use_outbound else '' }"
 
-     href="${thing.href_url}"
+     href="${url if url else thing.href_url}"
      %if tabindex:
        tabindex="${tabindex}"
      %endif
@@ -288,7 +288,7 @@
         css_class = '%s %s' % (css_class, thing.thumbnail)
 
     %>
-    <%call expr="make_link('thumbnail', css_class, 0)">
+    <%call expr="make_link('thumbnail', css_class, 0, getattr(thing, 'clickbox_expando_preview', False), getattr(thing, 'url', False))">
       ${thumbnail_img(thing)}
     </%call>
   %endif

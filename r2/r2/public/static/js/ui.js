@@ -22,7 +22,7 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    var experimentEnabled = r.config.feature_expando_new_tab_enabled;
+    var experimentEnabled = r.config.feature_expando_new_tab_enabled || r.config.feature_clickbox_with_title;
     var newTabVariantEnabled = r.config.feature_expando_new_tab_variant;
     var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
     if (experimentEnabled || userPrefEnabled) {
@@ -35,9 +35,17 @@ r.ui.init = function() {
                 !$(this).hasClass('expand-media') &&
                 !$(this).hasClass('comments');
 
-            if (experimentEnabled && $(this).hasClass('expand-media') && !e.metaKey){
-                e.preventDefault();
-                return false;
+            if (experimentEnabled && !e.metaKey) {
+                // Only preventDefault for title clicks, not flatlist buttons (comments, share, save)
+                if ($(this).parents('.expand-media').length && !$(this).parents('.may-blank').length && $(this).hasClass('title') ) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                if ($(this).hasClass('expand-media')) {
+                    e.preventDefault();
+                    return false;
+                }
             }
 
             if (!meetsExperimentRequirements && !userPrefEnabled) { return; }

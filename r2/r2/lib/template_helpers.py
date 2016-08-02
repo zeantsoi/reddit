@@ -249,6 +249,9 @@ def js_config(extra_config=None):
         (expando_new_tab_variant == "image_expando_new_tab" or
             expando_new_tab_variant == "self_post_image_expando_new_tab"))
 
+    feature_clickbox_with_title = (feature.is_enabled("expando_box") and
+        feature.variant("expando_box") == "clickbox_with_title")
+
     pref_new_window = (
         (feature.is_enabled("new_window") and
             feature.variant("new_window") == "test_group") or
@@ -374,6 +377,7 @@ def js_config(extra_config=None):
         "live_orangereds_pref": c.user.pref_live_orangereds,
         "pref_email_messages": logged and c.user.pref_email_messages,
         "feature_double_sidebar": feature.is_enabled('double_sidebar'),
+        "feature_clickbox_with_title": feature_clickbox_with_title,
     }
 
     if feature.is_enabled("eu_cookie_policy"):

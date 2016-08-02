@@ -877,7 +877,37 @@ class Link(Thing, Printable):
                 expando_new_tab_variant ==
                 "self_post_image_expando_new_tab")
 
-            if (self_post_image_expando_new_tab and
+            # Check media preview pref, and only change behavior for
+            # listing pages (not comment pages). This will expand images
+            # and bodies of self posts inline for thumbnail clicks
+            expando_box_enabled = (
+                request.route_dict['action_name'] != 'comments' and
+                feature.is_enabled('expando_box') and
+                feature.variant('expando_box') in (
+                    "clickbox_with_comments",
+                    "clickbox_with_title",
+                    "clickbox_no_title",
+                    "clickbox_with_source",
+                )
+            )
+
+            if expando_box_enabled:
+                # Specifies whether a preview exists so the expando box
+                # can redirect to the link if it doesn't
+                if ((show_media and getattr(item, 'preview_image', False) and
+                            item.link_child) or
+                        meets_self_post_experiment_requirements):
+                    item.clickbox_expando_preview = True
+                else:
+                    item.clickbox_expando_preview = False
+                item.clickbox_expando_variant = feature.variant('expando_box')
+                if feature.variant('expando_box') == "clickbox_with_comments":
+                    item.href_url = item.permalink
+                else:
+                    item.href_url = item.url
+
+                item.affiliatize_link = False
+            elif (self_post_image_expando_new_tab and
                     (meets_media_experiment_requirements or
                         meets_self_post_experiment_requirements)):
                 item.expand_inline = True

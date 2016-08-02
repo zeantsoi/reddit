@@ -190,6 +190,14 @@ ${self.RenderPrintable()}
     %endif
     ${thing.display} onclick="click_thing(this)"
     ${unsafe(self.thing_data_attributes(thing))}>
+  %if hasattr(thing, 'clickbox_expando_preview'):
+    %if not thing.clickbox_expando_preview:
+      <div class="expand-media ${'source-redirect' if thing.clickbox_expando_variant == 'clickbox_with_source' else ''}" data-href-url="${thing.href_url}">
+    %else:
+      <div class="expand-media preview-object">
+    %endif
+  %endif
+
   <p class="parent">
     ${self.ParentDiv()}
   </p>
@@ -209,6 +217,10 @@ ${self.RenderPrintable()}
   <div class="clearleft"></div>
 </div>
 <div class="clearleft"></div>
+%if hasattr(thing, 'clickbox_expando_preview'):
+  </div>
+%endif
+
 </%def>
 
 <%def name="buttons(ban=True)">

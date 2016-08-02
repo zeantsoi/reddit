@@ -237,6 +237,27 @@ label.disabled { color: gray; }
 .flat-list li.selected a { color: orangered; }
 
 .link .flat-list { display: block; padding: 1px 0; }
+
+.expand-media {
+  border-right: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.expand-media.preview-object:hover {
+  cursor: zoom-in;
+}
+
+.expand-media.source-redirect:hover {
+  cursor: pointer;
+}
+
+.expand-media:hover {
+  overflow: hidden;
+  background-color: #FBFBFB;
+  border-right: 1px solid #E2E2E2;
+  border-bottom: 1px solid #E2E2E2;
+}
+
 .link.compressed .flat-list { display: inline-block; padding: 0 0 1px 0; }
 
 ul.flat-vert {text-align: left;}
