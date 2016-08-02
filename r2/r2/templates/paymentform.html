@@ -98,7 +98,15 @@
     (function($) {
       $.payment_redirect = function(url, isNewCard, amount) {
         var redirect = function() {
-          window.location.href = url;
+          var changeLocation = function() {
+            window.location.href = url;
+          };
+          var conversion = document.createElement('img');
+
+          conversion.onload = conversion.onerror = changeLocation;
+          conversion.src = '//engine.a.redditmedia.com/e/5146/130267/e.gif?_=' + (new Date().getTime());
+          
+          setTimeout(changeLocation, 1000);
         };
 
         r.analytics.fireFunnelEvent('ads', isNewCard ? 'checkout-new' : 'checkout-existing');
