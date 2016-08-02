@@ -105,17 +105,26 @@ class FeatureState(object):
                 features.append(feature_state)
         return features
 
-    def _calculate_bucket(self, seed):
+    def _calculate_bucket(self, seed, experiment_seed=None):
         """Sort something into one of self.NUM_BUCKETS buckets.
 
         :param seed -- a string used for shifting the deterministic bucketing
                        algorithm.  In most cases, this will be an Account's
                        _fullname.
+        :param experiment_seed -- a unique id used for shifting the
+                        deterministic bucketing algorithm when we want to
+                        bucket a fresh group of users without changing the
+                        feature flag name. This should be a unique id that
+                        has not previously been in this experiment.
         :return int -- a bucket, 0 <= bucket < self.NUM_BUCKETS
         """
         # Mix the feature name in with the seed so the same users don't get
         # selected for ramp-ups for every feature.
-        hashed = hashlib.sha1(self.name + seed)
+        seed = "%s%s" % (
+            experiment_seed if experiment_seed else self.name,
+            seed
+        )
+        hashed = hashlib.sha1(seed)
         bucket = long(hashed.hexdigest(), 16) % self.NUM_BUCKETS
         return bucket
 
@@ -384,15 +393,16 @@ class FeatureState(object):
 
     def _get_experiment_variant(self, experiment, user):
         # for logged in users, bucket based on the User's fullname
+        experiment_seed = experiment.get('experiment_seed', None)
         if self.world.is_user_loggedin(user):
-            bucket = self._calculate_bucket(user._fullname)
+            bucket = self._calculate_bucket(user._fullname, experiment_seed)
         # for logged out users, bucket based on the loid if we have one
         elif g.enable_loggedout_experiments:
             loid = self.world.current_loid()
             # we can't run an experiment if we have no id to vary on.
             if not loid:
                 return None
-            bucket = self._calculate_bucket(loid)
+            bucket = self._calculate_bucket(loid, experiment_seed)
         # if logged out experiments are disabled, bail.
         else:
             return None

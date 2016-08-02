@@ -84,6 +84,48 @@ class TestExperiment(TestFeatureBase):
             self.assertAlmostEqual(percent_equal, 1.0, delta=.10,
                                    msg='bucket: %s' % bucket)
 
+    def test_calculate_bucket_with_seed(self):
+        """Test FeatureState's _calculate_bucket function."""
+        feature_state = self.world._make_state(config={})
+
+        # Give ourselves enough users that we can get some reasonable amount of
+        # precision when checking amounts per bucket.
+        NUM_USERS = FeatureState.NUM_BUCKETS * 2000
+        fullnames = []
+        for i in xrange(NUM_USERS):
+            fullnames.append("t2_%s" % str(i))
+
+        counter = collections.Counter()
+        bucketing_changed = False
+        for fullname in fullnames:
+            experiment_seed = "itscoldintheoffice"  # arbitrary string
+            bucket1 = feature_state._calculate_bucket(fullname,
+                                                      experiment_seed)
+            counter[bucket1] += 1
+            # Ensure bucketing is deterministic.
+            self.assertEqual(bucket1, feature_state._calculate_bucket(
+                fullname,
+                experiment_seed))
+
+            bucket2 = feature_state._calculate_bucket(fullname, "newstring")
+            # check that the bucketing changed at some point. Can't compare
+            # bucket1 to bucket2 inline because sometimes the user will fall
+            # into both buckets, and test will fail
+            if bucket1 != bucket2:
+                bucketing_changed = True
+
+        self.assertTrue(bucketing_changed)
+
+        for bucket in xrange(FeatureState.NUM_BUCKETS):
+            # We want an even distribution across buckets.
+            expected = NUM_USERS / FeatureState.NUM_BUCKETS
+            actual = counter[bucket]
+            # Calculating the percentage difference instead of looking at the
+            # raw difference scales better as we change NUM_USERS.
+            percent_equal = float(actual) / expected
+            self.assertAlmostEqual(percent_equal, 1.0, delta=.10,
+                                   msg='bucket: %s' % bucket)
+
     def test_choose_variant(self):
         """Test FeatureState's _choose_variant function."""
         no_variants = {}
