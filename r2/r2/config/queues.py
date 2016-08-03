@@ -90,6 +90,7 @@ def declare_queues(g):
         "keyword_target_q": MessageQueue(),
         "promo_q": MessageQueue(bind_to_self=True),
         "image_upload_q": MessageQueue(bind_to_self=True),
+        "live_comments_q": MessageQueue(bind_to_self=True),
     })
 
     if g.shard_link_vote_queues:

@@ -120,6 +120,7 @@ from r2.lib import (
     media,
     promote,
     tracking,
+    websockets,
 )
 from r2.lib.captcha import get_iden
 from r2.lib.filters import (
@@ -316,10 +317,6 @@ class Reddit(Templated):
         canonical_url = UrlParser(canonical_link or request.fullpath)
         canonical_url.canonicalize(preserve_language_subdomain=False)
         self.canonical_link = canonical_url.unparse()
-
-        self.link_websockets = False
-        if extra_js_config and extra_js_config.get('link_id36'):
-            self.link_websockets = True
 
         # Things displayed on the page (for ad targeting)
         if displayed_things is not None:
@@ -1926,10 +1923,31 @@ class LinkInfoPage(Reddit):
         if 'extra_js_config' not in kw:
             kw['extra_js_config'] = {}
 
+        # Feature flag live comments stylesheet
+        if link.allow_live_comments:
+            self.extra_stylesheets.append("live-comments.less")
+
+        # Open websocket on comment page
+        self.sort = kw.get("sort", None)
+        link_websocket_url = None
+        is_posts_mod = False
+        if c.user_is_loggedin:
+            # Check if we need to add the mod version of the comment
+            # for live comments
+            is_posts_mod = c.site.is_moderator_with_perms(c.user, 'posts')
+
+        namespace = "/link/%s" % link._id36
+        if link.allow_live_comments:
+            link_websocket_url = websockets.make_url(
+                namespace, max_age=24*60*60)
+            self.link_websockets = True
+
         kw['extra_js_config'].update({
             "cur_link": link._fullname,
-        });
-
+            "link_websocket_url": link_websocket_url,
+            "link_sort": self.sort,
+            "is_posts_mod": is_posts_mod,
+        })
         if c.can_embed:
             from r2.lib import embeds
             kw['extra_js_config'].update({
@@ -2397,6 +2415,14 @@ class CommentPane(Templated):
 
                 self.rendered += ThingUpdater(updates=updates).render()
                 timer.intermediate("thingupdater")
+
+        # Live comments are allowed and the sort is new
+        # so append the new comments
+        if article.allow_live_comments:
+            if self.sort != CommentSortMenu.operator('new'):
+                self.rendered += LiveComments().render()
+            else:
+                self.rendered = LiveComments().render() + self.rendered
 
         if try_cache:
             if cache_hit:
@@ -3924,6 +3950,10 @@ class NewLink(Templated):
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text)
+
+
+class LiveComments(Templated):
+    pass
 
 
 class Share(Templated):

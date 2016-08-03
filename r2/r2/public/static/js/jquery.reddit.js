@@ -556,7 +556,7 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
 };
 
 
-$.insert_things = function(things, append) {
+$.insert_things = function(things, append, hidden) {
     /* Insert new things into a listing.*/
     var map = $.map(things, function(thing) {
             var data = thing.data;
@@ -566,7 +566,11 @@ $.insert_things = function(things, append) {
             else
                 s = s.prepend($.unsafe(data.content)).children(".thing:first");
 
-            thing_init_func(s.hide().show());
+            if (hidden) {
+                thing_init_func(s.hide());
+            } else {
+                thing_init_func(s.hide().show());
+            }
             $(document).trigger('new_thing', s)
             return s;
         })

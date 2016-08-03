@@ -535,6 +535,7 @@ class FrontController(RedditController):
             campaign_fullname=campaign_fullname,
             click_url=click_url,
             canonical_link=canonical_link,
+            sort=sort,
             extra_js_config=extra_js_config,
         )
 

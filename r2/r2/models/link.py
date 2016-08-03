@@ -21,6 +21,7 @@
 ###############################################################################
 
 from r2.config import feature
+from r2.lib import amqp
 from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
@@ -35,6 +36,7 @@ from r2.lib.utils import (
     strip_www,
     timesince,
     title_to_url,
+    to_epoch_milliseconds,
     tup,
     UrlParser,
 )
@@ -88,6 +90,7 @@ from pylons import app_globals as g
 from pylons.i18n import _
 from datetime import datetime, timedelta
 from hashlib import md5
+from time import sleep
 import simplejson as json
 
 import random, re
@@ -1242,6 +1245,19 @@ class Link(Thing, Printable):
 
         return True
 
+    @property
+    def allow_live_comments(self):
+        if not feature.is_enabled('live_comments'):
+            return False
+
+        if self.disable_comments:
+            return False
+
+        if self.sort_if_suggested() == "new":
+            return True
+
+        return False
+
 
 class LinksByUrlAndSubreddit(tdb_cassandra.View):
     _use_db = True
@@ -1499,6 +1515,14 @@ class Comment(Thing, Printable):
         author.last_comment_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
+        if link.allow_live_comments:
+            amqp.add_item("live_comments_q",
+                json.dumps({
+                    "timestamp": int(to_epoch_milliseconds(comment._date)),
+                    "comment_fullname": comment._fullname,
+                })
+            )
+
         def should_send():
             # don't send the message to author if replying to own comment
             if author._id == to._id:
@@ -1526,6 +1550,19 @@ class Comment(Thing, Printable):
 
     def _unsave(self, user):
         CommentSavesByAccount._unsave(user, self)
+
+    def broadcast_new_comment(self, comment_element, mod_comment_element):
+        websockets.send_broadcast(
+            namespace="/link/%s" % utils.to36(self.link_id),
+            type="new_comment",
+            payload={
+                "comment_fullname": self._fullname,
+                "comment_html": comment_element,
+                "mod_comment_html": mod_comment_element,
+                "author_id": self.author_id,
+                "parent_fullname": self.parent_fullname,
+            },
+        )
 
     @property
     def link_slow(self):
@@ -1972,6 +2009,11 @@ class Comment(Thing, Printable):
         # no-op because Comments are not indexed
         return
 
+    @property
+    def parent_fullname(self):
+        if not self.parent_id:
+            return None
+        return self._fullname_from_id36(utils.to36(self.parent_id))
 
 class CommentScoresByLink(tdb_cassandra.View):
     _use_db = True
@@ -3273,3 +3315,68 @@ class CommentVisitsByUser(tdb_cassandra.View):
 
         cls.add_visit(user, link, visit_time)
         return visits
+
+
+def process_live_comments():
+    """
+    Process comments in live_comments_q for live updating.
+
+    Wait X seconds so that the comments go through automod and
+    some antievil review. If the comment isn't spammed or deleted,
+    get the html body and broadcast it.
+    """
+    from r2.controllers.reddit_base import UnloggedUser
+    from r2.lib.jsontemplates import CommentJsonTemplate
+    from r2.lib.pages.things import default_thing_wrapper
+    from r2.lib.template_helpers import replace_render
+    from r2.lib.translation import set_lang
+    from r2.models.builder import IDBuilder
+
+    # Override the c attributes that aren't available in this
+    # queue processor but needed to render the template
+    c.cookies = {}
+    c.secure = True
+    c.render_style = 'html'
+    set_lang('en')
+    c.user_is_loggedin = False
+    c.user = UnloggedUser([c.lang])
+
+    @g.stats.amqp_processor('live_comments_q')
+    def process_comment(msg):
+        msg_dict = json.loads(msg.body)
+
+        live_comment_sleep_ms = 2000
+        process_timestamp = msg_dict["timestamp"] + live_comment_sleep_ms
+        now = to_epoch_milliseconds(datetime.now(g.tz))
+
+        # If it hasn't been long enough to let automod and spam
+        # tools review, sleep until it is
+        if process_timestamp > now:
+            sleep_time = (process_timestamp-now)/1000.0
+            sleep(sleep_time)
+
+        comment = Thing._by_fullname(msg_dict["comment_fullname"])
+        if isinstance(comment, Comment) and not comment._spam and not comment._deleted:
+            c.site = Subreddit._byID(comment.sr_id, stale=True)
+
+            builder = IDBuilder([comment._fullname], wrap=default_thing_wrapper())
+            wrapped = builder.wrap_items([comment])[0]
+            wrapped.render = replace_render(None, wrapped, wrapped.render)
+
+            comment_element = [{
+                "data": CommentJsonTemplate.get_rendered(wrapped, 'html')
+            }]
+
+            # Get the mod version of the comment in case any mods
+            # are using live comments
+            wrapped.can_ban = True
+            mod_comment_element = [{
+                "data": CommentJsonTemplate.get_rendered(wrapped, 'html')
+            }]
+
+            comment.broadcast_new_comment(
+                comment_element,
+                mod_comment_element,
+            )
+
+    amqp.consume_items('live_comments_q', process_comment)

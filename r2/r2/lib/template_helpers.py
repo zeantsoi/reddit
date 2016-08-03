@@ -273,14 +273,6 @@ def js_config(extra_config=None):
     else:
         user_websocket_url = None
 
-    # Open websocket on comment page
-    link_id36 = extra_config and extra_config.pop('link_id36', None)
-    if link_id36:
-        namespace = "/link/%s" % link_id36
-        link_websocket_url = websockets.make_url(namespace, max_age=24 * 60 * 60)
-    else:
-        link_websocket_url = None
-
     config = {
         # is the user logged in?
         "logged": logged,
@@ -373,7 +365,6 @@ def js_config(extra_config=None):
         "pref_email_messages": logged and c.user.pref_email_messages,
         "feature_double_sidebar": feature.is_enabled('double_sidebar'),
         "feature_lazy_load_listings": lazy_load_listings,
-        "link_websocket_url": link_websocket_url,
     }
 
     if feature.is_enabled("eu_cookie_policy"):
