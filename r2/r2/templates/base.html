@@ -53,6 +53,10 @@
       ${unsafe(js.use("user-websockets"))}
     %endif
 
+    %if getattr(thing, "link_websockets", False):
+      ${unsafe(js.use("link-websockets"))}
+    %endif
+
     ##things here may depend on globals, or included js, so we run them last
     <style type="text/css">
       ## <style>s are treated as RAWTEXT segments, so we can't `websafe()` their contents.

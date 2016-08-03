@@ -317,6 +317,10 @@ class Reddit(Templated):
         canonical_url.canonicalize(preserve_language_subdomain=False)
         self.canonical_link = canonical_url.unparse()
 
+        self.link_websockets = False
+        if extra_js_config and extra_js_config.get('link_id36'):
+            self.link_websockets = True
+
         # Things displayed on the page (for ad targeting)
         if displayed_things is not None:
             self.displayed_things = displayed_things

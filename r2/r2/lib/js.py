@@ -852,6 +852,12 @@ module["https-tester"] = Module("https-tester.js",
     "https-tester.js"
 )
 
+module["link-websockets"] = Module("link-websockets.js",
+    "lib/backbone-1.0.0.js",
+    "link-websockets.js",
+    "websocket.js",
+)
+
 def src(*names, **kwargs):
     sources = []
 
