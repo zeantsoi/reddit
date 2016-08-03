@@ -29,6 +29,7 @@ from r2.models import Account, Message, Subreddit
 from r2.models.modmail import (
     ModmailConversation,
     ModmailConversationAction,
+    ModmailConversationParticipant,
     ModmailConversationUnreadState,
     MustBeAModError,
     Session,
@@ -202,7 +203,7 @@ class ModmailController(OAuth2OnlyController):
                 body,
                 request.ip,
                 sr=entity,
-                from_sr=True,
+                from_sr=is_author_hidden,
             )
         else:
             message, inbox_rel = Message._new(
@@ -350,13 +351,32 @@ class ModmailController(OAuth2OnlyController):
             if not subject.startswith('re: '):
                 subject = 're: ' + subject
 
+            # Retrieve the participant to decide whether to send the message
+            # to the sr or to the participant. If the currently logged in user
+            # is the same as the participant then address the message to the
+            # sr.
+            recipient = sr
+            if not is_internal:
+                participant = ModmailConversationParticipant.get_participant(
+                    conversation.id
+                )
+
+                is_participant = (
+                    (c.user._id == participant.account_id) and
+                    not sr.is_moderator_with_perms(c.user, 'mail')
+                )
+
+                if not is_participant:
+                    recipient = Account._byID(participant.account_id)
+
             message, inbox_rel = Message._new(
                 c.user,
-                sr,
+                recipient,
                 subject,
                 msg_body,
                 request.ip,
                 parent=first_message,
+                from_sr=is_author_hidden,
             )
             queries.new_message(message, inbox_rel)
 

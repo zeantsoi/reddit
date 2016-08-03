@@ -981,10 +981,23 @@ class ModmailConversationParticipant(Base):
         self.date = datetime.now(g.tz)
 
     @classmethod
-    def get_conversation_ids(cls, account_id):
-        # TODO: implement method to return convo ids that a
-        # non mod user is a participant in
-        raise NotImplementedError
+    def get_participant(cls, conversation_id):
+        query = (Session.query(cls)
+                        .filter(cls.conversation_id == conversation_id))
+
+        # only returning a single record now as there can only
+        # be one non-mod participant per conversation
+        try:
+            return query.one()
+        except NoResultFound:
+            raise NotFound
+
+    @classmethod
+    def is_participant(cls, account_id, conversation_id):
+        return (Session.query(exists().where(
+            and_(cls.account_id == account_id,
+                 cls.conversation_id == conversation_id)
+        ))).scalar()
 
 
 class ModmailConversationAction(Base):
