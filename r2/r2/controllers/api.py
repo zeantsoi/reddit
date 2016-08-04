@@ -1609,6 +1609,7 @@ class ApiController(RedditController):
         thing.update_search_index()
 
         if isinstance(thing, Link):
+            amqp.add_item("deleted_link", thing._fullname)
             queries.delete(thing)
             thing.subreddit_slow.remove_sticky(thing)
             if thing.image_upload:
@@ -1634,6 +1635,7 @@ class ApiController(RedditController):
             queries.new_comment(thing, None)  # possible inbox_rels are
                                               # handled by unnotify
             queries.unnotify(thing)
+            amqp.add_item("deleted_comment", thing._fullname)
             queries.delete(thing)
 
         g.events.delete_event(thing, request=request, context=c)
