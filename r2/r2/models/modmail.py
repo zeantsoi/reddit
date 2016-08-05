@@ -609,6 +609,7 @@ class ModmailConversation(Base):
             'lastModUpdate': parsed_last_mod_update,
             'lastUnread': last_unread,
             'isInternal': self.is_internal,
+            'isAuto': self.is_auto,
             'numMessages': self.num_messages,
             'owner': {
                 'id': self.owner_fullname,
