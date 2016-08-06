@@ -3,6 +3,13 @@ $(function() {
   var clientTime = Date.now();
   var serverTime = r.config.server_time * 1000;
   var disabledDueToDrift = false;
+  var beaconsEnabled = r.config.feature_outbound_beacons && 'sendBeacon' in window.navigator;
+
+  // If the browser supports beacons, we set the outbound URL
+  // here on mousedown or other navigate action. Then, before navigate
+  // we will send a beacon derived from this element. On mouseup we clear
+  // this field.
+  var beaconURL = null;
 
   // if our server time is more than 5 minutes greater than client time, that
   // means our client clock has future drift. Disable due to hmac signing
@@ -19,13 +26,17 @@ $(function() {
   }
 
   function setOutboundURL(elem) {
-    /* send outbound links to outbound url when clicked */
+    // log outbound clicks, either through redirect or beacon
     var $elem = $(elem);
     var now = Date.now();
 
     // If our outbound link has not expired, use it.
     if (!disabledDueToDrift && $elem.attr('data-outbound-expiration') > now) {
-      elem.href = $elem.attr('data-outbound-url');
+      if (beaconsEnabled) {
+        beaconURL = $elem.attr('data-outbound-url');
+      } else {
+        elem.href = $elem.attr('data-outbound-url');
+      }
     }
 
     return true;
@@ -33,7 +44,11 @@ $(function() {
 
   function resetOriginalURL(elem) {
     /* after clicking outbound link, reset url for clean mouseover view */
-    elem.href = $(elem).attr('data-href-url');
+    if (beaconsEnabled) {
+      beaconURL = null;
+    } else {
+      elem.href = $(elem).attr('data-href-url');
+    }
     return true;
   }
 
@@ -71,5 +86,19 @@ $(function() {
   /* touch device click */
   $("a.outbound").on('touchstart', function() {
     return setOutboundURL(this);
+  });
+
+  $(window).on('unload', function() {
+    if (beaconsEnabled && beaconURL !== null) {
+      // For the clicktracker, a GET to the tracking URL (with query parameters) will
+      // perform a redirect to the destination. A POST to the same url (with query
+      // parameters as payload) will return a 204 No Content (to support beacons).
+      // So we take our redirect URL and split it into a POST of the query parameters
+      var tempA = $('<a>', {href: beaconURL})[0];
+      var beaconPath = tempA.protocol + '//' + tempA.hostname + tempA.pathname;
+      var beaconPayload = tempA.search.replace(/^\?/, '');
+
+      navigator.sendBeacon(beaconPath, beaconPayload);
+    }
   });
 });
