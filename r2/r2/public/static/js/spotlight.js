@@ -181,10 +181,8 @@
         if (promo) {
           var $item = $(promo);
           var isHouse = $item.data('house');
-          var showPromo = this.showPromo &&
-            (!isHouse || Math.random() <= this.houseProbability);
 
-          if (showPromo) {
+          if (this.showPromo) {
             $('#siteTable_organic').show('slow');
           } else {
             return;
