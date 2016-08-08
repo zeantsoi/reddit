@@ -66,4 +66,124 @@
       return $('.sitetable').find('.thing').eq(pos);
     }
   };
+
+  var loadMoreListings = function(count){
+    $.ajax({
+      method: 'GET',
+      url: location.pathname,
+      data: {'count': count, 'after': $('.thing.link').last().data('fullname')},
+      success: function(results){
+        displayResults(results, count);
+      }
+    });
+  };
+
+  var displayResults = function(results, count) {
+    var linkHtml = $.parseHTML(results);
+    var listings = $(linkHtml).find('.thing.link');
+
+    $.each(listings, function(i,link){
+      $('#listings').append(adjustRankWidth(link, count));
+    });
+  };
+
+  var updateNextPrevButtons = function(){
+    // checking for RES here instead of on $(document).ready to give RES time
+    // to be applied to DOM
+    if (r.isResActive()){
+      return;
+    }
+
+    $(document.body).on('click', '.prev-button, .next-button', function(e) {
+      if ($(this).hasClass('prev-button')){
+        var $firstLink = $('#siteTable .thing.link').first();
+        var firstId = $firstLink.data('fullname');
+        var firstRank = $firstLink.data('rank');
+        // prev button will NOT lazy load. instead it will just load previous 100 listings
+        $('.prev-button a').attr('href', location.pathname + '?count=' + firstRank + '&before=' + firstId + '&limit=100');
+      } else if ($(this).hasClass('next-button')){
+        var $lastLink = $('#siteTable .thing.link').last();
+        var lastId = $lastLink.data('fullname');
+        var count = $lastLink.data('rank');
+        $('.next-button a').attr('href', location.pathname + '?count=' + count + '&after=' + lastId);
+      }
+    });
+  };
+
+  var lazyLoadOnScroll = function(){
+    // checking for RES here instead of on $(document).ready to give RES time
+    // to be applied to DOM
+    if (r.isResActive()){
+      return;
+    }
+
+    var urlCount = parseInt($.url().param('count'), 10) || 0;
+    var loadPoint = 3; // load more links when the 3rd link hits the top of the viewport
+    var data = {
+      'urlCount': urlCount,
+      'linkCount': urlCount + 25,
+      'prevLinkCount': 0,
+      'loadPoint': loadPoint,
+      'fromPrevButton': !!$.url().param('before'),
+      'middleOfPage': getMiddleOfPage(loadPoint),
+    }
+    $(window).on('scroll', null, data, doLoad);
+  };
+
+  doLoad = function(event){
+      var d = event.data;
+      var topOfPage = $(window).scrollTop();
+
+      if (d.middleOfPage &&
+          topOfPage > d.middleOfPage &&
+          d.prevLinkCount !== d.linkCount &&
+          // if we navigated to this page via "previous" button, don't do lazy load
+          !d.fromPrevButton){
+        loadMoreListings(d.linkCount);
+        d.prevLinkCount = d.linkCount;
+        d.linkCount += 25;
+        d.loadPoint += 20; // load more links once you have navigated 20 more links down the page
+        d.middleOfPage = getMiddleOfPage(d.loadPoint);
+      }
+
+      if (d.linkCount >= d.urlCount + 100){ // stop loading when we've hit 100 links
+        $(window).off('scroll', doLoad);
+      }
+  };
+
+  getMiddleOfPage = function(loadPoint){
+    // find 'middle' of page (where we want to lazy load more links)
+    // not really the middle -- more like upper fourth of page
+    var $offset = $('#listings .thing:nth-child(' + loadPoint + ')').first().offset();
+    if (!$offset) {
+      return null
+    }
+    return $offset.top;
+  };
+
+  adjustRankWidth = function(link, count){
+    // determines width of rank --> this is determined server side, normally,
+    // but with lazy load, we need to alter the width client-side so the numbers
+    // don't get cut off on render. This takes care of all numbers up to six
+    // digits
+    var rank = $(link).find('.rank')
+    if (count < 900){
+      $(rank).width(27);
+    } else if (count < 9900){
+      $(rank).width(37);
+    } else {
+      $(rank).width(47);
+    }
+    return link;
+  };
+
+  $(document).ready(function(){
+    if (r.config.feature_lazy_load_listings){
+      var urlCount = parseInt($.url().param('count'), 10) || 0;
+      $('#listings .thing.link .rank').width(adjustRankWidth(this, urlCount));
+      updateNextPrevButtons();
+      lazyLoadOnScroll();
+    }
+  })
+
 }(r, _, jQuery);

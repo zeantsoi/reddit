@@ -252,6 +252,12 @@ def js_config(extra_config=None):
     feature_clickbox_with_title = (feature.is_enabled("expando_box") and
         feature.variant("expando_box") == "clickbox_with_title")
 
+    lazy_load_listings = (
+        c.user.pref_numsites == 25 and
+        controller_name in ['hot', 'new'] and
+        feature.is_enabled("lazy_load_listings")
+    )
+
     pref_new_window = (
         (feature.is_enabled("new_window") and
             feature.variant("new_window") == "test_group") or
@@ -378,6 +384,7 @@ def js_config(extra_config=None):
         "pref_email_messages": logged and c.user.pref_email_messages,
         "feature_double_sidebar": feature.is_enabled('double_sidebar'),
         "feature_clickbox_with_title": feature_clickbox_with_title,
+        "feature_lazy_load_listings": lazy_load_listings,
     }
 
     if feature.is_enabled("eu_cookie_policy"):

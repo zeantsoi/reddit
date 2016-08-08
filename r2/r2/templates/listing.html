@@ -34,21 +34,27 @@
        cls = 'linklisting'
  %>
 <div id="siteTable${_id}" class="sitetable ${cls}">
-  %for a in thing.things:
-      ${a}
-  %endfor
+  <div id="listings">
+    %for a in thing.things:
+        ${a}
+    %endfor
+  </div>
 
   %if thing.nextprev and (thing.prev or thing.next):
     <div class="nav-buttons">
       <span class="nextprev">${_("view more:")}&#32;
       %if thing.prev:
-        ${plain_link(format_html("&lsaquo; %s", _("prev")), thing.prev, rel="nofollow prev")}
+        <span class="prev-button">
+          ${plain_link(format_html("&lsaquo; %s", _("prev")), thing.prev, rel="nofollow prev")}
+        </span>
       %endif
       %if thing.prev and thing.next:
         <span class="separator"></span>
       %endif
       %if thing.next:
-        ${plain_link(format_html("%s &rsaquo;", _("next")), thing.next, rel="nofollow next")}
+        <span class="next-button">
+          ${plain_link(format_html("%s &rsaquo;", _("next")), thing.next, rel="nofollow next")}
+        </span>
       %endif
       </span>
       %if thing.next_suggestions:
