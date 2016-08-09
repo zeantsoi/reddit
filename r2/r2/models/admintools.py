@@ -42,6 +42,7 @@ from pylons.i18n import _
 
 from datetime import datetime, timedelta
 from copy import copy
+from collections import Counter
 
 admintools_hooks = HookRegistrar()
 
@@ -56,6 +57,7 @@ class AdminTools(object):
 
         Report.accept(all_things, True)
 
+        inbox_adjustment_counter = Counter()
         for t in all_things:
             if getattr(t, "promoted", None) is not None:
                 g.log.debug("Refusing to mark promotion %r as spam" % t)
@@ -70,6 +72,8 @@ class AdminTools(object):
             elif t._spam and train_spam:
                 note = 'reinforce spam'
 
+            if isinstance(t, Message) and not t._spam and t.to_id:
+                inbox_adjustment_counter[t.to_id] -= 1
             t._spam = True
 
             if moderator_banned:
@@ -90,6 +94,8 @@ class AdminTools(object):
 
             t.ban_info = ban_info
             t._commit()
+
+        self.adjust_inbox_counts(inbox_adjustment_counter)
 
         if not auto:
             self.author_spammer(new_things, True)
@@ -119,6 +125,7 @@ class AdminTools(object):
             things = [x for x in things if x._spam]
 
         Report.accept(things, False)
+        inbox_adjustment_counter = Counter()
         for t in things:
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info['unbanned_at'] = datetime.now(g.tz)
@@ -129,7 +136,11 @@ class AdminTools(object):
             else:
                 ban_info['reset_used'] = True
             t.ban_info = ban_info
+
+            if isinstance(t, Message) and t._spam and t.to_id:
+                inbox_adjustment_counter[t.to_id] += 1
             t._spam = False
+
             if moderator_unbanned:
                 t.verdict = 'mod-approved'
             else:
@@ -139,6 +150,7 @@ class AdminTools(object):
         self.author_spammer(things, False)
         self.set_last_sr_ban(things)
         queries.unban(things, insert)
+        self.adjust_inbox_counts(inbox_adjustment_counter)
 
     def author_spammer(self, things, spam):
         """incr/decr the 'spammer' field for the author of every
@@ -157,6 +169,11 @@ class AdminTools(object):
             for aid, author_things in by_aid.iteritems():
                 author = authors[aid]
                 author._incr('spammer', len(author_things) if spam else -len(author_things))
+
+    def adjust_inbox_counts(self, uid_counter):
+        for uid, count in uid_counter.items():
+            inbox_owner = Account._byID(uid)
+            inbox_owner._incr('inbox_count', amt=count)
 
     def set_last_sr_ban(self, things):
         by_srid = {}
