@@ -22,12 +22,15 @@
 
 <%inherit file="reddit.html"/>
 
-<%! from r2.lib.filters import scriptsafe_dumps %>
+<%! 
+  from r2.lib.filters import scriptsafe_dumps
+  from r2.lib.template_helpers import static 
+%>
 
 <%def name="head()">
   ${parent.head()}
 
-  %if getattr(thing.link, "moat_engagement_tracking", False):
+  %if getattr(thing.link, "promoted", False):
     <script>
       %if thing.dnt_enabled:
       if (!window.DO_NOT_TRACK) {
@@ -35,7 +38,7 @@
         (function(a){
           var b = a.createElement('script'), c = a.getElementsByTagName('script')[0];
           b.type = 'text/javascript'; b.async = !0;
-          b.src = ${scriptsafe_dumps(g.live_config.get("moat_engagement_url"))};
+          b.src = ${scriptsafe_dumps(static("moat/moatcontent.js"))};
           c.parentNode.insertBefore(b,c);
         })(document);
       %if thing.dnt_enabled:
