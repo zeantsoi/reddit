@@ -915,7 +915,7 @@ class MinimalController(BaseController):
             # having issues, just skip adding the headers
             g.log.info("ratelimit error: %s", e)
             return
-        reqs_remaining = max(0, max_reqs - recent_reqs)
+        reqs_remaining = max(0, max_reqs - (recent_reqs or 0))
 
         c.ratelimit_headers = {
             "X-Ratelimit-Used": str(recent_reqs),
