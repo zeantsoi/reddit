@@ -12026,3 +12026,55 @@ body:not(.loggedin) .report-button {
     absolute;
     left: -1000%;
 }
+
+.browser-notifications {
+    @small-icon-size: 16px;
+    display: inline-block;
+    vertical-align: top;
+
+    a {
+      font-size: smaller;
+      margin-left: 5px;
+    }
+
+    .error-icon::before {
+        content: '';
+        .hdpi-bg-image(@1x: url(../alert.png),
+                       @2x: url(../alert_2x.png));
+        background-size: 100%;
+        background-repeat: no-repeat;
+        float: left;
+        height: @small-icon-size;
+        width: @small-icon-size;
+        margin-right: 5px;
+    }
+
+    .success-icon::before {
+        content: '';
+        .hdpi-bg-image(@1x: url(../check.png),
+                       @2x: url(../check_2x.png));
+        background-size: 100%;
+        background-repeat: no-repeat;
+        float: left;
+        height: @small-icon-size;
+        width: @small-icon-size;
+        margin-right: 5px;
+    }
+
+    .info-icon::before {
+        content: '';
+        .hdpi-bg-image(@1x: url(../action-icon-info-color.png),
+                       @2x: url(../action-icon-info-color_2x.png));
+        background-size: 100%;
+        background-repeat: no-repeat;
+        float: left;
+        height: @small-icon-size;
+        width: @small-icon-size;
+        margin-right: 5px;
+    }
+
+    #status {
+        margin-left: 10px;
+        display: inline-block;
+    }
+}

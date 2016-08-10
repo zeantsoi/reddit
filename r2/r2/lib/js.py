@@ -769,6 +769,11 @@ module["user-websockets"] = Module("user-websockets.js",
     "user-websockets.js",
 )
 
+module["notification-permissions"] = Module(
+    "notification-permissions.js",
+    "notification-permissions.js",
+)
+
 module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
     "lib/jquery.lazyload.js",

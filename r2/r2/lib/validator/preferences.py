@@ -144,9 +144,6 @@ def filter_prefs(prefs, user):
         del prefs['pref_hide_ads']
         del prefs['pref_show_gold_expiration']
 
-    if not feature.is_enabled("live_orangereds"):
-        del prefs["pref_live_orangereds"]
-
     if not (user.gold or user.is_moderator_somewhere):
         prefs['pref_highlight_new_comments'] = True
 
