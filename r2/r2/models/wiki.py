@@ -545,6 +545,10 @@ class DeletedImagesByWikiPage(tdb_cassandra.View):
 
     @classmethod
     def log_deletion(cls, sr, page_name, image_name, old_url):
+        if not old_url:
+            # it didn't exist before
+            return
+
         rowkey = WikiPage.id_for(sr, page_name)
         ts = datetime.now(pytz.UTC)
         colkey = uuid1()

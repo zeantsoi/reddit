@@ -2740,6 +2740,11 @@ class ApiController(RedditController):
         if g.css_killswitch:
             return abort(403, 'forbidden')
 
+        wiki.DeletedImagesByWikiPage.log_deletion(c.site,
+                                                  'config/stylesheet',
+                                                  'header',
+                                                  c.site.header)
+
         if c.site.header:
             c.site.header = None
             c.site.header_size = None
@@ -2767,6 +2772,12 @@ class ApiController(RedditController):
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
 
         """
+
+        wiki.DeletedImagesByWikiPage.log_deletion(c.site,
+                                                  'config/stylesheet',
+                                                  'icon',
+                                                  c.site.icon_img)
+
         if c.site.icon_img:
             c.site.icon_img = None
             c.site.icon_size = None
@@ -2794,6 +2805,12 @@ class ApiController(RedditController):
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
 
         """
+
+        wiki.DeletedImagesByWikiPage.log_deletion(c.site,
+                                                  'config/stylesheet',
+                                                  'banner',
+                                                  c.site.banner_img)
+
         if c.site.banner_img:
             c.site.banner_img = None
             c.site.banner_size = None
@@ -2932,16 +2949,30 @@ class ApiController(RedditController):
                                                 name, new_url)
                 kw = dict(details='upload_image', description=name)
             elif upload_type == 'header':
+                wiki.DeletedImagesByWikiPage.log_deletion(c.site,
+                                                          'config/stylesheet',
+                                                          'header',
+                                                          c.site.header)
+
                 c.site.header = new_url
                 c.site.header_size = size
                 c.site._commit()
                 kw = dict(details='upload_image_header')
             elif upload_type == 'icon':
+                wiki.DeletedImagesByWikiPage.log_deletion(c.site,
+                                                          'config/stylesheet',
+                                                          'icon',
+                                                          c.site.icon_img)
                 c.site.icon_img = new_url
                 c.site.icon_size = size
                 c.site._commit()
                 kw = dict(details='upload_image_icon')
             elif upload_type == 'banner':
+                wiki.DeletedImagesByWikiPage.log_deletion(c.site,
+                                                          'config/stylesheet',
+                                                          'banner',
+                                                          c.site.banner_img)
+
                 c.site.banner_img = new_url
                 c.site.banner_size = size
                 c.site._commit()
