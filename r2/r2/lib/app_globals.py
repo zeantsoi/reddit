@@ -265,6 +265,7 @@ class Globals(object):
             'RL_SITEWIDE_ENABLED',
             'RL_OAUTH_SITEWIDE_ENABLED',
             'enable_loggedout_experiments',
+            'enable_crawler_scrape_events',
         ],
 
         ConfigValue.tuple: [
@@ -662,10 +663,10 @@ class Globals(object):
             with open("/etc/ec2_asg", "r") as f:
                 pool = f.read().strip()
             # clean up the pool name since we're putting stuff after "-"
-            pool = pool.partition("-")[0]
+            self.pool_name = pool.partition("-")[0]
         except IOError:
-            pool = "reddit-app"
-        self.log = logging.LoggerAdapter(log, {"pool": pool})
+            self.pool_name = "reddit-app"
+        self.log = logging.LoggerAdapter(log, {"pool": self.pool_name})
 
         # set locations
         locations = pkg_resources.resource_stream(__name__,

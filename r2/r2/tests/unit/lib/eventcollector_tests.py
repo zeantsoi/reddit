@@ -24,14 +24,19 @@
 
 from collections import defaultdict
 import datetime
+import unittest
 
+import mock
 import pytz
 from pylons import app_globals as g
-from mock import MagicMock
+from pylons import Request, Response
+from mock import MagicMock, Mock, PropertyMock
 
 from r2.tests import RedditTestCase
-from r2.models import FakeAccount, Link
+from r2.models import Account, Comment, FakeAccount, Link
 from r2.lib import hooks
+from r2.lib.eventcollector import EventQueue
+from r2.tests import MockEventQueue
 from r2 import models
 
 
@@ -640,3 +645,100 @@ class TestEventCollector(RedditTestCase):
                 },
             }
         )
+
+
+class TestSearchEngineCrawlEvent(unittest.TestCase):
+
+    def run(self, result=None):
+        with mock.patch.object(EventQueue, 'save_event') as mock_save_event:
+            self.mock_save_event = mock_save_event
+            super(TestSearchEngineCrawlEvent, self).run(result)
+
+    @staticmethod
+    def _create_mock_context():
+        tmpl_context = Mock()
+        tmpl_context.request_timer.elapsed_seconds.return_value = 0.123
+        return tmpl_context
+
+    @staticmethod
+    def _create_mock_request(**overrides):
+        defaults = dict(
+            url='https://www.reddit.com/',
+            user_agent='msnbot/2.0b (+http://search.msn.com/msnbot.htm)',
+            method='GET',
+            domain='reddit.local',
+            referrer=None,
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.configure_mock(**dict(defaults, **overrides))
+        return mock_request
+
+    @staticmethod
+    def _create_mock_response(**overrides):
+        defaults = dict(status_int=200)
+        mock_response = Mock(spec=Response)
+        mock_response.configure_mock(**dict(defaults, **overrides))
+        return mock_response
+
+    def test_good_case_with_user_url(self):
+        mock_req = self._create_mock_request(
+            url='https://reddit.local/user/kntsMyDuanereOfOn',
+            user_agent='Mozilla/5.0 (compatible) Feedfetcher-Google; \
+                (+http://www.google.com/feedfetcher.html)',
+        )
+        # NOTE(wting|2016-08-15): Using Mock instead FakeAccount because we
+        # can't set / access _fullname.
+        mock_account = Mock(
+            spec=Account,
+            _id=123,
+            _type_name='account',
+            _fullname='t2_1371',
+        )
+
+        with mock.patch.object(Account, '_by_name', return_value=mock_account):
+            g.events.search_engine_crawl_event(
+                mock_req,
+                self._create_mock_response(),
+                self._create_mock_context())
+
+        self.assertEquals(self.mock_save_event.call_count, 1)
+
+    def test_comment_post_retrieves_link(self):
+        mock_req = self._create_mock_request(
+            url='https://reddit.local/r/askhistorians/comments/23/old_photos_etiquette/1j5',  # noqa
+            user_agent='Mozilla/5.0 (compatible) Feedfetcher-Google; \
+                (+http://www.google.com/feedfetcher.html)',
+        )
+        mock_link = Mock(spec=Link)
+        mock_link_fullname = PropertyMock(return_value='t3_abc1')
+        type(mock_link)._fullname = mock_link_fullname
+        mock_comment = Mock(
+            spec=Comment,
+            _id=123,
+            _type_name='comment',
+            _fullname='t1_1371',
+            link=mock_link,
+        )
+
+        with mock.patch.object(Comment, '_byID36', return_value=mock_comment):
+            g.events.search_engine_crawl_event(
+                mock_req,
+                self._create_mock_response(),
+                self._create_mock_context())
+
+        self.assertEquals(mock_link_fullname.call_count, 1)
+        self.assertEquals(self.mock_save_event.call_count, 1)
+
+    def test_exceptions_are_supressed(self):
+        mock_req = self._create_mock_request()
+        mock_context = self._create_mock_context()
+        # This mimics when .elapsed_seconds() is called before the request
+        # is finished.
+        mock_context.request_timer.elapsed_seconds.side_effect = AssertionError
+
+        g.events.search_engine_crawl_event(
+            mock_req,
+            self._create_mock_response(),
+            mock_context)
+
+        self.assertEquals(self.mock_save_event.call_count, 0)
