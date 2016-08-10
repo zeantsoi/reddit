@@ -27,7 +27,7 @@
     },
 
     insertPromo: function(){
-      var newPromo = r.promo.requestPromo();
+      var newPromo = r.promo.requestPromo({ placements: 'feed-' + this.pos });
       var self = this;
       newPromo.pipe(function(promo){
         var numThings = $('.sitetable.linklisting').find('.thing').length;

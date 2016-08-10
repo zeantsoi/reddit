@@ -174,6 +174,7 @@
 
     requestPromo: function(options) {
       options = options || {};
+      options.placements = 'spotlight';
 
       var newPromo = r.promo.requestPromo(options);
       return newPromo.pipe(function(promo) {
