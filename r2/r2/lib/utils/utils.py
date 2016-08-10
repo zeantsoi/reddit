@@ -901,6 +901,7 @@ def url_to_thing(url):
         /r/somesr/comments/j2jx/slug/k2js - Comment
     """
     from r2.models import Comment, Link, Message, NotFound, Subreddit, Thing
+    from r2.models.account import Account
     from r2.config.middleware import SubredditMiddleware
     sr_pattern = SubredditMiddleware.sr_pattern
 
@@ -945,6 +946,10 @@ def url_to_thing(url):
         msg = route_dict.get('mid')
         if msg:
             return Message._byID36(msg, data=True)
+
+        username = route_dict.get('username')
+        if username:
+            return Account._by_name(username)
     except (NotFound, ValueError):
         return None
 

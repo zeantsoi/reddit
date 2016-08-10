@@ -27,12 +27,15 @@ import math
 import functools
 import traceback
 import sys
+import unittest
 
 from mock import MagicMock, patch
+from mock import sentinel as s
 from pylons import request
 from pylons import app_globals as g
 
 from r2.lib import utils
+from r2.models import NotFound
 from r2.tests import RedditTestCase
 
 
@@ -547,3 +550,46 @@ class TestIsSeoReferrer(RedditTestCase):
 
         request.referer = None
         self.assertEqual(utils.is_seo_referrer(), False)
+
+
+class TestUrlToThing(unittest.TestCase):
+
+    def test_good_username(self):
+        with patch('r2.models.account.Account') as MockAccount:
+            MockAccount._by_name.return_value = s.Account
+            self.assertEqual(
+                utils.url_to_thing('http://reddit.local/user/wting'),
+                s.Account,
+            )
+
+    def test_bad_username(self):
+        with patch('r2.models.account.Account') as MockAccount:
+            MockAccount._by_name.side_effect = NotFound
+            self.assertEqual(
+                utils.url_to_thing('http://reddit.local/user/missing_user'),
+                None,
+            )
+
+    def test_short_username(self):
+        with patch('r2.models.account.Account') as MockAccount:
+            MockAccount._by_name.return_value = s.Account
+            self.assertEqual(
+                utils.url_to_thing('https://reddit.local/u/wting'),
+                s.Account,
+            )
+
+    def test_username_subcategories(self):
+        user_categories = [
+            'comments', 'submitted', 'gilded', 'upvoted', 'downvoted',
+            'hidden', 'saved'
+        ]
+        with patch('r2.models.account.Account') as MockAccount:
+            MockAccount._by_name.return_value = s.Account
+            for category in user_categories:
+                self.assertEqual(
+                    utils.url_to_thing(
+                        'https://reddit.local/u/wting/%s/' %
+                        category
+                    ),
+                    s.Account,
+                )
