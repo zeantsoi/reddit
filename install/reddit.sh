@@ -597,6 +597,7 @@ CONSUMER_CONFIG_ROOT=$REDDIT_HOME/consumer-count.d
 
 if [ ! -f /etc/default/reddit ]; then
     cat > /etc/default/reddit <<DEFAULT
+export REDDIT_BASE=$REDDIT_SRC
 export REDDIT_ROOT=$REDDIT_SRC/reddit/r2
 export REDDIT_INI=$REDDIT_SRC/reddit/r2/run.ini
 export REDDIT_USER=$REDDIT_USER
