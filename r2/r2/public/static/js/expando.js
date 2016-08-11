@@ -373,6 +373,7 @@
     $(listingSelectors.join(',')).on('click', '.expand-media.source-redirect', function(e) {
       // If the clickbox target doesn't have a preview, imitate the behavior
       // of a title click
+      if (!includeElementClicks(e.target)) { return; }
       var $mediaTarget = $(e.target).closest('.expand-media');
       var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
       var url = $mediaTarget.attr('data-href-url');
