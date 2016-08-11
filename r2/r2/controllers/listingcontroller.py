@@ -488,7 +488,7 @@ class ListingWithPromos(SubredditListingController):
 
             if requested_ad:
                 spotlight = self.make_requested_ad(requested_ad)
-            elif promote.ads_feature_enabled("promoted_links_in_feed"):
+            elif show_promo and promote.ads_feature_enabled("promoted_links_in_feed"):  # noqa
                 spotlight = None
             elif on_frontpage and show_organic:
                 spotlight = self.make_spotlight(show_promo)
