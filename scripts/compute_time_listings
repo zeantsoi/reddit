@@ -33,6 +33,9 @@ export TMPDIR=${TMPDIR:-/tmp}
 export PGUSER=${PGUSER:-reddit}
 export PGHOST=${PGHOST:-localhost}
 
+export MRTOP=${MRTOP:-MrTop}
+export MRTOPSCRIPT=${MRTOPSCRIPT:-$REDDIT_ROOT/r2/lib/mr_top.py}
+
 ## command line args
 # one of "link" or "comment"
 export THING_CLS="$1"
@@ -90,7 +93,7 @@ function reddit {
     done
     shift $((OPTIND-1))
 
-    cmd="paster --plugin=r2 run $REDDIT_INI $REDDIT_ROOT/r2/lib/mr_top.py -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
+    cmd="paster --plugin=r2 run $REDDIT_INI $MRTOPSCRIPT -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
 
     if [ "$njobs" = "1" ]; then
         sh -c "$cmd" # just execute it directly
@@ -116,17 +119,17 @@ if [ -z $MINID ]; then
     exit 1
 fi
 
-THING_SQL=$(reddit "MrTop('${THING_CLS}', ${MINID}).emit_thing_query()")
+THING_SQL=$(reddit "${MRTOP}('${THING_CLS}', ${MINID}).emit_thing_query()")
 run_query "\\copy ($THING_SQL) to $THING_DUMP"
 
-DATA_SQL=$(reddit "MrTop('${THING_CLS}', ${MINID}).emit_data_query()")
+DATA_SQL=$(reddit "${MRTOP}('${THING_CLS}', ${MINID}).emit_data_query()")
 run_query "\\copy ($DATA_SQL) to $DATA_DUMP"
 
 cat $THING_DUMP $DATA_DUMP |
     mrsort |
-    reddit "MrTop('${THING_CLS}').join_things()" |
-    reddit "MrTop('${THING_CLS}').time_listings($TIMES)" |
+    reddit "${MRTOP}('${THING_CLS}').join_things()" |
+    reddit "${MRTOP}('${THING_CLS}').time_listings($TIMES)" |
     mrsort |
-    reddit -j4 "MrTop.write_permacache()"
+    reddit -j4 "${MRTOP}.write_permacache()"
 
 echo 'Done.'
