@@ -148,7 +148,10 @@ def password_email(user):
     if not passlink:
         return False
 
-    g.log.info("Generated %s: %s", PasswordResetToken.__name__, passlink)
+    g.log.info("Generated %s: %s for user %s",
+               PasswordResetToken.__name__,
+               passlink,
+               user.name)
     signer = MessageSigner(g.secrets["outbound_url_secret"])
     signature = base64.urlsafe_b64encode(
         signer.make_signature(
@@ -536,6 +539,7 @@ def send_queued_mail(test = False):
                 session.sendmail(email.fr_addr, email.to_addr,
                                  mimetext.as_string())
                 email.set_sent(rejected = False)
+
         # exception happens only for local recipient that doesn't exist
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
                 UnicodeDecodeError, AttributeError, HeaderParseError):
@@ -573,6 +577,10 @@ def send_queued_mail(test = False):
                 email.set_sent(rejected = True)
                 continue
             sendmail(email)
+
+            g.log.info("Sent email from %r to %r",
+                       email.fr_addr,
+                       email.to_addr)
 
     finally:
         if not test:
