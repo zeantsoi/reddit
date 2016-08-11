@@ -361,6 +361,13 @@ class Reddit(Templated):
         u.switch_subdomain_by_extension('mobile')
         self.mobile_link = u.unparse()
 
+        link = getattr(self, 'link', None)
+        amphtml_domain = g.config.get('amphtml_domain', None)
+        if link and link.is_self and amphtml_domain:
+            u = UrlParser(self.canonical_link)
+            u.hostname = amphtml_domain
+            self.amp_link = u.unparse()
+
         if self.show_infobar:
             if not infotext:
                 if g.heavy_load_mode:

@@ -39,6 +39,9 @@
     %if hasattr(thing, 'mobile_link'):
         <link rel="alternate" media="only screen and (max-width: 640px)" href="${thing.mobile_link}" />
     %endif
+    %if hasattr(thing, 'amp_link'):
+        <link rel="amphtml" href="${thing.amp_link}" />
+    %endif
     ${self.viewport()}
     ${self.robots()}
     ${self.pagemeta()}
