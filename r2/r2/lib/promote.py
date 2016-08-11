@@ -1895,7 +1895,7 @@ def keywords_from_context(
     if in_feed_variant is not None:
         keywords.add("exp.promoted_link_in_feed.%s" % in_feed_variant)
 
-    if feature.is_enabled("double_sidebar"):
+    if ads_feature_enabled("double_sidebar"):
         keywords.add("exp.double_sidebar.test_group")
         keywords.add("exp.double_sidebar.ad_type.%s" % frame_id)
 
