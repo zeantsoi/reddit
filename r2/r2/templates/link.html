@@ -287,8 +287,12 @@
       if thing.thumbnail_sprited:
         css_class = '%s %s' % (css_class, thing.thumbnail)
 
+      if thing.is_self and not thing.promoted:
+        thumbnail_link = thing.permalink
+      else:
+        thumbnail_link = getattr(thing, 'url', thing.permalink)
     %>
-    <%call expr="make_link('thumbnail', css_class, 0, getattr(thing, 'clickbox_expando_preview', False), getattr(thing, 'url', False))">
+    <%call expr="make_link('thumbnail', css_class, 0, getattr(thing, 'clickbox_expando_preview', False), thumbnail_link)">
       ${thumbnail_img(thing)}
     </%call>
   %endif

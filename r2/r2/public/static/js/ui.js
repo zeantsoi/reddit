@@ -37,7 +37,7 @@ r.ui.init = function() {
 
             if (experimentEnabled && !e.metaKey) {
                 // Only preventDefault for title clicks, not flatlist buttons (comments, share, save)
-                if ($(this).parents('.expand-media').length && !$(this).parents('.may-blank').length && $(this).hasClass('title') ) {
+                if ($(this).parents('.expand-media.preview-object').length && !$(this).parents('.may-blank').length && $(this).hasClass('title') ) {
                     e.preventDefault();
                     return false;
                 }

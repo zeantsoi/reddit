@@ -90,6 +90,10 @@
     if ($target.parentsUntil('.thing', '.media-preview').length) {
       return false;
     }
+    // Clicking on the vote buttons shouldn't toggle the expando
+    if ($target.parentsUntil('.thing', '.midcol').length) {
+      return false;
+    }
 
     // Don't expand on title click unless the experiment variant
     // "clickbox_with_title" is enabled

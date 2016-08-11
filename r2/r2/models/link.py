@@ -894,8 +894,7 @@ class Link(Thing, Printable):
             if expando_box_enabled:
                 # Specifies whether a preview exists so the expando box
                 # can redirect to the link if it doesn't
-                if ((show_media and getattr(item, 'preview_image', False) and
-                            item.link_child) or
+                if ((item.link_child and getattr(item, 'preview_object', False)) or
                         meets_self_post_experiment_requirements):
                     item.clickbox_expando_preview = True
                 else:
