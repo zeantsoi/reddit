@@ -364,6 +364,8 @@ def make_map(config):
        action='archive')
     mc('/api/mod/conversations/:conversation_id/unarchive',
        controller='modmail', action='unarchive')
+    mc('/api/mod/conversations/:conversation_id/user',
+       controller='modmail', action='modmail_userinfo')
 
     mc('/api/wiki/edit', controller='wikiapi', action='wiki_edit')
     mc('/api/wiki/hide', controller='wikiapi', action='wiki_revision_hide')

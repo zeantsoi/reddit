@@ -1,3 +1,4 @@
+from datetime import datetime
 import simplejson
 from pylons import app_globals as g
 from pylons import request, response
@@ -26,7 +27,14 @@ from r2.lib.validator import (
     VSRByName,
     VSRByNames,
 )
-from r2.models import Account, Message, Subreddit
+from r2.models import (
+    Account,
+    Comment,
+    Link,
+    Message,
+    Subreddit,
+    Thing,
+)
 from r2.models.modmail import (
     ModmailConversation,
     ModmailConversationAction,
@@ -259,16 +267,28 @@ class ModmailController(OAuth2OnlyController):
         """
         self._validate_vmodconversation()
 
-        # Admin users should be able to override the subreddit access check
-        # in order to view permalinks shared by other mod teams.
         sr = self._try_get_subreddit_access(conversation, admin_override=True)
-        authors = self._try_get_byID(conversation.author_ids, Account,
-                                     ignore_missing=True)
+        authors = self._try_get_byID(
+            list(
+                set(conversation.author_ids) |
+                set(conversation.mod_action_account_ids)
+            ),
+            Account,
+            ignore_missing=True
+        )
         serializable_convo = conversation.to_serializable(
                 authors, sr, all_messages=True, current_user=c.user)
 
         messages = serializable_convo.pop('messages')
         mod_actions = serializable_convo.pop('modActions')
+
+        # Get participant user info for conversation
+        try:
+            userinfo = self._get_modmail_userinfo(conversation, sr=sr)
+        except ValueError:
+            userinfo = {}
+        except NotFound as e:
+            abort(400, str(e))
 
         if mark_read:
             conversation.mark_read(c.user)
@@ -277,6 +297,7 @@ class ModmailController(OAuth2OnlyController):
             'conversation': serializable_convo,
             'messages': messages,
             'modActions': mod_actions,
+            'user': userinfo,
         })
 
     @require_oauth2_scope('identity')
@@ -559,6 +580,172 @@ class ModmailController(OAuth2OnlyController):
 
         convo_counts = ModmailConversation.unread_convo_count(c.user)
         return simplejson.dumps(convo_counts)
+
+    @require_oauth2_scope('identity')
+    @validate(conversation=VModConversation('conversation_id'))
+    def GET_modmail_userinfo(self, conversation):
+        # validate that the currently logged in user is a mod
+        # of the subreddit associated with the conversation
+        self._try_get_subreddit_access(conversation, admin_override=True)
+        try:
+            userinfo = self._get_modmail_userinfo(conversation)
+        except (ValueError, NotFound) as e:
+            abort(400, str(e))
+
+        return simplejson.dumps(userinfo)
+
+    def _get_modmail_userinfo(self, conversation, sr=None):
+        if conversation.is_internal:
+            raise ValueError('Cannot get userinfo for internal conversations')
+
+        if not sr:
+            sr = Subreddit._by_fullname(conversation.owner_fullname)
+
+        # Retrieve the participant associated with the conversation
+        try:
+            participant = ModmailConversationParticipant.get_participant(
+                    conversation.id)
+            account = Account._byID(participant.account_id)
+
+            permatimeout = (account.in_timeout and
+                            account.days_remaining_in_timeout == 0)
+
+            if account._deleted or permatimeout:
+                raise ValueError('User info is inaccessible')
+        except NotFound:
+            raise NotFound('Unable to retrieve conversation participant')
+
+        # Fetch the mute and ban status of the participant as it relates
+        # to the subreddit associated with the conversation. Also retrieve
+        # the users link and comment karma associated with the subreddit.
+        mute_status = sr.is_muted(account)
+        ban_status = sr.is_banned(account)
+
+        # Display karma for only users that have not been shadow banned
+        post_karma = None
+        comment_karma = None
+        if not account._spam:
+            post_karma = account.karma('link', sr)
+            comment_karma = account.karma('comment', sr)
+
+        # Parse the ban status and retrieve the length of the ban,
+        # then output the data into a serialiazable dict
+        ban_result = {
+            'isBanned': bool(ban_status),
+            'reason': '',
+            'endDate': None,
+            'isPermanent': False
+        }
+
+        if ban_status:
+            ban_result['reason'] = ban_status.note
+
+            ban_duration = sr.get_tempbans('banned', account.name)
+            ban_duration = ban_duration.get(account.name)
+
+            if ban_duration:
+                ban_result['endDate'] = ban_duration.isoformat()
+            else:
+                ban_result['isPermanent'] = True
+                ban_result['endDate'] = None
+
+        # Parse the mute status and retrieve the length of the ban,
+        # then output the data into the serialiazable dict
+        mute_result = {
+            'isMuted': bool(mute_status),
+            'endDate': None,
+            'reason': ''
+        }
+
+        if mute_status:
+            mute_result['reason'] = mute_status.note
+
+            muted_items = sr.get_muted_items(account.name)
+            mute_duration = muted_items.get(account.name)
+            if mute_duration:
+                mute_result['endDate'] = mute_duration.isoformat()
+
+        # Retrieve the participants post and comment fullnames from cache
+        post_fullnames = []
+        comment_fullnames = []
+        if not account._spam:
+            post_fullnames = list(
+                queries.get_submitted(account, 'new', 'all')
+            )[:100]
+
+            comment_fullnames = list(
+                queries.get_comments(account, 'new', 'all')
+            )[:100]
+
+        # Retrieve the associated link objects for posts and comments
+        # using the retrieve fullnames, afer the link objects are retrieved
+        # create a serializable dict with the the necessary information from
+        # the endpoint.
+        lookup_fullnames = list(
+            set(post_fullnames) | set(comment_fullnames)
+        )
+        posts = Thing._by_fullname(lookup_fullnames)
+
+        serializable_posts = {}
+        for fullname in post_fullnames:
+            if len(serializable_posts) == 3:
+                break
+
+            post = posts[fullname]
+            if post.sr_id == sr._id and not post._deleted:
+                serializable_posts[fullname] = {
+                    'title': post.title,
+                    'permalink': post.make_permalink(
+                        sr,
+                        force_domain=True
+                    ),
+                    'date': post._date.isoformat(),
+                }
+
+        # Extract the users most recent comments associated with the
+        # subreddit
+        sr_comments = []
+        for fullname in comment_fullnames:
+            if len(sr_comments) == 3:
+                break
+
+            comment = posts[fullname]
+            if comment.sr_id == sr._id and not comment._deleted:
+                sr_comments.append(comment)
+
+        # Retrieve all associated link objects (combines lookup)
+        comment_links = Link._byID([
+            sr_comment.link_id
+            for sr_comment in sr_comments
+        ])
+
+        # Serialize all of the user's sr comments
+        serializable_comments = {}
+        for sr_comment in sr_comments:
+            comment_link = comment_links[sr_comment.link_id]
+            serializable_comments[sr_comment._fullname] = {
+                'title': comment_link.title,
+                'permalink': sr_comment.make_permalink(
+                    comment_link,
+                    sr,
+                    force_domain=True
+                ),
+                'date': sr_comment._date.isoformat(),
+            }
+
+        return {
+            'id': account._fullname,
+            'created': account._date.isoformat(),
+            'banStatus': ban_result,
+            'isShadowBanned': account._spam,
+            'subredditKarma': {
+                'post': post_karma,
+                'comment': comment_karma,
+            },
+            'muteStatus': mute_result,
+            'recentComments': serializable_comments,
+            'recentPosts': serializable_posts,
+        }
 
     def _get_updated_convo(self, convo_id, user):
         # Retrieve updated conversation to be returned
