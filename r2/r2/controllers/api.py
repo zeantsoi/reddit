@@ -145,6 +145,7 @@ from r2.lib.lock import TimeoutExpired
 from r2.lib.csrf import csrf_exempt
 from r2.lib.voting import cast_vote
 
+from r2.models import account
 from r2.models import wiki
 from r2.models.ip import set_account_ip
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
@@ -4116,15 +4117,25 @@ class ApiController(RedditController):
         if form.has_error():
             return
 
-        # at this point, we should mark the token used since it's either
-        # valid now or will never be valid again.
-        token.consume()
-
         # load up the user and check that things haven't changed
         user = Account._by_fullname(token.user_id)
         if not token.valid_for_user(user):
+            # The token has expired, possibly because the user's password was
+            # changed some other way.
+            token.consume()
             form.redirect('/password?expired=true')
             return
+
+        if account.valid_password(user, password):
+            c.errors.add(errors.OLD_PASSWORD_MATCH, field="passwd")
+            form.has_errors("passwd", errors.OLD_PASSWORD_MATCH)
+            # Do *not* consume the token here. This might be the first time
+            # we're telling the user they can't re-use their old password.
+            return
+        else:
+            # at this point, we should mark the token used since it's either
+            # valid now or will never be valid again.
+            token.consume()
 
         # Prevent banned users from resetting, and thereby logging in
         if user._banned:
