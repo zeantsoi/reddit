@@ -1799,7 +1799,6 @@ def srnames_from_site(user, site, include_subscriptions=True, limit=50):
 
 def keywords_from_context(
         user, site,
-        frame_id="ad_main",
         include_subscriptions=True,
         displayed_things=[],
         block_programmatic=False,
@@ -1894,10 +1893,6 @@ def keywords_from_context(
     in_feed_variant = feature.variant("promoted_links_in_feed")
     if in_feed_variant is not None:
         keywords.add("exp.promoted_link_in_feed.%s" % in_feed_variant)
-
-    if ads_feature_enabled("double_sidebar"):
-        keywords.add("exp.double_sidebar.test_group")
-        keywords.add("exp.double_sidebar.ad_type.%s" % frame_id)
 
     return keywords
 
