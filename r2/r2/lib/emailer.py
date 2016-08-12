@@ -42,7 +42,11 @@ from r2.config import feature
 from r2.lib import hooks
 from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.filters import _force_unicode
-from r2.lib.utils import timeago, long_datetime
+from r2.lib.utils import (
+    timeago,
+    long_datetime,
+    exponential_retrier,
+)
 from r2.models import (
     Account,
     Award,
@@ -548,6 +552,14 @@ def send_queued_mail(test = False):
             traceback.print_exc(file = sys.stdout)
             email.set_sent(rejected = True)
 
+    def should_retry_exception(exception):
+        """Retry only on SMTPDataError"""
+        if not isinstance(exception, smtplib.SMTPDataError):
+            return False
+        # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
+        # 400 range seems to be the network error range which
+        # is what we want to retry
+        return 400 <= exception.smtp_code < 500
 
     try:
         for email in Email.get_unsent(now):
@@ -576,12 +588,17 @@ def send_queued_mail(test = False):
                        % (email.fr_addr, email.to_addr))
                 email.set_sent(rejected = True)
                 continue
-            sendmail(email)
-
+            exponential_retrier(
+                lambda: sendmail(email),
+                should_retry_exception)
             g.log.info("Sent email from %r to %r",
                        email.fr_addr,
                        email.to_addr)
-
+    except:
+        # Log exceptions here and re-throw to make sure we are not swallowing
+        # elsewhere
+        g.log.exception("Unable to deliver email")
+        raise
     finally:
         if not test:
             session.quit()
