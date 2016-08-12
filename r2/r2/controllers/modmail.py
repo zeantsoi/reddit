@@ -1,4 +1,5 @@
 import simplejson
+from pylons import app_globals as g
 from pylons import request, response
 from pylons import tmpl_context as c
 
@@ -39,6 +40,13 @@ from r2.models.modmail import (
 class ModmailController(OAuth2OnlyController):
 
     def pre(self):
+        # Set user_is_admin property on context,
+        # normally set but this controller does not inherit
+        # from RedditController
+        c.user_is_admin = False
+        if c.user_is_loggedin:
+            c.user_is_admin = c.user.name in g.admins
+
         super(ModmailController, self).pre()
         VNotInTimeout().run()
 
@@ -251,7 +259,9 @@ class ModmailController(OAuth2OnlyController):
         """
         self._validate_vmodconversation()
 
-        sr = self._try_get_subreddit_access(conversation)
+        # Admin users should be able to override the subreddit access check
+        # in order to view permalinks shared by other mod teams.
+        sr = self._try_get_subreddit_access(conversation, admin_override=True)
         authors = self._try_get_byID(conversation.author_ids, Account,
                                      ignore_missing=True)
         serializable_convo = conversation.to_serializable(
@@ -603,11 +613,12 @@ class ModmailController(OAuth2OnlyController):
         except:
             abort(422, 'Invalid request')
 
-    def _try_get_subreddit_access(self, conversation):
+    def _try_get_subreddit_access(self, conversation, admin_override=False):
         sr = Subreddit._by_fullname(conversation.owner_fullname)
         self._feature_enabled_check(sr)
 
-        if not sr.is_moderator_with_perms(c.user, 'mail'):
+        if (not sr.is_moderator_with_perms(c.user, 'mail') and
+                not (admin_override and not c.user_is_admin)):
             abort(403)
 
         return sr
