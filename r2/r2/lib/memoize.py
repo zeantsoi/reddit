@@ -23,14 +23,14 @@
 from hashlib import md5
 
 from r2.lib.filters import _force_utf8
-from r2.lib.cache import NoneResult, make_key, make_key_id
+from r2.lib.cache import NoneResult, make_key
 from r2.lib.lock import make_lock_factory
 from pylons import app_globals as g
 
 make_lock = g.make_lock
 memoizecache = g.memoizecache
 
-def memoize(iden, time=0, stale=False, timeout=30):
+def memoize(iden, time = 0, stale=False, timeout=30):
     def memoize_fn(fn):
         from r2.lib.memoize import NoneResult
         def new_fn(*a, **kw):
@@ -39,19 +39,18 @@ def memoize(iden, time=0, stale=False, timeout=30):
             #overwritten no matter what
             update = kw.pop('_update', False)
 
-            old_key = make_key(iden, *a, **kw)
-            new_key = "memo:%s:%s" % (iden, make_key_id(*a, **kw))
+            key = make_key(iden, *a, **kw)
 
-            res = None if update else memoizecache.get(old_key, stale=stale)
+            res = None if update else memoizecache.get(key, stale=stale)
 
             if res is None:
                 # not cached, we should calculate it.
-                with make_lock("memoize", 'memoize_lock(%s)' % old_key,
+                with make_lock("memoize", 'memoize_lock(%s)' % key,
                                time=timeout, timeout=timeout):
 
                     # see if it was completed while we were waiting
                     # for the lock
-                    stored = None if update else memoizecache.get(old_key)
+                    stored = None if update else memoizecache.get(key)
                     if stored is not None:
                         # it was calculated while we were waiting
                         res = stored
@@ -60,11 +59,7 @@ def memoize(iden, time=0, stale=False, timeout=30):
                         res = fn(*a, **kw)
                         if res is None:
                             res = NoneResult
-                        to_set = {old_key: res, new_key: res}
-                        memoizecache.set_multi(to_set, time=time)
-            else:
-                # populate the new key
-                memoizecache.set(new_key, res, time=time)
+                        memoizecache.set(key, res, time=time)
 
             if res == NoneResult:
                 res = None
