@@ -26,6 +26,7 @@ from babel.dates import format_date
 from babel.numbers import format_number
 import hashlib
 import hmac
+from itertools import chain
 import json
 import urllib
 import mimetypes
@@ -1763,10 +1764,13 @@ class PromoteApiController(ApiController):
              "zip", "country", "phoneNumber"]
         ),
         creditcard=ValidCard(["cardNumber", "expirationDate", "cardCode"]),
+        industry=VOneOf('industry',
+                        list(chain(g.advertiser_industries.keys(),
+                                   g.advertiser_industries_nsfw.keys()))
+                        ),
     )
     def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
-                        edit, address, creditcard):
-
+                        edit, address, creditcard, industry):
         def _handle_failed_payment(pay_id=None, reason=None):
             promote.failed_payment_method(c.user, link)
             msg = reason or _("failed to authenticate card. sorry.")
@@ -1865,7 +1869,8 @@ class PromoteApiController(ApiController):
                     address = profile.billTo
 
                 promote.successful_payment(link, campaign, request.ip, address)
-                g.events.campaign_payment_success_event(
+
+                event_payload = dict(
                     link=link,
                     campaign=campaign,
                     amount_pennies=campaign.total_budget_pennies,
@@ -1877,6 +1882,14 @@ class PromoteApiController(ApiController):
                     request=request,
                     context=c,
                 )
+
+                if c.user.advertiser_industry != industry:
+                    user = c.user
+                    user.advertiser_industry = industry
+                    user._commit()
+                    event_payload['advertiser_industry_changed_to'] = industry
+
+                g.events.campaign_payment_success_event(**event_payload)
 
                 jquery.payment_redirect(promote.promo_edit_url(link),
                         new_payment, campaign.total_budget_pennies)

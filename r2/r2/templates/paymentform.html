@@ -187,6 +187,27 @@
      %endfor
      %endfor
      <tr>
+        <th>
+          <label for="account-industry">industry</label>
+        </th>
+        <td>
+          <select ${disabled} id="account-industry" name="industry">
+            <option value=''>select one</option>
+            %for industries in (g.advertiser_industries, g.advertiser_industries_nsfw):
+              %for key, value in sorted(industries.iteritems()):
+                <option
+                  ${'selected' if c.user.advertiser_industry == key else ''}
+                  value="${key}"
+                >
+                  ${value}
+                </option>
+              %endfor
+            %endfor
+          </select>
+          <span class="optional">${_("(optional)")}</span>
+       </td>
+     </tr>
+     <tr>
        <td></td>
        <td>
          <p class="rules">

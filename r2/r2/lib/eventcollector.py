@@ -1376,8 +1376,8 @@ class EventQueue(object):
     def campaign_payment_success_event(
             self, link, campaign,
             is_new_payment_method, amount_pennies, transaction_id,
-            payment_id=None, address=None, payment=None,
-            request=None, context=None):
+            payment_id=None, address=None, payment=None, request=None,
+            context=None, advertiser_industry_changed_to=None):
         """Send an event recording when a campaign payment succeeds.
 
         link: A promoted r2.models.Link object
@@ -1391,6 +1391,7 @@ class EventQueue(object):
         payment: An r2.lib.authorize.api.CreditCard object
         request: pylons.request of the request that created the message
         context: pylons.tmpl_context of the request that created the message
+        advertiser_industry_changed_to: Change value for Account.advertiser_industry  # noqa
 
         """
         event = SelfServeEvent(
@@ -1401,6 +1402,7 @@ class EventQueue(object):
                 payment_id=payment_id,
                 transaction_id=transaction_id,
                 is_new_payment_method=is_new_payment_method,
+                advertiser_industry_changed_to=advertiser_industry_changed_to,
             ),
         )
 

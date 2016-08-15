@@ -154,6 +154,7 @@ class Account(Thing):
                      gild_reveal_username=False,
                      selfserve_cpm_override_pennies=None,
                      selfserve_min_bid_override_pennies=None,
+                     advertiser_industry=None,
                      pref_show_gold_expiration=False,
                      admin_takedown_strikes=0,
                      admin_suspension_strikes=0,

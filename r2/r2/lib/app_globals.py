@@ -372,6 +372,8 @@ class Globals(object):
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
             'emr_traffic_tags',
+            'advertiser_industries',
+            'advertiser_industries_nsfw',
         ],
 
         ConfigValue.json_dict: [
