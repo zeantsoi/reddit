@@ -1311,14 +1311,32 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
     
     # light up the modmail icon for all other mods with mail access
     if update_modmail:
-        mod_perms = message.subreddit_slow.moderators_with_perms()
-        mod_ids = [mod_id for mod_id, perms in mod_perms.iteritems()
-            if mod_id != from_user._id and perms.get('mail', False)]
-        moderators = Account._byID(mod_ids, data=True, return_dict=False)
-        for mod in moderators:
-            if not mod.modmsgtime:
-                mod.modmsgtime = message._date
-                mod._commit()
+        subreddit = message.subreddit_slow
+
+        update_old_modmail_icon = True
+
+        # check if the subreddit has new modmail enabled, and if this message
+        # is in a thread that was created after it was enabled. In that case,
+        # we don't want to update the old modmail icon since the message will
+        # only show up in the new system
+        if subreddit.new_modmail_enabled_at:
+            if message.first_message:
+                first_message_date = Message._byID(message.first_message)._date
+            else:
+                first_message_date = message._date
+
+            if first_message_date >= subreddit.new_modmail_enabled_at:
+                update_old_modmail_icon = False
+
+        if update_old_modmail_icon:
+            mod_perms = subreddit.moderators_with_perms()
+            mod_ids = [mod_id for mod_id, perms in mod_perms.iteritems()
+                if mod_id != from_user._id and perms.get('mail', False)]
+            moderators = Account._byID(mod_ids, data=True, return_dict=False)
+            for mod in moderators:
+                if not mod.modmsgtime:
+                    mod.modmsgtime = message._date
+                    mod._commit()
 
 
 def set_unread(messages, to, unread, mutator=None):
