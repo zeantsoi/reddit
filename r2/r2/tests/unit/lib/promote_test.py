@@ -61,10 +61,8 @@ from r2.models import (
     Subreddit,
     MultiReddit,
 )
-from r2.tests import RedditTestCase
+from r2.tests import RedditTestCase, NonCache
 
-# use the original function to avoid going out to memcached.
-get_nsfw_collections_srnames = get_nsfw_collections_srnames.memoized_fn
 
 subscriptions_srnames = ["foo", "bar"]
 subscriptions = map(lambda srname: Subreddit(name=srname), subscriptions_srnames)
@@ -96,6 +94,10 @@ class TestSRNamesFromSite(RedditTestCase):
         super(TestSRNamesFromSite, self).setUp()
         self.logged_in = Account(name="test")
         self.logged_out = FakeAccount()
+
+        from r2.lib.memoize import g
+        self.autopatch(g, "memoizecache", NonCache())
+        self.autopatch(g, "memoizecache_old", NonCache())
 
     def test_frontpage_logged_out(self):
         srnames = srnames_from_site(self.logged_out, Frontpage)
