@@ -891,28 +891,7 @@ class Link(Thing, Printable):
                 )
             )
 
-            if expando_box_enabled:
-                # Specifies whether a preview exists so the expando box
-                # can redirect to the link if it doesn't
-                if ((item.link_child and getattr(item, 'preview_object', False)) or
-                        meets_self_post_experiment_requirements):
-                    item.clickbox_expando_preview = True
-                else:
-                    item.clickbox_expando_preview = False
-                item.clickbox_expando_variant = feature.variant('expando_box')
-                if feature.variant('expando_box') == "clickbox_with_comments":
-                    item.href_url = item.permalink
-                else:
-                    item.href_url = item.url
-
-                item.affiliatize_link = False
-            elif (self_post_image_expando_new_tab and
-                    (meets_media_experiment_requirements or
-                        meets_self_post_experiment_requirements)):
-                item.expand_inline = True
-                item.href_url = item.url
-                item.affiliatize_link = False
-            elif item.is_self and not item.promoted:
+            if item.is_self and not item.promoted:
                 item.href_url = item.permalink
                 item.affiliatize_link = False
             else:
@@ -951,6 +930,25 @@ class Link(Thing, Printable):
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
                     item.outbound_link = generate_outbound_link(item, outbound_url)
+
+            if expando_box_enabled:
+                # Specifies whether a preview exists so the expando box
+                # can redirect to the link if it doesn't
+                if ((item.link_child and
+                        getattr(item, 'preview_object', False)) or
+                        meets_self_post_experiment_requirements):
+                    item.clickbox_expando_preview = True
+                else:
+                    item.clickbox_expando_preview = False
+                item.clickbox_expando_variant = feature.variant('expando_box')
+                if feature.variant('expando_box') == "clickbox_with_comments":
+                    item.href_url = item.permalink
+            elif (self_post_image_expando_new_tab and
+                    (meets_media_experiment_requirements or
+                        meets_self_post_experiment_requirements)):
+                item.expand_inline = True
+                item.href_url = item.url
+                item.affiliatize_link = False
 
             item.fresh = not any((item.likes != None,
                                   item.saved,

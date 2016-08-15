@@ -95,6 +95,11 @@
       return false;
     }
 
+    // Don't expand on thumbnail clicks
+    if ($target.parentsUntil('.thing', '.thumbnail').length) {
+      return false;
+    }
+
     // Don't expand on title click unless the experiment variant
     // "clickbox_with_title" is enabled
     if (!r.config.feature_clickbox_with_title && $target.hasClass('title') && $target.hasClass('may-blank')) {
@@ -140,7 +145,6 @@
       // Prevent expando-button and thumbnail clicks (in same div)
       // from triggering the expand/collapse twice
       if ($(e.target).hasClass('expando-button')) { return; }
-      if ($(e.currentTarget).hasClass('thumbnail')) { return; }
       if (!includeElementClicks(e.target)) { return; }
 
       this.expanded ? this.collapse() : this.expand();
