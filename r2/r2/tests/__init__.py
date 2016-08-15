@@ -326,7 +326,6 @@ class RedditControllerTestCase(RedditTestCase):
             commentpanecache=NonCache(),
             gencache=NonCache(),
             memoizecache=NonCache(),
-            memoizecache_old=NonCache(),
         )
 
         self.mock_eventcollector()

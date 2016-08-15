@@ -97,7 +97,6 @@ class TestSRNamesFromSite(RedditTestCase):
 
         from r2.lib.memoize import g
         self.autopatch(g, "memoizecache", NonCache())
-        self.autopatch(g, "memoizecache_old", NonCache())
 
     def test_frontpage_logged_out(self):
         srnames = srnames_from_site(self.logged_out, Frontpage)
