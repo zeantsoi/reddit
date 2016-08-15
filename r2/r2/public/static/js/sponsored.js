@@ -3040,3 +3040,7 @@ function cancel_edit_campaign() {
       }
     }
 }(r.sponsored);
+
+$(function() {
+  r.hooks.get('sponsored').call();
+});

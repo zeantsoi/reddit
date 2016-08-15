@@ -32,7 +32,7 @@
   ${unsafe(js.use('sponsored'))}
   ${unsafe(js.use('promoted'))}
   <script type="text/javascript">
-    $(function() {
+    r.hooks.get('sponsored').register(function() {
       r.promoted.init();
     })
   </script>

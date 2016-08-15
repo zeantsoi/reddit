@@ -36,7 +36,7 @@
 
 <%def name="javascript_setup()">
 <script type="text/javascript">
-  $(function() {
+  r.hooks.get('sponsored').register(function() {
     r.sponsored.init();
     r.sponsored.set_form_render_fnc(r.sponsored.fill_campaign_editor);
     r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},

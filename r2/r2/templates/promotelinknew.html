@@ -80,7 +80,7 @@
 </%def>
 
 <script type="text/javascript">
-  $(function() {
+  r.hooks.get('sponsored').register(function() {
     r.sponsored.initUploads();
     r.sponsored.instrumentCreativeFields();
   });

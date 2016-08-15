@@ -57,7 +57,7 @@
   </div>
 </div>
 <script type="text/javascript">
-  $(function() {
+  r.hooks.get('sponsored').register(function() {
     r.sponsored.set_form_render_fnc(r.sponsored.fill_reporting_form);
     init_startdate();
     init_enddate();
