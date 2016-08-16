@@ -323,20 +323,6 @@ class Reddit(Templated):
         else:
             self.displayed_things = []
 
-        test_groups = ('test_group', 'dismiss', 'x')
-        action_name = request.route_dict['action_name']
-        if (not is_api() and is_seo_referrer() and
-                action_name in ('listing', 'comments') and
-                isinstance(c.site, Subreddit) and
-                feature.is_enabled('seo_overlay') and
-                feature.variant('seo_overlay') in test_groups):
-            if feature.variant('seo_overlay') == 'dismiss':
-                self.seo_show_dismiss = True
-            elif feature.variant('seo_overlay') == 'x':
-                self.seo_show_x = True
-
-            self.show_seo_login_overlay = True
-
         if feature.is_enabled("new_expando_icons"):
             self.feature_new_expando_icons = True
 
