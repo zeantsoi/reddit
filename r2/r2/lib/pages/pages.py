@@ -833,10 +833,7 @@ class Reddit(Templated):
                 mod_link_override = mod_self_override = False
 
                 if isinstance(c.site, FakeSubreddit):
-                    if feature.is_enabled('submit_image'):
-                        submit_buttons = set(("link", "self", "image"))
-                    else:
-                        submit_buttons = set(("link", "self"))
+                    submit_buttons = set(("link", "self"))
                 else:
                     # we want to show submit buttons for logged-out users too
                     # so we can't just use can_submit_link/text
@@ -851,6 +848,7 @@ class Reddit(Templated):
                                 c.site.can_submit_text(c.user)):
                             submit_buttons.add("self")
                             mod_self_override = True
+
                 buttons_list = []
                 if "link" in submit_buttons:
                     css_class = "submit submit-link"
@@ -886,22 +884,6 @@ class Reddit(Templated):
                                       sr_path=not fake_sub or is_multi,
                                       data_attrs=data_attrs,
                                       show_cover=True))
-                if "image" in submit_buttons:
-                    css_class = "submit submit-image"
-                    image_button = SideBox(
-                        title="Submit a new image",
-                        css_class=css_class,
-                        link="/submit?utm_term=submit_image",
-                        sr_path=False,
-                        show_cover=True,
-                    )
-                    submit_image_variant = feature.variant('submit_image')
-                    if submit_image_variant == 'image_button_first':
-                        buttons_list.insert(0, image_button)
-                    elif submit_image_variant == 'image_button_second':
-                        buttons_list.insert(1, image_button)
-                    elif submit_image_variant == 'image_button_third':
-                        buttons_list.append(image_button)
 
                 for button in buttons_list:
                     ps.append(button)
