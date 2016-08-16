@@ -1084,33 +1084,11 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def default_subreddits(cls, ids=True):
         """Return the subreddits a user with no subscriptions would see."""
-        sr_list = []
-        if feature.is_enabled("default_subreddits_experiment"):
-            if feature.variant("default_subreddits_experiment") == "links":
-                sr_list = ["GetMotivated", "UpliftingNews", "philosophy",
-                    "Art", "dataisbeautiful", "gadgets", "InternetIsBeautiful",
-                    "space", "documentaries", "Futurology", "books", "sports",
-                    "food", "science"]
-            elif feature.variant("default_subreddits_experiment") == "images":
-                sr_list = ["gifs", "pics", "earthporn", "foodporn"]
-            elif feature.variant("default_subreddits_experiment") == "popular":
-                sr_list = ["todayilearned", "gaming", "gifs", "funny",
-                    "technology", "news", "pics", "aww"]
-            elif feature.variant("default_subreddits_experiment") == "news":
-                sr_list = ["news", "inthenews", "worldnews", "politics"]
-            elif feature.variant("default_subreddits_experiment") == "self":
-                sr_list = ["history", "Showerthoughts", "askscience",
-                    "AskScienceFiction", "AskReddit", "AskMen",
-                    "AskWomen", "IAmA", "personalfinance"]
-            elif feature.variant("default_subreddits_experiment") == "video":
-                sr_list = ["videos"]
-        if sr_list:
-            srs = Subreddit._by_name(sr_list, stale=True).values()
-        else:
-            location = get_user_location()
-            srids = LocalizedDefaultSubreddits.get_defaults(location)
-            srs = Subreddit._byID(srids, return_dict=False, stale=True)
-            srs = filter(lambda sr: sr.allow_top, srs)
+        location = get_user_location()
+        srids = LocalizedDefaultSubreddits.get_defaults(location)
+
+        srs = Subreddit._byID(srids, return_dict=False, stale=True)
+        srs = filter(lambda sr: sr.allow_top, srs)
 
         if ids:
             return [sr._id for sr in srs]
