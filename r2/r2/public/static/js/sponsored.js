@@ -740,7 +740,7 @@ var exports = r.sponsored = {
 
     setup_collection_selector: function() {
         var $collectionSelector = $('.collection-selector');
-        var $collectionList = $('.collection-selector .form-group-list');
+        var $collectionList = $('.form-group-list');
         var $collections = $collectionList.find('.form-group .label-group');
         var collectionCount = $collections.length;
         var collectionHeight = $collections.eq(0).outerHeight();
@@ -824,66 +824,6 @@ var exports = r.sponsored = {
                         r.analytics.adsInteractionEvent('select_collection', {
                           collection_name: $input.val() || 'frontpage',
                         });
-                    }
-                    collapse();
-                }
-                return false;
-            });
-
-        collapse();
-    },
-
-    setup_interest_selector: function() {
-        var $interestSelector = $('.interest-selector');
-        var $interestList = $('.interest-selector .form-group-list');
-        var $interests = $interestList.find('.form-group .label-group');
-        var interestCount = $interests.length;
-        var interestHeight = $interests.eq(0).outerHeight();
-
-        var collapse = _.bind(function(track) {
-            this.collapse_interest_selector(track);
-            this.render();
-        }, this);
-
-        var collapseAndTrack = _.partial(collapse, true);
-
-        this.collapse_interest_selector = function collapse_widget(track) {
-            $('body').off('click', collapseAndTrack);
-            var $selected = get_selected();
-            var index = $interests.index($selected);
-            $interestSelector.addClass('collapsed').removeClass('expanded');
-            $interestList.innerHeight(interestHeight)
-                .css('top', -interestHeight * index);
-            var val = $interestList.find('input[type=radio]:checked').val();
-        }
-
-        function expand() {
-            $('body').on('click', collapseAndTrack);
-            $interestSelector.addClass('expanded').removeClass('collapsed');
-            $interestList
-                .innerHeight(interestCount * interestHeight)
-                .css('top', 0);
-
-        }
-
-        function get_selected() {
-            return $interestList.find('input[type=radio]:checked')
-                .siblings('.label-group');
-        }
-
-        $interestSelector
-            .removeClass('uninitialized')
-            .on('click', '.label-group', function(e) {
-                if ($interestSelector.is('.collapsed')) {
-                    expand();
-                }
-                else {
-                    var $selected = get_selected();
-                    if ($selected[0] !== this) {
-                        var $input = $(this).siblings('input');
-
-                        $selected.siblings('input').prop('checked', false);
-                        $input.prop('checked', 'checked');
                     }
                     collapse();
                 }
@@ -1005,7 +945,7 @@ var exports = r.sponsored = {
           + '<input type="radio" name="collection" value="<%= name %>"'
           + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
           + '  <div class="label-group">'
-          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'
+          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'           
           + '    <small class="description"><%= description %></small>'
           + '  </div>'
           + '</label>');
@@ -1020,7 +960,6 @@ var exports = r.sponsored = {
 
     // Sets up the subreddits on initialization
     setup_subreddits: function(srInput){
-
       if(typeof srInput === 'string'){
         if(srInput !== " reddit.com"){
           r.srAutocomplete.srAddSr(srInput);
@@ -1037,36 +976,6 @@ var exports = r.sponsored = {
           addSr(srName);
         });
       }
-    },
-
-    // Sets up the interests on initialization
-    setup_interests: function(interestInput, defaultValue){
-
-       this.interests = _.sortBy(_.map(interestInput, function(item, name) {
-           object = {};
-           object.name = name;
-           object.label = item[0];
-           //Truncating
-           object.description = item[1];
-           return object;
-       }),'name');
-
-       defaultValue = defaultValue || this.interests[0].name;
-       var template = _.template('<label class="form-group">'
-         + '<input type="radio" name="interest" value="<%= name %>"'
-         + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
-         + '  <div class="label-group">'
-         + '    <span class="label"><% print(label) %></span>'
-         + '    <small class="description"><%= description %></small>'
-         + '  </div>'
-         + '</label>');
-
-       var rendered = _.map(this.interests, template).join('');
-       $(_.bind(function() {
-           $('.interest-selector .form-group-list').html(rendered);
-           this.setup_interest_selector();
-           this.render_campaign_dashboard_header();
-       }, this));
     },
 
     get_dates: function(startdate, enddate) {
@@ -1485,10 +1394,9 @@ var exports = r.sponsored = {
     get_targeting: function($form) {
         var isSubreddit = $form.find('input[name="targeting"][value="subreddit"]').is(':checked'),
             collectionVal = $form.find('input[name="collection"]:checked').val(),
-            isInterest = $form.find('input[name="targeting"][value="interest"]').is(':checked'),
             isFrontpage = !isSubreddit && collectionVal === 'none',
             isCollection = !isSubreddit && !isFrontpage,
-            type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : isInterest ? 'interest':'subreddit',
+            type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'subreddit',
             srString = $form.find("#selected_sr_names").val(),
             sr = isSubreddit && !!srString ? r.srAutocomplete.getSelectedSubreddits() : [],
             collection = isCollection ? collectionVal : null,
@@ -1508,9 +1416,6 @@ var exports = r.sponsored = {
         switch(type) {
             case 'frontpage':
                 displayName = 'the frontpage';
-                break;
-            case 'interest':
-                displayName = srString;
                 break;
             case 'subreddit':
                 displayName = sr.length == 1 ? 
@@ -2070,25 +1975,17 @@ var exports = r.sponsored = {
     },
 
     subreddit_targeting: function() {
-        $('.interest-targeting').find('*[name="interest"]').prop("disabled", true).end().slideUp();
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
         this.render()
     },
 
     collection_targeting: function() {
-        $('.interest-targeting').find('*[name="interest"]').prop("disabled", true).end().slideUp();
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled",  false).end().slideDown();
         this.render()
     },
 
-    interest_targeting: function() {
-        $('.interest-targeting').find('*[name="interest"]').prop("disabled",  false).end().slideDown();
-        $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
-        $('.collection-targeting').find('*[name="collection"]').prop("disabled",  true).end().slideUp();
-        this.render()
-    },
     priority_changed: function() {
         this.render()
     },
@@ -2299,8 +2196,6 @@ var exports = r.sponsored = {
 
         if (targeting.type === 'collection') {
             data.collection_name = targeting.collection;
-        } else if (targeting.type === 'interest') {
-            data.interest_name = targeting.interest;
         }
         else if (targeting.type === 'subreddit') {
             data.sr_names = targeting.sr.join(',');
@@ -2682,24 +2577,11 @@ function edit_campaign($campaign_row) {
 
             // functions to support multisubreddit handling
             if (targeting && !isCollection) {
-                is_interest = $campaign_row.data("targeting-type") === "interest";
-                if(is_interest) {
-                  radios.filter('*[value="interest"]')
-                      .prop("checked", "checked");
-                   $('.interest-targeting input[value="' + targeting + '"]')
-                      .prop("checked", "checked");
-                  campaign.find('*[name="sr"]').prop("disabled", true).end()
-                      .find(".subreddit-targeting").hide();
-                  $(".interest-targeting").show();
-                } else {
-                  radios.filter('*[value="subreddit"]')
-                      .prop("checked", "checked");
-                  r.srAutocomplete.srAddSr(targeting);
-                  campaign.find('*[name="sr"]').prop("disabled", false).end()
-                      .find(".subreddit-targeting").show();
-                  $(".interest-targeting").hide();
-                }
-
+                radios.filter('*[value="subreddit"]')
+                    .prop("checked", "checked");
+                r.srAutocomplete.srAddSr(targeting);
+                campaign.find('*[name="sr"]').prop("disabled", false).end()
+                    .find(".subreddit-targeting").show();
                 $(".collection-targeting").hide();
             } else {
                 var srs = extract_subreddits_from_str(targeting);
@@ -2716,7 +2598,6 @@ function edit_campaign($campaign_row) {
                   campaign.find('*[name="sr"]').prop("disabled", false).end()
                       .find(".subreddit-targeting").show();
                   $(".collection-targeting").hide();
-                  $(".interest-targeting").hide();
                 } else {
                   // Plain old collection
                   radios.filter('*[value="collection"]')
@@ -2729,8 +2610,7 @@ function edit_campaign($campaign_row) {
                 }
             }
 
-            r.sponsored.collapse_collection_selector(false);
-            r.sponsored.collapse_interest_selector(false);
+            r.sponsored.collapse_collection_selector();
 
             /* set geotargeting */
             var country = $campaign_row.data("country"),
@@ -2805,7 +2685,6 @@ function create_campaign() {
                 .find('input[name="collection"]').slice(1).prop("checked", false).end().end()
                 .find('.collection-selector .form-group-list').css('top', 0).end()
             r.sponsored.collapse_collection_selector();
-            r.sponsored.collapse_interest_selector();
 
             $("#campaign")
                 .find('button[name="save"]').hide().end()

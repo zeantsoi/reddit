@@ -298,32 +298,23 @@ class CollectionStorage(tdb_cassandra.View):
 
 class Target(object):
     """Wrapper around either a Collection or a Subreddit name"""
-    def __init__(self, target, is_interest=False):
+    def __init__(self, target):
         if isinstance(target, Collection):
-            if is_interest:
-                raise ValueError("Collection cannot be interest")
             self.collection = target
             self.is_collection = True
         elif isinstance(target, basestring):
             self.subreddit_name = target
             self.is_collection = False
         else:
-            raise ValueError("target must be a Collection, Subreddit Name, or Interest")  # noqa
+            raise ValueError("target must be a Collection or Subreddit name")
 
         # defer looking up subreddits, we might only need their names
         self._subreddits = None
-        self.is_interest = is_interest
 
     @property
     def subreddit_names(self):
         if self.is_collection:
             return self.collection.sr_names
-        elif self.is_interest:
-            interest_keywords = []
-            interest_keywords.append("a.%s" % self.subreddit_name)
-            interest_keywords.append("t.%s" % self.subreddit_name)
-            interest_keywords.append("!nsfw")
-            return interest_keywords
         else:
             return [self.subreddit_name]
 
@@ -340,7 +331,7 @@ class Target(object):
     @property
     def is_frontpage(self):
         return self.is_collection and self.subreddit_name == Frontpage.name
-
+    
     def __eq__(self, other):
         if self.is_collection != other.is_collection:
             return False
@@ -356,12 +347,9 @@ class Target(object):
             if "/r/" in self.collection.name:
                 return self.collection.name
             else:
-                return _("collection: %(name)s") % \
-                        {'name': self.collection.name}
+                return _("collection: %(name)s") % {'name': self.collection.name}
         elif self.subreddit_name == Frontpage.name:
             return _("frontpage")
-        elif self.is_interest:
-            return _("interest: %s") % self.subreddit_name
         else:
             return "/r/%s" % self.subreddit_name
 
@@ -417,7 +405,6 @@ class PromoCampaign(Thing):
 
     SR_NAMES_DELIM = '|'
     SUBREDDIT_TARGET = "subreddit"
-    INTEREST_TARGET = "interest"
     MOBILE_TARGET_DELIM = ','
 
     @classmethod
@@ -511,19 +498,9 @@ class PromoCampaign(Thing):
     def unpack_target(cls, target):
         """Convert a Target into attributes suitable for storage."""
         sr_names = target.subreddit_names
-
-        if target.is_interest:
-            target_sr_names = target.subreddit_name
-        else:
-            target_sr_names = cls.SR_NAMES_DELIM.join(sr_names)
-
-        if target.is_collection:
-            target_name = target.collection.name
-        elif target.is_interest:
-            target_name = cls.INTEREST_TARGET
-        else:
-            target_name = cls.SUBREDDIT_TARGET
-
+        target_sr_names = cls.SR_NAMES_DELIM.join(sr_names)
+        target_name = (target.collection.name if target.is_collection
+                                              else cls.SUBREDDIT_TARGET)
         return target_sr_names, target_name
 
     @classmethod
@@ -613,8 +590,6 @@ class PromoCampaign(Thing):
         if self.target_name == self.SUBREDDIT_TARGET:
             sr_name = sr_names[0]
             target = Target(sr_name)
-        elif self.target_name == self.INTEREST_TARGET:
-            target = Target(sr_names[0], is_interest=True)
         else:
             collection = Collection(self.target_name, sr_names)
             target = Target(collection)
