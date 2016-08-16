@@ -343,10 +343,6 @@ class Reddit(Templated):
         if feature.is_enabled("show_survey"):
             self.show_survey = True
 
-        if (feature.is_enabled("inline_image_previews_logged_in") or
-            feature.is_enabled("inline_image_previews_logged_out")):
-            self.feature_expando_nsfw_flow = True
-
         has_adblock_test = feature.is_enabled("adblock_test")
 
         if has_adblock_test:
@@ -1500,14 +1496,8 @@ class PrefOptions(Templated):
                     use_other_theme = False
                     theme.checked = True
 
-        feature_autoexpand_media_previews = False
-        if (feature.is_enabled("inline_image_previews_logged_in") or
-                feature.is_enabled("inline_image_previews_logged_out")):
-            feature_autoexpand_media_previews = True
-
         Templated.__init__(self, done=done,
                 error_style_override=error_style_override,
-                feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                 generic_error=generic_error, themes=themes, use_other_theme=use_other_theme)
 
 
@@ -3317,7 +3307,6 @@ class CreateSubreddit(Templated):
         allow_image_upload = site and not site.quarantine
         # feature flag was changed to split it off from user preferences
         # keeping the same attribute name to unnecessary transient errors
-        feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_subreddit_setting")
         if feature.is_enabled("double_sidebar"):
             self.max_sidebar_chars = 10240
         else:
@@ -3329,7 +3318,6 @@ class CreateSubreddit(Templated):
                            captcha=captcha,
                            comment_sorts=CommentSortMenu.visible_options(),
                            allow_image_upload=allow_image_upload,
-                           feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                            )
         self.color_options = Subreddit.KEY_COLORS
         self.subreddit_selector = SubredditSelector(
@@ -5391,9 +5379,7 @@ def make_link_child(item, show_media_preview=False):
                                    nofollow=item.nofollow,
                                    position_inline=position_inline)
     # if the item has a preview image and is on the whitelist, show it
-    elif ((feature.is_enabled("inline_image_previews_logged_in") or
-           feature.is_enabled("inline_image_previews_logged_out")) and
-            item.preview_object and
+    elif (item.preview_object and
             media.allowed_media_preview(item.url, item.preview_object)):
         media_object = media.get_preview_media_object(
             item.preview_object,

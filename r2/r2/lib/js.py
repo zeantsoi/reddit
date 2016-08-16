@@ -551,6 +551,14 @@ _submodule["file-input-actions"] = Module("_file-input-actions.js",
     "file-input-actions.js",
 )
 
+
+_submodule["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
+    TemplateFileSource('ui/formbar.html'),
+    "ui/formbar.js",
+    TemplateFileSource('expando/nsfwgate.html'),
+    "expando/nsfwflow.js",
+)
+
 module["gtm-jail"] = Module("gtm-jail.js",
     "lib/json2.js",
     "custom-event.js",
@@ -658,13 +666,6 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
     wrap=catch_errors,
 )
 
-module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
-    TemplateFileSource('ui/formbar.html'),
-    "ui/formbar.js",
-    TemplateFileSource('expando/nsfwgate.html'),
-    "expando/nsfwflow.js",
-)
-
 module["reddit"] = LocalizedModule(
     "reddit.js",
     "lib/jquery.url.js",
@@ -703,7 +704,7 @@ module["reddit"] = LocalizedModule(
     _submodule["post-sharing"],
     "expando.js",
     "expando/resize-embedly-cards.js",
-    # inline expando-nsfw-flow.js module here when unflagged
+    _submodule["expando-nsfw-flow"],
     _submodule["saved"],
     "res-advisory.js",
     "cache-poisoning-detection.js",

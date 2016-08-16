@@ -143,16 +143,10 @@
       ${checkbox(_("open links in a new window"), "newwindow")}
     </td>
   </tr>
-  %if thing.feature_autoexpand_media_previews:
-    <tr class="preferences-media">
-  %else:
-    <tr>
-  %endif
+  <tr class="preferences-media">
     <th>${_("media")}</th>
     <td class="prefright">
-      %if thing.feature_autoexpand_media_previews:
-        <h6>${_("thumbnails")}</h6>
-      %endif
+      <h6>${_("thumbnails")}</h6>
       %if not c.user.pref_compress:
         ${media_radio("on", _("show thumbnails next to links"))}
         ${media_radio("off", _("don't show thumbnails next to links"))}
@@ -161,27 +155,20 @@
         <p class="error">${_("to enable thumbnails, disable compressed link display")}</p>
         <input type="hidden" name="media" value="${c.user.pref_media}"/>
       %endif
-      %if thing.feature_autoexpand_media_previews:
-        <br>
+      <br>
 
-        <h6>${_("media previews")}</h6>
-        ${media_preview_radio("on", _("auto-expand media previews"))}
-        ${media_preview_radio("off", _("don't auto-expand media previews on comments pages"))}
-        ${media_preview_radio("subreddit", _("expand media previews based on that subreddit's media preferences"))}
-        <br>
+      <h6>${_("media previews")}</h6>
+      ${media_preview_radio("on", _("auto-expand media previews"))}
+      ${media_preview_radio("off", _("don't auto-expand media previews on comments pages"))}
+      ${media_preview_radio("subreddit", _("expand media previews based on that subreddit's media preferences"))}
+      <br>
 
-        <h6>${_("NSFW content")}</h6>
-        ${checkbox(_("hide images for NSFW/18+ content "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
-        &#32;
-        <span class="details">
-          ${_("(Don't show thumbnails or media previews for anything labeled NSFW)")}
-        </span>
-      %else:
-        ${checkbox(_("make safe(r) for work "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
-        <span class="details">
-          ${_("(Don't show thumbnails next to anything labeled NSFW)")}
-        </span>
-      %endif
+      <h6>${_("NSFW content")}</h6>
+      ${checkbox(_("hide images for NSFW/18+ content "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
+      &#32;
+      <span class="details">
+        ${_("(Don't show thumbnails or media previews for anything labeled NSFW)")}
+      </span>
     </td>
   </tr>
   <tr>

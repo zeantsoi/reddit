@@ -658,12 +658,11 @@ class Link(Thing, Printable):
                     show_media = True
 
             show_media_preview = False
-            if (feature.is_enabled("inline_image_previews_logged_in") or
-                    feature.is_enabled("inline_image_previews_logged_out")):
-                if pref_media_preview == "on":
-                    show_media_preview = True
-                elif pref_media_preview == "subreddit" and item.subreddit.show_media_preview:
-                    show_media_preview = True
+            if pref_media_preview == "on":
+                show_media_preview = True
+            elif (pref_media_preview == "subreddit" and
+                    item.subreddit.show_media_preview):
+                show_media_preview = True
 
             item.over_18 = item.over_18 or item.subreddit.over_18
             item.nsfw = item.over_18 and user.pref_label_nsfw
@@ -845,13 +844,6 @@ class Link(Thing, Printable):
             )
 
             item.embedly_card_preview = use_embedly_card
-
-            if (feature.is_enabled("inline_image_previews_logged_in") or
-                    feature.is_enabled("inline_image_previews_logged_out")):
-                item.feature_media_previews = True
-            else:
-                item.feature_media_previews = False
-
             item.use_outbound = False
 
             meets_media_experiment_requirements = (
