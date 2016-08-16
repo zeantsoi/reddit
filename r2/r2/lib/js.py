@@ -552,7 +552,8 @@ _submodule["file-input-actions"] = Module("_file-input-actions.js",
 )
 
 
-_submodule["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
+_submodule["expando-nsfw-flow"] = Module(
+    "expando-nsfw-flow.js",
     TemplateFileSource('ui/formbar.html'),
     "ui/formbar.js",
     TemplateFileSource('expando/nsfwgate.html'),

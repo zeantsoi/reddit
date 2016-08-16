@@ -3937,20 +3937,9 @@ class NewLink(Templated):
         self.show_link = show_link
         self.show_self = show_self
 
-        link_tab_label = 'link'
-
-        if self.allow_image_upload:
-            if feature.is_enabled('image_uploads_tab_change',
-                                  subreddit=sr_name):
-                link_tab_label = 'link/image'
-
-            if feature.is_enabled('image_uploads_order_change',
-                                  subreddit=sr_name):
-                self.swap_link_and_image_order = True
-
         tabs = []
         if show_link:
-            tabs.append((link_tab_label,
+            tabs.append(('link',
                 ('link-desc', 'url-field', 'image-field')))
         if show_self:
             tabs.append(('text', ('text-desc', 'text-field')))

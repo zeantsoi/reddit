@@ -62,10 +62,6 @@ ${thing.formtabs_menu}
 
 <%def name="newlink_url_input()">
   <div id="new-link-url-input">
-    %if getattr(thing, "swap_link_and_image_order", False):
-      <span>${_("url")}</span>
-    %endif
-
     <div class="c-form-group">
       <input id="url"
           name="url"
@@ -103,12 +99,6 @@ ${thing.formtabs_menu}
     <input name="kind" value="link" type="hidden"/>
     %if thing.show_link:
       <div class="spacer">
-        <%
-          url_field_title = _('url')
-
-          if getattr(thing, "swap_link_and_image_order", False):
-            url_field_title = ''
-        %>
         <%utils:round_field title="${_('url')}" id="url-field">
 
           ${newlink_url_input()}
