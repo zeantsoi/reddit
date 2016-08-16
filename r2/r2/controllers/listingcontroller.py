@@ -21,6 +21,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import hashlib
 import urllib
 
 from oauth2 import require_oauth2_scope
@@ -399,15 +400,22 @@ class ListingWithPromos(SubredditListingController):
     show_organic = False
     show_promo_in_listing = True
 
-    def make_requested_ad(self, requested_ad):
+    def make_requested_ad(self, requested_ad, requested_ad_code=None):
         try:
             link = Link._by_fullname(requested_ad, data=True)
         except NotFound:
             self.abort404()
 
         is_link_creator = c.user_is_loggedin and (c.user._id == link.author_id)
+
+        # Hash allows us to send links to clients for ad preview
+        salt = g.secrets.get('ads_url_salt')
+        ad_code = hashlib.sha1(requested_ad + c.site.name + salt).hexdigest()
+        correct_code = (requested_ad_code == ad_code)
+
         if (not (is_link_creator or c.user_is_sponsor) and
-                not promote.is_live_on_sr(link, c.site)):
+                not promote.is_live_on_sr(link, c.site) and
+                not correct_code):
             self.abort403()
 
         res = wrap_links([link._fullname], wrapper=self.builder_wrapper,
@@ -481,13 +489,15 @@ class ListingWithPromos(SubredditListingController):
             show_organic = self.show_organic and c.user.pref_organic
             on_frontpage = isinstance(c.site, DefaultSR)
             requested_ad = request.GET.get('ad')
+            requested_ad_code = request.GET.get('ad_code')
 
             if on_frontpage:
                 self.extra_page_classes = \
                     self.extra_page_classes + ['front-page']
 
             if requested_ad:
-                spotlight = self.make_requested_ad(requested_ad)
+                spotlight = self.make_requested_ad(requested_ad,
+                                                   requested_ad_code)
             elif show_promo and promote.ads_feature_enabled("promoted_links_in_feed"):  # noqa
                 spotlight = None
             elif on_frontpage and show_organic:
