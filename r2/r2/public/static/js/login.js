@@ -97,11 +97,7 @@ r.login.ui = {
             })
 
             $('.content .register-form, .content #register-form').each(function(i, el) {
-                var registerForm = new r.ui.RegisterForm(el)
-                var $emailForm = $('#experiment-email-form');
-                if ($emailForm.length) {
-                    registerForm.initExperiment($emailForm)
-                }
+                new r.ui.RegisterForm(el)
             })
 
             this.popup = new r.ui.LoginPopup();
@@ -412,49 +408,7 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     _handleResult: r.ui.LoginForm.prototype._handleResult,
-    focus: r.ui.LoginForm.prototype.focus,
-
-    initExperiment: function(emailForm) {
-        this.$emailForm = emailForm;
-        this.$experimentEmailInput = $('#experiment-email-field');
-        this.$emailInput = $('#email_reg');
-
-        $('#email-exp-bypass-btn').on('click', function(e) {
-            this.$emailForm.hide();
-            this.$experimentEmailInput.val('');
-            this.$emailInput.val('');
-            this.$emailInput.show();
-            this.$el.show();
-
-            r.analytics.registerAdvanceEvent(null);
-        }.bind(this));
-
-        $('#email-exp-start').on('click', function(e) {
-            var email = this.$experimentEmailInput.val();
-            // We only care about very basic validation here.
-            if (!email || !/^.+@.+\..+$/.test(email)) {
-                this.$experimentEmailInput.css({border: '1px solid red'});
-                return; 
-            }
-
-            this.$emailInput.val(email);
-            this.$emailInput.hide();
-            this.$emailForm.hide();
-            this.$el.show();
-
-            r.analytics.registerAdvanceEvent(email);
-        }.bind(this));
-    },
-
-    maybeRestartExperiment: function() {
-        // If the emailForm is in the dom then we know it was already shown.
-        if (this.$emailForm) {
-            this.$experimentEmailInput.val('');
-            this.$emailInput.hide();
-            this.$emailForm.show();
-            this.$el.hide();
-        }
-    }
+    focus: r.ui.LoginForm.prototype.focus
 })
 
 r.ui.LoginPopup = function() {
@@ -471,7 +425,6 @@ r.ui.LoginPopup = function() {
 };
 
 r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
-    initialized: false,
 
     show: function(notice, callback) {
         this.login.successCallback = callback;
@@ -486,19 +439,10 @@ r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
 
     showLogin: function() {
         var login = this.login;
-        var register = this.register;
 
-        register.maybeRestartExperiment();
         this.show.apply(this, arguments);
         this.once('opened.r.popup', function() {
-
-        var $emailForm = $('#experiment-email-form');
-        if ($emailForm.length && !this.initialized) {
-            register.initExperiment($emailForm);
-            this.initialized = true;
-        } else {
             login.focus();
-        }
         });
     },
 

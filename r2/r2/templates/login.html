@@ -57,11 +57,7 @@
     %>
     <form id="${'register' if register else 'login'}-form" method="post" 
           action="${add_sr(base + '/post/' + op)}"
-          class="form-v2"
-          %if getattr(thing, "register_email_flow_test", False) and register:
-            hidden
-          %endif
-          >
+          class="form-v2">
       <input type="hidden" name="op" value="${op}">
       %if dest:
         <input type="hidden" name="dest" value="${dest}">
@@ -241,32 +237,12 @@
   %endif
 </%def>
 
-<%def name="experiment_form()">
-  <div id="experiment-email-form">
-    <div class="c-form-group">
-      <label for="experiment-email-field" class="screenreader-only">
-        ${_('email')}
-      </label>
-      <input class="c-form-control" placeholder="Email" id="experiment-email-field" 
-             data-validate-url="/api/check_email.json" data-validate-on="change blur">
-    </div>
-    <div class="email-exp-button-wrapper">
-      <button class="c-btn c-btn-primary" id="email-exp-start">Get Started</button>
-    </div>
-    <div class="c-form-group email-exp-link-wrapper">
-      <a href="#" id="email-exp-bypass-btn">Sign Up Without Email (not recommended)</a>
-    </div>
-  </div>
-</%def>
 
 <%def name="login_panel(lf, user_reg = '', user_login = '', dest='', registration_info=None)">
   <% autofocus = (not thing.is_popup) %>
   <div class="split-panel">
     <div class="split-panel-section split-panel-divider">
       <h4 class="modal-title">${_("create a new account")}</h4>
-      %if getattr(thing, "register_email_flow_test", False):
-        ${experiment_form()}
-      %endif
       ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
     </div>
     <div class="split-panel-section">
