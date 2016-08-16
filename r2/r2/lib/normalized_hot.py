@@ -20,17 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import hashlib
 import heapq
 import itertools
 from datetime import datetime, timedelta
 
-from pylons import app_globals as g, tmpl_context as c
+from pylons import app_globals as g
 
 from r2.config import feature
 from r2.lib.db.queries import _get_links, CachedResults
 from r2.lib.db.sorts import epoch_seconds
-from r2.models import DefaultSR
 
 
 MAX_PER_SUBREDDIT = 150
@@ -58,34 +56,6 @@ def get_hot_tuples(sr_ids, ageweight=None):
             tuples_by_srid[sr_id].append(
                 (-effective_hot, -hot, link_name, timestamp)
             )
-
-    # Experiment to shuffle the hottest n links to make the front page
-    # look like it's moving more
-    if (isinstance(c.site, DefaultSR) and
-            feature.is_enabled('frontpage_velocity') and
-            feature.variant('frontpage_velocity') == 'test_group'):
-        number_to_shuffle = 5
-        shuffle_seconds = 60
-        for sr_id, sr_links in tuples_by_srid.iteritems():
-            # Calculate the offset to shuffle the top links by every
-            # {shuffle_seconds} seconds but maintain the order
-            # per subreddit
-            shuffle_time = int(now_seconds)/shuffle_seconds
-            hashed = hashlib.sha1("%d:%d" % (sr_id, shuffle_time))
-            shuffle_offset = long(hashed.hexdigest(), 16) % number_to_shuffle
-
-            # Offset the hottest five link items by {shuffle_offset}
-            top_links = sr_links[:number_to_shuffle]
-            shuffled_links = top_links[shuffle_offset:]
-            shuffled_links.extend(top_links[:shuffle_offset])
-
-            # Update tuples_by_srid with the new ordering of links.
-            # The top links maintain the old hot values but contain
-            # the new link names and timestamps.
-            for count, link in enumerate(shuffled_links):
-                old_link = sr_links[count]
-                new_link = (old_link[0], old_link[1], link[2], link[3])
-                sr_links[count] = new_link
 
     return tuples_by_srid
 
