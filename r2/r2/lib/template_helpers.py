@@ -258,11 +258,6 @@ def js_config(extra_config=None):
         feature.is_enabled("lazy_load_listings")
     )
 
-    pref_new_window = (
-        (feature.is_enabled("new_window") and
-            feature.variant("new_window") == "test_group") or
-        (logged and bool(c.user.pref_newwindow))
-    )
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
     if isinstance(c.site, Subreddit) and not c.default_sr:
@@ -354,7 +349,7 @@ def js_config(extra_config=None):
         "pref_no_profanity": pref_no_profanity,
         "pref_beta": pref_beta,
         "nsfw_media_acknowledged": nsfw_media_acknowledged,
-        "new_window": pref_new_window,
+        "new_window": logged and bool(c.user.pref_newwindow),
         "mweb_blacklist_expressions": g.live_config['mweb_blacklist_expressions'],
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,
