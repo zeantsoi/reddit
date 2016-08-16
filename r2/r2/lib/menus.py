@@ -29,7 +29,7 @@ from r2.config import feature
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
 from r2.lib.strings import StringHandler, plurals
-from r2.lib.utils import class_property, query_string, timeago, UrlParser
+from r2.lib.utils import class_property, query_string, timeago
 from r2.lib.wrapped import Styled
 
 
@@ -433,12 +433,8 @@ class SubredditButton(NavButton):
     # TRANSLATORS: Gold feature, "myrandom", a random subreddit from your subscriptions
                       RandomSubscription: N_("myrandom")}
 
-    def __init__(self, sr, css_class='', data=None, query=None):
+    def __init__(self, sr, css_class='', data=None):
         self.path = sr.path
-        if query:
-            temp_url = UrlParser(self.path)
-            temp_url.update_query(**query)
-            self.path = temp_url.unparse()
         name = self.name_overrides.get(sr)
         name = _(name) if name else sr.name
         self.isselected = (c.site == sr)

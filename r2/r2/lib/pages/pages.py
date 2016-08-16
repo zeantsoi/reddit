@@ -402,10 +402,6 @@ class Reddit(Templated):
         self.srtopbar = None
         if srbar and not is_api():
             self.srtopbar = SubredditTopBar()
-            # check header experiment here
-            if feature.is_enabled('new_topbar') and \
-                    feature.variant('new_topbar') == 'topbar':
-                self.srtopbar = RedditTopBar()
 
         panes = [content]
 
@@ -704,12 +700,7 @@ class Reddit(Templated):
 
         ps = PaneStack(css_class='spacer')
 
-        top_bar_feature_enabled = (
-            not is_api() and
-            feature.is_enabled('new_topbar') and
-            feature.variant('new_topbar') == 'topbar'
-        )
-        if self.searchbox and not top_bar_feature_enabled:
+        if self.searchbox:
             ps.append(SearchForm())
 
         sidebar_message = g.live_config.get("sidebar_message")
@@ -722,8 +713,7 @@ class Reddit(Templated):
             ps.append(SidebarMessage(gold_sidebar_message[0],
                                      extra_class="gold"))
 
-        if not c.user_is_loggedin and self.loginbox and \
-                not g.read_only_mode and not top_bar_feature_enabled:
+        if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
         if isinstance(c.site, DomainSR) and c.user_is_admin:
@@ -1183,30 +1173,6 @@ class DebugFooter(Templated):
 class AccountActivityBox(Templated):
     def __init__(self):
         super(AccountActivityBox, self).__init__()
-
-
-class RedditTopBar(CachedTemplate):
-    def __init__(self):
-        self.username = None
-        self.link_karma = None
-        self.inbox_count = None
-        self.is_moderator_somewhere = False
-        self.has_messages = False
-        self.has_mod_messages = False
-        self.subscriptions = []
-        self.variant = feature.variant('new_topbar')
-
-        if c.user_is_loggedin:
-            self.subscriptions = [x.name for x in
-                                  Subreddit.user_subreddits(c.user, ids=False)]
-            self.subscriptions.sort()
-            self.username = c.user.name
-            self.link_karma = c.user.link_karma
-            self.inbox_count = c.user.inbox_count
-            self.is_moderator_somewhere = c.user.is_moderator_somewhere
-            self.has_messages = c.have_messages
-            self.has_mod_messages = c.have_mod_messages
-        super(RedditTopBar, self).__init__()
 
 
 class RedditFooter(CachedTemplate):
@@ -3076,15 +3042,6 @@ class SubredditTopBar(CachedTemplate):
         if c.user_is_loggedin:
             t += c.user._id
 
-        self.subreddit_link_query = None
-        if feature.is_enabled('new_topbar') and \
-                feature.variant('new_topbar') == 'no-styles':
-            self.subreddit_link_query = {
-                "utm_source": "experiments",
-                "utm_medium": "new_topbar",
-                "utm_name": feature.variant('new_topbar'),
-            }
-
         # HACK: depends on something in the page's content calling
         # Subreddit.default_subreddits so that c.location is set prior to this
         # template being added to the header. set c.location as an attribute so
@@ -3111,8 +3068,7 @@ class SubredditTopBar(CachedTemplate):
     def my_reddits_dropdown(self):
         drop_down_buttons = []
         for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
-            drop_down_buttons.append(
-                SubredditButton(sr, query=self.subreddit_link_query))
+            drop_down_buttons.append(SubredditButton(sr))
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
                                            sr_path = False,
                                            css_class = 'bottom-option',
@@ -3122,7 +3078,7 @@ class SubredditTopBar(CachedTemplate):
                              type = 'srdrop')
 
     def subscribed_reddits(self):
-        srs = [SubredditButton(sr, query=self.subreddit_link_query) for sr in
+        srs = [SubredditButton(sr) for sr in
                         sorted(self.my_reddits,
                                key = lambda sr: sr._downs,
                                reverse=True)
@@ -3133,7 +3089,7 @@ class SubredditTopBar(CachedTemplate):
 
     def popular_reddits(self, exclude_mine=False):
         exclude = self.my_reddits if exclude_mine else []
-        buttons = [SubredditButton(sr, query=self.subreddit_link_query) for sr in self.pop_reddits
+        buttons = [SubredditButton(sr) for sr in self.pop_reddits
                                        if sr not in exclude]
 
         return NavMenu(buttons,
