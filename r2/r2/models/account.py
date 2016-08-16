@@ -776,16 +776,6 @@ class Account(Thing):
         the feature flag enabled, return the subreddit name.
         Otherwise, return None.
         """
-        # Experiment to change the default style to determine if
-        # engagement metrics change
-        if (feature.is_enabled("default_design") and
-                feature.variant("default_design") == "nautclassic"):
-            return "nautclassic"
-
-        if (feature.is_enabled("default_design") and
-                feature.variant("default_design") == "serene"):
-            return "serene"
-
         # Reddit themes is not enabled for this user
         if not feature.is_enabled('stylesheets_everywhere'):
             return None
