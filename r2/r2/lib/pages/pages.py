@@ -4895,7 +4895,7 @@ class PromoteLinkBase(Templated):
         self.configure_moat_enabled = feature.is_enabled("configure_moat")
         Templated.__init__(self, **kw)
 
-    def get_locations(self): 
+    def get_locations(self):
         # geotargeting
         def location_sort(location_tuple):
             code, name, default = location_tuple
@@ -4944,6 +4944,10 @@ class PromoteLinkBase(Templated):
 
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
+
+    def get_interests(self):
+        self.interest_targeting_enabled = feature.is_enabled('interest_targeting')  # noqa
+        self.interests = g.interest_targets
 
     def get_mobile_versions(self):
         self.ios_versions = g.ios_versions
@@ -5002,7 +5006,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.min_start = min_start.strftime("%m/%d/%Y")
         self.max_end = max_end.strftime("%m/%d/%Y")
         self.default_start = default_start.strftime("%m/%d/%Y")
-        self.default_end = default_end.strftime("%m/%d/%Y") 
+        self.default_end = default_end.strftime("%m/%d/%Y")
 
         self.link = link
         self.listing = listing
@@ -5040,6 +5044,7 @@ class PromoteLinkEdit(PromoteLinkBase):
 
         self.get_locations()
         self.get_collections()
+        self.get_interests()
         self.get_mobile_versions()
 
         user_srs = [sr for sr in Subreddit.user_subreddits(c.user, ids=False)
@@ -5150,6 +5155,19 @@ class RenderableCampaign(Templated):
             # LEGACY: sponsored.js uses blank to indicate no targeting, meaning
             # targeted to the frontpage
             self.targeting_data = '' if sr_name == Frontpage.name else sr_name
+
+        if target.is_interest:
+            self.targeting_type = "interest"
+        elif target.is_collection:
+            if "/r/" in target.collection.name:
+                self.targeting_type = "subreddit"
+            else:
+                self.targeting_type = "collection"
+        else:
+            if target.subreddit_name == Frontpage.name:
+                self.targeting_type = "collection"
+            else:
+                self.targeting_type = "subreddit"
 
         self.platform = campaign.platform
         self.mobile_os = campaign.mobile_os
@@ -5627,6 +5645,10 @@ class PromoteInventory(PromoteLinkBase):
                 self.targeting_type = "collection"
                 self.sr_input = None
                 self.collection_input = target.collection.name
+        elif target.is_interest:
+            self.targeting_type = "interest"
+            self.sr_input = target.subreddit_name
+            self.collection_input = None
         else:
             self.sr_input = target.subreddit_name
             self.collection_input = None
@@ -5731,6 +5753,8 @@ class PromoteInventory(PromoteLinkBase):
 
         self.get_locations()
         self.get_collections()
+        self.get_interests()
+        self.interest_targeting_enabled = False
 
 
 ReportKey = namedtuple("ReportKey", ["date", "link", "campaign"])
