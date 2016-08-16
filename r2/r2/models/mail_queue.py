@@ -248,7 +248,10 @@ class EmailHandler(object):
                 s.c.list_unsubscribe_header: list_unsubscribe_header,
             }).execute()
             hashes.append(key)
-        g.log.info("Queued %r emails to be sent to %r", kind, user.name)
+        if user is not None:
+            g.log.info("Queued %r emails to be sent to %r", kind, user.name)
+        else:
+            g.log.info("Queued %r emails to be sent", kind)
         return hashes
 
 
