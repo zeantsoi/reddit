@@ -22,19 +22,10 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    var experimentEnabled = r.config.feature_expando_new_tab_enabled || r.config.feature_clickbox_with_title;
-    var newTabVariantEnabled = r.config.feature_expando_new_tab_variant;
+    var experimentEnabled = r.config.feature_clickbox_with_title;
     var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
     if (experimentEnabled || userPrefEnabled) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
-            // need to check for feature_expando_new_tab again because we only
-            // want to override this behavior when the experiment is enabled.
-            // checking the parent to make sure the link is not a self-post
-            var meetsExperimentRequirements = newTabVariantEnabled &&
-                !$(this).closest('.thing').hasClass('self') &&
-                !$(this).hasClass('expand-media') &&
-                !$(this).hasClass('comments');
-
             if (experimentEnabled && !e.metaKey) {
                 // Only preventDefault for title clicks, not flatlist buttons (comments, share, save)
                 if ($(this).parents('.expand-media.preview-object').length && !$(this).parents('.may-blank').length && $(this).hasClass('title') ) {
@@ -48,7 +39,8 @@ r.ui.init = function() {
                 }
             }
 
-            if (!meetsExperimentRequirements && !userPrefEnabled) { return; }
+            // Don't open links in new tabs if preference isn't set
+            if (!userPrefEnabled) { return; }
 
             if (!this.target) {
                 // Trident doesn't support `rel="noreferrer"` and requires a

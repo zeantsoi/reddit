@@ -239,12 +239,6 @@ def js_config(extra_config=None):
         expando_preference = "do_not_expand"
 
     pref_beta = logged and c.user.pref_beta
-    expando_new_tab_variant = feature.variant("expando_new_tab")
-    expando_new_tab_enabled = feature.is_enabled("expando_new_tab")
-    do_expando_new_tab = (
-        expando_new_tab_enabled and
-        (expando_new_tab_variant == "image_expando_new_tab" or
-            expando_new_tab_variant == "self_post_image_expando_new_tab"))
 
     feature_clickbox_with_title = (feature.is_enabled("expando_box") and
         feature.variant("expando_box") == "clickbox_with_title")
@@ -336,8 +330,6 @@ def js_config(extra_config=None):
         "events_collector_key": events_collector_key,
         "events_collector_secret": events_collector_secret,
         "feature_screenview_events": feature.is_enabled('screenview_events'),
-        "feature_expando_new_tab_variant": do_expando_new_tab,
-        "feature_expando_new_tab_enabled": expando_new_tab_enabled,
         "feature_scroll_events": feature.is_enabled('scroll_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),

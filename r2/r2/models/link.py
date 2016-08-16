@@ -846,26 +846,11 @@ class Link(Thing, Printable):
             item.embedly_card_preview = use_embedly_card
             item.use_outbound = False
 
-            meets_media_experiment_requirements = (
-                getattr(item, 'preview_image', False) and
-                show_media_preview and
-                item.link_child and
-                request.route_dict['action_name'] != 'comments')
-
             meets_self_post_experiment_requirements = (
                 request.route_dict['action_name'] != 'comments' and
                 item.is_self and
                 bool(item.selftext) and
                 not item.promoted)
-
-            # expando on link and thumbnail click
-            expando_new_tab_variant = feature.variant("expando_new_tab")
-
-            # enable expando for self-posts and media previews
-            self_post_image_expando_new_tab = (
-                feature.is_enabled("expando_new_tab") and
-                expando_new_tab_variant ==
-                "self_post_image_expando_new_tab")
 
             # Check media preview pref, and only change behavior for
             # listing pages (not comment pages). This will expand images
@@ -897,20 +882,9 @@ class Link(Thing, Printable):
                 else:
                     item.affiliatize_link = False
 
-                # enable expando for media previews
-                image_expando_new_tab = (
-                    feature.is_enabled("expando_new_tab") and
-                    (expando_new_tab_variant == "image_expando_new_tab" or
-                        expando_new_tab_variant == "image_expando_no_tab"))
-
-                if (image_expando_new_tab and
-                        meets_media_experiment_requirements):
-                    item.expand_inline = True
-                    item.affiliatize_link = False
-
+                # For image uploads, redirect link click to comments page
                 if (is_subdomain(item.domain, g.image_hosting_domain) and
                         show_media_preview and
-                        not image_expando_new_tab and
                         request.route_dict['action_name'] != 'comments'
                 ):
                     item.href_url = item.permalink
@@ -934,12 +908,6 @@ class Link(Thing, Printable):
                 item.clickbox_expando_variant = feature.variant('expando_box')
                 if feature.variant('expando_box') == "clickbox_with_comments":
                     item.href_url = item.permalink
-            elif (self_post_image_expando_new_tab and
-                    (meets_media_experiment_requirements or
-                        meets_self_post_experiment_requirements)):
-                item.expand_inline = True
-                item.href_url = item.url
-                item.affiliatize_link = False
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
