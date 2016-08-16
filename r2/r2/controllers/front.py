@@ -344,14 +344,6 @@ class FrontController(RedditController):
         else:
             num = min(c.user.pref_num_comments, g.max_comments)
 
-        # Experiment to show only top level comments
-        if (not depth and
-                not comment and
-                sr.name.lower() in ["pics", "gifs", "gaming", "askreddit"] and
-                feature.is_enabled('top_level_comments') and
-                feature.variant('top_level_comments') == 'test_group'):
-            depth = 1
-
         kw = {}
         # allow depth to be reset (I suspect I'll turn the VInt into a
         # validator on my next pass of .compact)
