@@ -1985,16 +1985,25 @@ class PromoteApiController(ApiController):
         promoter_url=VUrl('purl', allow_self=False),
         discussion_link=VBoolean('discussion_link'),
         promoted_externally=VBoolean('promoted_externally'),
+        third_party_tracking=VUrl("third_party_tracking"),
+        override_url=VUrl("override_url"),
     )
     def POST_promote_post_submit(self, form, jquery, original_link, 
                                  promoter_text, promoter_url, 
-                                 discussion_link, promoted_externally):
+                                 discussion_link, promoted_externally,
+                                 third_party_tracking, override_url):
 
         if original_link.promoted_post_id is not None:
             c.errors.add(errors.PROMOTED_POST_EXISTS, field="linkid")
             form.set_error(errors.PROMOTED_POST_EXISTS, "linkid")
             return
 
+        if form.has_errors('third_party_tracking', errors.BAD_URL):
+            return
+
+        if form.has_errors('override_url', errors.BAD_URL):
+            return
+            
         # Create the promoted link
         if discussion_link or original_link.is_self:
             original_subreddit = Subreddit._byID(
@@ -2006,7 +2015,10 @@ class PromoteApiController(ApiController):
                 force_domain=True,
             )
         else:
-            link_url = original_link.url
+            if not override_url:
+                link_url = original_link.url
+            else:
+                link_url = override_url
 
         sr = Subreddit._byID(Subreddit.get_promote_srid(), stale=True)
         l = Link._submit(
@@ -2029,6 +2041,7 @@ class PromoteApiController(ApiController):
         l.original_link = original_link._fullname
         l.promoted_display_name = promoter_text
         l.promoted_url = promoter_url
+        l.third_party_tracking = third_party_tracking or None
 
         if hasattr(original_link, 'thumbnail_url') and hasattr(original_link, 'thumbnail_size'):
             l.thumbnail_url = original_link.thumbnail_url

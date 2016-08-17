@@ -17,6 +17,13 @@
                 </div>
                 ${utils.error_field("PROMOTED_POST_EXISTS", "linkid", "div")}
             </%utils:line_field>
+            <%utils:line_field title="${_('override url')}" id="override_url-field" css_class="rounded">
+                <input id="override_url" name="override_url" type="text" class="rounded">
+                <div class="infotext rounded">
+                <p>${_("Override link, e.g. to add UTM tag, leave blank for original URL")}</p>
+                </div>
+                ${utils.error_field("BAD_URL", "override_url", "div")}
+            </%utils:line_field>
             <%utils:line_field title="${_('promoter text')}" id="ptext-field" css_class="rounded">
                 <input id="ptext" name="ptext" type="text" class="rounded">
                 <div class="infotext rounded">
@@ -33,7 +40,7 @@
             <%utils:line_field title="" id="discussion-link-field" css_class="rounded">
                 <div class="checkbox-group">
                 <div class="form-group">
-                    ${utils.checkbox("discussion_link", _("Link directly to discussion"), True)}
+                    ${utils.checkbox("discussion_link", _("Link directly to discussion"), False)}
                 </div>
                 <div class="infotext rounded">
                     <p>${_("Override the link with link to the comments page")}</p>
@@ -51,6 +58,13 @@
                 </div>
                 </div>
             </%utils:line_field>            
+            <%utils:line_field title="${_('third party tracker')}" id="third_party_tracking-field" css_class="rounded">
+                <input id="third_party_tracking" name="third_party_tracking" type="text" class="rounded">
+                <div class="infotext rounded">
+                <p>${_("URL for third-party tracking pixel")}</p>
+                </div>
+                ${utils.error_field("BAD_URL", "third_party_tracking", "div")}
+            </%utils:line_field>
         </div>
         <footer class="buttons">
           <span class="status error"></span>
