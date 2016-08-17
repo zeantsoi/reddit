@@ -51,11 +51,12 @@ class ModmailController(OAuth2OnlyController):
         # Set user_is_admin property on context,
         # normally set but this controller does not inherit
         # from RedditController
+        super(ModmailController, self).pre()
+
         c.user_is_admin = False
         if c.user_is_loggedin:
             c.user_is_admin = c.user.name in g.admins
 
-        super(ModmailController, self).pre()
         VNotInTimeout().run()
 
     def post(self):
@@ -266,7 +267,6 @@ class ModmailController(OAuth2OnlyController):
                     conversation is returned
         """
         self._validate_vmodconversation()
-
         sr = self._try_get_subreddit_access(conversation, admin_override=True)
         authors = self._try_get_byID(
             list(
@@ -735,6 +735,7 @@ class ModmailController(OAuth2OnlyController):
 
         return {
             'id': account._fullname,
+            'name': account.name,
             'created': account._date.isoformat(),
             'banStatus': ban_result,
             'isShadowBanned': account._spam,
