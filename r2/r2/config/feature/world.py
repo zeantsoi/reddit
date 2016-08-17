@@ -86,6 +86,15 @@ class World(object):
 
         return user.name in self.stacked_proxy_safe_get(g, 'admins', [])
 
+    def is_sponsor(self, user):
+        if not user or not hasattr(user, 'name'):
+            return False
+
+        if self.is_admin(user):
+            return True
+
+        return user.name in self.stacked_proxy_safe_get(g, 'sponsors', [])
+
     def is_employee(self, user):
         if not user:
             return False

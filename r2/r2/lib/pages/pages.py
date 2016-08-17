@@ -4897,6 +4897,7 @@ class PromoteLinkBase(Templated):
         self.mobile_device_version_targeting_enabled = feature.is_enabled("mobile_device_version_targeting")
         self.auto_extend_enabled = feature.is_enabled("ads_auto_extend")
         self.configure_moat_enabled = feature.is_enabled("configure_moat")
+        self.frequency_cap_enabled = feature.is_enabled('frequency_cap')
         Templated.__init__(self, **kw)
 
     def get_locations(self):

@@ -665,7 +665,7 @@
     ${error_field("FREQUENCY_CAP_TOO_LOW", "frequency_cap", "div")}
   </%def>
 
-  %if c.user_is_sponsor:
+  %if thing.frequency_cap_enabled:
     <%utils:line_field title="${_('frequency')}" css_class="rounded">
       ${frequency_select_content()}
       <div class="frequency-cap-field hidden">

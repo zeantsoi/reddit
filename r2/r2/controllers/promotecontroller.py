@@ -1632,9 +1632,8 @@ class PromoteApiController(ApiController):
             if oversold:
                 return
 
-        # Always set frequency_cap_default for auction campaign if
-        # frequency_cap is not set and the user isn't a sponsor.
-        if not c.user_is_sponsor and not frequency_cap and is_auction:
+        # Always set frequency_cap_default if feature_frequency_cap is False
+        if not feature.is_enabled('frequency_cap'):
             frequency_cap = g.frequency_cap_default
 
         campaign_dict = {

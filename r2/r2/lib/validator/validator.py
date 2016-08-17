@@ -2505,7 +2505,7 @@ class VFrequencyCap(Validator):
         if frequency_capped == 'true':
             if frequency_cap and int(frequency_cap) >= g.frequency_cap_min:
                 try:
-                    return frequency_cap
+                    return int(frequency_cap)
                 except (ValueError, TypeError):
                     self.set_error(errors.INVALID_FREQUENCY_CAP, code=400)
             else:

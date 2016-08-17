@@ -274,6 +274,9 @@ class FeatureState(object):
         if cfg.get('admin') and world.is_admin(user):
             return True
 
+        if cfg.get('sponsor') and world.is_sponsor(user):
+            return True
+
         if cfg.get('employee') and world.is_employee(user):
             return True
 
