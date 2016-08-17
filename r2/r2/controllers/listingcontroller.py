@@ -665,16 +665,16 @@ class BrowseController(ListingWithPromos):
     def keep_fn(self):
         """For merged time-listings, don't show items that are too old
            (this can happen when mr_top hasn't run in a while)"""
-        if self.time != 'all' and c.default_sr:
-            oldest = timeago('1 %s' % (str(self.time),))
-            def keep(item):
-                if isinstance(c.site, AllSR):
-                    if not item.subreddit.discoverable:
-                        return False
+        def keep(item):
+            # see if we'd keep the item normally
+            if not ListingController.keep_fn(self)(item):
+                return False
+            # check if the item is too old
+            elif self.time != 'all' and c.default_sr:
+                oldest = timeago('1 %s' % (str(self.time),))
                 return item._date > oldest and item.keep_item(item)
-            return keep
-        else:
-            return ListingController.keep_fn(self)
+            return True
+        return keep
 
     @property
     def menus(self):
