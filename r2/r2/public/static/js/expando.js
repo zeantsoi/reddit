@@ -61,16 +61,13 @@
   function includeElementClicks(target) {
     var $target = $(target);
 
+    // Don't expand on any link clicks
+    // This will catch some extension modifications (like image resizing with RES)
+    if ($target.parentsUntil('.thing', 'a:not(.title)').length) {
+      return false;
+    }
     // Don't expand on any of the flat-list buttons
     if ($target.parentsUntil('.thing', '.flat-list').length) {
-      return false;
-    }
-    // Don't expand on the author or subreddit links in tagline
-    if ($target.hasClass('author') || $target.hasClass('subreddit')) {
-      return false;
-    }
-    // Don't expand on domain click
-    if ($target.parentsUntil('.thing', '.domain').length) {
       return false;
     }
     // Don't expand on share form modal
