@@ -47,6 +47,11 @@ function requestPerms() {
   }
 
   Notification.requestPermission().then(function(result) {
+    payload = {"permission": result,
+      "tab_in_focus": !document.hidden,
+      "pref_email_messages": r.config.pref_email_messages};
+    r.analytics.sendEvent("browser_notification_events", "request_permission", null, payload);
+
     if (result !== 'default') {
       $('#status').removeClass('info-icon');
       updateStatus();
