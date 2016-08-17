@@ -46,20 +46,30 @@ function requestPerms() {
     return false;
   }
 
-  Notification.requestPermission().then(function(result) {
-    payload = {"permission": result,
-      "tab_in_focus": !document.hidden,
-      "pref_email_messages": r.config.pref_email_messages};
-    r.analytics.sendEvent("browser_notification_events", "request_permission", null, payload);
+  if (Notification.permission === 'default') {
+    Notification.requestPermission(handlePermission);
+  } else {
+    $('#status').removeClass('info-icon');
+    updateStatus();
+    $('#request-permissions').html('');
+    $('#request-permissions').hide();
+  }
+}
 
-    if (result !== 'default') {
-      $('#status').removeClass('info-icon');
-      updateStatus();
-      // hide request permissions (try again) button
-      $('#request-permissions').html('');
-      $('#request-permissions').hide();
-    }
-  });
+function handlePermission() {
+  var result = Notification.permission;
+  payload = {"permission": result,
+    "tab_in_focus": !document.hidden,
+    "pref_email_messages": r.config.pref_email_messages};
+  r.analytics.sendEvent("browser_notification_events", "request_permission", null, payload);
+
+  if (result !== 'default') {
+    $('#status').removeClass('info-icon');
+    updateStatus();
+    // hide request permissions (try again) button
+    $('#request-permissions').html('');
+    $('#request-permissions').hide();
+  }
 }
 
 function testNotification() {
