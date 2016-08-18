@@ -40,6 +40,7 @@ from r2.lib.utils import (
     sampled,
     squelch_exceptions,
     to36,
+    url_to_thing,
 )
 
 # XXX External dependencies!
@@ -1141,7 +1142,6 @@ class EventQueue(object):
 
         self.save_event(event)
 
-
     @squelch_exceptions
     def delete_campaign_event(self, link, campaign,
             request=None, context=None):
@@ -1619,6 +1619,48 @@ class EventQueue(object):
             }
         )
         self.save_event(e)
+
+    @squelch_exceptions
+    def search_engine_crawl_event(self, req, resp, context):
+        parsed_url = urlparse(req.url)
+        payload = dict(
+            base_url=parsed_url.path,
+            http_response_code=resp.status_int,
+            response_time=int(
+                1000 *
+                context.request_timer.elapsed_seconds()
+            ),
+            crawler_name=g.pool_name,
+            user_agent=req.user_agent,
+            server=g.reddit_host,
+            method=req.method,
+            domain=req.domain,
+            protocol=parsed_url.scheme,
+            sr_name=context.site.name,
+        )
+
+        thing = url_to_thing(req.url)
+        if thing:
+            payload['target_fullname'] = thing._fullname
+            payload['target_type'] = thing._type_name
+
+            if thing._type_name == 'comment':
+                link = getattr(thing, 'link', thing.link_slow)
+                payload['post_fullname'] = link._fullname
+
+        if req.referrer:
+            payload['referrer_url'] = req.referrer
+            ref_url = urlparse(req.referrer)
+            if ref_url.query:
+                payload['referrer_url_params'] = ref_url.query
+
+        self.save_event(
+            Event(
+                topic='crawl_events',
+                event_type='url_crawl',
+                data=payload,
+            )
+        )
 
 
 class Event(baseplate.events.Event):
