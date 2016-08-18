@@ -1652,10 +1652,6 @@ class RedditController(OAuth2ResourceController):
 
     def post(self):
         MinimalController.post(self)
-
-        if g.enable_crawler_scrape_events:
-            g.events.search_engine_crawl_event(request, response, c)
-
         if response.content_type == "text/html":
             self._embed_html_timing_data()
 
