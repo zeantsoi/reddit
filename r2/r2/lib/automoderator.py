@@ -1466,12 +1466,23 @@ class Rule(object):
 
             if feature.is_enabled("new_modmail",
                                   subreddit=data["subreddit"].name):
-                ModmailConversation(
+                new_modmail_convo = ModmailConversation(
                     data["subreddit"],
                     ACCOUNT,
                     subject,
                     message,
                 )
+
+                g.events.new_modmail_event(
+                    'ss.send_modmail_message',
+                    new_modmail_convo,
+                    message=new_modmail_convo.messages[0],
+                    msg_author=ACCOUNT,
+                    sr=data['subreddit'],
+                    request=None,
+                    context=None,
+                )
+
             else:
                 new_message, inbox_rel = Message._new(
                     ACCOUNT, data["subreddit"],
