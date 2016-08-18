@@ -249,6 +249,16 @@ class ModmailController(OAuth2OnlyController):
         messages = serializable_convo.pop('messages')
         mod_actions = serializable_convo.pop('modActions')
 
+        g.events.new_modmail_event(
+            'ss.send_modmail_message',
+            conversation,
+            message=conversation.messages[0],
+            msg_author=c.user,
+            sr=entity,
+            request=request,
+            context=c,
+        )
+
         return simplejson.dumps({
             'conversation': serializable_convo,
             'messages': messages,
@@ -297,6 +307,13 @@ class ModmailController(OAuth2OnlyController):
 
         if mark_read:
             conversation.mark_read(c.user)
+            g.events.new_modmail_event(
+                'ss.modmail_mark_thread',
+                conversation,
+                mark_type='read',
+                request=request,
+                context=c,
+            )
 
         return simplejson.dumps({
             'conversation': serializable_convo,
@@ -367,7 +384,7 @@ class ModmailController(OAuth2OnlyController):
             abort(422, 'Must be a mod to make the message internal.')
 
         try:
-            conversation.add_message(
+            new_message = conversation.add_message(
                 c.user,
                 msg_body,
                 is_author_hidden=is_author_hidden,
@@ -423,6 +440,16 @@ class ModmailController(OAuth2OnlyController):
         )
         messages = serializable_convo.pop('messages')
 
+        g.events.new_modmail_event(
+            'ss.send_modmail_message',
+            conversation,
+            message=new_message,
+            msg_author=c.user,
+            sr=sr,
+            request=request,
+            context=c,
+        )
+
         response.status_code = 201
         return simplejson.dumps({
             'conversation': serializable_convo,
@@ -441,6 +468,14 @@ class ModmailController(OAuth2OnlyController):
         # Retrieve updated conversation to be returned
         updated_convo = self._get_updated_convo(conversation.id, c.user)
 
+        g.events.new_modmail_event(
+            'ss.modmail_mark_thread',
+            conversation,
+            mark_type='highlight',
+            request=request,
+            context=c,
+        )
+
         return simplejson.dumps(updated_convo)
 
     @require_oauth2_scope('identity')
@@ -454,6 +489,14 @@ class ModmailController(OAuth2OnlyController):
 
         # Retrieve updated conversation to be returned
         updated_convo = self._get_updated_convo(conversation.id, c.user)
+
+        g.events.new_modmail_event(
+            'ss.modmail_mark_thread',
+            conversation,
+            mark_type='unhighlight',
+            request=request,
+            context=c,
+        )
 
         return simplejson.dumps(updated_convo)
 
@@ -552,6 +595,15 @@ class ModmailController(OAuth2OnlyController):
             conversation.add_action(c.user, 'archived')
             conversation.set_state('archived')
             updated_convo = self._get_updated_convo(conversation.id, c.user)
+
+            g.events.new_modmail_event(
+                'ss.modmail_mark_thread',
+                conversation,
+                mark_type='archive',
+                request=request,
+                context=c,
+            )
+
             return simplejson.dumps(updated_convo)
         else:
             abort(403, 'Must be a moderator with mail access.')
@@ -574,6 +626,15 @@ class ModmailController(OAuth2OnlyController):
             conversation.add_action(c.user, 'unarchived')
             conversation.set_state('inprogress')
             updated_convo = self._get_updated_convo(conversation.id, c.user)
+
+            g.events.new_modmail_event(
+                'ss.modmail_mark_thread',
+                conversation,
+                mark_type='unarchive',
+                request=request,
+                context=c,
+            )
+
             return simplejson.dumps(updated_convo)
         else:
             abort(403, 'Must be a moderator with mail access.')

@@ -524,6 +524,16 @@ class ModmailConversation(Base):
 
         return message
 
+    def get_participant(self):
+        try:
+            if not self.is_internal:
+                return ModmailConversationParticipant.get_participant(
+                    self.id)
+        except NotFound:
+            pass
+
+        return None
+
     def add_action(self, account, action_type_name, commit=False):
         """Add an action message to a conversation"""
         try:
