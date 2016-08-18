@@ -888,6 +888,7 @@ class Link(Thing, Printable):
                     "clickbox_with_title",
                     "clickbox_no_title",
                     "clickbox_with_source",
+                    "darker_clickbox",
                 )
             )
 
