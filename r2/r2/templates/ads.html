@@ -47,28 +47,13 @@
     r.frames.receiveMessage('request.adzerk', function(e) {
       var data = e.detail;
 
-      r.analytics.adServingEvent('ad_request', {
-        keywords: data.keywords,
-        placement_types: data.placement_types,
-        properties: data.properties,
-      });
+      r.analytics.adServingEvent('ad_request', data);
     });
 
     r.frames.receiveMessage('response.adzerk', function(e) {
       var data = e.detail;
 
-      r.analytics.adServingEvent('ad_response', {
-        keywords: data.keywords,
-        placement_types: data.placement_types,
-        placement_name: data.placement_name,
-        properties: data.properties,
-        adserver_campaign_id: data.campaign_id,
-        adserver_flight_id: data.flight_id,
-        adserver_creative_id: data.creative_id,
-        adserver_ad_id: data.ad_id,
-        adserver_priority_id: data.priority_id,
-        adserver_placement_type: data.ad_type,
-      });
+      r.analytics.adServingEvent('ad_response', data);
     });
 
     function parseJSONHash(hash) {
