@@ -2,7 +2,7 @@
     r.survey = {}
 
     r.survey.init = function() {
-        if (!$.cookie('survey_action_taken')){
+        if (!$.cookie('survey_action')){
             $('.survey-overlay').slideToggle({
                 direction: 'up',
             }, 300);
@@ -11,7 +11,7 @@
                 var expiry_date = new Date();
                 var hours = 730; // approx 1 month
                 expiry_date.setTime(expiry_date.getTime() + (hours * 3600 * 1000));
-                $.cookie('survey_action_taken', '1', {domain: r.config.cur_domain, expires: expiry_date})
+                $.cookie('survey_action', '1', {domain: r.config.cur_domain, expires: expiry_date, path: '/'})
                 $('.survey-overlay').slideToggle({
                     direction: 'down',
                 }, 300);

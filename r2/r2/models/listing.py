@@ -107,9 +107,9 @@ class Listing(object):
             thing.rowstyle_cls += ' ' + ('even' if (count % 2) else 'odd')
             thing.rowstyle = CachedVariable("rowstyle")
 
-        survey_action_taken = c.cookies.get('survey_action_taken')
+        survey_action = c.cookies.get('survey_action')
         if (feature.is_enabled('show_survey') and
-                not survey_action_taken and
+                not survey_action and
                 g.live_config['survey_info']):
             self.survey = ast.literal_eval(g.live_config['survey_info'])
             self.show_survey = True
