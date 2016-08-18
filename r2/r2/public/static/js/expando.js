@@ -137,6 +137,10 @@
     },
 
     toggleExpandoFromLink: function(e) {
+      // Disable clickbox for RES users
+      if (r.isResActive()){
+        return;
+      }
       var expandoButton = $('.expando-button').next();
       if (isPluginExpandoButton(expandoButton)) { return; }
       // Prevent expando-button and thumbnail clicks (in same div)
@@ -376,6 +380,10 @@
     });
 
     $(listingSelectors.join(',')).on('click', '.expand-media.source-redirect', function(e) {
+      // Disable clickbox for RES users
+      if (r.isResActive()){
+        return;
+      }
       // If the clickbox target doesn't have a preview, imitate the behavior
       // of a title click
       if (!includeElementClicks(e.target)) { return; }
@@ -397,6 +405,10 @@
     });
 
     $(listingSelectors.join(',')).on('click', '.expand-media.preview-object', function(e) {
+      // Disable clickbox for RES users
+      if (r.isResActive()){
+        return;
+      }
       var expandoButton = $('.expando-button').next();
       if (!includeElementClicks(e.target)) { return; }
       expandoOnClick(this, expandoButton);
