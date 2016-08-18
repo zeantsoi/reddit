@@ -144,9 +144,9 @@
 
           verify that a user has a sr that is enrolled in the new modmail system
          </%doc>
-         %if c.user_is_loggedin and c.user.new_modmail_exists is not None:
+         %if g.modmail_base_url and (c.user_is_loggedin and c.user.new_modmail_exists is not None):
            <%
-              modmail_path = '/message/moderator'
+              modmail_path = g.modmail_base_url
               if c.user.new_modmail_exists:
                 modmail_img_class = 'havemail'
                 modmail_img_title = 'new mod mail!'

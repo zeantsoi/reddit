@@ -616,17 +616,9 @@ class ModmailController(OAuth2OnlyController):
             raise NotFound('Unable to retrieve conversation participant')
 
         # Fetch the mute and ban status of the participant as it relates
-        # to the subreddit associated with the conversation. Also retrieve
-        # the users link and comment karma associated with the subreddit.
+        # to the subreddit associated with the conversation.
         mute_status = sr.is_muted(account)
         ban_status = sr.is_banned(account)
-
-        # Display karma for only users that have not been shadow banned
-        post_karma = None
-        comment_karma = None
-        if not account._spam:
-            post_karma = account.karma('link', sr)
-            comment_karma = account.karma('comment', sr)
 
         # Parse the ban status and retrieve the length of the ban,
         # then output the data into a serialiazable dict
@@ -723,8 +715,13 @@ class ModmailController(OAuth2OnlyController):
         serializable_comments = {}
         for sr_comment in sr_comments:
             comment_link = comment_links[sr_comment.link_id]
+            comment_body = sr_comment.body
+            if len(comment_body) > 140:
+                comment_body = '{:.140}...'.format(comment_body)
+
             serializable_comments[sr_comment._fullname] = {
                 'title': comment_link.title,
+                'comment': comment_body,
                 'permalink': sr_comment.make_permalink(
                     comment_link,
                     sr,
@@ -739,10 +736,6 @@ class ModmailController(OAuth2OnlyController):
             'created': account._date.isoformat(),
             'banStatus': ban_result,
             'isShadowBanned': account._spam,
-            'subredditKarma': {
-                'post': post_karma,
-                'comment': comment_karma,
-            },
             'muteStatus': mute_result,
             'recentComments': serializable_comments,
             'recentPosts': serializable_posts,

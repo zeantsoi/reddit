@@ -379,8 +379,7 @@ class ModmailConversation(Base):
             query = query.filter(cls.is_auto.is_(True),
                                  cls.state == cls.STATE['new'])
         elif state == 'highlighted':
-            query = query.filter(cls.is_highlighted.is_(True),
-                                 cls.state != cls.STATE['archived'])
+            query = query.filter(cls.is_highlighted.is_(True))
         elif state != 'all':
             query = (query.filter_by(state=cls.STATE[state])
                           .filter(cls.is_internal.is_(False)))
@@ -477,7 +476,7 @@ class ModmailConversation(Base):
             # Check if a mod who is not the original author of the
             # conversation is responding and if so change the state
             # of the conversation to 'inprogress'
-            if (self.state == self.STATE['new'] and
+            if (not self.is_internal and
                     author._id not in self.author_ids):
                 self.state = self.STATE['inprogress']
 
@@ -705,7 +704,8 @@ def to_serializable_author(author, entity, current_user, is_hidden=False):
 
     name = author.name
     user_is_mod = entity.is_moderator_with_perms(current_user, 'mail')
-    author_is_mod = entity.is_moderator_with_perms(author, 'mail')
+    author_is_mod = (entity.is_moderator_with_perms(author, 'mail') or
+                     author.name == g.automoderator_account)
     if (current_user and
             (not user_is_mod and is_hidden)):
         name = entity.name
