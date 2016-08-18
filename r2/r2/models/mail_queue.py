@@ -23,6 +23,7 @@
 import datetime
 import hashlib
 import time
+import pytz
 import email.utils
 
 from email.mime.multipart import MIMEMultipart
@@ -223,7 +224,7 @@ class EmailHandler(object):
         s = self.queue_table
         hashes = []
         if not date:
-            date = datetime.datetime.now(g.tz)
+            date = datetime.datetime.now(pytz.UTC)
         if not ip:
             ip = getattr(request, "ip", "127.0.0.1")
         for email in tup(emails):
@@ -299,7 +300,8 @@ class EmailHandler(object):
                  fr_addr, reply_to, html_body, list_unsubscribe_header) in res:
                 yield (accts.get(acct), things.get(fulln), addr,
                        fname, date, ip, kind, msg_hash, body,
-                       fr_addr, reply_to, html_body, list_unsubscribe_header)
+                       fr_addr, reply_to, html_body, list_unsubscribe_header,
+                       uid)
 
     def clear_queue(self, max_date, kind = None):
         s = self.queue_table
@@ -307,6 +309,11 @@ class EmailHandler(object):
         if kind:
             where.append([s.c.kind == kind])
         sa.delete(s, sa.and_(*where)).execute()
+
+    def clear_queue_by_uids(self, uids):
+        """Delete emails with uids in uids"""
+        s = self.queue_table
+        sa.delete(s, s.c.uid.in_(uids)).execute()
 
 
 class Email(object):
@@ -380,7 +387,8 @@ class Email(object):
 
     def __init__(self, user, thing, email, from_name, date, ip,
                  kind, msg_hash, body="", from_addr="",
-                 reply_to="", html_body="", list_unsubscribe_header=""):
+                 reply_to="", html_body="", list_unsubscribe_header="",
+                 uid=-1):
         self.user = user
         self.thing = thing
         self.to_addr = email
@@ -396,6 +404,7 @@ class Email(object):
         self.subject = self.subjects.get(kind, "")
         self.html_body = html_body
         self.list_unsubscribe_header = list_unsubscribe_header
+        self.uid = uid
         try:
             self.subject = self.subject % dict(user = self.from_name())
         except UnicodeDecodeError:

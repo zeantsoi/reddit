@@ -30,6 +30,7 @@ import datetime
 import traceback, sys, smtplib
 import hashlib
 import time
+import pytz
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
@@ -524,11 +525,10 @@ def send_queued_mail(test = False):
     on successes, empties the mail queue and adds all emails to the
     sent_mail list."""
     from r2.lib.pages import Share, Mail_Opt
-    now = datetime.datetime.now(g.tz)
     if not c.site:
         c.site = DefaultSR()
 
-    clear = False
+    uids_to_clear = []
     if not test:
         session = smtplib.SMTP(g.smtp_server)
     def sendmail(email):
@@ -562,8 +562,8 @@ def send_queued_mail(test = False):
         return 400 <= exception.smtp_code < 500
 
     try:
-        for email in Email.get_unsent(now):
-            clear = True
+        for email in Email.get_unsent(datetime.datetime.now(pytz.UTC)):
+            uids_to_clear.append(email.uid)
 
             should_queue = email.should_queue()
             # check only on sharing that the mail is invalid
@@ -604,9 +604,8 @@ def send_queued_mail(test = False):
             session.quit()
 
     # clear is true if anything was found and processed above
-    if clear:
-        Email.handler.clear_queue(now)
-
+    if len(uids_to_clear) > 0:
+        Email.handler.clear_queue_by_uids(uids_to_clear)
 
 
 def opt_out(msg_hash):
