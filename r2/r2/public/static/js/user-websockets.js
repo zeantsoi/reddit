@@ -18,7 +18,9 @@ $(function() {
       return;
     }
 
-    var recentNewMessageCount = inboxMessages.length;
+    // Get minimum of the count of recent batches or the inbox count
+    // (since some messages can be read during the batching period)
+    var recentNewMessageCount = Math.min(inboxMessages.length, inboxMessages[inboxMessages.length-1].inbox_count);
 
     // Get number of unread messages to tell if plural or not
     if (recentNewMessageCount === 1) {
