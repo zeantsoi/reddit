@@ -1613,12 +1613,13 @@ class RedditController(OAuth2ResourceController):
 
             # check over 18
             if (
-                c.site.over_18 and not c.over18 and
-                request.path != "/over18" and
-                c.render_style == 'html' and
-                not request.parsed_agent.bot
+                c.site.over_18 and
+                request.path != '/over18' and
+                c.render_style == 'html'
             ):
-                return self.intermediate_redirect("/over18", sr_path=False)
+                response.headers['X-Over18'] = 'true'
+                if not (request.parsed_agent.bot or c.over18):
+                    return self.intermediate_redirect('/over18', sr_path=False)
 
         #check whether to allow custom styles
         c.allow_styles = True

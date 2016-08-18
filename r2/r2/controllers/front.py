@@ -287,13 +287,10 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
 
         # check over 18
-        if (
-            article.is_nsfw and
-            not c.over18 and
-            c.render_style == 'html' and
-            not request.parsed_agent.bot
-        ):
-            return self.intermediate_redirect("/over18", sr_path=False)
+        if article.is_nsfw and c.render_style == 'html':
+            response.headers['X-Over18'] = 'true'
+            if not (request.parsed_agent.bot or c.over18):
+                return self.intermediate_redirect("/over18", sr_path=False)
 
         canonical_link = article.make_canonical_link(sr)
 
