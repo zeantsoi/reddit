@@ -130,7 +130,10 @@ r.ui.initFooterMwebBtn = function() {
       e.preventDefault();
 
       if ($.cookie('mweb-no-redirect')) {
-        $.cookie('mweb-no-redirect', null, { domain: r.config.cur_domain});
+        // From the docs, explicitly setting path to '/' sets (or in this
+        // case, unsets) the cookie across all paths. Otherwise, it's only set
+        // for the path it was created on.
+        $.cookie('mweb-no-redirect', null, { domain: r.config.cur_domain, path: '/' });
       }
 
       window.location = createMwebRedirectUrl('ref_source=desktop');
