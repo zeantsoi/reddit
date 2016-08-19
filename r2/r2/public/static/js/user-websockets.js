@@ -25,11 +25,11 @@ $(function() {
     // Get number of unread messages to tell if plural or not
     if (recentNewMessageCount === 1) {
       var messageType = inboxMessages[0].msg_type;
-      var messageText = "You have a new %(messageType)s!".format(
+      var messageText = r._("You have a new %(messageType)s!").format(
         {messageType: messageType});
     } else {
       var messageType = 'messages';
-      var messageText = "You have %(count)s new messages!".format({count: recentNewMessageCount});
+      var messageText = r._("You have %(count)s new messages!").format({count: recentNewMessageCount});
     }
 
     if (r.config.live_orangereds_pref && !!Notification && Notification.permission !== "granted") {

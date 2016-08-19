@@ -3067,9 +3067,20 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             return
 
         if isinstance(obj, Comment):
-            msg_type = "comment reply"
+            parent = None
+            if obj.parent_id:
+                parent = Comment._byID(obj.parent_id, stale=True)
+
+            msg_type = _("username mention")
+            if parent:
+                if parent.author_id == to._id:
+                    msg_type = _("comment reply")
+            else:
+                link = Link._byID(obj.link_id, stale=True)
+                if not parent and link.author_id == to._id:
+                    msg_type = _("post reply")
         else:
-            msg_type = "message"
+            msg_type = _("message")
 
         websockets.send_broadcast(
             namespace="/user/%s" % to._id36,
