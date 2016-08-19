@@ -129,8 +129,8 @@ class EventQueue(object):
 
     def canonical_redirect_event(self, canonical_url, request, context):
         event = Event(
-            topic='canonical_redirect',
-            event_type='canonical_redirect_events',
+            topic='canonical_redirect_events',
+            event_type='canonical_redirection',
             request=request,
             context=context,
         )
