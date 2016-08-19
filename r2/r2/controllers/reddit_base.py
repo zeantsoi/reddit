@@ -423,11 +423,11 @@ def _set_subreddit_from_multipath(multipath, can_stale):
         c.site = Friends
     else:
         srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
-        if len(srs) == 0:
+        if len(srs) == 0 and not c.error_page:
             abort(404)
         elif len(srs) == 1:
             c.site = srs[0]
-        else:
+        elif len(srs) > 1:
             sr_names = '+'.join(sorted([sr.name for sr in srs]))
             multi_path = '/r/{0}/'.format(sr_names)
             c.site = MultiReddit(multi_path, srs)
