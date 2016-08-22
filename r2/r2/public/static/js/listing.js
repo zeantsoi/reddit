@@ -83,7 +83,7 @@
     var listings = $(linkHtml).find('.thing.link');
 
     $.each(listings, function(i,link){
-      $('#listings').append(adjustRankWidth(link, count));
+      $(adjustRankWidth(link, count)).insertAfter('#siteTable .thing:last');
     });
   };
 
@@ -154,7 +154,7 @@
   getMiddleOfPage = function(loadPoint){
     // find 'middle' of page (where we want to lazy load more links)
     // not really the middle -- more like upper fourth of page
-    var $offset = $('#listings .thing:nth-child(' + loadPoint + ')').first().offset();
+    var $offset = $('#siteTable .thing:nth-child(' + loadPoint + ')').first().offset();
     if (!$offset) {
       return null
     }
@@ -180,7 +180,7 @@
   $(document).ready(function(){
     if (r.config.feature_lazy_load_listings){
       var urlCount = parseInt($.url().param('count'), 10) || 0;
-      $('#listings .thing.link .rank').width(adjustRankWidth(this, urlCount));
+      $('#siteTable .thing.link .rank').width(adjustRankWidth(this, urlCount));
       updateNextPrevButtons();
       lazyLoadOnScroll();
     }
