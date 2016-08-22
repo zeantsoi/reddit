@@ -33,7 +33,7 @@ from pylons import Request, Response
 from mock import MagicMock, Mock, PropertyMock
 
 from r2.tests import RedditTestCase
-from r2.models import Account, Comment, FakeAccount, Link
+from r2.models import Account, Comment, FakeAccount, Link, Subreddit
 from r2.lib import hooks
 from r2.lib.eventcollector import EventQueue
 from r2.tests import MockEventQueue
@@ -663,7 +663,7 @@ class TestSearchEngineCrawlEvent(unittest.TestCase):
     @staticmethod
     def _create_mock_request(**overrides):
         defaults = dict(
-            url='https://www.reddit.com/',
+            fullurl='https://www.reddit.com/',
             user_agent='msnbot/2.0b (+http://search.msn.com/msnbot.htm)',
             method='GET',
             domain='reddit.local',
@@ -682,7 +682,7 @@ class TestSearchEngineCrawlEvent(unittest.TestCase):
 
     def test_good_case_with_user_url(self):
         mock_req = self._create_mock_request(
-            url='https://reddit.local/user/kntsMyDuanereOfOn',
+            fullurl='https://reddit.local/user/kntsMyDuanereOfOn',
             user_agent='Mozilla/5.0 (compatible) Feedfetcher-Google; \
                 (+http://www.google.com/feedfetcher.html)',
         )
@@ -703,9 +703,27 @@ class TestSearchEngineCrawlEvent(unittest.TestCase):
 
         self.assertEquals(self.mock_save_event.call_count, 1)
 
+    def test_good_case_with_subreddit_url(self):
+        # For a sub-reddit request (e.g. http://reddit.com/r/nba), request.url
+        # is '/' instead of '/r/nba'). Since simulating a functional test is
+        # difficult, we're checking that request.fullurl is accessed instead
+        # as a proxy.
+        mock_req = self._create_mock_request()
+        mock_url = PropertyMock(return_value='https://reddit.local/r/nba')
+        type(mock_req).fullurl = mock_url
+
+        with mock.patch.object(Subreddit, '_by_name'):
+            g.events.search_engine_crawl_event(
+                mock_req,
+                self._create_mock_response(),
+                self._create_mock_context())
+
+        self.assertEquals(mock_url.call_count, 2)
+        self.assertEquals(self.mock_save_event.call_count, 1)
+
     def test_comment_post_retrieves_link(self):
         mock_req = self._create_mock_request(
-            url='https://reddit.local/r/askhistorians/comments/23/old_photos_etiquette/1j5',  # noqa
+            fullurl='https://reddit.local/r/askhistorians/comments/23/old_photos_etiquette/1j5',  # noqa
             user_agent='Mozilla/5.0 (compatible) Feedfetcher-Google; \
                 (+http://www.google.com/feedfetcher.html)',
         )

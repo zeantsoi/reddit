@@ -1635,7 +1635,7 @@ class EventQueue(object):
 
     @squelch_exceptions
     def search_engine_crawl_event(self, req, resp, context):
-        parsed_url = urlparse(req.url)
+        parsed_url = urlparse(req.fullurl)
         payload = dict(
             base_url=parsed_url.path,
             http_response_code=resp.status_int,
@@ -1652,7 +1652,7 @@ class EventQueue(object):
             sr_name=context.site.name,
         )
 
-        thing = url_to_thing(req.url)
+        thing = url_to_thing(req.fullurl)
         if thing:
             payload['target_fullname'] = thing._fullname
             payload['target_type'] = thing._type_name
