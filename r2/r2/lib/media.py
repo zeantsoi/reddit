@@ -41,6 +41,7 @@ from time import sleep
 import lxml.html
 
 from pylons import app_globals as g
+from pylons import tmpl_context as c
 
 from r2.config import feature
 from r2.lib import (
@@ -63,6 +64,7 @@ from r2.lib.utils import (
     extract_urls_from_markdown,
     is_subdomain,
     get_requests_resp_json,
+    url_is_image,
 )
 from r2.models.link import Link
 from r2.models.media_cache import (
@@ -731,6 +733,11 @@ def allowed_media_preview(url, preview_object):
         return True
     for allowed_domain in g.media_preview_domain_whitelist:
         if is_subdomain(p.hostname, allowed_domain):
+            return True
+
+    if (c.user.pref_media_preview != 'off' and
+            feature.is_enabled('title_to_commentspage')):
+        if url_is_image(url):
             return True
 
     return False

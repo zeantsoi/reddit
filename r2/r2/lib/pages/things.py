@@ -175,6 +175,7 @@ class LinkButtons(PrintableButtons):
                 kw["show_approval"] = (thing.promoted and
                   not thing._deleted and
                   not is_external(thing))
+        show_source = getattr(thing, 'source_flatlist_button', False)
 
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
@@ -208,6 +209,8 @@ class LinkButtons(PrintableButtons):
                                   promoted = thing.promoted,
                                   original_link = thing.original_link,
                                   is_link = True,
+                                  show_source=show_source,
+                                  href_url=thing.href_url,
                                   **kw)
 
 class CommentButtons(PrintableButtons):

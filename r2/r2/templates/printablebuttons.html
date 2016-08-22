@@ -337,6 +337,11 @@
       ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
     </li>
   %endif
+  %if thing.show_source:
+    <li>
+      <a class="post-source-button" href="${thing.href_url}">${_("source")}</a>
+    </li>
+  %endif
   % if thing.show_share:
     <li class="share">
       <a class="post-sharing-button" href="javascript: void 0;">${_("share")}</a>

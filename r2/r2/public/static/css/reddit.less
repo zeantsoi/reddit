@@ -12038,3 +12038,40 @@ body:not(.loggedin) .report-button {
         display: inline-block;
     }
 }
+
+.source-button {
+    content: '';
+    display: inline-block;
+    .hdpi-bg-image(
+        @1x: url(../source-title.png),
+        @2x: url(../source-title_2x.png)
+    );
+    background-repeat: no-repeat;
+    background-size: 100%;
+    width: 12px;
+    height: 12px;
+    vertical-align: middle;
+    margin-left: -2px;
+    margin-right: 6px;
+    margin-bottom: 1px;
+}
+
+.post-source-button {
+    color: #369 !important;
+
+    &:before {
+        content: '';
+        display: inline-block;
+        .hdpi-bg-image(
+            @1x: url(../source-flatlist-icon.png),
+            @2x: url(../source-flatlist-icon_2x.png)
+        );
+        background-repeat: no-repeat;
+        background-size: 100%;
+        width: 12px;
+        height: 12px;
+        vertical-align: middle;
+        margin-right: 2px;
+        margin-bottom: 1px;
+    }
+}

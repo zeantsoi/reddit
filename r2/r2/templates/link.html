@@ -51,13 +51,17 @@
 <%def name="make_link(name, css_class, tabindex=0, url=None)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
+    if hasattr(thing, 'redirect_to_permalink'):
+      url = thing.permalink
+    else:
+      url = url if url else thing.href_url
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }
             ${'outbound' if thing.use_outbound else '' }
             ${'affiliate' if thing.affiliatize_link and not thing.use_outbound else '' }"
 
-     href="${url if url else thing.href_url}"
+     href="${url}"
      %if tabindex:
        tabindex="${tabindex}"
      %endif
@@ -118,6 +122,9 @@
     <%call expr="make_link('title', 'title', tabindex=1)">
       ${thing.title}
     </%call>
+    %if getattr(thing, 'source_title_button', False):
+      ${self.source()}
+    %endif
     %if c.site.link_flair_position == 'right':
       <%call expr="flair()" />
     %endif
@@ -230,6 +237,9 @@
  ${self.thumbnail()}
 </%def>
 
+<%def name="source()">
+  <a class='source-button' href="${thing.href_url}"></a>
+</%def>
 
 <%def name="domain(link=True)">
   <span class="domain">

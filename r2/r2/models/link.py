@@ -834,6 +834,14 @@ class Link(Thing, Printable):
             if item.is_self:
                 item.domain_path = item.subreddit_path
 
+            # Force media preview to be shown on the comments pages
+            # if the subreddit has previews disabled
+            if (pref_media_preview != 'off' and
+                    not item.show_media_preview and
+                    request.route_dict['action_name'] == 'comments' and
+                    feature.is_enabled('title_to_commentspage')):
+                show_media_preview = True
+
             # attach video or selftext as needed
             item.link_child, item.editable = make_link_child(item, show_media_preview)
 
@@ -896,6 +904,15 @@ class Link(Thing, Printable):
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
                     item.outbound_link = generate_outbound_link(item, outbound_url)
 
+            # Exclude users from this experiment that explicitly
+            # have media previews turned off. Only apply this experiment
+            # to comments pages (and ignore subreddit settings for previews)
+            title_to_commentspage_enabled = (
+                pref_media_preview != 'off' and
+                request.route_dict['action_name'] != 'comments' and
+                feature.is_enabled('title_to_commentspage')
+            )
+
             if expando_box_enabled:
                 # Specifies whether a preview exists so the expando box
                 # can redirect to the link if it doesn't
@@ -908,6 +925,15 @@ class Link(Thing, Printable):
                 item.clickbox_expando_variant = feature.variant('expando_box')
                 if feature.variant('expando_box') == "clickbox_with_comments":
                     item.href_url = item.permalink
+            elif title_to_commentspage_enabled:
+                if (item.link_child and
+                        getattr(item, 'preview_object', False) and
+                        not item.is_self):
+                    item.use_outbound = False
+                    item.redirect_to_permalink = True
+                    item.source_flatlist_button = True
+                elif not item.is_self:
+                    item.source_title_button = True
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
