@@ -26,6 +26,7 @@
    from r2.config import feature
    from r2.lib.filters import conditional_websafe
    from r2.lib.template_helpers import (
+       format_html,
        get_domain,
        get_linkflair_css_classes,
        js_timestamp,
@@ -152,7 +153,7 @@
     %endif
   %endif
 
-  <p class="tagline">
+  <p class="tagline ${'frontpage-tagline-css' if thing.feature_frontpage_tagline else '' }">
     ${self.tagline()}
   </p>
 
@@ -215,8 +216,14 @@
 </%def>
 
 <%def name="subreddit()" buffered="True">
-  ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, _sr_path=False,
+  %if thing.feature_frontpage_tagline:
+    ## no trailing slash
+    ${plain_link('r/' + thing.subreddit.name, thing.subreddit_path, _sr_path=False,
                _class="subreddit hover may-blank")}
+  %else:
+    ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, _sr_path=False,
+               _class="subreddit hover may-blank")}
+  %endif
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
@@ -243,7 +250,10 @@
 
 <%def name="domain(link=True)">
   <span class="domain">
-    %if link:
+    %if thing.feature_frontpage_tagline and not c.user.pref_domain_details:
+      ## so as not to break RES
+      <a href="#"></a>
+    %elif link:
       (<a href="${thing.domain_path}">${thing.domain_str}</a>)
     %else:
       (${thing.domain_str})
@@ -263,7 +273,9 @@
                               score=capture(self.score, thing, tag='span'),
                               when=capture(thing_timestamp, thing, thing.timesince, live=True, include_tense=True),
                               author=WrappedUser(thing.author, thing.attribs, thing).render(),
-                              lastedited=capture(edited, thing, thing.lastedited)
+                              lastedited=capture(edited, thing, thing.lastedited),
+                              bullet=format_html("<span class='bullet'>&bull;</span>"),
+                              domain=self.newDomain()
                               ))}
   ${self.gildings()}
   %if thing.use_sticky_style:
@@ -276,6 +288,18 @@
                  _class='save-category' + ('' if thing.savedcategory else ' hidden')
                 )}
   %endif
+</%def>
+
+<%def name="newDomain(link=True)" buffered="True">
+    %if link:
+      ${plain_link(thing.new_domain_str, thing.domain_path, _sr_path = False, _class="new-domain")}
+    %else:
+      ${plain_link(thing.new_domain_str, _sr_path = False, _class="new-domain")}
+    %endif
+    %if c.user_is_admin:
+      &#32;
+      <a class="adminbox" href="/admin/domain/${thing.domain}">d</a>
+    %endif
 </%def>
 
 <%def name="child()">

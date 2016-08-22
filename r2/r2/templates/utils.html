@@ -24,6 +24,7 @@
     import json
     from datetime import datetime
 
+    from r2.config import feature
     from r2.lib import tracking
     from r2.lib.filters import spaceCompress, unsafe, safemarkdown, jssafe, scriptsafe_dumps
     from r2.lib.template_helpers import (
@@ -32,6 +33,7 @@
         html_datetime,
         js_config,
         make_url_protocol_relative,
+        short_timesince,
         simplified_timesince,
         static,
     )
@@ -652,7 +654,11 @@ ${unsafe(txt)}
     timestamp_class = unsafe(' class="live-timestamp"') if live else ''
   %>
   <time title="${long_datetime(date)}" datetime="${html_datetime(date)}"${timestamp_class}>
-    ${(since or simplified_timesince(date, include_tense))}
+    %if feature.is_enabled("frontpage_tagline"):
+      ${short_timesince(date)}
+    %else:
+      ${(since or simplified_timesince(date, include_tense))}
+    %endif
   </time>
 </%def>
 

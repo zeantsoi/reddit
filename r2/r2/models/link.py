@@ -774,8 +774,13 @@ class Link(Thing, Printable):
             if g.shortdomain:
                 item.shortlink = g.shortdomain + '/' + item._id36
 
+            item.feature_frontpage_tagline = feature.is_enabled(
+                'frontpage_tagline'
+            )
+
             item.domain_str = None
-            if c.user.pref_domain_details:
+            if (c.user.pref_domain_details or
+                    item.feature_frontpage_tagline):
                 urlparser = UrlParser(item.url)
                 if (not item.is_self and urlparser.is_reddit_url() and
                         urlparser.is_web_safe_url()):
@@ -785,7 +790,8 @@ class Link(Thing, Printable):
                         item.domain_str = ('{0}/r/{1}'
                                            .format(item.domain,
                                                    url_subreddit.name))
-                elif isinstance(item.media_object, dict):
+                elif (c.user.pref_domain_details and
+                        isinstance(item.media_object, dict)):
                     try:
                         author_url = item.media_object['oembed']['author_url']
                         if domain(author_url) == item.domain:
@@ -806,6 +812,15 @@ class Link(Thing, Printable):
 
             if not item.domain_str:
                 item.domain_str = item.domain
+
+            item.new_domain_str = item.domain_str
+            if item.feature_frontpage_tagline:
+                # remove top level domain from string
+                for d in ['.com', '.org', '.net']:
+                    # if it ends with top level domain, remove it
+                    if item.domain_str[-4:] == d:
+                        item.new_domain_str = item.domain_str.replace(d, '')
+                        break
 
             item.user_is_moderator = item.sr_id in is_moderator_srids
 
@@ -960,26 +975,56 @@ class Link(Thing, Printable):
                                           _("by %(author)s"))
             if item.editted:
                 if item.score_fmt in (Score.points, Score.safepoints):
-                    taglinetext = format_html("<span>%s</span>",
-                                              _("%(score)s submitted %(when)s "
-                                                "%(lastedited)s"))
+                    if item.feature_frontpage_tagline:
+                        taglinetext = ("<span>%(score)s %(bullet)s %(when)s "
+                                       "%(lastedited)s %(bullet)s %(domain)s"
+                                       "</span>")
+                    else:
+                        taglinetext = format_html(
+                            "<span>%s</span>",
+                            _("%(score)s submitted %(when)s %(lastedited)s")
+                        )
                     taglinetext = unsafe(taglinetext + author_text)
                 elif item.different_sr:
-                    taglinetext = _("submitted %(when)s %(lastedited)s "
-                                    "by %(author)s to %(reddit)s")
+                    if item.feature_frontpage_tagline:
+                        taglinetext = ("%(reddit)s %(bullet)s %(when)s "
+                                       "%(lastedited)s %(bullet)s "
+                                       "%(author)s %(bullet)s %(domain)s")
+                    else:
+                        taglinetext = _("submitted %(when)s %(lastedited)s"
+                                        " by %(author)s to %(reddit)s")
                 else:
-                    taglinetext = _("submitted %(when)s %(lastedited)s "
-                                    "by %(author)s")
+                    if item.feature_frontpage_tagline:
+                        taglinetext = ("%(when)s %(lastedited)s "
+                                       "%(bullet)s %(author)s %(bullet)s "
+                                       "%(domain)s")
+                    else:
+                        taglinetext = _("submitted %(when)s %(lastedited)s "
+                                        "by %(author)s")
             else:
                 if item.score_fmt in (Score.points, Score.safepoints):
-                    taglinetext = format_html("<span>%s</span>",
-                                              _("%(score)s submitted %(when)s"))
+                    if item.feature_frontpage_tagline:
+                        taglinetext = ("<span>%(score)s %(bullet)s %(when)s "
+                                       "%(bullet)s %(domain)s</span>")
+                    else:
+                        taglinetext = format_html(
+                            "<span>%s</span>",
+                            _("%(score)s submitted %(when)s"))
                     taglinetext = unsafe(taglinetext + author_text)
                 elif item.different_sr:
-                    taglinetext = _("submitted %(when)s by %(author)s "
-                                    "to %(reddit)s")
+                    if item.feature_frontpage_tagline:
+                        taglinetext = ("%(reddit)s %(bullet)s %(when)s "
+                                       "%(bullet)s %(author)s %(bullet)s "
+                                       "%(domain)s")
+                    else:
+                        taglinetext = _("submitted %(when)s by %(author)s "
+                                        "to %(reddit)s")
                 else:
-                    taglinetext = _("submitted %(when)s by %(author)s")
+                    if item.feature_frontpage_tagline:
+                        taglinetext = ("%(when)s %(bullet)s %(author)s"
+                                       " %(bullet)s %(domain)s")
+                    else:
+                        taglinetext = _("submitted %(when)s by %(author)s")
             item.taglinetext = taglinetext
 
             if item.is_author:
