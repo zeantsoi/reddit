@@ -6,6 +6,7 @@ $(function() {
   var userKey = r.config.user_id + '-websocket';
   var orangeredKey = r.config.user_id + '-orangered';
   var orangeredTimestampKey = r.config.user_id + '-orangered-ts';
+  var inboxCountKey = r.config.user_id + '-inboxcount';
   var websocketUrl = r.config.user_websocket_url;
   var millisecondsToBatch = 30000;
   var messageNotificationMilliseconds = 7000;
@@ -81,18 +82,27 @@ $(function() {
   }
 
   function updateMessageCount(inboxCount) {
-    if ($('.message-count').length) {
-      // Already havemail state so just increment count
-      $('.message-count').text(inboxCount);
+    if (inboxCount < 1) {
+      // No unread messages
+      $('.message-count').remove();
+      $('#mail').addClass('nohavemail');
+      $('#mail').removeClass('havemail');
+      $('#mail').attr('href', '');
+      $('#mail').attr('title', '');
     } else {
-      // Set the havemail state and add the inbox count
-      $('#mail').removeClass('nohavemail');
-      $('#mail').addClass('havemail');
-      $('#mail').attr("href", "/message/unread/");
-      $('#mail').attr("title", "new mail!");
-      var $messageCount = $('<a class="message-count" href="/message/unread/"></a>');
-      $messageCount.text(inboxCount);
-      $messageCount.insertAfter('#mail');
+      if ($('.message-count').length) {
+        // Already havemail state so just increment count
+        $('.message-count').text(inboxCount);
+      } else {
+        // Set the havemail state and add the inbox count
+        $('#mail').removeClass('nohavemail');
+        $('#mail').addClass('havemail');
+        $('#mail').attr('href', '/message/unread/');
+        $('#mail').attr('title', 'new mail!');
+        var $messageCount = $('<a class="message-count" href="/message/unread/"></a>');
+        $messageCount.text(inboxCount);
+        $messageCount.insertAfter('#mail');
+      }
     }
   }
 
@@ -105,6 +115,8 @@ $(function() {
         return;
       }
       updateMessageCount(message[message.length-1].inbox_count);
+    } else if (event.key === inboxCountKey) {
+      updateMessageCount(event.newValue);
     }
   };
 
@@ -130,6 +142,11 @@ $(function() {
       store.safeSet(orangeredKey, jsonItems);
       updateMessageCount(message.inbox_count);
       sendBatchedNotifications();
+    },
+    'message:messages_read': function(message) {
+      var storageItems = store.safeGet(inboxCountKey);
+      store.safeSet(inboxCountKey, message.inbox_count);
+      updateMessageCount(message.inbox_count);
     }
   };
 

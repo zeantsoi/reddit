@@ -3166,6 +3166,15 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             else:
                 to._incr('inbox_count', read_counter)
 
+        if to:
+            websockets.send_broadcast(
+                namespace="/user/%s" % to._id36,
+                type="messages_read",
+                payload={
+                    "inbox_count": to.inbox_count,
+                },
+            )
+
         return res
 
     @classmethod
