@@ -3432,11 +3432,6 @@ class VSigned(Validator):
 def need_provider_captcha(location=None):
     # don't show captchas to registered clients (for now)
 
-    # # XXX: Temporary: Disable captcha for mweb, which uses HTTP Basic to
-    # # send their auth
-    # if request.headers.get('Authorization'):
-    #     return False
-
     # oauth clients have other hoops to hop through.  No captcha needed.
     if c.oauth2_client:
         return False
