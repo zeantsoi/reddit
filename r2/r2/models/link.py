@@ -2247,7 +2247,7 @@ class Message(Thing, Printable):
 
         if not skip_inbox and sr_id:
             if parent or to_subreddit or from_sr:
-                inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
+                inbox_rel.append(ModeratorInbox._add(sr, m))
 
             if sr.is_moderator(author):
                 m.distinguished = 'yes'
@@ -3290,8 +3290,8 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         return "modinbox:"
 
     @classmethod
-    def _add(cls, sr, obj, *a, **kw):
-        i = cls(sr, obj, *a, **kw)
+    def _add(cls, sr, obj):
+        i = cls(sr, obj, name="inbox")
         i._commit()
         return i
 
