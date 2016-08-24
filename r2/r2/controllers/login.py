@@ -152,10 +152,6 @@ def handle_register(
     elif responder.has_errors('ratelimit', errors.RATELIMIT):
         _event(error='RATELIMIT')
 
-    elif (not signature and not g.disable_captcha and
-            responder.has_errors('captcha', errors.BAD_CAPTCHA)):
-        _event(error='BAD_CAPTCHA')
-
     elif newsletter_subscribe and not email:
         c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
         form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
