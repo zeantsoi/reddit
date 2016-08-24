@@ -1447,6 +1447,23 @@ class ApiController(RedditController):
                     _event("update_email")
                     c.user.set_email(email)
                 else:
+                    # Block known bots from adding email address to ATO'd
+                    # accounts
+                    if (c.user.force_password_reset and
+                            c.request_fingerprint and
+                            (c.request_fingerprint.get("loginbot", False) or
+                                c.request_fingerprint.get("spambot", False) or
+                                c.request_fingerprint.get("votebot", False))):
+                        g.events.timeout_forbidden_event(
+                            action_name="add_email",
+                            process_notes="loginbot_ato_account",
+                            details_text="blocked loginbot to add new email",
+                            target=c.user,
+                            target_fullname=c.user._fullname,
+                            request=request,
+                            context=c,
+                        )
+                        return
                     _event("add_email")
 
                     c.user.set_email(email)
@@ -4118,6 +4135,23 @@ class ApiController(RedditController):
             # changed some other way.
             token.consume()
             form.redirect('/password?expired=true')
+            return
+
+        # Block known bots from resetting password to ATO'd accounts
+        if (user.force_password_reset and
+                c.request_fingerprint and
+                (c.request_fingerprint.get("loginbot", False) or
+                    c.request_fingerprint.get("spambot", False) or
+                    c.request_fingerprint.get("votebot", False))):
+            g.events.timeout_forbidden_event(
+                action_name="resetpassword",
+                process_notes="loginbot_ato_account",
+                details_text="blocked loginbot from resetpassword",
+                target=user,
+                target_fullname=user._fullname,
+                request=request,
+                context=c,
+            )
             return
 
         if account.valid_password(user, password):

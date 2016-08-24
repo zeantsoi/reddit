@@ -385,12 +385,14 @@ class EventQueue(object):
 
     @squelch_exceptions
     def timeout_forbidden_event(self, action_name, details_text,
-            target=None, target_fullname=None, subreddit=None,
-            request=None, context=None):
+                                process_notes="IN_TIMEOUT", target=None,
+                                target_fullname=None, subreddit=None,
+                                request=None, context=None):
         """Create a timeout-related 'forbidden_actions' for event-collector.
 
         action_name: the action taken by a user in timeout
         details_text: this provides more details about the action
+        process_notes: this provides additional text for the action
         target: The intended item the action was to be taken on
         target_fullname: The fullname used to convert to a target
         subreddit: The Subreddit the action was taken in. If target is of the
@@ -464,7 +466,7 @@ class EventQueue(object):
             context=context,
         )
         event.add("details_text", details_text)
-        event.add("process_notes", "IN_TIMEOUT")
+        event.add("process_notes", process_notes)
 
         if not subreddit:
             if isinstance(context.site, Subreddit):
