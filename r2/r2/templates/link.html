@@ -294,6 +294,8 @@
   
       if thing.thumbnail_sprited:
         css_class = '%s %s' % (css_class, thing.thumbnail)
+      if getattr(thing, 'expand_thumbnail', False):
+        css_class += ' expand-media'
 
     %>
     <%call expr="make_link('thumbnail', css_class, 0)">

@@ -905,8 +905,11 @@ class Link(Thing, Printable):
                     item.use_outbound = False
                     item.redirect_to_permalink = True
                     item.source_flatlist_button = True
+                    item.expand_thumbnail = True
                 elif not item.is_self:
                     item.source_title_button = True
+                elif meets_self_post_experiment_requirements:
+                    item.expand_thumbnail = True
 
             item.fresh = not any((item.likes != None,
                                   item.saved,

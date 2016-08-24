@@ -20,16 +20,18 @@ r.ui.init = function() {
         $(el).data('SubredditSubmitText', new r.ui.SubredditSubmitText({el: el}))
     })
 
+    $(document.body).on('click', 'a.expand-media', function(e) {
+        if (!e.metaKey){
+            e.preventDefault();
+            return false;
+        }
+    });
+
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    var experimentEnabled = false;
     var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
-    if (experimentEnabled || userPrefEnabled) {
+    if (userPrefEnabled) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
-            if (experimentEnabled && $(this).hasClass('expand-media') && !e.metaKey){
-                e.preventDefault();
-                return false;
-            }
 
             // Don't open links in new tabs if preference isn't set
             if (!userPrefEnabled) { return; }
