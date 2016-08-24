@@ -437,6 +437,7 @@ class Globals(object):
             'precomputed_comment_sorts',
             'mailgun_domains',
             'moat_enabled_posts',
+            'modmail_admins',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',

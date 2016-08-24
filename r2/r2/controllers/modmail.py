@@ -53,9 +53,12 @@ class ModmailController(OAuth2OnlyController):
         # from RedditController
         super(ModmailController, self).pre()
 
+        admin_usernames = [
+            name.lower() for name in g.live_config['modmail_admins']
+        ]
         c.user_is_admin = False
         if c.user_is_loggedin:
-            c.user_is_admin = c.user.name in g.admins
+            c.user_is_admin = c.user.name.lower() in admin_usernames
 
         VNotInTimeout().run()
 
