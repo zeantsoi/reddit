@@ -3432,20 +3432,9 @@ class VSigned(Validator):
 def need_provider_captcha(location=None):
     # don't show captchas to registered clients (for now)
 
-    # Temporary: Disable captcha for mweb, which uses HTTP Basic to
+    # XXX: Temporary: Disable captcha for mweb, which uses HTTP Basic to
     # send their auth
     if request.headers.get('Authorization'):
-        return False
-
-    # Temporary: whitelist the mobile apps, because they are not necessarily
-    # sending oauth
-    if (
-        request.user_agent and
-        (
-            request.user_agent.startswith("RedditAndroid 0.3") or
-            request.user_agent.startswith("Reddit/Version 1")
-        )
-    ):
         return False
 
     # oauth clients have other hoops to hop through.  No captcha needed.
