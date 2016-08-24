@@ -22,21 +22,13 @@ r.ui.init = function() {
 
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
-    var experimentEnabled = r.config.feature_clickbox_with_title;
+    var experimentEnabled = false;
     var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
     if (experimentEnabled || userPrefEnabled) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
-            if (experimentEnabled && !e.metaKey) {
-                // Only preventDefault for title clicks, not flatlist buttons (comments, share, save)
-                if ($(this).parents('.expand-media.preview-object').length && !$(this).parents('.may-blank').length && $(this).hasClass('title') ) {
-                    e.preventDefault();
-                    return false;
-                }
-
-                if ($(this).hasClass('expand-media')) {
-                    e.preventDefault();
-                    return false;
-                }
+            if (experimentEnabled && $(this).hasClass('expand-media') && !e.metaKey){
+                e.preventDefault();
+                return false;
             }
 
             // Don't open links in new tabs if preference isn't set

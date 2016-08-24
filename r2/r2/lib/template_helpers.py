@@ -240,9 +240,6 @@ def js_config(extra_config=None):
 
     pref_beta = logged and c.user.pref_beta
 
-    feature_clickbox_with_title = (feature.is_enabled("expando_box") and
-        feature.variant("expando_box") == "clickbox_with_title")
-
     lazy_load_listings = (
         c.user.pref_numsites == 25 and
         controller_name in ['hot', 'new'] and
@@ -367,7 +364,6 @@ def js_config(extra_config=None):
         "live_orangereds_pref": c.user.pref_live_orangereds,
         "pref_email_messages": logged and c.user.pref_email_messages,
         "feature_double_sidebar": feature.is_enabled('double_sidebar'),
-        "feature_clickbox_with_title": feature_clickbox_with_title,
         "feature_lazy_load_listings": lazy_load_listings,
     }
 

@@ -860,21 +860,6 @@ class Link(Thing, Printable):
                 bool(item.selftext) and
                 not item.promoted)
 
-            # Check media preview pref, and only change behavior for
-            # listing pages (not comment pages). This will expand images
-            # and bodies of self posts inline for thumbnail clicks
-            expando_box_enabled = (
-                request.route_dict['action_name'] != 'comments' and
-                feature.is_enabled('expando_box') and
-                feature.variant('expando_box') in (
-                    "clickbox_with_comments",
-                    "clickbox_with_title",
-                    "clickbox_no_title",
-                    "clickbox_with_source",
-                    "darker_clickbox",
-                )
-            )
-
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink
                 item.affiliatize_link = False
@@ -913,19 +898,7 @@ class Link(Thing, Printable):
                 feature.is_enabled('title_to_commentspage')
             )
 
-            if expando_box_enabled:
-                # Specifies whether a preview exists so the expando box
-                # can redirect to the link if it doesn't
-                if ((item.link_child and
-                        getattr(item, 'preview_object', False)) or
-                        meets_self_post_experiment_requirements):
-                    item.clickbox_expando_preview = True
-                else:
-                    item.clickbox_expando_preview = False
-                item.clickbox_expando_variant = feature.variant('expando_box')
-                if feature.variant('expando_box') == "clickbox_with_comments":
-                    item.href_url = item.permalink
-            elif title_to_commentspage_enabled:
+            if title_to_commentspage_enabled:
                 if (item.link_child and
                         getattr(item, 'preview_object', False) and
                         not item.is_self):

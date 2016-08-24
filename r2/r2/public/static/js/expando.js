@@ -58,53 +58,6 @@
       }
   }
 
-  function includeElementClicks(target) {
-    var $target = $(target);
-
-    // Don't expand on any link clicks
-    // This will catch some extension modifications (like image resizing with RES)
-    if ($target.parentsUntil('.thing', 'a:not(.title)').length) {
-      return false;
-    }
-    // Don't expand on any of the flat-list buttons
-    if ($target.parentsUntil('.thing', '.flat-list').length) {
-      return false;
-    }
-    // Don't expand on share form modal
-    if ($target.parentsUntil('.thing', '.post-sharing').length) {
-      return false;
-    }
-    // Don't expand on report form modal
-    if ($target.parentsUntil('.thing', '.reportform').length) {
-      return false;
-    }
-    // Don't expand on selfpost body clicks
-    if ($target.parentsUntil('.thing', '.md').length) {
-      return false;
-    }
-    // Clicking on the expando should open the link,
-    // but not hide it
-    if ($target.parentsUntil('.thing', '.media-preview').length) {
-      return false;
-    }
-    // Clicking on the vote buttons shouldn't toggle the expando
-    if ($target.parentsUntil('.thing', '.midcol').length) {
-      return false;
-    }
-
-    // Don't expand on thumbnail clicks
-    if ($target.parentsUntil('.thing', '.thumbnail').length) {
-      return false;
-    }
-
-    // Don't expand on title click unless the experiment variant
-    // "clickbox_with_title" is enabled
-    if (!r.config.feature_clickbox_with_title && $target.hasClass('title') && $target.hasClass('may-blank')) {
-      return false;
-    }
-
-    return true;
-  }
   var Expando = Backbone.View.extend({
     buttonSelector: '.expando-button',
     expandoSelector: '.expando',
@@ -112,7 +65,7 @@
 
     events: {
       'click .expando-button': 'toggleExpando',
-      'click .expand-media.preview-object': 'toggleExpandoFromLink'
+      'click .expand-media': 'toggleExpandoFromLink'
     },
 
     constructor: function() {
@@ -137,16 +90,8 @@
     },
 
     toggleExpandoFromLink: function(e) {
-      // Disable clickbox for RES users
-      if (r.isResActive()){
-        return;
-      }
       var expandoButton = $('.expando-button').next();
       if (isPluginExpandoButton(expandoButton)) { return; }
-      // Prevent expando-button and thumbnail clicks (in same div)
-      // from triggering the expand/collapse twice
-      if ($(e.target).hasClass('expando-button')) { return; }
-      if (!includeElementClicks(e.target)) { return; }
 
       this.expanded ? this.collapse() : this.expand();
     },
@@ -371,6 +316,7 @@
 
     function expandoOnClick(target, expandoButton){
       if (isPluginExpandoButton(expandoButton)) { return; }
+
       var $thing = $(target).closest('.thing');
       initExpando($thing, false);
     }
@@ -379,38 +325,8 @@
       expandoOnClick(this, e.target);
     });
 
-    $(listingSelectors.join(',')).on('click', '.expand-media.source-redirect', function(e) {
-      // Disable clickbox for RES users
-      if (r.isResActive()){
-        return;
-      }
-      // If the clickbox target doesn't have a preview, imitate the behavior
-      // of a title click
-      if (!includeElementClicks(e.target)) { return; }
-      var $mediaTarget = $(e.target).closest('.expand-media');
-      var userPrefEnabled = r.config.new_window && (r.config.logged || !r.ui.isSmallScreen());
-      var url = $mediaTarget.attr('data-href-url');
-      if (userPrefEnabled) {
-        var w = window.open(url, '_blank');
-        // some popup blockers appear to return null for
-        // `window.open` even inside click handlers.
-        if (w !== null) {
-            // try to nullify `window.opener` so the new tab can't
-            // navigate us
-            w.opener = null;
-        }
-      } else {
-        location.href = url;
-      }
-    });
-
-    $(listingSelectors.join(',')).on('click', '.expand-media.preview-object', function(e) {
-      // Disable clickbox for RES users
-      if (r.isResActive()){
-        return;
-      }
+    $(listingSelectors.join(',')).on('click', '.expand-media', function(e) {
       var expandoButton = $('.expando-button').next();
-      if (!includeElementClicks(e.target)) { return; }
       expandoOnClick(this, expandoButton);
     });
 

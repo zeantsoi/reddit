@@ -190,20 +190,6 @@ ${self.RenderPrintable()}
     %endif
     ${thing.display} onclick="click_thing(this)"
     ${unsafe(self.thing_data_attributes(thing))}>
-  %if hasattr(thing, 'clickbox_expando_preview'):
-    <%
-        clickbox_css_class = ''
-        if thing.clickbox_expando_variant == 'darker_clickbox':
-            clickbox_css_class = 'darker-clickbox-variant'
-        if not thing.clickbox_expando_preview:
-            if thing.clickbox_expando_variant == 'clickbox_with_source':
-                clickbox_css_class += ' source-redirect'
-        else:
-            clickbox_css_class += ' preview-object'
-    %>
-    <div class="expand-media ${clickbox_css_class}" data-href-url="${thing.href_url}">
-  %endif
-
   <p class="parent">
     ${self.ParentDiv()}
   </p>
@@ -223,10 +209,6 @@ ${self.RenderPrintable()}
   <div class="clearleft"></div>
 </div>
 <div class="clearleft"></div>
-%if hasattr(thing, 'clickbox_expando_preview'):
-  </div>
-%endif
-
 </%def>
 
 <%def name="buttons(ban=True)">

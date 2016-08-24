@@ -48,13 +48,13 @@
   </span>
 </%def>
 
-<%def name="make_link(name, css_class, tabindex=0, url=None)">
+<%def name="make_link(name, css_class, tabindex=0)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
     if hasattr(thing, 'redirect_to_permalink'):
       url = thing.permalink
     else:
-      url = url if url else thing.href_url
+      url = thing.href_url
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }
@@ -295,12 +295,8 @@
       if thing.thumbnail_sprited:
         css_class = '%s %s' % (css_class, thing.thumbnail)
 
-      if thing.is_self and not thing.promoted:
-        thumbnail_link = thing.permalink
-      else:
-        thumbnail_link = getattr(thing, 'url', thing.permalink)
     %>
-    <%call expr="make_link('thumbnail', css_class, 0, thumbnail_link)">
+    <%call expr="make_link('thumbnail', css_class, 0)">
       ${thumbnail_img(thing)}
     </%call>
   %endif

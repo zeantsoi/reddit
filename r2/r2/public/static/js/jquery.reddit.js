@@ -288,11 +288,7 @@ $.fn.removeLinkFlairClass = function () {
 
 $.fn.updateThing = function(update) {
     var $thing = $(this);
-    if ($thing.children('.expand-media').length) {
-        var $entry = $thing.find('.entry');
-    } else {
-        var $entry = $thing.children('.entry');
-    }
+    var $entry = $thing.children('.entry');
 
     if ('enemy' in update) {
         // TODO: this will hide comments of enemies along with all of their
@@ -320,11 +316,7 @@ $.fn.updateThing = function(update) {
     }
 
     if ('voted' in update) {
-        if ($thing.children('.expand-media').length) {
-            var $midcol = $thing.find('.midcol');
-        } else {
-            var $midcol = $thing.children('.midcol');
-        }
+        var $midcol = $thing.children('.midcol');
         var $up = $midcol.find('.arrow.'+up_cls+', .arrow.'+upmod_cls);
         var $down = $midcol.find('.arrow.'+down_cls+', .arrow.'+downmod_cls);
         var $elems = $($midcol).add($entry);

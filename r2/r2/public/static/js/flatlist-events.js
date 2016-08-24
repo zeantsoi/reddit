@@ -13,19 +13,11 @@
     var $target = $(e.target);
     var $thing = $target.thing();
 
-    if ($thing.children('.expand-media').length) {
-      var isValidTarget = (
-        e.target &&
-        isTargetInContainer(e.target, $thing.find('.entry').find('.flat-list')[0]) ||
-        isTargetInContainer(e.target, $('.commentarea > .menuarea')[0])
-      );
-    } else {
-      var isValidTarget = (
-        e.target &&
-        isTargetInContainer(e.target, $thing.children('.entry').find('.flat-list')[0]) ||
-        isTargetInContainer(e.target, $('.commentarea > .menuarea')[0])
-      );
-    }
+    var isValidTarget = (
+      e.target &&
+      isTargetInContainer(e.target, $thing.children('.entry').find('.flat-list')[0]) ||
+      isTargetInContainer(e.target, $('.commentarea > .menuarea')[0])
+    );
 
     if (!isValidTarget) {
       if (typeof cb === 'function') {
