@@ -735,7 +735,9 @@ def allowed_media_preview(url, preview_object):
         if is_subdomain(p.hostname, allowed_domain):
             return True
 
-    if (c.user.pref_media_preview != 'off' and
+    # This can be reached from MinimalController where c.user is unset
+    # so it needs to support c.user=''
+    if ((not c.user or c.user.pref_media_preview != 'off') and
             feature.is_enabled('title_to_commentspage')):
         if url_is_image(url):
             return True
