@@ -436,6 +436,7 @@ class Globals(object):
             'global_loid_experiments',
             'precomputed_comment_sorts',
             'mailgun_domains',
+            'moat_enabled_posts',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',

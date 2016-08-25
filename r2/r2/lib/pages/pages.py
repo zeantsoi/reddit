@@ -1986,6 +1986,11 @@ class LinkInfoPage(Reddit):
                 self.append_link_listings = wrap_links(posts,
                     wrapper=wrapper, sr_detail=sr_detail)
 
+        if link._id36 in g.live_config['moat_enabled_posts']:
+            self.moat_enabled = True
+        else:
+            self.moat_enabled = False
+
         Reddit.__init__(self, title=title,
                         short_description=short_description, robots=robots,
                         *a, **kw)

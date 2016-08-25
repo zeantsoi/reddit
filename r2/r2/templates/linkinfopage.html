@@ -35,12 +35,14 @@
       %if thing.dnt_enabled:
       if (!window.DO_NOT_TRACK) {
       %endif
+      %if thing.moat_enabled:
         (function(a){
           var b = a.createElement('script'), c = a.getElementsByTagName('script')[0];
           b.type = 'text/javascript'; b.async = !0;
           b.src = ${scriptsafe_dumps(static("moat/moatcontent.js"))};
           c.parentNode.insertBefore(b,c);
         })(document);
+      %endif
       %if thing.dnt_enabled:
       }
       %endif
