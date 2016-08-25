@@ -1,4 +1,3 @@
-from datetime import datetime
 import simplejson
 from pylons import app_globals as g
 from pylons import request, response
@@ -11,6 +10,7 @@ from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.db.thing import NotFound
 from r2.lib.errors import errors
+from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.utils import tup
 from r2.lib.validator import (
     VAccountByName,
@@ -32,6 +32,8 @@ from r2.models import (
     Comment,
     Link,
     Message,
+    ModAction,
+    MutedAccountsBySubreddit,
     Subreddit,
     Thing,
 )
@@ -597,6 +599,96 @@ class ModmailController(OAuth2OnlyController):
 
         return simplejson.dumps(userinfo)
 
+    @require_oauth2_scope('identity')
+    @validate(conversation=VModConversation('conversation_id'))
+    def POST_mute_participant(self, conversation):
+
+        if conversation.is_internal or conversation.is_auto:
+            abort(400, 'Cannot mute users in mod discussions or notifications')
+
+        sr = Subreddit._by_fullname(conversation.owner_fullname)
+
+        try:
+            participant = conversation.get_participant_account()
+        except NotFound:
+            abort(404)
+
+        if not sr.can_mute(c.user, participant):
+            abort(403)
+
+        if not c.user_is_admin:
+            if not sr.is_moderator_with_perms(c.user, 'access', 'mail'):
+                abort(403, 'Invalid mod permissions')
+
+            if sr.use_quotas:
+                sr_ratelimit = SimpleRateLimit(
+                    name="sr_muted_%s" % sr._id36,
+                    seconds=g.sr_quota_time,
+                    limit=g.sr_muted_quota,
+                )
+                if not sr_ratelimit.record_and_check():
+                    abort(403, errors.SUBREDDIT_RATELIMIT)
+
+        # Add the mute record but only if successful create the
+        # appropriate notifications, this prevents duplicate
+        # notifications from being sent
+        added = sr.add_muted(participant)
+
+        if not added:
+            return simplejson.dumps(
+                self._convo_to_serializable(conversation, all_messages=True))
+
+        MutedAccountsBySubreddit.mute(sr, participant, c.user)
+        permalink = conversation.make_permalink()
+
+        # Create the appropriate objects to be displayed on the
+        # mute moderation log, use the permalink to the new modmail
+        # system
+        ModAction.create(
+            sr,
+            c.user,
+            'muteuser',
+            target=participant,
+            description=permalink
+        )
+        sr.add_rel_note('muted', participant, permalink)
+
+        # Add the muted mod action to the conversation
+        conversation.add_action(c.user, 'muted', commit=True)
+
+        return simplejson.dumps(
+            self._get_updated_convo(conversation.id, c.user))
+
+    @require_oauth2_scope('identity')
+    @validate(conversation=VModConversation('conversation_id'))
+    def POST_unmute_participant(self, conversation):
+
+        if conversation.is_internal or conversation.is_auto:
+            abort(400, 'Cannot mute users in mod discussions or notifications')
+
+        sr = Subreddit._by_fullname(conversation.owner_fullname)
+
+        try:
+            participant = conversation.get_participant_account()
+        except NotFound:
+            abort(404)
+
+        if not c.user_is_admin:
+            if not sr.is_moderator_with_perms(c.user, 'access', 'mail'):
+                abort(403, 'Invalid mod permissions')
+
+        removed = sr.remove_muted(participant)
+        if not removed:
+            return simplejson.dumps(
+                self._convo_to_serializable(conversation, all_messages=True))
+
+        MutedAccountsBySubreddit.unmute(sr, participant)
+        ModAction.create(sr, c.user, 'unmuteuser', target=participant)
+        conversation.add_action(c.user, 'unmuted', commit=True)
+
+        return simplejson.dumps(
+            self._get_updated_convo(conversation.id, c.user))
+
     def _get_modmail_userinfo(self, conversation, sr=None):
         if conversation.is_internal:
             raise ValueError('Cannot get userinfo for internal conversations')
@@ -606,9 +698,7 @@ class ModmailController(OAuth2OnlyController):
 
         # Retrieve the participant associated with the conversation
         try:
-            participant = ModmailConversationParticipant.get_participant(
-                    conversation.id)
-            account = Account._byID(participant.account_id)
+            account = conversation.get_participant_account()
 
             permatimeout = (account.in_timeout and
                             account.days_remaining_in_timeout == 0)
@@ -749,12 +839,26 @@ class ModmailController(OAuth2OnlyController):
         updated_convo = ModmailConversation._byID(
             convo_id,
             current_user=user
-        ).to_serializable(all_messages=True, current_user=c.user)
-        messages = updated_convo.pop('messages')
-        mod_actions = updated_convo.pop('modActions')
+        )
+
+        return simplejson.dumps(
+            self._convo_to_serializable(
+                updated_convo,
+                all_messages=True
+            )
+        )
+
+    def _convo_to_serializable(self, conversation, all_messages=False):
+
+        serialized_convo = conversation.to_serializable(
+            all_messages=all_messages,
+            current_user=c.user
+        )
+        messages = serialized_convo.pop('messages')
+        mod_actions = serialized_convo.pop('modActions')
 
         return {
-            'conversations': updated_convo,
+            'conversations': serialized_convo,
             'messages': messages,
             'modActions': mod_actions,
         }

@@ -452,6 +452,22 @@ class ModmailConversation(Base):
 
         return {row[0]: row[1].isoformat() for row in query.all()}
 
+    def make_permalink(self):
+        return '{}mail/mod/{}'.format(g.modmail_base_url, self.id36)
+
+    def get_participant_account(self):
+        if self.is_internal or self.is_auto:
+            return None
+
+        convo_participant = ModmailConversationParticipant.get_participant(
+            self.id)
+        participant = Account._byID(convo_participant.account_id)
+
+        if participant._deleted:
+            raise NotFound
+
+        return participant
+
     def add_participant(self, participant_id):
         participant = ModmailConversationParticipant(self, participant_id)
         Session.add(participant)
@@ -508,7 +524,7 @@ class ModmailConversation(Base):
 
         return message
 
-    def add_action(self, account, action_type_name):
+    def add_action(self, account, action_type_name, commit=False):
         """Add an action message to a conversation"""
         try:
             convo_action = ModmailConversationAction(
@@ -519,6 +535,9 @@ class ModmailConversation(Base):
         except Exception:
             Session.rollback()
             raise
+
+        if commit:
+            Session.commit()
 
     def set_state(self, state):
         """Set the state of this conversation."""
@@ -1047,6 +1066,7 @@ class ModmailConversationAction(Base):
 
     @classmethod
     def add_actions(cls, conversations, account, action_type_name):
+        conversations = tup(conversations)
         try:
             for conversation in conversations:
                 convo_action = ModmailConversationAction(
