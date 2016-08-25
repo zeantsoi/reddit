@@ -175,9 +175,6 @@ class ModmailConversation(Base):
         self.is_auto = is_auto
         participant_id = None
 
-        if author.name == g.automoderator_account:
-            self.is_auto = True
-
         if owner.is_moderator_with_perms(author, 'mail'):
             # check if moderator has addressed the new convo to someone
             # if they have make the convo not internal and add the 'to' user
