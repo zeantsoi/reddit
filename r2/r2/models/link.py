@@ -40,20 +40,20 @@ from r2.lib.utils import (
     tup,
     UrlParser,
 )
-from account import (
+from r2.models.account import (
     Account,
     BlockedSubredditsByAccount,
     DeletedUser,
     SubredditParticipationByAccount,
 )
-from subreddit import (
+from r2.models.subreddit import (
     DefaultSR,
     DomainSR,
     FakeSubreddit,
     Subreddit,
     SubredditsActiveForFrontPage,
 )
-from printable import Printable
+from r2.models.printable import Printable
 from r2.config import extensions
 from r2.lib.memoize import memoize
 from r2.lib.wrapped import Wrapped
