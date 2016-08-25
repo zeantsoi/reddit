@@ -226,6 +226,7 @@ class ModmailController(OAuth2OnlyController):
                 request.ip,
                 sr=entity,
                 from_sr=is_author_hidden,
+                create_modmail=False,
             )
         else:
             message, inbox_rel = Message._new(
@@ -234,6 +235,7 @@ class ModmailController(OAuth2OnlyController):
                 subject,
                 body,
                 request.ip,
+                create_modmail=False,
             )
         queries.new_message(message, inbox_rel)
         conversation.set_legacy_first_message_id(message._id)
@@ -430,6 +432,7 @@ class ModmailController(OAuth2OnlyController):
                 request.ip,
                 parent=first_message,
                 from_sr=is_author_hidden,
+                create_modmail=False,
             )
             queries.new_message(message, inbox_rel)
 

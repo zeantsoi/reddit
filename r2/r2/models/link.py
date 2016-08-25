@@ -77,6 +77,7 @@ from r2.models.gold import (
     make_gold_message,
 )
 from r2.models.modaction import ModAction
+from r2.models.modmail import ModmailConversation
 from r2.models.subreddit import MultiReddit
 from r2.models.trylater import TryLater
 from r2.models.query_cache import CachedQueryMutator
@@ -2174,7 +2175,7 @@ class Message(Thing, Printable):
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
              from_sr=False, can_send_email=True, sent_via_email=False,
-             email_id=None):
+             email_id=None, create_modmail=True):
         from r2.lib.emailer import message_notification_email
         from r2.lib.message_to_email import queue_modmail_email
 
@@ -2288,12 +2289,66 @@ class Message(Thing, Printable):
                         not first_recipient_modmail):
                     inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
 
+        if create_modmail and sr:
+            m.create_modmail()
+
         if sr_id:
             g.events.modmail_event(m, request=request, context=c)
         else:
             g.events.message_event(m, request=request, context=c)
 
         return (m, inbox_rel)
+
+    def create_modmail(self):
+        """Creates a copy of the message in the new modmail system."""
+        subreddit = self.subreddit_slow
+        if not subreddit:
+            return
+
+        if not feature.is_enabled('new_modmail', subreddit=subreddit.name):
+            return
+
+        author = self.author_slow
+
+        if not self.first_message:
+            # this is the first message, start a new conversation
+            if self.from_sr:
+                # initiated by the subreddit
+                is_author_hidden = True
+                to = self.recipient_slow
+            else:
+                # initiated by a user
+                is_author_hidden = False
+                to = None
+
+            conversation = ModmailConversation(
+                owner=subreddit,
+                author=author,
+                subject=self.subject,
+                body=self.body,
+                is_author_hidden=is_author_hidden,
+                to=to,
+                legacy_first_message_id=self._id,
+            )
+            message = conversation.messages[0]
+        else:
+            # this is a reply to a conversation that should already exist
+            try:
+                conversation = ModmailConversation._by_legacy_message(self)
+            except NotFound:
+                return
+
+            message = conversation.add_message(author, self.body)
+
+        g.events.new_modmail_event(
+            'ss.send_modmail_message',
+            conversation,
+            message=message,
+            msg_author=author,
+            sr=subreddit,
+            request=request if c.user_is_loggedin else None,
+            context=c if c.user_is_loggedin else None,
+        )
 
     @property
     def permalink(self):
