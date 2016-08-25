@@ -1247,9 +1247,6 @@ class Link(Thing, Printable):
 
     @property
     def allow_live_comments(self):
-        if not feature.is_enabled('live_comments'):
-            return False
-
         if self.disable_comments:
             return False
 

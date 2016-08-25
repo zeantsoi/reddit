@@ -1924,7 +1924,7 @@ class LinkInfoPage(Reddit):
             kw['extra_js_config'] = {}
 
         # Feature flag live comments stylesheet
-        if link.allow_live_comments:
+        if feature.is_enabled('live_comments') and link.allow_live_comments:
             self.extra_stylesheets.append("live-comments.less")
 
         # Open websocket on comment page
@@ -1937,7 +1937,7 @@ class LinkInfoPage(Reddit):
             is_posts_mod = c.site.is_moderator_with_perms(c.user, 'posts')
 
         namespace = "/link/%s" % link._id36
-        if link.allow_live_comments:
+        if feature.is_enabled('live_comments') and link.allow_live_comments:
             link_websocket_url = websockets.make_url(
                 namespace, max_age=24*60*60)
             self.link_websockets = True
@@ -2418,7 +2418,7 @@ class CommentPane(Templated):
 
         # Live comments are allowed and the sort is new
         # so append the new comments
-        if article.allow_live_comments:
+        if feature.is_enabled('live_comments') and article.allow_live_comments:
             if self.sort != CommentSortMenu.operator('new'):
                 self.rendered += LiveComments().render()
             else:
