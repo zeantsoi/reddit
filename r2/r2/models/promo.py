@@ -685,6 +685,11 @@ class PromoCampaign(Thing):
     def location_str(self):
         if not self.location:
             return ''
+        # Europe was removed from `g.locations` since it's no longer
+        # targetable. Some older campaigns may have used it and we need to
+        # be able to display them still.
+        elif self.location.country == 'EU':
+            return 'Europe'
         elif self.location.region:
             country = self.location.country
             region = self.location.region
