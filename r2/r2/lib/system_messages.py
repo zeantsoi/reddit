@@ -91,7 +91,7 @@ def notify_user_added(rel_type, author, user, target):
             # send the message from the subreddit
             item, inbox_rel = Message._new(
                 author, user, subject, msg, request.ip, sr=target, from_sr=True,
-                can_send_email=False)
+                can_send_email=False, is_auto_modmail=True)
         else:
             item, inbox_rel = Message._new(
                 author, user, subject, msg, request.ip, can_send_email=False)
@@ -108,7 +108,8 @@ def notify_user_added(rel_type, author, user, target):
             modmail_author = author
 
         item, inbox_rel = Message._new(modmail_author, target, subject, msg,
-                                       request.ip, sr=target)
+                                       request.ip, sr=target,
+                                       is_auto_modmail=True)
         queries.new_message(item, inbox_rel)
 
 
@@ -130,6 +131,7 @@ def send_mod_removal_message(subreddit, mod, user):
         sr=subreddit,
         from_sr=True,
         can_send_email=False,
+        is_auto_modmail=True,
     )
     queries.new_message(item, inbox_rel, update_modmail=True)
 
@@ -169,5 +171,5 @@ def send_ban_message(subreddit, mod, user, note=None, days=None, new=True):
 
     item, inbox_rel = Message._new(
         mod, user, subject, message, request.ip, sr=subreddit, from_sr=True,
-        can_send_email=False)
+        can_send_email=False, is_auto_modmail=True)
     queries.new_message(item, inbox_rel, update_modmail=False)
