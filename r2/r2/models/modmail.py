@@ -166,13 +166,13 @@ class ModmailConversation(Base):
 
     def __init__(self, owner, author, subject,
                  body, is_author_hidden=False, to=None,
-                 legacy_first_message_id=None):
+                 legacy_first_message_id=None, is_auto=False):
         self.owner_fullname = owner._fullname
         self.subject = subject
         self.legacy_first_message_id = legacy_first_message_id
         self.num_messages = 0
         self.is_internal = False
-        self.is_auto = False
+        self.is_auto = is_auto
         participant_id = None
 
         if author.name == g.automoderator_account:

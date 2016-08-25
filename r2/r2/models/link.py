@@ -2175,7 +2175,7 @@ class Message(Thing, Printable):
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
              from_sr=False, can_send_email=True, sent_via_email=False,
-             email_id=None, create_modmail=True):
+             email_id=None, create_modmail=True, is_auto_modmail=False):
         from r2.lib.emailer import message_notification_email
         from r2.lib.message_to_email import queue_modmail_email
 
@@ -2290,7 +2290,7 @@ class Message(Thing, Printable):
                     inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
 
         if create_modmail and sr:
-            m.create_modmail()
+            m.create_modmail(is_auto_modmail)
 
         if sr_id:
             g.events.modmail_event(m, request=request, context=c)
@@ -2299,7 +2299,7 @@ class Message(Thing, Printable):
 
         return (m, inbox_rel)
 
-    def create_modmail(self):
+    def create_modmail(self, is_auto=False):
         """Creates a copy of the message in the new modmail system."""
         subreddit = self.subreddit_slow
         if not subreddit:
@@ -2329,6 +2329,7 @@ class Message(Thing, Printable):
                 is_author_hidden=is_author_hidden,
                 to=to,
                 legacy_first_message_id=self._id,
+                is_auto=is_auto,
             )
             message = conversation.messages[0]
         else:
