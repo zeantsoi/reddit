@@ -494,6 +494,13 @@ class CachedTemplate(Templated):
 
 
 class Wrapped(CachedTemplate):
+    """
+    Wrap Things to support additional properties.
+
+    Things are wrapped in such a way that we can use add_props() to add
+    properties to those items. This can be things like `link.liked` or
+    `comment.author.is_friend` that affect how the resulting page is rendered.
+    """
     # default to false, evaluate
     cachable = False
     cache_ignore = set(['lookups'])
