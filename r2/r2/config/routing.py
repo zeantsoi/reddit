@@ -490,6 +490,9 @@ def make_map(config):
     mc("/api/v1/gold/gild/:fullname", controller="apiv1gold", action="gild")
     mc("/api/v1/gold/give/:username", controller="apiv1gold", action="give")
 
+    # Partner API related endpoints
+    mc('/partner_api/trending', controller='partnerapi', action='trending')
+
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
     mc('/dev/api', controller='apidocs', action='docs')
     mc('/dev/api/:mode', controller='apidocs', action='docs',

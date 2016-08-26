@@ -6395,3 +6395,12 @@ class GeotargetNotice(Templated):
 
 class ShareClose(Templated):
     pass
+
+
+class MinimalRss(Templated):
+
+    def content(self):
+        return PaneStack([self._content])
+
+    def render(self, *args, **kwargs):
+        return responsive(super(MinimalRss, self).render(*args, **kwargs))

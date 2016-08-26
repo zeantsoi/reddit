@@ -105,4 +105,6 @@ def load_controllers():
     from ipn import RedditGiftsController
     from mailgun import MailgunWebhookController
 
+    from partner_api import PartnerApiController
+
     _reddit_controllers.update((name.lower(), obj) for name, obj in locals().iteritems())

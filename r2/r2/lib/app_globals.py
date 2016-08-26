@@ -270,6 +270,7 @@ class Globals(object):
             'RL_OAUTH_SITEWIDE_ENABLED',
             'enable_loggedout_experiments',
             'enable_crawler_scrape_events',
+            'partner_api_enable_rss',
         ],
 
         ConfigValue.tuple: [
