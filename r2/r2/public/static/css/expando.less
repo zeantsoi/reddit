@@ -1,43 +1,78 @@
-.thing .entry .expando-button {
-    background-color: transparent;
+.expando-button {
+    float: left;
+    height: 23px;
+    width: 23px;
+    margin: 2px 5px 2px 0;
+    background: white none no-repeat scroll center center;
     cursor: pointer;
-    height: 20px;
-    margin: 4px 8px 4px 0;
-    width: 20px;
 
-    &.expanded {
-        background-image: url('../icon-contract.png'); /* SPRITE */
+    &.expanded.video {
+        background-image: url('../icon-collapse.png'); /* SPRITE */
     }
 
-    &.expanded:hover {
-        background-image: url('../icon-contract-hover.png'); /* SPRITE */
+    &.expanded.video:hover {
+        background-image: url('../icon-collapse-hover.png'); /* SPRITE */
     }
 
-    &.collapsed {
-        background-image: url('../icon-expand.png'); /* SPRITE */
+    &.expanded.selftext {
+        background-image: url('../icon-collapse.png'); /* SPRITE */
     }
 
-    &.collapsed:hover {
-        background-image: url('../icon-expand-hover.png'); /* SPRITE */
+    &.expanded.selftext:hover {
+        background-image: url('../icon-collapse-hover.png'); /* SPRITE */
+    }
+
+    &.collapsed.selftext {
+        background-image: url('../icon-expand-text.png'); /* SPRITE */
+    }
+
+    &.collapsed.selftext:hover {
+        background-image: url('../icon-expand-text-hover.png'); /* SPRITE */
+    }
+
+    &.collapsed.video {
+        background-image: url('../icon-expand-image.png'); /* SPRITE */
+    }
+
+    &.collapsed.video:hover {
+        background-image: url('../icon-expand-image-hover.png'); /* SPRITE */
     }
 
     @media
     only screen and (min-resolution: 2dppx),
     only screen and (-webkit-min-device-pixel-ratio: 2) {
-        &.expanded {
-            background-image: url(../icon-contract_2x.png); /* SPRITE pixel-ratio=2 */
+        background-size: 100%;
+
+        &.expanded.video {
+            background-image: url(../icon-collapse_2x.png); /* SPRITE pixel-ratio=2 */
         }
 
-        &.expanded:hover {
-            background-image: url(../icon-contract-hover_2x.png); /* SPRITE pixel-ratio=2 */
+        &.expanded.video:hover {
+            background-image: url(../icon-collapse-hover_2x.png); /* SPRITE pixel-ratio=2 */
         }
 
-        &.collapsed {
-            background-image: url(../icon-expand_2x.png); /* SPRITE pixel-ratio=2 */
+        &.expanded.selftext {
+            background-image: url(../icon-collapse_2x.png); /* SPRITE pixel-ratio=2 */
         }
 
-        &.collapsed:hover {
-            background-image: url(../icon-expand-hover_2x.png); /* SPRITE pixel-ratio=2 */
+        &.expanded.selftext:hover {
+            background-image: url(../icon-collapse-hover_2x.png); /* SPRITE pixel-ratio=2 */
+        }
+
+        &.collapsed.selftext {
+            background-image: url('../icon-expand-text_2x.png'); /* SPRITE pixel-ratio=2 */
+        }
+
+        &.collapsed.selftext:hover {
+            background-image: url('../icon-expand-text-hover_2x.png'); /* SPRITE pixel-ratio=2 */
+        }
+
+        &.collapsed.video {
+            background-image: url('../icon-expand-image_2x.png'); /* SPRITE pixel-ratio=2 */
+        }
+
+        &.collapsed.video:hover {
+            background-image: url('../icon-expand-image-hover_2x.png'); /* SPRITE pixel-ratio=2 */
         }
     }
 }
