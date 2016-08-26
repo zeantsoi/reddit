@@ -452,12 +452,12 @@ class Link(Thing, Printable):
             ])
 
         if style == "htmllite":
-             s.extend([
-                 request.GET.has_key('twocolumn'),
-                 c.link_target,
+            s.extend([
+                'twocolumn' in request.GET,
+                c.link_target,
             ])
         elif style == "xml":
-            s.append(request.GET.has_key("nothumbs"))
+            s.append('nothumbs' in request.GET)
         elif style == "compact":
             s.append(c.permalink_page)
 
