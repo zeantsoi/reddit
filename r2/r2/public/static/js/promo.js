@@ -8,9 +8,26 @@
     setup: function(displayedThings, site, showPromo){
       this.displayedThings = displayedThings;
       this.site = site;
-      this.showPromo = showPromo;
       this.loid = $.cookie('loid');
       this._initialized = true;
+      // adCanary to see if promotedlinks are adblocked
+      var $adCanary = $('<div />')
+                      .addClass('promotedlink')
+                      .appendTo($('body'))
+                      .show();
+      if($('#siteTable_organic').length && $('#siteTable_organic').is(":hidden")) {
+        this.adBlockIsEnabled = $adCanary.is(':visible');
+      } else {
+        this.adBlockIsEnabled = $adCanary.is(':hidden');
+      }
+
+      if (this.adBlockIsEnabled) {
+        r.analytics.adblockEvent('native-headline', {
+          method: 'element-hidden',
+        });
+      }
+
+      this.showPromo = showPromo && !this.adBlockIsEnabled;
     },
 
     requestPromo: function(options){

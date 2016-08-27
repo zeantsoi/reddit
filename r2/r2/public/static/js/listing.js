@@ -19,6 +19,7 @@
         r.promo.setup(this.displayedThings, this.site, this.showPromo);
       }
 
+      this.showPromo = showPromo && !r.promo.adBlockIsEnabled;
       if(this.showPromo){
         this.insertPromo();
       }
@@ -30,6 +31,10 @@
       var newPromo = r.promo.requestPromo({ placements: 'feed-' + this.pos });
       var self = this;
       newPromo.pipe(function(promo){
+        if(!promo || !promo.length) {
+          return;
+        }
+
         var numThings = $('.sitetable.linklisting').find('.thing').length;
         // if too few items displayed, don't display ad
         if(numThings < self.FOLD_LINE){
@@ -39,12 +44,8 @@
         var $sibling = self.getSibling(self.pos);
         if(promo){
           var $item = $(promo);
-          // adsense will throw error if inserted while hidden
           if (!$item.hasClass('adsense-wrap')) {
-            $item.hide().insertBefore($sibling);
-            $item.show();
-          } else {
-            $item.insertBefore($sibling);
+            $item.insertBefore($sibling).show();
           }
           return $item;
         }

@@ -36,7 +36,6 @@
       this.lineup = [];
       this.adWasClicked = false;
       this.interestProb = interestProb;
-      this.showPromo = showPromo;
       this.houseProbability = houseProbability;
       this.site = site;
       this.displayed_things = displayed_things;
@@ -46,21 +45,14 @@
       this.next = this._advance.bind(this, 1);
       this.prev = this._advance.bind(this, -1);
       this.$listing = $('.organic-listing');
-      this.adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
       this.userEngagedWithAd = false;
-
-      if (this.adBlockIsEnabled) {
-        this.showPromo = false;
-
-        r.analytics.adblockEvent('native-headline', {
-          method: 'element-hidden',
-        });
-      }
 
       // ensure that r.promo is initialized
       if(!r.promo || !r.promo._initialized){
         r.promo.setup(this.displayed_things, this.site, this.showPromo);
       }
+
+      this.showPromo = showPromo && !r.promo.adBlockIsEnabled;
 
       this._bindEvents();
 
@@ -125,11 +117,10 @@
         return;
       }
 
-      
       var $clearLeft = $promotedLink.next('.clearleft');
       var intervalSinceLastTabChange = Date.now() - this.lastTabChangeTimestamp;
 
-      if (this.adBlockIsEnabled ||
+      if (r.promo.adBlockIsEnabled ||
           intervalSinceLastTabChange < this.MIN_PROMO_TIME ||
           this.userEngagedWithAd) {
         return;
