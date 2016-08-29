@@ -747,6 +747,20 @@ class TestSearchEngineCrawlEvent(unittest.TestCase):
         self.assertEquals(mock_link_fullname.call_count, 1)
         self.assertEquals(self.mock_save_event.call_count, 1)
 
+    def test_missing_thing_fullname(self):
+        # Sometimes URLs aren't mapped to real things, but rather fake ones
+        # that lack a full name (e.g. '/r/all').
+        mock_req = self._create_mock_request(
+            fullurl='http://reddit.local/r/all'
+        )
+
+        g.events.search_engine_crawl_event(
+            mock_req,
+            self._create_mock_response(),
+            self._create_mock_context())
+
+        self.assertEquals(self.mock_save_event.call_count, 1)
+
     def test_exceptions_are_supressed(self):
         mock_req = self._create_mock_request()
         mock_context = self._create_mock_context()

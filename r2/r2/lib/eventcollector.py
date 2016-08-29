@@ -1656,12 +1656,20 @@ class EventQueue(object):
 
         thing = url_to_thing(req.fullurl)
         if thing:
-            payload['target_fullname'] = thing._fullname
-            payload['target_type'] = thing._type_name
+            try:
+                payload['target_fullname'] = thing._fullname
+            except AttributeError:
+                # Missing for fake Things like /r/all.
+                pass
 
-            if thing._type_name == 'comment':
-                link = getattr(thing, 'link', thing.link_slow)
-                payload['post_fullname'] = link._fullname
+            try:
+                payload['target_type'] = thing._type_name
+                if thing._type_name == 'comment':
+                    link = getattr(thing, 'link', thing.link_slow)
+                    payload['post_fullname'] = link._fullname
+            except AttributeError:
+                # Missing for fake Things like /r/all.
+                pass
 
         if req.referrer:
             payload['referrer_url'] = req.referrer
