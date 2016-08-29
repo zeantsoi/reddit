@@ -83,7 +83,7 @@
     <link rel="shorturl" href="https://${thing.shortlink}"/>
   %endif
 
-  %if feature.is_enabled("outbound_clicktracking"):
+  %if feature.is_enabled("outbound_clicktracking") and c.user.pref_allow_clicktracking:
     <link rel="dns-prefetch" href="//out.reddit.com">
     <link rel="preconnect" href="//out.reddit.com">
   %endif
