@@ -9,11 +9,10 @@ from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.db.thing import NotFound
-from r2.lib.errors import errors
+from r2.lib.errors import errors, reddit_http_error
 from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.utils import tup
 from r2.lib.validator import (
-    VAccountByName,
     validate,
     VBoolean,
     VInt,
@@ -29,7 +28,6 @@ from r2.lib.validator import (
 )
 from r2.models import (
     Account,
-    Comment,
     Link,
     Message,
     ModAction,
@@ -39,7 +37,6 @@ from r2.models import (
 )
 from r2.models.modmail import (
     ModmailConversation,
-    ModmailConversationAction,
     ModmailConversationParticipant,
     ModmailConversationUnreadState,
     MustBeAModError,
@@ -111,12 +108,20 @@ class ModmailController(OAuth2OnlyController):
                 if sr._fullname in modded_srs:
                     modded_entities[sr._fullname] = sr
                 else:
-                    abort(403, 'Invalid entity passed.')
+                    return self.send_error(
+                        403,
+                        errors.BAD_SR_NAME,
+                        fields='entity'
+                    )
         else:
             modded_entities = modded_srs
 
         if not modded_entities:
-            abort(404, 'Entities not found')
+            return self.send_error(
+                404,
+                errors.SR_NOT_FOUND,
+                fields='entity'
+            )
 
         # Retrieve conversations for given entities
         conversations = ModmailConversation.get_mod_conversations(
@@ -187,21 +192,35 @@ class ModmailController(OAuth2OnlyController):
 
         # make sure the user is not muted when creating a new conversation
         if entity.is_muted(c.user) and not c.user_is_admin:
-            abort(403, 'User muted for subreddit')
+            return self.send_error(400, errors.USER_MUTED)
 
         # validate post params
         if (errors.USER_BLOCKED, to) in c.errors:
-            # empty return to not give away that a user was banned
-            return
+            return self.send_error(400, errors.USER_BLOCKED, fields='to')
         elif (errors.USER_DOESNT_EXIST, to) in c.errors:
-            return abort(404, 'Recipient user not found')
+            return self.send_error(
+                404,
+                errors.USER_DOESNT_EXIST,
+                fields='to'
+            )
+
+        if not isinstance(to, Account):
+            return self.send_error(
+                422,
+                errors.NO_SR_TO_SR_MESSAGE,
+                fields='to',
+            )
 
         # only mods can set a 'to' parameter
         if (not entity.is_moderator_with_perms(c.user, 'mail') and to):
-            abort(403, 'Cannot set a convo recipient if you are a non mod')
+            return self.send_error(403, errors.MOD_REQUIRED, fields='to')
 
         if to and entity.is_muted(to):
-            abort(400, 'Cannot create conversations with muted users')
+            return self.send_error(
+                400,
+                errors.MUTED_FROM_SUBREDDIT,
+                fields='to',
+            )
 
         try:
             conversation = ModmailConversation(
@@ -213,9 +232,14 @@ class ModmailController(OAuth2OnlyController):
                 to=to,
             )
         except MustBeAModError:
-            abort(403, 'Must be a mod to hide the message author.')
-        except:
-            abort(500, 'Failed to save conversation')
+            return self.send_error(
+                403,
+                errors.MOD_REQUIRED,
+                fields='isAuthorHidden'
+            )
+        except Exception as e:
+            g.log.error('Failed to save conversation: {}'.format(e))
+            return self.send_error(500, errors.CONVERSATION_NOT_SAVED)
 
         # Create copy of the message in the legacy messaging system as well
         if to:
@@ -305,8 +329,8 @@ class ModmailController(OAuth2OnlyController):
             userinfo = self._get_modmail_userinfo(conversation, sr=sr)
         except ValueError:
             userinfo = {}
-        except NotFound as e:
-            abort(400, str(e))
+        except NotFound:
+            return self.send_error(404, errors.USER_DOESNT_EXIST)
 
         if mark_read:
             conversation.mark_read(c.user)
@@ -375,23 +399,34 @@ class ModmailController(OAuth2OnlyController):
 
         # make sure the user is not muted before posting a message
         if sr.is_muted(c.user):
-            abort(403, 'User muted for subreddit')
+            return self.send_error(400, errors.USER_MUTED)
 
         if conversation.is_internal and not is_internal:
             is_internal = True
 
         is_mod = sr.is_moderator(c.user)
         if not is_mod and is_author_hidden:
-            abort(422, 'Must be a mod to hide the author.')
+            return self.send_error(
+                403,
+                errors.MOD_REQUIRED,
+                fields='isAuthorHidden',
+            )
         elif not is_mod and is_internal:
-            abort(422, 'Must be a mod to make the message internal.')
+            return self.send_error(
+                403,
+                errors.MOD_REQUIRED,
+                fields='isInternal',
+            )
 
         try:
             if not conversation.is_internal and not conversation.is_auto:
                 participant = conversation.get_participant_account()
 
                 if participant and sr.is_muted(participant):
-                    abort(403, 'Participant muted for subreddit')
+                    return self.send_error(
+                        400,
+                        errors.MUTED_FROM_SUBREDDIT,
+                    )
         except NotFound:
             pass
 
@@ -402,8 +437,8 @@ class ModmailController(OAuth2OnlyController):
                 is_author_hidden=is_author_hidden,
                 is_internal=is_internal,
             )
-        except Exception:
-            abort(500, 'Failed to save message')
+        except:
+            return self.send_error(500, errors.MODMAIL_MESSAGE_NOT_SAVED)
 
         # Add the message to the legacy messaging system as well (unless it's
         # an internal message on a non-internal conversation, since we have no
@@ -516,47 +551,55 @@ class ModmailController(OAuth2OnlyController):
         return simplejson.dumps(updated_convo)
 
     @require_oauth2_scope('modmail')
-    @validate(ids=VList('conversation_ids'))
+    @validate(ids=VList('conversationIds'))
     def POST_unread(self, ids):
         """Marks conversations as unread for the user.
 
         Expects a list of conversation IDs.
         """
         if not ids:
-            abort(400, 'Must pass an id or list of ids.')
+            return self.send_error(400, 'Must pass an id or list of ids.')
 
         try:
             ids = [int(id, base=36) for id in ids]
         except:
-            abort(422, 'Must pass base 36 ids.')
+            return self.send_error(422, 'Must pass base 36 ids.')
 
         try:
             convos = self._get_conversation_access(ids)
         except ValueError:
-            abort(403, 'Invalid conversation id(s).')
+            return self.send_error(
+                403,
+                errors.INVALID_CONVERSATION_ID,
+                fields='conversationIds',
+            )
 
         ModmailConversationUnreadState.mark_unread(
                 c.user, [convo.id for convo in convos])
 
     @require_oauth2_scope('modmail')
-    @validate(ids=VList('conversation_ids'))
+    @validate(ids=VList('conversationIds'))
     def POST_read(self, ids):
         """Marks a conversations as read for the user.
 
         Expects a list of conversation IDs.
         """
         if not ids:
-            abort(400, 'Must pass an id or list of ids.')
+            return self.send_error(400, 'Must pass an id or list of ids.')
 
         try:
             ids = [int(id, base=36) for id in ids]
         except:
-            abort(422, 'Must pass base 36 ids.')
+            return self.send_error(422, 'Must pass base 36 ids.')
 
         try:
             convos = self._get_conversation_access(ids)
         except ValueError:
-            abort(403, 'Invalid conversation id(s).')
+            return self.send_error(
+                403,
+                errors.INVALID_CONVERSATION_ID,
+                fields='conversationIds',
+            )
 
         response.status_code = 204
         ModmailConversationUnreadState.mark_read(
@@ -564,7 +607,7 @@ class ModmailController(OAuth2OnlyController):
 
     @require_oauth2_scope('modmail')
     @validate(
-        ids=VList('conversation_ids'),
+        ids=VList('conversationIds'),
         archive=VBoolean('archive', default=True),
     )
     def POST_archive_status(self, ids, archive):
@@ -573,12 +616,20 @@ class ModmailController(OAuth2OnlyController):
                 [int(id, base=36) for id in ids]
             )
         except ValueError:
-            abort(403, 'Invalid conversation id passed.')
+            return self.send_error(
+                403,
+                errors.INVALID_CONVERSATION_ID,
+                fields='conversationIds',
+            )
 
         convo_ids = []
         for convo in convos:
             if convo.is_internal:
-                abort(422, 'Cannot archive/unarchive mod discussions.')
+                return self.send_error(
+                    422,
+                    errors.CONVERSATION_NOT_ARCHIVABLE,
+                    fields='conversationIds',
+                )
             convo_ids.append(convo.id)
 
         if not archive:
@@ -605,7 +656,10 @@ class ModmailController(OAuth2OnlyController):
                 return
 
             if conversation.is_internal:
-                abort(422, 'Cannot archive/unarchive mod discussions.')
+                return self.send_error(
+                    422,
+                    errors.CONVERSATION_NOT_ARCHIVABLE,
+                )
 
             conversation.add_action(c.user, 'archived')
             conversation.set_state('archived')
@@ -621,7 +675,7 @@ class ModmailController(OAuth2OnlyController):
 
             return simplejson.dumps(updated_convo)
         else:
-            abort(403, 'Must be a moderator with mail access.')
+            return self.send_error(403, errors.INVALID_MOD_PERMISSIONS)
 
     @require_oauth2_scope('modmail')
     @validate(conversation=VModConversation('conversation_id'))
@@ -636,7 +690,10 @@ class ModmailController(OAuth2OnlyController):
                 return
 
             if conversation.is_internal:
-                abort(422, 'Cannot archive/unarchive mod discussions.')
+                return self.send_error(
+                    422,
+                    errors.CONVERSATION_NOT_ARCHIVABLE,
+                )
 
             conversation.add_action(c.user, 'unarchived')
             conversation.set_state('inprogress')
@@ -652,7 +709,7 @@ class ModmailController(OAuth2OnlyController):
 
             return simplejson.dumps(updated_convo)
         else:
-            abort(403, 'Must be a moderator with mail access.')
+            return self.send_error(403, errors.INVALID_MOD_PERMISSIONS)
 
     @require_oauth2_scope('modmail')
     def GET_unread_convo_count(self):
@@ -670,8 +727,8 @@ class ModmailController(OAuth2OnlyController):
         self._try_get_subreddit_access(conversation, admin_override=True)
         try:
             userinfo = self._get_modmail_userinfo(conversation)
-        except (ValueError, NotFound) as e:
-            abort(400, str(e))
+        except (ValueError, NotFound):
+            return self.send_error(404, errors.USER_DOESNT_EXIST)
 
         return simplejson.dumps(userinfo)
 
@@ -680,21 +737,24 @@ class ModmailController(OAuth2OnlyController):
     def POST_mute_participant(self, conversation):
 
         if conversation.is_internal or conversation.is_auto:
-            abort(400, 'Cannot mute users in mod discussions or notifications')
+            return self.send_error(
+                400,
+                errors.CANT_RESTRICT_MODERATOR
+            )
 
         sr = Subreddit._by_fullname(conversation.owner_fullname)
 
         try:
             participant = conversation.get_participant_account()
         except NotFound:
-            abort(404)
+            return self.send_error(404, errors.USER_DOESNT_EXIST)
 
         if not sr.can_mute(c.user, participant):
-            abort(403)
+            return self.send_error(400, errors.CANT_RESTRICT_MODERATOR)
 
         if not c.user_is_admin:
             if not sr.is_moderator_with_perms(c.user, 'access', 'mail'):
-                abort(403, 'Invalid mod permissions')
+                return self.send_error(403, errors.INVALID_MOD_PERMISSIONS)
 
             if sr.use_quotas:
                 sr_ratelimit = SimpleRateLimit(
@@ -703,7 +763,7 @@ class ModmailController(OAuth2OnlyController):
                     limit=g.sr_muted_quota,
                 )
                 if not sr_ratelimit.record_and_check():
-                    abort(403, errors.SUBREDDIT_RATELIMIT)
+                    return self.send_error(403, errors.SUBREDDIT_RATELIMIT)
 
         # Add the mute record but only if successful create the
         # appropriate notifications, this prevents duplicate
@@ -742,18 +802,21 @@ class ModmailController(OAuth2OnlyController):
     def POST_unmute_participant(self, conversation):
 
         if conversation.is_internal or conversation.is_auto:
-            abort(400, 'Cannot mute users in mod discussions or notifications')
+            return self.send_error(
+                400,
+                errors.CANT_RESTRICT_MODERATOR
+            )
 
         sr = Subreddit._by_fullname(conversation.owner_fullname)
 
         try:
             participant = conversation.get_participant_account()
         except NotFound:
-            abort(404)
+            abort(404, errors.USER_DOESNT_EXIST)
 
         if not c.user_is_admin:
             if not sr.is_moderator_with_perms(c.user, 'access', 'mail'):
-                abort(403, 'Invalid mod permissions')
+                return self.send_error(403, errors.INVALID_MOD_PERMISSIONS)
 
         removed = sr.remove_muted(participant)
         if not removed:
@@ -946,7 +1009,7 @@ class ModmailController(OAuth2OnlyController):
 
     def _validate_vmodconversation(self):
         if (errors.CONVERSATION_NOT_FOUND, 'conversation_id') in c.errors:
-            abort(404, errors.CONVERSATION_NOT_FOUND)
+            return self.send_error(404, errors.CONVERSATION_NOT_FOUND)
 
     def _get_conversation_access(self, ids):
         validated_convos = []
@@ -978,9 +1041,13 @@ class ModmailController(OAuth2OnlyController):
             return thing_class._byID(ids, return_dict=return_dict,
                                      ignore_missing=ignore_missing)
         except NotFound:
-            abort(404, '{} not found'.format(thing_class.__name__))
+            return self.send_error(
+                404,
+                errors.THING_NOT_FOUND,
+                explanation='{} not found'.format(thing_class.__name__)
+            )
         except:
-            abort(422, 'Invalid request')
+            return self.send_error(422, 'Invalid request')
 
     def _try_get_subreddit_access(self, conversation, admin_override=False):
         sr = Subreddit._by_fullname(conversation.owner_fullname)
@@ -988,10 +1055,24 @@ class ModmailController(OAuth2OnlyController):
 
         if (not sr.is_moderator_with_perms(c.user, 'mail') and
                 not (admin_override and c.user_is_admin)):
-            abort(403)
+            return self.send_error(
+                403,
+                errors.SUBREDDIT_NO_ACCESS,
+            )
 
         return sr
 
     def _feature_enabled_check(self, sr):
         if not feature.is_enabled('new_modmail', subreddit=sr.name):
-            abort(403, 'Feature not enabled for the passed Subreddit.')
+            return self.send_error(
+                403,
+                errors.SR_FEATURE_NOT_ENABLED
+            )
+
+    def send_error(self, code, error, fields=None, explanation=None):
+        abort(reddit_http_error(
+            code=code or error.code,
+            error_name=error,
+            explanation=explanation,
+            fields=tup(fields),
+        ))

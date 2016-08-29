@@ -201,6 +201,13 @@ error_list = dict((
         ('NO_CONVERSATION_ID', _("No conversation id passed.")),
         ('CONVERSATION_NOT_FOUND', _("No conversation found.")),
         ('INVALID_CONVERSATION_ID', _("Invalid conversation id.")),
+        ('SR_FEATURE_NOT_ENABLED', _("The subreddit does not have this feature enabled.")),
+        ('THING_NOT_FOUND', _("Could not find thing object, it does not exist.")),
+        ('CONVERSATION_NOT_SAVED', _("Failed to save modmail conversation.")),
+        ('MODMAIL_MESSAGE_NOT_SAVED', _("Failed to save modmail message.")),
+        ('CONVERSATION_NOT_ARCHIVABLE', _("Conversation not archivable.")),
+        ('INVALID_MOD_PERMISSIONS', _("You do not have the correct moderator permissions.")),
+        ('SR_NOT_FOUND', _("The requested subreddit was not found.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

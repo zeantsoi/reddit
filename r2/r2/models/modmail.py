@@ -108,13 +108,13 @@ class ModmailConversation(Base):
         order_by="ModmailMessage.date.desc()", lazy="joined")
 
     mod_actions = relationship(
-            "ModmailConversationAction",
-            order_by="ModmailConversationAction.date.desc()", lazy="joined")
+        "ModmailConversationAction",
+        order_by="ModmailConversationAction.date.desc()", lazy="joined")
 
     # DO NOT REARRANGE THE ITEMS IN THIS ENUM - only append new items at bottom
-    # Pseudo-states: mod (is_internal), notification (is_auto), these pseudo-states
-    # act as a conversation type to denote mod only convos and automoderator generated
-    # convos
+    # Pseudo-states: mod (is_internal), notification (is_auto), these
+    # pseudo-states act as a conversation type to denote mod only convos and
+    # automoderator generated convos
     STATE = Enum(
         "new",
         "inprogress",
@@ -529,7 +529,8 @@ class ModmailConversation(Base):
 
         try:
             Session.commit()
-        except:
+        except Exception as e:
+            g.log.error('Failed to save message: {}'.format(e))
             Session.rollback()
             raise
 
@@ -563,7 +564,8 @@ class ModmailConversation(Base):
             Session.add(convo_action)
         except ValueError:
             raise
-        except Exception:
+        except Exception as e:
+            g.log.error('Failed to save mod action: {}'.format(e))
             Session.rollback()
             raise
 
@@ -697,7 +699,9 @@ class ModmailConversation(Base):
             })
         else:
             result_dict.update({
-                'objIds': [{'key': 'messages', 'id': to36(self.messages[0].id)}]
+                'objIds': [
+                    {'key': 'messages', 'id': to36(self.messages[0].id)}
+                ]
             })
 
         return result_dict
@@ -873,7 +877,12 @@ class ModmailConversationUnreadState(Base):
                 .filter(cls.conversation_id.in_(ids))
                 .update({'active': False}, synchronize_session=False))
 
-        Session.commit()
+        try:
+            Session.commit()
+        except Exception as e:
+            g.log.error('Failed to mark conversations as read: {}'.format(e))
+            Session.rollback()
+            return
 
         set_modmail_icon(user, bool(cls.unreads_exist(user)))
 
@@ -894,6 +903,9 @@ class ModmailConversationUnreadState(Base):
                 conversation.mark_unread(user)
             except ValueError:
                 pass
+            except Exception as e:
+                g.log.error('Failed to mark conversation unread: {}'.format(e))
+                return
 
         set_modmail_icon(user, True)
 
@@ -986,7 +998,8 @@ class ModmailConversationUnreadState(Base):
 
         try:
             Session.commit()
-        except IntegrityError:
+        except IntegrityError as e:
+            g.log.error('Failed to create unread records: {}'.format(e))
             Session.rollback()
 
 
@@ -1103,7 +1116,8 @@ class ModmailConversationAction(Base):
                 convo_action = ModmailConversationAction(
                         conversation, account, action_type_name)
                 Session.add(convo_action)
-        except:
+        except Exception as e:
+            g.log.error('Failed bulk action creation: {}'.format(e))
             Session.rollback()
             raise
 
