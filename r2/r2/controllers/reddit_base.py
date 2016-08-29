@@ -1277,6 +1277,7 @@ class OAuth2ResourceController(MinimalController):
                 require(account)
                 require(not account._deleted)
                 require(not account._banned)
+                require(not account.force_password_reset)
                 c.user = c.oauth_user = account
                 c.user_is_loggedin = True
             else:
