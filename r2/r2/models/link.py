@@ -3066,7 +3066,14 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
         if not to.pref_live_orangereds:
             return
 
+        author_name = Account._byID(obj.author_id, stale=True).name
         if isinstance(obj, Comment):
+            subreddit_name = Subreddit._byID(obj.sr_id, stale=True).name
+            msg_body = "From u/%(author_name)s on r/%(subreddit)s" % (dict(
+                author_name=author_name,
+                subreddit=subreddit_name,
+            ))
+
             parent = None
             if obj.parent_id:
                 parent = Comment._byID(obj.parent_id, stale=True)
@@ -3081,6 +3088,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
                     msg_type = "post reply"
         else:
             msg_type = "message"
+            msg_body = "From u/%s" % author_name
 
         websockets.send_broadcast(
             namespace="/user/%s" % to._id36,
@@ -3088,6 +3096,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             payload={
                 "inbox_count": to.inbox_count,
                 "msg_type" : msg_type,
+                "msg_body": msg_body,
             },
         )
 

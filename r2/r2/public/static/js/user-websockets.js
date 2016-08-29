@@ -12,8 +12,10 @@ $(function() {
   var messageNotificationMilliseconds = 7000;
 
   // New message or comment reply -- send browser notification
-  function flashNewMessage() {
+  function flashNewMessage(messageBody) {
     var inboxMessages = store.safeGet(orangeredKey);
+    var messageType;
+    var messageText;
     // The messages have already been processed
     if (inboxMessages === null) {
       return;
@@ -25,12 +27,11 @@ $(function() {
 
     // Get number of unread messages to tell if plural or not
     if (recentNewMessageCount === 1) {
-      var messageType = inboxMessages[0].msg_type;
-      var messageText = r._("You have a new %(messageType)s!").format(
-        {messageType: messageType});
+      messageType = inboxMessages[0].msg_type;
+      messageText = messageBody;
     } else {
-      var messageType = 'messages';
-      var messageText = r._("You have %(count)s new messages!").format({count: recentNewMessageCount});
+      messageType = 'messages';
+      messageText = r._("You have %(count)s new messages!").format({count: recentNewMessageCount});
     }
 
     if (r.config.live_orangereds_pref && !!Notification && Notification.permission !== "granted") {
@@ -141,7 +142,7 @@ $(function() {
       jsonItems.push(message);
       store.safeSet(orangeredKey, jsonItems);
       updateMessageCount(message.inbox_count);
-      sendBatchedNotifications();
+      sendBatchedNotifications(message.msg_body);
     },
     'message:messages_read': function(message) {
       var storageItems = store.safeGet(inboxCountKey);
@@ -150,13 +151,13 @@ $(function() {
     }
   };
 
-  function sendBatchedNotifications() {
+  function sendBatchedNotifications(messageBody) {
     var now = new Date();
     var date = store.safeGet(orangeredTimestampKey) || '';
     // If the last message was less than millisecondsToBatch ago,
     // wait millisecondsToBatch to batch more potential messages
     if (!date || now - new Date(date) >= millisecondsToBatch) {
-      flashNewMessage();
+      flashNewMessage(messageBody);
     }
   }
 
