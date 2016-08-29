@@ -1744,7 +1744,7 @@ class PromoteApiController(ApiController):
 
     @exclude_from_logging(
         "firstName",
-        "lastName"
+        "lastName",
         "phoneNumber",
         "cardNumber",
         "cardCode",
