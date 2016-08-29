@@ -597,14 +597,15 @@ class UrlParser(object):
         return self
 
     def _canonicalize_hostname(self, preserve_language_subdomain):
-        subdomain = extract_subdomain(self.hostname)
-        if (subdomain == '' or
-                is_language_subdomain(subdomain) and
-                not preserve_language_subdomain):
-            if g.domain_prefix:
-                self.hostname = '{0}.{1}'.format(g.domain_prefix, g.domain)
-            else:
-                self.hostname = g.domain
+        if preserve_language_subdomain:
+            subdomain = extract_subdomain(self.hostname)
+            if is_language_subdomain(extract_subdomain(self.hostname)):
+                self.hostname = '{0}.{1}'.format(subdomain, g.domain)
+                return
+        if g.domain_prefix:
+            self.hostname = '{0}.{1}'.format(g.domain_prefix, g.domain)
+        else:
+            self.hostname = g.domain
 
     def canonicalize(self, preserve_language_subdomain=True):
         self._canonicalize_hostname(preserve_language_subdomain)
