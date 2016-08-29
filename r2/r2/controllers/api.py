@@ -260,9 +260,12 @@ class ApiController(RedditController):
         if c.user_is_loggedin:
             user_data = Wrapped(c.user).render()
             user_data['data'].update({'features': feature.all_enabled(c.user)})
-            return user_data
         else:
-            return {'data': {'features': feature.all_enabled(None)}}
+            user_data = {'data': {'features': feature.all_enabled(None)}}
+
+        if c.loid:
+            user_data.update(c.loid.to_api_dict())
+        return user_data
 
     @json_validate(user=VUname(("user",)))
     @api_doc(api_section.users)

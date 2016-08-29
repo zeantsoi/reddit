@@ -216,6 +216,17 @@ class LoId(object):
                 d.setdefault("expires", expires)
                 self.context.cookies.add(name, value, **d)
 
+    def to_api_dict(self):
+        """Serialize LoId, for use in api responses"""
+        if not self.serializable:
+            return {}
+
+        return {
+            "loid": self.loid,
+            "loid_created": to_epoch_milliseconds(self.created),
+        }
+
+
     def to_dict(self, prefix=None):
         """Serialize LoId, generally for use in the event pipeline."""
         if not self.serializable:
