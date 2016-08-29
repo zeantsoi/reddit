@@ -68,9 +68,7 @@ class ModmailController(OAuth2OnlyController):
         Session.remove()
         super(ModmailController, self).post()
 
-    # TODO: Figure out what scope is required for these
-    # for now just defaulting to a logged in user
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(
         srs=VSRByNames('entity', required=False),
         after=VModConversation('after', required=False),
@@ -160,7 +158,7 @@ class ModmailController(OAuth2OnlyController):
             'messages': messages_dict,
         })
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(
         entity=VSRByName('srName'),
         subject=VLength('subject', max_length=100),
@@ -270,7 +268,7 @@ class ModmailController(OAuth2OnlyController):
             'modActions': mod_actions,
         })
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(
         conversation=VModConversation('conversation_id'),
         mark_read=VBoolean('markRead', default=False),
@@ -327,7 +325,7 @@ class ModmailController(OAuth2OnlyController):
             'user': userinfo,
         })
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     def GET_modmail_enabled_srs(self):
         # sr_name, sr_icon, subsriber_count, most_recent_action
         modded_srs = c.user.moderated_subreddits('mail')
@@ -350,7 +348,7 @@ class ModmailController(OAuth2OnlyController):
 
         return simplejson.dumps({'subreddits': results})
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(
         conversation=VModConversation('conversation_id'),
         msg_body=VMarkdownLength('body'),
@@ -462,7 +460,7 @@ class ModmailController(OAuth2OnlyController):
             'messages': messages,
         })
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(conversation=VModConversation('conversation_id'))
     def POST_highlight(self, conversation):
         """Marks a conversation as highlighted."""
@@ -484,7 +482,7 @@ class ModmailController(OAuth2OnlyController):
 
         return simplejson.dumps(updated_convo)
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(conversation=VModConversation('conversation_id'))
     def DELETE_highlight(self, conversation):
         """Removes a highlight from a conversation."""
@@ -506,7 +504,7 @@ class ModmailController(OAuth2OnlyController):
 
         return simplejson.dumps(updated_convo)
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(ids=VList('conversation_ids'))
     def POST_unread(self, ids):
         """Marks conversations as unread for the user.
@@ -529,7 +527,7 @@ class ModmailController(OAuth2OnlyController):
         ModmailConversationUnreadState.mark_unread(
                 c.user, [convo.id for convo in convos])
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(ids=VList('conversation_ids'))
     def POST_read(self, ids):
         """Marks a conversations as read for the user.
@@ -553,7 +551,7 @@ class ModmailController(OAuth2OnlyController):
         ModmailConversationUnreadState.mark_read(
                 c.user, [convo.id for convo in convos])
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(
         ids=VList('conversation_ids'),
         archive=VBoolean('archive', default=True),
@@ -583,7 +581,7 @@ class ModmailController(OAuth2OnlyController):
 
         response.status_code = 204
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(conversation=VModConversation('conversation_id'))
     def POST_archive(self, conversation):
         self._validate_vmodconversation()
@@ -614,7 +612,7 @@ class ModmailController(OAuth2OnlyController):
         else:
             abort(403, 'Must be a moderator with mail access.')
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(conversation=VModConversation('conversation_id'))
     def POST_unarchive(self, conversation):
         self._validate_vmodconversation()
@@ -645,7 +643,7 @@ class ModmailController(OAuth2OnlyController):
         else:
             abort(403, 'Must be a moderator with mail access.')
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     def GET_unread_convo_count(self):
         """Endpoint to retrieve the unread conversation count by
         category"""
@@ -653,7 +651,7 @@ class ModmailController(OAuth2OnlyController):
         convo_counts = ModmailConversation.unread_convo_count(c.user)
         return simplejson.dumps(convo_counts)
 
-    @require_oauth2_scope('identity')
+    @require_oauth2_scope('modmail')
     @validate(conversation=VModConversation('conversation_id'))
     def GET_modmail_userinfo(self, conversation):
         # validate that the currently logged in user is a mod

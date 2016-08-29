@@ -171,6 +171,12 @@ class OAuth2Scope:
             "description": _(
                 "Manage and assign flair in subreddits I moderate."),
         },
+        "modmail": {
+            "id": "modmail",
+            "name": _("New Modmail"),
+            "description": _(
+                "Access and manage modmail via mod.reddit.com."),
+        },
         "modposts": {
             "id": "modposts",
             "name": _("Moderate Posts"),
