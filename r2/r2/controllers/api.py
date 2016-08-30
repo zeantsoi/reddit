@@ -440,7 +440,7 @@ class ApiController(RedditController):
 
             # if it's from a subreddit with new modmail, create a conversation
             if feature.is_enabled('new_modmail', subreddit=from_sr.name):
-                conversation = ModmailConversation(
+                ModmailConversation(
                     from_sr,
                     c.user,
                     subject,
@@ -460,23 +460,13 @@ class ApiController(RedditController):
             # if it's to a subreddit with new modmail, create a conversation
             if (isinstance(to, Subreddit) and
                     feature.is_enabled('new_modmail', subreddit=to.name)):
-                conversation = ModmailConversation(
+                ModmailConversation(
                     to,
                     c.user,
                     subject,
                     body,
                     legacy_first_message_id=m._id,
                 )
-
-        g.events.new_modmail_event(
-            'ss.send_modmail_message',
-            conversation,
-            message=conversation.messages[0],
-            msg_author=c.user,
-            sr=from_sr if from_sr else to,
-            request=request,
-            context=c,
-        )
 
         form.set_text(".status", _("your message has been delivered"))
         form.set_inputs(to = "", subject = "", text = "", captcha="")
@@ -2430,17 +2420,7 @@ class ApiController(RedditController):
                     conv = None
 
                 if conv:
-                    new_message = conv.add_message(c.user, comment)
-
-                    g.events.new_modmail_event(
-                        'ss.send_modmail_message',
-                        conv,
-                        message=new_message,
-                        msg_author=c.user,
-                        sr=sr,
-                        request=request,
-                        context=c,
-                    )
+                    conv.add_message(c.user, comment)
         else:
             # Don't let users in timeout comment
             VNotInTimeout().run(action_name='comment', target=parent)
