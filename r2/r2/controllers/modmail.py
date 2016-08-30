@@ -656,8 +656,10 @@ class ModmailController(OAuth2OnlyController):
         # Add the muted mod action to the conversation
         conversation.add_action(c.user, 'muted', commit=True)
 
-        return simplejson.dumps(
-            self._get_updated_convo(conversation.id, c.user))
+        result = self._get_updated_convo(conversation.id, c.user)
+        result['user'] = self._get_modmail_userinfo(conversation, sr=sr)
+
+        return simplejson.dumps(result)
 
     @require_oauth2_scope('identity')
     @validate(conversation=VModConversation('conversation_id'))
@@ -686,8 +688,10 @@ class ModmailController(OAuth2OnlyController):
         ModAction.create(sr, c.user, 'unmuteuser', target=participant)
         conversation.add_action(c.user, 'unmuted', commit=True)
 
-        return simplejson.dumps(
-            self._get_updated_convo(conversation.id, c.user))
+        result = self._get_updated_convo(conversation.id, c.user)
+        result['user'] = self._get_modmail_userinfo(conversation, sr=sr)
+
+        return simplejson.dumps(result)
 
     def _get_modmail_userinfo(self, conversation, sr=None):
         if conversation.is_internal:
@@ -841,11 +845,9 @@ class ModmailController(OAuth2OnlyController):
             current_user=user
         )
 
-        return simplejson.dumps(
-            self._convo_to_serializable(
-                updated_convo,
-                all_messages=True
-            )
+        return self._convo_to_serializable(
+            updated_convo,
+            all_messages=True
         )
 
     def _convo_to_serializable(self, conversation, all_messages=False):
