@@ -719,7 +719,7 @@ class EventQueue(object):
             if (conversation.is_internal or
                     sr.is_moderator_with_perms(account, 'mail')):
                 return 'moderator'
-            elif account.name in g.modmail_admins:
+            elif account.name in g.live_config['modmail_admins']:
                 return 'admin'
             elif conversation.is_auto:
                 return 'automoderator'
