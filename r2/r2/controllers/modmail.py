@@ -768,6 +768,9 @@ class ModmailController(OAuth2OnlyController):
         try:
             account = conversation.get_participant_account()
 
+            if not account:
+                raise ValueError('No account associated with convo')
+
             permatimeout = (account.in_timeout and
                             account.days_remaining_in_timeout == 0)
 
