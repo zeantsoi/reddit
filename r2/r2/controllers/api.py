@@ -4490,7 +4490,7 @@ class ApiController(RedditController):
         VSrModerator(perms='flair'),
         VModhash(),
         VNotInTimeout(),
-        flair_csv=nop("flair_csv",
+        flair_csv=VRequired("flair_csv", errors.NO_TEXT,
             docs={"flair_csv": "comma-seperated flair information"}),
     )
     @api_doc(api_section.flair, uses_site=True)
@@ -4508,6 +4508,9 @@ class ApiController(RedditController):
         applied, or a reason for the failure.
 
         """
+
+        if form.has_errors('flair_csv', errors.NO_TEXT):
+            return
         
         limit = 100  # max of 100 flair settings per call
         results = FlairCsv()
