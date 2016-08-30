@@ -406,6 +406,7 @@ class Globals(object):
             'comment_vote_update_period',
             'r_all_penalty',
             'ads_usermatch_timeout_ms',
+            'ads_loading_timeout_ms',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',

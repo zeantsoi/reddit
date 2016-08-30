@@ -365,6 +365,8 @@ def js_config(extra_config=None):
         "pref_email_messages": logged and c.user.pref_email_messages,
         "feature_double_sidebar": feature.is_enabled('double_sidebar'),
         "feature_lazy_load_listings": lazy_load_listings,
+        "ads_loading_timeout_ms", g.live_config.get(
+            "ads_loading_timeout_ms", 1000),
     }
 
     if feature.is_enabled("eu_cookie_policy"):

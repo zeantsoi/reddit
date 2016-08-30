@@ -26,7 +26,7 @@
       return $.ajax({
         type: 'POST',
         url: url,
-        timeout: 1000,
+        timeout: r.config.ads_loading_timeout_ms,
         data: {
           site: this.site,
           r: r.config.post_site,
