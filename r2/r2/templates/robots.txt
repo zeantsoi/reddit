@@ -65,6 +65,7 @@ Disallow: /search
 Disallow: /r/*/search
 Disallow: /r/*/user/
 Disallow: /gold?
+Allow: /partner_api/
 Allow: /
 
 Sitemap: ${thing.subreddit_sitemap}
