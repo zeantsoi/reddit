@@ -178,8 +178,10 @@ class ModmailConversation(Base):
         if owner.is_moderator_with_perms(author, 'mail'):
             # check if moderator has addressed the new convo to someone
             # if they have make the convo not internal and add the 'to' user
-            # as the participant of the conversation
-            if to:
+            # as the participant of the conversation. If the 'to' user is also
+            # a moderator of the subreddit convert the conversation to an
+            # internal conversation (i.e. mod discussion)
+            if to and not owner.is_moderator_with_perms(to, 'mail'):
                 participant_id = to._id
             else:
                 self.is_internal = True
@@ -269,12 +271,14 @@ class ModmailConversation(Base):
             num_convos = total_count - internal_count
 
             result['mod'] += internal_count
+            result['highlighted'] += highlighted_count
 
             # Only add count to notifications and higlighted for 'new'
             # conversations, ignore 'inprogress' and 'archived' conversations
             if state == ModmailConversation.STATE.new:
                 result['notifications'] += auto_count
-                result['highlighted'] += highlighted_count
+                # Do not double count notification messages that are 'new'
+                num_convos -= auto_count
 
             if state in ModmailConversation.STATE:
                 result[ModmailConversation.STATE.name[state]] += num_convos
@@ -457,12 +461,17 @@ class ModmailConversation(Base):
         return '{}mail/perma/{}'.format(g.modmail_base_url, self.id36)
 
     def get_participant_account(self):
-        if self.is_internal or self.is_auto:
+        if self.is_internal:
             return None
 
-        convo_participant = ModmailConversationParticipant.get_participant(
-            self.id)
-        participant = Account._byID(convo_participant.account_id)
+        try:
+            convo_participant = ModmailConversationParticipant.get_participant(
+                self.id)
+            participant = Account._byID(convo_participant.account_id)
+        except NotFound:
+            if not self.is_auto:
+                raise
+            return None
 
         if participant._deleted:
             raise NotFound
@@ -489,20 +498,28 @@ class ModmailConversation(Base):
         Session.add(message)
 
         self.num_messages += 1
+
+        is_first_message = (self.num_messages == 1)
         if sr.is_moderator_with_perms(author, 'mail'):
             # Check if a mod who is not the original author of the
             # conversation is responding and if so change the state
-            # of the conversation to 'inprogress'
+            # of the conversation to 'inprogress'. Internal
+            # conversations also should not change state to 'inprogress'.
+            # Lastly if a conversation is 'archived' change the state
+            # to 'inprogress' regardless if the mod has participated or not
             if (not self.is_internal and
-                    author._id not in self.author_ids):
+                    not (is_first_message and self.is_auto) and
+                    (author._id not in self.author_ids or
+                     self.state == self.STATE['archived'])):
                 self.state = self.STATE['inprogress']
 
             self.last_mod_update = message.date
         else:
-            # if this is the first user interaction with the conversation
-            # set the state to inprogress
-            if (self.last_user_update == datetime.min.replace(tzinfo=g.tz) and
-                    self.last_mod_update != datetime.min.replace(tzinfo=g.tz)):
+            # Set the state to 'inprogress' only if a mod has responded
+            # with a message in the conversation already and the conversation
+            # is not already in an 'inprogress' state.
+            if (self.last_mod_update != datetime.min.replace(tzinfo=g.tz) and
+                    self.state != self.STATE['inprogress']):
                 self.state = self.STATE['inprogress']
 
             self.last_user_update = message.date
