@@ -266,11 +266,15 @@ class ModmailConversation(Base):
         for convo_count in convo_counts:
             (state, internal_count, auto_count,
              highlighted_count, total_count) = convo_count
-            num_convos = total_count - internal_count - auto_count
+            num_convos = total_count - internal_count
 
             result['mod'] += internal_count
-            result['notifications'] += auto_count
-            result['highlighted'] += highlighted_count
+
+            # Only add count to notifications and higlighted for 'new'
+            # conversations, ignore 'inprogress' and 'archived' conversations
+            if state == ModmailConversation.STATE.new:
+                result['notifications'] += auto_count
+                result['highlighted'] += highlighted_count
 
             if state in ModmailConversation.STATE:
                 result[ModmailConversation.STATE.name[state]] += num_convos
@@ -450,7 +454,7 @@ class ModmailConversation(Base):
         return {row[0]: row[1].isoformat() for row in query.all()}
 
     def make_permalink(self):
-        return '{}mail/mod/{}'.format(g.modmail_base_url, self.id36)
+        return '{}mail/perma/{}'.format(g.modmail_base_url, self.id36)
 
     def get_participant_account(self):
         if self.is_internal or self.is_auto:

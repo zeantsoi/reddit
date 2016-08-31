@@ -202,6 +202,9 @@ class ModmailController(OAuth2OnlyController):
         if (not entity.is_moderator_with_perms(c.user, 'mail') and to):
             abort(403, 'Cannot set a convo recipient if you are a non mod')
 
+        if to and entity.is_muted(to):
+            abort(400, 'Cannot create conversations with muted users')
+
         try:
             conversation = ModmailConversation(
                 entity,
@@ -975,7 +978,7 @@ class ModmailController(OAuth2OnlyController):
         self._feature_enabled_check(sr)
 
         if (not sr.is_moderator_with_perms(c.user, 'mail') and
-                not (admin_override and not c.user_is_admin)):
+                not (admin_override and c.user_is_admin)):
             abort(403)
 
         return sr
