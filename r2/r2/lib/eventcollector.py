@@ -1733,52 +1733,54 @@ class EventQueue(object):
     @squelch_exceptions
     def search_engine_crawl_event(self, req, resp, context):
         parsed_url = urlparse(req.fullurl)
-        payload = dict(
-            base_url=parsed_url.path,
-            http_response_code=resp.status_int,
-            response_time=int(
-                1000 *
-                context.request_timer.elapsed_seconds()
-            ),
-            crawler_name=g.pool_name,
-            user_agent=req.user_agent,
-            server=g.reddit_host,
-            method=req.method,
-            domain=req.domain,
-            protocol=parsed_url.scheme,
-            sr_name=context.site.name,
+        event = Event(
+            topic='crawl_events',
+            event_type='url_crawl',
         )
+
+        event.add('base_url', parsed_url.path)
+        event.add('http_response_code', resp.status_int)
+        event.add(
+            'response_time',
+            int(1000 * context.request_timer.elapsed_seconds())
+        )
+        event.add('crawler_name', g.pool_name)
+        event.add('user_agent', req.user_agent)
+        event.add('server', g.reddit_host)
+        event.add('method', req.method)
+        event.add('domain', req.domain)
+        event.add('protocol', parsed_url.scheme)
+        event.add('sr_name', context.site.name)
 
         thing = url_to_thing(req.fullurl)
         if thing:
-            try:
-                payload['target_fullname'] = thing._fullname
-            except AttributeError:
-                # Missing for fake Things like /r/all.
-                pass
+            # NOTE(wting|2016-09-01): If we keep adding things here, look into
+            # using self.add_target_fields and fixing that to handle
+            # FakeSubreddit.
+            event.add('target_fullname', getattr(thing, '_fullname', None))
+
+            type_name = getattr(thing, '_type_name', None)
+            if type_name:
+                event.add('target_type', type_name)
+                if type_name == 'comment':
+                    link = getattr(thing, 'link', thing.link_slow)
+                    event.add('post_fullname', link._fullname)
 
             try:
-                payload['target_type'] = thing._type_name
-                if thing._type_name == 'comment':
-                    link = getattr(thing, 'link', thing.link_slow)
-                    payload['post_fullname'] = link._fullname
+                event.add(
+                    'target_created_ts',
+                    to_epoch_milliseconds(thing._date)
+                )
             except AttributeError:
-                # Missing for fake Things like /r/all.
                 pass
 
         if req.referrer:
-            payload['referrer_url'] = req.referrer
+            event.add('referrer_url', req.referrer)
             ref_url = urlparse(req.referrer)
             if ref_url.query:
-                payload['referrer_url_params'] = ref_url.query
+                event.add('referrer_url_params', ref_url.query)
 
-        self.save_event(
-            Event(
-                topic='crawl_events',
-                event_type='url_crawl',
-                data=payload,
-            )
-        )
+        self.save_event(event)
 
 
 class Event(baseplate.events.Event):
