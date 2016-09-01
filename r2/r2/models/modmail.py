@@ -93,11 +93,11 @@ class ModmailConversation(Base):
         DateTime(timezone=True),
         nullable=False,
         index=True,
-        default=datetime.min)
+        default=datetime.min.replace(tzinfo=g.tz))
     last_mod_update = Column(
         DateTime(timezone=True),
         nullable=False, index=True,
-        default=datetime.min)
+        default=datetime.min.replace(tzinfo=g.tz))
     is_internal = Column(Boolean, nullable=False, default=False)
     is_auto = Column(Boolean, nullable=False, default=False)
     is_highlighted = Column(Boolean, nullable=False, default=False)
