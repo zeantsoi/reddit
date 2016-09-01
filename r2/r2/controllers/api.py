@@ -1414,6 +1414,17 @@ class ApiController(RedditController):
                 request=request,
                 context=c)
 
+        def _forbidden_event(process_notes, details_text):
+            g.events.timeout_forbidden_event(
+                action_name="add_email",
+                process_notes=process_notes,
+                details_text=details_text,
+                target=c.user,
+                target_fullname=c.user._fullname,
+                request=request,
+                context=c,
+            )
+
         if not c.user.force_password_reset and form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
 
@@ -1428,23 +1439,28 @@ class ApiController(RedditController):
                     _event("update_email")
                     c.user.set_email(email)
                 else:
-                    # Block known bots from adding email address to ATO'd
-                    # accounts
-                    if (c.user.force_password_reset and
-                            c.request_fingerprint and
-                            (c.request_fingerprint.get("loginbot", False) or
-                                c.request_fingerprint.get("spambot", False) or
-                                c.request_fingerprint.get("votebot", False))):
-                        g.events.timeout_forbidden_event(
-                            action_name="add_email",
-                            process_notes="loginbot_ato_account",
-                            details_text="blocked loginbot to add new email",
-                            target=c.user,
-                            target_fullname=c.user._fullname,
-                            request=request,
-                            context=c,
-                        )
-                        return
+                    if c.user.force_password_reset:
+                        # Block known bots from adding email address to ATO'd
+                        # accounts
+                        if (c.request_fingerprint and
+                                (c.request_fingerprint.get("loginbot",
+                                                           False) or
+                                 c.request_fingerprint.get("spambot", False) or
+                                 c.request_fingerprint.get("votebot", False))):
+                            _forbidden_event(
+                                process_notes="loginbot_ato_account",
+                                details_text="blocked loginbot to add email")
+                            return
+
+                        # Check recaptcha for adding email to ATO-ed accounts
+                        if (not g.disable_captcha and
+                                not valid_provider_captcha(jquery,
+                                                           "prefupdate")):
+                            _forbidden_event(
+                                process_notes="ato_account_recaptcha",
+                                details_text="failed recaptcha to add email")
+                            return
+
                     _event("add_email")
 
                     c.user.set_email(email)

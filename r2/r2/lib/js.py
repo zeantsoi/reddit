@@ -685,6 +685,7 @@ module["reddit"] = LocalizedModule(
     "ui.js",
     "popup.js",
     "login.js",
+    "pref-update.js",
     _submodule["locked"],
     _submodule["timeouts"],
     _submodule["archived"],

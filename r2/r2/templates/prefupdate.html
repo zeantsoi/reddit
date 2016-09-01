@@ -40,13 +40,17 @@
   </h1>
   ## add email address first as no email address for that account
   %if not c.user.email:
-  <form action="/post/update_email" method="post"
-        onsubmit="return post_form(this, 'update_email')" id="pref-update-pwreset-email">
+  <form class="pref-form" action="/api/update_email" method="post"
+        id="pref-update-pwreset-email">
     <div class="spacer">
       <%utils:round_field title="${_('email')}">
         <input type="text" name="email" value="${getattr(c.user, 'email', '')}">
       ${error_field("BAD_EMAILS", "email")}
       </%utils:round_field>
+      %if g.secrets.get('recaptcha_public_key'):
+        <div class="c-form-group g-recaptcha" data-sitekey="${g.secrets['recaptcha_public_key']}"></div>
+        ${error_field("BAD_CAPTCHA", "g-recaptcha-response", kind="span")}
+      %endif
     </div>
       <br>
       <button type="submit" class="btn">${_('save')}</button>
