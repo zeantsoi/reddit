@@ -180,10 +180,11 @@ class ModmailConversation(Base):
             # if they have make the convo not internal and add the 'to' user
             # as the participant of the conversation. If the 'to' user is also
             # a moderator of the subreddit convert the conversation to an
-            # internal conversation (i.e. mod discussion)
+            # internal conversation (i.e. mod discussion). Auto conversations
+            # can never be internal conversations.
             if to and not owner.is_moderator_with_perms(to, 'mail'):
                 participant_id = to._id
-            else:
+            elif not is_auto:
                 self.is_internal = True
         else:
             participant_id = author._id
