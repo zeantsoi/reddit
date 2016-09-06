@@ -49,7 +49,6 @@ from r2.lib import (
 from r2.lib.static import static_mtime
 
 import babel.numbers
-import datetime
 import simplejson
 import os.path
 from copy import copy
@@ -248,7 +247,6 @@ def js_config(extra_config=None):
         feature.is_enabled("lazy_load_listings")
     )
 
-    feature_frontpage_tagline = feature.is_enabled("frontpage_tagline")
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
     if isinstance(c.site, Subreddit) and not c.default_sr:
@@ -371,7 +369,6 @@ def js_config(extra_config=None):
         "feature_lazy_load_listings": lazy_load_listings,
         "ads_loading_timeout_ms": g.live_config.get(
             "ads_loading_timeout_ms", 1000),
-        "feature_frontpage_tagline": feature_frontpage_tagline,
     }
 
     if feature.is_enabled("eu_cookie_policy"):
@@ -808,32 +805,6 @@ def html_datetime(date):
 
 def js_timestamp(date):
     return '%d' % (calendar.timegm(date.timetuple()) * 1000)
-
-
-def short_timesince(date):
-    # returns string in the format of '%{number}{unit}'
-    # examples: '2d', '45m', '65d'
-    if date > timeago("1 minute"):
-        return _("just now")
-
-    now = datetime.datetime.now(g.tz)
-    diff = int((now - date).total_seconds())
-
-    days = diff / 86400  # 86400 = 24 hours * 60 minutes * 60 seconds per day
-    hours = diff % 86400 / 3600  # 3600 = 60 minutes * 60 seconds per day
-    minutes = diff % 3600 / 60  # 60 = 60 seconds per minute
-    years = diff / 31536000  # 31536000 = 86400 * 365 days
-
-    if years > 0:
-        return "%sy" % years
-
-    if days > 0:
-        return "%sd" % days
-
-    if hours > 0:
-        return "%sh" % hours
-
-    return "%sm" % minutes
 
 
 def simplified_timesince(date, include_tense=True):

@@ -15,36 +15,6 @@
         [60, r.NP_('a minute ago', '%(num)s minutes ago')],
     ]
 
-    function shortTime(timestamp){
-        // returns string in the format of '%{number}{unit}'
-        // examples: '2d', '45m', '65d'
-        var serverTimeInit = r.config.server_time * 1000;
-        var diff = (serverTimeInit - timestamp) / 1000; // in seconds
-        var years = Math.floor(diff / 31536000); // 31536000 = 86400 * 365 days
-        var days = Math.floor(diff / 86400); // 86400 = 24 hours * 60 minutes * 60 seconds per day
-        var hours = Math.floor((diff % 86400) / 3600); // 3600 = 60 minutes * 60 seconds per day
-        var minutes = Math.floor((diff % 3600) / 60); // 60 = 60 seconds per minute
-
-        if (years > 0) {
-            return years + 'y';
-        }
-
-        if (days > 0) {
-            return days + 'd';
-          }
-
-        if (hours > 0) {
-            return hours + 'h';
-        }
-
-        if (minutes <= 1){
-            return r._("just now");
-        }
-
-        return minutes + 'm';
-
-    }
-
     var defaults = {
         maxage: 24 * 60 * 60
     }
@@ -95,23 +65,18 @@
     }
 
     TimeText.prototype.formatTime = function($el, age, timestamp, now) {
-        var text = r._('just now');
+        var text = r._('just now')
+        $.each(CHUNKS, function(ix, chunk) {
+            var count = Math.floor(age / chunk[0])
+            var keys
 
-        if (r.config.feature_frontpage_tagline) {
-            text = shortTime(timestamp);
-        } else {
-            $.each(CHUNKS, function(ix, chunk) {
-                var count = Math.floor(age / chunk[0]);
-                var keys;
-
-                if (count > 0) {
-                    keys = chunk[1];
-                    text = r.P_(keys[0], keys[1], count).format({num: count});
-                    return false;
-                }
-            })
-        }
-        return text;
+            if (count > 0) {
+                keys = chunk[1]
+                text = r.P_(keys[0], keys[1], count).format({num: count})
+                return false
+            }
+        })
+        return text
     }
 
     TimeText.clientOffset = 0;
