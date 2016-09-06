@@ -86,7 +86,7 @@ automatically_created_pages = {
 special_length_restrictions_bytes = {
     'config/stylesheet': 128*1024,
     'config/submit_text': 1024,
-    'config/sidebar': 5120,
+    'config/sidebar': 10240,
     'config/description': 500,
     'usernotes': 1024*1024,
 }
@@ -382,9 +382,6 @@ class WikiPage(tdb_cassandra.Thing):
             return
         force = True if previous is None else force
         max_length = special_length_restrictions_bytes.get(self.name, MAX_PAGE_LENGTH_BYTES)
-        if (self.name == 'config/sidebar' and
-                feature.is_enabled('double_sidebar')):
-            max_length *= 2
         if len(content) > max_length:
             raise ContentLengthError(max_length)
         

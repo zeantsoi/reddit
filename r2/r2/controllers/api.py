@@ -2984,7 +2984,9 @@ class ApiController(RedditController):
                    domain = VCnameDomain("domain"),
                    submit_text = VMarkdownLength("submit_text", max_length=1024),
                    public_description = VMarkdownLength("public_description", max_length = 500),
-                   description = VMarkdownLength("description", max_length = 5120),
+                   description=VMarkdownLength(
+                       "description",
+                       max_length=wiki.special_length_restrictions_bytes['config/sidebar']),  # noqa
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),

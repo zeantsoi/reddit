@@ -186,6 +186,7 @@ def js_config(extra_config=None):
     action_name = request.environ['pylons.routes_dict']['action']
     route_name = controller_name + '.' + action_name
     stats_name = route_name + ('' if promote.ads_enabled() else '.no_ads')
+    banners_enabled = promote.banners_enabled(c.site, c.user)
 
     cache_policy = "loggedout_www"
     if c.user_is_loggedin:
@@ -364,7 +365,7 @@ def js_config(extra_config=None):
         "user_websocket_url": user_websocket_url,
         "live_orangereds_pref": c.user.pref_live_orangereds,
         "pref_email_messages": logged and c.user.pref_email_messages,
-        "feature_double_sidebar": feature.is_enabled('double_sidebar'),
+        "feature_double_sidebar": banners_enabled and not isinstance(c.site, FakeSubreddit),  # noqa
         "feature_lazy_load_listings": lazy_load_listings,
         "ads_loading_timeout_ms": g.live_config.get(
             "ads_loading_timeout_ms", 1000),

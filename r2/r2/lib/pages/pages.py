@@ -730,15 +730,14 @@ class Reddit(Templated):
         no_ads_yet = True
         show_adbox = promote.banners_enabled(site=c.site, user=c.user)
 
-        if (not isinstance(c.site, FakeSubreddit) and show_adbox and
-                promote.ads_feature_enabled("double_sidebar")):
+        if not isinstance(c.site, FakeSubreddit) and show_adbox:
             ps.append(Ads(
                     frame_id="ad_main_top",
                     displayed_things=self.displayed_things,
                     link=getattr(self, "link", None)
                 ))
             no_ads_yet = False
-        elif show_adbox and not promote.ads_feature_enabled("double_sidebar"):
+        elif show_adbox:
             ps.append(SponsorshipBox())
 
         if (isinstance(c.site, Filtered) and not
@@ -3281,11 +3280,6 @@ class CreateSubreddit(Templated):
         allow_image_upload = site and not site.quarantine
         # feature flag was changed to split it off from user preferences
         # keeping the same attribute name to unnecessary transient errors
-        if feature.is_enabled("double_sidebar"):
-            self.max_sidebar_chars = 10240
-        else:
-            self.max_sidebar_chars = 5120
-
         Templated.__init__(self,
                            site=site,
                            name=name,

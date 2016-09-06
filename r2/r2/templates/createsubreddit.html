@@ -26,6 +26,7 @@
    from r2.lib.menus import menu
    from r2.lib.pages import UserText
    from r2.lib.strings import strings
+   from r2.models.wiki import special_length_restrictions_bytes
 %>
 <%namespace file="utils.html" import="_md, error_field, language_tool, plain_link"/>
 <%namespace file="utils.html" import="image_upload"/>
@@ -96,7 +97,8 @@ try participating in other communities on reddit for a little while first before
   </%utils:line_field>
 
   <%utils:line_field title="${_('sidebar')}" css_class="usertext"
-                     description="${_('shown in the sidebar of your subreddit. %d characters max.' % thing.max_sidebar_chars)}">
+                     description="${_('shown in the sidebar of your subreddit. %d characters max.' %
+                       special_length_restrictions_bytes['config/sidebar'])}">
     %if thing.site and thing.site.description:
      ${UserText(None, text=thing.site.description or "", editable=True, creating=True, name="description", have_form=False)}
     %else:
