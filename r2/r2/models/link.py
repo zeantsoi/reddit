@@ -653,7 +653,7 @@ class Link(Thing, Printable):
                 item.score_fmt = Score.safepoints
             elif pref_media == 'on' and not user.pref_compress:
                 show_media = True
-            elif pref_media == 'subreddit' and item.subreddit.show_media:
+            elif pref_media == "subreddit" and site.show_media:
                 show_media = True
             elif item.promoted and item.has_thumbnail:
                 if user_is_loggedin and item.author_id == user._id:
@@ -704,6 +704,15 @@ class Link(Thing, Printable):
                 item.thumbnail = "default"
                 item.thumbnail_sprited = True
                 item.preview_image = None
+            elif pref_media == 'subreddit' and not item.subreddit.show_media:
+                if item.is_self:
+                    item.thumbnail = "self"
+                elif item.post_hint in ("image", "video", "rich:video"):
+                    item.thumbnail = "image"
+                else:
+                    item.thumbnail = "default"
+                item.thumbnail_sprited = True
+                item.preview_image = getattr(item, 'preview_object', None)
             elif item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
                 item.preview_image = getattr(item, 'preview_object', None)

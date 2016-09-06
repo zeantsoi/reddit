@@ -1634,6 +1634,7 @@ class FakeSubreddit(BaseSite):
     _defaults = dict(Subreddit._defaults,
         link_flair_position='right',
         flair_enabled=False,
+        show_media=True,
     )
 
     def __init__(self):

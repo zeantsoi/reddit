@@ -4694,29 +4694,38 @@ form input[type=radio] {margin: 2px .5em 0 0; }
             color: #369; font-weight: bold;}
 .stats td.ri { padding-left: 20px; text-align: right}
 
+
+/* Default thumbnails */
+
 .thumbnail {
     float: left; 
     font-size: 0;
-    margin: 0;
-    margin-right: 5px;
     margin-bottom: 2px;
+    margin-right: 5px;
+    margin-top: 0;
+    margin-left: 0;
     overflow: hidden;
     width: 70px; 
-}
 
-.thumbnail.nsfw {
-    height: 70px;
-    background-image: url(../nsfw2.png); /* SPRITE */
-}
+    &.nsfw {
+        background-image: url(../thumbnail-icon-nsfw.png); /* SPRITE */
+        height: 70px;
+    }
 
-.thumbnail.self {
-    height: 50px;
-    background-image: url(../self_default2.png); /* SPRITE */
-}
+    &.self {
+        background-image: url(../thumbnail-icon-text.png); /* SPRITE */
+        height: 70px;
+    }
 
-.thumbnail.default {
-    height: 50px;
-    background-image: url(../noimage.png); /* SPRITE */
+    &.image {
+        background-image: url(../thumbnail-icon-image.png); /* SPRITE */
+        height: 70px;
+    }
+
+    &.default {
+        background-image: url(../thumbnail-icon-link.png); /* SPRITE */
+        height: 70px;
+    }
 }
 
 
