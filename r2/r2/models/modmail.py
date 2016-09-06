@@ -51,9 +51,6 @@ ENGINE = g.dbm.get_engine("modmail")
 Session = scoped_session(sessionmaker(bind=ENGINE))
 Base = declarative_base(bind=ENGINE)
 
-# Ensure the db has a utc timezone for the session
-Session.execute("SET timezone=UTC")
-
 
 class ModmailConversation(Base):
     """An overall conversation/ticket, potentially multiple messages.
