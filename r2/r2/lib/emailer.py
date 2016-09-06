@@ -520,7 +520,65 @@ def share(link, emails, from_name = "", reply_to = "", body = ""):
                                body = body, reply_to = reply_to,
                                thing = link)
 
-def send_queued_mail(test = False):
+
+def _sendmail_using_mailgun(email, test=False):
+    """Send email object via mailgun.
+    if test is true then perform no side effect
+    """
+    try:
+        if test:
+            mimetext = email.to_MIMEText()
+            if mimetext is None:
+                print ("Got None mimetext for email from %r and to %r"
+                       % (email.fr_addr, email.to_addr))
+            print mimetext.as_string()
+        else:
+            g.email_provider.send_email(
+                to_address=email.to_addr,
+                from_address=email.fr_addr,
+                reply_to=email.reply_to,
+                subject=email.subject,
+                text=email.body,
+                html=email.html_body,
+            )
+    except (TypeError, ValueError) as e:
+        g.log.error(e)
+
+
+def should_retry_exception(exception):
+    """Retry only on SMTPDataError and EmailSendError"""
+    is_smtp_data_error = isinstance(exception, smtplib.SMTPDataError)
+    # retrieve smtp error code from the exception
+    # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
+    # 400 range seems to be the network error range which
+    # is what we want to retry
+    if is_smtp_data_error and 400 <= exception.smtp_code < 500:
+        return True
+
+
+def _sendmail(email, session, test=False):
+    try:
+        mimetext = email.to_MIMEText()
+        if mimetext is None:
+            print ("Got None mimetext for email from %r and to %r"
+                   % (email.fr_addr, email.to_addr))
+        if test:
+            print mimetext.as_string()
+        else:
+            session.sendmail(email.fr_addr, email.to_addr,
+                             mimetext.as_string())
+            email.set_sent(rejected=False)
+
+    # exception happens only for local recipient that doesn't exist
+    except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
+            UnicodeDecodeError, AttributeError, HeaderParseError):
+        # handle error and print, but don't stall the rest of the queue
+        print "Handled error sending mail (traceback to follow)"
+        traceback.print_exc(file=sys.stdout)
+        email.set_sent(rejected=True)
+
+
+def send_queued_mail(test=False):
     """sends mail from the mail queue to smtplib for delivery.  Also,
     on successes, empties the mail queue and adds all emails to the
     sent_mail list."""
@@ -531,35 +589,18 @@ def send_queued_mail(test = False):
     uids_to_clear = []
     if not test:
         session = smtplib.SMTP(g.smtp_server)
-    def sendmail(email):
-        try:
-            mimetext = email.to_MIMEText()
-            if mimetext is None:
-                print ("Got None mimetext for email from %r and to %r"
-                       % (email.fr_addr, email.to_addr))
-            if test:
-                print mimetext.as_string()
-            else:
-                session.sendmail(email.fr_addr, email.to_addr,
-                                 mimetext.as_string())
-                email.set_sent(rejected = False)
+    else:
+        session = "test"
 
-        # exception happens only for local recipient that doesn't exist
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
-                UnicodeDecodeError, AttributeError, HeaderParseError):
-            # handle error and print, but don't stall the rest of the queue
-            print "Handled error sending mail (traceback to follow)"
-            traceback.print_exc(file = sys.stdout)
-            email.set_sent(rejected = True)
-
-    def should_retry_exception(exception):
-        """Retry only on SMTPDataError"""
-        if not isinstance(exception, smtplib.SMTPDataError):
-            return False
-        # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
-        # 400 range seems to be the network error range which
-        # is what we want to retry
-        return 400 <= exception.smtp_code < 500
+    def sendmail_multiplexer(email):
+        """Use mailgun for password resets.
+        Use old sendmail for everything else
+        """
+        if email.kind == email.Kind.RESET_PASSWORD:
+            g.stats.simple_event('email.password_reset_mailgun')
+            _sendmail_using_mailgun(email, test)
+        else:
+            _sendmail(email, session, test)
 
     try:
         for email in Email.get_unsent(datetime.datetime.now(pytz.UTC)):
@@ -589,7 +630,7 @@ def send_queued_mail(test = False):
                 email.set_sent(rejected = True)
                 continue
             exponential_retrier(
-                lambda: sendmail(email),
+                lambda: sendmail_multiplexer(email),
                 should_retry_exception)
             g.log.info("Sent email from %r to %r",
                        email.fr_addr,
@@ -604,7 +645,7 @@ def send_queued_mail(test = False):
             session.quit()
 
     # clear is true if anything was found and processed above
-    if len(uids_to_clear) > 0:
+    if not test and len(uids_to_clear) > 0:
         Email.handler.clear_queue_by_uids(uids_to_clear)
 
 
