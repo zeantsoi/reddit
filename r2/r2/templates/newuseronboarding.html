@@ -1,0 +1,109 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2016
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+from r2.lib.filters import unsafe
+from r2.models import Account, LabeledMulti
+
+multi_user_name = g.config["reddit_defaults_user"]
+multi_user = Account._by_name(multi_user_name)
+multis = LabeledMulti.by_owner(multi_user)
+multis_by_name = {m.name: m for m in multis}
+
+%>
+
+<%def name="onboarding_category(name, display_name, key_color, icon_url, srs)">
+  <%
+  subreddit_names = [s._fullname for s in srs]
+  %>
+  <li class="onboarding__category"
+      data-sr-names="${','.join(subreddit_names)}"
+      >
+    <label class="onboarding__category-container">
+      <img class="onboarding__category-image"
+           style="background-color: ${key_color}"
+           src="${icon_url}"
+           >
+      <div class="c-clearfix">
+        <input class="onboarding__checkbox-input"
+               type="checkbox"
+               name="${name}"
+               >
+        <div class="onboarding__checkbox-display">
+        </div>
+        <div class="onboarding__category-title">
+          ${unsafe(display_name)}
+        </div>
+      </div>
+    </label>
+  </li>
+</%def>
+
+<div class="onboarding__step onboarding__step--choose-categories">
+  <header class="onboarding__step-header c-clearfix">
+    <div class="onboarding__image--snoo">
+    </div>
+    <h3 class="onboarding__step-title">
+      ${_("Pick some topics:")}
+    </h3>
+    <p class="onboarding__step-description">
+      ${_("Then we'll build a custom Front Page for you.")}
+    </p>
+  </header>
+  <ul class="onboarding__menu">
+    %for m in thing.multi_names:
+      <% multi = multis_by_name.get(m) %>
+      %if multi:
+        ${onboarding_category(
+          name=multi.name,
+          display_name=multi.display_name,
+          key_color=multi.key_color,
+          icon_url=multi.icon_url,
+          srs=multi.srs,
+        )}
+      %endif
+    %endfor
+  </ul>
+  <footer class="onboarding__step-footer c-clearfix c-submit-group">
+    <button class="onboarding__action onboarding__action--submit c-btn c-btn-primary c-pull-right">${_("Go")}</button>
+    <button class="onboarding__action onboarding__action--default c-btn c-btn-secondary c-pull-right">${_("Use Defaults")}</button>
+    <a class="onboarding__skip-link onboarding__action onboarding__action--close">${_("Skip this stuff")}</a>
+  </footer>
+</div>
+<div hidden class="onboarding__step onboarding__step--complete">
+  <div class="onboarding__image--horse-sized-duck">
+  </div>
+  <header class="onboarding__step-header">
+    <h3 class="onboarding__step-title">
+      <span class="onboarding__username">${_("Congratulations %(name)s!")}</span>
+    </h3>
+    <p class="onboarding__step-description">
+      ${_("You are a Redditor.")}
+    </p>
+    <p class="onboarding__step-description">
+      ${_("There are thousands of communities here. Go forth and find your people!")}
+    </p>
+  </header>
+  <footer class="onboarding__step-footer c-clearfix c-submit-group">
+    <button class="onboarding__action onboarding__action--close c-btn c-btn-primary c-pull-right">${_("OK")}</button>
+  </footer>
+</div>

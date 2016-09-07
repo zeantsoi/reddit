@@ -56,7 +56,7 @@
 
     $el.modal({
       show: false,
-      backdrop: !!options.modal,
+      backdrop: options.backdrop || !!options.modal,
       keyboard: options.shortcuts,
     });
 

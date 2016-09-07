@@ -168,6 +168,7 @@ class Account(Thing):
                      pref_allow_clicktracking=True,
                      disable_karma=False,
                      pref_live_orangereds=True,
+                     has_been_onboarded=True,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

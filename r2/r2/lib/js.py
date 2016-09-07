@@ -836,6 +836,10 @@ module["messagecompose"] = Module("messagecompose.js",
     # jquery, hooks, ajax, preload
     "messagecompose.js")
 
+module["onboarding"] = Module("onboarding.js",
+    "onboarding.js",
+)
+
 module["less"] = Module('less.js',
     'lib/less-1.4.2.js',
     should_compile=False,

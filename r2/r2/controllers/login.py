@@ -23,6 +23,8 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 
+from r2.config import feature;
+from r2.config.extensions import is_api;
 from r2.lib.validator import (
     need_provider_captcha,
     valid_provider_captcha,
@@ -184,6 +186,11 @@ def handle_register(
             emailer.verify_email(user)
 
         user.pref_lang = c.lang
+
+        if (is_api("html") and
+                feature.is_enabled("new_user_onboarding", user=user)):
+            user.has_been_onboarded = False;
+
         user._commit()
 
         amqp.add_item('new_account', user._fullname)

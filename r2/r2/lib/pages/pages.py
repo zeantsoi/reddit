@@ -350,6 +350,12 @@ class Reddit(Templated):
             u.hostname = amphtml_domain
             self.amp_link = u.unparse()
 
+        if (c.user_is_loggedin and not c.user.has_been_onboarded and
+                feature.is_enabled("new_user_onboarding")):
+            self.show_onboarding = True;
+            c.user.has_been_onboarded = True;
+            c.user._commit();
+
         if self.show_infobar:
             if not infotext:
                 if g.heavy_load_mode:
@@ -1117,6 +1123,10 @@ class Reddit(Templated):
             popup_content = ResetPasswordInterstitial()
             panes.append(Popup('access-popup', popup_content))
 
+        if getattr(self, 'show_onboarding', None):
+            popup_content = NewUserOnboarding()
+            panes.append(Popup('onboarding-popup', popup_content))
+
         return HtmlPaneStack(panes)
 
     def is_gold_page(self):
@@ -1180,6 +1190,23 @@ class DebugFooter(Templated):
 class AccountActivityBox(Templated):
     def __init__(self):
         super(AccountActivityBox, self).__init__()
+
+
+class NewUserOnboarding(CachedTemplate):
+    multi_names = [
+        "animals",
+        "news_politics",
+        "comics_hobbies",
+        "entertainment",
+        "ask",
+        "life_advice",
+        "games",
+        "sports",
+        "diy_crafts",
+    ]
+
+    def __init__(self):
+        super(NewUserOnboarding, self).__init__()
 
 
 class RedditFooter(CachedTemplate):

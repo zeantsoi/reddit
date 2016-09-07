@@ -74,6 +74,9 @@
   %for extra_stylesheet in getattr(thing, 'extra_stylesheets', ()):
     ${less_stylesheet(extra_stylesheet)}
   %endfor
+  %if getattr(thing, 'show_onboarding', None):
+    ${less_stylesheet('onboarding.less')}
+  %endif
 </%def>
 
 <%def name="pagemeta()">
@@ -133,6 +136,9 @@
 <%def name="javascript_bottom()">
   <% from r2.lib import js %>
   ${unsafe(js.use('reddit'))}
+  %if getattr(thing, 'show_onboarding', None):
+    ${unsafe(js.use('onboarding'))}
+  %endif
   ${unsafe(c.js_preload.use())}
 </%def>
 
