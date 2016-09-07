@@ -254,13 +254,6 @@ class FrontController(RedditController):
         [/api/comment](#POST_api_comment).
 
         """
-        if is_seo_referrer() and feature.is_enabled('seo_comments_page'):
-            seo_variant = feature.variant('seo_comments_page')
-            if seo_variant in ("top_listing_on_comments",
-                    "hot_listing_on_comments"):
-                limit = 3
-            elif seo_variant == "hot_listing_on_1_comment":
-                limit = 1
 
         self.abort_if_blocked_legally(article)
 
