@@ -3140,7 +3140,11 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
                     msg_type = "post reply"
         else:
             msg_type = "message"
-            msg_body = "From u/%s" % author_name
+            if getattr(obj, 'from_sr', False):
+                subreddit_name = Subreddit._byID(obj.sr_id, stale=True).name
+                msg_body = "From r/%s" % subreddit_name
+            else:
+                msg_body = "From u/%s" % author_name
 
         websockets.send_broadcast(
             namespace="/user/%s" % to._id36,
