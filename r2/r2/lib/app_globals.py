@@ -405,6 +405,8 @@ class Globals(object):
             'comment_vote_update_threshold',
             'comment_vote_update_period',
             'r_all_penalty',
+            'seo_comments_top_comments',
+            'seo_comments_link_listings',
             'ads_usermatch_timeout_ms',
             'ads_loading_timeout_ms',
         ],

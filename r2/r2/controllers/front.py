@@ -44,7 +44,7 @@ from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.csrf import csrf_exempt
-from r2.lib.utils import to36, sanitize_url, title_to_url, is_seo_referrer
+from r2.lib.utils import to36, sanitize_url, title_to_url
 from r2.lib.utils import (
     query_string,
     UrlParser,
@@ -254,7 +254,6 @@ class FrontController(RedditController):
         [/api/comment](#POST_api_comment).
 
         """
-
         self.abort_if_blocked_legally(article)
 
         if not sort:

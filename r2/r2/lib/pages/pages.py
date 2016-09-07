@@ -22,6 +22,7 @@
 ###############################################################################
 
 from collections import Counter, OrderedDict
+from copy import deepcopy
 
 from r2.config import feature
 from r2.lib.contrib.ipaddress import ip_address
@@ -47,6 +48,7 @@ from r2.models import (
     LabeledMulti,
     Link,
     LinkListing,
+    MoreChildren,
     ReadNextLink,
     ReadNextListing,
     Mod,
@@ -1320,10 +1322,14 @@ class SponsorshipBox(Templated):
 def _get_top_posts(num, link, sort='hot', time='all'):
     links = c.site.get_links(sort, time)
     builder = IDBuilder(links, num=num)
-    top_posts = LinkListing(builder).get_items()[0]
+    top_posts = []
 
-    return filter(lambda x: not x.fullname == link.fullname,
-                  top_posts)
+    for item in LinkListing(builder).get_items()[0]:
+        # exclude the original link
+        if item.fullname != link._fullname:
+            top_posts.append(item)
+
+    return top_posts
 
 
 class SubredditBar(Templated):
@@ -2240,6 +2246,7 @@ class CommentPane(Templated):
             self.edits_visible,
             feature.is_enabled("affiliate_links"),
             c.user.pref_affiliate_links,
+            self.seo_comments_page,
         )
         key = "pane:%s" % _id
         return key
@@ -2251,7 +2258,7 @@ class CommentPane(Templated):
         self.sort = sort
         self.num = num
         self.article = article
-
+        self.comment = comment
         self.max_depth = kw.get('max_depth')
         self.edits_visible = kw.get("edits_visible")
 
@@ -2272,9 +2279,9 @@ class CommentPane(Templated):
             not (c.user_is_loggedin and c.user._id == article.author_id)
         )
 
+        self.sr = article.subreddit_slow
         if c.user_is_loggedin:
-            sr = article.subreddit_slow
-            try_cache &= not bool(sr.can_ban(c.user))
+            try_cache &= not bool(self.sr.can_ban(c.user))
 
             user_threshold = c.user.pref_min_comment_score
             default_threshold = Account._defaults["pref_min_comment_score"]
@@ -2289,8 +2296,18 @@ class CommentPane(Templated):
             # loggedout users
             self.can_reply = not article.archived and not article.locked
 
+        self.seo_comments_page = False
+        if feature.is_enabled('seo_comments_page'):
+            self.seo_comments_page = True
+
         builder = CommentBuilder(
-            article, sort, comment=comment, context=context, num=num, **kw)
+            article,
+            sort,
+            comment=comment,
+            context=context,
+            num=num,
+            **kw
+        )
 
         if try_cache and c.user_is_loggedin:
             builder._get_comments()
@@ -2304,7 +2321,11 @@ class CommentPane(Templated):
             listing = NestedListing(builder, parent_name=article._fullname)
             listing_for_user = listing.listing()
             timer.intermediate("build_listing")
-            self.rendered = listing_for_user.render()
+            if self.seo_comments_page:
+                self.rendered = self.generate_seo_comments_page(
+                    listing_for_user).render()
+            else:
+                self.rendered = listing_for_user.render()
             timer.intermediate("render_listing")
         else:
             g.log.debug("using comment page cache")
@@ -2347,7 +2368,12 @@ class CommentPane(Templated):
                     else:
                         timer.intermediate("build_comments_and_listing")
 
-                    self.rendered = generic_listing.render()
+                    if self.seo_comments_page:
+                        self.rendered = self.generate_seo_comments_page(
+                            generic_listing).render()
+                    else:
+                        self.rendered = generic_listing.render()
+
                     timer.intermediate("render_listing")
                 finally:
                     # undo the spoofing
@@ -2428,6 +2454,72 @@ class CommentPane(Templated):
     def render(self, *a, **kw):
         return self.rendered
 
+    def generate_seo_comments_page(self, generic_listing):
+        """Render the seo comments page.
+
+        The layout will be the first 3 top level comments (with
+        children as a load more button), followed by 10 hot posts
+        from that subreddit, followed by the rest of the comments.
+        """
+        number_top_comments = g.live_config['seo_comments_top_comments']
+        number_hot_posts = g.live_config['seo_comments_link_listings']
+
+        comments = generic_listing.lookups[0].things
+
+        # Include only the first 3 comments for top portion of comments page
+        top_listing = deepcopy(generic_listing)
+        top_listing.lookups[0].things = comments[:number_top_comments]
+        for thing in top_listing.lookups[0].things:
+            self.collapse_children(thing)
+
+        # Get the current hot posts from the subreddit
+        posts = _get_top_posts(number_hot_posts, self.article, 'hot', 'all')
+        rendered_links = None
+        if posts:
+            wrapper = default_thing_wrapper(expand_children=False)
+            rendered_links = wrap_links(posts, wrapper=wrapper)
+
+        # Include the rest of the comments for the bottom portion
+        bottom_listing = None
+        if len(comments) > number_top_comments:
+            bottom_listing = deepcopy(generic_listing)
+            bottom_listing.lookups[0].things = comments[number_top_comments:]
+
+        return SeoCommentsPage(
+            top_listing,
+            rendered_links,
+            self.sr.name,
+            bottom_listing,
+        )
+
+    def collapse_children(self, parent):
+        if not hasattr(parent, 'child') or not parent.child.things:
+            return
+
+        # If it's a permalink page, don't collapse children
+        if self.comment:
+            return
+
+        children = parent.child.things
+        comment_ids = []
+        morechildren = None
+        for item in children:
+            if isinstance(item.lookups[0], Comment):
+                comment_ids.append(item._id)
+            elif isinstance(item.lookups[0], MoreChildren):
+                morechildren = item
+
+        if not morechildren:
+            mc = MoreChildren(
+                self.article, self.sort, depth=1, parent_id=parent._id)
+            w = Wrapped(mc)
+            w.count = parent.num_children
+            morechildren = w
+
+        morechildren.children.extend(comment_ids)
+        parent.child.things = [morechildren]
+
+
 class ThingUpdater(Templated):
     pass
 
@@ -2438,6 +2530,17 @@ class LinkInfoBar(Templated):
         if a:
             a = Wrapped(a)
         Templated.__init__(self, a = a, datefmt = datefmt)
+
+
+class SeoCommentsPage(Templated):
+    def __init__(self, top_comments, links, subreddit_name, bottom_comments):
+        Templated.__init__(
+            self,
+            top_comments=top_comments,
+            links=links,
+            subreddit_name=subreddit_name,
+            bottom_comments=bottom_comments,
+        )
 
 class EditReddit(Reddit):
     """Container for the about page for a reddit"""
