@@ -3021,8 +3021,11 @@ class MutedAccountsBySubreddit(object):
                 if not subject.startswith(re):
                     subject = re + subject
 
-            item, inbox_rel = Message._new(muter, user, subject, message,
-                request.ip, parent=parent_message, sr=sr, from_sr=True)
+            item, inbox_rel = Message._new(
+                muter, user, subject, message,
+                request.ip, parent=parent_message, sr=sr, from_sr=True,
+                is_auto_modmail=True,
+            )
             queries.new_message(item, inbox_rel, update_modmail=True)
 
         return {user.name: result.keys()[0]}
