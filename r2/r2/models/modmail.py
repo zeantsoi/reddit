@@ -509,7 +509,7 @@ class ModmailConversation(Base):
             # Lastly if a conversation is 'archived' change the state
             # to 'inprogress' regardless if the mod has participated or not
             if (not self.is_internal and
-                    not (is_first_message and self.is_auto) and
+                    not is_first_message and
                     (author._id not in self.author_ids or
                      self.state == self.STATE['archived'])):
                 self.state = self.STATE['inprogress']
@@ -519,7 +519,9 @@ class ModmailConversation(Base):
             # Set the state to 'inprogress' only if a mod has responded
             # with a message in the conversation already and the conversation
             # is not already in an 'inprogress' state.
-            if (self.last_mod_update != datetime.min.replace(tzinfo=g.tz) and
+            if (self.last_mod_update is not None and
+                    (self.last_mod_update !=
+                     datetime.min.replace(tzinfo=g.tz)) and
                     self.state != self.STATE['inprogress']):
                 self.state = self.STATE['inprogress']
 
