@@ -1140,7 +1140,7 @@ class Link(Thing, Printable):
         return (self.author_id,)
 
     @property
-    def archived(self):
+    def archived_slow(self):
         sr = self.subreddit_slow
         return self.is_archived(sr)
 
@@ -1637,7 +1637,7 @@ class Comment(Thing, Printable):
         return Account._byID(self.author_id, data=True, return_dict=False)
 
     @property
-    def archived(self):
+    def archived_slow(self):
         sr = self.subreddit_slow
         return self.is_archived(sr)
 
@@ -1861,6 +1861,8 @@ class Comment(Thing, Printable):
                     item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
             else:
                 item.parent_permalink = None
+
+            item.archived = item.is_archived(item.subreddit)
 
             link_is_archived = item.link.is_archived(item.subreddit)
             link_is_locked = item.link.locked

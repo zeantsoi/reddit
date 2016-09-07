@@ -1379,7 +1379,7 @@ class VSubmitParent(VByName):
         elif isinstance(parent, Link):
             sr = parent.subreddit_slow
 
-            if parent.archived:
+            if parent.is_archived(sr):
                 self.set_error(errors.TOO_OLD)
             elif parent.locked and not sr.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
@@ -1404,7 +1404,7 @@ class VSubmitParent(VByName):
 
             link = Link._byID(parent.link_id, data=True)
 
-            if link.archived:
+            if link.is_archived(sr):
                 self.set_error(errors.TOO_OLD)
             elif link.locked and not sr.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)

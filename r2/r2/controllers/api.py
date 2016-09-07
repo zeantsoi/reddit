@@ -1680,7 +1680,7 @@ class ApiController(RedditController):
         See also: [/api/unlock](#POST_api_unlock).
 
         """
-        if thing.archived:
+        if thing.archived_slow:
             return abort(400, "Bad Request")
         VNotInTimeout().run(action_name="lock", target=thing)
         thing.locked = True
@@ -1703,7 +1703,7 @@ class ApiController(RedditController):
         See also: [/api/lock](#POST_api_lock).
 
         """
-        if thing.archived:
+        if thing.archived_slow:
             return abort(400, "Bad Request")
         VNotInTimeout().run(action_name="unlock", target=thing)
         thing.locked = False
@@ -2577,7 +2577,7 @@ class ApiController(RedditController):
         # Don't allow users in timeout to vote
         VNotInTimeout().run(target=thing)
 
-        if thing.archived:
+        if thing.archived_slow:
             return abort(400,
                 "This thing is archived and may no longer be voted on")
 
