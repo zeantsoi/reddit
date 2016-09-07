@@ -419,11 +419,16 @@ def send_system_message(user, subject, body, system_user=None,
     if not author:
         author = system_user
 
-    item, inbox_rel = Message._new(author, user, subject, body,
-                                   ip='0.0.0.0')
+    item, inbox_rel = Message._new(
+        author,
+        user,
+        subject,
+        body,
+        ip='0.0.0.0',
+        display_author=system_user._id,
+    )
     item.distinguished = distinguished
     item.repliable = repliable
-    item.display_author = system_user._id
     item.signed = signed
     item._commit()
 

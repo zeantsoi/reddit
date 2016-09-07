@@ -2175,13 +2175,14 @@ class Message(Thing, Printable):
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
              from_sr=False, can_send_email=True, sent_via_email=False,
-             email_id=None, create_modmail=True, is_auto_modmail=False):
+             email_id=None, create_modmail=True, is_auto_modmail=False,
+             display_author=None):
         from r2.lib.emailer import message_notification_email
         from r2.lib.message_to_email import queue_modmail_email
 
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
                     ip=ip, from_sr=from_sr, sent_via_email=sent_via_email,
-                    email_id=email_id)
+                    email_id=email_id, display_author=display_author)
         m._spam = author._spam
 
         if author._spam:
@@ -3118,7 +3119,11 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
         if not to.pref_live_orangereds:
             return
 
-        author_name = Account._byID(obj.author_id, stale=True).name
+        if getattr(obj, 'display_author', False):
+            author_name = Account._byID(obj.display_author, stale=True).name
+        else:
+            author_name = Account._byID(obj.author_id, stale=True).name
+
         if isinstance(obj, Comment):
             subreddit_name = Subreddit._byID(obj.sr_id, stale=True).name
             msg_body = "From u/%(author_name)s on r/%(subreddit)s" % (dict(
