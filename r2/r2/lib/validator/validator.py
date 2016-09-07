@@ -1384,7 +1384,7 @@ class VSubmitParent(VByName):
             elif parent.locked and not sr.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
 
-            if self.has_errors or parent.can_comment(c.user):
+            if self.has_errors or parent.can_comment_slow(c.user):
                 return parent
 
         elif isinstance(parent, Comment):
@@ -1409,7 +1409,7 @@ class VSubmitParent(VByName):
             elif link.locked and not sr.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
 
-            if self.has_errors or link.can_comment(c.user):
+            if self.has_errors or link.can_comment_slow(c.user):
                 return parent
 
         abort(403, "forbidden")
