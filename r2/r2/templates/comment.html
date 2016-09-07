@@ -113,7 +113,7 @@ ${parent.midcol(cls = cls)}
     ${self.score(thing)}&#32;
   %endif
 
-  ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
+  ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True, short_time=getattr(thing, 'feature_frontpage_tagline', False))}
   ${edited(thing, thing.lastedited)}
   ${self.gildings()}
 

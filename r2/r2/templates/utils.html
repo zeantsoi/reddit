@@ -647,14 +647,14 @@ ${unsafe(txt)}
 	</label>
 </%def>
 
-<%def name="timestamp(date, since=None, live=False, include_tense=False)">
+<%def name="timestamp(date, since=None, live=False, include_tense=False, short_time=False)">
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
   <%
     timestamp_class = unsafe(' class="live-timestamp"') if live else ''
   %>
   <time title="${long_datetime(date)}" datetime="${html_datetime(date)}"${timestamp_class}>
-    %if feature.is_enabled("frontpage_tagline"):
+    %if short_time:
       ${short_timesince(date)}
     %else:
       ${(since or simplified_timesince(date, include_tense))}
@@ -666,10 +666,10 @@ ${unsafe(txt)}
   ${timestamp(date, since, live, include_tense)}
 </%def>
 
-<%def name="thing_timestamp(thing, since=None, live=False, include_tense=False)">
+<%def name="thing_timestamp(thing, since=None, live=False, include_tense=False, short_time=False)">
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
-  ${timestamp(thing._date, since=since, live=live, include_tense=include_tense)}
+  ${timestamp(thing._date, since=since, live=live, include_tense=include_tense, short_time=short_time)}
 </%def>
 
 <%def name="percentage(slice, total)">

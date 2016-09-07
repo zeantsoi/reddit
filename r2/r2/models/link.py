@@ -1980,6 +1980,10 @@ class Comment(Thing, Printable):
 
             item.is_sticky = (item.link.sticky_comment_id == item._id)
 
+            item.feature_frontpage_tagline = feature.is_enabled(
+                'frontpage_tagline'
+            )
+
             item.render_css_class = "comment"
 
             #will get updated in builder
