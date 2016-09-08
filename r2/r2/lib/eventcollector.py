@@ -748,13 +748,16 @@ class EventQueue(object):
                 raise ValueError('Must pass the ModmailMessage object '
                                  'for the ss.send_modmail_message event')
 
-            participant = conversation.get_participant_account()
-            if participant:
-                recipient = participant
-                recipient_type = 'user'
-            else:
-                recipient = sr
-                recipient_type = 'subreddit'
+            recipient = sr
+            recipient_type = 'subreddit'
+            if not conversation.is_internal:
+                try:
+                    participant = conversation.get_participant_account()
+                    if participant:
+                        recipient = participant
+                        recipient_type = 'user'
+                except:
+                    pass
 
             event.add('conversation_recipient_id', recipient._id)
             event.add('conversation_recipient_type', recipient_type)
