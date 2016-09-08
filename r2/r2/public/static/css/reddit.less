@@ -912,7 +912,12 @@ body > .content .link.compressed .midcol {
 }
 
 a.author { margin-right: 0.5em; }
-.frontpage-tagline-css a.author { margin-right: 0; }
+.frontpage-tagline-css a.author {
+    margin-right: 0;
+    &+.flair {
+        margin-left: 0.5em;
+    }
+}
 a.new-domain { color: #888888 }
 .tagline .bullet {font-size: 7pt; color: #CCCCC8}
 
