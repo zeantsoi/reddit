@@ -1612,10 +1612,10 @@ def purge_imgix_images(preview_object, purge_nsfw=False, notify_failures=True):
 
 
 def _purge_preview_links(preview_object, censor_nsfw=False, file_type=None):
-    from r2.lib.jsontemplates import LinkJsonTemplate
+    from r2.lib.jsontemplates import generate_image_links
 
     # get the nested dict that contains all the urls that we need to purge
-    template_dict = LinkJsonTemplate.generate_image_links(
+    template_dict = generate_image_links(
         preview_object=preview_object,
         censor_nsfw=censor_nsfw,
         file_type=file_type,
