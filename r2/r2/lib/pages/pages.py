@@ -326,9 +326,6 @@ class Reddit(Templated):
         else:
             self.displayed_things = []
 
-        if feature.is_enabled("new_expando_icons"):
-            self.feature_new_expando_icons = True
-
         if feature.is_enabled("show_survey"):
             self.show_survey = True
 

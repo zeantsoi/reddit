@@ -52,9 +52,7 @@
 
 <%def name="global_stylesheets()">
   ${less_stylesheet("reddit.less")}
-  %if getattr(thing, "feature_new_expando_icons", False):
-    ${less_stylesheet("expando.less")}
-  %endif
+  ${less_stylesheet("expando.less")}
   %if getattr(thing, "show_survey", False):
     ${less_stylesheet("survey.less")}
   %endif
