@@ -387,6 +387,15 @@ class ModmailController(OAuth2OnlyController):
             abort(422, 'Must be a mod to make the message internal.')
 
         try:
+            if not conversation.is_internal and not conversation.is_auto:
+                participant = conversation.get_participant_account()
+
+                if participant and sr.is_muted(participant):
+                    abort(403, 'Participant muted for subreddit')
+        except NotFound:
+            pass
+
+        try:
             new_message = conversation.add_message(
                 c.user,
                 msg_body,
