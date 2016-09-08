@@ -217,6 +217,11 @@ def get_secret_token(platform, version, global_version=GLOBAL_TOKEN_VERSION):
 
 def is_invalid_token(platform, version):
     """Conditionally reject a token based on platform and version."""
+
+    # the secret key for ios version 1 was leaked, newer ios app version
+    # uses version 2 (version 1.6 and later versions).
+    if platform == "ios" and version == 1:
+        return True
     return False
 
 
