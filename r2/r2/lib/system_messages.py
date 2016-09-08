@@ -23,6 +23,7 @@
 from pylons import request
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.models import Account, Message
 from r2.lib.db import queries
 from r2.lib.utils import blockquote_text
@@ -103,6 +104,15 @@ def notify_user_added(rel_type, author, user, target):
         msg = msgs["modmail"]["msg"] % d
 
         if rel_type == "moderator_invite":
+            # Don't send the separate moderator invite message from the
+            # system user to new modmail, since the one sent to the invitee
+            # will already show up in there.
+            # TODO: when new modmail is fully deployed, the "modmail" dict
+            # should be completely removed from the moderator_invite section
+            # of user_added_messages, and this check removed.
+            if feature.is_enabled('new_modmail', subreddit=target.name):
+                return
+
             modmail_author = Account.system_user()
         else:
             modmail_author = author
