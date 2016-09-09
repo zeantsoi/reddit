@@ -85,6 +85,8 @@
         loid_created: null,
         referrer_url: document.referrer || '',
         referrer_domain: null,
+        session_referrer_url: $.cookie('initref') || '',
+        session_referrer_domain: null,
         sr_id: config.cur_site ? r.utils.fullnameToId(config.cur_site) : null,
         sr_name: config.post_site || null,
         user_id: null,
@@ -110,12 +112,8 @@
         }
       }
 
-      if (document.referrer) {
-        var referrerDomain = document.referrer.match(/\/\/([^\/]+)/);
-        if (referrerDomain && referrerDomain.length > 1) {
-          contextData.referrer_domain = referrerDomain[1];
-        }
-      }
+      contextData.referrer_domain = r.utils.getDomain(document.referrer);
+      contextData.session_referrer_domain = r.utils.getDomain(contextData.session_referrer_url);
 
       if ($('body').hasClass('comments-page')) {
         contextData.page_type = 'comments';

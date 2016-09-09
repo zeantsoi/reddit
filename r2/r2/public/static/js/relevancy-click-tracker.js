@@ -20,7 +20,7 @@
       var url = $currentTarget.attr('href')
       var eventType = $currentTarget.data('event_type');
 
-      var defaultFields = ['referrer_url'];
+      var defaultFields = ['referrer_url', 'session_referrer_url'];
 
       // don't send fields that have empty string values
       var customFields = pick({

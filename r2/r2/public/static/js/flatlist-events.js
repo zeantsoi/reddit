@@ -51,6 +51,8 @@
       'dnt',
       'referrer_domain',
       'referrer_url',
+      'session_referrer_domain',
+      'session_referrer_url',
       'user_in_beta',
     ];
 

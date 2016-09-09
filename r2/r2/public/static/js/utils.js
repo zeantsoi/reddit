@@ -291,6 +291,15 @@ r.utils = {
         return 'ActiveXObject' in window;
     },
 
+    getDomain: function(url) {
+        var domain = url && url.match(/\/\/([^\/]+)/);
+        if (domain && domain.length > 1) {
+            return domain[1];
+        } else {
+            return null;
+        }
+    },
+
 }
 
 // Nothing is true. Everything is permitted.

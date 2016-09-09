@@ -1935,6 +1935,10 @@ class Event(baseplate.events.Event):
             data["referrer_url"] = http_referrer
             data["referrer_domain"] = domain(http_referrer)
 
+        if context.init_referrer:
+            data["session_referrer_url"] = context.init_referrer
+            data["session_referrer_domain"] = domain(context.init_referrer)
+
         hooks.get_hook("eventcollector.context_data").call(
             data=data,
             user=context.user,
