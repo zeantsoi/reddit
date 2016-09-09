@@ -3749,7 +3749,11 @@ class ApiController(RedditController):
         # Mark usage in the ratelimiter.
         VRatelimit.ratelimit(rate_user=True, prefix='rate_read_all_')
 
-        return abort(202)
+        if request.environ.get("WANT_RAW_JSON"):
+            response.status_code = 202
+            return
+        else:
+            return abort(202)
 
     @require_oauth2_scope("report")
     @noresponse(VUser(),
