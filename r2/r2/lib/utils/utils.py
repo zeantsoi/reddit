@@ -920,10 +920,12 @@ def is_seo_referrer():
     PRIOR to .is_enabled() to avoid the unnecessary bucketing of users. It
     should be used similarly to is_api() in this sense.
     """
-    if not request.referer:
+    if not c.init_referrer and not request.referer:
         return False
 
-    p = UrlParser(request.referer)
+    referrer = c.init_referrer or request.referer
+
+    p = UrlParser(referrer)
     return any(is_subdomain(p.hostname, seo_domain) for seo_domain
                in g.seo_domains)
 

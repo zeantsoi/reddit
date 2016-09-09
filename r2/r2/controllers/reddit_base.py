@@ -255,6 +255,34 @@ def set_recent_clicks():
             set_user_cookie('recentclicks2', '')
 
 
+def set_init_referrer():
+    """Set session cookie for initial referrer.
+
+    This sets a cookie that will delete at the end of the user's
+    session (which is considered to be 30 minutes without a screenview).
+    It tracks where they were initially referred from (if it's not
+    a reddit domain).
+    """
+    cookie_name = "initref"
+    c.init_referrer = None
+    referrer = request.referer
+    expiration = datetime.utcnow() + timedelta(seconds=30*60)
+
+    # Init referrer exists, so reset 30 minute session expiration
+    if cookie_name in c.cookies:
+        c.init_referrer = c.cookies[cookie_name].value
+    # Init referrer doesn't exist yet, so create cookie holding
+    # the init referrer for 30 min if it's not a reddit domain
+    elif referrer and not UrlParser(referrer).is_reddit_url():
+        c.init_referrer = referrer
+
+    if c.init_referrer:
+        c.cookies[cookie_name] = Cookie(
+            value=c.init_referrer,
+            expires=expiration,
+        )
+
+
 valid_recent_subreddit_cookie = fullname_regex(Subreddit, True).match
 def set_recent_subreddits():
     subreddits_cookie = read_user_cookie("recent_srs")
@@ -1561,6 +1589,7 @@ class RedditController(OAuth2ResourceController):
         #set_browser_langs()
         set_iface_lang()
         set_recent_clicks()
+        set_init_referrer()
         # used for HTML-lite templates
         set_colors()
 
