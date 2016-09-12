@@ -602,9 +602,16 @@ class ApiController(RedditController):
                 form.set_error(errors.TOO_LONG, 'text')
                 return
 
+        # Check if this is a new image upload
+        s3_uploads_domain = ("%s.%s" % (
+            g.s3_image_uploads_bucket, g.s3_media_accelerate_domain))
+        image_upload = not is_self and domain(url) == s3_uploads_domain
+
         allow_images = sr.can_submit_image(c.user)
         if not allow_images:
-            if kind == "image" or (kind == "link" and url_is_image(url)):
+            if (image_upload or
+                    kind == "image" or
+                    (kind == "link" and url_is_image(url))):
                 # Image uploads aren't allowed in this subreddit
                 c.errors.add(errors.IMAGES_NOTALLOWED, field='url')
                 form.has_errors('url', errors.IMAGES_NOTALLOWED)
@@ -615,15 +622,7 @@ class ApiController(RedditController):
         if not request.POST.get('sendreplies'):
             sendreplies = is_self
 
-        # Check if this is a new image upload
-        s3_uploads_domain = ("%s.%s" %
-            (g.s3_image_uploads_bucket, g.s3_media_accelerate_domain))
-        image_upload = (
-            kind == "image" and
-            domain(url) == s3_uploads_domain
-        )
         s3_image_key = None
-
         if image_upload:
             filepath = UrlParser(urllib.unquote(url)).path
             with g.stats.get_timer("providers.s3.get_image_upload_keys"):
