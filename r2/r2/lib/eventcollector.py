@@ -730,7 +730,6 @@ class EventQueue(object):
         event.add('conversation_id36', conversation.id36)
         event.add('conversation_subject', conversation.subject)
         event.add('conversation_mod_only', conversation.is_internal)
-        event.add('conversation_is_auto', conversation.is_auto)
         event.add('conversation_author_id', convo_author._id)
         event.add('conversation_author_name', convo_author.name)
         event.add('conversation_author_type', get_author_type(convo_author))
