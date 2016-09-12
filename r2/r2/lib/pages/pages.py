@@ -2470,7 +2470,7 @@ class CommentPane(Templated):
             self.collapse_children(thing)
 
         # Get the current hot posts from the subreddit
-        posts = _get_top_posts(number_hot_posts, self.article, 'hot', 'all')
+        posts = _get_top_posts(number_hot_posts, self.article, 'top', 'week')
         rendered_links = None
         if posts:
             wrapper = default_thing_wrapper(expand_children=False)
