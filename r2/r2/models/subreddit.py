@@ -273,6 +273,7 @@ class Subreddit(Thing, Printable, BaseSite):
         ban_count=0,
         quarantine=False,
         audience_target='',
+        modmail_transition_message_id=None,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -1523,6 +1524,24 @@ class Subreddit(Thing, Printable, BaseSite):
         if log_user:
             from r2.models import ModAction
             ModAction.create(self, log_user, "unsticky", target=link)
+
+    def enable_new_modmail(self):
+        if self.modmail_transition_message_id:
+            return
+
+        from r2.lib.comment_tree import subreddit_messages
+
+        # get the max message ID for a root message in the subreddit's modmail
+        modmail_trees = subreddit_messages(self)
+        max_message_id = max(root_message_id
+            for root_message_id, descendant_ids in modmail_trees)
+
+        self.modmail_transition_message_id = max_message_id
+        self._commit()
+
+    def disable_new_modmail(self):
+        self.modmail_transition_message_id = None
+        self._commit()
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):

@@ -322,12 +322,24 @@ def sr_messages_lock_key(sr_id):
     return 'sr_messages_conversation_lock_' + str(sr_id)
 
 
+def filter_new_modmail(subreddit, trees):
+    if not subreddit.modmail_transition_message_id:
+        return trees
+
+    # `trees` is a list of 2-tuples, with each tuple having the root message
+    # ID and a list of all descendant IDs (replies in that conversation)
+    return [(root_message_id, descendant_ids)
+            for root_message_id, descendant_ids in trees
+            if root_message_id <= subreddit.modmail_transition_message_id]
+
+
 def subreddit_messages(sr, update = False):
     key = sr_messages_key(sr._id)
     trees = g.permacache.get(key)
     if not trees or update:
         trees = subreddit_messages_nocache(sr)
         g.permacache.set(key, trees)
+    trees = filter_new_modmail(sr, trees)
     return trees
 
 def moderator_messages(sr_ids):
@@ -347,6 +359,9 @@ def moderator_messages(sr_ids):
 
     res = sgm(g.permacache, sr_ids, miss_fn = multi_load_tree,
               prefix = sr_messages_key(""))
+
+    res = {sr_id: filter_new_modmail(srs[sr_id], trees)
+            for sr_id, trees in res.iteritems()}
 
     return sorted(chain(*res.values()), key = tree_sort_fn, reverse = True)
 
