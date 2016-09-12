@@ -2294,8 +2294,11 @@ class CommentPane(Templated):
             self.can_reply = not article.archived_slow and not article.locked
 
         self.seo_comments_page = False
-        if feature.is_enabled('seo_comments_page'):
+        if not c.user_is_loggedin and not is_api() and is_seo_referrer():
             self.seo_comments_page = True
+            # Hold out a small percentage for seo comments page
+            if feature.is_enabled('seo_comments_page_holdout'):
+                self.seo_comments_page = False
 
         builder = CommentBuilder(
             article,
