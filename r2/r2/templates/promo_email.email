@@ -200,16 +200,10 @@ with us again!  To extend your campaign, visit this link and click "+ add new":
 
     ${unsafe(edit_url + ref_tags % dict(ref="promo_finished", campaign="edit_promo"))}
 
-We'd love to know how your experience with reddit's self-serve ad platform was,
-so feel free to reply to this email to let us know if you have any feedback.
-We've also set up a community just for self-serve advertisers like yourself to
-discuss the platform with each other:
+We'd love to know about your experience with Reddit's self-serve ad platform.
+If you have a couple minutes please share your feedback here:
 
-    ${unsafe("https://www.reddit.com/r/selfserve" + ref_tags % dict(ref="promo_finished", campaign="rselfserve"))}
-
-We're hoping to create a place for you to exchange tips and tricks for getting
-the most out of your sponsored links, as well as to provide support for new
-users.
+    https://redditadvertising.typeform.com/to/XSP3KL
 
 %elif thing.kind == Email.Kind.REFUNDED_PROMO:
 We're sorry, but we weren't able to deliver as many impressions as you paid for.
