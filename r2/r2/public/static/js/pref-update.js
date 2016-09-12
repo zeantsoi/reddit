@@ -34,6 +34,13 @@
   };
 
   r.pref.ui.PrefUpdateForm.prototype = $.extend(new r.ui.Form(), {
+    _handleResult: function(result) {
+      if (result.json.errors.length) {
+        return r.ui.Form.prototype._handleResult.call(this, result);
+      }
+      $('#pref-update-pwreset-email').find('.status').html("an email will be sent to the email address shortly").show();
+    },
+
     _submit: function() {
       return r.pref.post(this);
     },
