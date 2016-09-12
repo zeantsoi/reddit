@@ -520,46 +520,96 @@ def share(link, emails, from_name = "", reply_to = "", body = ""):
                                body = body, reply_to = reply_to,
                                thing = link)
 
-def send_queued_mail(test = False):
-    """sends mail from the mail queue to smtplib for delivery.  Also,
-    on successes, empties the mail queue and adds all emails to the
-    sent_mail list."""
-    from r2.lib.pages import Share, Mail_Opt
-    if not c.site:
-        c.site = DefaultSR()
 
-    uids_to_clear = []
-    if not test:
-        session = smtplib.SMTP(g.smtp_server)
-    def sendmail(email):
-        try:
+def _sendmail_using_mailgun(email, test=False):
+    try:
+        if test:
             mimetext = email.to_MIMEText()
             if mimetext is None:
                 print ("Got None mimetext for email from %r and to %r"
                        % (email.fr_addr, email.to_addr))
-            if test:
-                print mimetext.as_string()
-            else:
-                session.sendmail(email.fr_addr, email.to_addr,
-                                 mimetext.as_string())
-                email.set_sent(rejected = False)
+            print mimetext.as_string()
+        else:
+            g.email_provider.send_email(
+                to_address=email.to_addr,
+                from_address=email.fr_addr,
+                reply_to=email.reply_to,
+                subject=email.subject,
+                text=email.body,
+                html=email.html_body,
+            )
+            # make sure we invoke proper handlers
+            email.set_sent(rejected=False)
+            g.stats.simple_event('email.password_reset_mailgun.success')
+    except Exception as e:
+        g.stats.simple_event('email.password_reset_mailgun.failure')
+        if not test:
+            email.set_sent(rejected=True)
+        g.log.exception(e)
+        raise
 
-        # exception happens only for local recipient that doesn't exist
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
-                UnicodeDecodeError, AttributeError, HeaderParseError):
-            # handle error and print, but don't stall the rest of the queue
-            print "Handled error sending mail (traceback to follow)"
-            traceback.print_exc(file = sys.stdout)
-            email.set_sent(rejected = True)
 
-    def should_retry_exception(exception):
-        """Retry only on SMTPDataError"""
-        if not isinstance(exception, smtplib.SMTPDataError):
-            return False
-        # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
-        # 400 range seems to be the network error range which
-        # is what we want to retry
-        return 400 <= exception.smtp_code < 500
+def should_retry_exception(exception):
+    """Retry only on SMTPDataError"""
+    is_smtp_data_error = isinstance(exception, smtplib.SMTPDataError)
+    # retrieve smtp error code from the exception
+    # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
+    # 400 range seems to be the network error range which
+    # is what we want to retry
+    if is_smtp_data_error and 400 <= exception.smtp_code < 500:
+        return True
+
+
+def _sendmail(email, session, test=False):
+    try:
+        mimetext = email.to_MIMEText()
+        if mimetext is None:
+            print ("Got None mimetext for email from %r and to %r"
+                   % (email.fr_addr, email.to_addr))
+        if test:
+            print mimetext.as_string()
+        else:
+            session.sendmail(email.fr_addr, email.to_addr,
+                             mimetext.as_string())
+            email.set_sent(rejected=False)
+
+    # exception happens only for local recipient that doesn't exist
+    except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
+            UnicodeDecodeError, AttributeError, HeaderParseError):
+        # handle error and print, but don't stall the rest of the queue
+        print "Handled error sending mail (traceback to follow)"
+        traceback.print_exc(file=sys.stdout)
+        email.set_sent(rejected=True)
+
+
+def send_queued_mail(test=False):
+    if not c.site:
+        c.site = DefaultSR()
+
+    _send_queued_mail(test)
+
+
+def _send_queued_mail(test=False):
+    """sends mail from the mail queue to smtplib for delivery.  Also,
+    on successes, empties the mail queue and adds all emails to the
+    sent_mail list."""
+    from r2.lib.pages import Share, Mail_Opt
+
+    uids_to_clear = []
+    if not test:
+        session = smtplib.SMTP(g.smtp_server)
+    else:
+        session = None
+
+    def sendmail_multiplexer(email):
+        """Use mailgun for password resets.
+
+        Use old sendmail for everything else
+        """
+        if email.kind == Email.Kind.RESET_PASSWORD:
+            _sendmail_using_mailgun(email, test)
+        else:
+            _sendmail(email, session, test)
 
     try:
         for email in Email.get_unsent(datetime.datetime.now(pytz.UTC)):
@@ -567,29 +617,31 @@ def send_queued_mail(test = False):
 
             should_queue = email.should_queue()
             # check only on sharing that the mail is invalid
-            if email.kind == Email.Kind.SHARE:
-                if should_queue:
-                    email.body = Share(username = email.from_name(),
-                                       msg_hash = email.msg_hash,
-                                       link = email.thing,
-                                       body =email.body).render(style = "email")
-                else:
-                    email.set_sent(rejected = True)
+            if not test:
+                if email.kind == Email.Kind.SHARE:
+                    if should_queue:
+                        email.body = Share(username=email.from_name(),
+                                           msg_hash=email.msg_hash,
+                                           link=email.thing,
+                                           body=email.body).render(
+                            style="email")
+                    else:
+                        email.set_sent(rejected=True)
+                        continue
+                elif email.kind == Email.Kind.OPTOUT:
+                    email.body = Mail_Opt(msg_hash=email.msg_hash,
+                                          leave=True).render(style="email")
+                elif email.kind == Email.Kind.OPTIN:
+                    email.body = Mail_Opt(msg_hash=email.msg_hash,
+                                          leave=False).render(style="email")
+                # handle unknown types here
+                elif not email.body:
+                    print("Rejecting email with empty body from %r and to %r"
+                          % (email.fr_addr, email.to_addr))
+                    email.set_sent(rejected=True)
                     continue
-            elif email.kind == Email.Kind.OPTOUT:
-                email.body = Mail_Opt(msg_hash = email.msg_hash,
-                                      leave = True).render(style = "email")
-            elif email.kind == Email.Kind.OPTIN:
-                email.body = Mail_Opt(msg_hash = email.msg_hash,
-                                      leave = False).render(style = "email")
-            # handle unknown types here
-            elif not email.body:
-                print ("Rejecting email with an empty body from %r and to %r"
-                       % (email.fr_addr, email.to_addr))
-                email.set_sent(rejected = True)
-                continue
             exponential_retrier(
-                lambda: sendmail(email),
+                lambda: sendmail_multiplexer(email),
                 should_retry_exception)
             g.log.info("Sent email from %r to %r",
                        email.fr_addr,
@@ -600,12 +652,13 @@ def send_queued_mail(test = False):
         g.log.exception("Unable to deliver email")
         raise
     finally:
+        g.stats.flush()
         if not test:
             session.quit()
-
-    # clear is true if anything was found and processed above
-    if len(uids_to_clear) > 0:
-        Email.handler.clear_queue_by_uids(uids_to_clear)
+            # always perform clear_queue_by_uids, even if we have an
+            # unhandled exception
+            if len(uids_to_clear) > 0:
+                Email.handler.clear_queue_by_uids(uids_to_clear)
 
 
 def opt_out(msg_hash):
