@@ -1662,22 +1662,14 @@ class MessageBuilder(Builder):
         return self._viewable_message(w)
 
     def _viewable_message(self, m):
-        if c.user_is_admin:
+        if (c.user_is_admin or
+                getattr(m, "author_id", 0) == c.user._id or
+                getattr(m, "to_id", 0) == c.user._id):
             return True
 
         # m is wrapped at this time, so it should have an SR
         subreddit = getattr(m, "subreddit", None)
         if subreddit and subreddit.is_moderator_with_perms(c.user, 'mail'):
-            # mods shouldn't be able to view new messages after the subreddit
-            # was transitioned over to the new modmail system
-            if (subreddit.new_modmail_enabled_at and
-                    m._date >= subreddit.new_modmail_enabled_at):
-                return False
-
-            return True
-
-        if (getattr(m, "author_id", 0) == c.user._id or
-                getattr(m, "to_id", 0) == c.user._id):
             return True
 
         return False
