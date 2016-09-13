@@ -1319,13 +1319,13 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
         # is in a thread that was created after it was enabled. In that case,
         # we don't want to update the old modmail icon since the message will
         # only show up in the new system
-        if subreddit.new_modmail_enabled_at:
+        if subreddit.modmail_transition_message_id:
             if message.first_message:
-                first_message_date = Message._byID(message.first_message)._date
+                first_message_id = message.first_message
             else:
-                first_message_date = message._date
+                first_message_id = message._id
 
-            if first_message_date >= subreddit.new_modmail_enabled_at:
+            if first_message_id > subreddit.modmail_transition_message_id:
                 update_old_modmail_icon = False
 
         if update_old_modmail_icon:
