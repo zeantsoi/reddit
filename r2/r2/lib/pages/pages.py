@@ -1933,10 +1933,6 @@ class LinkInfoPage(Reddit):
         if 'extra_js_config' not in kw:
             kw['extra_js_config'] = {}
 
-        # Feature flag live comments stylesheet
-        if feature.is_enabled('live_comments') and link.allow_live_comments:
-            self.extra_stylesheets.append("live-comments.less")
-
         # Open websocket on comment page
         self.sort = kw.get("sort", None)
         link_websocket_url = None
@@ -1947,7 +1943,8 @@ class LinkInfoPage(Reddit):
             is_posts_mod = c.site.is_moderator_with_perms(c.user, 'posts')
 
         namespace = "/link/%s" % link._id36
-        if feature.is_enabled('live_comments') and link.allow_live_comments:
+        if self.sort == 'live' and link.allow_live_comments:
+            self.extra_stylesheets.append("live-comments.less")
             link_websocket_url = websockets.make_url(
                 namespace, max_age=24*60*60)
             self.link_websockets = True
@@ -2436,11 +2433,8 @@ class CommentPane(Templated):
 
         # Live comments are allowed and the sort is new
         # so append the new comments
-        if feature.is_enabled('live_comments') and article.allow_live_comments:
-            if self.sort != CommentSortMenu.operator('new'):
-                self.rendered += LiveComments().render()
-            else:
-                self.rendered = LiveComments().render() + self.rendered
+        if sort_name == 'live' and article.allow_live_comments:
+            self.rendered = LiveComments().render() + self.rendered
 
         if try_cache:
             if cache_hit:
@@ -4849,8 +4843,7 @@ class DetailsPage(LinkInfoPage):
             content = PaneStack()
             content.append(PermalinkMessage(link.make_permalink_slow()))
             content.append(LinkCommentSep())
-            content.append(CommentPane(link, 'new',
-                                   comment, None, 1))
+            content.append(CommentPane(link, 'new', comment, None, 1))
             content.append(self.details)
 
         kwargs['content'] = content

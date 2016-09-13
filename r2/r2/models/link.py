@@ -162,6 +162,7 @@ class Link(Thing, Printable):
                      precomputed_sorts=None,
                      image_upload=False,
                      affiliatize_link=True,
+                     allow_live_comments=False,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
@@ -1297,16 +1298,6 @@ class Link(Thing, Printable):
             return False
 
         return True
-
-    @property
-    def allow_live_comments(self):
-        if self.disable_comments:
-            return False
-
-        if self.sort_if_suggested() == "new":
-            return True
-
-        return False
 
 
 class LinksByUrlAndSubreddit(tdb_cassandra.View):

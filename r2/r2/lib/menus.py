@@ -194,7 +194,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      languages = _('languages'),
                      adverts = _('adverts'),
 
-                     whitelist = _("whitelist")
+                     whitelist=_("whitelist"),
+                     live=_('live (beta)'),
                      )
 
 def menu_style(type):
@@ -565,6 +566,9 @@ class SortMenu(NavMenu):
 
     @classmethod
     def operator(cls, sort):
+        # The live sort is the exact same as the new sort
+        if sort == "live":
+            sort = "new"
         return cls._mapping.get(sort)
 
     @classmethod
@@ -581,8 +585,8 @@ class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
     _default = 'confidence'
     _options = ('confidence', 'top', 'new', 'controversial', 'old', 'random',
-                'qa',)
-    hidden_options = ['random']
+                'qa', 'live')
+    hidden_options = ['random', 'live']
 
     # Links may have a suggested sort of 'blank', which is an explicit None -
     # that is, do not check the subreddit for a suggested sort, either.

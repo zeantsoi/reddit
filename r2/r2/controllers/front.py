@@ -262,6 +262,14 @@ class FrontController(RedditController):
             # hot sort no longer exists but might still be set as a preference
             if sort == "hot":
                 sort = "confidence"
+        elif sort == "live":
+            # "live" sort is just "new" sort with the live comments streaming
+            # If this is the first time someone views this thread with "live"
+            # sort, turn on the allow_live_comments attr so that new comments
+            # will get added to the live_comments_q
+            if not article.allow_live_comments:
+                article.allow_live_comments = True
+                article._commit()
 
         if comment and comment.link_id != article._id:
             return self.abort404()
