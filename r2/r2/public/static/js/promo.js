@@ -56,6 +56,7 @@
           referrer: document.referrer,
           day: currentDate.getDay(),
           hour: currentDate.getHours(),
+          adblock: r.utils.getAdblockLevel(),
         },
       });
     },

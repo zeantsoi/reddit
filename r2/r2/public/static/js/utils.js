@@ -6,6 +6,13 @@ r.utils = {
       return (!$el.length || $el.is(':hidden'));
     },
 
+    getAdblockLevel: function() {
+      var installed = this.testAdblock();
+
+      // TODO: detect difference between on and whitelisted.
+      return installed ? 'installed' : 'off';
+    },
+
     /**
      * update the given url's query params
      * @param  {String} url
