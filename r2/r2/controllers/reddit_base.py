@@ -265,7 +265,7 @@ def set_init_referrer():
     """
     cookie_name = "initref"
     c.init_referrer = None
-    referrer = request.referer
+    referrer = _force_utf8(request.referer)
     expiration = datetime.utcnow() + timedelta(seconds=30*60)
 
     # Init referrer exists, so reset 30 minute session expiration
