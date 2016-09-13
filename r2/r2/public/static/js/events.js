@@ -91,11 +91,8 @@
         user_id: null,
         user_name: null,
         user_in_beta: config.pref_beta,
+        adblock: r.utils.testAdblock(),
       };
-
-      if (config.feature_adblock_test) {
-        contextData.adblock = _testAdblock();
-      }
 
       if (config.user_id) {
         contextData.user_id = config.user_id;

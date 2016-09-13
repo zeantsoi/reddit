@@ -69,9 +69,7 @@
   </head>
 
   <body ${classes(*thing.page_classes())}>
-    %if thing.has_adblock_test:
-      <div class="${thing.adblock_test_class}" id="adblock-test"></div>
-    %endif
+    <div class="${thing.adblock_test_class}" id="adblock-test"></div>
     ${googletagmanager()}
     ${moatframe()}
     ${self.bodyContent()}

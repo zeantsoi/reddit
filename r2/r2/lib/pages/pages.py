@@ -329,14 +329,10 @@ class Reddit(Templated):
         if feature.is_enabled("show_survey"):
             self.show_survey = True
 
-        has_adblock_test = feature.is_enabled("adblock_test")
-
-        if has_adblock_test:
-            self.adblock_test_class = g.live_config.get("adblock_test_class", "")
-            # ensure test is configured properly.
-            has_adblock_test = bool(self.adblock_test_class)
-
-        self.has_adblock_test = has_adblock_test
+        self.adblock_test_class = g.live_config.get(
+            "adblock_test_class",
+            "LeftAd SidebarAd ad-banner adbar adbox1 ads-area box_ad ad"
+        )
 
         # Generate a mobile link for Google.
         u = UrlParser(self.canonical_link)

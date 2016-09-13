@@ -1,5 +1,11 @@
 r.utils = {
 
+    testAdblock: function() {
+      var $el = $('#adblock-test');
+
+      return (!$el.length || $el.is(':hidden'));
+    },
+
     /**
      * update the given url's query params
      * @param  {String} url
