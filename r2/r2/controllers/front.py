@@ -434,7 +434,7 @@ class FrontController(RedditController):
             suggested_sort_active = True
 
         # finally add the comment listing
-        displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
+        displayPane.append(CommentPane(article, sort,
                                        comment, context, num, **kw))
 
         subtitle_buttons = []

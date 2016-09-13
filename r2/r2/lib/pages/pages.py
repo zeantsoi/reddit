@@ -2253,11 +2253,11 @@ class CommentPane(Templated):
         key = "pane:%s" % _id
         return key
 
-    def __init__(self, article, sort, comment, context, num, **kw):
+    def __init__(self, article, sort_name, comment, context, num, **kw):
         from r2.models import Builder, CommentBuilder, NestedListing
         from r2.controllers.reddit_base import UnloggedUser
 
-        self.sort = sort
+        self.sort = CommentSortMenu.operator(sort_name)
         self.num = num
         self.article = article
         self.comment = comment
@@ -2307,7 +2307,7 @@ class CommentPane(Templated):
 
         builder = CommentBuilder(
             article,
-            sort,
+            self.sort,
             comment=comment,
             context=context,
             num=num,
@@ -4849,7 +4849,7 @@ class DetailsPage(LinkInfoPage):
             content = PaneStack()
             content.append(PermalinkMessage(link.make_permalink_slow()))
             content.append(LinkCommentSep())
-            content.append(CommentPane(link, CommentSortMenu.operator('new'),
+            content.append(CommentPane(link, 'new',
                                    comment, None, 1))
             content.append(self.details)
 
