@@ -824,7 +824,7 @@ class ModmailController(OAuth2OnlyController):
         }
 
         if mute_status:
-            mute_result['reason'] = mute_status.note
+            mute_result['reason'] = getattr(mute_status, 'note', '')
 
             muted_items = sr.get_muted_items(account.name)
             mute_duration = muted_items.get(account.name)
