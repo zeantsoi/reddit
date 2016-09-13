@@ -908,7 +908,7 @@ class Link(Thing, Printable):
                         show_media_preview and
                         request.route_dict['action_name'] != 'comments'
                 ):
-                    item.href_url = item.permalink
+                    item.redirect_to_permalink = True
                 elif (feature.is_enabled('outbound_clicktracking') and 
                         c.user.pref_allow_clicktracking and
                         not item.promoted and
