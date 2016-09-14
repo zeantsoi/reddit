@@ -59,8 +59,14 @@ def search_reddits(query, include_over_18=True):
 
     try:
         result = SubredditsByPartialName._byID(query)
-        return [name for (name, over_18) in getattr(result, 'tups', [])
-                if not over_18 or include_over_18]
+        result = [
+            (sr[0], sr[1], False) for sr in getattr(result, 'tups', [])
+            if not sr[1] or include_over_18
+        ]
+        return [
+            name for (name, over_18, unadvertisable)
+            in result if not over_18 or include_over_18
+        ]
     except tdb_cassandra.NotFound:
         return []
 
