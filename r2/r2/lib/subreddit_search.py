@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from pylons import app_globals as g
+
 from r2.models import Subreddit
 from r2.lib.memoize import memoize
 from r2.lib.db.operators import desc
@@ -49,7 +51,11 @@ def load_all_reddits():
             prefix = name[:i + 1]
             names = query_cache.setdefault(prefix, [])
             if len(names) < 10:
-                names.append((sr.name, sr.over_18))
+                unadvertisable = (
+                    sr.hide_ads or
+                    sr.name in g.live_config['anti_ads_subreddits']
+                )
+                names.append((sr.name, sr.over_18, unadvertisable))
 
     for name_prefix, subreddits in query_cache.iteritems():
         SubredditsByPartialName._set_values(name_prefix, {'tups': subreddits})
