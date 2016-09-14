@@ -1317,7 +1317,7 @@ class SponsorshipBox(Templated):
 
 
 def _get_top_posts(num, link, sort='hot', time='all'):
-    links = c.site.get_links(sort, time)
+    links = link.subreddit_slow.get_links(sort, time)
     builder = IDBuilder(links, num=num)
     top_posts = []
 
