@@ -923,9 +923,8 @@ def is_seo_referrer():
         return False
 
     referrer = c.init_referrer or request.referer
-
-    p = UrlParser(referrer)
-    return any(is_subdomain(p.hostname, seo_domain) for seo_domain
+    hostname = domain(referrer)
+    return any(is_subdomain(hostname, seo_domain) for seo_domain
                in g.seo_domains)
 
 

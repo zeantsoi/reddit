@@ -41,7 +41,6 @@ class LoidTests(RedditTestCase):
             'referrer_domain': self.domain_mock(),
             'referrer_url': self.request.headers.get(),
             'session_referrer_domain': self.domain_mock(),
-            'session_referrer_url': self.context.init_referrer,
             'user_agent': self.request.user_agent,
             'user_agent_parsed': self.request.parsed_agent.to_dict(),
             'obfuscated_data': {

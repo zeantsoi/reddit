@@ -265,12 +265,12 @@ def set_init_referrer():
     """
     cookie_name = "initref"
     c.init_referrer = None
-    referrer = _force_utf8(request.referer)
+    referrer = _force_utf8(utils.domain(request.referer or ""))
     expiration = datetime.utcnow() + timedelta(seconds=30*60)
 
     # Init referrer exists, so reset 30 minute session expiration
     if cookie_name in c.cookies:
-        c.init_referrer = _force_utf8(c.cookies[cookie_name].value)
+        c.init_referrer = utils.domain(c.cookies[cookie_name].value)
     # Init referrer doesn't exist yet, so create cookie holding
     # the init referrer for 30 min if it's not a reddit domain
     elif referrer and not UrlParser(referrer).is_reddit_url():

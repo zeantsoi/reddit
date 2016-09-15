@@ -417,7 +417,6 @@ r.analytics = {
         'referrer_domain',
         'referrer_url',
         'session_referrer_domain',
-        'session_referrer_url',
         'adblock',
         'dnt',
         'sr_name',
@@ -488,7 +487,6 @@ r.analytics = {
         'referrer_domain',
         'referrer_url',
         'session_referrer_domain',
-        'session_referrer_url',
       ],
     });
 
@@ -526,7 +524,6 @@ r.analytics = {
         'referrer_domain',
         'referrer_url',
         'session_referrer_domain',
-        'session_referrer_url',
       ],
     }).send();
   },
@@ -593,7 +590,6 @@ r.analytics = {
         'referrer_domain',
         'referrer_url',
         'session_referrer_domain',
-        'session_referrer_url',
         'sr_name',
         'sr_id',
       ],
@@ -656,7 +652,6 @@ r.analytics = {
         'referrer_domain',
         'referrer_url',
         'session_referrer_domain',
-        'session_referrer_url',
         'expando_preference',
         'media_preference_hide_nsfw',
       ],

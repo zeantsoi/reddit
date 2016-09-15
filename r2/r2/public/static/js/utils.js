@@ -296,7 +296,7 @@ r.utils = {
         if (domain && domain.length > 1) {
             return domain[1];
         } else {
-            return null;
+            return url;
         }
     },
 
