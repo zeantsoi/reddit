@@ -804,7 +804,7 @@ class ModmailController(OAuth2OnlyController):
         }
 
         if ban_status:
-            ban_result['reason'] = ban_status.note
+            ban_result['reason'] = getattr(ban_status, 'note', '')
 
             ban_duration = sr.get_tempbans('banned', account.name)
             ban_duration = ban_duration.get(account.name)
