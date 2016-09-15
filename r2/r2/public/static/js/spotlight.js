@@ -173,7 +173,11 @@
         if (promo) {
           var $item = $(promo);
           var isHouse = $item.data('house');
-
+          var isBlank = $item.data('blank');
+          if (isBlank) {
+            $('#siteTable_organic').hide();
+            return $item;
+          }
           if (this.showPromo) {
             $('#siteTable_organic').show('slow');
           } else {
