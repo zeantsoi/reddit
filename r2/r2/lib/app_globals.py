@@ -440,7 +440,6 @@ class Globals(object):
             'global_loid_experiments',
             'precomputed_comment_sorts',
             'mailgun_domains',
-            'moat_enabled_posts',
             'modmail_admins',
         ],
         ConfigValue.str: [

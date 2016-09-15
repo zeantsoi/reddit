@@ -1972,10 +1972,7 @@ class LinkInfoPage(Reddit):
             elif variant == 'subreddit':
                 self.top_posts = SubredditBar(self.link)
 
-        if link._id36 in g.live_config['moat_enabled_posts']:
-            self.moat_enabled = True
-        else:
-            self.moat_enabled = False
+        self.moat_enabled = campaign_fullname != promote.NO_CAMPAIGN
 
         Reddit.__init__(self, title=title,
                         short_description=short_description, robots=robots,
