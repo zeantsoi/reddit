@@ -305,7 +305,7 @@ def update_gold_users():
     renew_msg = _("[Click here for details on how to set up an "
                   "automatically-renewing subscription or to renew.]"
                   "(/gold) If you have any thoughts, complaints, "
-                  "rants, suggestions about reddit gold, please write "
+                  "rants, or suggestions about reddit gold, please write "
                   "to us at %(gold_email)s. Your feedback would be "
                   "much appreciated.\n\nThank you for your past "
                   "patronage.") % {'gold_email': g.goldsupport_email}
