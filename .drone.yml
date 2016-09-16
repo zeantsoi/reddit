@@ -29,7 +29,7 @@ compose:
     # In the meantime, we've got a custom image configured specifically for r2:
     # https://github.com/reddit/docker-cassandra
     # We'll move over to the official images when we upgrade to C* 2.x.
-    image: reddit/cassandra:single-1.2.19-v1
+    image: quay.io/reddit/cassandra:single-1.2.19-v1
 
   rabbitmq:
     # NOTE: Using 3.4.x instead of 3.2.4 due to tag availability.
@@ -52,7 +52,7 @@ build:
   # https://github.com/reddit/docker-reddit-py
   # Dependency changes in the install scripts can be optionally mirrored to the
   # image for speedups, but abstaining from doing so won't break the builds.
-  image: reddit/reddit-py:latest
+  image: quay.io/reddit/reddit-py:latest
   # Always re-pull the image, since we're re-using the same tag.
   pull: true
   environment:
