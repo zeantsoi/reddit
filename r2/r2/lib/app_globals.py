@@ -289,7 +289,6 @@ class Globals(object):
             'offsite_subdomains',
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
-            'timed_templates',
             'autoexpand_media_types',
             'media_preview_domain_whitelist',
             'multi_icons',
