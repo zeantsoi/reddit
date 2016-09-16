@@ -586,7 +586,6 @@ class CommentSortMenu(SortMenu):
     _default = 'confidence'
     _options = ('confidence', 'top', 'new', 'controversial', 'old', 'random',
                 'qa', 'live')
-    hidden_options = ['random', 'live']
 
     # Links may have a suggested sort of 'blank', which is an explicit None -
     # that is, do not check the subreddit for a suggested sort, either.
@@ -599,6 +598,13 @@ class CommentSortMenu(SortMenu):
     @classmethod
     def visible_options(cls):
         return set(cls._options) - set(cls.hidden_options)
+
+    @class_property
+    def hidden_options(self):
+        hidden_options = ['random']
+        if not feature.is_enabled('live_comments'):
+            hidden_options.append('live')
+        return hidden_options
 
     def make_title(self, attr):
         title = super(CommentSortMenu, self).make_title(attr)
