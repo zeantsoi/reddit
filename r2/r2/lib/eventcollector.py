@@ -1011,6 +1011,36 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def block_programmatic_event(
+        self, thing, block_programmatic,
+        request=None, context=None
+    ):
+        """Send an event recording `block_programmatic` attr set on a `Thing`.
+
+        thing: an r2.models.Thing object
+        block_programmatic: a boolean representing the block_programmatic attr
+        request: pylons.request of the request emitting the event
+        context: pylons.tmpl_context of the request emitting the event
+
+        """
+        # Right now, we should only be setting block_programmatic on Link
+        from r2.models import Link
+        if not isinstance(thing, Link):
+            return
+
+        event = Event(
+            event_topic='ad_admin_events',
+            event_type='ss.block_programmatic',
+            request=request,
+            context=context,
+        )
+
+        event.add('target_type', thing._type_name)
+        event.add('target_fullname', thing._fullname)
+        event.add('block_programmatic', block_programmatic)
+
+        self.save_event(event)
+
     @squelch_exceptions
     def new_promoted_link_event(self, link, request=None, context=None):
         """Send an event recording a new promoted link's creation.

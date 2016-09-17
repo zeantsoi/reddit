@@ -2097,8 +2097,16 @@ def failed_payment_method(user, link):
 
 
 def block_programmatic(thing, should_block):
-    thing.block_programmatic = should_block
-    thing._commit()
+    if getattr(thing, 'block_programmatic', None) != should_block:
+        thing.block_programmatic = should_block
+        thing._commit()
+
+        g.events.block_programmatic_event(
+            thing=thing,
+            block_programmatic=should_block,
+            request=request,
+            context=c,
+        )
 
 
 def subreddit_hide_ads(subreddit, should_hide):
