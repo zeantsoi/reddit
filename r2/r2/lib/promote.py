@@ -2088,6 +2088,19 @@ def block_programmatic(thing, should_block):
     thing._commit()
 
 
+def subreddit_hide_ads(subreddit, should_hide):
+    if subreddit.hide_ads != should_hide:
+        subreddit.hide_ads = should_hide
+        subreddit._commit()
+
+        g.events.subreddit_hide_ads_event(
+            subreddit=subreddit,
+            hide_ads=should_hide,
+            request=request,
+            context=c,
+        )
+
+
 def process_promo_q():
     @g.stats.amqp_processor('promo_q')
     def _process_promo(msg):

@@ -964,6 +964,14 @@ class Reddit(Templated):
             activity_link = AccountActivityBox()
             ps.append(activity_link)
 
+        should_show_hide_ads_option = (c.user_is_sponsor and
+                                       isinstance(c.site, Subreddit) and
+                                       not isinstance(self, LinkInfoPage))
+        if should_show_hide_ads_option:
+            from admin_pages import SponsorToolsBar
+            ps.insert(3, SponsorToolsBar(page_type='reddit',
+                                         subreddit=c.site.name))
+
         return ps
 
     def render(self, *a, **kw):
@@ -2175,9 +2183,9 @@ class LinkInfoPage(Reddit):
             else:
                 rb.insert(1, LinkInfoBar(a=self.link))
 
-        if c.user_is_sponsor and self.expand_children:
+        if (c.user_is_sponsor and self.expand_children):
             from admin_pages import SponsorToolsBar
-            rb.insert(3, SponsorToolsBar(a=self.link))
+            rb.insert(3, SponsorToolsBar(page_type='link_info', a=self.link))
 
         return rb
 

@@ -2072,3 +2072,13 @@ class PromoteApiController(ApiController):
     def POST_block_programmatic(self, thing, should_block):
         promote.block_programmatic(thing, should_block)
         return
+
+    @validate(
+        VSponsorAdmin(),
+        VModhash(),
+        subreddit=VByName('subreddit_fullname'),
+        should_hide=VBoolean('should_hide'),
+    )
+    def POST_subreddit_hide_ads(self, subreddit, should_hide):
+        promote.subreddit_hide_ads(subreddit, should_hide)
+        return

@@ -443,7 +443,8 @@ def make_map(config):
                                  "refund_campaign|terminate_campaign|"
                                  "review_fraud|create_promo|"
                                  "toggle_pause_campaign|approve_campaign|"
-                                 "promote_post_submit|block_programmatic")))
+                                 "promote_post_submit|block_programmatic|"
+                                 "subreddit_hide_ads")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',

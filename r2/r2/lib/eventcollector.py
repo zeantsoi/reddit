@@ -987,6 +987,29 @@ class EventQueue(object):
             event.add('url', request.url)
         self.save_event(event)
 
+    def subreddit_hide_ads_event(
+        self, subreddit, hide_ads,
+        request=None, context=None
+    ):
+        """Send an event recording `hide_ads` attr set on a `Subreddit`.
+
+        subreddit: an r2.models.Subreddit object
+        hide_ads: a boolean representing the hide_ads attr
+        request: pylons.request of the request emitting the event
+        context: pylons.tmpl_context of the request emitting the event
+
+        """
+        event = Event(
+            event_topic='promote_events',
+            event_type='subreddit_hide_ads',
+            request=request,
+            context=context,
+        )
+
+        event.add('target_fullname', subreddit._fullname)
+
+        self.save_event(event)
+
     @squelch_exceptions
     def new_promoted_link_event(self, link, request=None, context=None):
         """Send an event recording a new promoted link's creation.
