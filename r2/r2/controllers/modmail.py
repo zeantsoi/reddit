@@ -422,17 +422,19 @@ class ModmailController(OAuth2OnlyController):
             # sr.
             recipient = sr
             if not is_internal:
-                participant = ModmailConversationParticipant.get_participant(
-                    conversation.id
-                )
+                try:
+                    participant = (ModmailConversationParticipant
+                                   .get_participant(conversation.id))
 
-                is_participant = (
-                    (c.user._id == participant.account_id) and
-                    not sr.is_moderator_with_perms(c.user, 'mail')
-                )
+                    is_participant = (
+                        (c.user._id == participant.account_id) and
+                        not sr.is_moderator_with_perms(c.user, 'mail')
+                    )
 
-                if not is_participant:
-                    recipient = Account._byID(participant.account_id)
+                    if not is_participant:
+                        recipient = Account._byID(participant.account_id)
+                except NotFound:
+                    pass
 
             message, inbox_rel = Message._new(
                 c.user,
