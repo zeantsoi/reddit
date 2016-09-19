@@ -1598,7 +1598,7 @@ class Comment(Thing, Printable):
         CommentSavesByAccount._unsave(user, self)
 
     def broadcast_new_comment(self, comment_element, mod_comment_element,
-            wrapped_item):
+            wrapped):
         websockets.send_broadcast(
             namespace="/link/%s" % utils.to36(self.link_id),
             type="new_comment",
@@ -1608,7 +1608,7 @@ class Comment(Thing, Printable):
                 "mod_comment_html": mod_comment_element,
                 "author_id": self.author_id,
                 "parent_fullname": self.parent_fullname,
-                "total_comment_count": wrapped_item.full_comment_count,
+                "total_comment_count": wrapped.link.lookups[0].num_comments,
             },
         )
 
