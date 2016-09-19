@@ -556,23 +556,41 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
 };
 
 
-$.insert_things = function(things, append, hidden) {
+$.insert_things = function(things, append, hidden, defaultParentContainer) {
     /* Insert new things into a listing.*/
     var map = $.map(things, function(thing) {
             var data = thing.data;
-            var s = $.listing(data.parent);
-            if(append)
-                s = s.append($.unsafe(data.content)).children(".thing:last");
-            else
-                s = s.prepend($.unsafe(data.content)).children(".thing:first");
+
+            // Use defaultParentContainer if no parent container
+            if (!data.parent && defaultParentContainer) {
+                var $parentThing = defaultParentContainer;
+            } else {
+                var $parentThing = $.listing(data.parent);
+                if (!$parentThing.length && defaultParentContainer) {
+                    $parentThing = defaultParentContainer;
+                }
+            }
+
+            if (append) {
+                var $thing = $parentThing.append($.unsafe(data.content));
+            } else {
+                var $thingContainer = $parentThing.children('.thing:first');
+                // Stickied top level comment
+                if ($thingContainer.hasClass('stickied')) {
+                    var $thing = $($.unsafe(data.content));
+                    $thingContainer.after($thing);
+                } else {
+                    var $thing = $parentThing.prepend($.unsafe(data.content)).children('.thing:first');
+                }
+            }
 
             if (hidden) {
-                thing_init_func(s.hide());
+                thing_init_func($thing.hide());
             } else {
-                thing_init_func(s.hide().show());
+                thing_init_func($thing.hide().show());
             }
-            $(document).trigger('new_thing', s)
-            return s;
+            $(document).trigger('new_thing', $thing)
+            return $thing;
         })
     $(document).trigger('new_things_inserted')
     return map
