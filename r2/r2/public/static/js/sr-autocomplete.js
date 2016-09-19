@@ -34,12 +34,13 @@ consult subredditselector.html for config variables
     ),
     _initialized: false,
 
-    setup: function(srSearches, includeSearches, isMultiple, dynamicSuggestions) {
+    setup: function(srSearches, includeSearches, isMultiple, dynamicSuggestions, includeUnadvertisable) {
       this.srSearchCache = $.with_default(srSearches, {});
       this.srHovercardCache = {};
       this.includeSearches = includeSearches;
       this.isMultiple = isMultiple;
       this.dynamicSuggestions = dynamicSuggestions;
+      this.includeUnadvertisable = includeUnadvertisable;
       this.suggestedSr = {};
       this.defaultSuggestedSr = {};
       this.oldSrName = '';
@@ -227,7 +228,11 @@ consult subredditselector.html for config variables
       if (!cache[query]) {
         $.request(
           'search_reddit_names.json', 
-          {query: query, include_over_18: r.config.over_18},
+          {
+            query: query,
+            include_over_18: r.config.over_18,
+            include_unadvertisable: this.includeUnadvertisable,
+          },
           function (resp) {
             cache[query] = resp.names;
             r.srAutocomplete.srUpdateDropdown(resp.names);
@@ -259,6 +264,7 @@ consult subredditselector.html for config variables
           query: query, 
           include_over_18: r.config.over_18,
           exact: true,
+          include_unadvertisable: this.includeUnadvertisable,
         },
         function (resp) {
           $('.field-sr').hide();

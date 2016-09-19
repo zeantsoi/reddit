@@ -5064,18 +5064,28 @@ class ApiController(RedditController):
 
     @csrf_exempt
     @require_oauth2_scope("read")
-    @json_validate(query=VPrintable('query', max_length=50),
-                   include_over_18=VBoolean('include_over_18', default=True),
-                   exact=VBoolean('exact', default=False))
+    @json_validate(
+        query=VPrintable('query', max_length=50),
+        include_over_18=VBoolean('include_over_18', default=True),
+        exact=VBoolean('exact', default=False),
+        include_unadvertisable=VBoolean('include_unadvertisable',
+                                        default=True),
+    )
     @api_doc(api_section.subreddits)
-    def POST_search_reddit_names(self, responder, query, include_over_18, exact):
+    def POST_search_reddit_names(self, responder, query, include_over_18,
+                                 exact, include_unadvertisable):
         """List subreddit names that begin with a query string.
 
         Subreddits whose names begin with `query` will be returned. If
         `include_over_18` is false, subreddits with over-18 content
         restrictions will be filtered from the results.
 
-        If `exact` is true, only an exact match will be returned.
+        If `include_unadvertisable` is False, subreddits that have `hide_ads`
+        set to True or are on the `anti_ads_subreddits` list will be filtered.
+
+        If `exact` is true, only an exact match will be returned. Exact matches
+        are inclusive of `over_18` subreddits, but not `hide_ad` subreddits
+        when `include_unadvertisable` is `False`.
         """
         if query:
             query = sr_path_rx.sub('\g<name>', query.strip())
@@ -5086,11 +5096,15 @@ class ApiController(RedditController):
                 sr = Subreddit._by_name(query.strip())
             except NotFound:
                 self.abort404()
-            else:
-                # not respecting include_over_18 for exact match
-                names = [sr.name]
+
+            if not include_unadvertisable and sr.hide_ads:
+                self.abort404()
+
+            names = [sr.name]
+
         elif query:
-            names = search_reddits(query, include_over_18)
+            names = search_reddits(query, include_over_18,
+                                   include_unadvertisable)
 
         return {'names': names}
 
