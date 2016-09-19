@@ -1606,7 +1606,8 @@ class Comment(Thing, Printable):
     def _unsave(self, user):
         CommentSavesByAccount._unsave(user, self)
 
-    def broadcast_new_comment(self, comment_element, mod_comment_element):
+    def broadcast_new_comment(self, comment_element, mod_comment_element,
+            wrapped_item):
         websockets.send_broadcast(
             namespace="/link/%s" % utils.to36(self.link_id),
             type="new_comment",
@@ -1616,6 +1617,7 @@ class Comment(Thing, Printable):
                 "mod_comment_html": mod_comment_element,
                 "author_id": self.author_id,
                 "parent_fullname": self.parent_fullname,
+                "total_comment_count": wrapped_item.full_comment_count,
             },
         )
 
@@ -3553,6 +3555,7 @@ def process_live_comments():
             comment.broadcast_new_comment(
                 comment_element,
                 mod_comment_element,
+                wrapped,
             )
 
     amqp.consume_items('live_comments_q', process_comment)

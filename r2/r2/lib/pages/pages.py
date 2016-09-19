@@ -1955,7 +1955,7 @@ class LinkInfoPage(Reddit):
         kw['extra_js_config'].update({
             "cur_link": link._fullname,
             "link_websocket_url": link_websocket_url,
-            "link_sort": self.sort,
+            "link_limit": kw.get("num", None),
             "is_posts_mod": is_posts_mod,
         })
         if c.can_embed:
