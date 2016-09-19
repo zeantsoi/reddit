@@ -964,7 +964,7 @@ class Reddit(Templated):
             activity_link = AccountActivityBox()
             ps.append(activity_link)
 
-        should_show_hide_ads_option = (c.user_is_sponsor and
+        should_show_hide_ads_option = (c.user_is_admin and
                                        isinstance(c.site, Subreddit) and
                                        not isinstance(self, LinkInfoPage))
         if should_show_hide_ads_option:
