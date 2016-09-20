@@ -267,6 +267,8 @@ class FrontController(RedditController):
             # If this is the first time someone views this thread with "live"
             # sort, turn on the allow_live_comments attr so that new comments
             # will get added to the live_comments_q
+            if c.render_style != 'html':
+                sort = "new"
             if not g.disallow_db_writes and not article.allow_live_comments:
                 article.allow_live_comments = True
                 article._commit()

@@ -602,7 +602,8 @@ class CommentSortMenu(SortMenu):
     @class_property
     def hidden_options(self):
         hidden_options = ['random']
-        if not feature.is_enabled('live_comments'):
+        if (not feature.is_enabled('live_comments') or
+                c.render_style != 'html'):
             hidden_options.append('live')
         return hidden_options
 
