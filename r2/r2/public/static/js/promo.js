@@ -40,6 +40,8 @@
         url += '?' + $.param({ feature: params.feature }, true)
       }
 
+      var currentDate = new Date();
+
       return $.ajax({
         type: 'POST',
         url: url,
@@ -52,6 +54,8 @@
           is_refresh: options.refresh,
           placements: options.placements,
           referrer: document.referrer,
+          day: currentDate.getDay(),
+          hour: currentDate.getHours(),
         },
       });
     },
