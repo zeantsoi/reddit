@@ -1000,13 +1000,14 @@ class EventQueue(object):
 
         """
         event = Event(
-            event_topic='promote_events',
-            event_type='subreddit_hide_ads',
+            event_topic='ad_admin_events',
+            event_type='ss.subreddit_hide_ads',
             request=request,
             context=context,
         )
 
         event.add('target_fullname', subreddit._fullname)
+        event.add('hide_ads', hide_ads)
 
         self.save_event(event)
 
