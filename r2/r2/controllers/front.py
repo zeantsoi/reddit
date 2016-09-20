@@ -267,8 +267,6 @@ class FrontController(RedditController):
             # If this is the first time someone views this thread with "live"
             # sort, turn on the allow_live_comments attr so that new comments
             # will get added to the live_comments_q
-            if c.render_style != 'html':
-                sort = "new"
             if not g.disallow_db_writes and not article.allow_live_comments:
                 article.allow_live_comments = True
                 article._commit()
@@ -442,6 +440,10 @@ class FrontController(RedditController):
         elif suggested_sort and 'sort' not in request.params:
             sort = suggested_sort
             suggested_sort_active = True
+
+        # Don't use live sort for api calls
+        if c.render_style != 'html' and sort == "live":
+            sort = "new"
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, sort,
