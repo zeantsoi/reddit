@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import base64
 import calendar
 from collections import defaultdict, namedtuple
 import datetime
@@ -38,6 +39,7 @@ from pylons import app_globals as g
 from pylons import request
 from pytz import timezone
 
+from baseplate.crypto import MessageSigner
 from r2.config import feature
 from r2.lib import (
     amqp,
@@ -335,7 +337,7 @@ def set_previously_accepted(link):
     link._commit()
 
 
-def add_trackers(items, sr, adserver_click_urls=None):
+def add_trackers(items, sr, adserver_click_urls=None, click_query_data=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
     for item in items:
@@ -376,13 +378,23 @@ def add_trackers(items, sr, adserver_click_urls=None):
         # construct the click redirect url
         item_url = adserver_click_urls.get(item.campaign) or item.url
         url = _force_utf8(item_url)
-        hashable = ''.join((url, tracking_name.encode("utf-8")))
-        click_mac = hmac.new(
-            g.tracking_secret, hashable, hashlib.sha1).hexdigest()
+
+        data = {}
+        # payload comes from ad response
+        if item.campaign in click_query_data:
+            data = click_query_data[item.campaign]
+        b64_data = base64.urlsafe_b64encode(json.dumps(data))
+        # hmac
+        signer = MessageSigner(g.secrets["ads_click_secret"])
+        hashable = "|".join([url, b64_data])
+        click_mac = signer.make_signature(
+            hashable,
+            datetime.timedelta(minutes=5)
+        )
         click_query = {
-            "id": tracking_name,
-            "hash": click_mac,
             "url": url,
+            "data": b64_data,
+            "hmac": click_mac,
         }
         click_url = update_query(g.clicktracker_url, click_query)
 
