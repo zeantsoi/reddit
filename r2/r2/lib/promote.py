@@ -284,6 +284,7 @@ def get_min_cpm_bid_dollars(user):
 NO_CAMPAIGN = "NO_CAMPAIGN"
 EXTERNAL_CAMPAIGN = "__EXTERNAL_CAMPAIGN__"
 
+
 def is_valid_click_url(link, click_url, click_hash):
     expected_mac = get_click_url_hmac(link, click_url)
 
@@ -553,7 +554,7 @@ def new_campaign(link, requires_review=True, **attributes):
         if getattr(author, "complimentary_promos", False):
             free_campaign(link, campaign, c.user)
 
-    # force campaigns for approved links to also be approved unless 
+    # force campaigns for approved links to also be approved unless
     # otherwise specified.
     if is_accepted(link):
         set_campaign_approval(link, campaign, (not requires_review))
@@ -1023,7 +1024,7 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
         user can have more than one payment profile if, for instance, they have
         more than one credit card on file.) Set pay_id to -1 for freebies.
 
-    Returns: (True, "") if successful or (False, error_msg) if not. 
+    Returns: (True, "") if successful or (False, error_msg) if not.
     """
     void_campaign(link, campaign, reason='changed_payment')
 
@@ -1249,7 +1250,7 @@ def reject_promotion(link, reason=None, notify_why=True):
 
     link.promo_quality = None
     link._commit()
-    
+
     # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
         emailer.reject_promo(link, reason=(reason if notify_why else None))
@@ -1311,7 +1312,7 @@ def is_accepted_promo(date, link, campaign):
 
 
 def is_scheduled_promo(date, link, campaign):
-    return (is_accepted_promo(date, link, campaign) and 
+    return (is_accepted_promo(date, link, campaign) and
             charged_or_not_needed(campaign))
 
 
@@ -1321,7 +1322,7 @@ def is_live_promo(link, campaign):
 
 
 def is_complete_promo(link, campaign):
-    return (campaign.is_paid and 
+    return (campaign.is_paid and
         not (is_live_promo(link, campaign) or is_pending(campaign)))
 
 
@@ -1612,7 +1613,7 @@ def finalize_completed_campaigns(daysago=1):
                     camp.bid_dollars)
             else:
                 text = '%s completed with $%s billable (pre-CPM).'
-                text %= (camp, billable_amount) 
+                text %= (camp, billable_amount)
             PromotionLog.add(link, text)
             camp.refund_amount = 0.
             camp._commit()
@@ -1837,14 +1838,14 @@ def keywords_from_context(
     for fullname in displayed_things:
         t = Thing._by_fullname(fullname, data=True, stale=True)
         if hasattr(t, "keyword_targets"):
-            keywords.update(['k.' + word 
+            keywords.update(['k.' + word
                              for word in t.keyword_targets.split(',')])
 
     # Add keywords for recently visited links
     for link in c.recent_clicks:
         if (hasattr(link, "keyword_targets")):
-            keywords.update(['k.' + word 
-                             for word in link.keyword_targets.split(',')])            
+            keywords.update(['k.' + word
+                             for word in link.keyword_targets.split(',')])
 
     hook = hooks.get_hook("ads.get_additional_keywords")
     additional_keywords = hook.call_until_return(
@@ -1863,8 +1864,8 @@ def keywords_from_context(
             g.log.info("Request for invalid subreddit %s" % sn)
             continue
         if subreddit.audience_target:
-            keywords.update(['t.' + target 
-                             for target in subreddit.audience_target.split(',')])        
+            keywords.update(['t.' + target
+                             for target in subreddit.audience_target.split(',')])
 
     # Add keywords for audience targeting.
     #   use recently visited subreddits and subreddits
@@ -1882,7 +1883,7 @@ def keywords_from_context(
 
     for subreddit in recent_subreddits:
         if subreddit.audience_target:
-            keywords.update(['a.' + target 
+            keywords.update(['a.' + target
                              for target in subreddit.audience_target.split(',')])
 
     # Pass experiment flags to ad server for reporting
