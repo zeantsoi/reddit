@@ -381,7 +381,7 @@ def add_trackers(items, sr, adserver_click_urls=None, click_query_data=None):
 
         data = {}
         # payload comes from ad response
-        if item.campaign in click_query_data:
+        if click_query_data and (item.campaign in click_query_data):
             data = click_query_data[item.campaign]
         b64_data = base64.urlsafe_b64encode(json.dumps(data))
         # hmac
