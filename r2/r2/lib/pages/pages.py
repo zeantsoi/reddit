@@ -348,9 +348,9 @@ class Reddit(Templated):
 
         if (c.user_is_loggedin and not c.user.has_been_onboarded and
                 feature.is_enabled("new_user_onboarding")):
-            self.show_onboarding = True;
-            c.user.has_been_onboarded = True;
-            c.user._commit();
+            self.show_onboarding = True
+            c.user.has_been_onboarded = True
+            c.user._commit()
 
         if self.show_infobar:
             if not infotext:
@@ -1203,6 +1203,19 @@ class NewUserOnboarding(CachedTemplate):
 
     def __init__(self):
         super(NewUserOnboarding, self).__init__()
+
+    def get_multis(self):
+        # These probably won't change, so this gets called from within
+        # the template to avoid extra lookups every time this gets
+        # rendered from the cache.
+        multi_user_name = g.reddit_defaults_user
+        multi_user = Account._by_name(multi_user_name)
+        multis = LabeledMulti.by_owner(multi_user)
+        multis_by_name = {m.name: m for m in multis}
+
+        return [multis_by_name.get(name)
+                for name in self.multi_names
+                if name in multis_by_name]
 
 
 class RedditFooter(CachedTemplate):

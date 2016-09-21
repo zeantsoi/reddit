@@ -3,7 +3,7 @@
 
   r.onboarding = {
     init: function() {
-      var content = $('#' + 'onboarding-popup').html();
+      var content = $('#onboarding-popup').html();
       var onboardingPopup = new r.ui.Popup({
         size: 'xlarge',
         content: content,
@@ -12,45 +12,43 @@
       });
 
       // Update the header on the confirmation modal to include username.
-      var $congratsLine = onboardingPopup.$.find('.onboarding__username');
+      var $congratsLine = onboardingPopup.$.find('[ref=username]');
       $congratsLine.text($congratsLine.text().format({name: r.config.logged}));
 
       var MIN_VALID_SELECTIONS = 3;
 
+      var isSubmitting = false;
       var didUpdateSubscriptions = false;
       var shouldShowConfirmationModal = false;
       var isValidSelection = true;
 
       // Randomly select a set of 3 categories to enable by default.
-      var checkboxes = onboardingPopup.$.find('.onboarding__checkbox-input').toArray();
+      var checkboxes = onboardingPopup.$.find('[ref=checkbox]').toArray();
       var checkboxesToAutoCheck = _.shuffle(checkboxes).slice(0, MIN_VALID_SELECTIONS);
       checkboxesToAutoCheck.forEach(function (el) {
         $(el).prop('checked', true);
       });
 
+      var preselectedCategories = checkboxesToAutoCheck.map(function (el) {
+        return $(el).attr('name');
+      });
+      r.actions.trigger('onboarding:preselect', {
+        categories: preselectedCategories,
+      });
+
       // Any time a checkbox changes, validate and update the submit button.
-      onboardingPopup.$.on('change', '.onboarding__checkbox-input', function() {
-        var countOfCheckedCheckboxes = 0;
-        for (var i = 0; i < checkboxes.length; i++) {
-          if ($(checkboxes[i]).prop('checked')) {
-            countOfCheckedCheckboxes++;
-            if (countOfCheckedCheckboxes >= MIN_VALID_SELECTIONS) {
-              isValidSelection = true;
-              onboardingPopup.$.find('.onboarding__action--submit').prop('disabled', false);
-              return;
-            }
-          }
-        }
-        onboardingPopup.$.find('.onboarding__action--submit').prop('disabled', true);
-        isValidSelection = false;
+      onboardingPopup.$.on('change', '[ref=checkbox]', function() {
+        var numChecked = onboardingPopup.$.find('[ref=checkbox]:checked').length;
+        isValidSelection = (numChecked >= MIN_VALID_SELECTIONS);
+        onboardingPopup.$.find('[ref=action--submit]').prop('disabled', !isValidSelection);
       });
 
       // Any time the modal closes, check what needs to happen next (if anything).
       onboardingPopup.on('closed.r.popup', function() {
         if (shouldShowConfirmationModal) {
           shouldShowConfirmationModal = false;
-          onboardingPopup.$.find('.onboarding__step--choose-categories').hide();
-          onboardingPopup.$.find('.onboarding__step--complete').show();
+          onboardingPopup.$.find('[ref=step--choose-categories]').hide();
+          onboardingPopup.$.find('[ref=step--complete]').show();
           onboardingPopup.show();
         } else if (didUpdateSubscriptions) {
           window.location.reload();
@@ -58,20 +56,27 @@
       });
 
       // When the submit button is clicked, make the API request then close the modal.
-      onboardingPopup.$.on('click', '.onboarding__action--submit', function(e) {
-        if (!isValidSelection) { return }
+      onboardingPopup.$.on('click', '[ref=action--submit]', function(e) {
+        if (!isValidSelection || isSubmitting) { return }
 
-        var subreddits = getSubredditsFromSelectedCategories(onboardingPopup);
-
-        // TODO - what should we do if _nothing_ is selected? use defaults?
-        // should we allow people to subscribe to _nothing_??
+        isSubmitting = true;
+        onboardingPopup.$.find('[ref=action--submit]').prop('disabled', true);
+        onboardingPopup.$.find('[ref=action--default]').prop('disabled', true);
+        var categoryData = getSelectedCategoryData(onboardingPopup);
+        var subreddits = getSubredditsFromCategoryData(categoryData);
+        var categoryNames = categoryData.map(function(category) {
+          return category.name;
+        });
 
         subscribeToSubreddits(
           subreddits,
-          function onSucces() {
+          function onSuccess() {
             didUpdateSubscriptions = true;
             shouldShowConfirmationModal = true;
             onboardingPopup.hide();
+            r.actions.trigger('onboarding:submit', {
+              selectedCategories: categoryNames, 
+            });
           },
           function onError() {
             onboardingPopup.hide();
@@ -82,14 +87,20 @@
       });
 
       // When the "use defaults" button is clicked, just go to the confirmation page.
-      onboardingPopup.$.on('click', '.onboarding__action--default', function(e) {
+      onboardingPopup.$.on('click', '[ref=action--default]', function(e) {
+        if (isSubmitting) { return }
+
+        r.actions.trigger('onboarding:default'); 
         shouldShowConfirmationModal = true;
         onboardingPopup.hide();
         return false;
       });
 
       // When one of the close buttons is clicked, close the modal and do nothing.
-      onboardingPopup.$.on('click', '.onboarding__action--close', function(e) {
+      onboardingPopup.$.on('click', '[ref=action--close]', function(e) {
+        r.actions.trigger('onboarding:close', {
+          skippedOnboarding: !didUpdateSubscriptions,
+        });
         onboardingPopup.hide();
         return false;
       });
@@ -102,10 +113,10 @@
     r.onboarding.init();
   });
 
-  function getCategoryDataFromElement (element) {
+  function getCategoryDataFromElement(element) {
     var $el = $(element);
     var subredditNames = $el.data('sr-names').split(',');
-    var $input = $el.find('.onboarding__checkbox-input');
+    var $input = $el.find('[ref=checkbox]');
     var multiName = $input.attr('name');
     var checked = $input.is(':checked');
 
@@ -116,17 +127,24 @@
     };
   }
 
-  function getSubredditsFromSelectedCategories (onboardingPopup) {
-    var activeSubredditsMap = {};
-    var $categories = onboardingPopup.$.find('.onboarding__category');
+  function getSelectedCategoryData(onboardingPopup) {
+    var $categories = onboardingPopup.$.find('[ref=category]');
     var categoryElements = $categories.toArray();
 
-    categoryElements.forEach(function(element) {
-      var categoryData = getCategoryDataFromElement(element);
+    return categoryElements.map(function(element) {
+      return getCategoryDataFromElement(element);
+    }).filter(function(item) {
+      return item.active;
+    });
+  }
 
-      if (categoryData.active) {
-        for (var i = 0; i < categoryData.subreddits.length; i++) {
-          activeSubredditsMap[categoryData.subreddits[i]] = 1;
+  function getSubredditsFromCategoryData(categoryData) {
+    var activeSubredditsMap = {};
+
+    categoryData.forEach(function(category) {
+      if (category.active) {
+        for (var i = 0; i < category.subreddits.length; i++) {
+          activeSubredditsMap[category.subreddits[i]] = 1;
         }
       }
     });

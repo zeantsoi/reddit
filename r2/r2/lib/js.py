@@ -836,7 +836,9 @@ module["messagecompose"] = Module("messagecompose.js",
     # jquery, hooks, ajax, preload
     "messagecompose.js")
 
-module["onboarding"] = Module("onboarding.js",
+module["onboarding"] = Module(
+    "onboarding.js",
+    "onboarding-event.js",
     "onboarding.js",
 )
 

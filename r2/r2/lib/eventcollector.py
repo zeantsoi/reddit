@@ -1663,7 +1663,8 @@ class EventQueue(object):
 
     @squelch_exceptions
     def subreddit_subscribe_event(self, is_subscribing, is_first_sub,
-                                  subreddit, user, sub_size, request=None,
+                                  subreddit, user, sub_size,
+                                  is_onboarding=False, request=None,
                                   context=None):
         """Create a subreddit subscribe event
 
@@ -1693,6 +1694,9 @@ class EventQueue(object):
                 'user_subscription_size': sub_size,
             },
         )
+
+        if is_onboarding:
+            event.add("process_notes", "onboarding_experiment")
 
         self.save_event(event)
 

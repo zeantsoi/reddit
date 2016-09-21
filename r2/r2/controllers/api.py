@@ -4277,8 +4277,20 @@ class ApiController(RedditController):
         for sr in srs:
             sr.update_search_index(boost_only=True)
 
-            g.events.subreddit_subscribe_event(is_subscribing, is_first_sub, 
-                                               sr, c.user, sub_size, request, c)
+            is_onboarding = (
+                is_first_sub and skip_initial_defaults and
+                feature.is_enabled("new_user_onboarding"))
+
+            g.events.subreddit_subscribe_event(
+                is_subscribing,
+                is_first_sub,
+                sr,
+                c.user,
+                sub_size,
+                is_onboarding=is_onboarding,
+                request=request,
+                context=c,
+            )
 
     @validatedForm(
         VAdmin(),

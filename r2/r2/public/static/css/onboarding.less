@@ -175,12 +175,7 @@
 }
 
 .onboarding__checkbox-input:checked + .onboarding__checkbox-display {
-  -webkit-animation-duration: .2s;
-  animation-duration: .2s;
-  -webkit-animation-fill-mode: both;
-  animation-fill-mode: both;
-  -webkit-animation-name: onboardingCheckboxBounceIn;
-  animation-name: onboardingCheckboxBounceIn;
+  .animation(onboardingCheckboxBounceIn .2s both);
 }
 
 @-webkit-keyframes onboardingCheckboxBounceIn {

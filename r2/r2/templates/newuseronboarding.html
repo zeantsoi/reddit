@@ -22,13 +22,6 @@
 
 <%!
 from r2.lib.filters import unsafe
-from r2.models import Account, LabeledMulti
-
-multi_user_name = g.config["reddit_defaults_user"]
-multi_user = Account._by_name(multi_user_name)
-multis = LabeledMulti.by_owner(multi_user)
-multis_by_name = {m.name: m for m in multis}
-
 %>
 
 <%def name="onboarding_category(name, display_name, key_color, icon_url, srs)">
@@ -36,6 +29,7 @@ multis_by_name = {m.name: m for m in multis}
   subreddit_names = [s._fullname for s in srs]
   %>
   <li class="onboarding__category"
+      ref="category"
       data-sr-names="${','.join(subreddit_names)}"
       >
     <label class="onboarding__category-container">
@@ -45,6 +39,7 @@ multis_by_name = {m.name: m for m in multis}
            >
       <div class="c-clearfix">
         <input class="onboarding__checkbox-input"
+               ref="checkbox"
                type="checkbox"
                name="${name}"
                >
@@ -58,43 +53,40 @@ multis_by_name = {m.name: m for m in multis}
   </li>
 </%def>
 
-<div class="onboarding__step onboarding__step--choose-categories">
+<div class="onboarding__step onboarding__step--choose-categories" ref="step--choose-categories">
   <header class="onboarding__step-header c-clearfix">
     <div class="onboarding__image--snoo">
     </div>
     <h3 class="onboarding__step-title">
-      ${_("Pick some topics:")}
+      ${_("Pick 3 or more topics:")}
     </h3>
     <p class="onboarding__step-description">
       ${_("Then we'll build a custom Front Page for you.")}
     </p>
   </header>
   <ul class="onboarding__menu">
-    %for m in thing.multi_names:
-      <% multi = multis_by_name.get(m) %>
-      %if multi:
-        ${onboarding_category(
-          name=multi.name,
-          display_name=multi.display_name,
-          key_color=multi.key_color,
-          icon_url=multi.icon_url,
-          srs=multi.srs,
-        )}
-      %endif
+    %for multi in thing.get_multis():
+      ${onboarding_category(
+        name=multi.name,
+        display_name=multi.display_name,
+        key_color=multi.key_color,
+        icon_url=multi.icon_url,
+        srs=multi.srs,
+      )}
     %endfor
   </ul>
   <footer class="onboarding__step-footer c-clearfix c-submit-group">
-    <button class="onboarding__action onboarding__action--submit c-btn c-btn-primary c-pull-right">${_("Go")}</button>
-    <button class="onboarding__action onboarding__action--default c-btn c-btn-secondary c-pull-right">${_("Use Defaults")}</button>
-    <a class="onboarding__skip-link onboarding__action onboarding__action--close">${_("Skip this stuff")}</a>
+    <button class="onboarding__action c-btn c-btn-primary c-pull-right" ref="action--submit">${_("Go")}</button>
+    <button class="onboarding__action c-btn c-btn-secondary c-pull-right" ref="action--default">${_("Use Defaults")}</button>
+    <a class="onboarding__skip-link onboarding__action" ref="action--close">${_("Skip this stuff")}</a>
   </footer>
 </div>
-<div hidden class="onboarding__step onboarding__step--complete">
+<div hidden class="onboarding__step onboarding__step--complete" ref="step--complete">
   <div class="onboarding__image--horse-sized-duck">
   </div>
   <header class="onboarding__step-header">
     <h3 class="onboarding__step-title">
-      <span class="onboarding__username">${_("Congratulations %(name)s!")}</span>
+      <span ref="username">${_("Congratulations %(name)s!")}</span>
     </h3>
     <p class="onboarding__step-description">
       ${_("You are a Redditor.")}
@@ -104,6 +96,6 @@ multis_by_name = {m.name: m for m in multis}
     </p>
   </header>
   <footer class="onboarding__step-footer c-clearfix c-submit-group">
-    <button class="onboarding__action onboarding__action--close c-btn c-btn-primary c-pull-right">${_("OK")}</button>
+    <button class="onboarding__action c-btn c-btn-primary c-pull-right" ref="action--close">${_("OK")}</button>
   </footer>
 </div>
