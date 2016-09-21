@@ -204,7 +204,7 @@ class ModmailController(OAuth2OnlyController):
                 fields='to'
             )
 
-        if not isinstance(to, Account):
+        if to and not isinstance(to, Account):
             return self.send_error(
                 422,
                 errors.NO_SR_TO_SR_MESSAGE,
