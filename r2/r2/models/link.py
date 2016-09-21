@@ -916,7 +916,14 @@ class Link(Thing, Printable):
                         not g.debug):
                     item.use_outbound = True
                     outbound_url = generate_affiliate_link(item.url) if item.affiliatize_link else item.url
-                    item.outbound_link = generate_outbound_link(item, outbound_url)
+                    try:
+                        item.outbound_link = generate_outbound_link(
+                            item, outbound_url)
+                    except ValueError as e:
+                        g.log.warning(
+                            "Outbound link generation failed on %s",
+                            outbound_url)
+                        item.use_outbound = False
 
             # Exclude users from this experiment that explicitly
             # have media previews turned off. Only apply this experiment
